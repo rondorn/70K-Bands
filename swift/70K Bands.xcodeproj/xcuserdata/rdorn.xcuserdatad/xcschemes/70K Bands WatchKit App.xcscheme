@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   LastUpgradeVersion = "0620"
+   version = "1.3">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES">
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+               BuildableName = "70K Bands WatchKit App.app"
+               BlueprintName = "70K Bands WatchKit App"
+               ReferencedContainer = "container:70K Bands.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1154F6051A575893003F4764"
+               BuildableName = "70K Bands.app"
+               BlueprintName = "70K Bands"
+               ReferencedContainer = "container:70K Bands.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "11F033151AB3A77F00AA29B8"
+               BuildableName = "70K Bands WatchKit Extension.appex"
+               BlueprintName = "70K Bands WatchKit Extension"
+               ReferencedContainer = "container:70K Bands.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      buildConfiguration = "Debug">
+      <Testables>
+      </Testables>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+            BuildableName = "70K Bands WatchKit App.app"
+            BlueprintName = "70K Bands WatchKit App"
+            ReferencedContainer = "container:70K Bands.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+   </TestAction>
+   <LaunchAction
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      buildConfiguration = "Debug"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      allowLocationSimulation = "YES">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.springboard"
+         RemotePath = "/70K Bands">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+            BuildableName = "70K Bands WatchKit App.app"
+            BlueprintName = "70K Bands WatchKit App"
+            ReferencedContainer = "container:70K Bands.xcodeproj">
+         </BuildableReference>
+      </RemoteRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+            BuildableName = "70K Bands WatchKit App.app"
+            BlueprintName = "70K Bands WatchKit App"
+            ReferencedContainer = "container:70K Bands.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <AdditionalOptions>
+      </AdditionalOptions>
+   </LaunchAction>
+   <ProfileAction
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      buildConfiguration = "Release"
+      debugDocumentVersioning = "YES">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.springboard"
+         RemotePath = "/70K Bands">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+            BuildableName = "70K Bands WatchKit App.app"
+            BlueprintName = "70K Bands WatchKit App"
+            ReferencedContainer = "container:70K Bands.xcodeproj">
+         </BuildableReference>
+      </RemoteRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "11F033221AB3A77F00AA29B8"
+            BuildableName = "70K Bands WatchKit App.app"
+            BlueprintName = "70K Bands WatchKit App"
+            ReferencedContainer = "container:70K Bands.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
+</Scheme>
