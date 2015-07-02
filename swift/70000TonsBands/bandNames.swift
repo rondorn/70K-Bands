@@ -14,32 +14,76 @@ var officalUrls = [String: String]()
 var offline = false;
 
 
-let bandFile = dirs[0].stringByAppendingPathComponent( "bandFile")
+let bandFile = dirs[0].stringByAppendingPathComponent("bandFile")
 
 func gatherData () {
     
     var error:NSError?
-    var ok:Bool = NSFileManager.defaultManager().removeItemAtPath(bandFile, error: &error)
-    
+
     let defaults = NSUserDefaults.standardUserDefaults()
     var artistUrl = defaults.stringForKey("artistUrl")
     
-    //if (artistUrl == "Default"){
-    //    artistUrl = getDefaultArtistUrl()
-    //} else {
-        artistUrl = "https://www.dropbox.com/s/uc770ldfgsb8liy/artistLineupManual.csv?dl=1";
-    //}
+    if (artistUrl == "Default"){
+       artistUrl = getDefaultArtistUrl()
+    }
     
-    println ("Getting band data");
+    println ("Getting band data from " + artistUrl!);
     var httpData = getUrlData(artistUrl!)
     
     println("This will be making HTTP Calls for bands")
     
     if (httpData.isEmpty == false){
-        println ("Writing file");
-        httpData.writeToFile(bandFile, atomically: false, encoding: NSUTF8StringEncoding)
+        writeBandFile(httpData);
+        offline = false;
+    } else {
+        offline = true;
     }
+    readBandFile();
+}
 
+func writeBandFile (httpData: String){
+    
+    println("write file " + bandFile);
+    println (httpData);
+    
+    httpData.writeToFile(bandFile, atomically: false, encoding: NSUTF8StringEncoding)
+
+}
+
+func readBandFile (){
+    
+    bandNames = [String]()
+    
+    println("reading file " + bandFile);
+    if let csvDataString = String(contentsOfFile: bandFile, encoding: NSUTF8StringEncoding, error: nil) {
+        print("csvDataString has data");
+        
+        var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
+        var csvData: CSV
+        
+        var error: NSErrorPointer = nil
+        csvData = CSV(csvStringToParse: csvDataString, error: error)!
+        
+        for lineData in csvData.rows {
+            println("line data ");
+            println(lineData);
+            
+            if (lineData["bandName"]?.isEmpty == false){
+                
+                println ("Working on band " + lineData["bandName"]!)
+                
+                bandNames.append(lineData["bandName"]!);
+                bandImageUrl[lineData["bandName"]!] = "http://" + lineData["imageUrl"]!;
+                officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
+                wikipediaLink[lineData["bandName"]!] = lineData["wikipedia"]!;
+                youtubeLinks[lineData["bandName"]!] = lineData["youtube"]!;
+                metalArchiveLinks[lineData["bandName"]!] = lineData["metalArchives"]!;
+            }
+        }
+    } else {
+        println("Why is the file not here?");
+        exit(1);
+    }
 }
 
 func getDefaultArtistUrl() -> String{
@@ -51,27 +95,12 @@ func getDefaultArtistUrl() -> String{
     for record in dataArray {
         var valueArray = record.componentsSeparatedByString("::")
         if (valueArray[0] == "artistUrl"){
-           url = valueArray[1]
+            url = valueArray[1]
         }
     }
     
     println ("Using default BandName URL of " + url)
     return url
-}
-
-
-func writeBandFile (){
-    
-    var bands = getBandNames()
-    
-    var bandString = ""
-    
-    for bandName in bands {
-        bandString += bandName + ":"
-    }
-    
-    bandString.writeToFile(bandsFile, atomically: false, encoding: NSUTF8StringEncoding)
-
 }
 
 func getUrlData(urlString: String) -> String{
@@ -97,32 +126,6 @@ func getUrlData(urlString: String) -> String{
     
     return httpData
     
-}
-
-func readBandFile (){
-    
-    bandNames = [String]()
-    
-    if let csvDataString = String(contentsOfFile: bandFile, encoding: NSUTF8StringEncoding, error: nil) {
-        
-        var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
-        var csvData: CSV
-        
-        var error: NSErrorPointer = nil
-        csvData = CSV(csvStringToParse: csvDataString, error: error)!
-        
-        for lineData in csvData.rows {
-            println ("Working on band " + lineData["bandName"]!)
-            if (lineData["bandName"]?.isEmpty == false){
-                bandNames.append(lineData["bandName"]!);
-                bandImageUrl[lineData["bandName"]!] = "http://" + lineData["imageUrl"]!;
-                officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
-                wikipediaLink[lineData["bandName"]!] = lineData["wikipedia"]!;
-                youtubeLinks[lineData["bandName"]!] = lineData["youtube"]!;
-                metalArchiveLinks[lineData["bandName"]!] = lineData["metalArchives"]!;
-            }
-        }
-    }
 }
 
 func getBandNames () -> [String] {

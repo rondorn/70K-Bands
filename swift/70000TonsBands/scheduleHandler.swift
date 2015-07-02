@@ -79,7 +79,7 @@ public class scheduleHandler {
             
             var httpData = getUrlData(scheduleUrl!)
             
-            println("This will be making HTTP Calls for bands")
+            println("This will be making HTTP Calls for schedule")
             
             if (httpData.isEmpty == false){
                 httpData.writeToFile(scheduleFile, atomically: false, encoding: NSUTF8StringEncoding)
