@@ -61,7 +61,7 @@ class InterfaceController: WKInterfaceController {
 
         gatherData()
         schedule.DownloadCsv()
-        readBandFile()
+        //readBandFile()
         schedule.populateSchedule()
         refreshData()
         
@@ -150,9 +150,10 @@ class InterfaceController: WKInterfaceController {
         
         var fullBands = bands;
         var dupAvoidBands = Dictionary<String,Int>()
-        
-        var noShowsLeftMagicNumber = NSTimeInterval(80000000000)
-        
+
+        var futureTime = NSDecimalNumber(mantissa:80000000000, exponent: -9, isNegative:false)
+        var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
+
         for bandName in bands {
             var timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
             if (timeIndex > NSDate().timeIntervalSince1970 - 3600){

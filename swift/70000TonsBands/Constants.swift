@@ -46,10 +46,10 @@ let scheduleFile = dirs[0].stringByAppendingPathComponent( "scheduleFile.txt")
 let artistUrlDefault = "Default"
 let scheduleUrlDefault = "Default"
 
-let lastYearsartistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
+let lastYearsartistUrlDefault = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1"
 let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/zgk5zu8o5ukc96d/PreviousSchedule.csv?dl=1"
 
-let defaultStorageUrl = "https://www.dropbox.com/s/y3c0c07c339rr6x/productionPointer.txt?dl=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1"
 
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
