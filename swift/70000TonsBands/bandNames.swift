@@ -31,7 +31,6 @@ func gatherData () {
     var httpData = getUrlData(artistUrl!)
     
     println("This will be making HTTP Calls for bands")
-    
     if (httpData.isEmpty == false){
         writeBandFile(httpData);
         offline = false;
@@ -80,9 +79,6 @@ func readBandFile (){
                 metalArchiveLinks[lineData["bandName"]!] = lineData["metalArchives"]!;
             }
         }
-    } else {
-        println("Why is the file not here?");
-        exit(1);
     }
 }
 
