@@ -115,7 +115,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshFromCache (){
         
-        //readBandFile()
+        readBandFile()
         schedule.populateSchedule()
         bands = getFilteredBands(getBandNames(), schedule)
         bandsByName = bands
@@ -367,7 +367,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var fullBands = bands;
         var dupAvoidBands = Dictionary<String,Int>()
         
-        var futureTime = NSDecimalNumber(mantissa:80000000000, exponent: -9, isNegative:false)
+        var futureTime :Int64 = 8000000000000;
         var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
         
         for bandName in bands {
