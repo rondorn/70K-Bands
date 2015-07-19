@@ -1,38 +1,38 @@
-/* 
-  LocalizationStrings.strings
-  70K Bands
-
-  Created by Ron Dorn on 7/18/15.
-  Copyright (c) 2015 Ron Dorn. All rights reserved.
+/*
+ LocalizationStrings.strings
+ 70K Bands
  
-  Translation provided by Google Translate (I apologize in advance)
-*/
-
+ Created by Ron Dorn on 7/18/15.
+ Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by bodomdragon. Thank you kind sir!!!
+ */
 
 "Must"="Sí";
-"Might"="Puede Ser";
+"Might"="Quizás";
 "Wont"="No";
 
-"Alert On Must See Bands"="Alerta Para Sí Espectáculos";
-"Alert On Might See Bands"="Alerta para quizás Espectáculos";
-"Minutes Before Event to Alert"="Alérteme antes del evento (minutos)";
-"Alert For Shows"="Alerta Para Espectáculos";
+"Alert On Must See Bands"="Alerta para bandas que quiero ver";
+"Alert On Might See Bands"="Alerta para bandas que quizás vea";
+"Minutes Before Event to Alert"="Alerta antes del evento (minutos)"; //I NEED CONTEXT FOR A BETTER ONE HERE
+"Alert For Shows"="Alerta Para Conciertos";
 "Alert For Special Events"="Alerta Para Eventos Especiales";
-"Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet' Eventos";
-"Alert For Clinics"="Alerta para Clínicas";
+"Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet's ";
+"Alert For Clinics"="Alerta para Clinics";
 
-"Alert For Album Listening Events"="Alerta para el álbum Escuchar Eventos";
+"Alert For Album Listening Events"="Alerta para escuchas de álbums";
 
-"Use Last Years Data"="Utilice la información del año pasado";
+"Use Last Years Data"="Utilizar datos del año pasado";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
 
-"LastYearsFeatureExplication"="Activación 'uso Última años Información' se carga el programa de espectáculo desde el año pasado, pero el uso de un simulado jue-dom muestra programación utilizando su semana actual. Con ello se pretende para la demostración y prueba de las funciones de programación.";
+"LastYearsFeatureExplication"="Al activar 'utilizar datos del año pasado' se cargará el programa de conciertos del año pasado, pero utilizando una simulación de jueves a domingo basado en tu semana actual. La finalidad de esta característica es demostrar y testear las funcionalidades de programación de eventos.";
+
 
 //"restarTitle" = "Restart Required";
 //"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 "restarTitle" = "Es Necesario Reiniciar";
-"restartMessage" = "NO HACER ESTO EN EL CRUCERO. CONEXIÓN Interent REQUIERE.\nEste cambio requiere reiniciar la aplicación. 70K Bandas ahora dejar de fumar.\nRelanzamiento para ver los nuevos datos";
+"restartMessage" = "NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET. \nEste cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos";
