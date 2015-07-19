@@ -4,6 +4,8 @@
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Google Translate (I apologize in advance)
 */
 
 
@@ -22,10 +24,16 @@
 
 "Alert For Album Listening Events"="Alerta para o álbum Ouvir Eventos";
 
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
 "LastYearsFeatureExplication"="Ativando 'Use Última Anos Informação' irá carregar a programação do evento do ano passado, mas usar um simulado qui-Sun mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
 "restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+"restartMessage" = "NÃO FAZER ISTO NO CRUZEIRO. CONEXÃO interent NECESSÁRIO. Esta alteração requer a reinicialização do aplicativo. 70K Bandas vai agora sair. Relançar para ver os novos dados";
 
 
 

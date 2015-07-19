@@ -4,6 +4,8 @@
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Google Translate (I apologize in advance)
 */
 
 
@@ -22,11 +24,19 @@
 
 "Alert For Album Listening Events"="Alert för album Lyssna Händelser";
 
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
 "LastYearsFeatureExplication"="Aktivera 'Använd senaste åren information' kommer att ladda showen tidtabell från förra året, men använder en simulerad Tors-sön visar schema med ditt nuvarande vecka. Detta är avsett för demonstration och testning av schemaläggning funktioner.";
 
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
-"restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "omstart krävs";
+"restartMessage" = "GÖR INTE DETTA på kryssningen. Rent krävs. Denna förändring kräver omstart av programmet. 70K Band kommer nu att sluta. Starta om för att se den nya data";
+
+
 
 
 

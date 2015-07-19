@@ -4,6 +4,8 @@
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+  Translation provided by Google Translate, with assitance from Margaret Miner
 */
 
 
@@ -21,8 +23,15 @@
 
 "Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
 
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
 "Use Last Years Data"="Utilisez les informations de l'an dernier";
 "LastYearsFeatureExplication"="Activation 'utilisation dernières années information »va charger le calendrier de spectacle à partir de l'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.";
+
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 "restarTitle" = "Redémarrage Nécessaire";

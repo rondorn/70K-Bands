@@ -4,6 +4,8 @@
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+  Translation provided by Google Translate (I apologize in advance)
 */
 
 
@@ -21,12 +23,20 @@
 
 "Alert For Album Listening Events"="警惕专辑聆听活动";
 
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
 "Use Last Years Data"="用去年的信息";
 "LastYearsFeatureExplication"="激活“使用最后年的信息”将加载从去年的展会日程安排，但使用一个模拟周四至周日表示使用当前的周计划。这是用于演示的调度功能以及测试。";
 
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
-"restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+"restarTitle" = "需要重新启动d";
+"restartMessage" = "不要做这在巡航。 INTERENT连接所需。这种变化需要重新启动应用程序。 70K乐队现在将退出。重新启动，看看新的数据";
+
+
 
 
 

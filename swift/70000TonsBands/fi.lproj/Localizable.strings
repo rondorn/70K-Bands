@@ -4,6 +4,8 @@
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Google Translate (I apologize in advance)
 */
 
 
@@ -22,10 +24,18 @@
 
 "Alert For Album Listening Events"="Kuulutus Album Listening Tapahtumat";
 
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
 "LastYearsFeatureExplication"="Aktivointi 'Käytä Viime vuoden tiedot' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.";
 
-"restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "uudelleenkäynnistykseen";
+"restartMessage" = "ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot";
+
+
 
 
 
