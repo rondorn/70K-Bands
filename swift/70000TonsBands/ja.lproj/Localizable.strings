@@ -1,0 +1,25 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="はい";
+"Might"="多分";
+"Wont"="いいえ";
+
+"Alert On Must See Bands"="はいショーのアラート";
+"Alert On Might See Bands"="多分ショーのアラート";
+"Minutes Before Event to Alert"="イベントの前に通知する（分";
+"Alert For Shows"="ショーのアラート";
+"Alert For Special Events"="特別なイベントの警告";
+"Alert For Meeting and Greet Events"="イベントの「ミーティング＆グリート のアラート";
+"Alert For Clinics"="クリニックのアラート";
+
+"Alert For Album Listening Events"="アルバム鑑賞イベントの警告";
+
+"Use Last Years Data"="昨年の情報を使用してください";
+"LastYearsFeatureExplication"="「使用最後の年の情報を「有効にすると、昨年からのショーのスケジュールをロードしますが、シミュレートされた木-Sunはスケジュールあなたの現在の週を使用してを示して使用します。これは、スケジュール機能のデモやテストのために意図されています。";

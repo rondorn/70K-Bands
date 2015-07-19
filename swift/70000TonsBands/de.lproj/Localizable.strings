@@ -1,0 +1,26 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Ja";
+"Might"="Kann Sein";
+"Wont"="Nein";
+
+
+"Alert On Must See Bands"="Benachrichtigung für Ja Shows";
+"Alert On Might See Bands"="Benachrichtigung Für Vielleicht Shows";
+"Minutes Before Event to Alert"="Informieren Sie mich vor der Veranstaltung (Minuten)";
+"Alert For Shows"="Benachrichtigung für Shows";
+"Alert For Special Events"="Benachrichtigung für Special Events";
+"Alert For Meeting and Greet Events"="Benachrichtigung für 'Meeting and Greet' Events";
+"Alert For Clinics"="Benachrichtigung für Kliniken";
+
+"Alert For Album Listening Events"="Benachrichtigung für Album Listening Events";
+
+"Use Last Years Data"="Verwenden Sie Informationen Letzte Jahres";
+"LastYearsFeatureExplication"="Aktivieren 'Verwenden Sie Informationen Letzte Jahres' wird die Show Zeitplan aus dem letzten Jahr zu laden, sondern verwenden eine simulierte Do-So zeigt Zeitplan mit Ihrem aktuellen Gespräch. Dies ist für die Demonstration und Prüfung der Planungsfunktionen vorgesehen.";

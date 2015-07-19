@@ -1,0 +1,24 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Ja";
+"Might"="Kan Zijn";
+"Wont"="Nee";
+
+"Alert On Must See Bands"="Alert Voor Yes Shows";
+"Alert On Might See Bands"="Alert Voor Misschien Shows";
+"Minutes Before Event to Alert"="Waarschuw mij voor het evenement (minuten)";
+"Alert For Shows"="Waarschuwing voor shows";
+"Alert For Special Events"="Waarschuwing voor speciale evenementen";
+"Alert For Meeting and Greet Events"="Waarschuwing voor 'Meeting and Greet' Evenementen";
+"Alert For Clinics"="Waarschuwing Voor Klinieken";
+"Alert For Album Listening Events"="Alert Voor Album Listening Events";
+"Use Last Years Data"="Gebruik Last Year's informatie";
+"LastYearsFeatureExplication"="Het activeren van 'Use Last Years Informatie' zal de show schema van vorig jaar te laden, maar gebruik een gesimuleerde do-zon toont schema met uw huidige week. Dit is bedoeld voor het aantonen en het testen van de scheduling functies.";
+

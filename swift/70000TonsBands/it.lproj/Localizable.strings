@@ -1,0 +1,38 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Sì";
+"Might"="Forse";
+"Wont"="No";
+
+"Alert On Must See Bands"="Alert Per Sì Spettacoli";
+"Alert On Might See Bands"="Alert Per Forse Spettacoli";
+"Minutes Before Event to Alert"="Avvisa prima dell'evento (minuti)";
+"Alert For Shows"="Alert Per Spettacoli";
+"Alert For Special Events"="Alert Per Eventi Speciali";
+"Alert For Meeting and Greet Events"="Alert Per 'Meeting and Greet' Eventi";
+"Alert For Clinics"="Alert Per Cliniche";
+"Use Last Years Data"="Utilizzare le informazioni dello scorso anno";
+
+"Alert For Album Listening Events"="Alert Per Album ascolto Eventi";
+
+"LastYearsFeatureExplication"="Attivando 'Uso Ultimo Anni informazioni' caricherà il programma spettacolo dello scorso anno, ma utilizzare un simulato Gi-Do mostra pianificazione utilizzando la vostra settimana corrente. Questo è destinato per la dimostrazione e la prova delle funzioni di programmazione.";
+
+
+
+
+
+
+
+
+
+
+
+
+

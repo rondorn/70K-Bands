@@ -1,0 +1,38 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Да";
+"Might"="Может Быть";
+"Wont"="Нет";
+
+"Alert On Must See Bands"="Предупреждение Для Да Шоу";
+"Alert On Might See Bands"="Предупреждение Для Maybe Шоу";
+"Minutes Before Event to Alert"="Оповещать меня до мероприятия (в минутах)";
+"Alert For Shows"="Предупреждение для шоу";
+"Alert For Special Events"="Предупреждение для специальных событий";
+"Alert For Meeting and Greet Events"="Предупреждение Для 'Meet and Greet'";
+"Alert For Clinics"="Предупреждение для клиник";
+"Use Last Years Data"="Используйте информацию прошлогодних";
+
+"Alert For Album Listening Events"="Предупреждение для альбома Слушайте События";
+
+"LastYearsFeatureExplication"="Активация 'Использовать последние годы информация' будет загружать Показать график с прошлого года, но использовать моделирование Чт-Вс показывает график, используя текущую неделю. Это предназначено для демонстрации и тестирования возможностей планирования.";
+
+
+
+
+
+
+
+
+
+
+
+
+

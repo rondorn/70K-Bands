@@ -1,0 +1,34 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Ja";
+"Might"="Kanske";
+"Wont"="Nej";
+
+"Alert On Must See Bands"="Alert För Ja Shower";
+"Alert On Might See Bands"="Alert för kanske Shower";
+"Minutes Before Event to Alert"="Varna mig innan evenemanget (minuter)";
+"Alert For Shows"="Alert För Shower";
+"Alert For Special Events"="Alert för speciella evenemang";
+"Alert For Meeting and Greet Events"="Alert För 'Meet and Greet' Händelser";
+"Alert For Clinics"="Alert För kliniker";
+"Use Last Years Data"="Använd förra årets uppgifter";
+
+"Alert For Album Listening Events"="Alert för album Lyssna Händelser";
+
+"LastYearsFeatureExplication"="Aktivera 'Använd senaste åren information' kommer att ladda showen tidtabell från förra året, men använder en simulerad Tors-sön visar schema med ditt nuvarande vecka. Detta är avsett för demonstration och testning av schemaläggning funktioner.";
+
+
+
+
+
+
+
+
+

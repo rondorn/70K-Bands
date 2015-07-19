@@ -1,0 +1,43 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must" = "Oui";
+"Might" = "Peut Être";
+"Wont" = "Non";
+
+"Alert On Must See Bands"="Alerte Pour OUI Salons";
+"Alert On Might See Bands"="Alerte pour peut-être Shows";
+"Minutes Before Event to Alert"="Alertez-moi avant l'événement (minutes)";
+"Alert For Shows"="Alerte pour les spectacles";
+"Alert For Special Events"="Alerte pour des événements spéciaux";
+"Alert For Meeting and Greet Events"="Alerte pour Meeting and Greet Evénements";
+"Alert For Clinics"="Alerte pour les cliniques";
+
+"Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
+
+"Use Last Years Data"="Utilisez les informations de l'an dernier";
+"LastYearsFeatureExplication"="Activation 'utilisation dernières années information »va charger le calendrier de spectacle à partir de l'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

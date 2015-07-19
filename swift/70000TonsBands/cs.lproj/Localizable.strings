@@ -1,0 +1,38 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Ano";
+"Might"="Možná";
+"Wont"="žádná";
+
+"Alert On Must See Bands"="Alert Pro Ano Shows";
+"Alert On Might See Bands"="Alert Pro Možná Shows";
+"Minutes Before Event to Alert"="Upozornit před závodem (minuty)";
+"Alert For Shows"="Alert pro výstavy";
+"Alert For Special Events"="Výstraha pro speciální akce";
+"Alert For Meeting and Greet Events"="Alert Pro 'Meet and Greet' Události";
+"Alert For Clinics"="Alert Pro Klinika";
+"Use Last Years Data"="Používat informace Loňský";
+
+"Alert For Album Listening Events"="Výstraha pro album Poslech akce";
+
+"LastYearsFeatureExplication"="Aktivace 'Používat informace Loňský' načte plán přehlídky z loňského roku, ale používají simulované Čt-Ne ukazuje harmonogram pomocí svého aktuálního týden. Toto je určen pro demonstraci a testování funkcí plánování.";
+
+
+
+
+
+
+
+
+
+
+
+
+

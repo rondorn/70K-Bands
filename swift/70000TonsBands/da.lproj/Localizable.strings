@@ -1,0 +1,35 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Ja";
+"Might"="Kan Være";
+"Wont"="Ingen";
+
+"Alert On Must See Bands"="Alert for Ja Shows";
+"Alert On Might See Bands"="Alert for Kan Være Shows";
+"Minutes Before Event to Alert"="Advare mig før hændelsen (minutter)";
+"Alert For Shows"="Alert For Shows";
+"Alert For Special Events"="Alert til særlige begivenheder";
+"Alert For Meeting and Greet Events"="Alert For 'Meet and Greet' Begivenheder";
+"Alert For Clinics"="Alert For Klinikker";
+
+"Alert For Album Listening Events"="Alert For Album Listening Begivenheder";
+
+"Use Last Years Data"="Brug Sidste år oplysninger";
+"LastYearsFeatureExplication"="Aktivering 'Brug Last Years oplysninger' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.";
+
+
+
+
+
+
+
+
+
+

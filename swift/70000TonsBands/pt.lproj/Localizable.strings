@@ -1,0 +1,34 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+*/
+
+
+"Must"="Sim";
+"Night"="Pode Ser";
+"Wont"="Não";
+
+"Alert On Must See Bands"="Alerta para sim Shows";
+"Alert On Might See Bands"="Alerta para talvez Shows";
+"Minutes Before Event to Alert"="Alertar-me antes do evento (minutos)";
+"Alert For Shows"="Alerta para shows";
+"Alert For Special Events"="Alerta para eventos especiais";
+"Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet' Eventos";
+"Alert For Clinics"="Alerta para clínicas";
+"Use Last Years Data"="Use as informações do ano passado";
+
+"Alert For Album Listening Events"="Alerta para o álbum Ouvir Eventos";
+
+"LastYearsFeatureExplication"="Ativando 'Use Última Anos Informação' irá carregar a programação do evento do ano passado, mas usar um simulado qui-Sun mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
+
+
+
+
+
+
+
+
+
