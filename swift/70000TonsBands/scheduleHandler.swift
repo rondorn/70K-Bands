@@ -4,8 +4,6 @@
 //
 //  Created by Ron Dorn on 1/31/15.
 //  Copyright (c) 2015 Ron Dorn. All rights reserved.
-//  70K Bands
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
 
 import Foundation
@@ -42,7 +40,7 @@ public class scheduleHandler {
                     dateFormatter.dateFormat = "YYYY-M-d h:mm a"
                     
                     println("Adding index for band " + lineData[bandField]! + " ")
-                    //println (dateFormatter.stringFromDate(dateIndex))
+                    println (dateIndex)
                     
                     if (self.schedulingData[lineData[bandField]!] == nil){
                         self.schedulingData[lineData[bandField]!] = [NSTimeInterval : [String : String]]()
@@ -114,13 +112,17 @@ public class scheduleHandler {
         var dateFormatter = NSDateFormatter();
         dateFormatter.dateFormat = "M-d-yy h:mm a"
         dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
-
+        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        
         if (fullTimeString.isEmpty == false){
-            println ("'" + fullTimeString + "'");
+            println ("timeString '" + fullTimeString + "'");
             println(dateFormatter.dateFromString(fullTimeString))
             if (dateFormatter.dateFromString(fullTimeString) != nil){
                 startTimeIndex = dateFormatter.dateFromString(fullTimeString)!.timeIntervalSince1970
                 println(startTimeIndex)
+            } else {
+                println ("What the hell!!")
+                println(dateFormatter.dateFromString(fullTimeString))
             }
         }
                 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6724" systemVersion="14C109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="7706" systemVersion="14E46" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6711"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
@@ -16,20 +16,8 @@
                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="🍺 = Must See Might See&quot;,&quot;Will Not See&quot;" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PEc-Ka-Mps">
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="🍺 ✅ 🚫 ❓" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PEc-Ka-Mps">
                     <rect key="frame" x="8" y="172" width="457" height="30"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                    <nil key="highlightedColor"/>
-                </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="✅ = Might See Might See&quot;,&quot;Will Not See&quot;" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eA9-kA-z7h">
-                    <rect key="frame" x="11" y="210" width="454" height="21"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                    <nil key="highlightedColor"/>
-                </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="🚫 = Wont See Might See&quot;,&quot;Will Not See&quot;" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cqS-Hy-rYH">
-                    <rect key="frame" x="11" y="239" width="454" height="30"/>
                     <fontDescription key="fontDescription" type="system" pointSize="25"/>
                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                     <nil key="highlightedColor"/>
@@ -48,14 +36,8 @@ except a passenger. See you on board!</string>
                     <fontDescription key="fontDescription" type="system" pointSize="9"/>
                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                 </textView>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="❓ = Not Defined" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PU3-om-TpE">
-                    <rect key="frame" x="9" y="272" width="454" height="30"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                    <nil key="highlightedColor"/>
-                </label>
                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="70K Bands!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8IY-Mn-Ozm">
-                    <rect key="frame" x="148.5" y="58" width="180" height="41"/>
+                    <rect key="frame" x="148" y="58" width="180" height="41"/>
                     <fontDescription key="fontDescription" type="boldSystem" pointSize="34"/>
                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                     <color key="highlightedColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
@@ -66,18 +48,12 @@ except a passenger. See you on board!</string>
                 <constraint firstItem="8ie-xW-0ye" firstAttribute="trailing" secondItem="982-Nw-WIU" secondAttribute="trailing" id="00m-Ff-lVS"/>
                 <constraint firstAttribute="bottom" secondItem="8ie-xW-0ye" secondAttribute="bottom" constant="14" id="066-ZD-Wmr"/>
                 <constraint firstAttribute="centerX" secondItem="8ie-xW-0ye" secondAttribute="centerX" id="10P-WQ-nMi"/>
-                <constraint firstItem="cqS-Hy-rYH" firstAttribute="top" secondItem="eA9-kA-z7h" secondAttribute="bottom" constant="8" id="Dmc-6A-tCE"/>
                 <constraint firstItem="8ie-xW-0ye" firstAttribute="top" secondItem="982-Nw-WIU" secondAttribute="bottom" constant="29" id="MCg-GK-Hxf"/>
                 <constraint firstAttribute="centerX" secondItem="8IY-Mn-Ozm" secondAttribute="centerX" constant="1.75" id="NFI-oe-BX9"/>
-                <constraint firstItem="PU3-om-TpE" firstAttribute="top" secondItem="cqS-Hy-rYH" secondAttribute="bottom" constant="3" id="O8x-oB-cRw"/>
                 <constraint firstItem="8IY-Mn-Ozm" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="58" id="a7G-8c-G2v"/>
-                <constraint firstAttribute="centerX" secondItem="PU3-om-TpE" secondAttribute="centerX" constant="4" id="bWi-D8-oj7"/>
-                <constraint firstItem="eA9-kA-z7h" firstAttribute="top" secondItem="PEc-Ka-Mps" secondAttribute="bottom" constant="8" id="hDZ-W1-F1R"/>
                 <constraint firstAttribute="centerX" secondItem="982-Nw-WIU" secondAttribute="centerX" id="k9Y-q3-9JD"/>
-                <constraint firstAttribute="centerX" secondItem="eA9-kA-z7h" secondAttribute="centerX" constant="2" id="mWz-a4-nda"/>
                 <constraint firstAttribute="trailing" secondItem="982-Nw-WIU" secondAttribute="trailing" constant="15" id="oaj-hr-aa0"/>
                 <constraint firstAttribute="centerX" secondItem="PEc-Ka-Mps" secondAttribute="centerX" constant="3.5" id="pIk-Q6-4gk"/>
-                <constraint firstAttribute="centerX" secondItem="cqS-Hy-rYH" secondAttribute="centerX" constant="2" id="s1i-2U-9wT"/>
                 <constraint firstAttribute="bottom" secondItem="982-Nw-WIU" secondAttribute="bottom" constant="64" id="wdq-QK-eig"/>
                 <constraint firstItem="982-Nw-WIU" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="4" id="zkR-VA-ngw"/>
             </constraints>

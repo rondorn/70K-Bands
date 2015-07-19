@@ -41,6 +41,8 @@
 		1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1155E3B91A8B20BF00D51ED9 /* scheduleHandlerTest.swift */; };
 		1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
+		1172A2231B5AADC900C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
+		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		11AC1D5F1A6827A500267A8F /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D5A1A6827A500267A8F /* Bolts.framework */; };
 		11AC1D601A6827A500267A8F /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D5B1A6827A500267A8F /* Parse.framework */; };
@@ -124,6 +126,22 @@
 		1155E3B91A8B20BF00D51ED9 /* scheduleHandlerTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandlerTest.swift; sourceTree = "<group>"; };
 		1156B4F21A660BE500D48D12 /* guiIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = guiIcons.swift; sourceTree = "<group>"; };
 		1156B4F41A6613E700D48D12 /* urlStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = urlStorage.swift; sourceTree = "<group>"; };
+		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2281B5AAE3B00C28AB3 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A22C1B5AAFB800C28AB3 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A22E1B5AB0D600C28AB3 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		1172A22F1B5AB10D00C28AB3 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		1172A2301B5AB14600C28AB3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2311B5AB18E00C28AB3 /* es-MX */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-MX"; path = "es-MX.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		1172A2321B5AB1C100C28AB3 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2331B5AB1F200C28AB3 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2341B5AB22100C28AB3 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2351B5AB25D00C28AB3 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A2361B5AB29000C28AB3 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A23C1B5B17DC00C28AB3 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1172A23D1B5B187E00C28AB3 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		11AC1D5A1A6827A500267A8F /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bolts.framework; sourceTree = "<group>"; };
 		11AC1D5B1A6827A500267A8F /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
@@ -269,6 +287,7 @@
 		1154F6091A575893003F4764 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				1172A2251B5AADC900C28AB3 /* Localizable.strings */,
 				114F63AB1A84678D00584AD0 /* Settings.bundle */,
 				1154F60A1A575893003F4764 /* Info.plist */,
 				11AC1D7C1A682AF100267A8F /* ApiKeys.plist */,
@@ -392,7 +411,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
-				LastUpgradeCheck = 0620;
+				LastUpgradeCheck = 0640;
 				ORGANIZATIONNAME = "Ron Dorn";
 				TargetAttributes = {
 					1154F6051A575893003F4764 = {
@@ -427,6 +446,21 @@
 			knownRegions = (
 				en,
 				Base,
+				nl,
+				es,
+				ja,
+				fr,
+				"zh-Hans",
+				"zh-Hant",
+				de,
+				"es-MX",
+				da,
+				it,
+				fi,
+				sv,
+				pt,
+				ru,
+				cs,
 			);
 			mainGroup = 1154F5FD1A575893003F4764;
 			productRefGroup = 1154F6071A575893003F4764 /* Products */;
@@ -450,6 +484,7 @@
 				1154F61B1A575893003F4764 /* LaunchScreen.xib in Resources */,
 				1154F6181A575893003F4764 /* Images.xcassets in Resources */,
 				114F63AC1A84678D00584AD0 /* Settings.bundle in Resources */,
+				1172A2231B5AADC900C28AB3 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -457,6 +492,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				1155E3B61A8B126500D51ED9 /* OnMyWayToDeath.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -551,6 +587,30 @@
 			name = LaunchScreen.xib;
 			sourceTree = "<group>";
 		};
+		1172A2251B5AADC900C28AB3 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1172A2241B5AADC900C28AB3 /* en */,
+				1172A2281B5AAE3B00C28AB3 /* nl */,
+				1172A2291B5AAEC400C28AB3 /* es */,
+				1172A22C1B5AAFB800C28AB3 /* ja */,
+				1172A22D1B5AB04B00C28AB3 /* fr */,
+				1172A22E1B5AB0D600C28AB3 /* zh-Hans */,
+				1172A22F1B5AB10D00C28AB3 /* zh-Hant */,
+				1172A2301B5AB14600C28AB3 /* de */,
+				1172A2311B5AB18E00C28AB3 /* es-MX */,
+				1172A2321B5AB1C100C28AB3 /* da */,
+				1172A2331B5AB1F200C28AB3 /* it */,
+				1172A2341B5AB22100C28AB3 /* fi */,
+				1172A2351B5AB25D00C28AB3 /* sv */,
+				1172A2361B5AB29000C28AB3 /* pt */,
+				1172A23C1B5B17DC00C28AB3 /* ru */,
+				1172A23D1B5B187E00C28AB3 /* cs */,
+			);
+			name = Localizable.strings;
+			path = 70000TonsBands;
+			sourceTree = SOURCE_ROOT;
+		};
 		11F0332A1AB3A77F00AA29B8 /* Interface.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -598,11 +658,11 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.2;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "armv7s armv7";
+				VALID_ARCHS = "armv7s armv7 arm64";
 			};
 			name = Debug;
 		};
@@ -640,7 +700,7 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
-				VALID_ARCHS = "armv7s armv7";
+				VALID_ARCHS = "armv7s armv7 arm64";
 			};
 			name = Release;
 		};
@@ -665,7 +725,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "70000TonsBands/70000TonsBands-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 armv7s";
 			};
 			name = Debug;
 		};
@@ -690,7 +750,7 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "70000TonsBands/70000TonsBands-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 armv7s";
 			};
 			name = Release;
 		};
@@ -716,6 +776,7 @@
 				PRODUCT_NAME = "70K BandsTests";
 				PROVISIONING_PROFILE = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/70K Bands.app/70K Bands";
+				VALID_ARCHS = "armv7s armv7 x86_64 arm64";
 			};
 			name = Debug;
 		};
@@ -737,6 +798,7 @@
 				PRODUCT_NAME = "70K BandsTests";
 				PROVISIONING_PROFILE = "";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/70K Bands.app/70K Bands";
+				VALID_ARCHS = "armv7s armv7 x86_64 arm64";
 			};
 			name = Release;
 		};

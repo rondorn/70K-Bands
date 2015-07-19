@@ -4,8 +4,6 @@
 //
 //  Created by Ron Dorn on 1/2/15.
 //  Copyright (c) 2015 Ron Dorn. All rights reserved.
-//  70K Bands
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
 
 import UIKit
@@ -108,9 +106,14 @@ class DetailViewController: UIViewController{
     
     func setButtonNames(){
         
-        priorityButtons.setTitle(mustSeeIcon + " Must", forSegmentAtIndex: 1)
-        priorityButtons.setTitle(willSeeIcon + " Might", forSegmentAtIndex: 2)
-        priorityButtons.setTitle(willNotSeeIcon + " Wont", forSegmentAtIndex: 3)
+        var MustSee = NSLocalizedString("Must", comment: "A Must See Band")
+        var MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
+        var WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
+        
+        priorityButtons.setTitle(mustSeeIcon + " " + MustSee, forSegmentAtIndex: 1)
+        priorityButtons.setTitle(willSeeIcon + " " + MightSee, forSegmentAtIndex: 2)
+        priorityButtons.setTitle(willNotSeeIcon + " " + WontSee, forSegmentAtIndex: 3)
+
         priorityButtons.setTitle(unknownIcon, forSegmentAtIndex: 0)
         
         if (bandPriorityStorage[bandName!] != nil){
@@ -179,7 +182,7 @@ class DetailViewController: UIViewController{
                 
                 var scheduleText = String()
                 if (!date.isEmpty){
-                    scheduleText = date + " " + day
+                    scheduleText = day
                     scheduleText += " - " + startTime
                     scheduleText += " - " + endTime
                     scheduleText += " - " + location

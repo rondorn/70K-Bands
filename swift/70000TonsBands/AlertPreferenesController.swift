@@ -4,9 +4,7 @@
 //
 //  Created by Ron Dorn on 2/14/15.
 //  Copyright (c) 2015 Ron Dorn. All rights reserved.
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
-
 
 import Foundation
 import UIKit
@@ -34,12 +32,41 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var MinBeforeAlert: UITextField!
     @IBOutlet weak var UseLastYearsData: UISwitch!
     
+    //labels
+    @IBOutlet weak var mustSeeAlertLable: UILabel!
+    @IBOutlet weak var mightSeeAlertLable: UILabel!
+    @IBOutlet weak var minBeforeAlertLable: UILabel!
+    @IBOutlet weak var alertForShowsLable: UILabel!
+    @IBOutlet weak var alertForSpecialLable: UILabel!
+    @IBOutlet weak var alertForMandGLable: UILabel!
+    @IBOutlet weak var alertForClinicsLable: UILabel!
+    @IBOutlet weak var useLastYearsLable: UILabel!
+    @IBOutlet weak var alertForListeningLable: UILabel!
+    @IBOutlet weak var lastYearsDetailsLable: UITextView!
+    
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         setExistingValues()
-        
+        setLocalizedLables()
     }
+    
+    func setLocalizedLables (){
+    
+        mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
+        mightSeeAlertLable.text = NSLocalizedString("Alert On Might See Bands", comment: "")
+        minBeforeAlertLable.text = NSLocalizedString("Minutes Before Event to Alert", comment: "")
+        alertForShowsLable.text = NSLocalizedString("Alert For Shows", comment: "")
+        alertForSpecialLable.text = NSLocalizedString("Alert For Special Events", comment: "")
+        alertForMandGLable.text = NSLocalizedString("Alert For Meeting and Greet Events", comment: "")
+        alertForClinicsLable.text = NSLocalizedString("Alert For Clinics", comment: "")
+        alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
+        useLastYearsLable.text = NSLocalizedString("Use Last Years Data", comment: "")
+        lastYearsDetailsLable.text = NSLocalizedString("LastYearsFeatureExplication", comment: "")
+    }
+    
     
     func setExistingValues (){
         

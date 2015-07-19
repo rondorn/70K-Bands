@@ -4,8 +4,6 @@
 //
 //  Created by Ron Dorn on 1/7/15.
 //  Copyright (c) 2015 Ron Dorn. All rights reserved.
-//  70K Bands
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
 
 import Foundation
@@ -96,11 +94,10 @@ func addPriorityData (bandname:String, priority: Int){
 
 func getDateFormatter() -> NSDateFormatter {
     
-    let theTimeFormat = NSDateFormatterStyle.ShortStyle
     let dateFormatter = NSDateFormatter()
     
-    dateFormatter.dateStyle = theTimeFormat
-    dateFormatter.timeStyle = theTimeFormat
+    dateFormatter.dateFormat = "MM-dd-yy"
+    dateFormatter.timeStyle = NSDateFormatterStyle.ShortStyle
     
     return dateFormatter
 }
@@ -160,6 +157,7 @@ func writeiCloudData (){
 func writeFile(){
     
     let dateFormatter = getDateFormatter()
+    dateFormatter.dateFormat = "MM-dd-yy"
     
     var data: String = ""
     var dateTimeModified = NSDate();
@@ -184,12 +182,14 @@ func compareLastModifiedDate () -> String {
     var iCloudDate: NSDate = NSDate()
     
 
-    let dateFormatter = getDateFormatter()
-
-    if let data = String(contentsOfFile: dateFile, encoding: NSUTF8StringEncoding, error: nil) {
+    let dateFormatter: NSDateFormatter = getDateFormatter()
+    dateFormatter.dateFormat = "MM-dd-yy"
+    
+    if var data = String(contentsOfFile: dateFile, encoding: NSUTF8StringEncoding, error: nil) {
         fileDate = dateFormatter.dateFromString(data)!
     }
-  
+    
+    
     let values = NSUbiquitousKeyValueStore.defaultStore().dictionaryRepresentation
     
     if values["lastModifiedDate"] != nil {

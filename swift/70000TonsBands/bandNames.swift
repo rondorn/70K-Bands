@@ -4,8 +4,6 @@
 //
 //  Created by Ron Dorn on 12/23/14.
 //  Copyright (c) 2014 Ron Dorn. All rights reserved.
-//  70K Bands
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
 
 import Foundation

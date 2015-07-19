@@ -4,8 +4,6 @@
 //
 //  Created by Ron Dorn on 1/2/15.
 //  Copyright (c) 2015 Ron Dorn. All rights reserved.
-//  70K Bands
-//  Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
 //
 
 import UIKit
@@ -104,6 +102,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             resortBandsByTime()
             bands = bandsByTime
             self.tableView.reloadData()
+        } else {
+            refreshData()
         }
     }
     
@@ -163,8 +163,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         dispatch_async(dispatch_get_global_queue(priority, 0)) {
             
             gatherData();
-            //readBandFile();
-            
+
             if (offline == false){
                 schedule.DownloadCsv()
                 var validate = validateCSVSchedule()
