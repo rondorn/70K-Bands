@@ -5,37 +5,34 @@
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
  
- Translation provided by Google Translate (I apologize in advance)
+ Translation provided by mikijonas! Thank you kind sir
 */
 
 
-"Must"="Sim";
-"Night"="Pode Ser";
+"Must"="Obrigatório";
+"Night"="Noite";
 "Wont"="Não";
 
-"Alert On Must See Bands"="Alerta para sim Shows";
-"Alert On Might See Bands"="Alerta para talvez Shows";
+"Alert On Must See Bands"="Alerta para Shows Obrigatórios";
+"Alert On Might See Bands"="Alerta para Shows Possíveis";
 "Minutes Before Event to Alert"="Alertar-me antes do evento (minutos)";
 "Alert For Shows"="Alerta para shows";
 "Alert For Special Events"="Alerta para eventos especiais";
-"Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet' Eventos";
+"Alert For Meeting and Greet Events"="Alerta para Eventos com Artistas";
 "Alert For Clinics"="Alerta para clínicas";
 "Use Last Years Data"="Use as informações do ano passado";
 
-"Alert For Album Listening Events"="Alerta para o álbum Ouvir Eventos";
+"Alert For Album Listening Events"="Alerta para Eventos de Audição de Álbuns";
+
+"LastYearsFeatureExplication"="Ativando 'Use Informação dos Última Anos ' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
-
-
-"LastYearsFeatureExplication"="Ativando 'Use Última Anos Informação' irá carregar a programação do evento do ano passado, mas usar um simulado qui-Sun mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 
 //"restarTitle" = "Restart Required";
 //"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
-"restarTitle" = "Restart Required";
-"restartMessage" = "NÃO FAZER ISTO NO CRUZEIRO. CONEXÃO interent NECESSÁRIO. Esta alteração requer a reinicialização do aplicativo. 70K Bandas vai agora sair. Relançar para ver os novos dados";
-
-
+"restarTitle" = "Necessário Reiniciar";
+"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. CONEXÃO DE INTERNET NECESSÁRIA.\nEssa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados ";
 
 
 
