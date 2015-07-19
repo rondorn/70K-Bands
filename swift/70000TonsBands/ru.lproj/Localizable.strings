@@ -13,6 +13,9 @@
 "Might"="Может Быть";
 "Wont"="Нет";
 
+"Ok"="Да";
+"Cancel"="Нет";
+
 "Alert On Must See Bands"="Предупреждение Для Да Шоу";
 "Alert On Might See Bands"="Предупреждение Для Maybe Шоу";
 "Minutes Before Event to Alert"="Оповещать меня до мероприятия (в минутах)";

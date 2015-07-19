@@ -13,6 +13,9 @@
 "Might"="Forse";
 "Wont"="No";
 
+"Ok"="Sì";
+"Cancel"="No";
+
 "Alert On Must See Bands"="Alert Per Sì Spettacoli";
 "Alert On Might See Bands"="Alert Per Forse Spettacoli";
 "Minutes Before Event to Alert"="Avvisa prima dell'evento (minuti)";

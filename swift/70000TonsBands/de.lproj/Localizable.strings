@@ -13,6 +13,8 @@
 "Might"="Vielleicht";
 "Wont"="Nein";
 
+"Ok"="Ja";
+"Cancel"="Nein";
 
 "Alert On Must See Bands"="Alarm für 'Ja' Bands";
 "Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
@@ -36,4 +38,4 @@
 
 
 "restarTitle" = "Neustart erforderlich";
-"restartMessage"  = "NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen."
+"restartMessage"  = "NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.";

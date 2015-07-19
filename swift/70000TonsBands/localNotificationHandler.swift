@@ -176,6 +176,7 @@ class localNoticationHandler {
         var dateFormatter = NSDateFormatter();
         dateFormatter.dateFormat = "M-d-yy h:mm a"
         dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
+        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
         
         println ("Adding alert message " + message + " for alert at " + dateFormatter.stringFromDate(alertTime!))
         

@@ -13,6 +13,9 @@
 "Might"="Možná";
 "Wont"="žádná";
 
+"Ok"="Ano";
+"Cancel"="žádná";
+
 "Alert On Must See Bands"="Alert Pro Ano Shows";
 "Alert On Might See Bands"="Alert Pro Možná Shows";
 "Minutes Before Event to Alert"="Upozornit před závodem (minuty)";

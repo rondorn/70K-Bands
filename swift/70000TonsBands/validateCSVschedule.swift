@@ -33,6 +33,7 @@ class validateCSVSchedule {
     init(){
         dateFormatter.dateFormat = "M-d-yy"
         dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
+        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
     }
     
     func validateSchedule(){

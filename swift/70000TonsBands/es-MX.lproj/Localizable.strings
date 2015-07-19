@@ -12,6 +12,9 @@
 "Might"="Quizás";
 "Wont"="No";
 
+"Ok"="Sí";
+"Cancel"="No";
+
 "Alert On Must See Bands"="Alerta para bandas que quiero ver";
 "Alert On Might See Bands"="Alerta para bandas que quizás vea";
 "Minutes Before Event to Alert"="Alerta antes del evento (minutos)"; //I NEED CONTEXT FOR A BETTER ONE HERE

@@ -21,6 +21,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var minBeforeAlertValue = Double()
     
     var minBeforeAlertLabel = String()
+    var restartAlertTitle = String();
+    var restartAlertText = String();
+    var okPrompt = String();
+    var cancelPrompt = String();
     
     @IBOutlet weak var AlertOnMustSee: UISwitch!
     @IBOutlet weak var AlertOnMightSee: UISwitch!
@@ -65,6 +69,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
         useLastYearsLable.text = NSLocalizedString("Use Last Years Data", comment: "")
         lastYearsDetailsLable.text = NSLocalizedString("LastYearsFeatureExplication", comment: "")
+        
+        restartAlertTitle = NSLocalizedString("restarTitle", comment: "")
+        restartAlertText = NSLocalizedString("restartMessage", comment: "")
+        
+        okPrompt = NSLocalizedString("Ok", comment: "")
+        cancelPrompt = NSLocalizedString("Cancel", comment: "")
     }
     
     
@@ -159,10 +169,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBAction func UseLastYearsDataAction() {
         
         let alert: UIAlertView = UIAlertView()
-        alert.title = "Restart Required"
-        alert.message = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data"
-        let yesBut = alert.addButtonWithTitle("Cancel")
-        let noBut = alert.addButtonWithTitle("Ok")
+        alert.title = restartAlertTitle
+        alert.message = restartAlertText
+        
+        let yesBut = alert.addButtonWithTitle(cancelPrompt)
+        let noBut = alert.addButtonWithTitle(okPrompt)
         alert.delegate = self  // set the delegate here
         alert.show()
         
@@ -171,7 +182,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
         let buttonTitle = alertView.buttonTitleAtIndex(buttonIndex)
         println("\(buttonTitle) pressed")
-        if buttonTitle == "Ok" {
+        if buttonTitle == okPrompt {
             
             var convertDates = ConvertScheduleToCurrentWeek()
             

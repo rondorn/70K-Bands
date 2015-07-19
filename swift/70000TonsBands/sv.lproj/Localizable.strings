@@ -13,6 +13,9 @@
 "Might"="Kanske";
 "Wont"="Nej";
 
+"Ok"="Ja";
+"Cancel"="Nej";
+
 "Alert On Must See Bands"="Alert För Ja Shower";
 "Alert On Might See Bands"="Alert för kanske Shower";
 "Minutes Before Event to Alert"="Varna mig innan evenemanget (minuter)";

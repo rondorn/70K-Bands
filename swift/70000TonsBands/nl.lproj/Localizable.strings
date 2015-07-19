@@ -13,6 +13,9 @@
 "Might"="Kan Zijn";
 "Wont"="Nee";
 
+"Ok"="Ja";
+"Cancel"="Nee";
+
 "Alert On Must See Bands"="Alert Voor Yes Shows";
 "Alert On Might See Bands"="Alert Voor Misschien Shows";
 "Minutes Before Event to Alert"="Waarschuw mij voor het evenement (minuten)";

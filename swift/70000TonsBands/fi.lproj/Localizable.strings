@@ -13,6 +13,9 @@
 "Might"="Voi Olla";
 "Wont"="Ei";
 
+"Ok"="Kyllä";
+"Cancel"="Ei";
+
 "Alert On Must See Bands"="Hälyttävät Kyllä ohjelmat";
 "Alert On Might See Bands"="Hälyttävät Voi Olla ohjelmat";
 "Minutes Before Event to Alert"="Ilmoita, ennen tapahtumaa (minuuttia)";

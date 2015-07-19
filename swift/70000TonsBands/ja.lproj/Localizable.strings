@@ -13,6 +13,10 @@
 "Might"="多分";
 "Wont"="いいえ";
 
+"Ok"="はい";
+"Cancel"="いいえ";
+
+
 "Alert On Must See Bands"="はいショーのアラート";
 "Alert On Might See Bands"="多分ショーのアラート";
 "Minutes Before Event to Alert"="イベントの前に通知する（分";

@@ -13,6 +13,9 @@
 "Might"="可能是";
 "Wont"="没有";
 
+"Ok"="是的";
+"Cancel"="没有";
+
 "Alert On Must See Bands"="警报是展会";
 "Alert On Might See Bands"="快讯也许展会";
 "Minutes Before Event to Alert"="在活动开始前提醒我（分钟）";

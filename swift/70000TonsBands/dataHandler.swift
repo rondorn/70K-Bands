@@ -98,6 +98,7 @@ func getDateFormatter() -> NSDateFormatter {
     
     dateFormatter.dateFormat = "MM-dd-yy"
     dateFormatter.timeStyle = NSDateFormatterStyle.ShortStyle
+    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
     
     return dateFormatter
 }
@@ -184,6 +185,7 @@ func compareLastModifiedDate () -> String {
 
     let dateFormatter: NSDateFormatter = getDateFormatter()
     dateFormatter.dateFormat = "MM-dd-yy"
+    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
     
     if var data = String(contentsOfFile: dateFile, encoding: NSUTF8StringEncoding, error: nil) {
         fileDate = dateFormatter.dateFromString(data)!

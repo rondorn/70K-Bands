@@ -13,6 +13,9 @@
 "Might"="Kan Være";
 "Wont"="Ingen";
 
+"Ok"="Ja";
+"Cancel"="Ingen";
+
 "Alert On Must See Bands"="Alert for Ja Shows";
 "Alert On Might See Bands"="Alert for Kan Være Shows";
 "Minutes Before Event to Alert"="Advare mig før hændelsen (minutter)";

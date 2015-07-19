@@ -11,6 +11,9 @@
 "Might"="Might";
 "Wont"="Wont";
 
+"Ok"="Ok";
+"Cancel"="Cancel";
+
 "Alert On Must See Bands"="Alert On Must See Bands";
 "Alert On Might See Bands"="Alert On Might See Bands";
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";

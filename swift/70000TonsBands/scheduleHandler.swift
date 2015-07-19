@@ -38,6 +38,7 @@ public class scheduleHandler {
                     
                     var dateFormatter = NSDateFormatter();
                     dateFormatter.dateFormat = "YYYY-M-d h:mm a"
+                    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
                     
                     println("Adding index for band " + lineData[bandField]! + " ")
                     println (dateIndex)
@@ -182,6 +183,8 @@ public class scheduleHandler {
         
         let dateFormatter = NSDateFormatter()
         dateFormatter.dateFormat =  "yyyy'-'MM'-'dd HH':'mm':'ss '+0000'"
+        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        
         let date = dateFormatter.dateFromString(dateStr)
         
         return date!

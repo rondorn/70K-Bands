@@ -40,6 +40,8 @@ class ConvertScheduleToCurrentWeek {
                 
                 var dateFormatter = NSDateFormatter();
                 dateFormatter.dateFormat = "M-d-yy"
+                dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+                
                 var newDateString = dateFormatter.stringFromDate(newDate)
                 
                 var fullTimeString: String = newDateString + " " + lineData[startTimeField]!
@@ -47,6 +49,7 @@ class ConvertScheduleToCurrentWeek {
                 var fullDateFormatter = NSDateFormatter()
                 dateFormatter.dateFormat = "M-d-yy h:mm a"
                 dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
+                dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
                 
                 //this fix is needed for daylight savings time when we spring folder and lose an hour
                 var startTime = lineData[startTimeField]!

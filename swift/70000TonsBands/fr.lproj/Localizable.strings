@@ -13,6 +13,9 @@
 "Might" = "Peut Être";
 "Wont" = "Non";
 
+"Ok" = "Oui";
+"Cancel" = "Non";
+
 "Alert On Must See Bands"="Alerte Pour OUI Salons";
 "Alert On Might See Bands"="Alerte pour peut-être Shows";
 "Minutes Before Event to Alert"="Alertez-moi avant l'événement (minutes)";

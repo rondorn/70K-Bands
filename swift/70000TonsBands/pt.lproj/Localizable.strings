@@ -13,6 +13,9 @@
 "Night"="Noite";
 "Wont"="Não";
 
+"Ok"="Sim";
+"Cancel"="Não";
+
 "Alert On Must See Bands"="Alerta para Shows Obrigatórios";
 "Alert On Might See Bands"="Alerta para Shows Possíveis";
 "Minutes Before Event to Alert"="Alertar-me antes do evento (minutos)";
