@@ -5,7 +5,7 @@
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
  
- Translation provided by mikijonas! Thank you kind sir
+ Translation provided by mikijonas with assistance from broegaard.  Thank you kind sirs
 */
 
 
@@ -27,7 +27,7 @@
 
 "Alert For Album Listening Events"="Alerta para Eventos de Audição de Álbuns";
 
-"LastYearsFeatureExplication"="Ativando 'Use Informação dos Última Anos ' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
+"LastYearsFeatureExplication"="Ativando 'Use Informação dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
