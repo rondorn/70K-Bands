@@ -27,7 +27,8 @@
 "LastYearsFeatureExplication"="激活“使用最後年的信息”將加載從去年的展會日程安排，但使用一個模擬週四至週日表示使用當前的週計劃。這是用於演示的調度功能以及測試。";
 
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 

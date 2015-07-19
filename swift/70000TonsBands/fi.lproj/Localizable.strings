@@ -24,7 +24,8 @@
 
 "LastYearsFeatureExplication"="Aktivointi 'Käytä Viime vuoden tiedot' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.";
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 

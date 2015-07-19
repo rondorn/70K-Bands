@@ -8,19 +8,23 @@
 
 
 "Must"="Ja";
-"Might"="Kann Sein";
+"Might"="Vielleicht";
 "Wont"="Nein";
 
 
-"Alert On Must See Bands"="Benachrichtigung für Ja Shows";
-"Alert On Might See Bands"="Benachrichtigung Für Vielleicht Shows";
-"Minutes Before Event to Alert"="Informieren Sie mich vor der Veranstaltung (Minuten)";
-"Alert For Shows"="Benachrichtigung für Shows";
-"Alert For Special Events"="Benachrichtigung für Special Events";
-"Alert For Meeting and Greet Events"="Benachrichtigung für 'Meeting and Greet' Events";
-"Alert For Clinics"="Benachrichtigung für Kliniken";
+"Alert On Must See Bands"="Alarm für 'Ja' Bands";
+"Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
+"Minutes Before Event to Alert"="Alarm X minuten vor Event";
+"Alert For Shows"="Alarm für Shows";
+"Alert For Special Events"="Alarm für 'Special Events'";
+"Alert For Meeting and Greet Events"="Alarm für 'Meet and Greet'";
+"Alert For Clinics"="Alarm für Kliniken";
 
-"Alert For Album Listening Events"="Benachrichtigung für Album Listening Events";
+"Alert For Album Listening Events"="Alarm für 'Album Listening Events'";
 
-"Use Last Years Data"="Verwenden Sie Informationen Letzte Jahres";
-"LastYearsFeatureExplication"="Aktivieren 'Verwenden Sie Informationen Letzte Jahres' wird die Show Zeitplan aus dem letzten Jahr zu laden, sondern verwenden eine simulierte Do-So zeigt Zeitplan mit Ihrem aktuellen Gespräch. Dies ist für die Demonstration und Prüfung der Planungsfunktionen vorgesehen.";
+"Use Last Years Data"="Daten des letzten Jahres verwenden";
+"LastYearsFeatureExplication"="Das Aktivieren von 'Daten des letzten Jahres verwenden' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen. ";
+
+
+"restarTitle" = "Neustart erforderlich";
+"restartMessage"  = "NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen."

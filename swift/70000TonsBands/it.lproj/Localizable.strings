@@ -24,7 +24,8 @@
 
 "LastYearsFeatureExplication"="Attivando 'Uso Ultimo Anni informazioni' caricherà il programma spettacolo dello scorso anno, ma utilizzare un simulato Gi-Do mostra pianificazione utilizzando la vostra settimana corrente. Questo è destinato per la dimostrazione e la prova delle funzioni di programmazione.";
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 

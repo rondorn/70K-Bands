@@ -25,7 +25,8 @@
 "LastYearsFeatureExplication"="Aktivera 'Använd senaste åren information' kommer att ladda showen tidtabell från förra året, men använder en simulerad Tors-sön visar schema med ditt nuvarande vecka. Detta är avsett för demonstration och testning av schemaläggning funktioner.";
 
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 

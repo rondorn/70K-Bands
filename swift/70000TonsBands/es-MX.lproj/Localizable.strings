@@ -25,5 +25,7 @@
 "LastYearsFeatureExplication"="Activación 'uso Última años Información' se carga el programa de espectáculo desde el año pasado, pero el uso de un simulado jue-dom muestra programación utilizando su semana actual. Con ello se pretende para la demostración y prueba de las funciones de programación.";
 
 
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 

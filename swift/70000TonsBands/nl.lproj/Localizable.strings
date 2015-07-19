@@ -22,3 +22,6 @@
 "Use Last Years Data"="Gebruik Last Year's informatie";
 "LastYearsFeatureExplication"="Het activeren van 'Use Last Years Informatie' zal de show schema van vorig jaar te laden, maar gebruik een gesimuleerde do-zon toont schema met uw huidige week. Dit is bedoeld voor het aantonen en het testen van de scheduling functies.";
 
+
+"restarTitle" = "Herstart Nodig";
+"restartMessage" = "Doe dit niet op de cruise. Interent AANSLUITING NODIG.\nDeze verandering vereist de toepassing opnieuw te starten.\n70K Bands zal nu stoppen. Relaunch om de nieuwe gegevens te zien";

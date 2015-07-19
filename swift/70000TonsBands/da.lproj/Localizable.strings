@@ -25,7 +25,8 @@
 "LastYearsFeatureExplication"="Aktivering 'Brug Last Years oplysninger' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.";
 
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 

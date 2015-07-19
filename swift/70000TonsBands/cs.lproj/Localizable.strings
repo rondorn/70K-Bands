@@ -24,7 +24,8 @@
 
 "LastYearsFeatureExplication"="Aktivace 'Používat informace Loňský' načte plán přehlídky z loňského roku, ale používají simulované Čt-Ne ukazuje harmonogram pomocí svého aktuálního týden. Toto je určen pro demonstraci a testování funkcí plánování.";
 
-
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 
 
