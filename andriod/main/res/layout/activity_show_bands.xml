@@ -1,0 +1,120 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffff"
+    android:gravity="top">
+
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:background="#ffffffff"
+        android:layout_gravity="center_horizontal|left">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="70,000 Tons 27 bands"
+            android:id="@+id/headerBandCount"
+            android:textAlignment="center"
+            android:gravity="center|top"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="20dp"
+        android:background="#ffffffff">
+
+        <ToggleButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="MustSeeFilter"
+            android:textOff=""
+            android:textOn=""
+            android:id="@+id/mustSeeFilter"
+            android:background="@drawable/beer_mug" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <ToggleButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="50dp"
+            android:textOff=""
+            android:textOn=""
+            android:id="@+id/mightSeeFilter"
+            android:background="@drawable/heavy_checkmark" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <ToggleButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="Wont"
+            android:id="@+id/wontSeeFilter"
+            android:textOff=""
+            android:textOn=""
+            android:textSize="30dp"
+            android:background="@drawable/no_entrysign" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <ToggleButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="Unknown"
+            android:id="@+id/unknownFilter"
+            android:textOff=""
+            android:textOn=""
+            android:textSize="30dp"
+            android:background="@drawable/black_questionmark" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="45dp"
+            android:text=""
+            android:id="@+id/refresh"
+            android:background="@android:drawable/ic_popup_sync"
+            android:singleLine="false"
+            android:backgroundTint="@color/background_floating_material_dark" />
+    </LinearLayout >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="70dp"
+            android:background="#ffffffff"
+            android:layout_gravity="bottom">
+
+            <ListView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/bandNames"
+                android:stackFromBottom="false"
+                android:layout_gravity="top"
+                android:background="#ffffffff"
+                android:clickable="true"
+                android:cacheColorHint="@android:color/transparent"
+                android:listSelector="@android:color/transparent"
+                />
+
+        </LinearLayout>
+
+</RelativeLayout>
