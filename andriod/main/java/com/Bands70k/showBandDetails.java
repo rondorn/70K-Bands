@@ -48,7 +48,7 @@ public class showBandDetails extends Activity {
             @JavascriptInterface
             public void performClick(String value) {
                 Log.d("Variable is", value);
-                rankStore.saveBandRanking(getBandInfo.getSelectedBand(), resolveValue(value));
+                rankStore.saveBandRanking(BandInfo.getSelectedBand(), resolveValue(value));
 
                 Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                 startActivity(showDetails);
@@ -100,19 +100,19 @@ public class showBandDetails extends Activity {
 
         rankStore.getBandRankings();
 
-        if (rankStore.getRankForBand(getBandInfo.getSelectedBand()).equals(staticVariables.mustSeeIcon)){
+        if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.mustSeeIcon)){
             mustButtonColor = "Silver";
             mightButtonColor = "WhiteSmoke";
             wontButtonColor = "WhiteSmoke";
             unknownButtonColor = "WhiteSmoke";
 
-        } else if (rankStore.getRankForBand(getBandInfo.getSelectedBand()).equals(staticVariables.mightSeeIcon)){
+        } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.mightSeeIcon)){
             mustButtonColor = "WhiteSmoke";
             mightButtonColor = "Silver";
             wontButtonColor = "WhiteSmoke";
             unknownButtonColor = "WhiteSmoke";
 
-        } else if (rankStore.getRankForBand(getBandInfo.getSelectedBand()).equals(staticVariables.wontSeeIcon)){
+        } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.wontSeeIcon)){
             mustButtonColor = "WhiteSmoke";
             mightButtonColor = "WhiteSmoke";
             wontButtonColor = "Silver";
@@ -151,19 +151,19 @@ public class showBandDetails extends Activity {
 
     public void createDetailHTML () {
 
-        String bandName = getBandInfo.getSelectedBand();
+        String bandName = BandInfo.getSelectedBand();
 
         SetButtonColors();
 
             htmlText =
                     "<html><div style='height:90vh;'>" +
                             "<center>" + bandName + "</center><br>" +
-                            "<center><img src='" + getBandInfo.getImageUrl(bandName) + "'</img>" +
+                            "<center><img src='" + BandInfo.getImageUrl(bandName) + "'</img>" +
                             "<center><ul style='list-style-type:none;text-align:left;margin-left:60px'>" +
-                            "<li><a href='" + getBandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'>Offical Link</a></li>" +
-                            "<li><a href='" + getBandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
-                            "<li><a href='" + getBandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
-                            "<li><a href='" + getBandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
+                            "<li><a href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'>Offical Link</a></li>" +
+                            "<li><a href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
+                            "<li><a href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
+                            "<li><a href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
                             "</ul></center><br></div><div style='height:10vh;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + "</button></td>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " " + getResources().getString(R.string.must) + "</button></td>" +

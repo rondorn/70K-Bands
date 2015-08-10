@@ -96,12 +96,14 @@
             android:backgroundTint="@color/background_floating_material_dark" />
     </LinearLayout >
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_marginTop="70dp"
             android:background="#ffffffff"
-            android:layout_gravity="bottom">
+            android:layout_gravity="bottom"
+            android:id="@+id/listViewLayout"
+            android:orientation="horizontal">
 
             <ListView
                 android:layout_width="fill_parent"
@@ -115,6 +117,14 @@
                 android:listSelector="@android:color/transparent"
                 />
 
-        </LinearLayout>
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/progressBar"
+                android:layout_centerInParent="true"
+                android:visibility="visible"
+                android:layout_gravity="center" />
+
+        </RelativeLayout>
 
 </RelativeLayout>

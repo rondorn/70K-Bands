@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.os.StrictMode;
 import android.util.Log;
 
 import com.parse.Parse;
