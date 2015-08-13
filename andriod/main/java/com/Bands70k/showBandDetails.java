@@ -7,13 +7,17 @@ package com.Bands70k;
 import android.app.Activity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import android.util.Log;
 
+import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 
 
 public class showBandDetails extends Activity {
@@ -26,6 +30,7 @@ public class showBandDetails extends Activity {
     private String wontButtonColor;
     private String unknownButtonColor;
     private Boolean inLink = false;
+    private ProgressBar webProgressBar;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +40,8 @@ public class showBandDetails extends Activity {
     }
 
     private void initializeWebContent (){
+
+        webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
 
         mWebView = (WebView) findViewById(R.id.detailWebView);
         mWebView.setWebViewClient(new customWebViewClient());
@@ -66,6 +73,7 @@ public class showBandDetails extends Activity {
         }, "link");
 
         createDetailHTML();
+        webProgressBar.setVisibility(View.GONE);
     }
 
     @Override
@@ -156,7 +164,7 @@ public class showBandDetails extends Activity {
         SetButtonColors();
 
             htmlText =
-                    "<html><div style='height:90vh;'>" +
+                    "<html><div style='height:90vh;font-size:130%;'>" +
                             "<center>" + bandName + "</center><br>" +
                             "<center><img src='" + BandInfo.getImageUrl(bandName) + "'</img>" +
                             "<center><ul style='list-style-type:none;text-align:left;margin-left:60px'>" +
@@ -164,7 +172,7 @@ public class showBandDetails extends Activity {
                             "<li><a href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
                             "<li><a href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
                             "<li><a href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
-                            "</ul></center><br></div><div style='height:10vh;'><table width=100%><tr width=100%>" +
+                            "</ul></center><br></div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + "</button></td>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " " + getResources().getString(R.string.must) + "</button></td>" +
                             "<td><button style='background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mightSeeIcon + " " + getResources().getString(R.string.might) + "</button></td>" +
@@ -174,6 +182,30 @@ public class showBandDetails extends Activity {
 
             mWebView.loadDataWithBaseURL("", htmlText, "text/html", "UTF-8", "");
 
+    }
+
+    private class customWebViewClient extends WebViewClient {
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            // TODO Auto-generated method stub
+            super.onPageFinished(view, url);
+
+            webProgressBar.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            // TODO Auto-generated method stub
+            super.onPageStarted(view, url, favicon);
+            webProgressBar.setVisibility(View.VISIBLE);
+        }
+
+        public boolean shouldOverrideUrlLoading(WebView view, String url){
+
+            view.loadUrl(url);
+            return true;
+        }
     }
 }
 
