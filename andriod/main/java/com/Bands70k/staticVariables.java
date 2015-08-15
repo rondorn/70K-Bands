@@ -18,6 +18,8 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
+    public final static String defaultUrls = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1";
+
     //production//
     public final static String urlBandDownload = "https://www.dropbox.com/s/m356ri4n8bisdx4/artistLineup.csv?dl=1";
 
@@ -27,7 +29,7 @@ public class staticVariables {
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 
-    public static Boolean parseInitialized = false;
+    public static Boolean fileDownloaded = false;
 
     public static void staticVariablesInitialize (){
 

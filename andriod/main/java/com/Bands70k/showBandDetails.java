@@ -180,7 +180,7 @@ public class showBandDetails extends Activity {
                             "</tr></table></div>" +
                             "</html>";
 
-            mWebView.loadDataWithBaseURL("", htmlText, "text/html", "UTF-8", "");
+            mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
 
     }
 

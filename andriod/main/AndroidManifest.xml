@@ -20,6 +20,10 @@
         android:name="com.Bands70k.permission.C2D_MESSAGE" />
     <uses-permission android:name="com.Bands70k.permission.C2D_MESSAGE" />
 
+    <!--
+    //place this in application to pontentially fix Samsung bug
+    android:hardwareAccelerated="false"
+    -->
     <application
         android:name=".Bands70k"
         android:allowBackup="true"

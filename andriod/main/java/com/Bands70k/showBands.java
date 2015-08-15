@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,9 +14,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -29,6 +32,9 @@ public class showBands extends Activity {
     private ArrayList<String> rankedBandNames;
     private ArrayAdapter<String> arrayAdapter;
 
+    private ProgressBar progressBar;
+    private BandInfo bandInfo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +46,7 @@ public class showBands extends Activity {
         setupButtonFilters();
 
         setContentView(R.layout.activity_show_bands);
+        bandInfo = new BandInfo();
 
         populateBandList();
     }
@@ -60,6 +67,7 @@ public class showBands extends Activity {
             // argument position gives the index of item which is clicked
             public void onClick(View v) {
                 setContentView(R.layout.activity_show_bands);
+                staticVariables.fileDownloaded = false;
                 populateBandList();
                 Intent showDetails = new Intent(showBands.this, showBands.class);
                 startActivity(showDetails);
@@ -151,19 +159,57 @@ public class showBands extends Activity {
 
     public void populateBandList(){
 
-
-        BandInfo bandInfo = new BandInfo();
-
         bandNamesList = (ListView)findViewById(R.id.bandNames);
+
+        if (staticVariables.fileDownloaded == false) {
+            refreshNewData(true);
+
+        } else {
+            reloadData();
+
+        }
+    }
+
+    private void refreshNewData(Boolean twice){
+
+        RelativeLayout showBandLayout = (RelativeLayout)findViewById(R.id.showBandsView);
+        showBandLayout.invalidate();
+        showBandLayout.requestLayout();
+
+        Log.d("BandData Loaded", "from Internet");
 
         AsyncListViewLoader mytask = new AsyncListViewLoader();
         mytask.execute();
+
 
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
 
         rankedBandNames = bandInfo.getRankedBandNames(bandNames);
         rankStore.getBandRankings();
+
+    }
+
+
+    private void reloadData (){
+
+        if (staticVariables.fileDownloaded == true) {
+            Log.d("BandData Loaded", "from Cache");
+
+            BandInfo bandInfoNames = new BandInfo();
+            bandNames = bandInfoNames.getBandNames();
+
+            rankedBandNames = bandInfo.getRankedBandNames(bandNames);
+            rankStore.getBandRankings();
+
+            ListAdapter arrayAdapter = new ArrayAdapter<String>(showBands.this, android.R.layout.simple_list_item_1, rankedBandNames);
+
+            bandNamesList.setAdapter(arrayAdapter);
+            bandNamesList.requestLayout();
+
+            progressBar = (ProgressBar) findViewById(R.id.progressBar);
+            progressBar.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -190,7 +236,6 @@ public class showBands extends Activity {
     public void onResume() {
 
         super.onResume();
-
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // argument position gives the index of item which is clicked
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
@@ -204,7 +249,7 @@ public class showBands extends Activity {
 
                     Intent showDetails = new Intent(showBands.this, showBandDetails.class);
                     startActivity(showDetails);
-                } catch(Exception error){
+                } catch (Exception error) {
                     Log.e("Unable to find band", error.toString());
                     System.exit(0);
                 }
@@ -232,11 +277,12 @@ public class showBands extends Activity {
 
     class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
 
-        ProgressBar progressBar;
+        ArrayList<String> result;
 
         @Override
         protected void onPreExecute() {
 
+            super.onPreExecute();
             progressBar = (ProgressBar) findViewById(R.id.progressBar);
             progressBar.setVisibility(View.VISIBLE);
 
@@ -254,23 +300,26 @@ public class showBands extends Activity {
 
             BandInfo bandInfo = new BandInfo();
             ArrayList<String> bandList  = bandInfo.DownloadBandFile();
-            ArrayList<String> rankedBandList = bandInfo.getRankedBandNames(bandList);
 
-            return rankedBandList;
+            return result;
         }
+
 
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
+            BandInfo bandInfo = new BandInfo();
+            ArrayList<String> bandList = bandInfo.getBandNames();
+            ArrayList<String> rankedBandList = bandInfo.getRankedBandNames(bandList);
 
             Log.d("AsyncTask", "populating array list");
-            ListAdapter arrayAdapter = new ArrayAdapter<String>(showBands.this, android.R.layout.simple_list_item_1, result);
+            ListAdapter arrayAdapter = new ArrayAdapter<String>(showBands.this, android.R.layout.simple_list_item_1, rankedBandList);
 
             showBands.this.bandNamesList.setAdapter(arrayAdapter);
             progressBar.setVisibility(View.INVISIBLE);
 
+            showBands.this.bandNamesList.requestLayout();
+            staticVariables.fileDownloaded = true;
         }
     }
 }
