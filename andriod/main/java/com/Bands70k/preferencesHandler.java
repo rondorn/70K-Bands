@@ -75,6 +75,14 @@ public class preferencesHandler {
                     case "minBeforeToAlert":
                         setMinBeforeToAlert(Integer.valueOf(RowData[1]));
                         break;
+
+                    case "artistsUrl":
+                        setArtsistsUrl(RowData[1]);
+                        break;
+
+                    case "scheduleUrl":
+                        setScheduleUrl(RowData[1]);
+                        break;
                 }
             }
         } catch (Exception error){
@@ -94,6 +102,8 @@ public class preferencesHandler {
         dataString += "alertForListeningParties:" + alertForListeningParties.toString() + "\n";
         dataString += "useLastYearsData:" + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert:" + minBeforeToAlert.toString() + "\n";
+        dataString += "artistsUrl:" + artsistsUrl + "\n";
+        dataString += "scheduleUrl:" + scheduleUrl + "\n";
 
         Log.d("Save Data", dataString);
         try {

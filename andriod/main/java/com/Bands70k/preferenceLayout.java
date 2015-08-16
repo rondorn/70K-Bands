@@ -25,6 +25,9 @@ public class preferenceLayout  extends Activity {
     CheckBox lastYearsData;
     EditText alertMin;
 
+    EditText bandsUrl;
+    EditText scheduleUrl;
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.preferences);
@@ -119,6 +122,11 @@ public class preferenceLayout  extends Activity {
         alertMin = (EditText)findViewById(R.id.minBeforeEvent);
         alertMin.setText(alertPreferences.getMinBeforeToAlert().toString());
 
+        bandsUrl = (EditText)findViewById(R.id.bandsUrl);
+        bandsUrl.setText(alertPreferences.getArtsistsUrl().toString());
+
+        scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
+        scheduleUrl.setText(alertPreferences.getScheduleUrl().toString());
     }
 
 
@@ -126,6 +134,9 @@ public class preferenceLayout  extends Activity {
     public void onBackPressed() {
 
         alertPreferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
+        alertPreferences.setArtsistsUrl(bandsUrl.getText().toString());
+        alertPreferences.setScheduleUrl(scheduleUrl.getText().toString());
+
         alertPreferences.saveData();
         Intent showDetails = new Intent(preferenceLayout.this, showBands.class);
         startActivity(showDetails);

@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+<RelativeLayout
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:nestedScrollingEnabled="true">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -77,7 +83,7 @@
                     android:layout_marginLeft="40dp" />
 
                 <EditText
-                    android:layout_width="20dp"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:inputType="number"
                     android:ems="10"
@@ -223,9 +229,83 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/LastYearsFeatureExplication"
             android:gravity="center_horizontal"
-            android:textStyle="normal|italic"
+            android:textStyle="bold"
             android:textSize="11dp"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="390dp">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="----------\nAdvanced Preference.\nDo not modify unless you know what your doing!"
+            android:id="@+id/headerBandCount"
+            android:textAlignment="center"
+            android:gravity="center|top"/>
+        </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="450dp">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true">
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Bands URL"
+            android:layout_column="9"
+            android:layout_marginLeft="40dp" />
+
+        <EditText
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:id="@+id/bandsUrl"
+            android:layout_marginLeft="40dp"
+            android:layout_column="27"
+            android:editable="true"
+            android:inputType="textNoSuggestions" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Schedule URL"
+            android:layout_column="9"
+            android:layout_marginLeft="40dp" />
+
+        <EditText
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:id="@+id/scheduleUrl"
+            android:layout_marginLeft="40dp"
+            android:layout_column="27"
+            android:editable="true"
+            android:inputType="textNoSuggestions" />
+
+        </TableRow>
+    </TableLayout>
+  </LinearLayout>
 </RelativeLayout>
+</ScrollView>
