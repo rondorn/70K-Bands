@@ -3,4 +3,27 @@
     <string name="must">Must</string>
     <string name="might">Might</string>
     <string name="wont">Wont</string>
+
+    <string name="Ok">Ok</string>
+    <string name="Cancel">Cancel</string>
+
+
+    <string name="AlertOnMustSeeBands">Alert On Must See Bands</string>
+    <string name="AlertOnMightSeeBands">Alert On Might See Bands</string>
+
+    <string name="MinutesBeforeEventtoAlert">Minutes Before Event to Alert</string>
+    <string name="AlertForShows">Alert For Shows</string>
+    <string name="AlertForSpecialEvents">Alert For Special Events</string>
+    <string name="AlertForMeetingandGreetEvents">Alert For Meeting and Greet Events</string>
+    <string name="AlertForClinics">Alert For Clinics</string>
+    <string name="AlertForAlbumListeningEvents">Alert For Album Listening Events</string>
+
+    <string name="UseLastYearsData">Use Last Years Data</string>
+    <string name="LastYearsFeatureExplication">Activating \'Use Last Years Data\' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
+    <string name="restarTitle">Restart Required</string>
+    <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
+
 </resources>
+
+
+

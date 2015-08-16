@@ -44,6 +44,10 @@
             android:label="showBandDetails" >
         </activity>
 
+        <activity
+            android:name=".preferenceLayout"
+            android:label="Preferences" >
+        </activity>
 
         <service android:name="com.parse.PushService" />
         <receiver android:name="com.parse.ParseBroadcastReceiver">

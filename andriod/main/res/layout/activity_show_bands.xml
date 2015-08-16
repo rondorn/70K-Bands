@@ -95,6 +95,18 @@
             android:background="@android:drawable/ic_popup_sync"
             android:singleLine="false"
             android:backgroundTint="@color/background_floating_material_dark" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text=""
+            android:id="@+id/preferences"
+            android:background="@android:drawable/ic_menu_info_details" />
+
     </LinearLayout >
 
         <RelativeLayout

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,7 +13,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -43,8 +41,6 @@ public class showBands extends Activity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        setupButtonFilters();
-
         setContentView(R.layout.activity_show_bands);
         bandInfo = new BandInfo();
 
@@ -58,8 +54,7 @@ public class showBands extends Activity {
     }
 
 
-    public void setupButtonFilters(){
-
+    public void setupNoneFilterButtons(){
 
         Button refreshButton = (Button)findViewById(R.id.refresh);
 
@@ -74,6 +69,19 @@ public class showBands extends Activity {
 
             }
         });
+
+        Button preferencesButton = (Button)findViewById(R.id.preferences);
+
+        preferencesButton.setOnClickListener(new Button.OnClickListener() {
+            // argument position gives the index of item which is clicked
+            public void onClick(View v) {
+                Intent showPreferences = new Intent(showBands.this, preferenceLayout.class);
+                startActivity(showPreferences);
+            }
+        });
+    }
+
+    public void setupButtonFilters(){
 
         staticVariables.staticVariablesInitialize();
 
@@ -256,6 +264,7 @@ public class showBands extends Activity {
             }
         });
 
+        setupNoneFilterButtons();
         setupButtonFilters();
         displayNumberOfBands();
     }
