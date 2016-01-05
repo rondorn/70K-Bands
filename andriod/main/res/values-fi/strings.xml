@@ -4,4 +4,25 @@
     <string name="might">Ehkä</string>
     <string name="must">Kyllä</string>
     <string name="wont">Ei</string>
+
+    <string name="Ok">Kyllä</string>
+    <string name="Cancel">Ei</string>
+
+
+    <string name="AlertOnMustSeeBands">Hälyttävät Kyllä ohjelmat</string>
+    <string name="AlertOnMightSeeBands">Hälyttävät Voi Olla ohjelmat</string>
+
+    <string name="MinutesBeforeEventtoAlert">Ilmoita, ennen tapahtumaa (minuuttia)</string>
+    <string name="AlertForShows">Alert näytöksiin</string>
+    <string name="AlertForSpecialEvents">Alert erikoistapahtumia</string>
+    <string name="AlertForMeetingandGreetEvents">Kuulutus \'Meet and Greet\' Tapahtumat</string>
+    <string name="AlertForClinics">Alert klinikoiden</string>
+    <string name="AlertForAlbumListeningEvents">Kuulutus Album Listening Tapahtumat</string>
+
+    <string name="UseLastYearsData">Käytä viime vuoden tiedot</string>
+    <string name="LastYearsFeatureExplication">Aktivointi \'Käytä Viime vuoden tiedot\' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.</string>
+
+    <string name="restarTitle">uudelleenkäynnistykseen</string>
+    <string name="restartMessage">ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot</string>
+
 </resources>

@@ -20,16 +20,14 @@ public class staticVariables {
 
     public final static String defaultUrls = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1";
 
-    //production//
-    public final static String urlBandDownload = "https://www.dropbox.com/s/m356ri4n8bisdx4/artistLineup.csv?dl=1";
-
-    //test
-    //public final static String urlBandDownload = "https://www.dropbox.com/s/gpr66dsqamu0fq1/artistLineupTest.csv?dl=1";
-
+    public final static String previousYearArtist = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1";
+    public final static String previousYearSchedule = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1";
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 
     public static Boolean fileDownloaded = false;
+
+    public static Boolean sortBySchedule = true;
 
     public static void staticVariablesInitialize (){
 

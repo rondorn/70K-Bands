@@ -4,4 +4,23 @@
     <string name="might">Vielleicht</string>
     <string name="must">Ja</string>
     <string name="wont">Nein</string>
+
+    <string name="Ok">Ja</string>
+    <string name="Cancel">Nein</string>
+
+    <string name="AlertOnMustSeeBands">Alarm für \'Ja\' Bands</string>
+    <string name="AlertOnMightSeeBands">Alarm für \'Vielleicht\' Bands</string>
+    <string name="MinutesBeforeEventtoAlert">Alarm X minuten vor Event</string>
+    <string name="AlertForShows">Alarm für Shows</string>
+    <string name="AlertForSpecialEvents">Alarm für \'Special Events\'</string>
+    <string name="AlertForMeetingandGreetEvents">Alarm für \'Meet and Greet\'</string>
+    <string name="AlertForClinics">Alarm für Kliniken</string>
+    <string name="AlertForAlbumListeningEvents">Alarm für \'Album Listening Events\'</string>
+
+    <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
+    <string name="LastYearsFeatureExplication">Das Aktivieren von \'Daten des letzten Jahres verwenden\' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen.</string>
+
+    <string name="restarTitle">Neustart erforderlich</string>
+    <string name="restartMessage">NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
+
 </resources>

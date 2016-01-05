@@ -18,7 +18,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Alert Preferences"
+            android:text="Alert Preferences.\nComing for the 2017 cruise"
             android:layout_gravity="center_horizontal"
             android:gravity="center_horizontal"
             android:textStyle="bold" />
@@ -48,6 +48,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/mustSeecheckBox"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
             <TableRow
@@ -66,6 +67,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/mightSeecheckBox"
+                    android:enabled="false"
                     android:layout_column="27"
                     android:layout_marginLeft="40dp" />
             </TableRow>
@@ -90,6 +92,7 @@
                     android:id="@+id/minBeforeEvent"
                     android:layout_marginLeft="40dp"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:numeric="integer"
                     android:editable="true" />
 
@@ -112,6 +115,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForShows"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
 
@@ -132,6 +136,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForSpecialEvents"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
 
@@ -152,6 +157,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForMeetAndGreet"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
 
@@ -172,6 +178,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForClinics"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
 
@@ -192,6 +199,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForAlbumListen"
                     android:layout_column="27"
+                    android:enabled="false"
                     android:layout_marginLeft="40dp" />
             </TableRow>
 

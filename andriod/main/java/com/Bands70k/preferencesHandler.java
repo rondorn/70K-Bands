@@ -36,7 +36,7 @@ public class preferencesHandler {
             String line;
 
             while ((line = br.readLine()) != null) {
-                String[] RowData = line.split(":");
+                String[] RowData = line.split(",");
                 Log.d("Load Data", line);
                 Log.d("Load Data", "Setting " + RowData[0] + " to be " + RowData[1]);
                 switch (RowData[0]) {
@@ -93,17 +93,17 @@ public class preferencesHandler {
     public void saveData() {
 
         String dataString = "";
-        dataString += "mustSeeAlert:" + mustSeeAlert.toString() + "\n";
-        dataString += "mightSeeAlert:" + mightSeeAlert.toString() + "\n";
-        dataString += "alertForShows:" + alertForShows.toString() + "\n";
-        dataString += "alertForSpecialEvents:" + alertForSpecialEvents.toString() + "\n";
-        dataString += "alertForMeetAndGreet:" + alertForMeetAndGreet.toString() + "\n";
-        dataString += "alertForClinics:" + alertForClinics.toString() + "\n";
-        dataString += "alertForListeningParties:" + alertForListeningParties.toString() + "\n";
-        dataString += "useLastYearsData:" + useLastYearsData.toString() + "\n";
-        dataString += "minBeforeToAlert:" + minBeforeToAlert.toString() + "\n";
-        dataString += "artistsUrl:" + artsistsUrl + "\n";
-        dataString += "scheduleUrl:" + scheduleUrl + "\n";
+        dataString += "mustSeeAlert," + mustSeeAlert.toString() + "\n";
+        dataString += "mightSeeAlert," + mightSeeAlert.toString() + "\n";
+        dataString += "alertForShows," + alertForShows.toString() + "\n";
+        dataString += "alertForSpecialEvents," + alertForSpecialEvents.toString() + "\n";
+        dataString += "alertForMeetAndGreet," + alertForMeetAndGreet.toString() + "\n";
+        dataString += "alertForClinics," + alertForClinics.toString() + "\n";
+        dataString += "alertForListeningParties," + alertForListeningParties.toString() + "\n";
+        dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
+        dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
+        dataString += "artistsUrl," + artsistsUrl + "\n";
+        dataString += "scheduleUrl," + scheduleUrl + "\n";
 
         Log.d("Save Data", dataString);
         try {

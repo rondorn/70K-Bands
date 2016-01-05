@@ -1,12 +1,17 @@
 package com.Bands70k;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import java.util.ArrayList;
 
 
 /**
@@ -35,6 +40,53 @@ public class preferenceLayout  extends Activity {
         alertPreferences.loadData();
         setValues();
 
+    }
+
+    private void buildRebootDialog(){
+
+        AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
+
+        // Setting Dialog Title
+        restartDialog.setTitle("Confirm Restart");
+
+        // Setting Dialog Message
+        restartDialog.setMessage(getResources().getString(R.string.restartMessage));
+
+        // Setting Icon to Dialog
+        restartDialog.setIcon(R.drawable.alert_icon);
+
+        // Setting Positive "Yes" Btn
+        restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Write your code here to execute after dialog
+                        alertPreferences.saveData();
+
+                        BandInfo bandInfo = new BandInfo();
+                        ArrayList<String> bandList  = bandInfo.DownloadBandFile();
+
+                        Intent intent = new Intent(preferenceLayout.this, showBands.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
+                        finish();
+
+                    }
+                });
+        // Setting Negative "NO" Btn
+        restartDialog.setNegativeButton(getResources().getString(R.string.Cancel),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (lastYearsData.isChecked() == true) {
+                            lastYearsData.setChecked(false);
+                        } else {
+                            lastYearsData.setChecked(true);
+                        }
+                        alertPreferences.setUseLastYearsData(lastYearsData.isChecked());
+                    }
+                });
+
+        // Showing Alert Dialog
+        restartDialog.show();
     }
 
     private void setValues(){
@@ -116,6 +168,7 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 alertPreferences.setUseLastYearsData(lastYearsData.isChecked());
+                buildRebootDialog();
             }
         });
 

@@ -4,4 +4,23 @@
     <string name="might">MÂske</string>
     <string name="must">Skal</string>
     <string name="wont">Skal ikke</string>
+
+    <string name="Ok">Ja</string>
+    <string name="Cancel">Ingen</string>
+
+    <string name="AlertOnMustSeeBands">Alert for Ja Shows</string>
+    <string name="AlertOnMightSeeBands">Alert for Kan Være Shows</string>
+    <string name="MinutesBeforeEventtoAlert">Advare mig før hændelsen (minutter)</string>
+    <string name="AlertForShows">Alert For Shows</string>
+    <string name="AlertForSpecialEvents">Alert til særlige begivenheder</string>
+    <string name="AlertForMeetingandGreetEvents">Alert For \'Meet and Greet\' Begivenheder</string>
+    <string name="AlertForClinics">Alert For Klinikker</string>
+    <string name="AlertForAlbumListeningEvents">Alert For Album Listening Begivenheder</string>
+
+    <string name="UseLastYearsData">Brug Sidste år oplysninger</string>
+    <string name="LastYearsFeatureExplication">Aktivering \'Brug Last Years oplysninger\' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.</string>
+
+    <string name="restarTitle">Genstart Påkrævet</string>
+    <string name="restartMessage">Gør ikke dette på krydstogt.\nInterent FORBINDELSE PÅKRÆVET.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+
 </resources>
