@@ -5,12 +5,8 @@ import android.os.Environment;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +17,6 @@ public class rankStore {
 
     private static Map<String, String> bandRankings = new HashMap<String, String>();
     private static File bandRankingsFile = new File(Environment.getExternalStorageDirectory() + "/bandRankings.txt");
-    private static File bandRankingsFileBackup = new File(Environment.getExternalStorageDirectory() + "/bandRankings.bk");
 
     public static String getRankForBand (String bandName){
         if (bandRankings.get(bandName) == null){
@@ -67,35 +62,11 @@ public class rankStore {
             stream.write(rankingDataString.getBytes());
             stream.close();
 
-            stream = new FileOutputStream(bandRankingsFileBackup);
-            stream.write(rankingDataString.getBytes());
-            stream.close();
-
-        } catch (Exception error) {
-            Log.e("writingBandRankings", error.getMessage());
+        } catch (Exception e) {
+            Log.e("Ran into error writing band rankings", e.getMessage());
         }
 
-        Log.d("writingBandRankings", rankingDataString);
-    }
-
-    public static void loadBandRankingFromFileBackup(){
-        try {
-
-            BufferedReader br = new BufferedReader(new FileReader(bandRankingsFileBackup));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                String[] RowData = line.split(":");
-                Log.d("loading band from file", RowData[0] + ":" + RowData[1]);
-                bandRankings.put(RowData[0], RowData[1]);
-            }
-
-            saveBandRankingToFile();
-
-        } catch (Exception error) {
-            Log.e("writingBandRankings", "backupFile " + error.getMessage());
-        }
-
+        Log.d("Here is the ranking string", rankingDataString);
     }
 
     public static void loadBandRankingFromFile(){
@@ -110,18 +81,9 @@ public class rankStore {
                 Log.d("loading band from file", RowData[0] + ":" + RowData[1]);
                 bandRankings.put(RowData[0], RowData[1]);
             }
+        } catch (Exception e) {
 
-            if (bandRankings == null) {
-                loadBandRankingFromFileBackup();
-
-            } else if (bandRankings.size() == 0){
-                loadBandRankingFromFileBackup();
-            }
-
-        } catch (Exception error) {
-
-            Log.e("writingBandRankings", error.getMessage());
-            loadBandRankingFromFileBackup();
+           Log.e("Ran into error loading band rankings", e.getMessage());
 
         }
     }

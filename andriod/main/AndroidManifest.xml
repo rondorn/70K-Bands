@@ -57,7 +57,7 @@
                 <action android:name="android.intent.action.USER_PRESENT" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".AlarmReceiver"></receiver>
+
         <receiver android:name=".shipNotifications" />
 
         <receiver android:name="com.parse.ParsePushBroadcastReceiver"
