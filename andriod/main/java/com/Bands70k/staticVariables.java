@@ -1,5 +1,7 @@
 package com.Bands70k;
 
+import android.os.Parcelable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +30,9 @@ public class staticVariables {
     public static Boolean fileDownloaded = false;
 
     public static Boolean sortBySchedule = true;
+    public static Parcelable listState;
 
+    public static Integer alarmCount = 1;
     public static void staticVariablesInitialize (){
 
         if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null){
