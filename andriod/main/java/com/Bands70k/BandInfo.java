@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,6 +28,10 @@ public class BandInfo {
     private static Map<String, Map> bandData = new HashMap<String, Map>();
     //private ArrayList<String> bandNames = new ArrayList<String>();
     private static String selectedBand;
+
+    public static Map<String, scheduleTimeTracker> scheduleRecords;
+
+    private Map<String,String> downloadUrls = new HashMap<String, String>();
 
     public void onCreate() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -156,7 +161,7 @@ public class BandInfo {
         Log.d("Here is the full map", bandData.toString());
         Map<String, Map> detailedData = bandData.get(bandName);
 
-        Log.d("Here is the map", detailedData.toString());
+        //Log.d("Here is the map", detailedData.toString());
 
         if (detailedData != null){
             if (detailedData.get(key) != null) {
@@ -167,10 +172,62 @@ public class BandInfo {
         return data;
     }
 
+    private void getDownloadtUrls(){
+
+        preferencesHandler preferences = new preferencesHandler();
+        preferences.loadData();
+
+        if (preferences.getUseLastYearsData() == true){
+            downloadUrls.put("artistUrl", staticVariables.previousYearArtist);
+            downloadUrls.put("scheduleUrl", staticVariables.previousYearSchedule);
+
+
+        } else if (preferences.getArtsistsUrl().equals("Default") || preferences.getScheduleUrl().equals("Default")) {
+            String data = "";
+            try {
+                String line;
+                URL url = new URL(staticVariables.defaultUrls);
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+
+                while ((line = in.readLine()) != null) {
+                    data += line + "\n";
+                }
+                in.close();
+
+
+            } catch (Exception error) {
+                Log.e("ErrorDefaultUrls", error.getMessage());
+            }
+
+            Log.d("defaultUrls", data);
+
+            String[] records = data.split("\\n");
+            for (String record : records) {
+                Log.d("defaultUrls 1", record);
+                String[] recordData = record.split("::");
+                downloadUrls.put(recordData[0], recordData[1]);
+
+            }
+            Log.d("defaultUrls 2", downloadUrls.toString());
+        }
+
+        if (preferences.getUseLastYearsData() == false) {
+            if (!preferences.getArtsistsUrl().equals("Default")) {
+                downloadUrls.put("artistUrl", preferences.getArtsistsUrl());
+            }
+            if (!preferences.getScheduleUrl().equals("Default")) {
+                downloadUrls.put("scheduleUrl", preferences.getArtsistsUrl());
+            }
+        }
+    }
+
     public ArrayList<String> DownloadBandFile(){
 
+        getDownloadtUrls();
+
+        Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
         try {
-            URL u = new URL(staticVariables.urlBandDownload);
+            URL u = new URL(downloadUrls.get("artistUrl"));
             InputStream is = u.openStream();
 
             DataInputStream dis = new DataInputStream(is);
@@ -197,6 +254,9 @@ public class BandInfo {
 
         ArrayList<String> bandNames = ParseBandCSV();
 
+        scheduleInfo schedule = new scheduleInfo();
+        scheduleRecords = schedule.DownloadScheduleFile(downloadUrls.get("scheduleUrl"));
+
         return bandNames;
     }
 
@@ -211,19 +271,23 @@ public class BandInfo {
             String line;
 
             while ((line = br.readLine()) != null) {
-                String[] RowData = line.split(",");
-                Map<String, String> bandDetails = new HashMap<String,String>();
-                bandDetails.put("officalSite", RowData[1]);
-                bandDetails.put("imageUrl", RowData[2]);
-                bandDetails.put("youtube", RowData[3]);
-                bandDetails.put("metalArchives", RowData[4]);
-                bandDetails.put("wikipedia", RowData[5]);
+                Log.d("RawBandLine", line);
+                try {
+                    String[] RowData = line.split(",");
+                    Map<String, String> bandDetails = new HashMap<String, String>();
+                    bandDetails.put("officalSite", RowData[1]);
+                    bandDetails.put("imageUrl", RowData[2]);
+                    bandDetails.put("youtube", RowData[3]);
+                    bandDetails.put("metalArchives", RowData[4]);
+                    bandDetails.put("wikipedia", RowData[5]);
 
-                if (!RowData[0].contains("bandName")){
-                    bandData.put(RowData[0], bandDetails);
-                    bandNames.add(RowData[0]);
+                    if (!RowData[0].contains("bandName")) {
+                        bandData.put(RowData[0], bandDetails);
+                        bandNames.add(RowData[0]);
+                    }
+                } catch (Exception error){
+                    //just keep going
                 }
-
             }
 
         } catch (Exception e) {

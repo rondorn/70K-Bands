@@ -19,6 +19,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
+import java.util.Iterator;
+import java.util.Map;
+
 
 public class showBandDetails extends Activity {
     /** Called when the activity is first created. */
@@ -148,7 +151,7 @@ public class showBandDetails extends Activity {
             newValue = staticVariables.wontSeeIcon;
 
         } else if (value.equals(staticVariables.unknownKey)){
-            newValue = staticVariables.unknownIcon;
+            newValue = "";
 
         } else {
             newValue = value;
@@ -172,7 +175,10 @@ public class showBandDetails extends Activity {
                             "<li><a href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
                             "<li><a href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
                             "<li><a href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
-                            "</ul></center><br></div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
+                            "</ul></center><br>";
+
+            htmlText += buildScheduleView();
+            htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + "</button></td>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " " + getResources().getString(R.string.must) + "</button></td>" +
                             "<td><button style='background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mightSeeIcon + " " + getResources().getString(R.string.might) + "</button></td>" +
@@ -180,8 +186,36 @@ public class showBandDetails extends Activity {
                             "</tr></table></div>" +
                             "</html>";
 
-            mWebView.loadDataWithBaseURL("", htmlText, "text/html", "UTF-8", "");
+            mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
 
+    }
+
+    private String buildScheduleView(){
+
+        String bandName = BandInfo.getSelectedBand();
+
+        String htmlData = "<ul style='font-size:12px;font-size:3.0vw;list-style-type:none;text-align:left;margin-left:-20px'>";
+
+        if (BandInfo.scheduleRecords.get(bandName) != null) {
+            Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
+
+            while (entries.hasNext()) {
+                Map.Entry thisEntry = (Map.Entry) entries.next();
+                Object key = thisEntry.getKey();
+
+                htmlData += "<li>";
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString() + " - ";
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString() + " - ";
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation() + " - ";
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
+                htmlData += "</li>";
+            }
+
+            htmlData += "</ul>";
+        }
+
+        return htmlData;
     }
 
     private class customWebViewClient extends WebViewClient {
