@@ -10,6 +10,7 @@ import WatchKit
 import Foundation
 
 
+@available(iOS 8.2, *)
 class InterfaceController: WKInterfaceController {
 
     @IBOutlet weak var nextBand: WKInterfaceLabel!
@@ -69,8 +70,8 @@ class InterfaceController: WKInterfaceController {
     
     @IBAction func NextShow() {
         
-        println(index)
-        println(bandsByTime.count)
+        print(index)
+        print(bandsByTime.count)
         
         if (index < (bandsByTime.count - 1)){
             index = index + 1
@@ -87,12 +88,12 @@ class InterfaceController: WKInterfaceController {
     
     func refreshData() {
         
-        bands = getFilteredBands(getBandNames(), schedule)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         sortBandsByTime()
         getPriorityDataFromiCloud()
-        println(schedule.schedulingData);
+        print(schedule.schedulingData);
         
-        var bandText = getPriorityIcon(getPriorityData(bandsByTime[index])) + bandsByTime[index]
+        let bandText = getPriorityIcon(getPriorityData(bandsByTime[index])) + bandsByTime[index]
         nextBand.setText(bandText)
         getScheduleData(bandsByTime[index])
         if (DayTimeText.isEmpty == true){
@@ -107,22 +108,23 @@ class InterfaceController: WKInterfaceController {
     func getScheduleData (bandName: String) {
         
         if (schedule.schedulingData[bandName]?.isEmpty == false){
-            var keyValues = schedule.schedulingData[bandName]!.keys
-            var arrayValues = keyValues.array
-            var sortedArray = sorted(arrayValues, {
-                $0 < $1
-            })
+            let keyValues = schedule.schedulingData[bandName]!.keys
+            let arrayValues = keyValues.enumerate()
+            //var sortedArray = arrayValues.sort({
+            //    $0 < $1
+            //})
             
+            let sortedArray = arrayValues.reverse()
             var count = 1
             for index in sortedArray {
                 
-                var location = schedule.getData(bandName, index:index.0, variable: "Location")
-                var day = schedule.getData(bandName, index: index.0, variable: "Day")
-                var startTime = schedule.getData(bandName, index: index.0, variable: "Start Time")
-                var endTime = schedule.getData(bandName, index: index.0, variable: "End Time")
-                var date = schedule.getData(bandName, index:index.0, variable: "Date")
-                var type = schedule.getData(bandName, index:index.0, variable: "Type")
-                var notes = schedule.getData(bandName, index:index.0, variable: "Notes")
+                let location = schedule.getData(bandName, index: Double(index.0), variable: "Location")
+                let day = schedule.getData(bandName, index: Double(index.0), variable: "Day")
+                let startTime = schedule.getData(bandName, index: Double(index.0), variable: "Start Time")
+                var endTime = schedule.getData(bandName, index: Double(index.0), variable: "End Time")
+                let date = schedule.getData(bandName, index:Double(index.0), variable: "Date")
+                var type = schedule.getData(bandName, index:Double(index.0), variable: "Type")
+                var notes = schedule.getData(bandName, index:Double(index.0), variable: "Notes")
                 
                 var scheduleText = String()
                 if (date.isEmpty == false){
@@ -151,11 +153,11 @@ class InterfaceController: WKInterfaceController {
         var fullBands = bands;
         var dupAvoidBands = Dictionary<String,Int>()
         
-        var futureTime :Int64 = 8000000000000;
+        let futureTime :Int64 = 8000000000000;
         var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
 
         for bandName in bands {
-            var timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
+            let timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
             if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
                 sortableBands[timeIndex] = bandName
                 sortableTimeIndexArray.append(timeIndex)
@@ -167,7 +169,7 @@ class InterfaceController: WKInterfaceController {
         }
         
         
-        var sortedArray = sorted(sortableTimeIndexArray, {$0 < $1})
+        let sortedArray = sortableTimeIndexArray.sort({$0 < $1})
         
         for index in sortedArray{
             if (dupAvoidBands[sortableBands[index]!] == nil){

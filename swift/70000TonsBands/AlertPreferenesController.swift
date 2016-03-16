@@ -115,7 +115,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func MinBeforeAlertAction() {
         
-        var minBeforeAlertTemp = MinBeforeAlert.text.toInt()
+        let minBeforeAlertTemp = Int(MinBeforeAlert.text!)
         
         if (minBeforeAlertTemp >= 0 && minBeforeAlertTemp <= 60){
             defaults.setInteger(minBeforeAlertTemp!, forKey: "minBeforeAlert")
@@ -172,8 +172,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alert.title = restartAlertTitle
         alert.message = restartAlertText
         
-        let yesBut = alert.addButtonWithTitle(cancelPrompt)
-        let noBut = alert.addButtonWithTitle(okPrompt)
+        alert.addButtonWithTitle(cancelPrompt)
+        alert.addButtonWithTitle(okPrompt)
         alert.delegate = self  // set the delegate here
         alert.show()
         
@@ -181,21 +181,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
         let buttonTitle = alertView.buttonTitleAtIndex(buttonIndex)
-        println("\(buttonTitle) pressed")
+        print("\(buttonTitle) pressed")
         if buttonTitle == okPrompt {
-            
-            var convertDates = ConvertScheduleToCurrentWeek()
-            
-            //remove existing schedule file
-            String().writeToFile(scheduleFile, atomically: false, encoding: NSUTF8StringEncoding)
-            schedule = scheduleHandler()
             
             if (UseLastYearsData.on == true){
                 defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
                 defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
-                byPassCsvDownloadCheck = true
-                schedule.DownloadCsv()
-                convertDates.convertScheduleCSV()
                 
             } else {
                 defaults.setValue(artistUrlDefault, forKey: "artistUrl")
@@ -203,7 +194,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             }
             
             //clear all existing notifications
-            var localNotification = localNoticationHandler()
+            let localNotification = localNoticationHandler()
             localNotification.clearNotifications();
             
             exit(0)

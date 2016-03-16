@@ -8,19 +8,17 @@
 
 import UIKit
 import CoreData
-import Parse
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
-
+    
     var window: UIWindow?
-    var pushNotificationController:PushNotificationController?
-
+    
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
         let splitViewController = self.window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
-        navigationController.topViewController.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem()
+        navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem()
         splitViewController.delegate = self
 
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
@@ -38,26 +36,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUbiquitousKeyValueStore.defaultStore().synchronize()
         updateBandFromICloud()
 
-        //parse code
-        self.pushNotificationController = PushNotificationController()
-        
-        // Register for Push Notitications, if running iOS 8
-        if application.respondsToSelector("registerUserNotificationSettings:") {
-            
-            let types:UIUserNotificationType = (.Alert | .Badge | .Sound)
-            let settings:UIUserNotificationSettings = UIUserNotificationSettings(forTypes: types, categories: nil)
-            
-            application.registerUserNotificationSettings(settings)
-            application.registerForRemoteNotifications()
-            
-        } else {
-            // Register for Push Notifications before iOS 8
-            //application.registerForRemoteNotificationTypes(.Alert | .Badge | .Sound)
-            application.registerForRemoteNotifications()
-            
-        }
-        
-        //parse done
         
         //register Application Defaults
         let defaults = ["artistUrl": artistUrlDefault,
@@ -70,38 +48,227 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         NSUserDefaults.standardUserDefaults().registerDefaults(defaults)
         
+        // Sets up Mobile Push Notification
+        let readAction = UIMutableUserNotificationAction()
+        readAction.identifier = "READ_IDENTIFIER"
+        readAction.title = "Read"
+        readAction.activationMode = UIUserNotificationActivationMode.Foreground
+        readAction.destructive = false
+        readAction.authenticationRequired = true
+        
+        let deleteAction = UIMutableUserNotificationAction()
+        deleteAction.identifier = "DELETE_IDENTIFIER"
+        deleteAction.title = "Delete"
+        deleteAction.activationMode = UIUserNotificationActivationMode.Foreground
+        deleteAction.destructive = true
+        deleteAction.authenticationRequired = true
+        
+        let ignoreAction = UIMutableUserNotificationAction()
+        ignoreAction.identifier = "IGNORE_IDENTIFIER"
+        ignoreAction.title = "Ignore"
+        ignoreAction.activationMode = UIUserNotificationActivationMode.Foreground
+        ignoreAction.destructive = false
+        ignoreAction.authenticationRequired = false
+        
+        let messageCategory = UIMutableUserNotificationCategory()
+        messageCategory.identifier = "MESSAGE_CATEGORY"
+        messageCategory.setActions([readAction, deleteAction], forContext: UIUserNotificationActionContext.Minimal)
+        messageCategory.setActions([readAction, deleteAction, ignoreAction], forContext: UIUserNotificationActionContext.Default)
+        
+        
+        let notificationSettings = UIUserNotificationSettings(forTypes: [.Alert, .Sound, .Badge], categories: nil)
+        //let types = UIUserNotificationType.Badge | UIUserNotificationType.Sound | UIUserNotificationType.Alert
+        //let notificationSettings = UIUserNotificationSettings(forTypes: types, categories: NSSet(object: messageCategory))
+        
+        UIApplication.sharedApplication().registerForRemoteNotifications()
+        UIApplication.sharedApplication().registerUserNotificationSettings(notificationSettings)
+        
+        // Sets up the AWS Mobile SDK for iOS
+        let credentialsProvider = AWSCognitoCredentialsProvider(
+            regionType: CognitoRegionType,
+            identityPoolId: CognitoIdentityPoolId)
+        let defaultServiceConfiguration = AWSServiceConfiguration(
+            region: DefaultServiceRegionType,
+            credentialsProvider: credentialsProvider)
+        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
+        
+        //end push notification
+
         readFile()
         return true
     
     }
     
-    //pase push functions
-
-    func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
-        println("didRegisterForRemoteNotificationsWithDeviceToken")
+    // push functions
+    func subscribe(token : String, completionHandler : ((NSError?) -> ())? = nil) {
+        let credentialsProvider : AWSStaticCredentialsProvider = AWSStaticCredentialsProvider(accessKey: AWSaccessKey, secretKey: AWSsecretKey)
+        let defaultServiceConfiguration : AWSServiceConfiguration = AWSServiceConfiguration(region: DefaultServiceRegionType, credentialsProvider: credentialsProvider)
         
-        let currentInstallation = PFInstallation.currentInstallation()
+        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
         
-        currentInstallation.setDeviceTokenFromData(deviceToken)
-        currentInstallation.saveInBackgroundWithBlock { (succeeded, e) -> Void in
-            //code
+        let sns = AWSSNS.defaultSNS()
+        let createPlatformEndpointInput = AWSSNSCreatePlatformEndpointInput()
+        createPlatformEndpointInput.token = token
+        createPlatformEndpointInput.platformApplicationArn = SNSPlatformApplicationArn
+        
+        sns.createPlatformEndpoint(createPlatformEndpointInput).continueWithBlock {
+                (task) -> AnyObject! in
+                if task.error != nil {
+                    print("Error creating platform endpoint: \(task.error)")
+                    completionHandler?(task.error)
+                    return nil
+                }
+                let result = task.result as! AWSSNSCreateEndpointResponse
+                let subscribeInput = AWSSNSSubscribeInput()
+                subscribeInput.topicArn = SNSTopicARN
+                subscribeInput.endpoint = result.endpointArn
+                print("Endpoint arn: \(result.endpointArn)")
+                subscribeInput.protocols = "application"
+                sns.subscribe(subscribeInput).continueWithBlock
+                    {
+                        (task) -> AnyObject! in
+                        if task.error != nil
+                        {
+                            completionHandler?(task.error)
+                            print("Error subscribing: \(task.error)")
+                            return nil
+                        }
+                        print("Subscribed succesfully")
+                        let subscriptionConfirmInput = AWSSNSConfirmSubscriptionInput()
+                        subscriptionConfirmInput.token = token
+                        subscriptionConfirmInput.topicArn = SNSTopicARN
+                        sns.confirmSubscription(subscriptionConfirmInput).continueWithBlock{
+                                (task) -> AnyObject! in
+                                if task.error != nil {
+                                    print("Confirmed subscription")
+                                } else {
+                                    print ("Error during Subscribed");
+                                    print (task.error)
+                                }
+                                completionHandler?(task.error)
+                                return nil
+                        }
+                        return nil
+                }
+                return nil
         }
     }
     
+    func sendMessage(message : String, type : String = "alert", sound : String = "default", badges : Int = 1, completionHandler : ((NSError?) -> ())? = nil) {
+        let credentialsProvider : AWSStaticCredentialsProvider = AWSStaticCredentialsProvider(accessKey: AWSaccessKey, secretKey: AWSsecretKey)
+        let defaultServiceConfiguration : AWSServiceConfiguration = AWSServiceConfiguration(region: DefaultServiceRegionType, credentialsProvider: credentialsProvider)
+        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
+        
+        
+        let sns = AWSSNS.defaultSNS()
+        let request = AWSSNSPublishInput()
+        request.messageStructure = "json"
+        
+        let dict = ["default": message, AWSenvironment: "{\"aps\":{\"\(type)\": \"\(message)\",\"sound\":\"\(sound)\", \"badge\":\"\(badges)\"} }"]
+        
+        do {
+            let jsonData = try NSJSONSerialization.dataWithJSONObject(dict, options: NSJSONWritingOptions.PrettyPrinted)
+            request.message = (NSString(data: jsonData, encoding: NSUTF8StringEncoding) as? String)
+            request.topicArn = SNSTopicARN
+            
+            sns.publish(request).continueWithBlock
+                {
+                    (task) -> AnyObject! in
+                    if task.error != nil
+                    {
+                        print("Error sending mesage: \(task.error)")
+                    }
+                    else
+                    {
+                        print("Success sending message")
+                    }
+                    completionHandler?(task.error)
+                    return nil
+            }
+        }
+        catch {
+            print("Error on json serialization: \(error)")
+        }
+        
+    }
+    
+    func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
+        let deviceTokenString = "\(deviceToken)"
+            .stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString:"<>"))
+            .stringByReplacingOccurrencesOfString(" ", withString: "")
+        print("deviceTokenString: \(deviceTokenString)")
+        NSUserDefaults.standardUserDefaults().setObject(deviceTokenString, forKey: "deviceToken")
+        
+        let sns = AWSSNS.defaultSNS()
+        let request = AWSSNSCreatePlatformEndpointInput()
+        request.token = deviceTokenString
+        request.platformApplicationArn = SNSPlatformApplicationArn
+        sns.createPlatformEndpoint(request).continueWithExecutor(AWSExecutor.mainThreadExecutor(), withBlock: { (task: AWSTask!) -> AnyObject! in
+            if task.error != nil {
+                print("Error: \(task.error)")
+            } else {
+                let createEndpointResponse = task.result as! AWSSNSCreateEndpointResponse
+                let endPointAWS = createEndpointResponse.endpointArn
+                print("endpointArn: \(endPointAWS)")
+                NSUserDefaults.standardUserDefaults().setObject(endPointAWS, forKey: "endpointArn")
+                
+            }
+        
+            return nil
+        })
+        self.subscribe(deviceTokenString)
+        
+    }
+    
     func application(application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
-        println("failed to register for remote notifications:  (error)")
+        print("Failed to register with error: \(error)")
     }
     
-    func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
-        println("didReceiveRemoteNotification")
-        PFPush.handlePush(userInfo)
+    func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
+        // display the userInfo
+        if let notification = userInfo["aps"] as? NSDictionary,
+            let alert = notification["alert"] as? String {
+            let alertCtrl = UIAlertController(title: "70K Bands", message: alert as String, preferredStyle: UIAlertControllerStyle.Alert)
+            alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.Default, handler: nil))
+
+            // Find the presented VC...
+            var presentedVC = self.window?.rootViewController
+            while (presentedVC!.presentedViewController != nil)  {
+                presentedVC = presentedVC!.presentedViewController
+            }
+            presentedVC!.presentViewController(alertCtrl, animated: true, completion: nil)
+            
+            // call the completion handler
+            // -- pass in NoData, since no new data was fetched from the server.
+            completionHandler(UIBackgroundFetchResult.NoData)
+        }
     }
-  
     
-    //end parse push functions
+    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [NSObject : AnyObject], completionHandler: () -> Void) {
+        
+        completionHandler()
+    }
+    
+    //end push functions
     
     //iCloud functions
-
+    
+    
+    func applicationDidEnterBackground(application: UIApplication) {
+        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        writeFiltersFile()
+        writeFile()
+        
+        //push notification
+        //self.connectedToGCM = false
+    }
+    
+    func applicationDidBecomeActive( application: UIApplication){
+        
+        NSNotificationCenter.defaultCenter().postNotificationName("RefreshDisplay", object: nil)
+        
+    }
+    
     func iCloudKeysChanged(notification: NSNotification) {
         updateBandFromICloud()
     }
@@ -121,22 +288,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
     }
 
-    func applicationDidEnterBackground(application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        writeFiltersFile()
-        writeFile()
-        
-    }
 
     func applicationWillEnterForeground(application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     }
 
-    func applicationDidBecomeActive(application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-        NSNotificationCenter.defaultCenter().postNotificationName("RefreshDisplay", object: nil)
-    }
 
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
@@ -148,7 +304,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     // MARK: - Split view
 
-    func splitViewController(splitViewController: UISplitViewController, collapseSecondaryViewController secondaryViewController:UIViewController!, ontoPrimaryViewController primaryViewController:UIViewController!) -> Bool {
+    func splitViewController(splitViewController: UISplitViewController, collapseSecondaryViewController secondaryViewController:UIViewController, ontoPrimaryViewController primaryViewController:UIViewController) -> Bool {
         if let secondaryAsNavController = secondaryViewController as? UINavigationController {
             if let topAsDetailController = secondaryAsNavController.topViewController as? DetailViewController {
                 if topAsDetailController.detailItem == nil {
@@ -164,7 +320,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     lazy var applicationDocumentsDirectory: NSURL = {
         // The directory the application uses to store the Core Data store file. This code uses a directory named "com.rdorn._0000TonsBands" in the application's documents Application Support directory.
         let urls = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
-        return urls[urls.count-1] as! NSURL
+        return urls[urls.count-1] 
     }()
 
     lazy var managedObjectModel: NSManagedObjectModel = {
@@ -180,7 +336,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let url = self.applicationDocumentsDirectory.URLByAppendingPathComponent("_0000TonsBands.sqlite")
         var error: NSError? = nil
         var failureReason = "There was an error creating or loading the application's saved data."
-        if coordinator!.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: url, options: nil, error: &error) == nil {
+        do {
+            try coordinator!.addPersistentStoreWithType(NSSQLiteStoreType, configuration: nil, URL: url, options: nil)
+        } catch var error1 as NSError {
+            error = error1
             coordinator = nil
             // Report any error we got.
             var dict = [String: AnyObject]()
@@ -192,6 +351,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
             NSLog("Unresolved error \(error), \(error!.userInfo)")
             abort()
+        } catch {
+            fatalError()
         }
         
         return coordinator
@@ -213,11 +374,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func saveContext () {
         if let moc = self.managedObjectContext {
             var error: NSError? = nil
-            if moc.hasChanges && !moc.save(&error) {
-                // Replace this implementation with code to handle the error appropriately.
-                // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                NSLog("Unresolved error \(error), \(error!.userInfo)")
-                abort()
+            if moc.hasChanges {
+                do {
+                    try moc.save()
+                } catch let error1 as NSError {
+                    error = error1
+                    // Replace this implementation with code to handle the error appropriately.
+                    // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                    NSLog("Unresolved error \(error), \(error!.userInfo)")
+                    abort()
+                }
             }
         }
     }

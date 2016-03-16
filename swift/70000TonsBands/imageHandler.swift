@@ -14,11 +14,13 @@ var imageCache = [String: UIImage]()
 
 func displayImage (urlString: String, bandName: String, logoImage: UIImageView) -> Void {
     
-    var imageStore = dirs[0].stringByAppendingPathComponent( bandName + ".png")
     
+    let imageStore = getDocumentsDirectory().stringByAppendingPathComponent(bandName + ".png")
     
-    if var imageData: UIImage = UIImage(contentsOfFile: imageStore) {
-        println("Loading image from file cache for " + bandName)
+    let imageStoreFile = NSURL(fileURLWithPath: dirs[0]).URLByAppendingPathComponent( bandName + ".png")
+    
+    if let imageData: UIImage = UIImage(contentsOfFile: imageStore) {
+        print("Loading image from file cache for " + bandName)
         logoImage.image = imageData
         return
     }
@@ -28,33 +30,64 @@ func displayImage (urlString: String, bandName: String, logoImage: UIImageView) 
     }
     
     var image = UIImage()
+    
+    let session = NSURLSession.sharedSession()
+    let url = NSURL(string: urlString)
+    let request = NSURLRequest(URL: url!)
+    let dataTask = session.dataTaskWithRequest(request) { (data:NSData?, response:NSURLResponse?, error:NSError?) -> Void in
+        if let httpResponse = response as? NSHTTPURLResponse {
+            let statusCode = httpResponse.statusCode
+            if statusCode == 200 {
+                image = UIImage(data: data!)!
+                imageCache[urlString] = image
+                logoImage.image =  image
+                
+                UIImageJPEGRepresentation(image,1.0)!.writeToURL(imageStoreFile, atomically: true)
+                
+                
+                
+            } else {
+                print("Could not download image " + statusCode.description)
+            }
+        } else {
+            print("Could not download image Not sure what is going on here " + response.debugDescription)
+        }
+    }
+    dataTask.resume()
+    
+    /*
+    var image = UIImage()
 
 
     // If the image does not exist, we need to download it
-    var imgURL: NSURL = NSURL(string: urlString)!
-        
+    let imgURL: NSURL = NSURL(string: urlString)!
+    print ("Trying to download image " + urlString);
+    
     // Download an NSData representation of the image at the URL
-    var request: NSURLRequest = NSURLRequest(URL: imgURL)
+    let request: NSURLRequest = NSURLRequest(URL: imgURL)
     
     var urlConnection: NSURLConnection = NSURLConnection(request: request, delegate: nil)!
     
-    NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue(), completionHandler: {(response: NSURLResponse!,data: NSData!,error: NSError!) -> Void in
+    NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue(), completionHandler: {(response: NSURLResponse?,data: NSData?,error: NSError?) -> Void in
 
         if let httpResponse = response as? NSHTTPURLResponse {
             let statusCode = httpResponse.statusCode
             if statusCode == 200 {
-                image = UIImage(data: data)!
+                image = UIImage(data: data!)!
                 imageCache[urlString] = image
                 logoImage.image =  image
                 
-                UIImageJPEGRepresentation(image,1.0).writeToFile(imageStore, atomically: true)
+                UIImageJPEGRepresentation(image,1.0)!.writeToURL(imageStoreFile, atomically: true)
                 
                 usleep(200)
                 
             } else {
-                println(statusCode)
+                print("Could not download image " + statusCode.description)
             }
+        } else {
+            print("Could not download image sendAsynchronousRequest failed " + NSHTTPURLResponse.debugDescription())
         }
 
     })
+    */
 }

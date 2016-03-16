@@ -13,11 +13,11 @@ var openUrl = ""
 
 
 func setUrl (url: String){
-    println ("Setting url to be " + url);
+    print ("Setting url to be " + url);
     openUrl = url;
 }
 
 func getUrl () -> String {
-    println ("Returning url of " + openUrl)
+    print ("Returning url of " + openUrl)
     return openUrl;
 }

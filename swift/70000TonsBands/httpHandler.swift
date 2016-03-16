@@ -15,10 +15,10 @@ func HTTPsendRequest(request: NSMutableURLRequest,
             completionHandler: {
                 data, response, error in
                 if error != nil {
-                    callback("", error.localizedDescription)
+                    callback("", error!.localizedDescription)
                 } else {
                     callback(
-                        NSString(data: data, encoding: NSUTF8StringEncoding)! as String,
+                        NSString(data: data!, encoding: NSUTF8StringEncoding) as! String,
                         nil
                     )
                 }
@@ -28,6 +28,7 @@ func HTTPsendRequest(request: NSMutableURLRequest,
 }
 
 func HTTPGet(url: String, callback: (String, String?) -> Void) {
-    var request = NSMutableURLRequest(URL: NSURL(string: url)!)
-    HTTPsendRequest(request, callback)
+    let request = NSMutableURLRequest(URL: NSURL(string: url)!)
+    request.timeoutInterval = 30;
+    HTTPsendRequest(request, callback: callback)
 }

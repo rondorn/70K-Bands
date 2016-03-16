@@ -8,12 +8,20 @@
  Translation provided by bodomdragon. Thank you kind sir!!!
 */
 
-"Must"="Sí";
+/*
+ LocalizationStrings.strings
+ 70K Bands
+ Created by Ron Dorn on 7/18/15.
+ Copyright (c) 2015 Ron Dorn. All rights reserved.
+ Translation provided by bodomdragon. Thank you kind sir!!!
+ */
+
+"Must"="Tienes Que";
 "Might"="Quizás";
 "Wont"="No";
 
 "Ok"="Sí";
-"Cancel"="No";
+"Cancel"="Cancelar";
 
 "Alert On Must See Bands"="Alerta para bandas que quiero ver";
 "Alert On Might See Bands"="Alerta para bandas que quizás vea";
@@ -21,7 +29,7 @@
 "Alert For Shows"="Alerta Para Conciertos";
 "Alert For Special Events"="Alerta Para Eventos Especiales";
 "Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet's ";
-"Alert For Clinics"="Alerta para Clinics";
+"Alert For Clinics"="Alerta para Clinicas";
 
 "Alert For Album Listening Events"="Alerta para escuchas de álbums";
 

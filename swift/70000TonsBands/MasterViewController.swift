@@ -62,7 +62,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             name: NSUserDefaultsDidChangeNotification ,
             object: nil)
         
-        var refreshControl = UIRefreshControl()
+        let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: Selector("refreshData"), forControlEvents: UIControlEvents.ValueChanged)
         self.refreshControl = refreshControl
         scheduleButton.setTitle(getBandIconSort(), forState: UIControlState.Normal)
@@ -71,7 +71,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setFilterButtons()
         refreshData()
         
-        var didChange: Void = NSUserDefaults.standardUserDefaults().didChangeValueForKey("mustSeeAlert")
+        NSUserDefaults.standardUserDefaults().didChangeValueForKey("mustSeeAlert")
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshDisplayAfterWake", name: "RefreshDisplay", object: nil)
         
@@ -108,8 +108,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshAlerts(){
-        dispatch_async(dispatch_get_global_queue(Int(QOS_CLASS_BACKGROUND.value), 0)) {
-            var localNotication = localNoticationHandler()
+        dispatch_async(dispatch_get_global_queue(Int(QOS_CLASS_BACKGROUND.rawValue), 0)) {
+            let localNotication = localNoticationHandler()
             localNotication.clearNotifications()
             localNotication.addNotifications()
         }
@@ -119,7 +119,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         readBandFile()
         schedule.populateSchedule()
-        bands = getFilteredBands(getBandNames(), schedule)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         bandsByName = bands
         
     }
@@ -127,30 +127,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func ensureCorrectSorting(){
         
         if (schedule.schedulingData.isEmpty == true){
-            println("Schedule is empty, stay hidden")
+            print("Schedule is empty, stay hidden")
             self.scheduleButton.hidden = true;
             sortedBy = "name"
             self.scheduleButton.setTitle(getScheduleIcon(), forState: UIControlState.Normal)
             bands = bandsByName
-            bands = getFilteredBands(bands, schedule)
+            bands = getFilteredBands(bands, schedule: schedule)
             
         } else if (sortedBy == "name"){
-            println("Sort By is Name, Show")
+            print("Sort By is Name, Show")
             self.scheduleButton.hidden = false;
             self.scheduleButton.setTitle(getScheduleIcon(), forState: UIControlState.Normal)
             bands = bandsByName
-            bands = getFilteredBands(bands, schedule)
+            bands = getFilteredBands(bands, schedule: schedule)
             
         } else {
             sortedBy = "time"
-            println("Sort By is Time, Show")
+            print("Sort By is Time, Show")
             self.sortBandsByTime()
             self.scheduleButton.hidden = false;
             self.scheduleButton.setTitle(getBandIconSort(), forState: UIControlState.Normal)
             if (bandsByTime.isEmpty == false){
                 bands = bandsByTime
             }
-            bands = getFilteredBands(bands, schedule)
+            bands = getFilteredBands(bands, schedule: schedule)
         }
     }
     
@@ -166,12 +166,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             if (offline == false){
                 schedule.DownloadCsv()
-                var validate = validateCSVSchedule()
+                let validate = validateCSVSchedule()
                 validate.validateSchedule()
             }
             
             schedule.populateSchedule()
-            self.bands = getFilteredBands(getBandNames(), schedule)
+            self.bands = getFilteredBands(getBandNames(), schedule: schedule)
             self.bandsByName = self.bands
             dispatch_async(dispatch_get_main_queue()){
                 
@@ -204,8 +204,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func filterContent(sender: UIButton) {
         
-        var filteredBands =  [String]()
-        var filterInt :Int = 0
         
         if (sender.titleLabel?.text == getMustSeeIcon()){
             
@@ -248,14 +246,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
         } else {
-            bands = getFilteredBands(getBandNames(), schedule)
+            bands = getFilteredBands(getBandNames(), schedule: schedule)
             updateCountLable(self.bands.count)
             tableView.reloadData()
             return
         }
         
-        println("Sorted  by is " + sortedBy)
-        bands = getFilteredBands(getBandNames(), schedule)
+        print("Sorted  by is " + sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         if (sortedBy == "time"){
             sortBandsByTime()
             bands = bandsByTime
@@ -277,7 +275,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands = getBandNames()
         for band in bands {
             if (getPriorityData(band) == 1){
-                println ("Adding band " + band)
+                print ("Adding band " + band)
                 favoriteBands += "\t" + getMustSeeIcon() + "\t" +  band + "\n"
             }
         }
@@ -323,7 +321,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) as! UITableViewCell
+        let cell = tableView.dequeueReusableCellWithIdentifier("Cell", forIndexPath: indexPath) 
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
@@ -338,15 +336,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         setScheduleButton(scheduleButton.hidden)
         
-        cell.textLabel!.text = getCellValue(indexPath.row, schedule)
+        cell.textLabel!.text = getCellValue(indexPath.row, schedule: schedule)
 
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        println("Getting Details")
+        print("Getting Details")
         if segue.identifier == "showDetail" {
-            if let indexPath = self.tableView.indexPathForSelectedRow() {
-                println(bands[indexPath.row])
+            if let indexPath = self.tableView.indexPathForSelectedRow {
+                print(bands[indexPath.row])
                 //let object = bands[indexPath.row] as String
                 //(segue.destinationViewController as DetailViewController).detailItem = bands[indexPath.row]
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
@@ -365,14 +363,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var sortableTimeIndexArray = [NSTimeInterval]()
         var sortedBands = [String]()
         
-        var fullBands = bands;
+        //var fullBands = bands;
         var dupAvoidBands = Dictionary<String,Int>()
         
-        var futureTime :Int64 = 8000000000000;
+        let futureTime :Int64 = 8000000000000;
         var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
         
         for bandName in bands {
-            var timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
+            let timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
             if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
                 sortableBands[timeIndex] = bandName
                 sortableTimeIndexArray.append(timeIndex)
@@ -384,7 +382,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         
-        var sortedArray = sorted(sortableTimeIndexArray, {$0 < $1})
+        let sortedArray = sortableTimeIndexArray.sort({$0 < $1})
         
         for index in sortedArray{
             if (dupAvoidBands[sortableBands[index]!] == nil){

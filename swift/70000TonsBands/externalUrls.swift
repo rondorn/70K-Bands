@@ -13,10 +13,12 @@ func getWikipediaPage (bandName: String) -> String{
     
     var wikipediaUrl = wikipediaLink[bandName];
 
-    let language: String = NSLocale.preferredLanguages()[0] as! String
+    var language: String = NSLocale.preferredLanguages()[0]
     
+    language = language.substringToIndex(language.startIndex.advancedBy(2))
+    print ("Language is " + language);
     if (language != "en"){
-        var replacement: String = language + ".wikipedia.org";
+        let replacement: String = language + ".wikipedia.org";
         
         wikipediaUrl = wikipediaUrl!.stringByReplacingOccurrencesOfString("en.wikipedia.org", withString:replacement)
     }
@@ -29,7 +31,7 @@ func getYouTubePage (bandName: String) -> String{
     
     var youTubeUrl = youtubeLinks[bandName];
 
-    let language: String = NSLocale.preferredLanguages()[0] as! String
+    let language: String = NSLocale.preferredLanguages()[0] 
     
     if (language != "en"){
         youTubeUrl = youTubeUrl! + "&hl=" + language
@@ -41,7 +43,7 @@ func getYouTubePage (bandName: String) -> String{
 
 func getMetalArchives (bandName: String) -> String {
     
-    var metalArchives = metalArchiveLinks[bandName];
+    let metalArchives = metalArchiveLinks[bandName];
 
     return (metalArchives)!
 }

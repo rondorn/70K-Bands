@@ -34,7 +34,7 @@ class loadingSchedule: XCTestCase {
         schedule.schedulingData = [String : [NSTimeInterval : [String : String]]]()
         schedule.populateSchedule()
         
-        println (schedule.schedulingData)
+        print (schedule.schedulingData)
         XCTAssertNotNil(schedule.schedulingData["1349"], "Band 1349 has an entry")
         XCTAssertNotNil(schedule.schedulingData["Wintersun"], "Band Wintersun has an entry")
         

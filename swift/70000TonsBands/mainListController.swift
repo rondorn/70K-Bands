@@ -94,8 +94,8 @@ import Foundation
                     preventDups[bandName] = 1
                 }
             default:
-                print("Encountered unexpected value of ")
-                println (getPriorityData(bandName))
+                print("Encountered unexpected value of ", terminator: "")
+                print (getPriorityData(bandName))
             }
         }
         
@@ -105,8 +105,8 @@ import Foundation
     
     func getCellValue (indexRow: Int, schedule: scheduleHandler) -> String{
     
-        var bandName = bands[indexRow]
-        var timeIndex = schedule.getCurrentIndex(bandName)
+        let bandName = bands[indexRow]
+        let timeIndex = schedule.getCurrentIndex(bandName)
         var cellText = String()
     
         if (getPriorityData(bandName) == 0){
@@ -115,20 +115,20 @@ import Foundation
             cellText = getPriorityIcon(getPriorityData(bandName)) + " - " + bandName
         }
         
-        var location = schedule.getData(bandName, index:timeIndex, variable: "Location")
-        var day = schedule.getData(bandName, index: timeIndex, variable: "Day")
-        var startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
+        let location = schedule.getData(bandName, index:timeIndex, variable: "Location")
+        let day = schedule.getData(bandName, index: timeIndex, variable: "Day")
+        let startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
         
     
         if (day.isEmpty == false && timeIndex > NSDate().timeIntervalSince1970 - 3600){
-            println(bandName + " displaying timeIndex of \(timeIndex) ")
+            print(bandName + " displaying timeIndex of \(timeIndex) ")
             cellText += " - " + day
             cellText += " " + startTime
             cellText += " " + location
             scheduleButton = false
             
         } else {
-            println ("Not display schedule for band " + bandName)
+            print ("Not display schedule for band " + bandName)
             scheduleButton = true
         }
         

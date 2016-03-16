@@ -29,8 +29,18 @@ class DetailViewController: UIViewController{
     @IBOutlet weak var priorityButtons: UISegmentedControl!
     @IBOutlet weak var priorityView: UITextField!
     
+    /*
+    @IBOutlet weak var Event1Button: UIButton!
+    @IBOutlet weak var Event2Button: UIButton!
+    @IBOutlet weak var Event3Button: UIButton!
+    @IBOutlet weak var Event4Button: UIButton!
+    @IBOutlet weak var Event5Button: UIButton!
+    */
     
-    
+    @IBOutlet weak var Country: UITextField!
+    @IBOutlet weak var Genre: UITextField!
+    @IBOutlet weak var NoteWorthy: UITextField!
+
     var bandName :String!
     var schedule = scheduleHandler()
     
@@ -46,6 +56,14 @@ class DetailViewController: UIViewController{
         // Do any additional setup after loading the view, typically from a nib.
         self.configureView()
         
+        /*
+        Event1Button.hidden = true;
+        Event2Button.hidden = true;
+        Event3Button.hidden = true;
+        Event4Button.hidden = true;
+        Event5Button.hidden = true;
+        */
+        
         readFile()
         
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
@@ -53,20 +71,25 @@ class DetailViewController: UIViewController{
         if bandName == nil && bands.isEmpty == false {
             var bands = getBandNames()
             bandName = bands[0]
-            println("Providing default band of " + bandName)
+            print("Providing default band of " + bandName)
         }
         
         if bandName != nil {
             
             schedule.populateSchedule()
-            var imageURL = getBandImageUrl(bandName)
-            println("imageUrl: " + imageURL)
-            displayImage(imageURL, bandName, bandLogo)
+            let imageURL = getBandImageUrl(bandName)
+            print("imageUrl: " + imageURL)
+            
+            //called twice to ensure image is loaded even if delayed
+            displayImage(imageURL, bandName: bandName, logoImage: bandLogo)
+            sleep(1)
+            displayImage(imageURL, bandName: bandName, logoImage: bandLogo)
+            
+            print ("Priority for bandName " + bandName + " ", terminator: "")
+            print(getPriorityData(bandName))
             
             
-            print ("Priority for bandName " + bandName + " ")
-            println(getPriorityData(bandName))
-            
+            showBandDetails()
             showFullSchedule()
             setButtonNames()
             rotationChecking()
@@ -81,6 +104,38 @@ class DetailViewController: UIViewController{
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "rotationChecking", name: UIDeviceOrientationDidChangeNotification, object: nil)
     }
     
+    func showBandDetails(){
+        
+        if(UIDeviceOrientationIsPortrait(UIDevice.currentDevice().orientation) || UIDevice.currentDevice().userInterfaceIdiom != .Phone){
+            
+            if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
+                Country.text = "";
+            } else {
+                Country.text = "Country:\t" + bandCountry[bandName]!
+            
+            }
+
+            if (bandGenre[bandName] == nil || bandGenre[bandName]!.isEmpty){
+                Genre.text = ""
+            
+            } else {
+                Genre.text = "Genre:\t" + bandGenre[bandName]!
+            
+            }
+    
+            if (bandNoteWorthy[bandName] == nil || bandNoteWorthy[bandName]!.isEmpty){
+                NoteWorthy.text = ""
+            } else {
+                NoteWorthy.text = "Note:\t" + bandNoteWorthy[bandName]!
+            }
+        } else if (UIDevice.currentDevice().userInterfaceIdiom == .Phone) {
+            Country.text = ""
+            Genre.text = ""
+            NoteWorthy.text = ""
+        }
+    }
+    
+    
     func rotationChecking(){
         
         //need to hide things to make room in the detail display
@@ -93,6 +148,7 @@ class DetailViewController: UIViewController{
                 wikipediaUrlButton.hidden = true;
                 youtubeUrlButton.hidden = true;
                 metalArchivesButton.hidden = true;
+                
             }
             
         } else {
@@ -102,13 +158,14 @@ class DetailViewController: UIViewController{
             youtubeUrlButton.hidden = false;
             metalArchivesButton.hidden = false;
         }
+        showBandDetails();
     }
     
     func setButtonNames(){
         
-        var MustSee = NSLocalizedString("Must", comment: "A Must See Band")
-        var MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
-        var WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
+        let MustSee = NSLocalizedString("Must", comment: "A Must See Band")
+        let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
+        let WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
         
         priorityButtons.setTitle(mustSeeIcon + " " + MustSee, forSegmentAtIndex: 1)
         priorityButtons.setTitle(willSeeIcon + " " + MightSee, forSegmentAtIndex: 2)
@@ -122,7 +179,7 @@ class DetailViewController: UIViewController{
     }
     
     @IBAction func setBandPriority() {
-        addPriorityData(bandName, priorityButtons.selectedSegmentIndex)
+        addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
     }
     
     @IBAction func openLink(sender: UIButton) {
@@ -161,24 +218,21 @@ class DetailViewController: UIViewController{
     }
     
     func showFullSchedule () {
-        
+    
         if (schedule.schedulingData[bandName]?.isEmpty == false){
-            var keyValues = schedule.schedulingData[bandName]!.keys
-            var arrayValues = keyValues.array
-            var sortedArray = sorted(arrayValues, {
-                $0 < $1
-            })
-            
+            let keyValues = schedule.schedulingData[bandName]!.keys
+            let sortedArray = keyValues.sort();
             var count = 1
+            
             for index in sortedArray {
                 
-                var location = schedule.getData(bandName, index:index.0, variable: "Location")
-                var day = schedule.getData(bandName, index: index.0, variable: "Day")
-                var startTime = schedule.getData(bandName, index: index.0, variable: "Start Time")
-                var endTime = schedule.getData(bandName, index: index.0, variable: "End Time")
-                var date = schedule.getData(bandName, index:index.0, variable: "Date")
-                var type = schedule.getData(bandName, index:index.0, variable: "Type")
-                var notes = schedule.getData(bandName, index:index.0, variable: "Notes")
+                let location = schedule.getData(bandName, index:index, variable: "Location")
+                let day = schedule.getData(bandName, index: index, variable: "Day")
+                let startTime = schedule.getData(bandName, index: index, variable: "Start Time")
+                let endTime = schedule.getData(bandName, index: index, variable: "End Time")
+                let date = schedule.getData(bandName, index:index, variable: "Date")
+                let type = schedule.getData(bandName, index:index, variable: "Type")
+                let notes = schedule.getData(bandName, index:index, variable: "Notes")
                 
                 var scheduleText = String()
                 if (!date.isEmpty){
@@ -192,26 +246,33 @@ class DetailViewController: UIViewController{
                         scheduleText += " - " + notes
                     }
                     
+                    /*
                     switch count {
                     case 1:
                         Event1.text = scheduleText
+                        Event1Button.hidden = false;
                         
                     case 2:
                         Event2.text = scheduleText
+                        Event2Button.hidden = false;
                         
                     case 3:
                         Event3.text = scheduleText
+                        Event3Button.hidden = false;
                         
                     case 4:
                         Event4.text = scheduleText
+                        Event4Button.hidden = false;
                         
                     case 5:
                         Event5.text = scheduleText
+                        Event5Button.hidden = false;
                         
                     default:
-                        println("To many events")
+                        print("To many events")
                     }
-                    count++
+                    */
+                    count += 1
                     
                 }
             }
@@ -239,6 +300,21 @@ class DetailViewController: UIViewController{
             metalArchivesButton.tintColor = UIColor.grayColor()
 
         }
+
     }
+    
+    @IBAction func wentToShowToggle(sender: UIButton) {
+        
+        if (sender.titleLabel?.text == "⬜️"){
+            sender.setTitle("☑️", forState: UIControlState.Normal);
+            
+        } else {
+           sender.setTitle("⬜️", forState: UIControlState.Normal);
+        }
+        
+        
+        
+    }
+    
 }
 

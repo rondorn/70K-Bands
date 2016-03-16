@@ -1,50 +1,34 @@
-/* 
-  LocalizationStrings.strings
-  70K Bands
-
-  Created by Ron Dorn on 7/18/15.
-  Copyright (c) 2015 Ron Dorn. All rights reserved.
+/*
+ LocalizationStrings.strings
+ 70K Bands
  
- Translation provided by Google Translate (I apologize in advance)
-*/
+ Oprettet af Ron Dorn 18/7-15.
+ Copyright (c) 2015 Ron Dorn. Alle rettigheder forbeholdes.
+ translation provided by Morten Petersen, thank you kind sir
+ */
 
 
-"Must"="Ja";
-"Might"="Kan Være";
-"Wont"="Ingen";
+"Must"="Skal";
+"Might"="MÂske";
+"Wont"="Skal ikke";
 
-"Ok"="Ja";
-"Cancel"="Ingen";
+"Ok"="Ok";
+"Cancel"="Afbryd";
 
-"Alert On Must See Bands"="Alert for Ja Shows";
-"Alert On Might See Bands"="Alert for Kan Være Shows";
-"Minutes Before Event to Alert"="Advare mig før hændelsen (minutter)";
-"Alert For Shows"="Alert For Shows";
-"Alert For Special Events"="Alert til særlige begivenheder";
-"Alert For Meeting and Greet Events"="Alert For 'Meet and Greet' Begivenheder";
-"Alert For Clinics"="Alert For Klinikker";
-
-"Alert For Album Listening Events"="Alert For Album Listening Begivenheder";
-
-
-//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
-
-
-"Use Last Years Data"="Brug Sidste år oplysninger";
-"LastYearsFeatureExplication"="Aktivering 'Brug Last Years oplysninger' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.";
-
-//"restarTitle" = "Restart Required";
-//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
-
-
-"restarTitle" = "Genstart Påkrævet";
-"restartMessage" = "Gør ikke dette på krydstogt.\nInterent FORBINDELSE PÅKRÆVET.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data";
+"Alert On Must See Bands"="Notifikation ved bands der skal ses";
+"Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
+"Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
+"Alert For Shows"="Notifikation for shows";
+"Alert For Special Events"="Notifikation for specielle begivenheder";
+"Alert For Meeting and Greet Events"="Notifikation for meet and greet begivenheder";
+"Alert For Clinics"="Notifikation for clinics";
+"Alert For Album Listening Events"="Notifikation for prÊsentation af nyt album";
+"Use Last Years Data"="Brug sidste Ârs data";
+"LastYearsFeatureExplication"="Aktivering af 'Brug sidste Ârs data' vil indlÊse sidste Ârs spilleplan, men bruge et simuleret Tors-S¯n program ved at anvende din nuvÊrende uge. Dette er tiltÊnkt demonstration og test af begivenhedsfunktionerne.";
 
 
 
-
-
-
-
+"restarTitle" = "Genstart pÂkrÊvet";
+"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.\nDenne Êndring krÊver genstart af app'en.\n70K Bands Vil nu lukke ned. Genstart for at se nye data";
 
 

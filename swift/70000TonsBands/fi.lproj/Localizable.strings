@@ -5,41 +5,37 @@
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
  
- Translation provided by Google Translate (I apologize in advance)
+ Translation provided by Memnoch, thank you kind sir!
 */
 
-
 "Must"="Kyllä";
-"Might"="Voi Olla";
+"Might"="Ehkä";
 "Wont"="Ei";
 
 "Ok"="Kyllä";
-"Cancel"="Ei";
+"Cancel"="Peruuta";
 
-"Alert On Must See Bands"="Hälyttävät Kyllä ohjelmat";
-"Alert On Might See Bands"="Hälyttävät Voi Olla ohjelmat";
-"Minutes Before Event to Alert"="Ilmoita, ennen tapahtumaa (minuuttia)";
-"Alert For Shows"="Alert näytöksiin";
-"Alert For Special Events"="Alert erikoistapahtumia";
-"Alert For Meeting and Greet Events"="Kuulutus 'Meet and Greet' Tapahtumat";
-"Alert For Clinics"="Alert klinikoiden";
-"Use Last Years Data"="Käytä viime vuoden tiedot";
+"Alert On Must See Bands"="Hälytys Kyllä-bändeille";
+"Alert On Might See Bands"="Hälytys Ehkä-bändeille";
+"Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
+"Alert For Shows"="Hälytys keikoille";
+"Alert For Special Events"="Hälytys muihin tapahtumiin";
+"Alert For Meeting and Greet Events"="Hälytys 'Meet and Greet'eille";
+"Alert For Clinics"="Hälytys klinikoille";
+"Use Last Years Data"="Käytä viime vuoden tietoja";
 
-"Alert For Album Listening Events"="Kuulutus Album Listening Tapahtumat";
+"Alert For Album Listening Events"="Hälytys levyjen ennakkokuunteluihin";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
 
-"LastYearsFeatureExplication"="Aktivointi 'Käytä Viime vuoden tiedot' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.";
+"LastYearsFeatureExplication"="'Käytä viime vuoden tietoja'-valinta näyttää viime vuoden aikataulut, mutta sovittaa aikataulun kuluvan viikon torstaista sunnuntaihin. Tämä on tarkoitettu esittelyä ja aikataulun ominaisuuksien testaamista varten.";
 
 //"restarTitle" = "Restart Required";
 //"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
-"restarTitle" = "uudelleenkäynnistykseen";
-"restartMessage" = "ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot";
-
-
-
+"restarTitle" = "Vaatii uudelleenkäynnistyksen";
+"restartMessage" = "ÄLÄ TEE NÄIN LAIVALLA. VAATII INTERNET-YHTEYDEN. Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä. 70K Bändit suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot";
 
 
 

@@ -1,1 +1,403 @@
 restrictedStaticVariables.java
+.DS_Store
+Podfile.lock
+swift/Pods/AWSCore/AWSCore/AWSCore.h
+swift/Pods/AWSCore/AWSCore/Authentication/AWSCredentialsProvider.h
+swift/Pods/AWSCore/AWSCore/Authentication/AWSCredentialsProvider.m
+swift/Pods/AWSCore/AWSCore/Authentication/AWSIdentityProvider.h
+swift/Pods/AWSCore/AWSCore/Authentication/AWSIdentityProvider.m
+swift/Pods/AWSCore/AWSCore/Authentication/AWSSignature.h
+swift/Pods/AWSCore/AWSCore/Authentication/AWSSignature.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSBolts.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSBolts.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSBoltsVersion.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationToken.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationToken.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationTokenRegistration.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationTokenRegistration.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationTokenSource.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSCancellationTokenSource.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSExecutor.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSExecutor.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSTask.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSTask.m
+swift/Pods/AWSCore/AWSCore/Bolts/AWSTaskCompletionSource.h
+swift/Pods/AWSCore/AWSCore/Bolts/AWSTaskCompletionSource.m
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentity.h
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityModel.h
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityModel.m
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityResources.h
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityResources.m
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityService.h
+swift/Pods/AWSCore/AWSCore/CognitoIdentity/AWSCognitoIdentityService.m
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDB.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabase+Private.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabase.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabase.m
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabaseAdditions.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabaseAdditions.m
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabasePool.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabasePool.m
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabaseQueue.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMDatabaseQueue.m
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMResultSet.h
+swift/Pods/AWSCore/AWSCore/FMDB/AWSFMResultSet.m
+swift/Pods/AWSCore/AWSCore/GZIP/AWSGZIP.h
+swift/Pods/AWSCore/AWSCore/GZIP/AWSGZIP.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLJSONAdapter.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLJSONAdapter.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLManagedObjectAdapter.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLManagedObjectAdapter.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLModel+NSCoding.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLModel+NSCoding.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLModel.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLModel.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLReflection.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLReflection.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLValueTransformer.h
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMTLValueTransformer.m
+swift/Pods/AWSCore/AWSCore/Mantle/AWSMantle.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSArray+AWSMTLManipulationAdditions.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSArray+AWSMTLManipulationAdditions.m
+swift/Pods/AWSCore/AWSCore/Mantle/NSDictionary+AWSMTLManipulationAdditions.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSDictionary+AWSMTLManipulationAdditions.m
+swift/Pods/AWSCore/AWSCore/Mantle/NSError+AWSMTLModelException.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSError+AWSMTLModelException.m
+swift/Pods/AWSCore/AWSCore/Mantle/NSObject+AWSMTLComparisonAdditions.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSObject+AWSMTLComparisonAdditions.m
+swift/Pods/AWSCore/AWSCore/Mantle/NSValueTransformer+AWSMTLInversionAdditions.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSValueTransformer+AWSMTLInversionAdditions.m
+swift/Pods/AWSCore/AWSCore/Mantle/NSValueTransformer+AWSMTLPredefinedTransformerAdditions.h
+swift/Pods/AWSCore/AWSCore/Mantle/NSValueTransformer+AWSMTLPredefinedTransformerAdditions.m
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSEXTKeyPathCoding.h
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSEXTRuntimeExtensions.h
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSEXTRuntimeExtensions.m
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSEXTScope.h
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSEXTScope.m
+swift/Pods/AWSCore/AWSCore/Mantle/extobjc/AWSmetamacros.h
+swift/Pods/AWSCore/AWSCore/Networking/AWSNetworking.h
+swift/Pods/AWSCore/AWSCore/Networking/AWSNetworking.m
+swift/Pods/AWSCore/AWSCore/Networking/AWSURLSessionManager.h
+swift/Pods/AWSCore/AWSCore/Networking/AWSURLSessionManager.m
+swift/Pods/AWSCore/AWSCore/Reachability/AWSReachability.h
+swift/Pods/AWSCore/AWSCore/Reachability/AWSReachability.m
+swift/Pods/AWSCore/AWSCore/STS/AWSSTS.h
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSModel.h
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSModel.m
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSResources.h
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSResources.m
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSService.h
+swift/Pods/AWSCore/AWSCore/STS/AWSSTSService.m
+swift/Pods/AWSCore/AWSCore/Serialization/AWSSerialization.h
+swift/Pods/AWSCore/AWSCore/Serialization/AWSSerialization.m
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLRequestRetryHandler.h
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLRequestRetryHandler.m
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLRequestSerialization.h
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLRequestSerialization.m
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLResponseSerialization.h
+swift/Pods/AWSCore/AWSCore/Serialization/AWSURLResponseSerialization.m
+swift/Pods/AWSCore/AWSCore/Serialization/AWSValidation.h
+swift/Pods/AWSCore/AWSCore/Serialization/AWSValidation.m
+swift/Pods/AWSCore/AWSCore/Service/AWSClientContext.h
+swift/Pods/AWSCore/AWSCore/Service/AWSClientContext.m
+swift/Pods/AWSCore/AWSCore/Service/AWSService.h
+swift/Pods/AWSCore/AWSCore/Service/AWSService.m
+swift/Pods/AWSCore/AWSCore/Service/AWSServiceEnum.h
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMCache.h
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMCache.m
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMCacheBackgroundTaskManager.h
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMDiskCache.h
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMDiskCache.m
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMMemoryCache.h
+swift/Pods/AWSCore/AWSCore/TMCache/AWSTMMemoryCache.m
+swift/Pods/AWSCore/AWSCore/UICKeyChainStore/AWSUICKeyChainStore.h
+swift/Pods/AWSCore/AWSCore/UICKeyChainStore/AWSUICKeyChainStore.m
+swift/Pods/AWSCore/AWSCore/Utility/AWSCategory.h
+swift/Pods/AWSCore/AWSCore/Utility/AWSCategory.m
+swift/Pods/AWSCore/AWSCore/Utility/AWSLogging.h
+swift/Pods/AWSCore/AWSCore/Utility/AWSLogging.m
+swift/Pods/AWSCore/AWSCore/Utility/AWSModel.h
+swift/Pods/AWSCore/AWSCore/Utility/AWSModel.m
+swift/Pods/AWSCore/AWSCore/Utility/AWSSynchronizedMutableDictionary.h
+swift/Pods/AWSCore/AWSCore/Utility/AWSSynchronizedMutableDictionary.m
+swift/Pods/AWSCore/AWSCore/XMLDictionary/AWSXMLDictionary.h
+swift/Pods/AWSCore/AWSCore/XMLDictionary/AWSXMLDictionary.m
+swift/Pods/AWSCore/AWSCore/XMLWriter/AWSXMLWriter.h
+swift/Pods/AWSCore/AWSCore/XMLWriter/AWSXMLWriter.m
+swift/Pods/AWSCore/LICENSE
+swift/Pods/AWSCore/README.md
+swift/Pods/AWSSNS/AWSSNS/AWSSNS.h
+swift/Pods/AWSSNS/AWSSNS/AWSSNSModel.h
+swift/Pods/AWSSNS/AWSSNS/AWSSNSModel.m
+swift/Pods/AWSSNS/AWSSNS/AWSSNSResources.h
+swift/Pods/AWSSNS/AWSSNS/AWSSNSResources.m
+swift/Pods/AWSSNS/AWSSNS/AWSSNSService.h
+swift/Pods/AWSSNS/AWSSNS/AWSSNSService.m
+swift/Pods/AWSSNS/LICENSE
+swift/Pods/AWSSNS/README.md
+swift/Pods/Bolts/Bolts/Common/BFCancellationToken.h
+swift/Pods/Bolts/Bolts/Common/BFCancellationToken.m
+swift/Pods/Bolts/Bolts/Common/BFCancellationTokenRegistration.h
+swift/Pods/Bolts/Bolts/Common/BFCancellationTokenRegistration.m
+swift/Pods/Bolts/Bolts/Common/BFCancellationTokenSource.h
+swift/Pods/Bolts/Bolts/Common/BFCancellationTokenSource.m
+swift/Pods/Bolts/Bolts/Common/BFExecutor.h
+swift/Pods/Bolts/Bolts/Common/BFExecutor.m
+swift/Pods/Bolts/Bolts/Common/BFTask.h
+swift/Pods/Bolts/Bolts/Common/BFTask.m
+swift/Pods/Bolts/Bolts/Common/BFTaskCompletionSource.h
+swift/Pods/Bolts/Bolts/Common/BFTaskCompletionSource.m
+swift/Pods/Bolts/Bolts/Common/Bolts.h
+swift/Pods/Bolts/Bolts/Common/Bolts.m
+swift/Pods/Bolts/Bolts/Common/BoltsVersion.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLink.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLink.m
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkNavigation.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkNavigation.m
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkResolving.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkReturnToRefererController.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkReturnToRefererController.m
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkReturnToRefererView.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkReturnToRefererView.m
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkReturnToRefererView_Internal.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkTarget.h
+swift/Pods/Bolts/Bolts/iOS/BFAppLinkTarget.m
+swift/Pods/Bolts/Bolts/iOS/BFAppLink_Internal.h
+swift/Pods/Bolts/Bolts/iOS/BFMeasurementEvent.h
+swift/Pods/Bolts/Bolts/iOS/BFMeasurementEvent.m
+swift/Pods/Bolts/Bolts/iOS/BFMeasurementEvent_Internal.h
+swift/Pods/Bolts/Bolts/iOS/BFURL.h
+swift/Pods/Bolts/Bolts/iOS/BFURL.m
+swift/Pods/Bolts/Bolts/iOS/BFURL_Internal.h
+swift/Pods/Bolts/Bolts/iOS/BFWebViewAppLinkResolver.h
+swift/Pods/Bolts/Bolts/iOS/BFWebViewAppLinkResolver.m
+swift/Pods/Bolts/LICENSE
+swift/Pods/Bolts/README.md
+swift/Pods/Headers/Private/AWSCore/AWSBolts.h
+swift/Pods/Headers/Private/AWSCore/AWSBoltsVersion.h
+swift/Pods/Headers/Private/AWSCore/AWSCancellationToken.h
+swift/Pods/Headers/Private/AWSCore/AWSCancellationTokenRegistration.h
+swift/Pods/Headers/Private/AWSCore/AWSCancellationTokenSource.h
+swift/Pods/Headers/Private/AWSCore/AWSCategory.h
+swift/Pods/Headers/Private/AWSCore/AWSClientContext.h
+swift/Pods/Headers/Private/AWSCore/AWSCognitoIdentity.h
+swift/Pods/Headers/Private/AWSCore/AWSCognitoIdentityModel.h
+swift/Pods/Headers/Private/AWSCore/AWSCognitoIdentityResources.h
+swift/Pods/Headers/Private/AWSCore/AWSCognitoIdentityService.h
+swift/Pods/Headers/Private/AWSCore/AWSCore.h
+swift/Pods/Headers/Private/AWSCore/AWSCredentialsProvider.h
+swift/Pods/Headers/Private/AWSCore/AWSEXTKeyPathCoding.h
+swift/Pods/Headers/Private/AWSCore/AWSEXTRuntimeExtensions.h
+swift/Pods/Headers/Private/AWSCore/AWSEXTScope.h
+swift/Pods/Headers/Private/AWSCore/AWSExecutor.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDB.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDatabase+Private.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDatabase.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDatabaseAdditions.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDatabasePool.h
+swift/Pods/Headers/Private/AWSCore/AWSFMDatabaseQueue.h
+swift/Pods/Headers/Private/AWSCore/AWSFMResultSet.h
+swift/Pods/Headers/Private/AWSCore/AWSGZIP.h
+swift/Pods/Headers/Private/AWSCore/AWSIdentityProvider.h
+swift/Pods/Headers/Private/AWSCore/AWSLogging.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLJSONAdapter.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLManagedObjectAdapter.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLModel+NSCoding.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLModel.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLReflection.h
+swift/Pods/Headers/Private/AWSCore/AWSMTLValueTransformer.h
+swift/Pods/Headers/Private/AWSCore/AWSMantle.h
+swift/Pods/Headers/Private/AWSCore/AWSModel.h
+swift/Pods/Headers/Private/AWSCore/AWSNetworking.h
+swift/Pods/Headers/Private/AWSCore/AWSReachability.h
+swift/Pods/Headers/Private/AWSCore/AWSSTS.h
+swift/Pods/Headers/Private/AWSCore/AWSSTSModel.h
+swift/Pods/Headers/Private/AWSCore/AWSSTSResources.h
+swift/Pods/Headers/Private/AWSCore/AWSSTSService.h
+swift/Pods/Headers/Private/AWSCore/AWSSerialization.h
+swift/Pods/Headers/Private/AWSCore/AWSService.h
+swift/Pods/Headers/Private/AWSCore/AWSServiceEnum.h
+swift/Pods/Headers/Private/AWSCore/AWSSignature.h
+swift/Pods/Headers/Private/AWSCore/AWSSynchronizedMutableDictionary.h
+swift/Pods/Headers/Private/AWSCore/AWSTMCache.h
+swift/Pods/Headers/Private/AWSCore/AWSTMCacheBackgroundTaskManager.h
+swift/Pods/Headers/Private/AWSCore/AWSTMDiskCache.h
+swift/Pods/Headers/Private/AWSCore/AWSTMMemoryCache.h
+swift/Pods/Headers/Private/AWSCore/AWSTask.h
+swift/Pods/Headers/Private/AWSCore/AWSTaskCompletionSource.h
+swift/Pods/Headers/Private/AWSCore/AWSUICKeyChainStore.h
+swift/Pods/Headers/Private/AWSCore/AWSURLRequestRetryHandler.h
+swift/Pods/Headers/Private/AWSCore/AWSURLRequestSerialization.h
+swift/Pods/Headers/Private/AWSCore/AWSURLResponseSerialization.h
+swift/Pods/Headers/Private/AWSCore/AWSURLSessionManager.h
+swift/Pods/Headers/Private/AWSCore/AWSValidation.h
+swift/Pods/Headers/Private/AWSCore/AWSXMLDictionary.h
+swift/Pods/Headers/Private/AWSCore/AWSXMLWriter.h
+swift/Pods/Headers/Private/AWSCore/AWSmetamacros.h
+swift/Pods/Headers/Private/AWSCore/NSArray+AWSMTLManipulationAdditions.h
+swift/Pods/Headers/Private/AWSCore/NSDictionary+AWSMTLManipulationAdditions.h
+swift/Pods/Headers/Private/AWSCore/NSError+AWSMTLModelException.h
+swift/Pods/Headers/Private/AWSCore/NSObject+AWSMTLComparisonAdditions.h
+swift/Pods/Headers/Private/AWSCore/NSValueTransformer+AWSMTLInversionAdditions.h
+swift/Pods/Headers/Private/AWSCore/NSValueTransformer+AWSMTLPredefinedTransformerAdditions.h
+swift/Pods/Headers/Private/AWSSNS/AWSSNS.h
+swift/Pods/Headers/Private/AWSSNS/AWSSNSModel.h
+swift/Pods/Headers/Private/AWSSNS/AWSSNSResources.h
+swift/Pods/Headers/Private/AWSSNS/AWSSNSService.h
+swift/Pods/Headers/Private/Bolts/BFAppLink.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkNavigation.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkResolving.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkReturnToRefererController.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkReturnToRefererView.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkReturnToRefererView_Internal.h
+swift/Pods/Headers/Private/Bolts/BFAppLinkTarget.h
+swift/Pods/Headers/Private/Bolts/BFAppLink_Internal.h
+swift/Pods/Headers/Private/Bolts/BFCancellationToken.h
+swift/Pods/Headers/Private/Bolts/BFCancellationTokenRegistration.h
+swift/Pods/Headers/Private/Bolts/BFCancellationTokenSource.h
+swift/Pods/Headers/Private/Bolts/BFExecutor.h
+swift/Pods/Headers/Private/Bolts/BFMeasurementEvent.h
+swift/Pods/Headers/Private/Bolts/BFMeasurementEvent_Internal.h
+swift/Pods/Headers/Private/Bolts/BFTask.h
+swift/Pods/Headers/Private/Bolts/BFTaskCompletionSource.h
+swift/Pods/Headers/Private/Bolts/BFURL.h
+swift/Pods/Headers/Private/Bolts/BFURL_Internal.h
+swift/Pods/Headers/Private/Bolts/BFWebViewAppLinkResolver.h
+swift/Pods/Headers/Private/Bolts/Bolts.h
+swift/Pods/Headers/Private/Bolts/BoltsVersion.h
+swift/Pods/Headers/Public/AWSCore/AWSBolts.h
+swift/Pods/Headers/Public/AWSCore/AWSBoltsVersion.h
+swift/Pods/Headers/Public/AWSCore/AWSCancellationToken.h
+swift/Pods/Headers/Public/AWSCore/AWSCancellationTokenRegistration.h
+swift/Pods/Headers/Public/AWSCore/AWSCancellationTokenSource.h
+swift/Pods/Headers/Public/AWSCore/AWSCategory.h
+swift/Pods/Headers/Public/AWSCore/AWSClientContext.h
+swift/Pods/Headers/Public/AWSCore/AWSCognitoIdentity.h
+swift/Pods/Headers/Public/AWSCore/AWSCognitoIdentityModel.h
+swift/Pods/Headers/Public/AWSCore/AWSCognitoIdentityResources.h
+swift/Pods/Headers/Public/AWSCore/AWSCognitoIdentityService.h
+swift/Pods/Headers/Public/AWSCore/AWSCore.h
+swift/Pods/Headers/Public/AWSCore/AWSCredentialsProvider.h
+swift/Pods/Headers/Public/AWSCore/AWSExecutor.h
+swift/Pods/Headers/Public/AWSCore/AWSFMDB.h
+swift/Pods/Headers/Public/AWSCore/AWSFMDatabase.h
+swift/Pods/Headers/Public/AWSCore/AWSFMDatabaseAdditions.h
+swift/Pods/Headers/Public/AWSCore/AWSFMDatabasePool.h
+swift/Pods/Headers/Public/AWSCore/AWSFMDatabaseQueue.h
+swift/Pods/Headers/Public/AWSCore/AWSFMResultSet.h
+swift/Pods/Headers/Public/AWSCore/AWSGZIP.h
+swift/Pods/Headers/Public/AWSCore/AWSIdentityProvider.h
+swift/Pods/Headers/Public/AWSCore/AWSLogging.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLJSONAdapter.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLManagedObjectAdapter.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLModel+NSCoding.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLModel.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLReflection.h
+swift/Pods/Headers/Public/AWSCore/AWSMTLValueTransformer.h
+swift/Pods/Headers/Public/AWSCore/AWSMantle.h
+swift/Pods/Headers/Public/AWSCore/AWSModel.h
+swift/Pods/Headers/Public/AWSCore/AWSNetworking.h
+swift/Pods/Headers/Public/AWSCore/AWSReachability.h
+swift/Pods/Headers/Public/AWSCore/AWSSTS.h
+swift/Pods/Headers/Public/AWSCore/AWSSTSModel.h
+swift/Pods/Headers/Public/AWSCore/AWSSTSResources.h
+swift/Pods/Headers/Public/AWSCore/AWSSTSService.h
+swift/Pods/Headers/Public/AWSCore/AWSSerialization.h
+swift/Pods/Headers/Public/AWSCore/AWSService.h
+swift/Pods/Headers/Public/AWSCore/AWSServiceEnum.h
+swift/Pods/Headers/Public/AWSCore/AWSSignature.h
+swift/Pods/Headers/Public/AWSCore/AWSSynchronizedMutableDictionary.h
+swift/Pods/Headers/Public/AWSCore/AWSTMCache.h
+swift/Pods/Headers/Public/AWSCore/AWSTMCacheBackgroundTaskManager.h
+swift/Pods/Headers/Public/AWSCore/AWSTMDiskCache.h
+swift/Pods/Headers/Public/AWSCore/AWSTMMemoryCache.h
+swift/Pods/Headers/Public/AWSCore/AWSTask.h
+swift/Pods/Headers/Public/AWSCore/AWSTaskCompletionSource.h
+swift/Pods/Headers/Public/AWSCore/AWSUICKeyChainStore.h
+swift/Pods/Headers/Public/AWSCore/AWSURLRequestRetryHandler.h
+swift/Pods/Headers/Public/AWSCore/AWSURLRequestSerialization.h
+swift/Pods/Headers/Public/AWSCore/AWSURLResponseSerialization.h
+swift/Pods/Headers/Public/AWSCore/AWSURLSessionManager.h
+swift/Pods/Headers/Public/AWSCore/AWSValidation.h
+swift/Pods/Headers/Public/AWSCore/NSArray+AWSMTLManipulationAdditions.h
+swift/Pods/Headers/Public/AWSCore/NSDictionary+AWSMTLManipulationAdditions.h
+swift/Pods/Headers/Public/AWSCore/NSError+AWSMTLModelException.h
+swift/Pods/Headers/Public/AWSCore/NSObject+AWSMTLComparisonAdditions.h
+swift/Pods/Headers/Public/AWSCore/NSValueTransformer+AWSMTLInversionAdditions.h
+swift/Pods/Headers/Public/AWSCore/NSValueTransformer+AWSMTLPredefinedTransformerAdditions.h
+swift/Pods/Headers/Public/AWSSNS/AWSSNS.h
+swift/Pods/Headers/Public/AWSSNS/AWSSNSModel.h
+swift/Pods/Headers/Public/AWSSNS/AWSSNSResources.h
+swift/Pods/Headers/Public/AWSSNS/AWSSNSService.h
+swift/Pods/Headers/Public/Bolts/BFAppLink.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkNavigation.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkResolving.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkReturnToRefererController.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkReturnToRefererView.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkReturnToRefererView_Internal.h
+swift/Pods/Headers/Public/Bolts/BFAppLinkTarget.h
+swift/Pods/Headers/Public/Bolts/BFAppLink_Internal.h
+swift/Pods/Headers/Public/Bolts/BFCancellationToken.h
+swift/Pods/Headers/Public/Bolts/BFCancellationTokenRegistration.h
+swift/Pods/Headers/Public/Bolts/BFCancellationTokenSource.h
+swift/Pods/Headers/Public/Bolts/BFExecutor.h
+swift/Pods/Headers/Public/Bolts/BFMeasurementEvent.h
+swift/Pods/Headers/Public/Bolts/BFMeasurementEvent_Internal.h
+swift/Pods/Headers/Public/Bolts/BFTask.h
+swift/Pods/Headers/Public/Bolts/BFTaskCompletionSource.h
+swift/Pods/Headers/Public/Bolts/BFURL.h
+swift/Pods/Headers/Public/Bolts/BFURL_Internal.h
+swift/Pods/Headers/Public/Bolts/BFWebViewAppLinkResolver.h
+swift/Pods/Headers/Public/Bolts/Bolts.h
+swift/Pods/Headers/Public/Bolts/BoltsVersion.h
+swift/Pods/Manifest.lock
+swift/Pods/Pods.xcodeproj/project.pbxproj
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/AWSCore.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/AWSSNS.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/Bolts.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/Pods-70K Bands.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/Pods-70K BandsTests.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/Pods.xcscheme
+swift/Pods/Pods.xcodeproj/xcuserdata/rdorn.xcuserdatad/xcschemes/xcschememanagement.plist
+swift/Pods/Target Support Files/AWSCore/AWSCore-dummy.m
+swift/Pods/Target Support Files/AWSCore/AWSCore-prefix.pch
+swift/Pods/Target Support Files/AWSCore/AWSCore.xcconfig
+swift/Pods/Target Support Files/AWSSNS/AWSSNS-dummy.m
+swift/Pods/Target Support Files/AWSSNS/AWSSNS-prefix.pch
+swift/Pods/Target Support Files/AWSSNS/AWSSNS.xcconfig
+swift/Pods/Target Support Files/Bolts/Bolts-dummy.m
+swift/Pods/Target Support Files/Bolts/Bolts-prefix.pch
+swift/Pods/Target Support Files/Bolts/Bolts.xcconfig
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-acknowledgements.markdown
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-acknowledgements.plist
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-dummy.m
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-resources.sh
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig
+swift/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-acknowledgements.markdown
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-acknowledgements.plist
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-dummy.m
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-resources.sh
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.debug.xcconfig
+swift/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig
+swift/Pods/Target Support Files/Pods/Pods-acknowledgements.markdown
+swift/Pods/Target Support Files/Pods/Pods-acknowledgements.plist
+swift/Pods/Target Support Files/Pods/Pods-dummy.m
+swift/Pods/Target Support Files/Pods/Pods-frameworks.sh
+swift/Pods/Target Support Files/Pods/Pods-resources.sh
+swift/Pods/Target Support Files/Pods/Pods.debug.xcconfig
+swift/Pods/Target Support Files/Pods/Pods.release.xcconfig
+swift/build/Debug-iphonesimulator/Pods_70K_Bands.framework/Headers/Pods-70K Bands-umbrella.h
+swift/build/Debug-iphonesimulator/Pods_70K_Bands.framework/Info.plist
+swift/build/Debug-iphonesimulator/Pods_70K_Bands.framework/Modules/module.modulemap
+swift/build/Debug-iphonesimulator/Pods_70K_Bands.framework/Pods_70K_Bands
+swift/70K Bands.xcworkspace/contents.xcworkspacedata
+swift/70K Bands.xcworkspace/xcuserdata/rdorn.xcuserdatad/UserInterfaceState.xcuserstate
+swift/70K Bands.xcworkspace/xcuserdata/rdorn.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+UserInterfaceState.xcuserstate
+70000TonsBands.xcscheme
+70K Bands WatchKit App.xcscheme
+70K BandsTests.xcscheme
+Notification - 70K Bands WatchKit App.xcscheme

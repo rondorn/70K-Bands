@@ -24,7 +24,7 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         
         self.webDisplay.delegate = self
         
-        var url = getUrl()
+        let url = getUrl()
         
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.PrimaryHidden
         
@@ -33,6 +33,7 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         self.webDisplay.mediaPlaybackRequiresUserAction = false
 
         self.activityIndicator.hidesWhenStopped = true;
+        print ("Loading url of " + url)
         let requestURL = NSURL(string: url)
         let request = NSURLRequest(URL: requestURL!)
         

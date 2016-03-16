@@ -31,7 +31,8 @@
 
 
 "Use Last Years Data"="Daten des letzten Jahres verwenden";
-"LastYearsFeatureExplication"="Das Aktivieren von 'Daten des letzten Jahres verwenden' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen. ";
+
+"LastYearsFeatureExplication"="Das Aktivieren von 'Daten des letzten Jahres verwenden' lädt die Daten des letzten Jahres und wird dann anhand der aktuellen Woche eine simulierte Running Order der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen. ";
 
 //"restarTitle" = "Restart Required";
 //"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";

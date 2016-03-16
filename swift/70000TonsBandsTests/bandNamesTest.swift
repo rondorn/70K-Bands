@@ -37,7 +37,7 @@ class bandNameTests: XCTestCase {
         readBandFile()
         bands = getBandNames()
         
-        println(bands)
+        print(bands)
         
         XCTAssertEqual(bands.count, 60, "Found 60 bands " + String(bands.count))
         XCTAssertEqual(bands[0], "1349", "First band is 1349 " + bands[0])

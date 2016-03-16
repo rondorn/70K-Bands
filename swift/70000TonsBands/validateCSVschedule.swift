@@ -11,8 +11,7 @@ import UIKit
 
 class validateCSVSchedule {
     
-    
-    let scheduleFile = dirs[0].stringByAppendingPathComponent( "scheduleFile.txt")
+    let scheduleFile = NSURL(fileURLWithPath: dirs[0]).URLByAppendingPathComponent( "scheduleFile.txt")
 
     var numberOfShows = 0
     var numberOfClinics = 0
@@ -39,15 +38,21 @@ class validateCSVSchedule {
     func validateSchedule(){
         
         let defaults = NSUserDefaults.standardUserDefaults()
-        var validateSchedulePreference = defaults.boolForKey("validateScheduleFile")
+        let validateSchedulePreference = defaults.boolForKey("validateScheduleFile")
         
         if (validateSchedulePreference == true){
             bands = getBandNames()
-            if let csvDataString = String(contentsOfFile: scheduleFile, encoding: NSUTF8StringEncoding, error: nil) {
+            var scheduleFileString = ""
+            do {
+                scheduleFileString = try String(contentsOfURL:scheduleFile);
+            } catch _ {
+                //do nothing
+            }
+            if let csvDataString = try? String(contentsOfFile: scheduleFileString, encoding: NSUTF8StringEncoding) {
                 
                 var csvData: CSV
                 var error: NSErrorPointer = nil
-                csvData = CSV(csvStringToParse: csvDataString, error: error)!
+                csvData = try! CSV(csvStringToParse: csvDataString)
                 
                 verifyExpectedFieldsExists(csvData)
                 verifyTypes(csvData)
@@ -71,8 +76,8 @@ class validateCSVSchedule {
                 
                 //for index in eventsPerDate {
                 for index in sortedDates {
-                    var date = dateFormatter.stringFromDate(index)
-                    var events = String(eventsPerDate[index]!)
+                    let date = dateFormatter.stringFromDate(index)
+                    let events = String(eventsPerDate[index]!)
                     summaryMessage += date + " has " + events + " events\n"
                 }
                 
@@ -80,8 +85,8 @@ class validateCSVSchedule {
                 errorMessage = "Schedule file was not found\n"
             }
             
-            showAlert(summaryMessage, "Verification Summary Message")
-            showAlert(errorMessage, "Verification Error Message")
+            showAlert(summaryMessage, title: "Verification Summary Message")
+            showAlert(errorMessage, title: "Verification Error Message")
         }
     }
         
@@ -93,9 +98,15 @@ class validateCSVSchedule {
             
             count = count + 1
             
-            var pattern = "^\\d{1,2}:\\d{1,2}\\sAM|PM$"
+            let pattern = "^\\d{1,2}:\\d{1,2}\\sAM|PM$"
             var error: NSError? = nil
-            var regex = NSRegularExpression(pattern: pattern, options: NSRegularExpressionOptions.DotMatchesLineSeparators, error: &error)
+            var regex: NSRegularExpression?
+            do {
+                regex = try NSRegularExpression(pattern: pattern, options: NSRegularExpressionOptions.DotMatchesLineSeparators)
+            } catch let error1 as NSError {
+                error = error1
+                regex = nil
+            }
             
             /*
             var match = regex?.numberOfMatchesInString(lineData[fieldName]!, options: nil, range: NSRange(location:0, length:count(lineData[fieldName]!)))
@@ -173,7 +184,7 @@ class validateCSVSchedule {
         for lineData in csvData.rows {
 
             var startTimeIndex = NSDate()
-            var fullTimeString: String = lineData[dateField]!
+            let fullTimeString: String = lineData[dateField]!
             
             startTimeIndex = dateFormatter.dateFromString(fullTimeString)!
             
@@ -186,7 +197,7 @@ class validateCSVSchedule {
         
         }
         
-        sorted(sortedDates, {
+        sortedDates.sort({
             $1.compare($0) == NSComparisonResult.OrderedDescending
         })
 
@@ -258,18 +269,18 @@ class validateCSVSchedule {
     }
     
     func incremetNumberOfShows(){
-        numberOfShows++
+        numberOfShows += 1
     }
     func incremetNumberOfClinics(){
-        numberOfClinics++
+        numberOfClinics += 1
     }
     func incremetNumberOfSpecialEvents(){
-        numberOfSpecialEvents++
+        numberOfSpecialEvents += 1
     }
     func incremetNumberOfmAndg(){
-        numberOfmAndg++
+        numberOfmAndg += 1
     }
     func incremeNumberOfListering(){
-        numberOfListering++
+        numberOfListering += 1
     }
 }
