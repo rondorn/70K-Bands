@@ -154,6 +154,30 @@ public class BandInfo {
         }
     }
 
+    public static String getCountry(String bandName){
+        if (getBandDetailsData(bandName, "country") != null) {
+            return getBandDetailsData(bandName, "country");
+        } else {
+            return " ";
+        }
+    }
+
+    public static String getGenre(String bandName){
+        if (getBandDetailsData(bandName, "genre") != null) {
+            return getBandDetailsData(bandName, "genre");
+        } else {
+            return " ";
+        }
+    }
+
+    public static String getNote(String bandName){
+        if (getBandDetailsData(bandName, "note") != null) {
+            return getBandDetailsData(bandName, "note");
+        } else {
+            return " ";
+        }
+    }
+
     private static String getBandDetailsData (String bandName, String key){
 
         String data = "";
@@ -194,23 +218,26 @@ public class BandInfo {
                 }
                 in.close();
 
+                Log.d("defaultUrls", data);
+
+                String[] records = data.split("\\n");
+                for (String record : records) {
+                    Log.d("defaultUrls 1", record);
+                    String[] recordData = record.split("::");
+                    //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
+                    if (recordData.length >= 2) {
+                        downloadUrls.put(recordData[0], recordData[1]);
+                    }
+
+                }
+                Log.d("defaultUrls 2", downloadUrls.toString());
 
             } catch (Exception error) {
                 Log.e("ErrorDefaultUrls", error.getMessage());
             }
 
-            Log.d("defaultUrls", data);
-
-            String[] records = data.split("\\n");
-            for (String record : records) {
-                Log.d("defaultUrls 1", record);
-                String[] recordData = record.split("::");
-                downloadUrls.put(recordData[0], recordData[1]);
-
-            }
-            Log.d("defaultUrls 2", downloadUrls.toString());
+            //downloadUrls.put("scheduleUrl", "https://www.dropbox.com/s/k8b32buyjh213aw/artistsSchedule.csv?dl=1");
         }
-
         if (preferences.getUseLastYearsData() == false) {
             if (!preferences.getArtsistsUrl().equals("Default")) {
                 downloadUrls.put("artistUrl", preferences.getArtsistsUrl());
@@ -275,22 +302,27 @@ public class BandInfo {
                 try {
                     String[] RowData = line.split(",");
                     Map<String, String> bandDetails = new HashMap<String, String>();
-                    bandDetails.put("officalSite", RowData[1]);
-                    bandDetails.put("imageUrl", RowData[2]);
-                    bandDetails.put("youtube", RowData[3]);
-                    bandDetails.put("metalArchives", RowData[4]);
-                    bandDetails.put("wikipedia", RowData[5]);
+
+                    bandDetails = addToBandDetails("officalSite", RowData, 1, bandDetails);
+                    bandDetails = addToBandDetails("imageUrl", RowData, 2, bandDetails);
+                    bandDetails = addToBandDetails("youtube", RowData, 3, bandDetails);
+                    bandDetails = addToBandDetails("metalArchives", RowData, 4, bandDetails);
+                    bandDetails = addToBandDetails("wikipedia", RowData, 5, bandDetails);
+
+                    bandDetails = addToBandDetails("country", RowData,6, bandDetails);
+                    bandDetails = addToBandDetails("genre", RowData,7, bandDetails);
+                    bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
 
                     if (!RowData[0].contains("bandName")) {
                         bandData.put(RowData[0], bandDetails);
                         bandNames.add(RowData[0]);
                     }
                 } catch (Exception error){
-                    //just keep going
+                    Log.d("error", "Encountered an unknown error" + error.getMessage());
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             Log.e("General Exception", "Parsing bandData", e);
         }
 
@@ -300,4 +332,16 @@ public class BandInfo {
         return bandNames;
     }
 
+    private Map<String, String> addToBandDetails(String variable, String[] data, Integer index, Map<String, String> bandDetails){
+
+        String value = "";
+
+        if (data.length > index){
+            value = data[index];
+        }
+
+        bandDetails.put(variable, value);
+
+        return bandDetails;
+    }
 }

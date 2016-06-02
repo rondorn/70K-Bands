@@ -1,5 +1,8 @@
 package com.Bands70k;
 
+import android.os.Parcelable;
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,9 +12,22 @@ import java.util.Map;
 public class staticVariables {
 
     public final static String mustSeeIcon = "\uD83C\uDF7A";
-    public final static String mightSeeIcon = "\u2705";
+    public final static String mightSeeIcon = "\u2714"; //2705 //2611 //2714
     public final static String wontSeeIcon = "\uD83D\uDEAB";
     public final static String unknownIcon = "\u2753";
+    public final static String oldMightSeeIcon = "\u2705";
+
+    public final static String showTypeIcon = "";
+    public final static String specialEventTypeIcon = "🌟"; //"\u1F31F";
+    public final static String mAndmEventTypeIcon = "\uD83D\uDCF7";
+    public final static String listeningEventTypeIcon =  "💽";
+    public final static String clinicEventTypeIcon = "🎸";
+
+    public final static String show = "Show";
+    public final static String meetAndGreet = "Meet and Greet";
+    public final static String clinic = "Clinic";
+    public final static String specialEvent = "Special Event";
+    public final static String listeningEvent = "Listening Party";
 
     public final static String mustSeeKey = "mustSee";
     public final static String mightSeeKey = "mightSee";
@@ -28,6 +44,14 @@ public class staticVariables {
     public static Boolean fileDownloaded = false;
 
     public static Boolean sortBySchedule = true;
+    public static Parcelable listState;
+
+    public static String SENT_TOKEN_TO_SERVER = "sentTokenToServer";
+    public static String REGISTRATION_COMPLETE = "registrationComplete";
+
+    public static Integer alarmCount = 1;
+
+    public static Boolean refreshActivated = false;
 
     public static void staticVariablesInitialize (){
 
@@ -43,5 +67,53 @@ public class staticVariables {
         if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == null){
             staticVariables.filterToogle.put(staticVariables.unknownIcon, true);
         }
+    }
+
+    public static String getEventTypeIcon (String eventType){
+
+        String icon;
+
+        if (eventType.equals(staticVariables.show)) {
+            icon = showTypeIcon;
+
+        } else if (eventType.equals(staticVariables.meetAndGreet)) {
+            icon = mAndmEventTypeIcon;
+
+        } else if (eventType.equals(staticVariables.specialEvent)) {
+            icon = specialEventTypeIcon;
+
+        } else if (eventType.equals(staticVariables.clinic)) {
+            icon = clinicEventTypeIcon;
+
+        } else if (eventType.equals(staticVariables.listeningEvent)) {
+            icon = listeningEventTypeIcon;
+
+        } else {
+            icon = unknownIcon;
+        }
+
+        Log.d ("eventType", "Event Received is " + eventType + " returned " + icon);
+
+        return icon;
+    }
+
+    public static String getRankIcon (String rankName){
+
+        String icon = "";
+
+        if (rankName.equals(staticVariables.mustSeeKey) || rankName.equals(staticVariables.mustSeeIcon)) {
+            icon = mustSeeIcon;
+
+        } else if (rankName.equals(staticVariables.mightSeeKey) || rankName.equals(staticVariables.mightSeeIcon)
+                   || rankName.equals(staticVariables.oldMightSeeIcon)) {
+
+            icon = mightSeeIcon;
+
+        } else if (rankName.equals(staticVariables.wontSeeKey) || rankName.equals(staticVariables.wontSeeIcon)) {
+            icon = wontSeeIcon;
+
+        }
+
+        return icon;
     }
 }

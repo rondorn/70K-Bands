@@ -1,48 +1,58 @@
 package com.Bands70k;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.PendingIntent;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.BroadcastReceiver;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class showBands extends Activity {
 
     private ArrayList<String> bandNames;
-    private ArrayList<String> scheduleSortedBandNames;
+    public ArrayList<String> scheduleSortedBandNames;
     private ListView bandNamesList;
 
     private ArrayList<String> rankedBandNames;
-    private ArrayAdapter<String> arrayAdapter;
 
     private ProgressBar progressBar;
     private BandInfo bandInfo;
-    private Button sortButton;
+    public Button sortButton;
     private preferencesHandler preferences = new preferencesHandler();
-    private Boolean tempAlert = true;
+
+    public static Boolean inBackground = true;
+
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String TAG = "MainActivity";
+
+    private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private boolean isReceiverRegistered;
+
+    private mainListHandler listHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,19 +62,53 @@ public class showBands extends Activity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
+
         setContentView(R.layout.activity_show_bands);
+
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                SharedPreferences sharedPreferences =
+                        PreferenceManager.getDefaultSharedPreferences(context);
+                boolean sentToken = sharedPreferences
+                        .getBoolean(staticVariables.SENT_TOKEN_TO_SERVER, false);
+            }
+        };
+
+        // Registering BroadcastReceiver
+        registerReceiver();
+
+        if (checkPlayServices()) {
+            // Start IntentService to register this application with GCM.
+            Intent intent = new Intent(this, RegistrationIntentService.class);
+            startService(intent);
+        }
+
         bandInfo = new BandInfo();
         preferences.loadData();
 
         populateBandList();
+        showNotification();
+
     }
 
+    private void showNotification(){
 
-    public void displayNumberOfBands (){
-        TextView bandCount = (TextView)findViewById(R.id.headerBandCount);
-        bandCount.setText("70,0000 Tons " + bandNames.size() + " bands");
+        if (MyGcmListenerService.messageString != null) {
+
+            new AlertDialog.Builder(this)
+                    .setTitle("70K Bands Message")
+                    .setMessage(MyGcmListenerService.messageString)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // continue with delete
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            MyGcmListenerService.messageString = null;
+        }
     }
-
 
     public void setupNoneFilterButtons() {
 
@@ -75,6 +119,7 @@ public class showBands extends Activity {
             public void onClick(View v) {
                 setContentView(R.layout.activity_show_bands);
                 staticVariables.fileDownloaded = false;
+                staticVariables.refreshActivated = true;
                 populateBandList();
                 Intent showDetails = new Intent(showBands.this, showBands.class);
                 startActivity(showDetails);
@@ -113,8 +158,9 @@ public class showBands extends Activity {
                 } else {
                     staticVariables.sortBySchedule = true;
                 }
-                Intent showDetails = new Intent(showBands.this, showBands.class);
-                startActivity(showDetails);
+                setSortButton();
+                Intent showBandList = new Intent(showBands.this, showBands.class);
+                startActivity(showBandList);
             }
         });
     }
@@ -224,16 +270,14 @@ public class showBands extends Activity {
         bandNamesList = (ListView)findViewById(R.id.bandNames);
 
         if (staticVariables.fileDownloaded == false) {
-            refreshNewData(true);
+            refreshNewData();
 
         } else {
             reloadData();
         }
-
-        displayNumberOfBands();
     }
 
-    private void refreshNewData(Boolean twice){
+    private void refreshNewData(){
 
         RelativeLayout showBandLayout = (RelativeLayout)findViewById(R.id.showBandsView);
         showBandLayout.invalidate();
@@ -244,6 +288,8 @@ public class showBands extends Activity {
         AsyncListViewLoader mytask = new AsyncListViewLoader();
         mytask.execute();
 
+        scheduleAlertHandler alerts = new scheduleAlertHandler(preferences, getApplicationContext());
+        alerts.execute();
 
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
@@ -253,6 +299,12 @@ public class showBands extends Activity {
 
     }
 
+    public void onStop() {
+
+        super.onStop();
+        inBackground = true;
+
+    }
 
     private void reloadData (){
 
@@ -265,7 +317,7 @@ public class showBands extends Activity {
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
 
-            ListAdapter arrayAdapter = populateBandInfo(bandInfo, bandNames);
+            ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
 
             bandNamesList.setAdapter(arrayAdapter);
             bandNamesList.requestLayout();
@@ -273,6 +325,25 @@ public class showBands extends Activity {
             progressBar = (ProgressBar) findViewById(R.id.progressBar);
             progressBar.setVisibility(View.INVISIBLE);
 
+        }
+    }
+
+    private void refreshData(){
+
+        if (staticVariables.refreshActivated == false) {
+
+
+            BandInfo bandInfoNames = new BandInfo();
+            bandNames = bandInfoNames.getBandNames();
+
+            rankedBandNames = bandInfo.getRankedBandNames(bandNames);
+            rankStore.getBandRankings();
+
+            ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
+
+            bandNamesList.setAdapter(arrayAdapter);
+        } else {
+            staticVariables.refreshActivated = false;
         }
     }
 
@@ -297,9 +368,60 @@ public class showBands extends Activity {
     }
 
     @Override
+    public void onPause() {
+        staticVariables.listState = bandNamesList.onSaveInstanceState();
+        Log.d("State Status", "Saving state during Pause");
+        super.onPause();
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+        isReceiverRegistered = false;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (listHandler != null){
+            refreshData();
+        }
+        showNotification();
+
+    }
+
+    private void registerReceiver(){
+        if(!isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
+                    new IntentFilter(staticVariables.REGISTRATION_COMPLETE));
+            isReceiverRegistered = true;
+        }
+    }
+    /**
+     * Check the device to make sure it has the Google Play Services APK. If
+     * it doesn't, display a dialog that allows users to download the APK from
+     * the Google Play Store or enable it in the device's system settings.
+     */
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public void onResume() {
 
         super.onResume();
+        inBackground = false;
+
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // argument position gives the index of item which is clicked
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
@@ -308,10 +430,10 @@ public class showBands extends Activity {
                     String selectedBand;
                     getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
-                    if (scheduleSortedBandNames == null){
+                    if (scheduleSortedBandNames == null) {
                         scheduleSortedBandNames = bandNames;
                     }
-                    selectedBand = scheduleSortedBandNames.get(position);
+                    selectedBand = listHandler.bandNamesIndex.get(position);
 
                     Log.d("The follow band was clicked ", selectedBand);
 
@@ -325,9 +447,16 @@ public class showBands extends Activity {
                 }
             }
         });
-
+        if(staticVariables.listState != null) {
+            Log.d("State Status", "restoring state during Resume");
+            bandNamesList.onRestoreInstanceState(staticVariables.listState);
+        }
         setupNoneFilterButtons();
         setupButtonFilters();
+        registerReceiver();
+
+        showNotification();
+
     }
 
     @Override
@@ -336,7 +465,8 @@ public class showBands extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
+        staticVariables.listState  = bandNamesList.onSaveInstanceState();
+        Log.d("State Status", "Saving state");
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
@@ -345,172 +475,35 @@ public class showBands extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void scheduleAlerts(ArrayList<String> bandList){
-
-        if (BandInfo.scheduleRecords != null) {
-            if (BandInfo.scheduleRecords.get(bandList.get(0)) != null) {
-                for (String bandName : bandList) {
-                    Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
-                    while (entries.hasNext()) {
-                        Map.Entry thisEntry = (Map.Entry) entries.next();
-                        Object key = thisEntry.getKey();
-
-                        shipNotifications.unuiqueNumber++;
-                        String alertMessage = bandName + " will go on in " + preferences.getMinBeforeToAlert() + " min";
-                        Long alertTime = Long.valueOf(key.toString());
-
-
-
-                        //if (alertTime > 0 && bandName.equals("Equilibrium") && tempAlert == true) {
-                            Log.d("Notications", "Timing " + bandName + " " + alertTime);
-                            tempAlert = false;
-                            SendScheduleAlert alerts = new SendScheduleAlert();
-                            Context context = this.getApplicationContext();
-                            alerts.setOnetimeTimer(context, alertMessage, alertTime);
-                        //}
-                    }
-                }
-            }
-        }
-    }
-
-    public ListAdapter populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
-
-        ListAdapter arrayAdapter;
-
-        if (BandInfo.scheduleRecords != null) {
-            if (BandInfo.scheduleRecords.get(bandList.get(0)) != null) {
-
-                sortButton = (Button) findViewById(R.id.sort);
-                sortButton.setClickable(true);
-                sortButton.setVisibility(View.VISIBLE);
-                if (staticVariables.sortBySchedule == true) {
-                    sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_alphabetically));
-                } else {
-                    sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_by_size));
-                }
-
-                ArrayList<String> scheduleBandList = new ArrayList<String>();
-                Map<String, String> sortedScheduleBandList = new TreeMap<>();
-                Map<String, String> sortedMapping = new TreeMap<>();
-                for (String bandName : bandList) {
-                    Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
-                    while (entries.hasNext()) {
-                        Map.Entry thisEntry = (Map.Entry) entries.next();
-                        Object key = thisEntry.getKey();
-
-                        //Do no display the time if the record is more then an hour old
-                        Log.d("Comparing Epoc ", "for " + bandName + " " + key.toString() + " to " + System.currentTimeMillis());
-                        if ((Long.valueOf(key.toString()) + 3600000) > System.currentTimeMillis()) {
-
-                            if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType().equals("Show")) {
-                                Log.d("Comparing Epoc", key.toString() + " " + bandName + " Accepted");
-                                String line = rankStore.getRankForBand(bandName);
-                                if (!rankStore.getRankForBand(bandName).equals("")) {
-                                    line += " - ";
-                                }
-                                line += bandName + " - ";
-                                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " ";
-                                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString() + " ";
-                                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
-                                if (staticVariables.sortBySchedule == true) {
-                                    sortedScheduleBandList.put(key.toString() + bandName, line);
-                                    sortedMapping.put(key.toString() + bandName, bandName);
-
-                                    sortedScheduleBandList.remove(bandName);
-                                    sortedMapping.remove(bandName);
-
-                                } else {
-                                    sortedScheduleBandList.put(bandName, line);
-                                    sortedMapping.put(bandName, bandName);
-                                }
-
-                                break;
-                            }
-                        } else {
-
-                            String line = rankStore.getRankForBand(bandName);
-                            if (!rankStore.getRankForBand(bandName).equals("")) {
-                                line += " - ";
-                            }
-                            line += bandName;
-                            sortedScheduleBandList.put(bandName, line);
-                            sortedMapping.put(bandName, bandName);
-                        }
-                    }
-                }
-                //take sorted TreeMap and convert to ordredList
-                Iterator entries = sortedScheduleBandList.entrySet().iterator();
-                while (entries.hasNext()) {
-                    Map.Entry thisEntry = (Map.Entry) entries.next();
-                    Object key = thisEntry.getKey();
-                    scheduleBandList.add(sortedScheduleBandList.get(key));
-                }
-                //take sorted band list and use for click though tracking
-                entries = sortedMapping.entrySet().iterator();
-                while (entries.hasNext()) {
-                    Map.Entry thisEntry = (Map.Entry) entries.next();
-                    Object key = thisEntry.getKey();
-
-                    if (scheduleSortedBandNames == null) {
-                        scheduleSortedBandNames = new ArrayList<>();
-                    }
-                    Log.d("sortBySchedule Status", sortedMapping.get(key));
-                    scheduleSortedBandNames.add(sortedMapping.get(key));
-                }
-
-                arrayAdapter = new ArrayAdapter<String>(showBands.this, android.R.layout.simple_list_item_1, scheduleBandList);
-
-            } else {
-                arrayAdapter = noSchedulePopulate(bandList);
-            }
-        } else {
-            arrayAdapter = noSchedulePopulate(bandList);
-        }
-
-        return arrayAdapter;
-    }
-
-    public ListAdapter noSchedulePopulate(ArrayList<String> bandList){
-
-        ListAdapter arrayAdapter;
+    public void setSortButton(){
 
         sortButton = (Button) findViewById(R.id.sort);
-        sortButton.setClickable(false);
-        sortButton.setVisibility(View.GONE);
-        ArrayList<String> rankedBandList = bandInfo.getRankedBandNames(bandList);
-        scheduleSortedBandNames = bandList;
-        Log.d("AsyncTask", "populating array list");
-        arrayAdapter = new ArrayAdapter<String>(showBands.this, android.R.layout.simple_list_item_1, rankedBandList);
+
+        if (BandInfo.scheduleRecords.size() > 2) {
+            sortButton.setEnabled(true);
+            sortButton.setClickable(true);
+            sortButton.setVisibility(View.VISIBLE);
+            if (staticVariables.sortBySchedule == true) {
+                sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_alphabetically));
+            } else {
+                sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_by_size));
+            }
+        } else {
+            sortButton.setEnabled(false);
+            sortButton.setVisibility(View.INVISIBLE);
+        }
+
+    }
+
+    public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
+
+        setSortButton();
+
+        listHandler = new mainListHandler(showBands.this);
+        listHandler.populateBandInfo(bandInfo, bandList);
+        ListAdapter arrayAdapter = listHandler.arrayAdapter;
 
         return arrayAdapter;
-    }
-
-    public void scheduleNotification(Notification notification, long delay) {
-
-        Log.d("shipNotifications", "PendingIntent=" + String.valueOf(shipNotifications.unuiqueNumber));
-        Intent notificationIntent = new Intent(this, shipNotifications.class);
-        notificationIntent.putExtra(shipNotifications.NOTIFICATION_ID, 1);
-        notificationIntent.putExtra(shipNotifications.NOTIFICATION, notification);
-        notificationIntent.putExtra("onetime", Boolean.FALSE);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, shipNotifications.unuiqueNumber, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        //delay = delay - 1000;
-
-        //long futureInMillis = SystemClock.elapsedRealtime() + delay;
-        //futureInMillis = futureInMillis / 1000;
-        Log.d("shipNotifications", "Notification should alert at " + String.valueOf(delay) + " " +  notification.toString());
-        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, delay, pendingIntent);
-    }
-
-    public Notification getNotification(String content, String bandName) {
-        Log.d("Notications", "getNotification was called");
-
-        Notification.Builder builder = new Notification.Builder(this);
-        builder.setContentTitle(bandName);
-        builder.setContentText(content);
-        builder.setSmallIcon(R.drawable.bands_70k_icon);
-        return builder.build();
     }
 
     class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
@@ -523,7 +516,6 @@ public class showBands extends Activity {
             super.onPreExecute();
             progressBar = (ProgressBar) findViewById(R.id.progressBar);
             progressBar.setVisibility(View.VISIBLE);
-
             super.onPreExecute();
         }
 
@@ -536,10 +528,15 @@ public class showBands extends Activity {
 
             Log.d("AsyncTask", "Downloading data");
 
-            BandInfo bandInfo = new BandInfo();
-            bandInfo.DownloadBandFile();
+            try {
+                BandInfo bandInfo = new BandInfo();
+                bandInfo.DownloadBandFile();
+            } catch (Exception error){
+                Log.d("bandInfo", error.getMessage());
+            }
 
             return result;
+
         }
 
 
@@ -549,12 +546,10 @@ public class showBands extends Activity {
             BandInfo bandInfo = new BandInfo();
             ArrayList<String> bandList = bandInfo.getBandNames();
 
-            ListAdapter arrayAdapter = populateBandInfo(bandInfo, bandList);
+            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
 
             showBands.this.bandNamesList.setAdapter(arrayAdapter);
             progressBar.setVisibility(View.INVISIBLE);
-
-            //scheduleAlerts(bandList);
 
             showBands.this.bandNamesList.requestLayout();
             staticVariables.fileDownloaded = true;
