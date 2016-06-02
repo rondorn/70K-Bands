@@ -18,7 +18,9 @@ import Foundation
     var unknownSeeOn = true;
     
     var sortedBy = String();
-    
+    var bandCount = Int();
+    var eventCount = Int();
+
     func setBands(value: [String]){
         bands = value
     }
@@ -61,52 +63,169 @@ import Foundation
     func getUnknownSeeOn() -> Bool{
         return unknownSeeOn
     }
+
+    func determineBandOrScheduleList (allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
         
-    func getFilteredBands(allBands:[String], schedule: scheduleHandler) -> [String]{
+        var newAllBands = [String]()
+        var presentCheck = [String]();
+        
+        schedule.buildTimeSortedSchedulingData();
+        print (schedule.getTimeSortedSchedulingData());
+        if (schedule.getBandSortedSchedulingData().count > 2 && sortedBy == "name"){
+            print ("Sorting by name!!!");
+            for bandName in schedule.getBandSortedSchedulingData().keys {
+                for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
+                    if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                        newAllBands.append(bandName + ":" + String(timeIndex));
+                        presentCheck.append(bandName);
+                    }
+                }
+            }
+            bandCount = 0;
+            eventCount = newAllBands.count;
+            
+        } else if (schedule.getTimeSortedSchedulingData().count > 2 && sortedBy == "time"){
+            print ("Sorting by time!!!");
+            for timeIndex in schedule.getTimeSortedSchedulingData().keys {
+                for bandName in schedule.getTimeSortedSchedulingData()[timeIndex]!.keys{
+                    if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                        newAllBands.append(String(timeIndex) + ":" + bandName);
+                        presentCheck.append(bandName);
+                    }
+                }
+            }
+            bandCount = 0;
+            eventCount = newAllBands.count;
+        } else {
+            
+            //return immediatly. Dont need to do schedule sorting magic
+            newAllBands = allBands;
+            newAllBands.sortInPlace();
+            bandCount = newAllBands.count;
+            eventCount = 0;
+            
+            return newAllBands
+        }
+        
+        newAllBands.sortInPlace();
+        
+        if (schedule.getTimeSortedSchedulingData().count > 2){
+            //add any bands without shows to the bottom of the list
+            for bandName in allBands {
+                    if (presentCheck.contains(bandName) == false){
+                newAllBands.append(bandName);
+                }
+            }
+        }
+        
+        return newAllBands
+    }
+
+    func getFilteredBands(allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
         
         var filteredBands = [String]()
-        var preventDups = Dictionary<String, Int>()
         
-        for bandName in allBands{
-
+        var newAllBands = [String]()
+        
+        newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy);
+        
+        for bandNameIndex in newAllBands {
+            
+            let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
+            
             switch getPriorityData(bandName) {
             case 1:
-                if (getMustSeeOn() == true && preventDups[bandName] == nil){
-                    filteredBands.append(bandName)
-                    preventDups[bandName] = 1
+                if (getMustSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
                 }
                 
             case 2:
-                if (getMightSeeOn() == true && preventDups[bandName] == nil){
-                    filteredBands.append(bandName)
-                    preventDups[bandName] = 1
+                if (getMightSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
                 }
                 
             case 3:
-                if (getWontSeeOn() == true && preventDups[bandName] == nil){
-                    filteredBands.append(bandName)
-                    preventDups[bandName] = 1
+                if (getWontSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
                 }
                 
             case 0:
-                if (getUnknownSeeOn() == true && preventDups[bandName] == nil){
-                    filteredBands.append(bandName)
-                    preventDups[bandName] = 1
+                if (getUnknownSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
                 }
+                
             default:
                 print("Encountered unexpected value of ", terminator: "")
                 print (getPriorityData(bandName))
             }
         }
         
-        
         return filteredBands
     }
-    
-    func getCellValue (indexRow: Int, schedule: scheduleHandler) -> String{
-    
-        let bandName = bands[indexRow]
-        let timeIndex = schedule.getCurrentIndex(bandName)
+
+    func getNameFromSortable(value: String, sortedBy: String) -> String{
+        
+        let indexString = value.componentsSeparatedByString(":")
+        var bandName = String();
+        
+        if (indexString.count == 2){
+            
+            if ((indexString[0].doubleValue) != nil){
+                bandName = indexString[1];
+                
+            } else if ((indexString[1].doubleValue) != nil){
+                bandName = indexString[0];
+                
+            } else {
+                bandName = value
+            }
+            
+        } else {
+            bandName = value
+        }
+        
+        return bandName;
+    }
+
+    func getTimeFromSortable(value: String, sortBy: String) -> Double{
+        
+        let indexString = value.componentsSeparatedByString(":")
+        var timeIndex = Double()
+        
+        if (indexString.count == 2){
+            
+            if ((indexString[0].doubleValue) != nil){
+                timeIndex = Double(indexString[0])!;
+                
+            } else if ((indexString[1].doubleValue) != nil){
+                timeIndex = Double(indexString[1])!;
+                
+            }
+        }
+        
+        return timeIndex;
+    }
+
+    extension String {
+        var doubleValue: Double? {
+            return Double(self)
+        }
+        var floatValue: Float? {
+            return Float(self)
+        }
+        var integerValue: Int? {
+            return Int(self)
+        }
+    }
+
+
+    func getCellValue (indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
+        
+        let indexString = bands[indexRow].componentsSeparatedByString(":")
+        
+        let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
+        let timeIndex = getTimeFromSortable(bands[indexRow], sortBy: sortBy);
+        
         var cellText = String()
     
         if (getPriorityData(bandName) == 0){
@@ -115,16 +234,17 @@ import Foundation
             cellText = getPriorityIcon(getPriorityData(bandName)) + " - " + bandName
         }
         
-        let location = schedule.getData(bandName, index:timeIndex, variable: "Location")
-        let day = schedule.getData(bandName, index: timeIndex, variable: "Day")
-        let startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
-        
-    
-        if (day.isEmpty == false && timeIndex > NSDate().timeIntervalSince1970 - 3600){
+        if (indexString.count > 1){
+            
+            let location = schedule.getData(bandName, index:timeIndex, variable: "Location")
+            let day = schedule.getData(bandName, index: timeIndex, variable: "Day")
+            let startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
+            let eventIcon = getEventTypeIcon(schedule.getData(bandName, index: timeIndex, variable: "Type"))
+            
             print(bandName + " displaying timeIndex of \(timeIndex) ")
             cellText += " - " + day
             cellText += " " + startTime
-            cellText += " " + location
+            cellText += " " + location + " " + eventIcon;
             scheduleButton = false
             
         } else {
@@ -134,3 +254,6 @@ import Foundation
         
         return cellText
     }
+
+
+

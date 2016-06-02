@@ -55,6 +55,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Do any additional setup after loading the view, typically from a nib.
         setExistingValues()
         setLocalizedLables()
+        
+        self.navigationItem.title = "Alert Preferences - Build:" + (((NSBundle.mainBundle().infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
     func setLocalizedLables (){
@@ -191,6 +193,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             } else {
                 defaults.setValue(artistUrlDefault, forKey: "artistUrl")
                 defaults.setValue(scheduleUrlDefault, forKey: "scheduleUrl")
+            }
+
+            do {
+                try  NSFileManager.defaultManager().removeItemAtPath(scheduleFile)
+            } catch {
+                //guess there was no file to delete
             }
             
             //clear all existing notifications

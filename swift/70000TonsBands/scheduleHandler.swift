@@ -11,6 +11,7 @@ import Foundation
 public class scheduleHandler {
 
     var schedulingData: [String : [NSTimeInterval : [String : String]]] = [String : [NSTimeInterval : [String : String]]]()
+    var schedulingDataByTime: [NSTimeInterval : [String : String]] = [NSTimeInterval : [String : String]]()
     
     func populateSchedule(){
         
@@ -43,11 +44,11 @@ public class scheduleHandler {
                     if (self.schedulingData[lineData[bandField]!] == nil){
                         self.schedulingData[lineData[bandField]!] = [NSTimeInterval : [String : String]]()
                     }
-                    //if (self.schedulingData[lineData[bandField]!]?.isEmpty == false){
-                        if (self.schedulingData[lineData[bandField]!]![dateIndex] == nil){
-                            self.schedulingData[lineData[bandField]!]![dateIndex] = [String : String]()
-                        }
-                    //}
+                    
+                    if (self.schedulingData[lineData[bandField]!]![dateIndex] == nil){
+                        self.schedulingData[lineData[bandField]!]![dateIndex] = [String : String]()
+                    }
+                
                     setData(lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
@@ -55,6 +56,7 @@ public class scheduleHandler {
                     setData(lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
+                    
                     
                 } else {
                     print ("Unable to parse schedule file")
@@ -174,13 +176,17 @@ public class scheduleHandler {
     }
     
     func setData (bandName:String, index:NSTimeInterval, variable:String, value:String){
-        print ("value for variable is " + value)
+        
         if (variable.isEmpty == false && value.isEmpty == false){
             if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
                 if (self.schedulingData[bandName]?.isEmpty == false){
+                    print ("value for variable is " + value)
                     self.schedulingData[bandName]![index]![variable] = value
                 }
             }
+        }
+        if (self.schedulingData[bandName]![index]![variable] == nil){
+            self.schedulingData[bandName]![index]![variable] = "";
         }
     }
     
@@ -201,6 +207,31 @@ public class scheduleHandler {
         }
         print ("schedule value lookup. Returning nothing")
         return String()
+    }
+
+    func buildTimeSortedSchedulingData () {
+        
+        for bandName in schedulingData.keys {
+            for timeIndex in (schedulingData[bandName]!.keys){
+                print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
+                self.schedulingDataByTime[timeIndex] = [bandName:bandName]
+                
+            }
+        }
+        
+        print ("schedulingDataByTime is")
+        print (schedulingDataByTime);
+        
+    }
+    
+    func getTimeSortedSchedulingData () -> [NSTimeInterval : [String : String]] {
+        return schedulingDataByTime
+    }
+    
+    func getBandSortedSchedulingData () -> [String : [NSTimeInterval : [String : String]]] {
+    
+        return schedulingData;
+    
     }
     
     func convertStringToNSDate(dateStr: String) -> NSDate {

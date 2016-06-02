@@ -32,6 +32,7 @@ func gatherData () {
         writeBandFile(httpData);
         offline = false;
     } else {
+        print ("Setting offline is true")
         offline = true;
     }
     readBandFile();

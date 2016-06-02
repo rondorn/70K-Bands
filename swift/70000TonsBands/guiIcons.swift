@@ -14,13 +14,42 @@ let willSeeIcon = "✅"
 let willNotSeeIcon = "🚫"
 let unknownIcon = "❓"
 let refreshIcon = "🔄"
-let scheduleIcon = "⌚️"
+let scheduleIcon = "⏰"
 let poolVenue = "🏊"
 let theaterVenue = "🎭"
 let loungeVenue = "🎤"
 let rinkVenue = "®"
 let unknownVenue = "❓"
 let bandIconSort = "🔠"
+
+let showTypeIcon = "";
+let specialEventTypeIcon = "🌟";
+let mAndmEventTypeIcon = "📸";
+let listeningEventTypeIcon = "💽";
+let clinicEventTypeIcon = "🎸";
+
+func getEventTypeIcon (eventType: String) -> String {
+
+    switch eventType {
+    case showType:
+        return showTypeIcon
+        
+    case meetAndGreetype:
+        return mAndmEventTypeIcon
+        
+    case specialEventType:
+        return specialEventTypeIcon
+        
+    case clinicType:
+        return clinicEventTypeIcon
+
+    case listeningPartyType:
+        return listeningEventTypeIcon
+        
+    default:
+        return unknownVenue
+    }
+}
 
 func getVenuIcon(venue: String)->String {
     

@@ -56,14 +56,6 @@ class DetailViewController: UIViewController{
         // Do any additional setup after loading the view, typically from a nib.
         self.configureView()
         
-        /*
-        Event1Button.hidden = true;
-        Event2Button.hidden = true;
-        Event3Button.hidden = true;
-        Event4Button.hidden = true;
-        Event5Button.hidden = true;
-        */
-        
         readFile()
         
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
@@ -74,7 +66,7 @@ class DetailViewController: UIViewController{
             print("Providing default band of " + bandName)
         }
         
-        if bandName != nil {
+        if (bandName != nil) {
             
             schedule.populateSchedule()
             let imageURL = getBandImageUrl(bandName)
@@ -88,25 +80,45 @@ class DetailViewController: UIViewController{
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(getPriorityData(bandName))
             
-            
             showBandDetails()
             showFullSchedule()
             setButtonNames()
             rotationChecking()
             
         } else {
+            bandName = "";
             priorityButtons.hidden = true
+            Country.text = ""
+            Genre.text = ""
+            NoteWorthy.text = ""
+            officialUrlButton.hidden = true;
+            wikipediaUrlButton.hidden = true;
+            youtubeUrlButton.hidden = true;
+            metalArchivesButton.hidden = true;
         }
         
         disableButtonsIfNeeded()
+        disableLinksWithEmptyData();
         
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "rotationChecking", name: UIDeviceOrientationDidChangeNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDeviceOrientationDidChangeNotification, object: nil)
     }
     
-    func showBandDetails(){
+    func disableLinksWithEmptyData(){
         
-        if(UIDeviceOrientationIsPortrait(UIDevice.currentDevice().orientation) || UIDevice.currentDevice().userInterfaceIdiom != .Phone){
+        if (getofficalPage(bandName).isEmpty == true || getofficalPage(bandName) == "Unavailable"){
+            officialUrlButton.hidden = true;
+            wikipediaUrlButton.hidden = true;
+            youtubeUrlButton.hidden = true;
+            metalArchivesButton.hidden = true;
+        } else {
+            print ("Office link is " + getofficalPage(bandName));
+        }
+    }
+ 
+ 
+    func showBandDetails(){
+ 
+        if (UIDeviceOrientationIsPortrait(UIDevice.currentDevice().orientation) || UIDevice.currentDevice().userInterfaceIdiom != .Phone){
             
             if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
                 Country.text = "";
@@ -128,10 +140,24 @@ class DetailViewController: UIViewController{
             } else {
                 NoteWorthy.text = "Note:\t" + bandNoteWorthy[bandName]!
             }
+            
         } else if (UIDevice.currentDevice().userInterfaceIdiom == .Phone) {
             Country.text = ""
             Genre.text = ""
             NoteWorthy.text = ""
+            
+        }
+        
+        if (bandName.isEmpty) {
+            bandName = "";
+            priorityButtons.hidden = true
+            Country.text = ""
+            Genre.text = ""
+            NoteWorthy.text = ""
+            officialUrlButton.hidden = true;
+            wikipediaUrlButton.hidden = true;
+            youtubeUrlButton.hidden = true;
+            metalArchivesButton.hidden = true;
         }
     }
     
@@ -201,8 +227,8 @@ class DetailViewController: UIViewController{
         }
         
         if (sender.enabled == true){
-            setUrl(sendToUrl)
             splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.PrimaryHidden
+            setUrl(sendToUrl)
         }
     }
 
@@ -233,6 +259,7 @@ class DetailViewController: UIViewController{
                 let date = schedule.getData(bandName, index:index, variable: "Date")
                 let type = schedule.getData(bandName, index:index, variable: "Type")
                 let notes = schedule.getData(bandName, index:index, variable: "Notes")
+                let eventIcon = getEventTypeIcon(type)
                 
                 var scheduleText = String()
                 if (!date.isEmpty){
@@ -240,38 +267,38 @@ class DetailViewController: UIViewController{
                     scheduleText += " - " + startTime
                     scheduleText += " - " + endTime
                     scheduleText += " - " + location
-                    scheduleText += " - " + type
+                    scheduleText += " - " + type  + " " + eventIcon;
                     
                     if (notes.isEmpty == false){
                         scheduleText += " - " + notes
                     }
                     
-                    /*
+                
                     switch count {
                     case 1:
                         Event1.text = scheduleText
-                        Event1Button.hidden = false;
+                        //Event1Button.hidden = false;
                         
                     case 2:
                         Event2.text = scheduleText
-                        Event2Button.hidden = false;
+                        //Event2Button.hidden = false;
                         
                     case 3:
                         Event3.text = scheduleText
-                        Event3Button.hidden = false;
+                        //Event3Button.hidden = false;
                         
                     case 4:
                         Event4.text = scheduleText
-                        Event4Button.hidden = false;
+                        //Event4Button.hidden = false;
                         
                     case 5:
                         Event5.text = scheduleText
-                        Event5Button.hidden = false;
+                        //Event5Button.hidden = false;
                         
                     default:
                         print("To many events")
                     }
-                    */
+                   
                     count += 1
                     
                 }
@@ -287,6 +314,7 @@ class DetailViewController: UIViewController{
     func disableButtonsIfNeeded(){
         
         if (offline == true || bandName == nil){
+            print ("Offline is active")
             officialUrlButton.userInteractionEnabled = false
             officialUrlButton.tintColor = UIColor.grayColor()
             

@@ -55,39 +55,4 @@ func displayImage (urlString: String, bandName: String, logoImage: UIImageView) 
     }
     dataTask.resume()
     
-    /*
-    var image = UIImage()
-
-
-    // If the image does not exist, we need to download it
-    let imgURL: NSURL = NSURL(string: urlString)!
-    print ("Trying to download image " + urlString);
-    
-    // Download an NSData representation of the image at the URL
-    let request: NSURLRequest = NSURLRequest(URL: imgURL)
-    
-    var urlConnection: NSURLConnection = NSURLConnection(request: request, delegate: nil)!
-    
-    NSURLConnection.sendAsynchronousRequest(request, queue: NSOperationQueue.mainQueue(), completionHandler: {(response: NSURLResponse?,data: NSData?,error: NSError?) -> Void in
-
-        if let httpResponse = response as? NSHTTPURLResponse {
-            let statusCode = httpResponse.statusCode
-            if statusCode == 200 {
-                image = UIImage(data: data!)!
-                imageCache[urlString] = image
-                logoImage.image =  image
-                
-                UIImageJPEGRepresentation(image,1.0)!.writeToURL(imageStoreFile, atomically: true)
-                
-                usleep(200)
-                
-            } else {
-                print("Could not download image " + statusCode.description)
-            }
-        } else {
-            print("Could not download image sendAsynchronousRequest failed " + NSHTTPURLResponse.debugDescription())
-        }
-
-    })
-    */
 }

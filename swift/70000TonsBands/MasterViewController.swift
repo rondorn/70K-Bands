@@ -58,12 +58,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //icloud change notification
         NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: "onSettingsChanged:",
+            selector: #selector(MasterViewController.onSettingsChanged(_:)),
             name: NSUserDefaultsDidChangeNotification ,
             object: nil)
         
+        NSNotificationCenter.defaultCenter().addObserver(self,
+                                                         selector: #selector(MasterViewController.showReceivedMessage(_:)),
+                                                         name: NSUserDefaultsDidChangeNotification, object: nil)
+        
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: Selector("refreshData"), forControlEvents: UIControlEvents.ValueChanged)
+        refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), forControlEvents: UIControlEvents.ValueChanged)
         self.refreshControl = refreshControl
         scheduleButton.setTitle(getBandIconSort(), forState: UIControlState.Normal)
         
@@ -73,12 +77,36 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NSUserDefaults.standardUserDefaults().didChangeValueForKey("mustSeeAlert")
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "refreshDisplayAfterWake", name: "RefreshDisplay", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake), name: "RefreshDisplay", object: nil)
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector:Selector("refreshAlerts"), name: NSUserDefaultsDidChangeNotification, object: nil)
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: NSUserDefaultsDidChangeNotification, object: nil)
+        
+        if (schedule.getBandSortedSchedulingData().count > 2 && sortedBy == "name"){
+            sortedBy = "time";
+        }
         
     }
+ 
+    func showReceivedMessage(notification: NSNotification) {
+        if let info = notification.userInfo as? Dictionary<String,AnyObject> {
+            if let aps = info["aps"] as? Dictionary<String, String> {
+                showAlert("Message received", message: aps["alert"]!)
+            }
+        } else {
+            print("Software failure. Guru meditation.")
+        }
+    }
     
+    func showAlert(title:String, message:String) {
+
+            let alert = UIAlertController(title: title,
+                                          message: message, preferredStyle: .Alert)
+            let dismissAction = UIAlertAction(title: "Dismiss", style: .Destructive, handler: nil)
+            alert.addAction(dismissAction)
+            self.presentViewController(alert, animated: true, completion: nil)
+
+    }
     
     func setFilterButtons(){
         
@@ -100,7 +128,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if (sortedBy == "time"){
             resortBandsByTime()
-            bands = bandsByTime
+            //bands = bandsByTime
             self.tableView.reloadData()
         } else {
             refreshData()
@@ -119,7 +147,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         readBandFile()
         schedule.populateSchedule()
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
         bandsByName = bands
         
     }
@@ -131,27 +159,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.hidden = true;
             sortedBy = "name"
             self.scheduleButton.setTitle(getScheduleIcon(), forState: UIControlState.Normal)
-            bands = bandsByName
-            bands = getFilteredBands(bands, schedule: schedule)
             
         } else if (sortedBy == "name"){
             print("Sort By is Name, Show")
             self.scheduleButton.hidden = false;
             self.scheduleButton.setTitle(getScheduleIcon(), forState: UIControlState.Normal)
-            bands = bandsByName
-            bands = getFilteredBands(bands, schedule: schedule)
             
         } else {
             sortedBy = "time"
             print("Sort By is Time, Show")
-            self.sortBandsByTime()
+            //self.sortBandsByTime()
             self.scheduleButton.hidden = false;
             self.scheduleButton.setTitle(getBandIconSort(), forState: UIControlState.Normal)
-            if (bandsByTime.isEmpty == false){
-                bands = bandsByTime
-            }
-            bands = getFilteredBands(bands, schedule: schedule)
+            
         }
+        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
     }
     
     func refreshData(){
@@ -171,12 +193,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
             schedule.populateSchedule()
-            self.bands = getFilteredBands(getBandNames(), schedule: schedule)
+            self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
             self.bandsByName = self.bands
             dispatch_async(dispatch_get_main_queue()){
                 
                 self.ensureCorrectSorting()
-                self.updateCountLable(self.bands.count)
+                self.updateCountLable()
                 self.tableView.reloadData()
                 self.blankScreenActivityIndicator.stopAnimating()
             }
@@ -188,7 +210,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         ensureCorrectSorting()
         refreshAlerts()
         
-        updateCountLable(self.bands.count)
+        updateCountLable()
+        
         self.tableView.reloadData()
         if (self.refreshControl?.refreshing == true){
             sleep(5)
@@ -246,25 +269,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
         } else {
-            bands = getFilteredBands(getBandNames(), schedule: schedule)
-            updateCountLable(self.bands.count)
+            bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
+            updateCountLable()
             tableView.reloadData()
             return
         }
         
         print("Sorted  by is " + sortedBy)
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
         if (sortedBy == "time"){
-            sortBandsByTime()
-            bands = bandsByTime
+            //sortBandsByTime()
+            //bands = bandsByTime
         }
         
-        updateCountLable(bands.count)
+        updateCountLable()
         tableView.reloadData()
     }
     
-    func updateCountLable(bandCount: Int){
-       titleLabel.title = "70,000 Tons\t" + String(bandCount) + " bands"
+    func updateCountLable(){
+        
+        var lableCounterString = String();
+        var labeleCounter = Int()
+        
+        if bandCount > 0 {
+            labeleCounter = bandCount
+            lableCounterString = " bands";
+            
+        } else {
+            labeleCounter = eventCount
+            lableCounterString = " events";
+        }
+        
+       titleLabel.title = "70,000 Tons\t" + String(labeleCounter) + lableCounterString
+        
     }
     
     @IBAction func shareButtonClicked(sender: UIButton){
@@ -336,7 +373,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         setScheduleButton(scheduleButton.hidden)
         
-        cell.textLabel!.text = getCellValue(indexPath.row, schedule: schedule)
+        cell.textLabel!.text = getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy)
 
     }
     
@@ -348,8 +385,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 //let object = bands[indexPath.row] as String
                 //(segue.destinationViewController as DetailViewController).detailItem = bands[indexPath.row]
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
-
-                controller.detailItem = bands[indexPath.row] as String
+                
+                let bandName = getNameFromSortable(bands[indexPath.row] as String, sortedBy: sortedBy);
+                controller.detailItem = bandName
                 controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem()
                 controller.navigationItem.leftItemsSupplementBackButton = true
             }
@@ -357,6 +395,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         tableView.reloadData()
     }
     
+    /*
     func sortBandsByTime() {
         
         var sortableBands = Dictionary<NSTimeInterval, String>()
@@ -385,19 +424,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let sortedArray = sortableTimeIndexArray.sort({$0 < $1})
         
         for index in sortedArray{
-            if (dupAvoidBands[sortableBands[index]!] == nil){
+            //if (dupAvoidBands[sortableBands[index]!] == nil){
                 sortedBands.append(sortableBands[index]!)
                 dupAvoidBands[sortableBands[index]!] = 1
-            }
+            //}
         }
         
         
         bandsByTime = sortedBands
+        
     }
+    */
     
     func resortBandsByTime(){
         schedule.populateSchedule()
-        sortBandsByTime()
+        //sortBandsByTime()
     }
     
     @IBAction func resortBands(sender: UIButton) {

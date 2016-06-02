@@ -10,9 +10,18 @@ import UIKit
 import CoreData
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate, GGLInstanceIDDelegate,GCMReceiverDelegate {
     
     var window: UIWindow?
+    var connectedToGCM = false
+    var subscribedToTopic = false
+    var gcmSenderID: String?
+    var registrationToken: String?
+    var registrationOptions = [String: AnyObject]()
+    
+    let registrationKey = "onRegistrationCompleted"
+    let messageKey = "onMessageReceived"
+    let subscriptionTopic = "/topics/global"
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
@@ -29,7 +38,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //icloud code
         // Register for notification of iCloud key-value changes
         NSNotificationCenter.defaultCenter().addObserver(self,
-        selector: "iCloudKeysChanged:",
+        selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
         name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification, object: nil)
         
         // Start iCloud key-value updates
@@ -49,49 +58,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUserDefaults.standardUserDefaults().registerDefaults(defaults)
         
         // Sets up Mobile Push Notification
-        let readAction = UIMutableUserNotificationAction()
-        readAction.identifier = "READ_IDENTIFIER"
-        readAction.title = "Read"
-        readAction.activationMode = UIUserNotificationActivationMode.Foreground
-        readAction.destructive = false
-        readAction.authenticationRequired = true
+        var configureError:NSError?
+        GGLContext.sharedInstance().configureWithError(&configureError)
+        assert(configureError == nil, "Error configuring Google services: \(configureError)")
+        gcmSenderID = GGLContext.sharedInstance().configuration.gcmSenderID
+        // [END_EXCLUDE]
+        // Register for remote notifications
+
+        let settings: UIUserNotificationSettings =
+            UIUserNotificationSettings(forTypes: [.Alert, .Badge, .Sound], categories: nil)
+        application.registerUserNotificationSettings(settings)
+        application.registerForRemoteNotifications()
+
         
-        let deleteAction = UIMutableUserNotificationAction()
-        deleteAction.identifier = "DELETE_IDENTIFIER"
-        deleteAction.title = "Delete"
-        deleteAction.activationMode = UIUserNotificationActivationMode.Foreground
-        deleteAction.destructive = true
-        deleteAction.authenticationRequired = true
-        
-        let ignoreAction = UIMutableUserNotificationAction()
-        ignoreAction.identifier = "IGNORE_IDENTIFIER"
-        ignoreAction.title = "Ignore"
-        ignoreAction.activationMode = UIUserNotificationActivationMode.Foreground
-        ignoreAction.destructive = false
-        ignoreAction.authenticationRequired = false
-        
-        let messageCategory = UIMutableUserNotificationCategory()
-        messageCategory.identifier = "MESSAGE_CATEGORY"
-        messageCategory.setActions([readAction, deleteAction], forContext: UIUserNotificationActionContext.Minimal)
-        messageCategory.setActions([readAction, deleteAction, ignoreAction], forContext: UIUserNotificationActionContext.Default)
-        
-        
-        let notificationSettings = UIUserNotificationSettings(forTypes: [.Alert, .Sound, .Badge], categories: nil)
-        //let types = UIUserNotificationType.Badge | UIUserNotificationType.Sound | UIUserNotificationType.Alert
-        //let notificationSettings = UIUserNotificationSettings(forTypes: types, categories: NSSet(object: messageCategory))
-        
-        UIApplication.sharedApplication().registerForRemoteNotifications()
-        UIApplication.sharedApplication().registerUserNotificationSettings(notificationSettings)
-        
-        // Sets up the AWS Mobile SDK for iOS
-        let credentialsProvider = AWSCognitoCredentialsProvider(
-            regionType: CognitoRegionType,
-            identityPoolId: CognitoIdentityPoolId)
-        let defaultServiceConfiguration = AWSServiceConfiguration(
-            region: DefaultServiceRegionType,
-            credentialsProvider: credentialsProvider)
-        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
-        
+        let gcmConfig = GCMConfig.defaultConfig()
+        gcmConfig.receiverDelegate = self
+        GCMService.sharedInstance().startWithConfig(gcmConfig)
         //end push notification
 
         readFile()
@@ -99,150 +81,137 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     }
     
-    // push functions
-    func subscribe(token : String, completionHandler : ((NSError?) -> ())? = nil) {
-        let credentialsProvider : AWSStaticCredentialsProvider = AWSStaticCredentialsProvider(accessKey: AWSaccessKey, secretKey: AWSsecretKey)
-        let defaultServiceConfiguration : AWSServiceConfiguration = AWSServiceConfiguration(region: DefaultServiceRegionType, credentialsProvider: credentialsProvider)
-        
-        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
-        
-        let sns = AWSSNS.defaultSNS()
-        let createPlatformEndpointInput = AWSSNSCreatePlatformEndpointInput()
-        createPlatformEndpointInput.token = token
-        createPlatformEndpointInput.platformApplicationArn = SNSPlatformApplicationArn
-        
-        sns.createPlatformEndpoint(createPlatformEndpointInput).continueWithBlock {
-                (task) -> AnyObject! in
-                if task.error != nil {
-                    print("Error creating platform endpoint: \(task.error)")
-                    completionHandler?(task.error)
-                    return nil
-                }
-                let result = task.result as! AWSSNSCreateEndpointResponse
-                let subscribeInput = AWSSNSSubscribeInput()
-                subscribeInput.topicArn = SNSTopicARN
-                subscribeInput.endpoint = result.endpointArn
-                print("Endpoint arn: \(result.endpointArn)")
-                subscribeInput.protocols = "application"
-                sns.subscribe(subscribeInput).continueWithBlock
-                    {
-                        (task) -> AnyObject! in
-                        if task.error != nil
-                        {
-                            completionHandler?(task.error)
-                            print("Error subscribing: \(task.error)")
-                            return nil
-                        }
-                        print("Subscribed succesfully")
-                        let subscriptionConfirmInput = AWSSNSConfirmSubscriptionInput()
-                        subscriptionConfirmInput.token = token
-                        subscriptionConfirmInput.topicArn = SNSTopicARN
-                        sns.confirmSubscription(subscriptionConfirmInput).continueWithBlock{
-                                (task) -> AnyObject! in
-                                if task.error != nil {
-                                    print("Confirmed subscription")
-                                } else {
-                                    print ("Error during Subscribed");
-                                    print (task.error)
-                                }
-                                completionHandler?(task.error)
-                                return nil
-                        }
-                        return nil
-                }
-                return nil
+    func subscribeToTopic() {
+        // If the app has a registration token and is connected to GCM, proceed to subscribe to the
+        // topic
+        if(registrationToken != nil && connectedToGCM) {
+            GCMPubSub.sharedInstance().subscribeWithToken(self.registrationToken, topic: subscriptionTopic,
+                                                          options: nil, handler: {(error:NSError?) -> Void in
+                                                            if let error = error {
+                                                                // Treat the "already subscribed" error more gently
+                                                                if error.code == 3001 {
+                                                                    print("Already subscribed to \(self.subscriptionTopic)")
+                                                                } else {
+                                                                    print("Subscription failed: \(error.localizedDescription)");
+                                                                }
+                                                            } else {
+                                                                self.subscribedToTopic = true;
+                                                                NSLog("Subscribed to \(self.subscriptionTopic)");
+                                                            }
+            })
         }
     }
     
-    func sendMessage(message : String, type : String = "alert", sound : String = "default", badges : Int = 1, completionHandler : ((NSError?) -> ())? = nil) {
-        let credentialsProvider : AWSStaticCredentialsProvider = AWSStaticCredentialsProvider(accessKey: AWSaccessKey, secretKey: AWSsecretKey)
-        let defaultServiceConfiguration : AWSServiceConfiguration = AWSServiceConfiguration(region: DefaultServiceRegionType, credentialsProvider: credentialsProvider)
-        AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = defaultServiceConfiguration
-        
-        
-        let sns = AWSSNS.defaultSNS()
-        let request = AWSSNSPublishInput()
-        request.messageStructure = "json"
-        
-        let dict = ["default": message, AWSenvironment: "{\"aps\":{\"\(type)\": \"\(message)\",\"sound\":\"\(sound)\", \"badge\":\"\(badges)\"} }"]
-        
-        do {
-            let jsonData = try NSJSONSerialization.dataWithJSONObject(dict, options: NSJSONWritingOptions.PrettyPrinted)
-            request.message = (NSString(data: jsonData, encoding: NSUTF8StringEncoding) as? String)
-            request.topicArn = SNSTopicARN
-            
-            sns.publish(request).continueWithBlock
-                {
-                    (task) -> AnyObject! in
-                    if task.error != nil
-                    {
-                        print("Error sending mesage: \(task.error)")
-                    }
-                    else
-                    {
-                        print("Success sending message")
-                    }
-                    completionHandler?(task.error)
-                    return nil
-            }
-        }
-        catch {
-            print("Error on json serialization: \(error)")
-        }
-        
+    func application( application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken
+        deviceToken: NSData ) {
+        // [END receive_apns_token]
+        // [START get_gcm_reg_token]
+        // Create a config and set a delegate that implements the GGLInstaceIDDelegate protocol.
+        let instanceIDConfig = GGLInstanceIDConfig.defaultConfig()
+        instanceIDConfig.delegate = self
+        // Start the GGLInstanceID shared instance with that config and request a registration
+        // token to enable reception of notifications
+        GGLInstanceID.sharedInstance().startWithConfig(instanceIDConfig)
+        registrationOptions = [kGGLInstanceIDRegisterAPNSOption:deviceToken,
+                               kGGLInstanceIDAPNSServerTypeSandboxOption:false]
+        GGLInstanceID.sharedInstance().tokenWithAuthorizedEntity(gcmSenderID,
+                                                                 scope: kGGLInstanceIDScopeGCM, options: registrationOptions, handler: registrationHandler)
+        // [END get_gcm_reg_token]
     }
     
-    func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
-        let deviceTokenString = "\(deviceToken)"
-            .stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString:"<>"))
-            .stringByReplacingOccurrencesOfString(" ", withString: "")
-        print("deviceTokenString: \(deviceTokenString)")
-        NSUserDefaults.standardUserDefaults().setObject(deviceTokenString, forKey: "deviceToken")
-        
-        let sns = AWSSNS.defaultSNS()
-        let request = AWSSNSCreatePlatformEndpointInput()
-        request.token = deviceTokenString
-        request.platformApplicationArn = SNSPlatformApplicationArn
-        sns.createPlatformEndpoint(request).continueWithExecutor(AWSExecutor.mainThreadExecutor(), withBlock: { (task: AWSTask!) -> AnyObject! in
-            if task.error != nil {
-                print("Error: \(task.error)")
-            } else {
-                let createEndpointResponse = task.result as! AWSSNSCreateEndpointResponse
-                let endPointAWS = createEndpointResponse.endpointArn
-                print("endpointArn: \(endPointAWS)")
-                NSUserDefaults.standardUserDefaults().setObject(endPointAWS, forKey: "endpointArn")
-                
-            }
-        
-            return nil
-        })
-        self.subscribe(deviceTokenString)
-        
+    func application( application: UIApplication,
+                      didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
+        print("Notification received 1: \(userInfo)")
+        // This works only if the app started the GCM service
+        GCMService.sharedInstance().appDidReceiveMessage(userInfo);
+        // Handle the received message
+        // [START_EXCLUDE]
+        NSNotificationCenter.defaultCenter().postNotificationName(messageKey, object: nil,
+                                                                userInfo: userInfo)
+        displayNotification(userInfo["message"]! as! String);
+        // [END_EXCLUDE]
     }
     
-    func application(application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
-        print("Failed to register with error: \(error)")
-    }
+    func displayNotification (message: String){
     
-    func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
-        // display the userInfo
-        if let notification = userInfo["aps"] as? NSDictionary,
-            let alert = notification["alert"] as? String {
-            let alertCtrl = UIAlertController(title: "70K Bands", message: alert as String, preferredStyle: UIAlertControllerStyle.Alert)
-            alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.Default, handler: nil))
+        let alertCtrl = UIAlertController(title: "70K Bands", message: message, preferredStyle: UIAlertControllerStyle.Alert)
+        alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.Default, handler: nil))
+    
+        // Find the presented VC...
+        var presentedVC = self.window?.rootViewController
+        while (presentedVC!.presentedViewController != nil)  {
+        presentedVC = presentedVC!.presentedViewController}
+    
+        presentedVC!.presentViewController(alertCtrl, animated: true, completion: nil)
 
-            // Find the presented VC...
-            var presentedVC = self.window?.rootViewController
-            while (presentedVC!.presentedViewController != nil)  {
-                presentedVC = presentedVC!.presentedViewController
-            }
-            presentedVC!.presentViewController(alertCtrl, animated: true, completion: nil)
-            
-            // call the completion handler
-            // -- pass in NoData, since no new data was fetched from the server.
-            completionHandler(UIBackgroundFetchResult.NoData)
+    
+    
+    }
+    
+    func application( application: UIApplication,
+                      didReceiveRemoteNotification userInfo: [NSObject : AnyObject],
+                                                   fetchCompletionHandler handler: (UIBackgroundFetchResult) -> Void) {
+        print("Notification received 2: \(userInfo)")
+        // This works only if the app started the GCM service
+        GCMService.sharedInstance().appDidReceiveMessage(userInfo);
+        // Handle the received message
+        // Invoke the completion handler passing the appropriate UIBackgroundFetchResult value
+        // [START_EXCLUDE]
+        NSNotificationCenter.defaultCenter().postNotificationName(messageKey, object: nil,
+                                                                  userInfo: userInfo)
+        handler(UIBackgroundFetchResult.NoData);
+        // [END_EXCLUDE]
+        
+        displayNotification(userInfo["message"]! as! String);
+        
+    }
+    
+    
+    func registrationHandler(registrationToken: String!, error: NSError!) {
+        if (registrationToken != nil) {
+            self.registrationToken = registrationToken
+            print("Registration Token: \(registrationToken)")
+            self.subscribeToTopic()
+            let userInfo = ["registrationToken": registrationToken]
+            NSNotificationCenter.defaultCenter().postNotificationName(
+                self.registrationKey, object: nil, userInfo: userInfo)
+        } else {
+            print("Registration to GCM failed with error: \(error.localizedDescription)")
+            let userInfo = ["error": error.localizedDescription]
+            NSNotificationCenter.defaultCenter().postNotificationName(
+                self.registrationKey, object: nil, userInfo: userInfo)
         }
     }
+    
+    // [START on_token_refresh]
+    func onTokenRefresh() {
+        // A rotation of the registration tokens is happening, so the app needs to request a new token.
+        print("The GCM registration token needs to be changed.")
+        GGLInstanceID.sharedInstance().tokenWithAuthorizedEntity(gcmSenderID,
+                                                                 scope: kGGLInstanceIDScopeGCM, options: registrationOptions, handler: registrationHandler)
+    }
+    // [END on_token_refresh]
+    
+    // [START upstream_callbacks]
+    func willSendDataMessageWithID(messageID: String!, error: NSError!) {
+        if (error != nil) {
+            // Failed to send the message.
+        } else {
+            // Will send message, you can save the messageID to track the message
+        }
+    }
+    
+    func didSendDataMessageWithID(messageID: String!) {
+        // Did successfully send message identified by messageID
+    }
+    // [END upstream_callbacks]
+    
+    func didDeleteMessagesOnServer() {
+        // Some messages sent to this device were deleted on the GCM server before reception, likely
+        // because the TTL expired. The client should notify the app server of this, so that the app
+        // server can resend those messages.
+    }
+    
     
     func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [NSObject : AnyObject], completionHandler: () -> Void) {
         
@@ -260,12 +229,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         writeFile()
         
         //push notification
-        //self.connectedToGCM = false
+        GCMService.sharedInstance().disconnect()
+        // [START_EXCLUDE]
+        self.connectedToGCM = false
+        // [END_EXCLUDE]
     }
     
     func applicationDidBecomeActive( application: UIApplication){
         
         NSNotificationCenter.defaultCenter().postNotificationName("RefreshDisplay", object: nil)
+        
+        GCMService.sharedInstance().connectWithHandler({(error:NSError?) -> Void in
+            if let error = error {
+                print("Could not connect to GCM: \(error.localizedDescription)")
+            } else {
+                self.connectedToGCM = true
+                print("Connected to GCM")
+                // [START_EXCLUDE]
+                self.subscribeToTopic()
+                // [END_EXCLUDE]
+            }
+        })
         
     }
     
