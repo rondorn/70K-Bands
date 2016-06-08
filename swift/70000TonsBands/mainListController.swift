@@ -71,7 +71,7 @@ import Foundation
         
         schedule.buildTimeSortedSchedulingData();
         print (schedule.getTimeSortedSchedulingData());
-        if (schedule.getBandSortedSchedulingData().count > 2 && sortedBy == "name"){
+        if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
             print ("Sorting by name!!!");
             for bandName in schedule.getBandSortedSchedulingData().keys {
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
@@ -84,7 +84,7 @@ import Foundation
             bandCount = 0;
             eventCount = newAllBands.count;
             
-        } else if (schedule.getTimeSortedSchedulingData().count > 2 && sortedBy == "time"){
+        } else if (schedule.getTimeSortedSchedulingData().count > 0 && sortedBy == "time"){
             print ("Sorting by time!!!");
             for timeIndex in schedule.getTimeSortedSchedulingData().keys {
                 for bandName in schedule.getTimeSortedSchedulingData()[timeIndex]!.keys{
@@ -112,8 +112,9 @@ import Foundation
         if (schedule.getTimeSortedSchedulingData().count > 2){
             //add any bands without shows to the bottom of the list
             for bandName in allBands {
-                    if (presentCheck.contains(bandName) == false){
-                newAllBands.append(bandName);
+                if (presentCheck.contains(bandName) == false){
+                    print("Adding!! bandName  " + bandName)
+                    newAllBands.append(bandName);
                 }
             }
         }

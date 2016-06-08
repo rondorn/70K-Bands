@@ -82,7 +82,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: NSUserDefaultsDidChangeNotification, object: nil)
         
-        if (schedule.getBandSortedSchedulingData().count > 2 && sortedBy == "name"){
+        if (eventCount != 0 && sortedBy == "name"){
             sortedBy = "time";
         }
         
@@ -127,8 +127,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func refreshDisplayAfterWake(){
         
         if (sortedBy == "time"){
-            resortBandsByTime()
-            //bands = bandsByTime
+            refreshFromCache()
             self.tableView.reloadData()
         } else {
             refreshData()
@@ -145,6 +144,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshFromCache (){
         
+        bands =  [String]()
+        bandsByName = [String]()
         readBandFile()
         schedule.populateSchedule()
         bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
@@ -154,7 +155,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func ensureCorrectSorting(){
         
-        if (schedule.schedulingData.isEmpty == true){
+        if (eventCount == 0){
             print("Schedule is empty, stay hidden")
             self.scheduleButton.hidden = true;
             sortedBy = "name"
@@ -173,6 +174,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.setTitle(getBandIconSort(), forState: UIControlState.Normal)
             
         }
+        bands =  [String]()
         bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
     }
     
@@ -191,6 +193,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let validate = validateCSVSchedule()
                 validate.validateSchedule()
             }
+            self.bandsByName = [String]()
+            self.bands =  [String]()
             
             schedule.populateSchedule()
             self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
@@ -269,6 +273,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
         } else {
+            bands =  [String]()
             bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
             updateCountLable()
             tableView.reloadData()
@@ -276,11 +281,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         print("Sorted  by is " + sortedBy)
+        bands =  [String]()
         bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
-        if (sortedBy == "time"){
-            //sortBandsByTime()
-            //bands = bandsByTime
-        }
         
         updateCountLable()
         tableView.reloadData()
@@ -291,8 +293,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var lableCounterString = String();
         var labeleCounter = Int()
         
-        if bandCount > 0 {
-            labeleCounter = bandCount
+        if eventCount == 0 {
+            labeleCounter = bandsByName.count
             lableCounterString = " bands";
             
         } else {
@@ -395,50 +397,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         tableView.reloadData()
     }
     
-    /*
-    func sortBandsByTime() {
-        
-        var sortableBands = Dictionary<NSTimeInterval, String>()
-        var sortableTimeIndexArray = [NSTimeInterval]()
-        var sortedBands = [String]()
-        
-        //var fullBands = bands;
-        var dupAvoidBands = Dictionary<String,Int>()
-        
-        let futureTime :Int64 = 8000000000000;
-        var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
-        
-        for bandName in bands {
-            let timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
-            if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
-                sortableBands[timeIndex] = bandName
-                sortableTimeIndexArray.append(timeIndex)
-            } else {
-                sortableBands[noShowsLeftMagicNumber] = bandName
-                sortableTimeIndexArray.append(noShowsLeftMagicNumber)
-                noShowsLeftMagicNumber = noShowsLeftMagicNumber + 1
-            }
-        }
-        
-        
-        let sortedArray = sortableTimeIndexArray.sort({$0 < $1})
-        
-        for index in sortedArray{
-            //if (dupAvoidBands[sortableBands[index]!] == nil){
-                sortedBands.append(sortableBands[index]!)
-                dupAvoidBands[sortableBands[index]!] = 1
-            //}
-        }
-        
-        
-        bandsByTime = sortedBands
-        
-    }
-    */
     
     func resortBandsByTime(){
         schedule.populateSchedule()
-        //sortBandsByTime()
     }
     
     @IBAction func resortBands(sender: UIButton) {

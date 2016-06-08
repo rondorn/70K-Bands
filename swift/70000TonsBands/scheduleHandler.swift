@@ -9,7 +9,7 @@
 import Foundation
 
 public class scheduleHandler {
-
+    
     var schedulingData: [String : [NSTimeInterval : [String : String]]] = [String : [NSTimeInterval : [String : String]]]()
     var schedulingDataByTime: [NSTimeInterval : [String : String]] = [NSTimeInterval : [String : String]]()
     
