@@ -9,24 +9,15 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="com.google.android.c2dm.permission.REGISTER" />
 
-
-    <!--
-      IMPORTANT: Change "com.parse.starter.permission.C2D_MESSAGE" in the lines below
-      to match your app's package name + ".permission.C2D_MESSAGE".
-    -->
-    <permission android:protectionLevel="signature"
-        android:name="com.Bands70k.permission.C2D_MESSAGE" />
+    <permission android:name="com.Bands70k.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
     <uses-permission android:name="com.Bands70k.permission.C2D_MESSAGE" />
 
-    <!--
-    //place this in application to pontentially fix Samsung bug
-    android:hardwareAccelerated="false"
-    -->
     <application
-        android:name=".Bands70k"
+        android:name="Bands70k"
         android:allowBackup="true"
         android:icon="@mipmap/bands_70k_icon"
         android:label="@string/app_name"
@@ -50,36 +41,56 @@
             android:label="Preferences" >
         </activity>
 
-        <service android:name="com.parse.PushService" />
-        <receiver android:name="com.parse.ParseBroadcastReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.USER_PRESENT" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name=".shipNotifications" />
-
-        <receiver android:name="com.parse.ParsePushBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.parse.push.intent.RECEIVE" />
-                <action android:name="com.parse.push.intent.DELETE" />
-                <action android:name="com.parse.push.intent.OPEN" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name="com.parse.GcmBroadcastReceiver"
-            android:permission="com.google.android.c2dm.permission.SEND">
+        <!-- [START gcm_receiver] -->
+        <receiver
+            android:name="com.google.android.gms.gcm.GcmReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-
-                <!--
-                  IMPORTANT: Change "com.parse.starter" to match your app's package name.
-                -->
                 <category android:name="com.Bands70k" />
             </intent-filter>
         </receiver>
+        <!-- [END gcm_receiver] -->
+
+
+        <receiver
+            android:name="com.Bands70k.NotificationPublisher"
+            android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action
+                    android:name="com.google.android.c2dm.intent.RECEIVE"/>
+                <action
+                    android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+                <category android:name="com.Bands70K"/>
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".MyGcmListenerService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+        </service>
+
+        <!-- [END gcm_listener] -->
+        <!-- [START instanceId_listener] -->
+        <service
+            android:name=".MyInstanceIDListenerService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.iid.InstanceID"/>
+            </intent-filter>
+        </service>
+        <!-- [END instanceId_listener] -->
+        <service
+            android:name=".RegistrationIntentService"
+            android:exported="false">
+        </service>
+
+        <meta-data android:name="com.Bands70k"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>
