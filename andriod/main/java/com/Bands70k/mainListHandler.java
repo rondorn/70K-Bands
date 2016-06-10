@@ -31,11 +31,13 @@ public class mainListHandler {
 
     public ListAdapter arrayAdapter;
     public showBands showBands;
-    private Integer numberOfEvents = 0;
+    public Integer numberOfEvents = 0;
     private Integer numberOfBands = 0;
+    private preferencesHandler preferences;
 
-    public mainListHandler(showBands showBandsValue){
+    public mainListHandler(showBands showBandsValue, preferencesHandler preferencesValue){
         showBands = showBandsValue;
+        preferences = preferencesValue;
     }
 
     public void populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
@@ -49,14 +51,22 @@ public class mainListHandler {
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.sortBySchedule == true) {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
-                            sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
-                            bandPresent.add(bandName);
-                            numberOfEvents++;
+                            if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true){
+                                if (checkFiltering(bandName) == true) {
+                                    sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
+                                    bandPresent.add(bandName);
+                                    numberOfEvents++;
+                                }
+                            }
                         }
                     } else {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
-                            sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
-                            numberOfEvents++;
+                            if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType())  == true) {
+                                if (checkFiltering(bandName) == true) {
+                                    sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
+                                    numberOfEvents++;
+                                }
+                            }
                         }
                         bandPresent.add(bandName);
                     }
@@ -80,6 +90,37 @@ public class mainListHandler {
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
         bandCount.setText(this.getSizeDisplay());
+    }
+
+    private boolean filterByEventType(String eventType){
+
+        Boolean showEvent = true;
+        Log.d("EventFilter", "EventType is " + eventType);
+
+        if (eventType.equals("Special Event") && preferences.getHideSpecialEvents() == true){
+            Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
+            showEvent = false;
+
+        } else if (eventType.equals("Meet and Greet") && preferences.getHideMeetAndGreet() == true){
+            Log.d("EventFilter", "preferences.getHideMeetAndGreet() is true");
+            showEvent = false;
+
+        } else if (eventType.equals("Clinic") && preferences.getHideClinicEvents() == true){
+            Log.d("EventFilter", "preferences.getHideClinicEvents() is true");
+            showEvent = false;
+
+        } else if (eventType.equals("Listening Party") && preferences.getHideAlbumListen() == true){
+            Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
+            showEvent = false;
+
+        } else if (eventType == "Show") {
+            //do nothing
+
+        } else {
+            Log.d("EventFilter", "No hide preferences are set");
+        }
+
+        return showEvent;
     }
 
     private void turnSortedListIntoArrayAdapter(){

@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#ffff"
+    android:id="@+id/showBandsView"
     android:gravity="top">
 
 
@@ -16,7 +17,7 @@
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="70,000 Tons 27 bands"
+            android:text="70,000 Tons"
             android:id="@+id/headerBandCount"
             android:textAlignment="center"
             android:gravity="center|top"/>
@@ -29,13 +30,14 @@
         android:background="#ffffffff">
 
         <ToggleButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:text="MustSeeFilter"
             android:textOff=""
             android:textOn=""
             android:id="@+id/mustSeeFilter"
-            android:background="@drawable/beer_mug" />
+            android:background="@drawable/beer_mug"
+            android:layout_marginLeft="5dp" />
 
         <View
             android:layout_width="0dp"
@@ -43,8 +45,8 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:text="50dp"
             android:textOff=""
             android:textOn=""
@@ -57,14 +59,15 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:text="Wont"
             android:id="@+id/wontSeeFilter"
             android:textOff=""
             android:textOn=""
             android:textSize="30dp"
-            android:background="@drawable/no_entrysign" />
+            android:background="@drawable/no_entrysign"
+            android:layout_marginTop="10dp" />
 
         <View
             android:layout_width="0dp"
@@ -72,14 +75,15 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:text="Unknown"
             android:id="@+id/unknownFilter"
             android:textOff=""
             android:textOn=""
             android:textSize="30dp"
-            android:background="@drawable/black_questionmark" />
+            android:background="@drawable/black_questionmark"
+            android:layout_marginTop="10dp" />
 
         <View
             android:layout_width="0dp"
@@ -87,13 +91,49 @@
             android:layout_weight="1" />
 
         <Button
-            android:layout_width="40dp"
-            android:layout_height="45dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:id="@+id/sort"
+            android:backgroundTint="@color/background_floating_material_dark" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:text=""
             android:id="@+id/refresh"
             android:background="@android:drawable/ic_popup_sync"
             android:singleLine="false"
             android:backgroundTint="@color/background_floating_material_dark" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:text=""
+            android:id="@+id/shareButton"
+            android:background="@android:drawable/ic_menu_share" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:text=""
+            android:id="@+id/preferences"
+            android:background="@android:drawable/ic_menu_preferences" />
+
     </LinearLayout >
 
         <RelativeLayout

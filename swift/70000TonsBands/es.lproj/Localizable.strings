@@ -22,8 +22,13 @@
 "Alert For Special Events"="Alerta Para Eventos Especiales";
 "Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet's ";
 "Alert For Clinics"="Alerta para Clinics";
-
 "Alert For Album Listening Events"="Alerta para escuchas de álbums";
+
+
+"Hide Special Events"="Ocultar Eventos Especiales";
+"Hide Meet and Greet Events"="Ocultar 'Meet and Greet's ";
+"Hide Clinic Events"="Ocultar Clinicas";
+"Hide Album Listening Events"="Ocultar escuchas de álbums";
 
 "Use Last Years Data"="Utilizar datos del año pasado";
 

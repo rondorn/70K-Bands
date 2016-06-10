@@ -23,6 +23,12 @@
 "Alert For Clinics"="Alert For Clinics";
 "Alert For Album Listening Events"="Alert For Album Listening Events";
 "Use Last Years Data"="Use Last Years Data";
+
+"Hide Special Events"="Hide Special Events";
+"Hide Meet and Greet Events"="Hide Meet and Greet Events";
+"Hide Clinic Events"="Hide Clinic Events";
+"Hide Album Listening Events"="Hide Album Listening Events";
+
 "LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
 

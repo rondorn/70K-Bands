@@ -96,17 +96,22 @@ public class showBands extends Activity {
 
         if (MyGcmListenerService.messageString != null) {
 
-            new AlertDialog.Builder(this)
-                    .setTitle("70K Bands Message")
-                    .setMessage(MyGcmListenerService.messageString)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            // continue with delete
-                        }
-                    })
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
-            MyGcmListenerService.messageString = null;
+            if (MyGcmListenerService.messageString.contains(".intent.")){
+                MyGcmListenerService.messageString = null;
+
+            } else {
+                new AlertDialog.Builder(this)
+                        .setTitle("70K Bands Message")
+                        .setMessage(MyGcmListenerService.messageString)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                // continue with delete
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+                MyGcmListenerService.messageString = null;
+            }
         }
     }
 
@@ -479,7 +484,7 @@ public class showBands extends Activity {
 
         sortButton = (Button) findViewById(R.id.sort);
 
-        if (BandInfo.scheduleRecords.size() > 2) {
+        if (listHandler.numberOfEvents != 0) {
             sortButton.setEnabled(true);
             sortButton.setClickable(true);
             sortButton.setVisibility(View.VISIBLE);
@@ -497,10 +502,10 @@ public class showBands extends Activity {
 
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
+        listHandler = new mainListHandler(showBands.this, preferences);
+        listHandler.populateBandInfo(bandInfo, bandList);
         setSortButton();
 
-        listHandler = new mainListHandler(showBands.this);
-        listHandler.populateBandInfo(bandInfo, bandList);
         ListAdapter arrayAdapter = listHandler.arrayAdapter;
 
         return arrayAdapter;

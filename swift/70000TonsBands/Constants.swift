@@ -51,8 +51,8 @@ let artistUrlDefault = "Default"
 let scheduleUrlDefault = "Default"
 
 let lastYearsartistUrlDefault = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1"
-//let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1"
-let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1"
+let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1"
+//let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1"
 let defaultStorageUrl = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1"
 
 let mustSeeAlertDefault = "YES"
@@ -64,6 +64,13 @@ let alertForMandGDefault = "NO"
 let alertForClinicsDefault = "NO"
 let alertForListeningDefault = "NO"
 let validateScheduleFileDefault = "NO"
+
+
+let hideSpecialDefault = "NO"
+let hideMandGDefault = "NO"
+let hideClinicsDefault = "NO"
+let hideListeningDefault = "NO"
+
 
 var schedule = scheduleHandler()
 let defaults = NSUserDefaults.standardUserDefaults()

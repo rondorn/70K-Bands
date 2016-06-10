@@ -25,12 +25,17 @@ public class preferencesHandler {
     private Integer minBeforeToAlert = 10;
     private Boolean useLastYearsData = false;
 
+    private Boolean hideSpecialEvents = false;
+    private Boolean hideMeetAndGreet = false;
+    private Boolean hideClinicEvents = false;
+    private Boolean hideAlbumListen = false;
+
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
 
     public void loadData() {
         try {
-            File file = new File(Environment.getExternalStorageDirectory() + "/70kbandPreferences.csv");
+            File file = FileHandler70k.bandPrefs;
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
@@ -50,6 +55,22 @@ public class preferencesHandler {
 
                     case "alertForShows":
                         setAlertForShows(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "hideSpecialEvents":
+                        setHideSpecialEvents(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "hideMeetAndGreet":
+                        setHideMeetAndGreet(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "hideClinics":
+                        setHideClinicEvents(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "hideListeningParties":
+                        setHideAlbumListen(Boolean.valueOf(RowData[1]));
                         break;
 
                     case "alertForSpecialEvents":
@@ -100,6 +121,12 @@ public class preferencesHandler {
         dataString += "alertForMeetAndGreet," + alertForMeetAndGreet.toString() + "\n";
         dataString += "alertForClinics," + alertForClinics.toString() + "\n";
         dataString += "alertForListeningParties," + alertForListeningParties.toString() + "\n";
+
+        dataString += "hideSpecialEvents," + hideSpecialEvents.toString() + "\n";
+        dataString += "hideMeetAndGreet," + hideMeetAndGreet.toString() + "\n";
+        dataString += "hideClinics," + hideClinicEvents.toString() + "\n";
+        dataString += "hideListeningParties," + hideAlbumListen.toString() + "\n";
+
         dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
@@ -107,7 +134,7 @@ public class preferencesHandler {
 
         Log.d("Save Data", dataString);
         try {
-            FileOutputStream stream = new FileOutputStream(new File(Environment.getExternalStorageDirectory() + "/70kbandPreferences.csv"));
+            FileOutputStream stream = new FileOutputStream(FileHandler70k.bandPrefs);
             try {
                 stream.write(dataString.getBytes());
             } finally {
@@ -144,6 +171,32 @@ public class preferencesHandler {
 
     public Boolean getAlertForSpecialEvents() {
         return alertForSpecialEvents;
+    }
+
+    public Boolean getHideSpecialEvents() {
+        return hideSpecialEvents;
+    }
+    public Boolean getHideMeetAndGreet() {
+        return hideMeetAndGreet;
+    }
+    public Boolean getHideClinicEvents() {
+        return hideClinicEvents;
+    }
+    public Boolean getHideAlbumListen() {
+        return hideAlbumListen;
+    }
+
+    public void setHideSpecialEvents(Boolean hideSpecialEvents) {
+        this.hideSpecialEvents = hideSpecialEvents;
+    }
+    public void setHideMeetAndGreet(Boolean hideMeetAndGreet) {
+        this.hideMeetAndGreet = hideMeetAndGreet;
+    }
+    public void setHideClinicEvents(Boolean hideClinicEvents) {
+        this.hideClinicEvents = hideClinicEvents;
+    }
+    public void setHideAlbumListen(Boolean hideAlbumListen) {
+        this.hideAlbumListen = hideAlbumListen;
     }
 
     public void setAlertForSpecialEvents(Boolean alertForSpecialEvents) {

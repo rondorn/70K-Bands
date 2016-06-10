@@ -45,6 +45,7 @@ public class BandInfo {
     public static String getSelectedBand(){
         return selectedBand;
     }
+    public FileHandler70k fileHandle = new FileHandler70k();
 
     public ArrayList<String> getBandNames(){
 
@@ -235,8 +236,6 @@ public class BandInfo {
             } catch (Exception error) {
                 Log.e("ErrorDefaultUrls", error.getMessage());
             }
-
-            //downloadUrls.put("scheduleUrl", "https://www.dropbox.com/s/k8b32buyjh213aw/artistsSchedule.csv?dl=1");
         }
         if (preferences.getUseLastYearsData() == false) {
             if (!preferences.getArtsistsUrl().equals("Default")) {
@@ -262,7 +261,7 @@ public class BandInfo {
             byte[] buffer = new byte[1024];
             int length;
 
-            FileOutputStream fos = new FileOutputStream(new File(Environment.getExternalStorageDirectory() + "/70kbandInfo.csv"));
+            FileOutputStream fos = new FileOutputStream(FileHandler70k.bandInfo);
             while ((length = dis.read(buffer))>0) {
                 fos.write(buffer, 0, length);
             }
@@ -292,7 +291,7 @@ public class BandInfo {
         ArrayList<String> bandNames = new ArrayList<String>();
 
         try {
-            File file = new File(Environment.getExternalStorageDirectory() + "/70kbandInfo.csv");
+            File file = FileHandler70k.bandInfo;
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;

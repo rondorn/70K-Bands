@@ -20,8 +20,8 @@ import java.util.Map;
 public class rankStore {
 
     private static Map<String, String> bandRankings = new HashMap<String, String>();
-    private static File bandRankingsFile = new File(Environment.getExternalStorageDirectory() + "/bandRankings.txt");
-    private static File bandRankingsFileBackup = new File(Environment.getExternalStorageDirectory() + "/bandRankings.bk");
+    private static File bandRankingsFile = FileHandler70k.bandRankings;
+    private static File bandRankingsFileBackup = FileHandler70k.bandRankingsBk;
 
     public static String getRankForBand (String bandName){
 

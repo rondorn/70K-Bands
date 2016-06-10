@@ -76,8 +76,12 @@ import Foundation
             for bandName in schedule.getBandSortedSchedulingData().keys {
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
                     if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
-                        newAllBands.append(bandName + ":" + String(timeIndex));
-                        presentCheck.append(bandName);
+                        if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                            if (rankFiltering(bandName) == true){
+                                newAllBands.append(bandName + ":" + String(timeIndex));
+                                presentCheck.append(bandName);
+                            }
+                        }
                     }
                 }
             }
@@ -89,8 +93,12 @@ import Foundation
             for timeIndex in schedule.getTimeSortedSchedulingData().keys {
                 for bandName in schedule.getTimeSortedSchedulingData()[timeIndex]!.keys{
                     if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
-                        newAllBands.append(String(timeIndex) + ":" + bandName);
-                        presentCheck.append(bandName);
+                        if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                            if (rankFiltering(bandName) == true){
+                                newAllBands.append(String(timeIndex) + ":" + bandName);
+                                presentCheck.append(bandName);
+                            }
+                        }
                     }
                 }
             }
@@ -219,8 +227,60 @@ import Foundation
         }
     }
 
+    func rankFiltering(bandName: String) -> Bool {
+        
+        var showBand = true;
+        
+        if (getMustSeeOn() == false && getPriorityData(bandName) == 1){
+            showBand = false
+        
+        } else if (getMightSeeOn() == false && getPriorityData(bandName) == 2){
+            showBand = false
+            
+        } else if (getWontSeeOn() == false && getPriorityData(bandName) == 3){
+            showBand = false
+            
+        } else if (getUnknownSeeOn() == false && getPriorityData(bandName) == 0){
+            showBand = false
+        
+        }
+        
+        return showBand
+    
+    }
+
+    func eventTypeFiltering(eventType: String) -> Bool{
+        
+        var showEvent = true;
+        
+        let hideSpecialValue = defaults.boolForKey("hideSpecial")
+        let hideMandGValue = defaults.boolForKey("hideMandG")
+        let hideClinicsValue = defaults.boolForKey("hideClinics")
+        let hideListeningValue = defaults.boolForKey("hideListening")
+        
+        if (eventType == "Special Event" && hideSpecialValue == true){
+            showEvent = false;
+        
+        } else if (eventType == "Meet and Greet" && hideMandGValue == true){
+            showEvent = false;
+        
+        } else if (eventType == "Clinic" && hideClinicsValue == true){
+            showEvent = false;
+        
+        } else if (eventType == "Listening Party" && hideListeningValue == true){
+            showEvent = false;
+            
+        }
+        
+        return showEvent
+    }
 
     func getCellValue (indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
+        
+        //index is out of bounds. Don't allow this
+        if (bands.count < indexRow){
+            return ""
+        }
         
         let indexString = bands[indexRow].componentsSeparatedByString(":")
         

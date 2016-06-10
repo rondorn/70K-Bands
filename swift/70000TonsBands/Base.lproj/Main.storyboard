@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10109" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="H1p-Uh-vWS">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="H1p-Uh-vWS">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10083"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
@@ -490,203 +490,219 @@
                         <viewControllerLayoutGuide type="bottom" id="HiL-ed-ex9"/>
                     </layoutGuides>
                     <view key="view" contentMode="top" id="c4o-PN-9Pg" customClass="UIControl">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="750"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <switch opaque="NO" clipsSubviews="YES" tag="3" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rOL-SG-E1p">
-                                <rect key="frame" x="535" y="378" width="51" height="31"/>
-                                <connections>
-                                    <action selector="UseLastYearsDataAction" destination="wME-gs-GWB" eventType="valueChanged" id="qRd-J9-RlQ"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert On Must See Bands" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="Zdt-B0-gyT">
-                                <rect key="frame" x="16" y="72" width="204" height="21"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="204" id="x79-Zg-Kao"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" clipsSubviews="YES" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CPG-dg-hVq">
-                                <rect key="frame" x="535" y="67" width="51" height="31"/>
-                                <connections>
-                                    <action selector="MustSeeChange" destination="wME-gs-GWB" eventType="valueChanged" id="amQ-ad-ZFq"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert On Might See Bands" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="4Px-mQ-94P">
-                                <rect key="frame" x="16" y="104" width="204" height="26"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6gp-sY-UWk">
-                                <rect key="frame" x="535" y="101" width="51" height="31"/>
-                                <connections>
-                                    <action selector="MightSeeChange" destination="wME-gs-GWB" eventType="valueChanged" id="jZK-4M-RWb"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Min Before Event to Alert" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="VsJ-uI-fpU">
-                                <rect key="frame" x="16" y="144" width="204" height="21"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="21" id="MUA-JJ-h9g"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" borderStyle="roundedRect" clearsOnBeginEditing="YES" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="s0H-aj-PQP">
-                                <rect key="frame" x="519" y="140" width="65" height="30"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="65" id="vts-ID-aVV"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="numbersAndPunctuation" returnKeyType="done"/>
-                                <connections>
-                                    <action selector="MinBeforeAlertAction" destination="wME-gs-GWB" eventType="editingDidEnd" id="I2m-Jp-Je3"/>
-                                </connections>
-                            </textField>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert For Shows" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="lYb-Qt-dwe">
-                                <rect key="frame" x="16" y="183" width="212" height="21"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="212" id="vhB-Pi-Wop"/>
-                                    <constraint firstAttribute="height" constant="21" id="zEf-ZD-Hfi"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rPG-hX-OcE">
-                                <rect key="frame" x="535" y="178" width="51" height="31"/>
-                                <connections>
-                                    <action selector="AlertForShowsChange" destination="wME-gs-GWB" eventType="valueChanged" id="y2s-5Z-hWB"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert For Special Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="6rh-64-BHF">
-                                <rect key="frame" x="16" y="222" width="212" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rca-gD-C4K">
-                                <rect key="frame" x="535" y="256" width="51" height="31"/>
-                                <connections>
-                                    <action selector="AlertForMeetAndGreetChange" destination="wME-gs-GWB" eventType="valueChanged" id="QHZ-sT-Gj8"/>
-                                </connections>
-                            </switch>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9yX-KV-3Cq">
-                                <rect key="frame" x="535" y="217" width="51" height="31"/>
-                                <connections>
-                                    <action selector="AlertForSpecialEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="Dse-BN-IDA"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert For Meeting and Greets" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="j7a-hd-VQL">
-                                <rect key="frame" x="16" y="261" width="212" height="22"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert For Clinic" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="DEu-Zn-f5v">
-                                <rect key="frame" x="16" y="299" width="212" height="23"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RoS-ya-C6u">
-                                <rect key="frame" x="535" y="295" width="51" height="31"/>
-                                <connections>
-                                    <action selector="AlertForClinicChange" destination="wME-gs-GWB" eventType="valueChanged" id="FCj-dC-1iy"/>
-                                </connections>
-                            </switch>
-                            <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="udf-Jd-Ict">
-                                <rect key="frame" x="535" y="339" width="51" height="31"/>
-                                <connections>
-                                    <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="qIl-aF-tRg"/>
-                                </connections>
-                            </switch>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Use Last Years Data" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="AqN-Ko-joc">
-                                <rect key="frame" x="16" y="383" width="212" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" editable="NO" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="XwI-fp-dny">
-                                <rect key="frame" x="0.0" y="417" width="584" height="131"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <string key="text">Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
-                                <fontDescription key="fontDescription" type="system" weight="ultraLight" pointSize="8"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Alert For Album Listening Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="c7E-hk-S5X">
-                                <rect key="frame" x="16" y="347" width="212" height="16"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="16" id="JKF-jq-jax"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1DA-aL-VLr">
+                                <rect key="frame" x="0.0" y="0.0" width="350" height="821"/>
+                                <subviews>
+                                    <switch opaque="NO" clipsSubviews="YES" tag="3" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rOL-SG-E1p">
+                                        <rect key="frame" x="249" y="487" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="UseLastYearsDataAction" destination="wME-gs-GWB" eventType="valueChanged" id="qRd-J9-RlQ"/>
+                                        </connections>
+                                    </switch>
+                                    <switch opaque="NO" clipsSubviews="YES" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CPG-dg-hVq">
+                                        <rect key="frame" x="251" y="8" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="MustSeeChange" destination="wME-gs-GWB" eventType="valueChanged" id="amQ-ad-ZFq"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Alert On Might See Bands" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="4Px-mQ-94P">
+                                        <rect key="frame" x="36" y="57" width="204" height="26"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6gp-sY-UWk">
+                                        <rect key="frame" x="249" y="50" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="MightSeeChange" destination="wME-gs-GWB" eventType="valueChanged" id="jZK-4M-RWb"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Min Before Event to Alert" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="VsJ-uI-fpU">
+                                        <rect key="frame" x="36" y="97" width="204" height="21"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="21" id="MUA-JJ-h9g"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" borderStyle="roundedRect" clearsOnBeginEditing="YES" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="s0H-aj-PQP">
+                                        <rect key="frame" x="233" y="89" width="65" height="30"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="65" id="vts-ID-aVV"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="numbersAndPunctuation" returnKeyType="done"/>
+                                        <connections>
+                                            <action selector="MinBeforeAlertAction" destination="wME-gs-GWB" eventType="editingDidEnd" id="I2m-Jp-Je3"/>
+                                        </connections>
+                                    </textField>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Alert For Shows" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="lYb-Qt-dwe">
+                                        <rect key="frame" x="36" y="136" width="212" height="21"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="212" id="vhB-Pi-Wop"/>
+                                            <constraint firstAttribute="height" constant="21" id="zEf-ZD-Hfi"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rPG-hX-OcE">
+                                        <rect key="frame" x="249" y="127" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForShowsChange" destination="wME-gs-GWB" eventType="valueChanged" id="y2s-5Z-hWB"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Alert For Special Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="6rh-64-BHF">
+                                        <rect key="frame" x="36" y="175" width="212" height="21"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rca-gD-C4K">
+                                        <rect key="frame" x="249" y="205" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForMeetAndGreetChange" destination="wME-gs-GWB" eventType="valueChanged" id="QHZ-sT-Gj8"/>
+                                        </connections>
+                                    </switch>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9yX-KV-3Cq">
+                                        <rect key="frame" x="249" y="166" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForSpecialEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="Dse-BN-IDA"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Alert For Meeting and Greets" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="j7a-hd-VQL">
+                                        <rect key="frame" x="36" y="214" width="212" height="22"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Alert For Clinic" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="DEu-Zn-f5v">
+                                        <rect key="frame" x="36" y="252" width="212" height="23"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RoS-ya-C6u">
+                                        <rect key="frame" x="249" y="244" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForClinicChange" destination="wME-gs-GWB" eventType="valueChanged" id="FCj-dC-1iy"/>
+                                        </connections>
+                                    </switch>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="udf-Jd-Ict">
+                                        <rect key="frame" x="249" y="285" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="qIl-aF-tRg"/>
+                                        </connections>
+                                    </switch>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" editable="NO" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="XwI-fp-dny">
+                                        <rect key="frame" x="31" y="539" width="319" height="47"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <string key="text">Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
+                                        <fontDescription key="fontDescription" type="system" weight="ultraLight" pointSize="8"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Alert For Album Listening Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="c7E-hk-S5X">
+                                        <rect key="frame" x="36" y="297" width="212" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="16" id="JKF-jq-jax"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oVr-Ez-Duf" userLabel="Hide Special Events">
+                                        <rect key="frame" x="250" y="326" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="1E2-g2-jIs"/>
+                                            <action selector="HideSpecialEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="xcC-gU-MM7"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Hide Special Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="Xsi-UD-KJI">
+                                        <rect key="frame" x="37" y="338" width="212" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="16" id="qZ6-qe-owx"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwU-XO-IET" userLabel="Hide Meet and Greet">
+                                        <rect key="frame" x="250" y="366" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="j5e-DK-htp"/>
+                                            <action selector="HideMeetAndGreetChange" destination="wME-gs-GWB" eventType="valueChanged" id="N41-Qv-Sai"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Hide Meet and Greets Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="A41-J3-7gv">
+                                        <rect key="frame" x="37" y="378" width="212" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="16" id="ptu-RV-LaC"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UyS-0B-WDz" userLabel="Hide Clinic">
+                                        <rect key="frame" x="251" y="406" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="xEO-4D-9Vq"/>
+                                            <action selector="HideClinicChange" destination="wME-gs-GWB" eventType="valueChanged" id="ZdF-aq-tH1"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Hide Clinic Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="xPU-Zv-ZNX">
+                                        <rect key="frame" x="38" y="418" width="212" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="16" id="VVb-G7-cCV"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <switch opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8em-6X-s3f" userLabel="Hide Listening">
+                                        <rect key="frame" x="250" y="443" width="51" height="31"/>
+                                        <connections>
+                                            <action selector="AlertForListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="JfQ-tM-F12"/>
+                                            <action selector="HideListeningEventChange" destination="wME-gs-GWB" eventType="valueChanged" id="2f2-Oc-2Rc"/>
+                                        </connections>
+                                    </switch>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Hide Album Listening Events" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="aMQ-ZT-hZj">
+                                        <rect key="frame" x="37" y="455" width="212" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="16" id="mIe-QQ-ixK"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Use Last Years Data" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="AqN-Ko-joc">
+                                        <rect key="frame" x="37" y="496" width="212" height="21"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="Alert On Must See Bands" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="Zdt-B0-gyT">
+                                        <rect key="frame" x="31" y="13" width="204" height="21"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="204" id="x79-Zg-Kao"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                        <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                            </scrollView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <constraints>
-                            <constraint firstItem="HiL-ed-ex9" firstAttribute="top" secondItem="XwI-fp-dny" secondAttribute="bottom" constant="8" symbolic="YES" id="0B8-HG-yDk"/>
-                            <constraint firstItem="rOL-SG-E1p" firstAttribute="centerY" secondItem="AqN-Ko-joc" secondAttribute="centerY" id="7cf-E1-dfe"/>
-                            <constraint firstItem="XwI-fp-dny" firstAttribute="trailing" secondItem="rOL-SG-E1p" secondAttribute="trailing" id="8RN-ID-3pu"/>
-                            <constraint firstItem="CPG-dg-hVq" firstAttribute="top" secondItem="dgr-NV-Uhp" secondAttribute="bottom" constant="3" id="9Xb-Wv-Ju4"/>
-                            <constraint firstItem="VsJ-uI-fpU" firstAttribute="top" secondItem="4Px-mQ-94P" secondAttribute="bottom" constant="14" id="9qy-EB-4GF"/>
-                            <constraint firstItem="j7a-hd-VQL" firstAttribute="trailing" secondItem="DEu-Zn-f5v" secondAttribute="trailing" id="AS2-8R-IAx"/>
-                            <constraint firstItem="AqN-Ko-joc" firstAttribute="trailing" secondItem="c7E-hk-S5X" secondAttribute="trailing" id="AbN-hI-aQs"/>
-                            <constraint firstItem="j7a-hd-VQL" firstAttribute="top" secondItem="6rh-64-BHF" secondAttribute="bottom" constant="18" id="Awq-Ci-Lf7"/>
-                            <constraint firstItem="4Px-mQ-94P" firstAttribute="top" secondItem="Zdt-B0-gyT" secondAttribute="bottom" constant="11" id="Dej-Gv-9AQ"/>
-                            <constraint firstItem="4Px-mQ-94P" firstAttribute="leading" secondItem="VsJ-uI-fpU" secondAttribute="leading" id="Dyv-jb-24s"/>
-                            <constraint firstItem="lYb-Qt-dwe" firstAttribute="trailing" secondItem="6rh-64-BHF" secondAttribute="trailing" id="ERb-dW-9TD"/>
-                            <constraint firstItem="udf-Jd-Ict" firstAttribute="leading" secondItem="RoS-ya-C6u" secondAttribute="leading" id="Hku-Ak-ABA"/>
-                            <constraint firstItem="j7a-hd-VQL" firstAttribute="leading" secondItem="c4o-PN-9Pg" secondAttribute="leadingMargin" id="I5A-dV-0CQ"/>
-                            <constraint firstItem="9yX-KV-3Cq" firstAttribute="top" secondItem="rPG-hX-OcE" secondAttribute="bottom" constant="8" symbolic="YES" id="Ias-wS-0Gp"/>
-                            <constraint firstItem="XwI-fp-dny" firstAttribute="top" secondItem="AqN-Ko-joc" secondAttribute="bottom" constant="13" id="Il2-39-BtB"/>
-                            <constraint firstItem="6rh-64-BHF" firstAttribute="trailing" secondItem="j7a-hd-VQL" secondAttribute="trailing" id="KNt-eV-hZe"/>
-                            <constraint firstItem="DEu-Zn-f5v" firstAttribute="trailing" secondItem="c7E-hk-S5X" secondAttribute="trailing" id="KVE-qG-daj"/>
-                            <constraint firstItem="6rh-64-BHF" firstAttribute="top" secondItem="lYb-Qt-dwe" secondAttribute="bottom" constant="18" id="LX7-hs-xhe"/>
-                            <constraint firstItem="6rh-64-BHF" firstAttribute="leading" secondItem="j7a-hd-VQL" secondAttribute="leading" id="MBe-dn-iRk"/>
-                            <constraint firstItem="rPG-hX-OcE" firstAttribute="centerY" secondItem="lYb-Qt-dwe" secondAttribute="centerY" id="MQf-h6-39g"/>
-                            <constraint firstItem="VsJ-uI-fpU" firstAttribute="leading" secondItem="lYb-Qt-dwe" secondAttribute="leading" id="NnL-I3-2xL"/>
-                            <constraint firstItem="DEu-Zn-f5v" firstAttribute="top" secondItem="j7a-hd-VQL" secondAttribute="bottom" constant="16" id="POA-29-KQ3"/>
-                            <constraint firstItem="rca-gD-C4K" firstAttribute="top" secondItem="9yX-KV-3Cq" secondAttribute="bottom" constant="8" symbolic="YES" id="RCp-d5-PpH"/>
-                            <constraint firstItem="rOL-SG-E1p" firstAttribute="leading" secondItem="udf-Jd-Ict" secondAttribute="leading" id="Rlz-jM-0fq"/>
-                            <constraint firstItem="XwI-fp-dny" firstAttribute="leading" secondItem="c4o-PN-9Pg" secondAttribute="leading" id="T8d-NO-swu"/>
-                            <constraint firstItem="DEu-Zn-f5v" firstAttribute="leading" secondItem="j7a-hd-VQL" secondAttribute="leading" id="UX7-id-Vrk"/>
-                            <constraint firstItem="CPG-dg-hVq" firstAttribute="trailing" secondItem="c4o-PN-9Pg" secondAttribute="trailingMargin" id="W0C-P0-apc"/>
-                            <constraint firstItem="s0H-aj-PQP" firstAttribute="trailing" secondItem="6gp-sY-UWk" secondAttribute="trailing" id="Wsd-0z-ZPH"/>
-                            <constraint firstItem="DEu-Zn-f5v" firstAttribute="leading" secondItem="c7E-hk-S5X" secondAttribute="leading" id="XV7-dH-aii"/>
-                            <constraint firstItem="6gp-sY-UWk" firstAttribute="leading" secondItem="CPG-dg-hVq" secondAttribute="leading" id="Y1h-aw-Kb0"/>
-                            <constraint firstItem="udf-Jd-Ict" firstAttribute="top" secondItem="RoS-ya-C6u" secondAttribute="bottom" constant="13" id="ZKN-Ti-9CT"/>
-                            <constraint firstItem="6rh-64-BHF" firstAttribute="centerY" secondItem="9yX-KV-3Cq" secondAttribute="centerY" id="ab3-Kh-IKD"/>
-                            <constraint firstItem="Zdt-B0-gyT" firstAttribute="centerY" secondItem="CPG-dg-hVq" secondAttribute="centerY" id="b7O-Zu-ovC"/>
-                            <constraint firstItem="6gp-sY-UWk" firstAttribute="top" secondItem="CPG-dg-hVq" secondAttribute="bottom" constant="3" id="dCd-Zg-1ru"/>
-                            <constraint firstItem="rca-gD-C4K" firstAttribute="leading" secondItem="RoS-ya-C6u" secondAttribute="leading" id="dHt-cr-05W"/>
-                            <constraint firstItem="c7E-hk-S5X" firstAttribute="leading" secondItem="AqN-Ko-joc" secondAttribute="leading" id="dSg-FW-ubT"/>
-                            <constraint firstItem="c7E-hk-S5X" firstAttribute="top" secondItem="DEu-Zn-f5v" secondAttribute="bottom" constant="25" id="dmT-iq-YxK"/>
-                            <constraint firstItem="AqN-Ko-joc" firstAttribute="top" secondItem="c7E-hk-S5X" secondAttribute="bottom" constant="20" id="f4Y-k7-ekR"/>
-                            <constraint firstItem="6rh-64-BHF" firstAttribute="leading" secondItem="lYb-Qt-dwe" secondAttribute="leading" id="fE0-KO-iWb"/>
-                            <constraint firstItem="VsJ-uI-fpU" firstAttribute="trailing" secondItem="4Px-mQ-94P" secondAttribute="trailing" id="fMw-oo-Xcz"/>
-                            <constraint firstItem="Zdt-B0-gyT" firstAttribute="top" secondItem="dgr-NV-Uhp" secondAttribute="bottom" constant="8" symbolic="YES" id="huM-jA-WOx"/>
-                            <constraint firstItem="rOL-SG-E1p" firstAttribute="top" secondItem="udf-Jd-Ict" secondAttribute="bottom" constant="8" symbolic="YES" id="iqq-jQ-RWQ"/>
-                            <constraint firstItem="Zdt-B0-gyT" firstAttribute="leading" secondItem="4Px-mQ-94P" secondAttribute="leading" id="j8j-lC-bv6"/>
-                            <constraint firstItem="lYb-Qt-dwe" firstAttribute="top" secondItem="VsJ-uI-fpU" secondAttribute="bottom" constant="18" id="l3L-5f-IKt"/>
-                            <constraint firstItem="Zdt-B0-gyT" firstAttribute="trailing" secondItem="4Px-mQ-94P" secondAttribute="trailing" id="lda-Bs-idx"/>
-                            <constraint firstItem="s0H-aj-PQP" firstAttribute="top" secondItem="6gp-sY-UWk" secondAttribute="bottom" constant="8" symbolic="YES" id="lmu-QI-WtZ"/>
-                            <constraint firstItem="RoS-ya-C6u" firstAttribute="top" secondItem="rca-gD-C4K" secondAttribute="bottom" constant="8" symbolic="YES" id="mzZ-vt-EAY"/>
-                            <constraint firstItem="9yX-KV-3Cq" firstAttribute="leading" secondItem="rca-gD-C4K" secondAttribute="leading" id="nJv-0c-TYP"/>
-                            <constraint firstItem="XwI-fp-dny" firstAttribute="top" secondItem="rOL-SG-E1p" secondAttribute="bottom" constant="8" symbolic="YES" id="pD1-rV-wjj"/>
-                            <constraint firstItem="rPG-hX-OcE" firstAttribute="top" secondItem="s0H-aj-PQP" secondAttribute="bottom" constant="8" symbolic="YES" id="rpK-IW-3UO"/>
-                            <constraint firstItem="DEu-Zn-f5v" firstAttribute="centerY" secondItem="RoS-ya-C6u" secondAttribute="centerY" id="s2G-Sq-LxJ"/>
-                            <constraint firstItem="rPG-hX-OcE" firstAttribute="leading" secondItem="6gp-sY-UWk" secondAttribute="leading" id="wkG-bI-ucC"/>
-                            <constraint firstItem="rPG-hX-OcE" firstAttribute="leading" secondItem="9yX-KV-3Cq" secondAttribute="leading" id="xik-bA-P3x"/>
-                        </constraints>
                         <connections>
                             <action selector="backgroundTap:" destination="wME-gs-GWB" eventType="touchDown" id="hMS-hB-nZi"/>
                         </connections>
                     </view>
+                    <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <size key="freeformSize" width="600" height="750"/>
                     <connections>
                         <outlet property="AlertForClinic" destination="RoS-ya-C6u" id="mby-Vv-lba"/>
                         <outlet property="AlertForListeningEvent" destination="udf-Jd-Ict" id="KBq-U3-P4X"/>
@@ -695,6 +711,10 @@
                         <outlet property="AlertForSpecialEvents" destination="9yX-KV-3Cq" id="r4a-Tp-G2j"/>
                         <outlet property="AlertOnMightSee" destination="6gp-sY-UWk" id="fwu-R9-Bga"/>
                         <outlet property="AlertOnMustSee" destination="CPG-dg-hVq" id="Cjl-Qa-RQc"/>
+                        <outlet property="HideClinics" destination="UyS-0B-WDz" id="ou5-Wy-IgQ"/>
+                        <outlet property="HideListeningEvents" destination="8em-6X-s3f" id="Dat-tR-Dgr"/>
+                        <outlet property="HideMeetAndGreets" destination="uwU-XO-IET" id="yfH-Qi-5ki"/>
+                        <outlet property="HideSpecialEvents" destination="oVr-Ez-Duf" id="gHX-0k-cZZ"/>
                         <outlet property="MinBeforeAlert" destination="s0H-aj-PQP" id="rri-TC-Md8"/>
                         <outlet property="UseLastYearsData" destination="rOL-SG-E1p" id="mtt-fm-Uml"/>
                         <outlet property="alertForClinicsLable" destination="DEu-Zn-f5v" id="hyZ-QS-aDE"/>
@@ -702,16 +722,22 @@
                         <outlet property="alertForMandGLable" destination="j7a-hd-VQL" id="h13-36-DTo"/>
                         <outlet property="alertForShowsLable" destination="lYb-Qt-dwe" id="Uhc-8U-Tl0"/>
                         <outlet property="alertForSpecialLable" destination="6rh-64-BHF" id="Qp5-OZ-3t2"/>
+                        <outlet property="controlView" destination="c4o-PN-9Pg" id="ZIW-sT-48H"/>
+                        <outlet property="hideAlbumListeningLable" destination="aMQ-ZT-hZj" id="U8M-LH-kNi"/>
+                        <outlet property="hideClinicEventLable" destination="xPU-Zv-ZNX" id="8vW-pq-vDe"/>
+                        <outlet property="hideMeetAndGreetLable" destination="A41-J3-7gv" id="3LW-SB-NWf"/>
+                        <outlet property="hideSpecialEventLable" destination="Xsi-UD-KJI" id="JvF-1S-5ef"/>
                         <outlet property="lastYearsDetailsLable" destination="XwI-fp-dny" id="08V-Iv-58w"/>
                         <outlet property="mightSeeAlertLable" destination="4Px-mQ-94P" id="zne-t7-8r0"/>
                         <outlet property="minBeforeAlertLable" destination="VsJ-uI-fpU" id="QbX-qi-l9l"/>
                         <outlet property="mustSeeAlertLable" destination="Zdt-B0-gyT" id="SfQ-5j-44n"/>
+                        <outlet property="scrollView" destination="1DA-aL-VLr" id="Red-s0-8Hv"/>
                         <outlet property="useLastYearsLable" destination="AqN-Ko-joc" id="xUi-bR-JOV"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="pMk-Tb-Kkm" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1392" y="-600"/>
+            <point key="canvasLocation" x="1440" y="-584"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="r7l-gg-dq7">

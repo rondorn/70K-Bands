@@ -33,7 +33,7 @@ public class scheduleInfo {
             byte[] buffer = new byte[1024];
             int length;
 
-            FileOutputStream fos = new FileOutputStream(new File(Environment.getExternalStorageDirectory() + "/70kScheduleInfo.csv"));
+            FileOutputStream fos = new FileOutputStream(FileHandler70k.schedule);
             while ((length = dis.read(buffer))>0) {
                 fos.write(buffer, 0, length);
             }
@@ -58,7 +58,7 @@ public class scheduleInfo {
         Map<String, scheduleTimeTracker> bandSchedule = new HashMap<>();
 
         try {
-            File file = new File(Environment.getExternalStorageDirectory() + "/70kScheduleInfo.csv");
+            File file = FileHandler70k.schedule;
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;

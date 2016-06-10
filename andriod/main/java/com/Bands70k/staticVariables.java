@@ -38,6 +38,7 @@ public class staticVariables {
 
     public final static String previousYearArtist = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1";
     public final static String previousYearSchedule = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1";
+    //public final static String previousYearSchedule = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1";
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 

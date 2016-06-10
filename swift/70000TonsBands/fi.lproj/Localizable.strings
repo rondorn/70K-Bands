@@ -20,11 +20,15 @@
 "Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
 "Alert For Shows"="Hälytys keikoille";
 "Alert For Special Events"="Hälytys muihin tapahtumiin";
-"Alert For Meeting and Greet Events"="Hälytys 'Meet and Greet'eille";
+"Alert For Meeting and Greet Events"="Hälytys 'Meet and Greet' eille";
 "Alert For Clinics"="Hälytys klinikoille";
 "Use Last Years Data"="Käytä viime vuoden tietoja";
-
 "Alert For Album Listening Events"="Hälytys levyjen ennakkokuunteluihin";
+
+"Hide Special Events"="Piilottaa muihin tapahtumiin";
+"Hide Meet and Greet Events"="Piilottaa 'Meet and Greet'eille";
+"Hide Clinic Events"="Piilottaa klinikoille";
+"Hide Album Listening Events"="Piilottaa levyjen ennakkokuunteluihin";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 

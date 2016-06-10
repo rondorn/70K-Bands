@@ -46,6 +46,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
+        refreshData()
         tableView.reloadData()
     }
     

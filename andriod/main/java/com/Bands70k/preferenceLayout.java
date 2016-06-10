@@ -33,6 +33,12 @@ public class preferenceLayout  extends Activity {
     private CheckBox alertForMeetAndGreet;
     private CheckBox alertForAlbum;
     private CheckBox lastYearsData;
+
+    private CheckBox hideSpecialEvents;
+    private CheckBox hideMeetAndGreet;
+    private CheckBox hideClinicEvents;
+    private CheckBox hideAlbumListen;
+
     private EditText alertMin;
 
     private EditText bandsUrl;
@@ -57,24 +63,6 @@ public class preferenceLayout  extends Activity {
         TextView headerText = (TextView) this.findViewById(R.id.headerText);
         headerText.setText("Alert Preferences - Build:" + versionString);
     }
-
-    /*
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.preferences, container, false);
-
-        try {
-            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            versionString = pInfo.versionName;
-        } catch (Exception error){
-            //do nothing
-        }
-        TextView prefsHeader = (TextView) view.findViewById(R.id.headerBandCount);
-        prefsHeader.setText("Alert Preferences - Build:" + versionString);
-
-        return view;
-    }
-    */
 
     private void buildRebootDialog(){
 
@@ -192,6 +180,46 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 alertPreferences.setAlertForListeningParties(alertForAlbum.isChecked());
+            }
+        });
+
+        hideSpecialEvents = (CheckBox)findViewById(R.id.hideSpecialEvents);
+        hideSpecialEvents.setChecked(alertPreferences.getHideSpecialEvents());
+        hideSpecialEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                alertPreferences.setHideSpecialEvents(hideSpecialEvents.isChecked());
+            }
+        });
+
+        hideMeetAndGreet = (CheckBox)findViewById(R.id.hideMeetAndGreet);
+        hideMeetAndGreet.setChecked(alertPreferences.getHideMeetAndGreet());
+        hideMeetAndGreet.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                alertPreferences.setHideMeetAndGreet(hideMeetAndGreet.isChecked());
+            }
+        });
+
+        hideClinicEvents = (CheckBox)findViewById(R.id.hideClinicEvents);
+        hideClinicEvents.setChecked(alertPreferences.getHideClinicEvents());
+        hideClinicEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                alertPreferences.setHideClinicEvents(hideClinicEvents.isChecked());
+            }
+        });
+
+        hideAlbumListen = (CheckBox)findViewById(R.id.hideAlbumListen);
+        hideAlbumListen.setChecked(alertPreferences.getHideAlbumListen());
+        hideAlbumListen.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                alertPreferences.setHideAlbumListen(hideAlbumListen.isChecked());
             }
         });
 
