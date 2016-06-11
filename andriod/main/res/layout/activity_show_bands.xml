@@ -145,7 +145,15 @@
             android:id="@+id/listViewLayout"
             android:orientation="horizontal">
 
-            <ListView
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/progressBar"
+                android:layout_centerInParent="true"
+                android:visibility="visible"
+                android:layout_gravity="center" />
+
+            <com.baoyz.swipemenulistview.SwipeMenuListView
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:id="@+id/bandNames"
@@ -156,15 +164,6 @@
                 android:cacheColorHint="@android:color/transparent"
                 android:listSelector="@android:color/transparent"
                 />
-
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar"
-                android:layout_centerInParent="true"
-                android:visibility="visible"
-                android:layout_gravity="center" />
-
         </RelativeLayout>
 
 </RelativeLayout>

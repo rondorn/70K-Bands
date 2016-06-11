@@ -179,6 +179,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
     }
     
+    func quickRefresh(){
+        
+        self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+        self.bandsByName = self.bands
+        ensureCorrectSorting()
+        updateCountLable()
+        self.tableView.reloadData()
+    }
+    
     func refreshData(){
         
         refreshFromCache()
@@ -283,6 +292,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print("Sorted  by is " + sortedBy)
         bands =  [String]()
+        quickRefresh()
         bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
         
         updateCountLable()
@@ -371,6 +381,71 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return true
     }
     
+    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
+    }
+    
+    //swip code start
+    
+    func currentlySectionBandName(rowNumber: Int) -> String{
+        
+        var bandName = "None";
+    
+        print ("SelfBandCount is " + String(self.bands.count) + " rowNumber is " + String(rowNumber));
+        if (self.bands.count >= rowNumber){
+            bandName = self.bands[rowNumber]
+        }
+        
+        return bandName
+    }
+    
+    override func tableView(tableView: UITableView, editActionsForRowAtIndexPath indexPath: NSIndexPath) -> [UITableViewRowAction]? {
+        
+        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:NSIndexPath!) -> Void in
+            print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 1")
+            let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
+            addPriorityData(bandName, priority: 1);
+            print ("Offline is offline");
+            self.quickRefresh()
+
+        })
+
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:NSIndexPath!) -> Void in
+            
+            print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
+            let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
+            addPriorityData(bandName, priority: 2);
+            self.quickRefresh()
+            
+        })
+        
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:NSIndexPath!) -> Void in
+            
+            print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
+            let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
+            addPriorityData(bandName, priority: 3);
+            self.quickRefresh()
+            
+        })
+        
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.Default, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:NSIndexPath!) -> Void in
+            
+            print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
+            let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
+            addPriorityData(bandName, priority: 0);
+            self.quickRefresh()
+            
+        })
+        
+        mustSeeAction.backgroundColor = UIColor.whiteColor()
+        mightSeeAction.backgroundColor = UIColor.whiteColor()
+        wontSeeAction.backgroundColor = UIColor.whiteColor()
+        setUnknownAction.backgroundColor = UIColor.whiteColor()
+        
+        return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+    }
+    
+    //swip code end
+    
     func configureCell(cell: UITableViewCell, atIndexPath indexPath: NSIndexPath) {
         
         setBands(bands)
@@ -384,12 +459,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("Getting Details")
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
-                print(bands[indexPath.row])
-                //let object = bands[indexPath.row] as String
-                //(segue.destinationViewController as DetailViewController).detailItem = bands[indexPath.row]
+
                 let controller = (segue.destinationViewController as! UINavigationController).topViewController as! DetailViewController
                 
-                let bandName = getNameFromSortable(bands[indexPath.row] as String, sortedBy: sortedBy);
+                print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
+                let bandName = getNameFromSortable(currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy);
                 controller.detailItem = bandName
                 controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem()
                 controller.navigationItem.leftItemsSupplementBackButton = true

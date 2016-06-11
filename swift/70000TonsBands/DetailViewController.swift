@@ -28,15 +28,7 @@ class DetailViewController: UIViewController{
     
     @IBOutlet weak var priorityButtons: UISegmentedControl!
     @IBOutlet weak var priorityView: UITextField!
-    
-    /*
-    @IBOutlet weak var Event1Button: UIButton!
-    @IBOutlet weak var Event2Button: UIButton!
-    @IBOutlet weak var Event3Button: UIButton!
-    @IBOutlet weak var Event4Button: UIButton!
-    @IBOutlet weak var Event5Button: UIButton!
-    */
-    
+        
     @IBOutlet weak var Country: UITextField!
     @IBOutlet weak var Genre: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!

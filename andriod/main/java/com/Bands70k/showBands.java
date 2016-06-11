@@ -8,11 +8,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.service.notification.NotificationListenerService;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.util.ArrayMap;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,18 +28,27 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.baoyz.swipemenulistview.SwipeMenu;
+import com.baoyz.swipemenulistview.SwipeMenuCreator;
+import com.baoyz.swipemenulistview.SwipeMenuItem;
+import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class showBands extends Activity {
 
     private ArrayList<String> bandNames;
-    public ArrayList<String> scheduleSortedBandNames;
-    private ListView bandNamesList;
+    public List<String> scheduleSortedBandNames;
+
+    private SwipeMenuListView bandNamesList;
 
     private ArrayList<String> rankedBandNames;
 
@@ -53,6 +66,7 @@ public class showBands extends Activity {
     private boolean isReceiverRegistered;
 
     private mainListHandler listHandler;
+    private CustomArrayAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +103,127 @@ public class showBands extends Activity {
 
         populateBandList();
         showNotification();
+    }
 
+    private void setupSwipeList (){
+
+        List<String> sortedList = new ArrayList<>();
+
+        if (scheduleSortedBandNames != null){
+            if (scheduleSortedBandNames.size()  > 0) {
+                sortedList = scheduleSortedBandNames;
+
+            } else {
+                sortedList = bandNames;
+            }
+        } else {
+            sortedList = bandNames;
+        }
+
+        adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, sortedList);
+
+        bandNamesList.setAdapter(adapter);
+
+        SwipeMenuCreator creator = new SwipeMenuCreator() {
+
+            @Override
+            public void create(SwipeMenu menu) {
+                //create an action that will be showed on swiping an item in the list
+                SwipeMenuItem item1 = new SwipeMenuItem(
+                        getApplicationContext());
+                item1.setBackground(new ColorDrawable(Color.WHITE));
+                // set width of an option (px)
+                item1.setWidth(75);
+                item1.setTitle(staticVariables.mustSeeIcon);
+                item1.setTitleSize(18);
+                item1.setTitleColor(Color.LTGRAY);
+                menu.addMenuItem(item1);
+
+                SwipeMenuItem item2 = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                item2.setBackground(new ColorDrawable(Color.WHITE));
+                item2.setWidth(75);
+                item2.setTitle(staticVariables.mightSeeIcon);
+                item2.setTitleSize(18);
+                item2.setTitleColor(Color.LTGRAY);
+                menu.addMenuItem(item2);
+
+                SwipeMenuItem item3 = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                item3.setBackground(new ColorDrawable(Color.WHITE));
+                item3.setWidth(75);
+                item3.setTitle(staticVariables.wontSeeIcon);
+                item3.setTitleSize(18);
+                item3.setTitleColor(Color.LTGRAY);
+                menu.addMenuItem(item3);
+
+                SwipeMenuItem item4 = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                item4.setBackground(new ColorDrawable(Color.WHITE));
+                item4.setWidth(75);
+                item4.setTitle(staticVariables.unknownIcon);
+                item4.setTitleSize(18);
+                item4.setTitleColor(Color.LTGRAY);
+                menu.addMenuItem(item4);
+            }
+        };
+        //set MenuCreator
+        bandNamesList.setMenuCreator(creator);
+        // set SwipeListener
+        bandNamesList.setOnSwipeListener(new SwipeMenuListView.OnSwipeListener() {
+
+            @Override
+            public void onSwipeStart(int position) {
+                // swipe start
+            }
+
+            @Override
+            public void onSwipeEnd(int position) {
+                // swipe end
+            }
+        });
+
+        setupOnSwipeListener();
+
+    }
+
+    private void setupOnSwipeListener(){
+
+        bandNamesList.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
+
+            @Override
+            public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
+                String value = listHandler.getBandNameFromIndex(adapter.getItem(position));
+
+                staticVariables.listState = bandNamesList.onSaveInstanceState();
+
+                switch (index) {
+                    case 0:
+                        rankStore.saveBandRanking(value,staticVariables.mustSeeIcon);
+                        break;
+
+                    case 1:
+                        rankStore.saveBandRanking(value,staticVariables.mightSeeIcon);
+                        break;
+
+                    case 2:
+                        rankStore.saveBandRanking(value,staticVariables.wontSeeIcon);
+                        break;
+
+                    case 3:
+                        rankStore.saveBandRanking(value,staticVariables.unknownIcon);
+                        break;
+                }
+
+                refreshData();
+                bandNamesList.onRestoreInstanceState(staticVariables.listState);
+
+                return false;
+            }
+        });
     }
 
     private void showNotification(){
@@ -272,7 +406,7 @@ public class showBands extends Activity {
 
     public void populateBandList(){
 
-        bandNamesList = (ListView)findViewById(R.id.bandNames);
+        bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
 
         if (staticVariables.fileDownloaded == false) {
             refreshNewData();
@@ -280,6 +414,8 @@ public class showBands extends Activity {
         } else {
             reloadData();
         }
+
+        setupSwipeList();
     }
 
     private void refreshNewData(){
@@ -435,9 +571,9 @@ public class showBands extends Activity {
                     String selectedBand;
                     getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
-                    if (scheduleSortedBandNames == null) {
-                        scheduleSortedBandNames = bandNames;
-                    }
+                    //if (scheduleSortedBandNames == null) {
+                    //    scheduleSortedBandNames = bandNames;
+                    //}
                     selectedBand = listHandler.bandNamesIndex.get(position);
 
                     Log.d("The follow band was clicked ", selectedBand);
@@ -503,7 +639,11 @@ public class showBands extends Activity {
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
         listHandler = new mainListHandler(showBands.this, preferences);
-        listHandler.populateBandInfo(bandInfo, bandList);
+        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+
+        //swip stuff
+        setupSwipeList();
+
         setSortButton();
 
         ListAdapter arrayAdapter = listHandler.arrayAdapter;
@@ -520,6 +660,7 @@ public class showBands extends Activity {
 
             super.onPreExecute();
             progressBar = (ProgressBar) findViewById(R.id.progressBar);
+            showBands.this.bandNamesList.setVisibility(View.INVISIBLE);
             progressBar.setVisibility(View.VISIBLE);
             super.onPreExecute();
         }
@@ -556,6 +697,7 @@ public class showBands extends Activity {
             showBands.this.bandNamesList.setAdapter(arrayAdapter);
             progressBar.setVisibility(View.INVISIBLE);
 
+            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
             showBands.this.bandNamesList.requestLayout();
             staticVariables.fileDownloaded = true;
         }

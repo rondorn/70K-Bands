@@ -40,7 +40,7 @@ public class mainListHandler {
         preferences = preferencesValue;
     }
 
-    public void populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
+    public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, bandList);
 
@@ -90,6 +90,8 @@ public class mainListHandler {
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
         bandCount.setText(this.getSizeDisplay());
+
+        return sortableBandNames;
     }
 
     private boolean filterByEventType(String eventType){
@@ -144,7 +146,7 @@ public class mainListHandler {
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, displayableBandList);
     }
 
-    private String getBandNameFromIndex(String value){
+    public String getBandNameFromIndex(String value){
 
         String[] indexData = value.split(":");
 

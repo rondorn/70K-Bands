@@ -26,6 +26,7 @@ func displayImage (urlString: String, bandName: String, logoImage: UIImageView) 
     }
     
     if (urlString == ""){
+        logoImage.image = UIImage(named: "70000TonsLogo")
         return
     }
     
@@ -44,13 +45,15 @@ func displayImage (urlString: String, bandName: String, logoImage: UIImageView) 
                 
                 UIImageJPEGRepresentation(image,1.0)!.writeToURL(imageStoreFile, atomically: true)
                 
-                
+                print("Download image " + imageStoreFile.absoluteString)
                 
             } else {
-                print("Could not download image " + statusCode.description)
+                logoImage.image = UIImage(named: "70000TonsLogo")
+                print("Could not Download image " + statusCode.description)
             }
         } else {
-            print("Could not download image Not sure what is going on here " + response.debugDescription)
+            logoImage.image = UIImage(named: "70000TonsLogo")
+            print("Could not Download image Not sure what is going on here " + response.debugDescription)
         }
     }
     dataTask.resume()
