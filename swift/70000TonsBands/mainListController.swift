@@ -20,6 +20,7 @@ import Foundation
     var sortedBy = String();
     var bandCount = Int();
     var eventCount = Int();
+    var totalUpcomingEvents = Int()
 
     func setBands(value: [String]){
         bands = value
@@ -68,6 +69,7 @@ import Foundation
         
         var newAllBands = [String]()
         var presentCheck = [String]();
+        listOfVenues = ["All"]
         
         schedule.buildTimeSortedSchedulingData();
         print (schedule.getTimeSortedSchedulingData());
@@ -76,10 +78,13 @@ import Foundation
             for bandName in schedule.getBandSortedSchedulingData().keys {
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
                     if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                        totalUpcomingEvents += 1;
                         if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                            if (rankFiltering(bandName) == true){
-                                newAllBands.append(bandName + ":" + String(timeIndex));
-                                presentCheck.append(bandName);
+                            if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
+                                if (rankFiltering(bandName) == true){
+                                    newAllBands.append(bandName + ":" + String(timeIndex));
+                                    presentCheck.append(bandName);
+                                }
                             }
                         }
                     }
@@ -93,10 +98,13 @@ import Foundation
             for timeIndex in schedule.getTimeSortedSchedulingData().keys {
                 for bandName in schedule.getTimeSortedSchedulingData()[timeIndex]!.keys{
                     if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                        totalUpcomingEvents += 1;
                         if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                            if (rankFiltering(bandName) == true){
-                                newAllBands.append(String(timeIndex) + ":" + bandName);
-                                presentCheck.append(bandName);
+                            if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
+                                if (rankFiltering(bandName) == true){
+                                    newAllBands.append(String(timeIndex) + ":" + bandName);
+                                    presentCheck.append(bandName);
+                                }
                             }
                         }
                     }
@@ -114,7 +122,7 @@ import Foundation
             
             return newAllBands
         }
-        
+ 
         newAllBands.sortInPlace();
         
         if (schedule.getTimeSortedSchedulingData().count > 2){
@@ -123,6 +131,7 @@ import Foundation
                 if (presentCheck.contains(bandName) == false){
                     print("Adding!! bandName  " + bandName)
                     newAllBands.append(bandName);
+                    presentCheck.append(bandName);
                 }
             }
         }
@@ -251,34 +260,66 @@ import Foundation
 
     func eventTypeFiltering(eventType: String) -> Bool{
         
-        var showEvent = true;
+        var showEvent = false;
         
-        let hideSpecialValue = defaults.boolForKey("hideSpecial")
-        let hideMandGValue = defaults.boolForKey("hideMandG")
-        let hideClinicsValue = defaults.boolForKey("hideClinics")
-        let hideListeningValue = defaults.boolForKey("hideListening")
+        let showSpecialValue = defaults.boolForKey("showSpecial")
+        let showMandGValue = defaults.boolForKey("showMandG")
+        let showClinicsValue = defaults.boolForKey("showClinics")
+        let showListeningValue = defaults.boolForKey("showListening")
         
-        if (eventType == "Special Event" && hideSpecialValue == true){
-            showEvent = false;
+        if (eventType == specialEventType && showSpecialValue == true){
+            showEvent = true;
         
-        } else if (eventType == "Meet and Greet" && hideMandGValue == true){
-            showEvent = false;
+        } else if (eventType == meetAndGreetype && showMandGValue == true){
+            showEvent = true;
         
-        } else if (eventType == "Clinic" && hideClinicsValue == true){
-            showEvent = false;
+        } else if (eventType == clinicType && showClinicsValue == true){
+            showEvent = true;
         
-        } else if (eventType == "Listening Party" && hideListeningValue == true){
-            showEvent = false;
-            
+        } else if (eventType == listeningPartyType && showListeningValue == true){
+            showEvent = true;
+        
+        } else if (eventType == showType){
+           showEvent = true; 
         }
         
         return showEvent
     }
 
+    func venueFiltering(venue: String) -> Bool {
+        
+        print ("filtering venue is " + venue)
+        let showPoolShows = defaults.boolForKey("showPoolShows")
+        let showTheaterShows = defaults.boolForKey("showTheaterShows")
+        let showRinkShows = defaults.boolForKey("showRinkShows")
+        let showLoungeShows = defaults.boolForKey("showLoungeShows")
+        let showOtherShows = defaults.boolForKey("showOtherShows")
+        
+        var showVenue = false;
+        
+        if (venue == poolVenueText && showPoolShows == true){
+            showVenue = true
+        
+        } else if (venue == theaterVenueText && showTheaterShows == true){
+            showVenue = true
+
+        } else if (venue == rinkVenueText && showRinkShows == true){
+            showVenue = true
+            
+        } else if (venue == loungeVenueText && showLoungeShows == true){
+            showVenue = true
+            
+        } else if (venue != loungeVenueText && venue != rinkVenueText && venue != theaterVenueText && venue != poolVenueText && showOtherShows == true){
+            showVenue = true
+        }
+        
+        return showVenue
+    }
+
     func getCellValue (indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
         
         //index is out of bounds. Don't allow this
-        if (bands.count < indexRow){
+        if (bands.count < indexRow || bands.count == 0){
             return ""
         }
         
@@ -301,6 +342,11 @@ import Foundation
             let day = schedule.getData(bandName, index: timeIndex, variable: "Day")
             let startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
             let eventIcon = getEventTypeIcon(schedule.getData(bandName, index: timeIndex, variable: "Type"))
+            
+            if (listOfVenues.contains(location) == false){
+                print ("Adding location " + location)
+                listOfVenues.append(location)
+            }
             
             print(bandName + " displaying timeIndex of \(timeIndex) ")
             cellText += " - " + day

@@ -14,9 +14,7 @@ import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.service.notification.NotificationListenerService;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.util.ArrayMap;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,10 +23,8 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -38,9 +34,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class showBands extends Activity {
@@ -272,7 +266,18 @@ public class showBands extends Activity {
             // argument position gives the index of item which is clicked
             public void onClick(View v) {
                 Intent showPreferences = new Intent(showBands.this, preferenceLayout.class);
-                startActivity(showPreferences);
+                startActivityForResult(showPreferences, 1);
+            }
+        });
+
+        Button filterMenuButton = (Button) findViewById(R.id.filterMenu);
+
+        filterMenuButton.setOnClickListener(new Button.OnClickListener() {
+            // argument position gives the index of item which is clicked
+            public void onClick(View v) {
+                Intent showFilterMenu = new Intent(showBands.this, filterMenu.class);
+                startActivityForResult(showFilterMenu, 1);
+                //startActivity(showFilterMenu);
             }
         });
 
@@ -302,6 +307,16 @@ public class showBands extends Activity {
                 startActivity(showBandList);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK){
+            Intent refresh = new Intent(this, showBands.class);
+            startActivity(refresh);
+            refreshNewData();
+        }
     }
 
     private String buildShareMessage(){
@@ -418,6 +433,17 @@ public class showBands extends Activity {
         setupSwipeList();
     }
 
+    private void setFilterButton() {
+
+        Button filterButton = (Button) findViewById(R.id.filterMenu);
+
+        if (listHandler.allUpcomingEvents == 0) {
+            filterButton.setVisibility(View.INVISIBLE);
+        } else {
+            filterButton.setVisibility(View.VISIBLE);
+        }
+
+    }
     private void refreshNewData(){
 
         RelativeLayout showBandLayout = (RelativeLayout)findViewById(R.id.showBandsView);
@@ -640,6 +666,7 @@ public class showBands extends Activity {
 
         listHandler = new mainListHandler(showBands.this, preferences);
         scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        setFilterButton();
 
         //swip stuff
         setupSwipeList();

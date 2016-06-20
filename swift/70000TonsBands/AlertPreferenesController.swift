@@ -20,11 +20,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var alertForListeningValue = Bool()
     
     
-    var hideSpecialValue = Bool()
-    var hideMandGValue = Bool()
-    var hideClinicsValue = Bool()
-    var hideListeningValue = Bool()
-    
     var minBeforeAlertValue = Double()
     
     var minBeforeAlertLabel = String()
@@ -43,13 +38,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var MinBeforeAlert: UITextField!
     @IBOutlet weak var UseLastYearsData: UISwitch!
     
-    
-    @IBOutlet weak var HideSpecialEvents: UISwitch!
-    @IBOutlet weak var HideMeetAndGreets: UISwitch!
-    @IBOutlet weak var HideClinics: UISwitch!
-    @IBOutlet weak var HideListeningEvents: UISwitch!
-    
-    
+
     //labels
     @IBOutlet weak var mustSeeAlertLable: UILabel!
     @IBOutlet weak var mightSeeAlertLable: UILabel!
@@ -61,11 +50,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var useLastYearsLable: UILabel!
     @IBOutlet weak var alertForListeningLable: UILabel!
     @IBOutlet weak var lastYearsDetailsLable: UITextView!
-    @IBOutlet weak var hideSpecialEventLable: UILabel!
-    @IBOutlet weak var hideMeetAndGreetLable: UILabel!
-    @IBOutlet weak var hideClinicEventLable: UILabel!
-    @IBOutlet weak var hideAlbumListeningLable: UILabel!
-    
     
     @IBOutlet var scrollView: UIScrollView!
     @IBOutlet var controlView: UIControl!
@@ -101,12 +85,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForClinicsLable.text = NSLocalizedString("Alert For Clinics", comment: "")
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
         
-        hideSpecialEventLable.text = NSLocalizedString("Hide Special Events", comment: "")
-        hideMeetAndGreetLable.text = NSLocalizedString("Hide Meet and Greet Events", comment: "")
-        hideClinicEventLable.text = NSLocalizedString("Hide Clinic Events", comment: "")
-        hideAlbumListeningLable.text  = NSLocalizedString("Hide Album Listening Events", comment: "")
-        
-        
         useLastYearsLable.text = NSLocalizedString("Use Last Years Data", comment: "")
         lastYearsDetailsLable.text = NSLocalizedString("LastYearsFeatureExplication", comment: "")
         
@@ -127,12 +105,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForClinicsValue = defaults.boolForKey("alertForClinics")
         alertForListeningValue = defaults.boolForKey("alertForListening")
         
-        hideSpecialValue = defaults.boolForKey("hideSpecial")
-        hideMandGValue = defaults.boolForKey("hideMandG")
-        hideClinicsValue = defaults.boolForKey("hideClinics")
-        hideListeningValue = defaults.boolForKey("hideListening")
-        
-        
         minBeforeAlertValue = Double(defaults.integerForKey("minBeforeAlert"))
         
         AlertOnMustSee.on = mustSeeAlertValue
@@ -144,11 +116,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         AlertForMeetAndGreets.on = alertForMandGValue
         AlertForClinic.on = alertForClinicsValue
         AlertForListeningEvent.on = alertForListeningValue
-        
-        HideSpecialEvents.on = hideSpecialValue;
-        HideMeetAndGreets.on = hideMandGValue;
-        HideClinics.on = hideClinicsValue;
-        HideListeningEvents.on = hideListeningValue;
         
         self.MinBeforeAlert.delegate = self
         
@@ -212,22 +179,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBAction func AlertForListeningEventChange() {
         defaults.setBool(AlertForListeningEvent.on, forKey: "alertForListening")
     }
-
-    @IBAction func HideSpecialEventChange() {
-        defaults.setBool(HideSpecialEvents.on, forKey: "hideSpecial")
-    }
-    
-    @IBAction func HideMeetAndGreetChange() {
-        defaults.setBool(HideMeetAndGreets.on, forKey: "hideMandG")
-    }
-    
-    @IBAction func HideClinicChange() {
-        defaults.setBool(HideClinics.on, forKey: "hideClinics")
-    }
-    
-    @IBAction func HideListeningEventChange() {
-        defaults.setBool(HideListeningEvents.on, forKey: "hideListening")
-    }
     
     @IBAction func backgroundTap (sender: UIControl){
         MinBeforeAlert.resignFirstResponder()
@@ -262,6 +213,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
             do {
                 try  NSFileManager.defaultManager().removeItemAtPath(scheduleFile)
+                try  NSFileManager.defaultManager().removeItemAtPath(bandFile)
             } catch {
                 //guess there was no file to delete
             }

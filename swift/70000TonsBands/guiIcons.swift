@@ -18,7 +18,7 @@ let scheduleIcon = "⏰"
 let poolVenue = "🏊"
 let theaterVenue = "🎭"
 let loungeVenue = "🎤"
-let rinkVenue = "®"
+let rinkVenue = "⛸"
 let unknownVenue = "❓"
 let bandIconSort = "🔠"
 

@@ -13,11 +13,15 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -30,6 +34,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     preferencesHandler preferences;
     Context context;
     ArrayList<String> result;
+
+    private String alertStore = "";
 
     public scheduleAlertHandler(preferencesHandler preferencesValue, Context contextValue){
         preferences = preferencesValue;
@@ -49,6 +55,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     }
 
     public void scheduleAlerts(){
+
+        clearAlerts();
 
         Calendar cal = Calendar.getInstance();
         long currentEpoch = cal.getTime().getTime();
@@ -78,7 +86,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                             String alertDateTimeText = alertDateTime.format(new Date(alertTime));
 
                             Log.d("SchedNotications", "alertEpoc" + bandName + "=" + alertTime + " currentEpoch=" + currentEpoch + " - " + alertDateTimeText);
-                            int delay = (int) (alertTime - currentEpoch) - ((preferences.getMinBeforeToAlert() * 60) * 1000);
+                            int delay = (int) (alertTime - currentEpoch) - (((preferences.getMinBeforeToAlert() + 1) * 60) * 1000);
                             int delayInMin = (delay/1000) / 60;
                             Log.d("SchedNotications", "!Timing " + bandName + " " + delayInMin + " - " + alertDateTimeText);
                             Log.d("SchedNotications", "Message is " + alertMessage + " delay is " + delay);
@@ -90,6 +98,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                         }
                     }
                 }
+                FileHandler70k.saveData(alertStore, FileHandler70k.alertData);
             }
         }
     }
@@ -97,6 +106,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content) {
 
         Log.d("NotifLogs", "Scheduled alert in = " + delay + " seconds " + unuiqueID);
+
+        alertStore += String.valueOf(delay) + ":" + String.valueOf(unuiqueID) + ":" + content + "\n";
 
         Intent notificationIntent = new Intent(context, NotificationPublisher.class);
         notificationIntent.putExtra(String.valueOf(delay), 1);
@@ -200,5 +211,56 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         return true;
     }
 
+    private void clearAlerts (){
+
+        List<String> alertList = loadPreviousAlerts();
+        Log.d ("ClearAlert", "Looping through previosu alerts");
+
+        try {
+            for (String alert : alertList) {
+                String[] alertBreakdown = alert.split(":");
+
+                int delay = Integer.valueOf(alertBreakdown[0]);
+                int unuiqueID = Integer.valueOf(alertBreakdown[1]);
+                String message = alertBreakdown[2];
+
+                Log.d("ClearAlert", "Clearing alert for " + message);
+
+                AlarmManager clearAlarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+                Notification clearNotification = getNotification(message);
+                Intent notificationIntent = new Intent(context, NotificationPublisher.class);
+                notificationIntent.putExtra(String.valueOf(delay), 1);
+                notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, clearNotification);
+                notificationIntent.setAction(message);
+
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                clearAlarm.cancel(pendingIntent);
+            }
+        } catch (Exception error){
+            Log.e("ERROR", error.getMessage());
+        }
+    }
+
+    private List<String> loadPreviousAlerts(){
+        List<String> alertList = new ArrayList<String>();
+
+        try {
+            File file = FileHandler70k.alertData;
+
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                alertList.add(line);
+            }
+
+        } catch (Exception error){
+            Log.e("Load Data Error", error.getMessage() + "\n" + error.fillInStackTrace());
+        }
+
+        return alertList;
+    }
 
 }

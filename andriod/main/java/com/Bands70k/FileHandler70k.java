@@ -67,4 +67,20 @@ public class FileHandler70k {
         }
     }
 
+    public static void saveData(String data, File fileHandle){
+
+        Log.d("Save Data", data);
+        try {
+            FileOutputStream stream = new FileOutputStream(fileHandle);
+            try {
+                stream.write(data.getBytes());
+            } finally {
+                stream.close();
+            }
+        } catch (Exception error) {
+            Log.e("Save Data Error", error.getMessage());
+        }
+
+    }
+
 }

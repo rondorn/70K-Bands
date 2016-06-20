@@ -25,10 +25,16 @@ public class preferencesHandler {
     private Integer minBeforeToAlert = 10;
     private Boolean useLastYearsData = false;
 
-    private Boolean hideSpecialEvents = false;
-    private Boolean hideMeetAndGreet = false;
-    private Boolean hideClinicEvents = false;
-    private Boolean hideAlbumListen = false;
+    private Boolean showSpecialEvents = true;
+    private Boolean showMeetAndGreet = true;
+    private Boolean showClinicEvents = true;
+    private Boolean showAlbumListen = true;
+
+    private Boolean showPoolShows = true;
+    private Boolean showTheaterShows = true;
+    private Boolean showRinkShows = true;
+    private Boolean showLoungeShows = true;
+    private Boolean showOtherShows = true;
 
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
@@ -57,20 +63,40 @@ public class preferencesHandler {
                         setAlertForShows(Boolean.valueOf(RowData[1]));
                         break;
 
-                    case "hideSpecialEvents":
-                        setHideSpecialEvents(Boolean.valueOf(RowData[1]));
+                    case "showSpecialEvents":
+                        setShowSpecialEvents(Boolean.valueOf(RowData[1]));
                         break;
 
-                    case "hideMeetAndGreet":
-                        setHideMeetAndGreet(Boolean.valueOf(RowData[1]));
+                    case "showMeetAndGreet":
+                        setShowMeetAndGreet(Boolean.valueOf(RowData[1]));
                         break;
 
-                    case "hideClinics":
-                        setHideClinicEvents(Boolean.valueOf(RowData[1]));
+                    case "showClinics":
+                        setShowClinicEvents(Boolean.valueOf(RowData[1]));
                         break;
 
-                    case "hideListeningParties":
-                        setHideAlbumListen(Boolean.valueOf(RowData[1]));
+                    case "showListeningParties":
+                        setShowAlbumListen(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "showPoolShows":
+                        setShowPoolShows(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "showTheaterShows":
+                        setShowTheaterShows(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "showRinkShows":
+                        setShowRinkShows(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "showLoungeShows":
+                        setShowLoungeShows(Boolean.valueOf(RowData[1]));
+                        break;
+
+                    case "showOtherShows":
+                        setShowOtherShows(Boolean.valueOf(RowData[1]));
                         break;
 
                     case "alertForSpecialEvents":
@@ -122,27 +148,25 @@ public class preferencesHandler {
         dataString += "alertForClinics," + alertForClinics.toString() + "\n";
         dataString += "alertForListeningParties," + alertForListeningParties.toString() + "\n";
 
-        dataString += "hideSpecialEvents," + hideSpecialEvents.toString() + "\n";
-        dataString += "hideMeetAndGreet," + hideMeetAndGreet.toString() + "\n";
-        dataString += "hideClinics," + hideClinicEvents.toString() + "\n";
-        dataString += "hideListeningParties," + hideAlbumListen.toString() + "\n";
+        dataString += "showSpecialEvents," + showSpecialEvents.toString() + "\n";
+        dataString += "showMeetAndGreet," + showMeetAndGreet.toString() + "\n";
+        dataString += "showClinics," + showClinicEvents.toString() + "\n";
+        dataString += "showListeningParties," + showAlbumListen.toString() + "\n";
+
+        dataString += "showPoolShows," + showPoolShows.toString() + "\n";
+        dataString += "showTheaterShows," + showTheaterShows.toString() + "\n";
+        dataString += "showRinkShows," + showRinkShows.toString() + "\n";
+        dataString += "showLoungeShows," + showLoungeShows.toString() + "\n";
+        dataString += "showOtherShows," + showOtherShows.toString() + "\n";
 
         dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
 
-        Log.d("Save Data", dataString);
-        try {
-            FileOutputStream stream = new FileOutputStream(FileHandler70k.bandPrefs);
-            try {
-                stream.write(dataString.getBytes());
-            } finally {
-                stream.close();
-            }
-        } catch (Exception error) {
-            Log.e("Save Data Error", error.getMessage());
-        }
+
+        FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
+
     }
 
     public Boolean getMustSeeAlert() {
@@ -173,30 +197,63 @@ public class preferencesHandler {
         return alertForSpecialEvents;
     }
 
-    public Boolean getHideSpecialEvents() {
-        return hideSpecialEvents;
+    public Boolean getShowSpecialEvents() {
+        return showSpecialEvents;
     }
-    public Boolean getHideMeetAndGreet() {
-        return hideMeetAndGreet;
+    public Boolean getShowMeetAndGreet() {
+        return showMeetAndGreet;
     }
-    public Boolean getHideClinicEvents() {
-        return hideClinicEvents;
+    public Boolean getShowClinicEvents() {
+        return showClinicEvents;
     }
-    public Boolean getHideAlbumListen() {
-        return hideAlbumListen;
+    public Boolean getShowAlbumListen() {
+        return showAlbumListen;
     }
 
-    public void setHideSpecialEvents(Boolean hideSpecialEvents) {
-        this.hideSpecialEvents = hideSpecialEvents;
+    public Boolean getShowPoolShows() {
+        return showPoolShows;
     }
-    public void setHideMeetAndGreet(Boolean hideMeetAndGreet) {
-        this.hideMeetAndGreet = hideMeetAndGreet;
+    public Boolean getShowTheaterShows() {
+        return showTheaterShows;
     }
-    public void setHideClinicEvents(Boolean hideClinicEvents) {
-        this.hideClinicEvents = hideClinicEvents;
+    public Boolean getShowRinkShows() {
+        return showRinkShows;
     }
-    public void setHideAlbumListen(Boolean hideAlbumListen) {
-        this.hideAlbumListen = hideAlbumListen;
+    public Boolean getShowLoungeShows() {
+        return showLoungeShows;
+    }
+    public Boolean getShowOtherShows() {
+        return showOtherShows;
+    }
+
+    public void setShowPoolShows(Boolean showPoolShows) {
+        this.showPoolShows = showPoolShows;
+    }
+
+    public void setShowTheaterShows(Boolean showTheaterShows) {
+        this.showTheaterShows = showTheaterShows;
+    }
+    public void setShowRinkShows(Boolean showRinkShows) {
+        this.showRinkShows = showRinkShows;
+    }
+    public void setShowLoungeShows(Boolean showLoungeShows) {
+        this.showLoungeShows = showLoungeShows;
+    }
+    public void setShowOtherShows(Boolean showOtherShows) {
+        this.showOtherShows = showOtherShows;
+    }
+
+    public void setShowSpecialEvents(Boolean hideSpecialEvents) {
+        this.showSpecialEvents = hideSpecialEvents;
+    }
+    public void setShowMeetAndGreet(Boolean hideMeetAndGreet) {
+        this.showMeetAndGreet = hideMeetAndGreet;
+    }
+    public void setShowClinicEvents(Boolean hideClinicEvents) {
+        this.showClinicEvents = hideClinicEvents;
+    }
+    public void setShowAlbumListen(Boolean hideAlbumListen) {
+        this.showAlbumListen = hideAlbumListen;
     }
 
     public void setAlertForSpecialEvents(Boolean alertForSpecialEvents) {

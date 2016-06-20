@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 
+
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
     
@@ -25,16 +26,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var menuButton: UIBarButtonItem!
     
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
-
+    
     var objects = NSMutableArray()
     var bands =  [String]()
     var bandsByTime = [String]()
     var bandsByName = [String]()
+    var reloadTableBool = true
     
     @IBOutlet weak var titleLabel: UINavigationItem!
+    
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -45,13 +49,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func viewWillAppear(animated: Bool) {
+        print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
         refreshData()
         tableView.reloadData()
     }
     
+    @IBAction func menuButtonAction(sender: AnyObject) {
+        let secondViewController = self.storyboard?.instantiateViewControllerWithIdentifier("sortMenuNavigation")
+        let window = UIApplication.sharedApplication().windows[0] as UIWindow
+        UIView.transitionFromView(
+            window.rootViewController!.view,
+            toView: secondViewController!.view,
+            duration: 0.65,
+            options: .TransitionCrossDissolve,
+            completion: {
+                finished in window.rootViewController = secondViewController
+        })
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        sortedBy = "time"
+        
+        //have a reference to this controller for external refreshes
+        masterView = self;
+        
         // Do any additional setup after loading the view, typically from a nib.
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
         
@@ -89,6 +113,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
     }
  
+    
     func showReceivedMessage(notification: NSNotification) {
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
@@ -185,6 +210,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.bandsByName = self.bands
         ensureCorrectSorting()
         updateCountLable()
+        
         self.tableView.reloadData()
     }
     
@@ -225,19 +251,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshAlerts()
         
         updateCountLable()
-        
         self.tableView.reloadData()
         if (self.refreshControl?.refreshing == true){
             sleep(5)
             self.refreshControl?.endRefreshing()
         }
         
-    }
+        
+    } 
     
-    @IBAction func settingsAction(sender: UIButton) {
-         UIApplication.sharedApplication().openURL(NSURL(string:UIApplicationOpenSettingsURLString)!);
+    func showHideFilterMenu(){
+        print ("totalUpcomingEvents is " + String(totalUpcomingEvents))
+        if (totalUpcomingEvents == 0){
+            menuButton.title = "";
+            menuButton.enabled = false;
+        } else {
+            menuButton.title = "Filters";
+            menuButton.enabled = true;
+        }
     }
-    
     
     @IBAction func filterContent(sender: UIButton) {
         
@@ -313,7 +345,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             lableCounterString = " events";
         }
         
-       titleLabel.title = "70,000 Tons\t" + String(labeleCounter) + lableCounterString
+        titleLabel.title = "70,000 Tons\t" + String(labeleCounter) + lableCounterString
+        showHideFilterMenu()
         
     }
     
@@ -471,7 +504,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         tableView.reloadData()
     }
-    
     
     func resortBandsByTime(){
         schedule.populateSchedule()

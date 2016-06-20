@@ -207,81 +207,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/HideSpecialEvents"
-                    android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/hideSpecialEvents"
-                    android:layout_column="27"
-                    android:enabled="true"
-                    android:layout_marginLeft="40dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/HideMeetAndGreet"
-                    android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/hideMeetAndGreet"
-                    android:layout_column="27"
-                    android:enabled="true"
-                    android:layout_marginLeft="40dp" />
             </TableRow>
+
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/HideClinicEvents"
-                    android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/hideClinicEvents"
-                    android:layout_column="27"
-                    android:enabled="true"
-                    android:layout_marginLeft="40dp" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/HideAlbumListeningEvents"
-                    android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
-
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/hideAlbumListen"
-                    android:layout_column="27"
-                    android:enabled="true"
-                    android:layout_marginLeft="40dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -315,7 +251,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="500dp">
+        android:layout_marginTop="385dp">
 
         <TextView
             android:layout_width="fill_parent"
@@ -330,7 +266,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="540dp">
+        android:layout_marginTop="435dp">
 
     <TableLayout
         android:layout_width="match_parent"
@@ -394,6 +330,7 @@
         android:textStyle="bold"
         android:textSize="11dp"
         android:layout_below="@+id/linearLayout"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:width="300dp" />
 </RelativeLayout>
 </ScrollView>

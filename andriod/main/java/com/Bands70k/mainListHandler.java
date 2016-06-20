@@ -35,6 +35,8 @@ public class mainListHandler {
     private Integer numberOfBands = 0;
     private preferencesHandler preferences;
 
+    public Integer allUpcomingEvents = 0;
+
     public mainListHandler(showBands showBandsValue, preferencesHandler preferencesValue){
         showBands = showBandsValue;
         preferences = preferencesValue;
@@ -51,20 +53,26 @@ public class mainListHandler {
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.sortBySchedule == true) {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
+                            allUpcomingEvents++;
                             if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true){
-                                if (checkFiltering(bandName) == true) {
-                                    sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
-                                    bandPresent.add(bandName);
-                                    numberOfEvents++;
+                                if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true){
+                                    if (checkFiltering(bandName) == true) {
+                                        sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
+                                        bandPresent.add(bandName);
+                                        numberOfEvents++;
+                                    }
                                 }
                             }
                         }
                     } else {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
+                            allUpcomingEvents++;
                             if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType())  == true) {
-                                if (checkFiltering(bandName) == true) {
-                                    sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
-                                    numberOfEvents++;
+                                if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true) {
+                                    if (checkFiltering(bandName) == true) {
+                                        sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
+                                        numberOfEvents++;
+                                    }
                                 }
                             }
                         }
@@ -94,29 +102,59 @@ public class mainListHandler {
         return sortableBandNames;
     }
 
+    private boolean filterByVenue(String venue){
+
+        Boolean showVenue = false;
+        Log.d("VenueFilter", "Venue is " + venue);
+
+        if (venue.equals("Pool") && preferences.getShowPoolShows() == true){
+            showVenue = true;
+
+        } else if (venue.equals("Theater") && preferences.getShowTheaterShows() == true){
+            showVenue = true;
+
+        } else if (venue.equals("Rink") && preferences.getShowRinkShows()== true){
+            showVenue = true;
+
+        } else if (venue.equals("Lounge") && preferences.getShowLoungeShows() == true){
+            showVenue = true;
+
+        } else if ( venue.equals("Lounge") == false && venue.equals("Rink") == false &&
+                    venue.equals("Theater") == false && venue.equals("Pool") == false &&
+                    preferences.getShowOtherShows() == true){
+
+            showVenue = true;
+
+        } else {
+            Log.d("EventFilter", "No hide preferences are set");
+        }
+
+        return showVenue;
+    }
+
     private boolean filterByEventType(String eventType){
 
-        Boolean showEvent = true;
+        Boolean showEvent = false;
         Log.d("EventFilter", "EventType is " + eventType);
 
-        if (eventType.equals("Special Event") && preferences.getHideSpecialEvents() == true){
+        if (eventType.equals("Special Event") && preferences.getShowSpecialEvents() == true){
             Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
-            showEvent = false;
+            showEvent = true;
 
-        } else if (eventType.equals("Meet and Greet") && preferences.getHideMeetAndGreet() == true){
+        } else if (eventType.equals("Meet and Greet") && preferences.getShowMeetAndGreet() == true){
             Log.d("EventFilter", "preferences.getHideMeetAndGreet() is true");
-            showEvent = false;
+            showEvent = true;
 
-        } else if (eventType.equals("Clinic") && preferences.getHideClinicEvents() == true){
+        } else if (eventType.equals("Clinic") && preferences.getShowClinicEvents() == true){
             Log.d("EventFilter", "preferences.getHideClinicEvents() is true");
-            showEvent = false;
+            showEvent = true;
 
-        } else if (eventType.equals("Listening Party") && preferences.getHideAlbumListen() == true){
+        } else if (eventType.equals("Listening Party") && preferences.getShowAlbumListen() == true){
             Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
-            showEvent = false;
+            showEvent = true;
 
-        } else if (eventType == "Show") {
-            //do nothing
+        } else if (eventType.equals("Show")) {
+            showEvent = true;
 
         } else {
             Log.d("EventFilter", "No hide preferences are set");

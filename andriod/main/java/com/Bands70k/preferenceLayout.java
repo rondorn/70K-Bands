@@ -34,11 +34,6 @@ public class preferenceLayout  extends Activity {
     private CheckBox alertForAlbum;
     private CheckBox lastYearsData;
 
-    private CheckBox hideSpecialEvents;
-    private CheckBox hideMeetAndGreet;
-    private CheckBox hideClinicEvents;
-    private CheckBox hideAlbumListen;
-
     private EditText alertMin;
 
     private EditText bandsUrl;
@@ -183,46 +178,6 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        hideSpecialEvents = (CheckBox)findViewById(R.id.hideSpecialEvents);
-        hideSpecialEvents.setChecked(alertPreferences.getHideSpecialEvents());
-        hideSpecialEvents.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                alertPreferences.setHideSpecialEvents(hideSpecialEvents.isChecked());
-            }
-        });
-
-        hideMeetAndGreet = (CheckBox)findViewById(R.id.hideMeetAndGreet);
-        hideMeetAndGreet.setChecked(alertPreferences.getHideMeetAndGreet());
-        hideMeetAndGreet.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                alertPreferences.setHideMeetAndGreet(hideMeetAndGreet.isChecked());
-            }
-        });
-
-        hideClinicEvents = (CheckBox)findViewById(R.id.hideClinicEvents);
-        hideClinicEvents.setChecked(alertPreferences.getHideClinicEvents());
-        hideClinicEvents.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                alertPreferences.setHideClinicEvents(hideClinicEvents.isChecked());
-            }
-        });
-
-        hideAlbumListen = (CheckBox)findViewById(R.id.hideAlbumListen);
-        hideAlbumListen.setChecked(alertPreferences.getHideAlbumListen());
-        hideAlbumListen.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                alertPreferences.setHideAlbumListen(hideAlbumListen.isChecked());
-            }
-        });
-
         lastYearsData = (CheckBox)findViewById(R.id.useLastYearsData);
         lastYearsData.setChecked(alertPreferences.getUseLastYearsData());
         lastYearsData.setOnClickListener(new View.OnClickListener() {
@@ -253,8 +208,9 @@ public class preferenceLayout  extends Activity {
         alertPreferences.setScheduleUrl(scheduleUrl.getText().toString());
 
         alertPreferences.saveData();
-        Intent showDetails = new Intent(preferenceLayout.this, showBands.class);
-        startActivity(showDetails);
+        setResult(RESULT_OK, null);
+        finish();
+
     }
 
 }

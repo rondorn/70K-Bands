@@ -44,7 +44,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.defaultStore().synchronize()
         updateBandFromICloud()
-
         
         //register Application Defaults
         let defaults = ["artistUrl": artistUrlDefault,
@@ -53,7 +52,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
             "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
             "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
-            "validateScheduleFile": validateScheduleFileDefault]
+            "validateScheduleFile": validateScheduleFileDefault, "showSpecial": showSpecialDefault,
+            "showMandG": showMandGDefault, "showClinics": showClinicsDefault,
+            "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
+            "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
+            "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault]
+        
         
         NSUserDefaults.standardUserDefaults().registerDefaults(defaults)
         

@@ -180,8 +180,10 @@ public class scheduleHandler {
         if (variable.isEmpty == false && value.isEmpty == false){
             if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
                 if (self.schedulingData[bandName]?.isEmpty == false){
-                    print ("value for variable is " + value)
-                    self.schedulingData[bandName]![index]![variable] = value
+                    if (self.schedulingData[bandName]![index]!.isEmpty == false){
+                        print ("value for variable is " + value)
+                        self.schedulingData[bandName]![index]![variable] = value
+                    }
                 }
             }
         }

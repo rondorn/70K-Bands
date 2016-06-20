@@ -45,7 +45,7 @@ class DetailViewController: UIViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
         self.configureView()
         
         readFile()
@@ -93,6 +93,9 @@ class DetailViewController: UIViewController{
         disableLinksWithEmptyData();
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDeviceOrientationDidChangeNotification, object: nil)
+        
+        
+        
     }
     
     func disableLinksWithEmptyData(){

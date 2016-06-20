@@ -36,6 +36,11 @@ var clinicType = "Clinic"
 var listeningPartyType = "Listening Party"
 var specialEventType = "Special Event"
 
+var poolVenueText = "Pool"
+var rinkVenueText = "Rink"
+var loungeVenueText = "Lounge"
+var theaterVenueText = "Theater"
+
 //links to external site
 var officalSiteButtonName = "Offical Web Site"
 var wikipediaButtonName = "Wikipedia"
@@ -65,16 +70,23 @@ let alertForClinicsDefault = "NO"
 let alertForListeningDefault = "NO"
 let validateScheduleFileDefault = "NO"
 
+let showSpecialDefault = "YES"
+let showMandGDefault = "YES"
+let showClinicsDefault = "YES"
+let showListeningDefault = "YES"
 
-let hideSpecialDefault = "NO"
-let hideMandGDefault = "NO"
-let hideClinicsDefault = "NO"
-let hideListeningDefault = "NO"
-
+let showPoolShowsDefault = "YES"
+let showTheaterShowsDefault = "YES"
+let showRinkShowsDefault = "YES"
+let showLoungeShowsDefault = "YES"
+let showOtherShowsDefault = "YES"
 
 var schedule = scheduleHandler()
 let defaults = NSUserDefaults.standardUserDefaults()
 var byPassCsvDownloadCheck = false
+var listOfVenues = [String]()
+
+var masterView: MasterViewController!
 
 func getDocumentsDirectory() -> NSString {
     let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)
