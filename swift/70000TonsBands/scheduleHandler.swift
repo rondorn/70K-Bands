@@ -48,15 +48,18 @@ public class scheduleHandler {
                     if (self.schedulingData[lineData[bandField]!]![dateIndex] == nil){
                         self.schedulingData[lineData[bandField]!]![dateIndex] = [String : String]()
                     }
-                
-                    setData(lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
+                    print ("Adding location of " + lineData[locationField]!)
+                    
+                    //doing this double for unknown reason, it wont work if the first entry is single
                     setData(lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    setData(lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    
                     setData(lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
                     setData(lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
-                    
+                    setData(lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
                     
                 } else {
                     print ("Unable to parse schedule file")

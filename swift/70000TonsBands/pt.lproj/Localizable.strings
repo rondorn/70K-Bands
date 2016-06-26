@@ -27,10 +27,10 @@
 
 "Alert For Album Listening Events"="Alerta para Eventos de Audição de Álbuns";
 
-"Hide Special Events"="Esconder eventos especiais";
-"Hide Meet and Greet Events"="Esconder Eventos com Artistas";
-"Hide Clinic Events"="Esconder clínicas";
-"Hide Album Listening Events"="Esconder Eventos de Audição de Álbuns";
+"Special Event"="Eventos Especiais";
+"Meet and Greet"="Eventos com Artistas";
+"Clinic"="Clínicas";
+"Listening Party"="Eventos de Audição de Álbuns";
 
 "LastYearsFeatureExplication"="Ativando 'Use Informação dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 

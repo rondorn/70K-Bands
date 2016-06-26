@@ -60,7 +60,6 @@ class DetailViewController: UIViewController{
         
         if (bandName != nil) {
             
-            schedule.populateSchedule()
             let imageURL = getBandImageUrl(bandName)
             print("imageUrl: " + imageURL)
             
@@ -239,32 +238,35 @@ class DetailViewController: UIViewController{
     }
     
     func showFullSchedule () {
-    
+        
+        schedule.populateSchedule()
+        
         if (schedule.schedulingData[bandName]?.isEmpty == false){
             let keyValues = schedule.schedulingData[bandName]!.keys
             let sortedArray = keyValues.sort();
             var count = 1
             
+            schedule.buildTimeSortedSchedulingData();
+            
             for index in sortedArray {
                 
-                let location = schedule.getData(bandName, index:index, variable: "Location")
+                let location = schedule.getData(bandName, index:index, variable: locationField)
                 let day = schedule.getData(bandName, index: index, variable: "Day")
                 let startTime = schedule.getData(bandName, index: index, variable: "Start Time")
                 let endTime = schedule.getData(bandName, index: index, variable: "End Time")
                 let date = schedule.getData(bandName, index:index, variable: "Date")
                 let type = schedule.getData(bandName, index:index, variable: "Type")
                 let notes = schedule.getData(bandName, index:index, variable: "Notes")
-                let eventIcon = getEventTypeIcon(type)
                 
                 var scheduleText = String()
                 if (!date.isEmpty){
                     scheduleText = day
                     scheduleText += " - " + startTime
                     scheduleText += " - " + endTime
-                    scheduleText += " - " + location
-                    scheduleText += " - " + type  + " " + eventIcon;
+                    scheduleText += " - " + location + getVenuIcon(location)
+                    scheduleText += " - " + type  + " " + getEventTypeIcon(type);
                     
-                    if (notes.isEmpty == false){
+                    if (notes.isEmpty == false && notes != " "){
                         scheduleText += " - " + notes
                     }
                     
@@ -272,23 +274,18 @@ class DetailViewController: UIViewController{
                     switch count {
                     case 1:
                         Event1.text = scheduleText
-                        //Event1Button.hidden = false;
                         
                     case 2:
                         Event2.text = scheduleText
-                        //Event2Button.hidden = false;
                         
                     case 3:
                         Event3.text = scheduleText
-                        //Event3Button.hidden = false;
                         
                     case 4:
                         Event4.text = scheduleText
-                        //Event4Button.hidden = false;
-                        
+
                     case 5:
                         Event5.text = scheduleText
-                        //Event5Button.hidden = false;
                         
                     default:
                         print("To many events")

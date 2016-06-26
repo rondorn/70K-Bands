@@ -12,8 +12,8 @@
 "Might"="MÂske";
 "Wont"="Skal ikke";
 
-"Ok"="Ok";
-"Cancel"="Afbryd";
+"Ok"="Ja";
+"Cancel"="Ingen";
 
 "Alert On Must See Bands"="Notifikation ved bands der skal ses";
 "Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
@@ -24,10 +24,10 @@
 "Alert For Clinics"="Notifikation for clinics";
 "Alert For Album Listening Events"="Notifikation for prÊsentation af nyt album";
 
-"Hide Special Events"="Skjule specielle begivenheder";
-"Hide Meet and Greet Events"="Skjule  meet and greet begivenheder";
-"Hide Clinic Events"="Skjule clinics";
-"Hide Album Listening Events"="Skjule prÊsentation af nyt album";
+"Special Event"="Specielle Begivenheder";
+"Meet and Greet"="Meet and Greet begivenheder";
+"Clinic"="Clinics";
+"Listening Party"="PrÊsentation af nyt Album";
 
 "Use Last Years Data"="Brug sidste Ârs data";
 "LastYearsFeatureExplication"="Aktivering af 'Brug sidste Ârs data' vil indlÊse sidste Ârs spilleplan, men bruge et simuleret Tors-S¯n program ved at anvende din nuvÊrende uge. Dette er tiltÊnkt demonstration og test af begivenhedsfunktionerne.";

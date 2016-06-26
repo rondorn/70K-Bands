@@ -67,7 +67,8 @@ func getVenuIcon(venue: String)->String {
             return rinkVenue
 
         default:
-            return unknownVenue
+            //exit(1);
+            return ""
     }
 }
 

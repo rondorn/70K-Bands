@@ -11,6 +11,7 @@ import CoreData
 
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
+    @IBOutlet weak var titleButton: UIButton!
     
     
     @IBOutlet weak var mustSeeButton: UIButton!
@@ -39,39 +40,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var titleLabel: UINavigationItem!
     
-    
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
-            self.clearsSelectionOnViewWillAppear = false
-            self.preferredContentSize = CGSize(width: 320.0, height: 600.0)
-        }
-    }
-
-    override func viewWillAppear(animated: Bool) {
-        print ("The viewWillAppear was called");
-        super.viewWillAppear(animated)
-        refreshData()
-        tableView.reloadData()
-    }
-    
-    @IBAction func menuButtonAction(sender: AnyObject) {
-        let secondViewController = self.storyboard?.instantiateViewControllerWithIdentifier("sortMenuNavigation")
-        let window = UIApplication.sharedApplication().windows[0] as UIWindow
-        UIView.transitionFromView(
-            window.rootViewController!.view,
-            toView: secondViewController!.view,
-            duration: 0.65,
-            options: .TransitionCrossDissolve,
-            completion: {
-                finished in window.rootViewController = secondViewController
-        })
-        
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         sortedBy = "time"
+        
+        /*
+         Long press to indicate event attended
+         //setup long press
+         let longPressRecognizer = UILongPressGestureRecognizer(target: self, action: "longPress:")
+         self.view.addGestureRecognizer(longPressRecognizer)
+         */
         
         //have a reference to this controller for external refreshes
         masterView = self;
@@ -83,9 +61,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //icloud change notification
         NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: #selector(MasterViewController.onSettingsChanged(_:)),
-            name: NSUserDefaultsDidChangeNotification ,
-            object: nil)
+                                                         selector: #selector(MasterViewController.onSettingsChanged(_:)),
+                                                         name: NSUserDefaultsDidChangeNotification ,
+                                                         object: nil)
         
         NSNotificationCenter.defaultCenter().addObserver(self,
                                                          selector: #selector(MasterViewController.showReceivedMessage(_:)),
@@ -112,7 +90,67 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
     }
- 
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
+            self.clearsSelectionOnViewWillAppear = false
+            self.preferredContentSize = CGSize(width: 320.0, height: 600.0)
+        }
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        print ("The viewWillAppear was called");
+        super.viewWillAppear(animated)
+        refreshData()
+        tableView.reloadData()
+    }
+
+    @IBAction func titleButtonAction(sender: AnyObject) {
+        //let indexPath = NSIndexPath(forRow: 0, inSection: 0)
+        //self.tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: .Top, animated: true)
+        self.tableView.contentOffset = CGPointMake(0, 0 - self.tableView.contentInset.top);
+    }
+    
+    @IBAction func menuButtonAction(sender: AnyObject) {
+
+        let secondViewController = self.storyboard?.instantiateViewControllerWithIdentifier("sortMenuNavigation")
+        let window = UIApplication.sharedApplication().windows[0] as UIWindow
+        UIView.transitionFromView(
+            window.rootViewController!.view,
+            toView: secondViewController!.view,
+            duration: 0.65,
+            options: .TransitionCrossDissolve,
+            completion: {
+                finished in window.rootViewController = secondViewController
+        })
+        
+    }
+    
+    /*
+     Long press to indicate event attended
+    func longPress(longPressGestureRecognizer: UILongPressGestureRecognizer) {
+        
+        if longPressGestureRecognizer.state == UIGestureRecognizerState.Began {
+            
+            let touchPoint = longPressGestureRecognizer.locationInView(self.view)
+            if tableView.indexPathForRowAtPoint(touchPoint) != nil {
+                
+                let cell = tableView.indexPathForRowAtPoint(touchPoint);
+                let cellPosition = cell?.item;
+                let alert: UIAlertView = UIAlertView()
+                alert.title = "Mark Event As Attended"
+                alert.message = "Do you want to mark this " +  getNameFromSortable(bands[cellPosition!], sortedBy: sortedBy) + " show as 'Attended'."
+                alert.addButtonWithTitle("No")
+                alert.addButtonWithTitle("Yes")
+                alert.delegate = self  // set the delegate here
+                alert.show()
+            }
+        }
+    }
+    */
+
+    
     
     func showReceivedMessage(notification: NSNotification) {
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
@@ -345,7 +383,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             lableCounterString = " events";
         }
         
-        titleLabel.title = "70,000 Tons\t" + String(labeleCounter) + lableCounterString
+        titleButton.setTitle("70,000 Tons " + String(labeleCounter) + lableCounterString, forState: UIControlState.Normal)
+        
+        titleButton.setTitleColor(UIColor.blackColor(), forState: UIControlState.Normal)
+        
         showHideFilterMenu()
         
     }
@@ -424,7 +465,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var bandName = "None";
     
         print ("SelfBandCount is " + String(self.bands.count) + " rowNumber is " + String(rowNumber));
-        if (self.bands.count >= rowNumber){
+        if (self.bands.count > rowNumber){
             bandName = self.bands[rowNumber]
         }
         

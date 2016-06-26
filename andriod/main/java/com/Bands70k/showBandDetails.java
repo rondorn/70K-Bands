@@ -243,11 +243,14 @@ public class showBandDetails extends Activity {
                 Map.Entry thisEntry = (Map.Entry) entries.next();
                 Object key = thisEntry.getKey();
 
+                String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
+                String locationIcon = staticVariables.getVenuIcon(location);
+
                 htmlData += "<li>";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString() + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString() + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation() + " - ";
+                htmlData += location + locationIcon + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
                 htmlData += staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType());
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();

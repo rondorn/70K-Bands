@@ -18,10 +18,20 @@ public class staticVariables {
     public final static String oldMightSeeIcon = "\u2705";
 
     public final static String showTypeIcon = "";
-    public final static String specialEventTypeIcon = "🌟"; //"\u1F31F";
+    public final static String specialEventTypeIcon = "🌟";
     public final static String mAndmEventTypeIcon = "\uD83D\uDCF7";
     public final static String listeningEventTypeIcon =  "💽";
     public final static String clinicEventTypeIcon = "🎸";
+
+    public final static String  poolVenueIcon = "🏊";
+    public final static String  theaterVenueIcon = "🎭";
+    public final static String  loungeVenueIcon = "🎤";
+    public final static String  rinkVenueIcon = "\uD83D\uDD03";
+
+    public final static String  poolVenueText = "Pool";
+    public final static String  theaterVenueText = "Theater";
+    public final static String  loungeVenueText = "Lounge";
+    public final static String  rinkVenueText = "Rink";
 
     public final static String show = "Show";
     public final static String meetAndGreet = "Meet and Greet";
@@ -95,6 +105,26 @@ public class staticVariables {
         }
 
         Log.d ("eventType", "Event Received is " + eventType + " returned " + icon);
+
+        return icon;
+    }
+
+    public static String getVenuIcon(String venue) {
+
+        String icon = "";
+
+        if (venue.equals(poolVenueText)){
+            icon = poolVenueIcon;
+
+        } else if (venue.equals(theaterVenueText)){
+            icon = theaterVenueIcon;
+
+        } else if (venue.equals(rinkVenueText)){
+            icon = rinkVenueIcon;
+
+        } else if (venue.equals(loungeVenueText)){
+            icon = loungeVenueIcon;
+        }
 
         return icon;
     }

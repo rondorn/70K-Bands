@@ -5,149 +5,33 @@
 	<key>PreferenceSpecifiers</key>
 	<array>
 		<dict>
-			<key>Type</key>
-			<string>PSGroupSpecifier</string>
-			<key>Title</key>
-			<string>Alert Preferences</string>
-		</dict>
-		<dict>
-			<key>Group</key>
-			<string>Alert Preferences</string>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert On Must See Bands</string>
-			<key>Key</key>
-			<string>mustSeeAlert</string>
+			<key>AutocapitalizationType</key>
+			<string>None</string>
+			<key>AutocorrectionType</key>
+			<string>No</string>
 			<key>DefaultValue</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>Group</key>
-			<string>Alert Preferences</string>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert On Might See Bands</string>
-			<key>Key</key>
-			<string>mightSeeAlert</string>
-			<key>DefaultValue</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>KeyboardType</key>
-			<string>NumberPad</string>
-			<key>DefaultValue</key>
-			<integer>10</integer>
-			<key>Type</key>
-			<string>PSTextFieldSpecifier</string>
-			<key>Title</key>
-			<string>Min Before Show To Alert</string>
-			<key>Key</key>
-			<string>minBeforeAlert</string>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert For Shows</string>
-			<key>Key</key>
-			<string>alertForShows</string>
-			<key>DefaultValue</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert For Special Events</string>
-			<key>Key</key>
-			<string>alertForSpecial</string>
-			<key>DefaultValue</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert For Meet and Greet</string>
-			<key>Key</key>
-			<string>alertForMandG</string>
-			<key>DefaultValue</key>
-			<false/>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert For Clinics</string>
-			<key>Key</key>
-			<string>alertForClinics</string>
-			<key>DefaultValue</key>
-			<false/>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Alert For Listening Party</string>
-			<key>Key</key>
-			<string>alertForListening</string>
-			<key>DefaultValue</key>
-			<false/>
-		</dict>
-		<dict>
-			<key>Title</key>
-			<string>Advanced</string>
-			<key>Type</key>
-			<string>PSGroupSpecifier</string>
-		</dict>
-		<dict>
-			<key>Group</key>
-			<string>Advanced</string>
+			<string>https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1</string>
 			<key>IsSecure</key>
 			<false/>
-			<key>DefaultValue</key>
-			<string>Default</string>
 			<key>Key</key>
 			<string>artistUrl</string>
+			<key>KeyboardType</key>
+			<string>Alphabet</string>
 			<key>Title</key>
-			<string>Artist Url</string>
+			<string>Artist URL</string>
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
-			<key>AutocorrectionType</key>
-			<string>No</string>
 		</dict>
 		<dict>
-			<key>Group</key>
-			<string>Advanced</string>
 			<key>DefaultValue</key>
-			<string>Default</string>
-			<key>IsSecure</key>
-			<false/>
+			<string>https://www.dropbox.com/s/tg9qgt48ezp7udv/2015Schedule.csv?dl=1</string>
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>
-			<string>Schedule Url</string>
+			<string>Schedule URL</string>
 			<key>Key</key>
 			<string>scheduleUrl</string>
-			<key>AutocorrectionType</key>
-			<string>No</string>
-		</dict>
-		<dict>
-			<key>Group</key>
-			<string>Advanced</string>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Validate Schedule FIle</string>
-			<key>Key</key>
-			<string>validateScheduleFile</string>
-			<key>DefaultValue</key>
-			<false/>
 		</dict>
 	</array>
-	<key>StringsTable</key>
-	<string>Root</string>
 </dict>
 </plist>

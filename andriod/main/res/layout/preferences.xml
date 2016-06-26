@@ -43,7 +43,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertOnMustSeeBands"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -51,7 +51,7 @@
                     android:id="@+id/mustSeecheckBox"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -63,7 +63,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertOnMightSeeBands"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -71,7 +71,7 @@
                     android:id="@+id/mightSeecheckBox"
                     android:enabled="true"
                     android:layout_column="27"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
             <TableRow
@@ -84,7 +84,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/MinutesBeforeEventtoAlert"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <EditText
                     android:layout_width="80dp"
@@ -92,7 +92,7 @@
                     android:inputType="number"
                     android:ems="10"
                     android:id="@+id/minBeforeEvent"
-                    android:layout_marginLeft="40dp"
+                    android:layout_marginLeft="10dp"
                     android:layout_column="27"
                     android:enabled="true"
                     />
@@ -109,7 +109,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForShows"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -117,7 +117,7 @@
                     android:id="@+id/alertForShows"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
             <TableRow
@@ -130,7 +130,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForSpecialEvents"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -138,7 +138,7 @@
                     android:id="@+id/alertForSpecialEvents"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
             <TableRow
@@ -151,7 +151,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForMeetingandGreetEvents"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="1dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -159,7 +159,7 @@
                     android:id="@+id/alertForMeetAndGreet"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
             <TableRow
@@ -172,7 +172,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForClinics"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -180,7 +180,7 @@
                     android:id="@+id/alertForClinics"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
             <TableRow
@@ -193,7 +193,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForAlbumListeningEvents"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
@@ -201,7 +201,7 @@
                     android:id="@+id/alertForAlbumListen"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -229,14 +229,14 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/UseLastYearsData"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/useLastYearsData"
                     android:layout_column="27"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="10dp" />
             </TableRow>
 
         </TableLayout>
@@ -251,7 +251,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="385dp">
+        android:layout_marginTop="395dp">
 
         <TextView
             android:layout_width="fill_parent"
@@ -266,7 +266,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="435dp">
+        android:layout_marginTop="445dp">
 
     <TableLayout
         android:layout_width="match_parent"
@@ -282,14 +282,14 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Bands URL"
             android:layout_column="9"
-            android:layout_marginLeft="40dp" />
+            android:layout_marginLeft="10dp" />
 
         <EditText
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:ems="10"
             android:id="@+id/bandsUrl"
-            android:layout_marginLeft="40dp"
+            android:layout_marginLeft="10dp"
             android:layout_column="27"
             android:editable="true"
             android:inputType="textNoSuggestions" />
@@ -305,14 +305,14 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Schedule URL"
             android:layout_column="9"
-            android:layout_marginLeft="40dp" />
+            android:layout_marginLeft="10dp" />
 
         <EditText
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:ems="10"
             android:id="@+id/scheduleUrl"
-            android:layout_marginLeft="40dp"
+            android:layout_marginLeft="10dp"
             android:layout_column="27"
             android:editable="true"
             android:inputType="textNoSuggestions" />

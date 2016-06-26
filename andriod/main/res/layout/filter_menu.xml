@@ -18,7 +18,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Show/Hide Venues"
+                android:text="Show Venues"
                 android:id="@+id/headerTextVenues"
                 android:layout_gravity="center_horizontal"
                 android:gravity="center_horizontal"
@@ -41,7 +41,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Pool"
+                        android:text="@string/PoolVenue"
+                        android:id="@+id/poolVenueLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp"
                         android:width="100dp" />
@@ -62,7 +63,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Theater"
+                        android:text="@string/TheaterVenue"
+                        android:id="@+id/theaterVenueLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -83,7 +85,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Rink"
+                        android:text="@string/RinkVenue"
+                        android:id="@+id/rinkVenueLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -105,7 +108,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Lounge"
+                        android:text="@string/LoungeVenue"
+                        android:id="@+id/loungeVenueLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -127,6 +131,7 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:text="Other"
+                        android:id="@+id/otherVenueLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -150,7 +155,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Show/Hide Event Type"
+                android:text="Show Event Type"
                 android:id="@+id/headerTextEventType"
                 android:layout_gravity="center_horizontal"
                 android:gravity="center_horizontal"
@@ -173,7 +178,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Special Event"
+                        android:text="@string/SpecialEvents"
+                        android:id="@+id/specialEventLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp"
                         android:width="100dp" />
@@ -195,7 +201,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Meet And Greet"
+                        android:text="@string/MeetAndGreet"
+                        android:id="@+id/meetAndGreetEventLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -216,7 +223,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Clinic"
+                        android:text="@string/ClinicEvents"
+                        android:id="@+id/clinicEventLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 
@@ -236,7 +244,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Listening Event"
+                        android:text="@string/AlbumListeningEvents"
+                        android:id="@+id/albumListeningEventLable"
                         android:layout_column="9"
                         android:layout_marginLeft="40dp" />
 

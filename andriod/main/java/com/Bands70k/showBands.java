@@ -25,6 +25,7 @@ import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -94,6 +95,13 @@ public class showBands extends Activity {
 
         bandInfo = new BandInfo();
         preferences.loadData();
+
+        TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
+        jumpToTop.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                bandNamesList.setSelectionAfterHeaderView();
+            }
+        });
 
         populateBandList();
         showNotification();
@@ -307,7 +315,7 @@ public class showBands extends Activity {
                 startActivity(showBandList);
             }
         });
-    }
+    };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

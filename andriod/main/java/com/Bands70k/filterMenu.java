@@ -12,6 +12,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.wallet.wobs.LabelValue;
+
 import java.util.ArrayList;
 
 
@@ -40,8 +42,34 @@ public class filterMenu extends Activity {
 
         alertPreferences.loadData();
         setValues();
-
+        setLabels();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+    }
+
+    private void setLabels(){
+        TextView poolVenueLable = (TextView)findViewById(R.id.poolVenueLable);
+        poolVenueLable.setText(getResources().getString(R.string.PoolVenue) + " " + staticVariables.poolVenueIcon);
+
+        TextView theaterVenueLable = (TextView)findViewById(R.id.theaterVenueLable);
+        theaterVenueLable.setText(getResources().getString(R.string.TheaterVenue) + " " + staticVariables.theaterVenueIcon);
+
+        TextView rinkVenueLable = (TextView)findViewById(R.id.rinkVenueLable);
+        rinkVenueLable.setText(getResources().getString(R.string.RinkVenue) + " " + staticVariables.rinkVenueIcon);
+
+        TextView loungeVenueLable = (TextView)findViewById(R.id.loungeVenueLable);
+        loungeVenueLable.setText(getResources().getString(R.string.LoungeVenue) + " " + staticVariables.loungeVenueIcon);
+
+        TextView specialEventLable = (TextView)findViewById(R.id.specialEventLable);
+        specialEventLable.setText(getResources().getString(R.string.SpecialEvents) + " " + staticVariables.specialEventTypeIcon);
+
+        TextView meetAndGreetEventLable = (TextView)findViewById(R.id.meetAndGreetEventLable);
+        meetAndGreetEventLable.setText(getResources().getString(R.string.MeetAndGreet) + " " + staticVariables.mAndmEventTypeIcon);
+
+        TextView clinicEventLable = (TextView)findViewById(R.id.clinicEventLable);
+        clinicEventLable.setText(getResources().getString(R.string.ClinicEvents) + " " + staticVariables.clinicEventTypeIcon);
+
+        TextView albumListeningEventLable = (TextView)findViewById(R.id.albumListeningEventLable);
+        albumListeningEventLable.setText(getResources().getString(R.string.AlbumListeningEvents) + " " + staticVariables.listeningEventTypeIcon);
     }
 
     private void setValues(){

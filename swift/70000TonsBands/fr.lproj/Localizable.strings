@@ -26,11 +26,10 @@
 "Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
 
 
-"Hide Special Events"="Cacher des événements spéciaux";
-"Hide Meet and Greet Events"="Cacher Meeting and Greet Evénements";
-"Hide Clinic Events"="Cacher les cliniques";
-"Hide Album Listening Events"="Cacher l'album Listening Evénements";
-
+"Special Event"="événements spéciaux";
+"Meet and Greet"="Meet and Greet Evénements";
+"Clinic"="Cliniques Evénements";
+"Listening Party"="l'album Listening Evénements";
 
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";

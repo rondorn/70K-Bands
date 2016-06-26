@@ -55,16 +55,16 @@ class SortMenuController: UIViewController  {
     }
     
     func setLabels(){
-        
+                
         poolLabel.text = poolVenueText + " " + poolVenue
         theaterLable.text = theaterVenueText + " " + theaterVenue
         rinkLabel.text = rinkVenueText + " " + rinkVenue
         loungeLable.text = loungeVenueText + " " + loungeVenue
         
-        specialEventLabel.text = specialEventType + " " + specialEventTypeIcon
-        meetAndGreetLable.text = meetAndGreetype + " " + mAndmEventTypeIcon
-        clinicLabel.text = clinicType + " " + clinicEventTypeIcon
-        listeningEventLabel.text = listeningPartyType + " " + listeningEventTypeIcon
+        specialEventLabel.text = NSLocalizedString(specialEventType, comment: "") + " " + specialEventTypeIcon
+        meetAndGreetLable.text = NSLocalizedString(meetAndGreetype, comment: "") + " " + mAndmEventTypeIcon
+        clinicLabel.text = NSLocalizedString(clinicType, comment: "") + " " + clinicEventTypeIcon
+        listeningEventLabel.text = NSLocalizedString(listeningPartyType, comment: "") + " " + listeningEventTypeIcon
         
     }
     
