@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">70K Bands</string>
+    <string name="might">Peut Être</string>
+    <string name="wont">Non</string>
+    <string name="must">Oui</string>
+
+    <string name="Ok">Oui</string>
+    <string name="Cancel">Non</string>
+
+    <string name="AlertOnMustSeeBands">Alerte Pour OUI Salons</string>
+    <string name="AlertOnMightSeeBands">Alerte pour peut-être Shows</string>
+
+    <string name="MinutesBeforeEventtoAlert">Alertez-moi avant l\'événement (minutes)</string>
+    <string name="AlertForShows">Alerte pour les spectacles</string>
+    <string name="AlertForSpecialEvents">Alerte pour des événements spéciaux</string>
+    <string name="AlertForMeetingandGreetEvents">Alerte pour Meeting and Greet Evénements</string>
+    <string name="AlertForClinics">Alerte pour les cliniques</string>
+    <string name="AlertForAlbumListeningEvents">Alerte pour l\'album Listening Evénements</string>
+
+    <string name="PoolVenue">Pool</string>
+    <string name="TheaterVenue">Theater</string>
+    <string name="LoungeVenue">Lounge</string>
+    <string name="RinkVenue">Rink</string>
+
+    <string name="SpecialEvents">événements spéciaux</string>
+    <string name="MeetAndGreet">Meeting and Greet</string>
+    <string name="ClinicEvents">Cliniques</string>
+    <string name="AlbumListeningEvents">l\'album Listening Evénements</string>
+
+    <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
+    <string name="LastYearsFeatureExplication">Activation \'utilisation dernières années information\' va charger le calendrier de spectacle à partir de l\'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.</string>
+
+    <string name="restarTitle">Redémarrage Nécessaire</string>
+    <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
+
+</resources>

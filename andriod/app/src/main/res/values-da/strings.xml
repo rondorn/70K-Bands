@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">70K Bands</string>
+    <string name="might">MÂske</string>
+    <string name="must">Skal</string>
+    <string name="wont">Skal ikke</string>
+
+    <string name="Ok">Ja</string>
+    <string name="Cancel">Ingen</string>
+
+    <string name="AlertOnMustSeeBands">Notifikation ved bands der skal ses</string>
+    <string name="AlertOnMightSeeBands">Notifikation ved bands der mÂske skal ses</string>
+    <string name="MinutesBeforeEventtoAlert">Antal minutter før begivenhed for notifikation</string>
+    <string name="AlertForShows">Notifikation for shows</string>
+    <string name="AlertForSpecialEvents">Notifikation for specielle begivenheder</string>
+    <string name="AlertForMeetingandGreetEvents">Notifikation for meet and greet begivenheder</string>
+    <string name="AlertForClinics">Notifikation for clinics</string>
+    <string name="AlertForAlbumListeningEvents">Notifikation for prÊsentation af nyt album</string>
+
+    <string name="PoolVenue">Pool</string>
+    <string name="TheaterVenue">Theater</string>
+    <string name="LoungeVenue">Lounge</string>
+    <string name="RinkVenue">Rink</string>
+
+    <string name="SpecialEvents">Specielle Begivenheder</string>
+    <string name="MeetAndGreet">Meeting and Greet</string>
+    <string name="ClinicEvents">Clinics</string>
+    <string name="AlbumListeningEvents">PrÊsentation af nyt Album</string>
+
+    <string name="UseLastYearsData">Brug sidste Ârs data</string>
+    <string name="LastYearsFeatureExplication">Aktivering \'Brug Last Years oplysninger\' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.</string>
+
+    <string name="restarTitle">Genstart Påkrævet</string>
+    <string name="restartMessage">Gør ikke dette på krydstogt.\nInterent FORBINDELSE PÅKRÆVET.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+
+</resources>
