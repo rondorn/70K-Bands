@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">70K Bands</string>
+    <string name="might">Noite</string>
+    <string name="must">Obrigatório</string>
+    <string name="wont">Não</string>
+
+    <string name="Ok">Sim</string>
+    <string name="Cancel">Não</string>
+
+    <string name="AlertOnMustSeeBands">Alerta para Shows Obrigatórios</string>
+    <string name="AlertOnMightSeeBands">Alerta para Shows Possíveis</string>
+
+    <string name="MinutesBeforeEventtoAlert">Alertar-me antes do evento (minutos)</string>
+    <string name="AlertForShows">Alerta para shows</string>
+    <string name="AlertForSpecialEvents">Alerta para eventos especiais</string>
+    <string name="AlertForMeetingandGreetEvents">Alerta para Eventos com Artistas</string>
+    <string name="AlertForClinics">Alerta para clínicas</string>
+    <string name="AlertForAlbumListeningEvents">Alerta para Eventos de Audição de Álbuns</string>
+
+    <string name="PoolVenue">Pool</string>
+    <string name="TheaterVenue">Theater</string>
+    <string name="LoungeVenue">Lounge</string>
+    <string name="RinkVenue">Rink</string>
+
+    <string name="SpecialEvents">Eventos Especiais</string>
+    <string name="MeetAndGreet">Eventos com Artistas</string>
+    <string name="ClinicEvents">Clínicas</string>
+    <string name="AlbumListeningEvents">Eventos de Audição de Álbuns</string>
+
+    <string name="UseLastYearsData">Use as informações do ano passado</string>
+    <string name="LastYearsFeatureExplication">Ativando \'Use Informação dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>
+
+    <string name="restarTitle">Necessário Reiniciar</string>
+    <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. CONEXÃO DE INTERNET NECESSÁRIA.\nEssa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados</string>
+
+</resources>
