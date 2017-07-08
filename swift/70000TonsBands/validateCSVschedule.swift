@@ -11,7 +11,7 @@ import UIKit
 
 class validateCSVSchedule {
     
-    let scheduleFile = NSURL(fileURLWithPath: dirs[0]).URLByAppendingPathComponent( "scheduleFile.txt")
+    let scheduleFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent( "scheduleFile.txt")
 
     var numberOfShows = 0
     var numberOfClinics = 0
@@ -19,39 +19,39 @@ class validateCSVSchedule {
     var numberOfmAndg = 0
     var numberOfListering = 0
     
-    var eventsPerDate = Dictionary<NSDate, Int>()
+    var eventsPerDate = Dictionary<Date, Int>()
     var eventsPerDay = Dictionary<String, Int>()
     var errorMessage = ""
     var summaryMessage = ""
     
     var bands = [String]()
     
-    var dateFormatter = NSDateFormatter();
-    var sortedDates = [NSDate]()
+    var dateFormatter = DateFormatter();
+    var sortedDates = [Date]()
     
     init(){
         dateFormatter.dateFormat = "M-d-yy"
-        dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
-        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone.current
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     }
     
     func validateSchedule(){
         
-        let defaults = NSUserDefaults.standardUserDefaults()
-        let validateSchedulePreference = defaults.boolForKey("validateScheduleFile")
+        let defaults = UserDefaults.standard
+        let validateSchedulePreference = defaults.bool(forKey: "validateScheduleFile")
         
         if (validateSchedulePreference == true){
             bands = getBandNames()
             var scheduleFileString = ""
             do {
-                scheduleFileString = try String(contentsOfURL:scheduleFile);
+                scheduleFileString = try String(contentsOf:scheduleFile);
             } catch _ {
                 //do nothing
             }
-            if let csvDataString = try? String(contentsOfFile: scheduleFileString, encoding: NSUTF8StringEncoding) {
+            if let csvDataString = try? String(contentsOfFile: scheduleFileString, encoding: String.Encoding.utf8) {
                 
                 var csvData: CSV
-                var error: NSErrorPointer = nil
+                var error: NSErrorPointer? = nil
                 csvData = try! CSV(csvStringToParse: csvDataString)
                 
                 verifyExpectedFieldsExists(csvData)
@@ -76,7 +76,7 @@ class validateCSVSchedule {
                 
                 //for index in eventsPerDate {
                 for index in sortedDates {
-                    let date = dateFormatter.stringFromDate(index)
+                    let date = dateFormatter.string(from: index)
                     let events = String(eventsPerDate[index]!)
                     summaryMessage += date + " has " + events + " events\n"
                 }
@@ -90,7 +90,7 @@ class validateCSVSchedule {
         }
     }
         
-    func validateTimeField(csvData: CSV, fieldName: String){
+    func validateTimeField(_ csvData: CSV, fieldName: String){
         
         var count = 1;
         
@@ -102,7 +102,7 @@ class validateCSVSchedule {
             var error: NSError? = nil
             var regex: NSRegularExpression?
             do {
-                regex = try NSRegularExpression(pattern: pattern, options: NSRegularExpressionOptions.DotMatchesLineSeparators)
+                regex = try NSRegularExpression(pattern: pattern, options: NSRegularExpression.Options.dotMatchesLineSeparators)
             } catch let error1 as NSError {
                 error = error1
                 regex = nil
@@ -121,7 +121,7 @@ class validateCSVSchedule {
 
     }
     
-    func validateDayField(csvData: CSV){
+    func validateDayField(_ csvData: CSV){
         
         var count = 1;
         
@@ -179,14 +179,14 @@ class validateCSVSchedule {
     
     }
 
-    func verifySaneDates (csvData: CSV){
+    func verifySaneDates (_ csvData: CSV){
         
         for lineData in csvData.rows {
 
-            var startTimeIndex = NSDate()
+            var startTimeIndex = Date()
             let fullTimeString: String = lineData[dateField]!
             
-            startTimeIndex = dateFormatter.dateFromString(fullTimeString)!
+            startTimeIndex = dateFormatter.date(from: fullTimeString)!
             
             if (eventsPerDate[startTimeIndex] == nil){
                 sortedDates.append(startTimeIndex)
@@ -197,13 +197,13 @@ class validateCSVSchedule {
         
         }
         
-        sortedDates.sort({
-            $1.compare($0) == NSComparisonResult.OrderedDescending
+        sortedDates.sorted(by: {
+            $1.compare($0) == ComparisonResult.orderedDescending
         })
 
     }
     
-    func verifyExpectedFieldsExists(csvData: CSV){
+    func verifyExpectedFieldsExists(_ csvData: CSV){
         for lineData in csvData.rows {
             if (lineData[bandField] == nil){
                 errorMessage += "'Band' field not found\n"
@@ -230,7 +230,7 @@ class validateCSVSchedule {
         }
     }
     
-    func verifyTypes (csvData: CSV){
+    func verifyTypes (_ csvData: CSV){
         for lineData in csvData.rows {
             switch lineData[typeField]!{
                 case showType:
@@ -249,7 +249,7 @@ class validateCSVSchedule {
         }
     }
     
-    func verifyBandNames(csvData: CSV){
+    func verifyBandNames(_ csvData: CSV){
         
         var bandDictionary = Dictionary<String, Int>()
         

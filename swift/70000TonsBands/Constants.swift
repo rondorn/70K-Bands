@@ -48,8 +48,8 @@ var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
 //file names
-let dirs = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true)
-let scheduleFile = getDocumentsDirectory().stringByAppendingPathComponent("scheduleFile.txt")
+let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
+let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
 
 //defaults preferences
 let artistUrlDefault = "Default"
@@ -82,16 +82,18 @@ let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 
 var schedule = scheduleHandler()
-let defaults = NSUserDefaults.standardUserDefaults()
+let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
 var listOfVenues = [String]()
 
 var masterView: MasterViewController!
 
+var googleCloudID = "Nothing";
+
 func getDocumentsDirectory() -> NSString {
-    let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)
+    let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
     let documentsDirectory = paths[0]
-    return documentsDirectory
+    return documentsDirectory as NSString
 }
 
 

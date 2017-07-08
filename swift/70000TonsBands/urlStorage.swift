@@ -12,7 +12,7 @@ import Foundation
 var openUrl = ""
 
 
-func setUrl (url: String){
+func setUrl (_ url: String){
     print ("Setting url to be " + url);
     openUrl = url;
 }

@@ -13,12 +13,12 @@ var bandImageUrl = [String: String]()
 var officalUrls = [String: String]()
 var offline = false;
 
-let bandFile = getDocumentsDirectory().stringByAppendingPathComponent("bandFile")
+let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 
 func gatherData () {
     
-    let defaults = NSUserDefaults.standardUserDefaults()
-    var artistUrl = defaults.stringForKey("artistUrl")
+    let defaults = UserDefaults.standard
+    var artistUrl = defaults.string(forKey: "artistUrl")
     
     if (artistUrl == "Default"){
        artistUrl = getDefaultArtistUrl()
@@ -38,14 +38,13 @@ func gatherData () {
     readBandFile();
 }
 
-func writeBandFile (httpData: String){
+func writeBandFile (_ httpData: String){
     
     print("write file " + bandFile);
     print (httpData);
-    
 
     do {
-       try httpData.writeToFile(bandFile, atomically: true,encoding: NSUTF8StringEncoding)
+       try httpData.write(toFile: bandFile, atomically: true,encoding: String.Encoding.utf8)
         print ("Just created file " + bandFile);
     } catch let error as NSError {
         print ("Encountered an error of creating file " + error.debugDescription)
@@ -53,13 +52,17 @@ func writeBandFile (httpData: String){
     
 }
 
+
 func readBandFile (){
     
     bandNames = [String]()
     
     print ("Reading content of file " + bandFile);
     
-    if let csvDataString = try? String(contentsOfFile: bandFile, encoding: NSUTF8StringEncoding) {
+    if (FileManager.default.fileExists(atPath: bandFile) == false){
+        gatherData();
+    }
+    if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
         print("csvDataString has data", terminator: "");
         
         //var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
@@ -109,7 +112,7 @@ func readBandFile (){
     } else {
         print ("Could not read file for some reason");
         do {
-            try NSString(contentsOfFile: bandFile, encoding: NSUTF8StringEncoding)
+            try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
             
         } catch let error as NSError {
             print ("Encountered an error on reading file" + error.debugDescription)
@@ -122,9 +125,9 @@ func getDefaultArtistUrl() -> String{
     var url = String()
     let httpData = getUrlData(defaultStorageUrl)
     
-    let dataArray = httpData.componentsSeparatedByString("\n")
+    let dataArray = httpData.components(separatedBy: "\n")
     for record in dataArray {
-        var valueArray = record.componentsSeparatedByString("::")
+        var valueArray = record.components(separatedBy: "::")
         if (valueArray[0] == "artistUrl"){
             url = valueArray[1]
         }
@@ -134,26 +137,26 @@ func getDefaultArtistUrl() -> String{
     return url
 }
 
-func getUrlData(urlString: String) -> String{
+func getUrlData(_ urlString: String) -> String{
 
     var httpData = String()
     
-    let semaphore = dispatch_semaphore_create(0)
+    let semaphore = DispatchSemaphore(value: 0)
     
     HTTPGet(urlString) {
         (data: String, error: String?) -> Void in
         if error != nil {
             print("Error, well now what")
             print(error)
-            dispatch_semaphore_signal(semaphore)
+            semaphore.signal()
         } else {
             httpData = data
-            dispatch_semaphore_signal(semaphore)
+            semaphore.signal()
         }
         
     }
     
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
+    semaphore.wait(timeout: DispatchTime.distantFuture)
     
     return httpData
     
@@ -161,12 +164,13 @@ func getUrlData(urlString: String) -> String{
 
 func getBandNames () -> [String] {
     
-    bandNames.sortInPlace{$0 < $1}
-
+    if (bandNames.isEmpty == false){
+        bandNames.sort{$0 < $1}
+    }
     return bandNames
 }
 
-func getBandImageUrl(band: String) -> String {
+func getBandImageUrl(_ band: String) -> String {
     
     if (bandImageUrl[band]?.isEmpty == false){
         return bandImageUrl[band]!
@@ -175,7 +179,7 @@ func getBandImageUrl(band: String) -> String {
     }
 }
 
-func getofficalPage (band: String) -> String {
+func getofficalPage (_ band: String) -> String {
     
     if (officalUrls[band]?.isEmpty == false){
         return officalUrls[band]!
@@ -187,7 +191,7 @@ func getofficalPage (band: String) -> String {
 
 func getBandCountry () -> [String] {
     
-    bandNames.sortInPlace{$0 < $1}
+    bandNames.sort{$0 < $1}
     
     return bandNames
 }

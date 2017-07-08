@@ -1,0 +1,52 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Google Translate (I apologize in advance)
+*/
+
+
+"Must"="Sì";
+"Might"="Forse";
+"Wont"="No";
+
+"Ok"="Sì";
+"Cancel"="No";
+
+"Alert On Must See Bands"="Alert Per Sì Spettacoli";
+"Alert On Might See Bands"="Alert Per Forse Spettacoli";
+"Minutes Before Event to Alert"="Avvisa prima dell'evento (minuti)";
+"Alert For Shows"="Alert Per Spettacoli";
+"Alert For Special Events"="Alert Per Eventi Speciali";
+"Alert For Meeting and Greet Events"="Alert Per 'Meeting and Greet' Eventi";
+"Alert For Clinics"="Alert Per Cliniche";
+"Use Last Years Data"="Utilizzare le informazioni dello scorso anno";
+
+"Alert For Album Listening Events"="Alert Per Album ascolto Eventi";
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
+"LastYearsFeatureExplication"="Attivando 'Uso Ultimo Anni informazioni' caricherà il programma spettacolo dello scorso anno, ma utilizzare un simulato Gi-Do mostra pianificazione utilizzando la vostra settimana corrente. Questo è destinato per la dimostrazione e la prova delle funzioni di programmazione.";
+
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "Riavvio Richiesto";
+"restartMessage" = "NON FARLO IN CROCIERA. COLLEGAMENTO interent RICHIESTO. Questa modifica richiede il riavvio dell'applicazione. 70K Bands ora smettere. Rilanciare di vedere i nuovi dati";
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -8,17 +8,17 @@
 
 import Foundation
 
-func HTTPsendRequest(request: NSMutableURLRequest,
-    callback: (String, String?) -> Void) {
-        let task = NSURLSession.sharedSession().dataTaskWithRequest(
-            request,
+func HTTPsendRequest(_ request: URLRequest,
+    callback: @escaping (String, String?) -> Void) {
+        let task = URLSession.shared.dataTask(
+            with: request,
             completionHandler: {
                 data, response, error in
                 if error != nil {
                     callback("", error!.localizedDescription)
                 } else {
                     callback(
-                        NSString(data: data!, encoding: NSUTF8StringEncoding) as! String,
+                        NSString(data: data!, encoding: String.Encoding.utf8.rawValue) as! String,
                         nil
                     )
                 }
@@ -27,8 +27,10 @@ func HTTPsendRequest(request: NSMutableURLRequest,
         
 }
 
-func HTTPGet(url: String, callback: (String, String?) -> Void) {
-    let request = NSMutableURLRequest(URL: NSURL(string: url)!)
-    request.timeoutInterval = 30;
-    HTTPsendRequest(request, callback: callback)
+func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
+    if (url.isEmpty == false){
+        let request = NSMutableURLRequest(url: URL(string: url)!)
+        request.timeoutInterval = 30;
+        HTTPsendRequest(request as URLRequest, callback: callback)
+    }
 }

@@ -11,15 +11,15 @@ import CoreData
 
 var bandPriorityStorage = [String:Int]()
 
-let directoryPath = NSURL(fileURLWithPath:dirs[0])
-let storageFile = directoryPath.URLByAppendingPathComponent( "data.txt")
-let dateFile = directoryPath.URLByAppendingPathComponent( "date.txt")
-let bandsFile = directoryPath.URLByAppendingPathComponent( "bands.txt")
-let lastFilters = directoryPath.URLByAppendingPathComponent("lastFilters")
+let directoryPath = URL(fileURLWithPath:dirs[0])
+let storageFile = directoryPath.appendingPathComponent( "data.txt")
+let dateFile = directoryPath.appendingPathComponent( "date.txt")
+let bandsFile = directoryPath.appendingPathComponent( "bands.txt")
+let lastFilters = directoryPath.appendingPathComponent("lastFilters")
 
 func writeFiltersFile(){
-    
-    dispatch_async(dispatch_get_global_queue(Int(QOS_CLASS_BACKGROUND.rawValue), 0)) {
+    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+    //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
         var prefsString = String()
         
         prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
@@ -29,7 +29,7 @@ func writeFiltersFile(){
         
         print ("Wrote prefs " + prefsString)
         do {
-            try prefsString.writeToFile(String(contentsOfURL:lastFilters), atomically: false, encoding: NSUTF8StringEncoding)
+            try prefsString.write(toFile: String(contentsOf:lastFilters), atomically: false, encoding: String.Encoding.utf8)
         } catch _ {
         }
     }
@@ -38,10 +38,10 @@ func writeFiltersFile(){
 
 func readFiltersFile(){
 
-    if let data = try? String(contentsOfURL: lastFilters, encoding: NSUTF8StringEncoding) {
-        let dataArray = data.componentsSeparatedByString(";")
+    if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
+        let dataArray = data.components(separatedBy: ";")
         for record in dataArray {
-            var valueArray = record.componentsSeparatedByString(":")
+            var valueArray = record.components(separatedBy: ":")
             switch valueArray[0] {
                 
                 case "mustSeeOn":
@@ -64,7 +64,7 @@ func readFiltersFile(){
 }
 
 
-func boolToString(value: Bool) -> String{
+func boolToString(_ value: Bool) -> String{
     
     var result = String()
     
@@ -77,7 +77,7 @@ func boolToString(value: Bool) -> String{
     return result
 }
 
-func stringToBool(value: String) -> Bool{
+func stringToBool(_ value: String) -> Bool{
     
     var result = Bool()
     
@@ -90,24 +90,24 @@ func stringToBool(value: String) -> Bool{
     return result
 }
 
-func addPriorityData (bandname:String, priority: Int){
+func addPriorityData (_ bandname:String, priority: Int){
     
     bandPriorityStorage[bandname] = priority
     writeFile()
 }
 
-func getDateFormatter() -> NSDateFormatter {
+func getDateFormatter() -> DateFormatter {
     
-    let dateFormatter = NSDateFormatter()
+    let dateFormatter = DateFormatter()
     
     dateFormatter.dateFormat = "MM-dd-yy"
-    dateFormatter.timeStyle = NSDateFormatterStyle.ShortStyle
-    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+    dateFormatter.timeStyle = DateFormatter.Style.short
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     
     return dateFormatter
 }
 
-func getPriorityData (bandname:String) -> Int {
+func getPriorityData (_ bandname:String) -> Int {
     
     print ("Retrieving data for " + bandname + ":", terminator: "")
     var priority: Int
@@ -127,14 +127,14 @@ func getPriorityData (bandname:String) -> Int {
 
 func getPriorityDataFromiCloud (){
     
-    let values = NSUbiquitousKeyValueStore.defaultStore().dictionaryRepresentation
+    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
     
     if values["bandPriorities"] != nil {
-        let dataString = String(NSUbiquitousKeyValueStore.defaultStore().stringForKey("bandPriorities")!)
-        let split1 = dataString.componentsSeparatedByString(";")
+        let dataString = String(NSUbiquitousKeyValueStore.default().string(forKey: "bandPriorities")!)
+        let split1 = dataString?.components(separatedBy: ";")
     
-        for record in split1 {
-            var split2 = record.componentsSeparatedByString(":")
+        for record in split1! {
+            var split2 = record.components(separatedBy: ":")
             if (split2.count == 2){
                 bandPriorityStorage[split2[0]] = Int(split2[1])
             }
@@ -151,10 +151,10 @@ func writeiCloudData (){
         dataString = dataString + band + ":" + String(priority) + ";"
     }
 
-    NSUbiquitousKeyValueStore.defaultStore().setString(dataString, forKey: "bandPriorities")
-    NSUbiquitousKeyValueStore.defaultStore().setObject(NSDate(), forKey: "lastModifiedDate")
+    NSUbiquitousKeyValueStore.default().set(dataString, forKey: "bandPriorities")
+    NSUbiquitousKeyValueStore.default().set(Date(), forKey: "lastModifiedDate")
     
-    NSUbiquitousKeyValueStore.defaultStore().synchronize()
+    NSUbiquitousKeyValueStore.default().synchronize()
 
     
 }
@@ -165,20 +165,20 @@ func writeFile(){
     dateFormatter.dateFormat = "MM-dd-yy"
     
     var data: String = ""
-    let dateTimeModified = NSDate();
+    let dateTimeModified = Date();
     
-    let dateTimeModifiedString = dateFormatter.stringFromDate(dateTimeModified)
+    let dateTimeModifiedString = dateFormatter.string(from: dateTimeModified)
     
     for (index, element) in bandPriorityStorage{
         data = data + index + ":" + String(element) + "\n"
     }
     
     do {
-        try data.writeToURL(storageFile, atomically: false, encoding: NSUTF8StringEncoding)
+        try data.write(to: storageFile, atomically: false, encoding: String.Encoding.utf8)
     } catch _ {
     }
     do {
-        try dateTimeModifiedString.writeToURL(dateFile, atomically: false, encoding: NSUTF8StringEncoding)
+        try dateTimeModifiedString.write(to: dateFile, atomically: false, encoding: String.Encoding.utf8)
     } catch _ {
     }
     
@@ -189,23 +189,23 @@ func writeFile(){
 func compareLastModifiedDate () -> String {
     
     var winner: String = ""
-    var fileDate: NSDate = NSDate()
-    var iCloudDate: NSDate = NSDate()
+    var fileDate: Date = Date()
+    var iCloudDate: Date = Date()
     
 
-    let dateFormatter: NSDateFormatter = getDateFormatter()
+    let dateFormatter: DateFormatter = getDateFormatter()
     dateFormatter.dateFormat = "MM-dd-yy"
-    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     
-    if let data = try? String(contentsOfURL: dateFile, encoding: NSUTF8StringEncoding) {
-        fileDate = dateFormatter.dateFromString(data)!
+    if let data = try? String(contentsOf: dateFile, encoding: String.Encoding.utf8) {
+        fileDate = dateFormatter.date(from: data)!
     }
     
     
-    let values = NSUbiquitousKeyValueStore.defaultStore().dictionaryRepresentation
+    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
     
     if values["lastModifiedDate"] != nil {
-        iCloudDate = NSUbiquitousKeyValueStore.defaultStore().objectForKey("lastModifiedDate") as! NSDate
+        iCloudDate = NSUbiquitousKeyValueStore.default().object(forKey: "lastModifiedDate") as! Date
     } else {
         return "file"
     }
@@ -233,14 +233,14 @@ func readFile() -> [String:Int]{
     }
     
     if (bandPriorityStorage.count == 0){
-        if let data = try? String(contentsOfURL: storageFile, encoding: NSUTF8StringEncoding) {
-            let dataArray = data.componentsSeparatedByString("\n")
+        if let data = try? String(contentsOf: storageFile, encoding: String.Encoding.utf8) {
+            let dataArray = data.components(separatedBy: "\n")
             for record in dataArray {
-                var element = record.componentsSeparatedByString(":")
+                var element = record.components(separatedBy: ":")
                 if element.count == 2 {
                     var priorityString = element[1];
                     
-                     priorityString = priorityString.stringByReplacingOccurrencesOfString("\n", withString: "", options: NSStringCompareOptions.LiteralSearch, range: nil)
+                     priorityString = priorityString.replacingOccurrences(of: "\n", with: "", options: NSString.CompareOptions.literal, range: nil)
                     
                     bandPriorityStorage[element[0]] = Int(priorityString)
 

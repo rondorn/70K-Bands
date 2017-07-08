@@ -1,0 +1,40 @@
+/*
+ LocalizationStrings.strings
+ 70K Bands
+ 
+ Oprettet af Ron Dorn 18/7-15.
+ Copyright (c) 2015 Ron Dorn. Alle rettigheder forbeholdes.
+ translation provided by Morten Petersen, thank you kind sir
+ */
+
+
+"Must"="Skal";
+"Might"="MÂske";
+"Wont"="Skal ikke";
+
+"Ok"="Ok";
+"Cancel"="Afbryd";
+
+"Alert On Must See Bands"="Notifikation ved bands der skal ses";
+"Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
+"Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
+"Alert For Shows"="Notifikation for shows";
+"Alert For Special Events"="Notifikation for specielle begivenheder";
+"Alert For Meeting and Greet Events"="Notifikation for meet and greet begivenheder";
+"Alert For Clinics"="Notifikation for clinics";
+"Alert For Album Listening Events"="Notifikation for prÊsentation af nyt album";
+
+"Hide Special Events"="Skjule specielle begivenheder";
+"Hide Meet and Greet Events"="Skjule  meet and greet begivenheder";
+"Hide Clinic Events"="Skjule clinics";
+"Hide Album Listening Events"="Skjule prÊsentation af nyt album";
+
+"Use Last Years Data"="Brug sidste Ârs data";
+"LastYearsFeatureExplication"="Aktivering af 'Brug sidste Ârs data' vil indlÊse sidste Ârs spilleplan, men bruge et simuleret Tors-S¯n program ved at anvende din nuvÊrende uge. Dette er tiltÊnkt demonstration og test af begivenhedsfunktionerne.";
+
+
+
+"restarTitle" = "Genstart pÂkrÊvet";
+"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.\nDenne Êndring krÊver genstart af app'en.\n70K Bands Vil nu lukke ned. Genstart for at se nye data";
+
+

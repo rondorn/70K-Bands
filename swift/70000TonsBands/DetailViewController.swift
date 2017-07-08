@@ -9,7 +9,7 @@
 import UIKit
 import CoreData
 
-class DetailViewController: UIViewController{
+class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
@@ -17,6 +17,11 @@ class DetailViewController: UIViewController{
     @IBOutlet weak var wikipediaUrlButton: UIButton!
     @IBOutlet weak var youtubeUrlButton: UIButton!
     @IBOutlet weak var metalArchivesButton: UIButton!
+    
+    @IBOutlet weak var customNotesButton: UIButton!
+    @IBOutlet weak var customNotesText: UITextView!
+    
+    
     
     @IBOutlet weak var returnToMaster: UINavigationItem!
     
@@ -32,9 +37,10 @@ class DetailViewController: UIViewController{
     @IBOutlet weak var Country: UITextField!
     @IBOutlet weak var Genre: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
-
+    
     var bandName :String!
     var schedule = scheduleHandler()
+    var imagePosition = CGFloat(0);
     
     var detailItem: AnyObject? {
         didSet {
@@ -48,9 +54,11 @@ class DetailViewController: UIViewController{
         
         self.configureView()
         
+        customNotesText.delegate = self as? UITextViewDelegate
+        
         readFile()
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
+        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
         
         if bandName == nil && bands.isEmpty == false {
             var bands = getBandNames()
@@ -58,67 +66,65 @@ class DetailViewController: UIViewController{
             print("Providing default band of " + bandName)
         }
         
-        if (bandName != nil) {
+        print ("bandName is")
+        print (bandName)
+        if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
             let imageURL = getBandImageUrl(bandName)
             print("imageUrl: " + imageURL)
             
             //called twice to ensure image is loaded even if delayed
-            displayImage(imageURL, bandName: bandName, logoImage: bandLogo)
+            displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
             sleep(1)
-            displayImage(imageURL, bandName: bandName, logoImage: bandLogo)
+            displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(getPriorityData(bandName))
             
+            print ("showBandDetails");
             showBandDetails()
+            
+            print ("showFullSchedule");
             showFullSchedule()
             setButtonNames()
             rotationChecking()
+            loadComments()
             
-        } else {
-            bandName = "";
-            priorityButtons.hidden = true
-            Country.text = ""
-            Genre.text = ""
-            NoteWorthy.text = ""
-            officialUrlButton.hidden = true;
-            wikipediaUrlButton.hidden = true;
-            youtubeUrlButton.hidden = true;
-            metalArchivesButton.hidden = true;
+            disableButtonsIfNeeded()
+            disableLinksWithEmptyData();
+            
+            NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+            
         }
-        
-        disableButtonsIfNeeded()
-        disableLinksWithEmptyData();
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDeviceOrientationDidChangeNotification, object: nil)
-        
-        
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
         
     }
     
     func disableLinksWithEmptyData(){
         
         if (getofficalPage(bandName).isEmpty == true || getofficalPage(bandName) == "Unavailable"){
-            officialUrlButton.hidden = true;
-            wikipediaUrlButton.hidden = true;
-            youtubeUrlButton.hidden = true;
-            metalArchivesButton.hidden = true;
+            officialUrlButton.isHidden = true;
+            wikipediaUrlButton.isHidden = true;
+            youtubeUrlButton.isHidden = true;
+            metalArchivesButton.isHidden = true;
+            
         } else {
             print ("Office link is " + getofficalPage(bandName));
         }
     }
- 
- 
+  
     func showBandDetails(){
  
-        if (UIDeviceOrientationIsPortrait(UIDevice.currentDevice().orientation) || UIDevice.currentDevice().userInterfaceIdiom != .Phone){
+        if (UIDeviceOrientationIsLandscape(UIDevice.current.orientation) == false || UIDevice.current.userInterfaceIdiom == .pad){
             
             if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
                 Country.text = "";
             } else {
                 Country.text = "Country:\t" + bandCountry[bandName]!
-            
             }
 
             if (bandGenre[bandName] == nil || bandGenre[bandName]!.isEmpty){
@@ -135,49 +141,109 @@ class DetailViewController: UIViewController{
                 NoteWorthy.text = "Note:\t" + bandNoteWorthy[bandName]!
             }
             
-        } else if (UIDevice.currentDevice().userInterfaceIdiom == .Phone) {
+        } else if (UIDevice.current.userInterfaceIdiom == .phone) {
             Country.text = ""
             Genre.text = ""
             NoteWorthy.text = ""
-            
         }
         
         if (bandName.isEmpty) {
             bandName = "";
-            priorityButtons.hidden = true
+            priorityButtons.isHidden = true
             Country.text = ""
             Genre.text = ""
             NoteWorthy.text = ""
-            officialUrlButton.hidden = true;
-            wikipediaUrlButton.hidden = true;
-            youtubeUrlButton.hidden = true;
-            metalArchivesButton.hidden = true;
+            officialUrlButton.isHidden = true;
+            wikipediaUrlButton.isHidden = true;
+            youtubeUrlButton.isHidden = true;
+            metalArchivesButton.isHidden = true;
+            customNotesText.isHidden = true;
+            customNotesButton.isHidden = true;
         }
     }
     
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        print ("Editing of commentFile has begun")
+        if (customNotesText.text == "Add your custom notes here"){
+            customNotesText.text = ""
+            customNotesText.textColor = UIColor.black
+        }
+    }
+    
+
+    func loadComments(){
+        let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
+        print ("Loading commentFile");
+        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
+            if (data.isEmpty == false){
+                customNotesText.text = data;
+                customNotesText.textColor = UIColor.black
+                
+            } else {
+                print ("Nothing in commentFile");
+            }
+        } else {
+           customNotesText.text = "Add your custom notes here";
+           customNotesText.textColor = UIColor.gray
+           print ("commentFile does not exist");
+        }
+
+    }
+    
+    func saveComments(){
+        if (bandName != nil && bandName.isEmpty == false){
+            let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
+            if (customNotesText.text != "Add your custom notes here"){
+                print ("saving commentFile");
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
+                    var commentString = self.customNotesText.text;
+                
+                    print ("Wrote commentFile " + commentString!)
+
+                    do {
+                        try commentString?.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                    } catch {
+                        print("commentFile " + error.localizedDescription)
+                    }
+                }
+            }
+        }
+    }
+    
+    override func viewWillDisappear(_ animated : Bool) {
+        super.viewWillDisappear(animated)
+        saveComments()
+    }
     
     func rotationChecking(){
         
         //need to hide things to make room in the detail display
-        if(UIDeviceOrientationIsLandscape(UIDevice.currentDevice().orientation)){
+        if(UIDeviceOrientationIsLandscape(UIDevice.current.orientation)){
             //if schdule exists, hide the web links that probably dont work anyway
             //only needed on iPhones. iPads have enought room for both
-            if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.currentDevice().userInterfaceIdiom == .Phone){
+            if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
                 
-                officialUrlButton.hidden = true;
-                wikipediaUrlButton.hidden = true;
-                youtubeUrlButton.hidden = true;
-                metalArchivesButton.hidden = true;
-                
+                officialUrlButton.isHidden = true;
+                wikipediaUrlButton.isHidden = true;
+                youtubeUrlButton.isHidden = true;
+                metalArchivesButton.isHidden = true;
+                customNotesText.isHidden = true;
+                customNotesButton.isHidden = true;
             }
+            bandLogo.contentMode = UIViewContentMode.top
             
         } else {
 
-            officialUrlButton.hidden = false;
-            wikipediaUrlButton.hidden = false;
-            youtubeUrlButton.hidden = false;
-            metalArchivesButton.hidden = false;
+            officialUrlButton.isHidden = false;
+            wikipediaUrlButton.isHidden = false;
+            youtubeUrlButton.isHidden = false;
+            metalArchivesButton.isHidden = false;
+            customNotesText.isHidden = false;
+            customNotesButton.isHidden = false;
+            bandLogo.contentMode = UIViewContentMode.scaleAspectFit
         }
+
         showBandDetails();
     }
     
@@ -187,11 +253,11 @@ class DetailViewController: UIViewController{
         let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
         let WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
         
-        priorityButtons.setTitle(mustSeeIcon + " " + MustSee, forSegmentAtIndex: 1)
-        priorityButtons.setTitle(willSeeIcon + " " + MightSee, forSegmentAtIndex: 2)
-        priorityButtons.setTitle(willNotSeeIcon + " " + WontSee, forSegmentAtIndex: 3)
+        priorityButtons.setTitle(mustSeeIcon + " " + MustSee, forSegmentAt: 1)
+        priorityButtons.setTitle(willSeeIcon + " " + MightSee, forSegmentAt: 2)
+        priorityButtons.setTitle(willNotSeeIcon + " " + WontSee, forSegmentAt: 3)
 
-        priorityButtons.setTitle(unknownIcon, forSegmentAtIndex: 0)
+        priorityButtons.setTitle(unknownIcon, forSegmentAt: 0)
         
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
@@ -202,7 +268,7 @@ class DetailViewController: UIViewController{
         addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
     }
     
-    @IBAction func openLink(sender: UIButton) {
+    @IBAction func openLink(_ sender: UIButton) {
         
         var sendToUrl = String()
         
@@ -220,8 +286,8 @@ class DetailViewController: UIViewController{
             
         }
         
-        if (sender.enabled == true){
-            splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.PrimaryHidden
+        if (sender.isEnabled == true){
+            splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
             setUrl(sendToUrl)
         }
     }
@@ -243,7 +309,7 @@ class DetailViewController: UIViewController{
         
         if (schedule.schedulingData[bandName]?.isEmpty == false){
             let keyValues = schedule.schedulingData[bandName]!.keys
-            let sortedArray = keyValues.sort();
+            let sortedArray = keyValues.sorted();
             var count = 1
             
             schedule.buildTimeSortedSchedulingData();
@@ -307,29 +373,29 @@ class DetailViewController: UIViewController{
         
         if (offline == true || bandName == nil){
             print ("Offline is active")
-            officialUrlButton.userInteractionEnabled = false
-            officialUrlButton.tintColor = UIColor.grayColor()
+            officialUrlButton.isUserInteractionEnabled = false
+            officialUrlButton.tintColor = UIColor.gray
             
-            wikipediaUrlButton.userInteractionEnabled = false
-            wikipediaUrlButton.tintColor = UIColor.grayColor()
+            wikipediaUrlButton.isUserInteractionEnabled = false
+            wikipediaUrlButton.tintColor = UIColor.gray
             
-            youtubeUrlButton.userInteractionEnabled = false
-            youtubeUrlButton.tintColor = UIColor.grayColor()
+            youtubeUrlButton.isUserInteractionEnabled = false
+            youtubeUrlButton.tintColor = UIColor.gray
             
-            metalArchivesButton.userInteractionEnabled = false
-            metalArchivesButton.tintColor = UIColor.grayColor()
+            metalArchivesButton.isUserInteractionEnabled = false
+            metalArchivesButton.tintColor = UIColor.gray
 
         }
 
     }
     
-    @IBAction func wentToShowToggle(sender: UIButton) {
+    @IBAction func wentToShowToggle(_ sender: UIButton) {
         
         if (sender.titleLabel?.text == "⬜️"){
-            sender.setTitle("☑️", forState: UIControlState.Normal);
+            sender.setTitle("☑️", for: UIControlState());
             
         } else {
-           sender.setTitle("⬜️", forState: UIControlState.Normal);
+           sender.setTitle("⬜️", for: UIControlState());
         }
         
         
@@ -337,4 +403,3 @@ class DetailViewController: UIViewController{
     }
     
 }
-

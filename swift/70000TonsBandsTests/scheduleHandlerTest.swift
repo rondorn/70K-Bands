@@ -31,7 +31,7 @@ class loadingSchedule: XCTestCase {
     
     func getCsvScheduleOffline (){
         
-        schedule.schedulingData = [String : [NSTimeInterval : [String : String]]]()
+        schedule.schedulingData = [String : [TimeInterval : [String : String]]]()
         schedule.populateSchedule()
         
         print (schedule.schedulingData)

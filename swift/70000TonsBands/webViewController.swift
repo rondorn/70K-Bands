@@ -26,7 +26,7 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         
         let url = getUrl()
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.PrimaryHidden
+        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
         
         self.webDisplay.allowsInlineMediaPlayback = true
         self.webDisplay.mediaPlaybackAllowsAirPlay = true
@@ -34,8 +34,8 @@ class WebViewController: UIViewController, UIWebViewDelegate {
 
         self.activityIndicator.hidesWhenStopped = true;
         print ("Loading url of " + url)
-        let requestURL = NSURL(string: url)
-        let request = NSURLRequest(URL: requestURL!)
+        let requestURL = URL(string: url)
+        let request = URLRequest(url: requestURL!)
         
      
         self.webDisplay.loadRequest(request)
@@ -48,23 +48,23 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-    func webViewDidStartLoad(webView: UIWebView){
+    func webViewDidStartLoad(_ webView: UIWebView){
         
-        activityIndicator.hidden = false
+        activityIndicator.isHidden = false
         activityIndicator.startAnimating()
         
     }
-    func webViewDidFinishLoad(webView: UIWebView){
+    func webViewDidFinishLoad(_ webView: UIWebView){
         
-        activityIndicator.hidden = true
+        activityIndicator.isHidden = true
         activityIndicator.stopAnimating()
     }
     
-    @IBAction func goForward(sender: AnyObject) {
+    @IBAction func goForward(_ sender: AnyObject) {
         webDisplay.goForward()
     }
     
-    @IBAction func GoBack(sender: AnyObject) {
+    @IBAction func GoBack(_ sender: AnyObject) {
         webDisplay.goBack()
     }
     

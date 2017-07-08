@@ -71,73 +71,73 @@ class SortMenuController: UIViewController  {
     
     func setExistingValues (){
         
-        showSpecialValue = defaults.boolForKey("showSpecial")
-        showMandGValue = defaults.boolForKey("showMandG")
-        showClinicsValue = defaults.boolForKey("showClinics")
-        showListeningValue = defaults.boolForKey("showListening")
+        showSpecialValue = defaults.bool(forKey: "showSpecial")
+        showMandGValue = defaults.bool(forKey: "showMandG")
+        showClinicsValue = defaults.bool(forKey: "showClinics")
+        showListeningValue = defaults.bool(forKey: "showListening")
         
-        showPoolShows = defaults.boolForKey("showPoolShows")
-        showTheaterShows = defaults.boolForKey("showTheaterShows")
-        showRinkShows = defaults.boolForKey("showRinkShows")
-        showLoungeShows = defaults.boolForKey("showLoungeShows")
-        showOtherShows = defaults.boolForKey("showOtherShows")
+        showPoolShows = defaults.bool(forKey: "showPoolShows")
+        showTheaterShows = defaults.bool(forKey: "showTheaterShows")
+        showRinkShows = defaults.bool(forKey: "showRinkShows")
+        showLoungeShows = defaults.bool(forKey: "showLoungeShows")
+        showOtherShows = defaults.bool(forKey: "showOtherShows")
         
-        specialEventToggle.on = showSpecialValue;
-        meetAndGreetToggle.on = showMandGValue;
-        clinicToggle.on = showClinicsValue;
-        listeningEventToggle.on = showListeningValue;
+        specialEventToggle.isOn = showSpecialValue;
+        meetAndGreetToggle.isOn = showMandGValue;
+        clinicToggle.isOn = showClinicsValue;
+        listeningEventToggle.isOn = showListeningValue;
         
-        poolToggle.on = showPoolShows;
-        theaterToggle.on = showTheaterShows;
-        rinkToggle.on = showRinkShows;
-        loungeToggle.on = showLoungeShows;
-        otherToggle.on = showOtherShows;
+        poolToggle.isOn = showPoolShows;
+        theaterToggle.isOn = showTheaterShows;
+        rinkToggle.isOn = showRinkShows;
+        loungeToggle.isOn = showLoungeShows;
+        otherToggle.isOn = showOtherShows;
     }
     
  
-    @IBAction func poolSwitchAction(sender: UISwitch) {
-        defaults.setBool(poolToggle.on, forKey: "showPoolShows")
+    @IBAction func poolSwitchAction(_ sender: UISwitch) {
+        defaults.set(poolToggle.isOn, forKey: "showPoolShows")
     }
     
-    @IBAction func theaterSwitchAction(sender: UISwitch) {
-        defaults.setBool(theaterToggle.on, forKey: "showTheaterShows")
+    @IBAction func theaterSwitchAction(_ sender: UISwitch) {
+        defaults.set(theaterToggle.isOn, forKey: "showTheaterShows")
     }
     
-    @IBAction func rinkSwitchAction(sender: UISwitch) {
-        defaults.setBool(rinkToggle.on, forKey: "showRinkShows")
+    @IBAction func rinkSwitchAction(_ sender: UISwitch) {
+        defaults.set(rinkToggle.isOn, forKey: "showRinkShows")
     }
     
-    @IBAction func loungeSwitchAction(sender: UISwitch) {
-        defaults.setBool(loungeToggle.on, forKey: "showLoungeShows")
+    @IBAction func loungeSwitchAction(_ sender: UISwitch) {
+        defaults.set(loungeToggle.isOn, forKey: "showLoungeShows")
     }
     
-    @IBAction func otherSwitchAction(sender: UISwitch) {
-        defaults.setBool(otherToggle.on, forKey: "showOtherShows")
+    @IBAction func otherSwitchAction(_ sender: UISwitch) {
+        defaults.set(otherToggle.isOn, forKey: "showOtherShows")
     }
     
-    @IBAction func specialEventSwitchAction(sender: UISwitch) {
-        defaults.setBool(specialEventToggle.on, forKey: "showSpecial")
+    @IBAction func specialEventSwitchAction(_ sender: UISwitch) {
+        defaults.set(specialEventToggle.isOn, forKey: "showSpecial")
     }
     
-    @IBAction func meetAndGreetSwitchAction(sender: UISwitch) {
-        defaults.setBool(meetAndGreetToggle.on, forKey: "showMandG")
+    @IBAction func meetAndGreetSwitchAction(_ sender: UISwitch) {
+        defaults.set(meetAndGreetToggle.isOn, forKey: "showMandG")
     }
     
-    @IBAction func clinicSwitchAction(sender: UISwitch) {
-        defaults.setBool(clinicToggle.on, forKey: "showClinics")
+    @IBAction func clinicSwitchAction(_ sender: UISwitch) {
+        defaults.set(clinicToggle.isOn, forKey: "showClinics")
     }
     
-    @IBAction func ListeningEventSwitchAction(sender: UISwitch) {
-        defaults.setBool(listeningEventToggle.on, forKey: "showListening")
+    @IBAction func ListeningEventSwitchAction(_ sender: UISwitch) {
+        defaults.set(listeningEventToggle.isOn, forKey: "showListening")
     }
     
-    override func viewDidDisappear(animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         masterView.quickRefresh()
     }
     
-    @IBAction func returnButtonAction(sender: AnyObject) {
+    @IBAction func returnButtonAction(_ sender: AnyObject) {
         
-        self.dismissViewControllerAnimated(true, completion: nil)
+        self.dismiss(animated: true, completion: nil)
 
     }
     

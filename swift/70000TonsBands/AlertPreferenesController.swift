@@ -8,6 +8,41 @@
 
 import Foundation
 import UIKit
+// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
+// Consider refactoring the code to use the non-optional operators.
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
+// Consider refactoring the code to use the non-optional operators.
+fileprivate func >= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l >= r
+  default:
+    return !(lhs < rhs)
+  }
+}
+
+// FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
+// Consider refactoring the code to use the non-optional operators.
+fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l <= r
+  default:
+    return !(rhs < lhs)
+  }
+}
+
 
 class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
@@ -56,7 +91,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let screenSize: CGRect = UIScreen.mainScreen().bounds
+        let screenSize: CGRect = UIScreen.main.bounds
         var screenHeight = screenSize.height
         let screenWidth = screenSize.width
         
@@ -64,14 +99,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             screenHeight = 1000;
             scrollView.contentInset = UIEdgeInsets(top: 0, left: -25, bottom: 0, right: 0);
         }
-        scrollView.contentSize = CGSizeMake(300,screenHeight);
+        scrollView.contentSize = CGSize(width: 300,height: screenHeight);
 
   
         // Do any additional setup after loading the view, typically from a nib.
         setExistingValues()
         setLocalizedLables()
         
-        self.navigationItem.title = "Alert Preferences - Build:" + (((NSBundle.mainBundle().infoDictionary?["CFBundleVersion"])!) as! String)
+        self.navigationItem.title = "Alert Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
     func setLocalizedLables (){
@@ -97,36 +132,36 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     func setExistingValues (){
         
-        mustSeeAlertValue = defaults.boolForKey("mustSeeAlert")
-        mightSeeAlertValue = defaults.boolForKey("mightSeeAlert")
-        alertForShowsValue = defaults.boolForKey("alertForShows")
-        alertForSpecialValue = defaults.boolForKey("alertForSpecial")
-        alertForMandGValue = defaults.boolForKey("alertForMandG")
-        alertForClinicsValue = defaults.boolForKey("alertForClinics")
-        alertForListeningValue = defaults.boolForKey("alertForListening")
+        mustSeeAlertValue = defaults.bool(forKey: "mustSeeAlert")
+        mightSeeAlertValue = defaults.bool(forKey: "mightSeeAlert")
+        alertForShowsValue = defaults.bool(forKey: "alertForShows")
+        alertForSpecialValue = defaults.bool(forKey: "alertForSpecial")
+        alertForMandGValue = defaults.bool(forKey: "alertForMandG")
+        alertForClinicsValue = defaults.bool(forKey: "alertForClinics")
+        alertForListeningValue = defaults.bool(forKey: "alertForListening")
         
-        minBeforeAlertValue = Double(defaults.integerForKey("minBeforeAlert"))
+        minBeforeAlertValue = Double(defaults.integer(forKey: "minBeforeAlert"))
         
-        AlertOnMustSee.on = mustSeeAlertValue
-        AlertOnMightSee.on = mightSeeAlertValue
+        AlertOnMustSee.isOn = mustSeeAlertValue
+        AlertOnMightSee.isOn = mightSeeAlertValue
         
         MinBeforeAlert.text = String(format: "%.0f", minBeforeAlertValue)
-        AlertForShows.on = alertForShowsValue
-        AlertForSpecialEvents.on = alertForSpecialValue
-        AlertForMeetAndGreets.on = alertForMandGValue
-        AlertForClinic.on = alertForClinicsValue
-        AlertForListeningEvent.on = alertForListeningValue
+        AlertForShows.isOn = alertForShowsValue
+        AlertForSpecialEvents.isOn = alertForSpecialValue
+        AlertForMeetAndGreets.isOn = alertForMandGValue
+        AlertForClinic.isOn = alertForClinicsValue
+        AlertForListeningEvent.isOn = alertForListeningValue
         
         self.MinBeforeAlert.delegate = self
         
-        if (defaults.stringForKey("scheduleUrl") == lastYearsScheduleUrlDefault){
-            UseLastYearsData.on = true
+        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
+            UseLastYearsData.isOn = true
         } else {
-            UseLastYearsData.on = false
+            UseLastYearsData.isOn = false
         }
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.view.endEditing(true);
         return false;
     }
@@ -136,7 +171,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let minBeforeAlertTemp = Int(MinBeforeAlert.text!)
         
         if (minBeforeAlertTemp >= 0 && minBeforeAlertTemp <= 60){
-            defaults.setInteger(minBeforeAlertTemp!, forKey: "minBeforeAlert")
+            defaults.set(minBeforeAlertTemp!, forKey: "minBeforeAlert")
             MinBeforeAlert.resignFirstResponder()
             
         } else {
@@ -146,41 +181,41 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             let alert = UIAlertView()
             alert.title = "Number Provided Is Invalid"
             alert.message =  "Number Provided Is Invalid\nMust be a value between 0 and 60"
-            alert.addButtonWithTitle("Ok")
+            alert.addButton(withTitle: "Ok")
             alert.show()
         }
         
     }
     
     @IBAction func MustSeeChange() {
-        defaults.setBool(AlertOnMustSee.on, forKey: "mustSeeAlert")
+        defaults.set(AlertOnMustSee.isOn, forKey: "mustSeeAlert")
     }
     
     @IBAction func MightSeeChange() {
-        defaults.setBool(AlertOnMightSee.on, forKey: "mightSeeAlert")
+        defaults.set(AlertOnMightSee.isOn, forKey: "mightSeeAlert")
     }
     
     @IBAction func AlertForShowsChange() {
-        defaults.setBool(AlertForShows.on, forKey: "alertForShows")
+        defaults.set(AlertForShows.isOn, forKey: "alertForShows")
     }
     
     @IBAction func AlertForSpecialEventChange() {
-        defaults.setBool(AlertForSpecialEvents.on, forKey: "alertForSpecial")
+        defaults.set(AlertForSpecialEvents.isOn, forKey: "alertForSpecial")
     }
     
     @IBAction func AlertForMeetAndGreetChange() {
-        defaults.setBool(AlertForMeetAndGreets.on, forKey: "alertForMandG")
+        defaults.set(AlertForMeetAndGreets.isOn, forKey: "alertForMandG")
     }
     
     @IBAction func AlertForClinicChange() {
-        defaults.setBool(AlertForClinic.on, forKey: "alertForClinics")
+        defaults.set(AlertForClinic.isOn, forKey: "alertForClinics")
     }
     
     @IBAction func AlertForListeningEventChange() {
-        defaults.setBool(AlertForListeningEvent.on, forKey: "alertForListening")
+        defaults.set(AlertForListeningEvent.isOn, forKey: "alertForListening")
     }
     
-    @IBAction func backgroundTap (sender: UIControl){
+    @IBAction func backgroundTap (_ sender: UIControl){
         MinBeforeAlert.resignFirstResponder()
     }
     
@@ -190,19 +225,19 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alert.title = restartAlertTitle
         alert.message = restartAlertText
         
-        alert.addButtonWithTitle(cancelPrompt)
-        alert.addButtonWithTitle(okPrompt)
+        alert.addButton(withTitle: cancelPrompt)
+        alert.addButton(withTitle: okPrompt)
         alert.delegate = self  // set the delegate here
         alert.show()
         
     }
     
-    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        let buttonTitle = alertView.buttonTitleAtIndex(buttonIndex)
+    func alertView(_ alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        let buttonTitle = alertView.buttonTitle(at: buttonIndex)
         print("\(buttonTitle) pressed")
         if buttonTitle == okPrompt {
             
-            if (UseLastYearsData.on == true){
+            if (UseLastYearsData.isOn == true){
                 defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
                 defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
                 
@@ -212,8 +247,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             }
 
             do {
-                try  NSFileManager.defaultManager().removeItemAtPath(scheduleFile)
-                try  NSFileManager.defaultManager().removeItemAtPath(bandFile)
+                try  FileManager.default.removeItem(atPath: scheduleFile)
+                try  FileManager.default.removeItem(atPath: bandFile)
             } catch {
                 //guess there was no file to delete
             }
@@ -225,11 +260,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             exit(0)
             
         } else {
-            if (UseLastYearsData.on == true){
-                UseLastYearsData.on = false
+            if (UseLastYearsData.isOn == true){
+                UseLastYearsData.isOn = false
                 
             } else {
-                UseLastYearsData.on = true
+                UseLastYearsData.isOn = true
             }
         }
     }

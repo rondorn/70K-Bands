@@ -22,50 +22,50 @@ import Foundation
     var eventCount = Int();
     var totalUpcomingEvents = Int()
 
-    func setBands(value: [String]){
+    func setBands(_ value: [String]){
         bands = value
     }
     func getBands() -> [String]{
         return bands
     }
-    func setHideScheduleButton(value: Bool){
+    func setHideScheduleButton(_ value: Bool){
         hideScheduleButton = value
     }
     func getHideScheduleButton() -> Bool{
         return hideScheduleButton
     }
-    func setScheduleButton(value: Bool){
+    func setScheduleButton(_ value: Bool){
         hideScheduleButton = value
     }
     func getScheduleButton() -> Bool{
         return hideScheduleButton
     }
-    func setMustSeeOn(value: Bool){
+    func setMustSeeOn(_ value: Bool){
         mustSeeOn = value
     }
     func getMustSeeOn() -> Bool{
         return mustSeeOn
     }
-    func setMightSeeOn(value: Bool){
+    func setMightSeeOn(_ value: Bool){
         mightSeeOn = value
     }
     func getMightSeeOn() -> Bool{
         return mightSeeOn
     }
-    func setWontSeeOn(value: Bool){
+    func setWontSeeOn(_ value: Bool){
         wontSeeOn = value
     }
     func getWontSeeOn() -> Bool{
         return wontSeeOn
     }
-    func setUnknownSeeOn(value: Bool){
+    func setUnknownSeeOn(_ value: Bool){
         unknownSeeOn = value
     }
     func getUnknownSeeOn() -> Bool{
         return unknownSeeOn
     }
 
-    func determineBandOrScheduleList (allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
+    func determineBandOrScheduleList (_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
         
         var newAllBands = [String]()
         var presentCheck = [String]();
@@ -77,13 +77,15 @@ import Foundation
             print ("Sorting by name!!!");
             for bandName in schedule.getBandSortedSchedulingData().keys {
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
-                    if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                    if (timeIndex > Date().timeIntervalSince1970 - 3600){
                         totalUpcomingEvents += 1;
-                        if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                            if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
-                                if (rankFiltering(bandName) == true){
-                                    newAllBands.append(bandName + ":" + String(timeIndex));
-                                    presentCheck.append(bandName);
+                        if (schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField] != nil){
+                            if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                                if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
+                                    if (rankFiltering(bandName) == true){
+                                        newAllBands.append(bandName + ":" + String(timeIndex));
+                                        presentCheck.append(bandName);
+                                    }
                                 }
                             }
                         }
@@ -97,13 +99,15 @@ import Foundation
             print ("Sorting by time!!!");
             for timeIndex in schedule.getTimeSortedSchedulingData().keys {
                 for bandName in schedule.getTimeSortedSchedulingData()[timeIndex]!.keys{
-                    if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+                    if (timeIndex > Date().timeIntervalSince1970 - 3600){
                         totalUpcomingEvents += 1;
-                        if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                            if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
-                                if (rankFiltering(bandName) == true){
-                                    newAllBands.append(String(timeIndex) + ":" + bandName);
-                                    presentCheck.append(bandName);
+                        if (schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField] != nil){
+                            if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                                if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
+                                    if (rankFiltering(bandName) == true){
+                                        newAllBands.append(String(timeIndex) + ":" + bandName);
+                                        presentCheck.append(bandName);
+                                    }
                                 }
                             }
                         }
@@ -116,14 +120,14 @@ import Foundation
             
             //return immediatly. Dont need to do schedule sorting magic
             newAllBands = allBands;
-            newAllBands.sortInPlace();
+            newAllBands.sort();
             bandCount = newAllBands.count;
             eventCount = 0;
             
             return newAllBands
         }
  
-        newAllBands.sortInPlace();
+        newAllBands.sort();
         
         if (schedule.getTimeSortedSchedulingData().count > 2){
             //add any bands without shows to the bottom of the list
@@ -139,7 +143,7 @@ import Foundation
         return newAllBands
     }
 
-    func getFilteredBands(allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
+    func getFilteredBands(_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String] {
         
         var filteredBands = [String]()
         
@@ -181,9 +185,9 @@ import Foundation
         return filteredBands
     }
 
-    func getNameFromSortable(value: String, sortedBy: String) -> String{
+    func getNameFromSortable(_ value: String, sortedBy: String) -> String{
         
-        let indexString = value.componentsSeparatedByString(":")
+        let indexString = value.components(separatedBy: ":")
         var bandName = String();
         
         if (indexString.count == 2){
@@ -205,9 +209,9 @@ import Foundation
         return bandName;
     }
 
-    func getTimeFromSortable(value: String, sortBy: String) -> Double{
+    func getTimeFromSortable(_ value: String, sortBy: String) -> Double{
         
-        let indexString = value.componentsSeparatedByString(":")
+        let indexString = value.components(separatedBy: ":")
         var timeIndex = Double()
         
         if (indexString.count == 2){
@@ -236,7 +240,7 @@ import Foundation
         }
     }
 
-    func rankFiltering(bandName: String) -> Bool {
+    func rankFiltering(_ bandName: String) -> Bool {
         
         var showBand = true;
         
@@ -258,14 +262,14 @@ import Foundation
     
     }
 
-    func eventTypeFiltering(eventType: String) -> Bool{
+    func eventTypeFiltering(_ eventType: String) -> Bool{
         
         var showEvent = false;
         
-        let showSpecialValue = defaults.boolForKey("showSpecial")
-        let showMandGValue = defaults.boolForKey("showMandG")
-        let showClinicsValue = defaults.boolForKey("showClinics")
-        let showListeningValue = defaults.boolForKey("showListening")
+        let showSpecialValue = defaults.bool(forKey: "showSpecial")
+        let showMandGValue = defaults.bool(forKey: "showMandG")
+        let showClinicsValue = defaults.bool(forKey: "showClinics")
+        let showListeningValue = defaults.bool(forKey: "showListening")
         
         if (eventType == specialEventType && showSpecialValue == true){
             showEvent = true;
@@ -286,14 +290,14 @@ import Foundation
         return showEvent
     }
 
-    func venueFiltering(venue: String) -> Bool {
+    func venueFiltering(_ venue: String) -> Bool {
         
         print ("filtering venue is " + venue)
-        let showPoolShows = defaults.boolForKey("showPoolShows")
-        let showTheaterShows = defaults.boolForKey("showTheaterShows")
-        let showRinkShows = defaults.boolForKey("showRinkShows")
-        let showLoungeShows = defaults.boolForKey("showLoungeShows")
-        let showOtherShows = defaults.boolForKey("showOtherShows")
+        let showPoolShows = defaults.bool(forKey: "showPoolShows")
+        let showTheaterShows = defaults.bool(forKey: "showTheaterShows")
+        let showRinkShows = defaults.bool(forKey: "showRinkShows")
+        let showLoungeShows = defaults.bool(forKey: "showLoungeShows")
+        let showOtherShows = defaults.bool(forKey: "showOtherShows")
         
         var showVenue = false;
         
@@ -316,14 +320,14 @@ import Foundation
         return showVenue
     }
 
-    func getCellValue (indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
+    func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
         
         //index is out of bounds. Don't allow this
         if (bands.count < indexRow || bands.count == 0){
             return ""
         }
         
-        let indexString = bands[indexRow].componentsSeparatedByString(":")
+        let indexString = bands[indexRow].components(separatedBy: ":")
         
         let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
         let timeIndex = getTimeFromSortable(bands[indexRow], sortBy: sortBy);

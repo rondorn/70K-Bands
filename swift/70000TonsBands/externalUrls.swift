@@ -9,21 +9,21 @@
 import Foundation
 
 
-func getWikipediaPage (bandName: String) -> String{
+func getWikipediaPage (_ bandName: String) -> String{
     
     var wikipediaUrl = String()
     
     if (wikipediaLink[bandName]?.isEmpty == false){
         wikipediaUrl = wikipediaLink[bandName]!;
 
-        var language: String = NSLocale.preferredLanguages()[0]
+        var language: String = Locale.preferredLanguages[0]
     
-        language = language.substringToIndex(language.startIndex.advancedBy(2))
+        language = language.substring(to: language.characters.index(language.startIndex, offsetBy: 2))
         print ("Language is " + language);
         if (language != "en"){
             let replacement: String = language + ".wikipedia.org";
         
-            wikipediaUrl = wikipediaUrl.stringByReplacingOccurrencesOfString("en.wikipedia.org", withString:replacement)
+            wikipediaUrl = wikipediaUrl.replacingOccurrences(of: "en.wikipedia.org", with:replacement)
         }
     }
     
@@ -31,14 +31,14 @@ func getWikipediaPage (bandName: String) -> String{
     
 }
 
-func getYouTubePage (bandName: String) -> String{
+func getYouTubePage (_ bandName: String) -> String{
     
     var youTubeUrl = String()
     
     if (youtubeLinks[bandName]?.isEmpty == false){
         youTubeUrl = youtubeLinks[bandName]!;
     
-        let language: String = NSLocale.preferredLanguages()[0]
+        let language: String = Locale.preferredLanguages[0]
     
         if (language != "en"){
             youTubeUrl = youTubeUrl + "&hl=" + language
@@ -49,7 +49,7 @@ func getYouTubePage (bandName: String) -> String{
     
 }
 
-func getMetalArchives (bandName: String) -> String {
+func getMetalArchives (_ bandName: String) -> String {
     
     var metalArchives = String();
     if (metalArchiveLinks[bandName]?.isEmpty == false){

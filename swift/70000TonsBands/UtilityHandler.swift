@@ -11,13 +11,13 @@ import UIKit
 
 
     
-func showAlert (message: String, title:String){
+func showAlert (_ message: String, title:String){
     
     let alert = UIAlertView()
     if (message.isEmpty == false){
         alert.title = title
         alert.message = message
-        alert.addButtonWithTitle("Ok")
+        alert.addButton(withTitle: "Ok")
         alert.show()
     }
 }

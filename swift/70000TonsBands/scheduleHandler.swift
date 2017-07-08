@@ -8,16 +8,20 @@
 
 import Foundation
 
-public class scheduleHandler {
+open class scheduleHandler {
     
-    var schedulingData: [String : [NSTimeInterval : [String : String]]] = [String : [NSTimeInterval : [String : String]]]()
-    var schedulingDataByTime: [NSTimeInterval : [String : String]] = [NSTimeInterval : [String : String]]()
+    var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
+    var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
     
     func populateSchedule(){
         
-        if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: NSUTF8StringEncoding) {
+        if (FileManager.default.fileExists(atPath: scheduleFile) == false){
+            DownloadCsv();
+        }
+        
+        if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
             
-            var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
+            var unuiqueIndex = Dictionary<TimeInterval, Int>()
             var csvData: CSV
             
             csvData = try! CSV(csvStringToParse: csvDataString)
@@ -34,15 +38,15 @@ public class scheduleHandler {
                     
                     unuiqueIndex[dateIndex] = 1
                     
-                    let dateFormatter = NSDateFormatter();
+                    let dateFormatter = DateFormatter();
                     dateFormatter.dateFormat = "YYYY-M-d h:mm a"
-                    dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+                    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
                     
                     print("Adding index for band " + lineData[bandField]! + " ")
                     print (dateIndex)
                     
                     if (self.schedulingData[lineData[bandField]!] == nil){
-                        self.schedulingData[lineData[bandField]!] = [NSTimeInterval : [String : String]]()
+                        self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
                     }
                     
                     if (self.schedulingData[lineData[bandField]!]![dateIndex] == nil){
@@ -51,15 +55,15 @@ public class scheduleHandler {
                     print ("Adding location of " + lineData[locationField]!)
                     
                     //doing this double for unknown reason, it wont work if the first entry is single
-                    setData(lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
                     
-                    setData(lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
-                    setData(lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
                     
                 } else {
                     print ("Unable to parse schedule file")
@@ -76,10 +80,10 @@ public class scheduleHandler {
         var scheduleUrl = "";
         
         print ("working with scheduleFile " + scheduleFile)
-        if (defaults.stringForKey("scheduleUrl") == lastYearsScheduleUrlDefault){
+        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
             scheduleUrl = lastYearsScheduleUrlDefault;
         } else {
-            scheduleUrl = defaults.stringForKey("scheduleUrl")!
+            scheduleUrl = defaults.string(forKey: "scheduleUrl")!
         }
         
         print ("Downloading Schedule URL " + scheduleUrl);
@@ -95,13 +99,13 @@ public class scheduleHandler {
         
         if (httpData.isEmpty == false){
             do {
-                try NSFileManager.defaultManager().removeItemAtPath(scheduleFile)
-                
+                try FileManager.default.removeItem(atPath: scheduleFile)
+            
             } catch let error as NSError {
                 print ("Encountered an error removing old schedule file " + error.debugDescription)
             }
             do {
-                try httpData.writeToFile(scheduleFile, atomically: false, encoding: NSUTF8StringEncoding)
+                try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
             } catch let error as NSError {
                 print ("Encountered an error writing schedule file " + error.debugDescription)
             }
@@ -114,9 +118,9 @@ public class scheduleHandler {
         var url = String()
         let httpData = getUrlData(defaultStorageUrl)
         
-        let dataArray = httpData.componentsSeparatedByString("\n")
+        let dataArray = httpData.components(separatedBy: "\n")
         for record in dataArray {
-            var valueArray = record.componentsSeparatedByString("::")
+            var valueArray = record.components(separatedBy: "::")
             if (valueArray[0] == "scheduleUrl"){
                 url = valueArray[1]
             }
@@ -126,44 +130,44 @@ public class scheduleHandler {
         return url
     }
     
-    func getDateIndex (dateString: String, timeString: String, band:String) -> NSTimeInterval{
+    func getDateIndex (_ dateString: String, timeString: String, band:String) -> TimeInterval{
         
-        var startTimeIndex = NSTimeInterval()
+        var startTimeIndex = TimeInterval()
         let fullTimeString: String = dateString + " " + timeString;
         
-        let dateFormatter = NSDateFormatter();
+        let dateFormatter = DateFormatter();
         dateFormatter.dateFormat = "M-d-yy h:mm a"
-        dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
-        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone.current
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         if (fullTimeString.isEmpty == false){
             print ("timeString '" + fullTimeString + "'");
-            print(dateFormatter.dateFromString(fullTimeString))
-            if (dateFormatter.dateFromString(fullTimeString) != nil){
-                startTimeIndex = dateFormatter.dateFromString(fullTimeString)!.timeIntervalSince1970
+            print(dateFormatter.date(from: fullTimeString))
+            if (dateFormatter.date(from: fullTimeString) != nil){
+                startTimeIndex = dateFormatter.date(from: fullTimeString)!.timeIntervalSince1970
                 print(startTimeIndex)
             } else {
                 print ("What the hell!!")
-                print(dateFormatter.dateFromString(fullTimeString))
+                print(dateFormatter.date(from: fullTimeString))
             }
         }
                 
         return startTimeIndex
     }
     
-    func getCurrentIndex (bandName: String) -> NSTimeInterval {
+    func getCurrentIndex (_ bandName: String) -> TimeInterval {
         
         let dateIndex = NSTimeIntervalSince1970
         
         if (self.schedulingData[bandName]?.isEmpty == false){
         
             let keyValues = self.schedulingData[bandName]!.keys
-            let sortedArray = keyValues.reverse()
+            let sortedArray = keyValues.reversed()
             
             if (self.schedulingData[bandName] != nil){
                 for dateIndexTemp in sortedArray {
                     if (self.schedulingData[bandName]![dateIndexTemp]![typeField]! == showType){
-                        let currentTime =  NSDate().timeIntervalSince1970
+                        let currentTime =  Date().timeIntervalSince1970
                         let currentTimePlusAnHour = currentTime - 3600
                         
                         print ("time comparison of scheduledate " + dateIndexTemp.description + " vs " + currentTimePlusAnHour.description)
@@ -178,12 +182,12 @@ public class scheduleHandler {
         return dateIndex
     }
     
-    func setData (bandName:String, index:NSTimeInterval, variable:String, value:String){
+    func setData (bandName:String, index:TimeInterval, variable:String, value:String){
         
         if (variable.isEmpty == false && value.isEmpty == false){
             if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
                 if (self.schedulingData[bandName]?.isEmpty == false){
-                    if (self.schedulingData[bandName]![index]!.isEmpty == false){
+                    if (self.schedulingData[bandName]![index] != nil){
                         print ("value for variable is " + value)
                         self.schedulingData[bandName]![index]![variable] = value
                     }
@@ -195,7 +199,7 @@ public class scheduleHandler {
         }
     }
     
-    func getData(bandName:String, index:NSTimeInterval, variable:String) -> String{
+    func getData(_ bandName:String, index:TimeInterval, variable:String) -> String{
         
         print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
         print (self.schedulingData[bandName])
@@ -229,23 +233,23 @@ public class scheduleHandler {
         
     }
     
-    func getTimeSortedSchedulingData () -> [NSTimeInterval : [String : String]] {
+    func getTimeSortedSchedulingData () -> [TimeInterval : [String : String]] {
         return schedulingDataByTime
     }
     
-    func getBandSortedSchedulingData () -> [String : [NSTimeInterval : [String : String]]] {
+    func getBandSortedSchedulingData () -> [String : [TimeInterval : [String : String]]] {
     
         return schedulingData;
     
     }
     
-    func convertStringToNSDate(dateStr: String) -> NSDate {
+    func convertStringToNSDate(_ dateStr: String) -> Date {
         
-        let dateFormatter = NSDateFormatter()
+        let dateFormatter = DateFormatter()
         dateFormatter.dateFormat =  "yyyy'-'MM'-'dd HH':'mm':'ss '+0000'"
-        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
-        let date = dateFormatter.dateFromString(dateStr)
+        let date = dateFormatter.date(from: dateStr)
         
         return date!
     }

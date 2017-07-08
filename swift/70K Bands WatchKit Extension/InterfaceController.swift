@@ -25,11 +25,11 @@ class InterfaceController: WKInterfaceController {
     var LocationText = String();
     var index = 0;
     
-    override func awakeWithContext(context: AnyObject?) {
-        super.awakeWithContext(context)
+    override func awake(withContext context: Any?) {
+        super.awake(withContext: context)
         
         // Start iCloud key-value updates
-        NSUbiquitousKeyValueStore.defaultStore().synchronize()
+        NSUbiquitousKeyValueStore.default().synchronize()
         updateBandFromICloud()
         
        
@@ -42,23 +42,10 @@ class InterfaceController: WKInterfaceController {
             "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
             "validateScheduleFile": validateScheduleFileDefault]
         
-         /*
-        artistUrlDefault
-        scheduleUrlDefault
-
-        //register Application Defaults
-        let defaultValues = ["artistUrl": lastYearsartistUrlDefault,
-            "scheduleUrl": scheduleUrlDefault,
-            "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
-            "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
-            "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
-            "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
-            "validateScheduleFile": validateScheduleFileDefault]
-               */
         
-        NSUserDefaults.standardUserDefaults().registerDefaults(defaultValues)
+        UserDefaults.standard.register(defaults: defaultValues)
         
-        var scheduleUrl = defaults.stringForKey("scheduleUrl")
+        //var scheduleUrl = defaults.stringForKey("scheduleUrl")
 
         gatherData()
         schedule.DownloadCsv()
@@ -88,7 +75,7 @@ class InterfaceController: WKInterfaceController {
     
     func refreshData() {
         
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
         sortBandsByTime()
         getPriorityDataFromiCloud()
         print(schedule.schedulingData);
@@ -105,28 +92,28 @@ class InterfaceController: WKInterfaceController {
         }
     }
     
-    func getScheduleData (bandName: String) {
+    func getScheduleData (_ bandName: String) {
         
         if (schedule.schedulingData[bandName]?.isEmpty == false){
             let keyValues = schedule.schedulingData[bandName]!.keys
-            let arrayValues = keyValues.enumerate()
+            let arrayValues = keyValues.enumerated()
             //var sortedArray = arrayValues.sort({
             //    $0 < $1
             //})
             
-            let sortedArray = arrayValues.reverse()
-            var count = 1
+            let sortedArray = arrayValues.reversed()
+            //var count = 1
             for index in sortedArray {
                 
                 let location = schedule.getData(bandName, index: Double(index.0), variable: "Location")
                 let day = schedule.getData(bandName, index: Double(index.0), variable: "Day")
                 let startTime = schedule.getData(bandName, index: Double(index.0), variable: "Start Time")
-                var endTime = schedule.getData(bandName, index: Double(index.0), variable: "End Time")
+                //var endTime = schedule.getData(bandName, index: Double(index.0), variable: "End Time")
                 let date = schedule.getData(bandName, index:Double(index.0), variable: "Date")
-                var type = schedule.getData(bandName, index:Double(index.0), variable: "Type")
-                var notes = schedule.getData(bandName, index:Double(index.0), variable: "Notes")
+                //var type = schedule.getData(bandName, index:Double(index.0), variable: "Type")
+                //var notes = schedule.getData(bandName, index:Double(index.0), variable: "Notes")
                 
-                var scheduleText = String()
+                //var scheduleText = String()
                 if (date.isEmpty == false){
                     DayTimeText = day + " " + startTime
                     LocationText = location;
@@ -137,8 +124,8 @@ class InterfaceController: WKInterfaceController {
     }
 
     
-    private func updateBandFromICloud() {
-        let bandInfo = NSUbiquitousKeyValueStore.defaultStore().dictionaryRepresentation
+    fileprivate func updateBandFromICloud() {
+        let bandInfo = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
         if (bandInfo.count >= 1) {
             getPriorityDataFromiCloud()
         }
@@ -146,19 +133,19 @@ class InterfaceController: WKInterfaceController {
     
     func sortBandsByTime() {
         
-        var sortableBands = Dictionary<NSTimeInterval, String>()
-        var sortableTimeIndexArray = [NSTimeInterval]()
+        var sortableBands = Dictionary<TimeInterval, String>()
+        var sortableTimeIndexArray = [TimeInterval]()
         var sortedBands = [String]()
         
-        var fullBands = bands;
+        //var fullBands = bands;
         var dupAvoidBands = Dictionary<String,Int>()
         
         let futureTime :Int64 = 8000000000000;
-        var noShowsLeftMagicNumber = NSTimeInterval(futureTime)
+        var noShowsLeftMagicNumber = TimeInterval(futureTime)
 
         for bandName in bands {
-            let timeIndex: NSTimeInterval = schedule.getCurrentIndex(bandName);
-            if (timeIndex > NSDate().timeIntervalSince1970 - 3600){
+            let timeIndex: TimeInterval = schedule.getCurrentIndex(bandName);
+            if (timeIndex > Date().timeIntervalSince1970 - 3600){
                 sortableBands[timeIndex] = bandName
                 sortableTimeIndexArray.append(timeIndex)
             } else {
@@ -169,7 +156,7 @@ class InterfaceController: WKInterfaceController {
         }
         
         
-        let sortedArray = sortableTimeIndexArray.sort({$0 < $1})
+        let sortedArray = sortableTimeIndexArray.sorted(by: {$0 < $1})
         
         for index in sortedArray{
             if (dupAvoidBands[sortableBands[index]!] == nil){

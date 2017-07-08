@@ -28,7 +28,7 @@ let mAndmEventTypeIcon = "📸";
 let listeningEventTypeIcon = "💽";
 let clinicEventTypeIcon = "🎸";
 
-func getEventTypeIcon (eventType: String) -> String {
+func getEventTypeIcon (_ eventType: String) -> String {
 
     switch eventType {
     case showType:
@@ -51,7 +51,7 @@ func getEventTypeIcon (eventType: String) -> String {
     }
 }
 
-func getVenuIcon(venue: String)->String {
+func getVenuIcon(_ venue: String)->String {
     
     switch venue {
         case "Pool":
@@ -72,7 +72,7 @@ func getVenuIcon(venue: String)->String {
     }
 }
 
-func getPriorityIcon(index: Int) -> String {
+func getPriorityIcon(_ index: Int) -> String {
 
     switch index {
     case 1:

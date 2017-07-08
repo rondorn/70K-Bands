@@ -1,0 +1,45 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+  Translation provided by Google Translate (I apologize in advance)
+*/
+
+
+"Must"="是的";
+"Might"="有可能";
+"Wont"="沒有";
+
+"Ok"="是的";
+"Cancel"="沒有";
+
+"Alert On Must See Bands"="警報是展會";
+"Alert On Might See Bands"="快訊也許展會";
+"Minutes Before Event to Alert"="在活動開始前提醒我（分鐘";
+"Alert For Shows"="快訊展會";
+"Alert For Special Events"="快訊特別活動";
+"Alert For Meeting and Greet Events"="警惕“迎接和歡迎”活動";
+"Alert For Clinics"="警惕診所";
+"Use Last Years Data"="用去年的信息";
+
+"Alert For Album Listening Events"="警惕專輯聆聽活動";
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
+"LastYearsFeatureExplication"="激活“使用最後年的信息”將加載從去年的展會日程安排，但使用一個模擬週四至週日表示使用當前的週計劃。這是用於演示的調度功能以及測試。";
+
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "需要重新啟動";
+"restartMessage" = "不要做這在巡航。 INTERENT連接所需。這種變化需要重新啟動應用程序。 70K樂隊現在將退出。重新啟動，看看新的數據";
+
+
+
+
+
+

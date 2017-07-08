@@ -12,40 +12,50 @@ import CoreData
 
 var imageCache = [String: UIImage]()
 
-func displayImage (urlString: String, bandName: String, logoImage: UIImageView) -> Void {
+func displayImage ( urlString: String, bandName: String, logoImage: UIImageView) -> DarwinBoolean {
     
     
-    let imageStore = getDocumentsDirectory().stringByAppendingPathComponent(bandName + ".png")
+    var bandName = bandName
+    var urlString = urlString
+    var logoImage = logoImage
+    print ("urlString is " + urlString);
     
-    let imageStoreFile = NSURL(fileURLWithPath: dirs[0]).URLByAppendingPathComponent( bandName + ".png")
+    let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")
+    
+    let imageStoreFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent( bandName + ".png")
     
     if let imageData: UIImage = UIImage(contentsOfFile: imageStore) {
         print("Loading image from file cache for " + bandName)
         logoImage.image = imageData
-        return
+        return true
     }
     
     if (urlString == ""){
         logoImage.image = UIImage(named: "70000TonsLogo")
-        return
+        return true
+    }
+    
+    if (urlString == "http://"){
+        logoImage.image = UIImage(named: "70000TonsLogo")
+        return true
     }
     
     var image = UIImage()
     
-    let session = NSURLSession.sharedSession()
-    let url = NSURL(string: urlString)
-    let request = NSURLRequest(URL: url!)
-    let dataTask = session.dataTaskWithRequest(request) { (data:NSData?, response:NSURLResponse?, error:NSError?) -> Void in
-        if let httpResponse = response as? NSHTTPURLResponse {
+    let session = URLSession.shared
+    let url = URL(string: urlString)
+    let request = URLRequest(url: url!)
+    
+    let dataTask = session.dataTask(with: request) { (data, response, error) -> Void in
+        if let httpResponse = response as? HTTPURLResponse {
             let statusCode = httpResponse.statusCode
             if statusCode == 200 {
                 image = UIImage(data: data!)!
                 imageCache[urlString] = image
                 logoImage.image =  image
                 
-                UIImageJPEGRepresentation(image,1.0)!.writeToURL(imageStoreFile, atomically: true)
+                try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
                 
-                print("Download image " + imageStoreFile.absoluteString)
                 
             } else {
                 logoImage.image = UIImage(named: "70000TonsLogo")
@@ -56,6 +66,9 @@ func displayImage (urlString: String, bandName: String, logoImage: UIImageView) 
             print("Could not Download image Not sure what is going on here " + response.debugDescription)
         }
     }
+
     dataTask.resume()
+    
+    return true;
     
 }

@@ -1,18 +1,17 @@
-source 'https://github.com/CocoaPods/Specs.git'
-#use_frameworks!
-pod 'AWSSNS'
-pod 'Bolts'
-
-link_with '70K Bands', '70K BandTests'
+# Uncomment this line to define a global platform for your project
+platform :ios, '9.0'
+# Uncomment this line if you're using Swift
+use_frameworks!
+pod 'Firebase/Core'
+pod 'Firebase/Messaging'
 
 target '70K Bands' do
-	platform :ios, '8.0'
-#	pod 'AWSMobileAnalytics', '~> 2.3.0'
-	pod 'AWSSNS', '~> 2.3.0’
+	pod 'Firebase/Core'
+	pod 'Firebase/Messaging'
 end
 
 target '70K BandsTests' do
-        platform :ios, '8.0'
-#        pod 'AWSMobileAnalytics', '~> 2.3.0'
-        pod 'AWSSNS', '~> 2.3.0’
+        pod 'Firebase/Core'
+        pod 'Firebase/Messaging'
 end
+

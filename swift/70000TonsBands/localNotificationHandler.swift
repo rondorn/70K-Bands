@@ -18,16 +18,16 @@ class localNoticationHandler {
         schedule.populateSchedule()
     }
     
-    func willAddToNotifications(bandName: String, eventTypeValue: String) -> Bool{
+    func willAddToNotifications(_ bandName: String, eventTypeValue: String) -> Bool{
         
-        let defaults = NSUserDefaults.standardUserDefaults()
-        let mustSeeAlert = defaults.boolForKey("mustSeeAlert")
-        let mightSeeAlert = defaults.boolForKey("mightSeeAlert")
-        let alertForShows = defaults.boolForKey("alertForShows")
-        let alertForSpecial = defaults.boolForKey("alertForSpecial")
-        let alertForMandG = defaults.boolForKey("alertForMandG")
-        let alertForClinics = defaults.boolForKey("alertForClinics")
-        let alertForListening = defaults.boolForKey("alertForListening")
+        let defaults = UserDefaults.standard
+        let mustSeeAlert = defaults.bool(forKey: "mustSeeAlert")
+        let mightSeeAlert = defaults.bool(forKey: "mightSeeAlert")
+        let alertForShows = defaults.bool(forKey: "alertForShows")
+        let alertForSpecial = defaults.bool(forKey: "alertForSpecial")
+        let alertForMandG = defaults.bool(forKey: "alertForMandG")
+        let alertForClinics = defaults.bool(forKey: "alertForClinics")
+        let alertForListening = defaults.bool(forKey: "alertForListening")
         
         print ("Checking for alert for bands " + bandName + " ... ", terminator: "")
         
@@ -52,7 +52,7 @@ class localNoticationHandler {
         return alertStatus
     }
     
-    func checkBandPriority (bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool)->Bool{
+    func checkBandPriority (_ bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool)->Bool{
         
         if (mustSeeAlert == true && getPriorityData(bandName) == 1){
             print("Ok")
@@ -66,7 +66,7 @@ class localNoticationHandler {
         return false
     }
     
-    func getAlertMessage(name:String, indexValue: NSDate){
+    func getAlertMessage(_ name:String, indexValue: Date){
         
         let eventType = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: "Type")
         
@@ -93,7 +93,7 @@ class localNoticationHandler {
         }
     }
     
-    func showMessage(name:String, indexValue: NSDate){
+    func showMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
@@ -101,7 +101,7 @@ class localNoticationHandler {
         alertTextMessage = name + " will be playing the " + locationName + " at " + startingTime
     }
     
-    func specialEventMessage(name:String, indexValue: NSDate){
+    func specialEventMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
@@ -109,7 +109,7 @@ class localNoticationHandler {
         alertTextMessage = "Special event '" + name + "' taking place at the " + locationName + " starting at " + startingTime
     }
     
-    func meetingAndGreetMessage(name:String, indexValue: NSDate){
+    func meetingAndGreetMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
@@ -117,7 +117,7 @@ class localNoticationHandler {
         alertTextMessage = name + " is holding a Meet and Greet at the " + locationName + " starting at " + startingTime
     }
     
-    func listeningPartyMessage(name:String, indexValue: NSDate){
+    func listeningPartyMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
@@ -125,7 +125,7 @@ class localNoticationHandler {
         alertTextMessage = name + " is holding a new album listening party at the " + locationName + " starting at " + startingTime
     }
     
-    func clinicMessage(name:String, indexValue: NSDate){
+    func clinicMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
@@ -139,50 +139,55 @@ class localNoticationHandler {
         if (schedule.schedulingData.isEmpty == false){
             for bandName in schedule.schedulingData{
                 for startTime in schedule.schedulingData[bandName.0]!{
-                    let alertTime = NSDate(timeIntervalSince1970: startTime.0)
+                    let alertTime = Date(timeIntervalSince1970: startTime.0)
                     print ("Date provided is \(alertTime)")
-                    if (willAddToNotifications(bandName.0, eventTypeValue:schedule.schedulingData[bandName.0]![startTime.0]![typeField]!) == true){
-                        let compareResult = alertTime.compare(NSDate())
-                        if compareResult == NSComparisonResult.OrderedDescending {
-                            
-                            getAlertMessage(bandName.0, indexValue: alertTime)
-                            addNotification(alertTextMessage, showTime: alertTime)
+                    print (startTime.0);
+                    print (typeField);
+                    print (schedule.schedulingData[bandName.0]![startTime.0]);
+                    //if (schedule.schedulingData[bandName.0]![startTime.0]![typeField] != nil){
+                        if (willAddToNotifications(bandName.0, eventTypeValue:schedule.schedulingData[bandName.0]![startTime.0]![typeField]!) == true){
+                            let compareResult = alertTime.compare(Date())
+                            if compareResult == ComparisonResult.orderedDescending {
+                                
+                                getAlertMessage(bandName.0, indexValue: alertTime)
+                                addNotification(alertTextMessage, showTime: alertTime)
+                            }
                         }
-                    }
+                    //}
                 }
             }
         }
     }
     
-    func addNotification(message: String, showTime: NSDate) {
-        let defaults = NSUserDefaults.standardUserDefaults()
-        let minBeforeAlert = -defaults.integerForKey("minBeforeAlert")
+    func addNotification(_ message: String, showTime: Date) {
+        let defaults = UserDefaults.standard
+        let minBeforeAlert = -defaults.integer(forKey: "minBeforeAlert")
         
-        let alertTime = NSCalendar.currentCalendar().dateByAddingUnit(
-            .Minute,
+        let alertTime = (Calendar.current as NSCalendar).date(
+            byAdding: .minute,
             value: minBeforeAlert,
-            toDate: showTime,
-            options: NSCalendarOptions(rawValue: 0))
+            to: showTime,
+            options: NSCalendar.Options(rawValue: 0))
         
         let localNotification:UILocalNotification = UILocalNotification()
         localNotification.alertBody = message
         localNotification.fireDate = alertTime
-        localNotification.timeZone = NSTimeZone.defaultTimeZone()
+        localNotification.timeZone = TimeZone.current
         localNotification.soundName = "OnMyWayToDeath.wav"
         
-        UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
+        UIApplication.shared.scheduleLocalNotification(localNotification)
         
         
-        let dateFormatter = NSDateFormatter();
+        let dateFormatter = DateFormatter();
         dateFormatter.dateFormat = "M-d-yy h:mm a"
-        dateFormatter.timeZone = NSTimeZone.defaultTimeZone()
-        dateFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone.current
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
-        print ("Adding alert message " + message + " for alert at " + dateFormatter.stringFromDate(alertTime!))
+        print ("Adding alert message " + message + " for alert at " + dateFormatter.string(from: alertTime!))
         
     }
     
     func clearNotifications(){
-        UIApplication.sharedApplication().cancelAllLocalNotifications()
+        UIApplication.shared.cancelAllLocalNotifications()
     }
 }
