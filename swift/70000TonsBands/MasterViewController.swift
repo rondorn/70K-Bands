@@ -505,10 +505,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
+        
+        self.splitViewController!.delegate = self;
+        
+        self.splitViewController!.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        
+        self.extendedLayoutIncludesOpaqueBars = true
+        
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
+                
                 let bandName = getNameFromSortable(currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy);
                  if (bandName.isEmpty == false){
+                    print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
                     let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
                 
                         print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))

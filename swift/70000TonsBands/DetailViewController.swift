@@ -54,20 +54,20 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         
         self.configureView()
         
+        //splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        
         customNotesText.delegate = self as? UITextViewDelegate
         
         readFile()
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
-        
-        if bandName == nil && bands.isEmpty == false {
+        if (bandName == nil || bands.isEmpty == true) {
             var bands = getBandNames()
             bandName = bands[0]
             print("Providing default band of " + bandName)
         }
         
-        print ("bandName is")
-        print (bandName)
+        print ("bandName is " + bandName)
+
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
             let imageURL = getBandImageUrl(bandName)
@@ -90,6 +90,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             rotationChecking()
             loadComments()
             
+            print ("Checking button status:" + bandName)
             disableButtonsIfNeeded()
             disableLinksWithEmptyData();
             
@@ -112,8 +113,6 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             youtubeUrlButton.isHidden = true;
             metalArchivesButton.isHidden = true;
             
-        } else {
-            print ("Office link is " + getofficalPage(bandName));
         }
     }
   
@@ -159,6 +158,11 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             metalArchivesButton.isHidden = true;
             customNotesText.isHidden = true;
             customNotesButton.isHidden = true;
+            
+            officialUrlButton.isEnabled = false;
+            wikipediaUrlButton.isEnabled = false;
+            youtubeUrlButton.isEnabled = false;
+            metalArchivesButton.isEnabled = false;
         }
     }
     
@@ -232,6 +236,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                 customNotesButton.isHidden = true;
             }
             bandLogo.contentMode = UIViewContentMode.top
+            priorityButtons.contentPositionAdjustment(forSegmentType: <#T##UISegmentedControlSegment#>, barMetrics: <#T##UIBarMetrics#>)
             
         } else {
 
@@ -265,30 +270,34 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     }
     
     @IBAction func setBandPriority() {
-        addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
+        if (bandName != nil){
+            addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
+        }
     }
     
     @IBAction func openLink(_ sender: UIButton) {
         
         var sendToUrl = String()
         
-        if (sender.titleLabel?.text == officalSiteButtonName){
-           sendToUrl = getofficalPage(bandName)
-        
-        } else if (sender.titleLabel?.text == wikipediaButtonName){
-            sendToUrl = getWikipediaPage(bandName)
-        
-        } else if (sender.titleLabel?.text == youTubeButtonName){
-            sendToUrl = getYouTubePage(bandName)
+        if (bandName != nil){
+            if (sender.titleLabel?.text == officalSiteButtonName){
+               sendToUrl = getofficalPage(bandName)
             
-        } else if (sender.titleLabel?.text == metalArchivesButtonName){
-            sendToUrl = getMetalArchives(bandName)
+            } else if (sender.titleLabel?.text == wikipediaButtonName){
+                sendToUrl = getWikipediaPage(bandName)
             
-        }
-        
-        if (sender.isEnabled == true){
-            splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
-            setUrl(sendToUrl)
+            } else if (sender.titleLabel?.text == youTubeButtonName){
+                sendToUrl = getYouTubePage(bandName)
+                
+            } else if (sender.titleLabel?.text == metalArchivesButtonName){
+                sendToUrl = getMetalArchives(bandName)
+                
+            }
+            
+            if (sender.isEnabled == true){
+                splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
+                setUrl(sendToUrl)
+            }
         }
     }
 
@@ -371,6 +380,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     func disableButtonsIfNeeded(){
         
+        print ("Checking button status " + bandName)
         if (offline == true || bandName == nil){
             print ("Offline is active")
             officialUrlButton.isUserInteractionEnabled = false
