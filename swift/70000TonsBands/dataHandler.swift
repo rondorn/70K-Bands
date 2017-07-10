@@ -11,13 +11,14 @@ import CoreData
 
 var bandPriorityStorage = [String:Int]()
 
-let directoryPath = URL(fileURLWithPath:dirs[0])
-let storageFile = directoryPath.appendingPathComponent( "data.txt")
-let dateFile = directoryPath.appendingPathComponent( "date.txt")
-let bandsFile = directoryPath.appendingPathComponent( "bands.txt")
-let lastFilters = directoryPath.appendingPathComponent("lastFilters")
+var directoryPath = URL(fileURLWithPath:dirs[0])
+var storageFile = directoryPath.appendingPathComponent( "data.txt")
+var dateFile = directoryPath.appendingPathComponent( "date.txt")
+var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
+var lastFilters = directoryPath.appendingPathComponent("lastFilters")
 
 func writeFiltersFile(){
+    
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
     //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
         var prefsString = String()
@@ -37,7 +38,7 @@ func writeFiltersFile(){
 
 
 func readFiltersFile(){
-
+    
     if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
         let dataArray = data.components(separatedBy: ";")
         for record in dataArray {
@@ -124,38 +125,25 @@ func getPriorityData (_ bandname:String) -> Int {
     return priority
 }
 
-
-func getPriorityDataFromiCloud (){
-    
-    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
-    
-    if values["bandPriorities"] != nil {
-        let dataString = String(NSUbiquitousKeyValueStore.default().string(forKey: "bandPriorities")!)
-        let split1 = dataString?.components(separatedBy: ";")
-    
-        for record in split1! {
-            var split2 = record.components(separatedBy: ":")
-            if (split2.count == 2){
-                bandPriorityStorage[split2[0]] = Int(split2[1])
-            }
-        }
-    }
-}
-
 func writeiCloudData (){
 
     var dataString: String = ""
     
+    var counter = 0;
     
     for (band, priority) in bandPriorityStorage {
         dataString = dataString + band + ":" + String(priority) + ";"
+        //print ("iCloud write priority is " + String(priority) + " for " + band)
+        counter += 1
     }
 
-    NSUbiquitousKeyValueStore.default().set(dataString, forKey: "bandPriorities")
-    NSUbiquitousKeyValueStore.default().set(Date(), forKey: "lastModifiedDate")
+    if (counter > 2){
+        //print ("iCloud writing priority data")
+        NSUbiquitousKeyValueStore.default().set(dataString, forKey: "bandPriorities")
+        NSUbiquitousKeyValueStore.default().set(Date(), forKey: "lastModifiedDate")
     
-    NSUbiquitousKeyValueStore.default().synchronize()
-
+        NSUbiquitousKeyValueStore.default().synchronize()
+    }
     
 }
 
@@ -224,12 +212,40 @@ func compareLastModifiedDate () -> String {
     
 }
 
+func getPriorityDataFromiCloud() -> [String:Int]{
+    
+    NSUbiquitousKeyValueStore.default().synchronize()
+
+    print ("iCloud getting priority data from the cloud")
+    
+    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
+    
+    print ("iCloud - " + String(describing: values))
+    if values["bandPriorities"] != nil {
+        let dataString = String(NSUbiquitousKeyValueStore.default().string(forKey: "bandPriorities")!)
+        let split1 = dataString?.components(separatedBy: ";")
+        
+        for record in split1! {
+            var split2 = record.components(separatedBy: ":")
+            if (split2.count == 2){
+                bandPriorityStorage[split2[0]] = Int(split2[1])
+            }
+        }
+    }
+    
+    return bandPriorityStorage
+}
+
+
 func readFile() -> [String:Int]{
     
     let dateWinner = compareLastModifiedDate();
     
     if (dateWinner == "iCloud"){
-        getPriorityDataFromiCloud();
+        print ("iCloud, founder newer data in cloud")
+        return getPriorityDataFromiCloud();
+    } else {
+        print ("iCloud, trying local data")
     }
     
     if (bandPriorityStorage.count == 0){
@@ -247,6 +263,11 @@ func readFile() -> [String:Int]{
                 }
             }
         }
+    }
+    
+    if (bandPriorityStorage.count == 0){
+        print ("iCloud, nothing locally, using the cloud")
+        return getPriorityDataFromiCloud();
     }
     
     return bandPriorityStorage

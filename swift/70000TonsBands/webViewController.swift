@@ -35,12 +35,11 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         self.activityIndicator.hidesWhenStopped = true;
         print ("Loading url of " + url)
         let requestURL = URL(string: url)
-        let request = URLRequest(url: requestURL!)
         
-     
-        self.webDisplay.loadRequest(request)
-
-        
+        if (requestURL != nil){
+            let request = URLRequest(url: requestURL!)
+            self.webDisplay.loadRequest(request)
+        }
     }
     
     override func didReceiveMemoryWarning() {
