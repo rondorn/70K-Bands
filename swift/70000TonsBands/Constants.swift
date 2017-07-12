@@ -29,6 +29,9 @@ var bandCountry = [String: String]()
 var bandGenre = [String: String]()
 var bandNoteWorthy = [String: String]()
 
+//var band list placeHolder
+var bandListIndexCache = 0
+
 //valid event types
 var showType = "Show"
 var meetAndGreetype = "Meet and Greet"
