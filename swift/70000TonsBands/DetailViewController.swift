@@ -21,7 +21,10 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     @IBOutlet weak var customNotesButton: UIButton!
     @IBOutlet weak var customNotesText: UITextView!
     
-    
+    @IBOutlet weak var notesSection: UIView!
+    @IBOutlet weak var Links: UIView!
+    @IBOutlet weak var extraData: UIView!
+    @IBOutlet weak var eventView: UIView!
     
     @IBOutlet weak var returnToMaster: UINavigationItem!
     
@@ -33,7 +36,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBOutlet weak var priorityButtons: UISegmentedControl!
     @IBOutlet weak var priorityView: UITextField!
-        
+    
     @IBOutlet weak var Country: UITextField!
     @IBOutlet weak var Genre: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
@@ -54,15 +57,13 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         
         self.configureView()
         
-        //splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
-        
         customNotesText.delegate = self as? UITextViewDelegate
         
         readFile()
         
         if (bandName == nil || bands.isEmpty == true) {
             var bands = getBandNames()
-            bandName = bands[0]
+            bandName = bands[bandListIndexCache]
             print("Providing default band of " + bandName)
         }
         
@@ -88,7 +89,6 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             showFullSchedule()
             setButtonNames()
             rotationChecking()
-            loadComments()
             
             print ("Checking button status:" + bandName)
             disableButtonsIfNeeded()
@@ -100,10 +100,14 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        
+        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        loadComments()
         super.viewDidAppear(animated)
         customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
         
     }
+    
     
     func disableLinksWithEmptyData(){
         
@@ -122,22 +126,28 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             
             if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
                 Country.text = "";
+                Country.isHidden = true
             } else {
                 Country.text = "Country:\t" + bandCountry[bandName]!
+                Country.isHidden = false
             }
 
             if (bandGenre[bandName] == nil || bandGenre[bandName]!.isEmpty){
                 Genre.text = ""
+                Genre.isHidden = true
             
             } else {
                 Genre.text = "Genre:\t" + bandGenre[bandName]!
+                Genre.isHidden = false
             
             }
     
             if (bandNoteWorthy[bandName] == nil || bandNoteWorthy[bandName]!.isEmpty){
                 NoteWorthy.text = ""
+                NoteWorthy.isHidden = true
             } else {
                 NoteWorthy.text = "Note:\t" + bandNoteWorthy[bandName]!
+                NoteWorthy.isHidden = false
             }
             
         } else if (UIDevice.current.userInterfaceIdiom == .phone) {
@@ -176,12 +186,16 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
 
     func loadComments(){
+        
         let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
         print ("Loading commentFile");
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.isEmpty == false){
                 customNotesText.text = data;
                 customNotesText.textColor = UIColor.black
+                
+                notesSection.sizeToFit()
+                customNotesText.sizeToFit()
                 
             } else {
                 print ("Nothing in commentFile");
@@ -191,6 +205,11 @@ class DetailViewController: UIViewController, UITextViewDelegate{
            customNotesText.textColor = UIColor.gray
            print ("commentFile does not exist");
         }
+        
+        customNotesText.layer.borderWidth = 1
+        customNotesText.layer.borderColor = UIColor.black.cgColor
+        customNotesText.layer.cornerRadius = 8;
+
 
     }
     
@@ -228,25 +247,39 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             //only needed on iPhones. iPads have enought room for both
             if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
                 
-                officialUrlButton.isHidden = true;
-                wikipediaUrlButton.isHidden = true;
-                youtubeUrlButton.isHidden = true;
-                metalArchivesButton.isHidden = true;
-                customNotesText.isHidden = true;
-                customNotesButton.isHidden = true;
+                Links.isHidden = true
+                Links.sizeToFit()
+            
             }
+            
+            if (UIDevice.current.userInterfaceIdiom == .phone){
+                extraData.isHidden = true
+                extraData.sizeToFit()
+                
+                notesSection.isHidden = true
+                customNotesText.text = "";
+                notesSection.sizeToFit()
+                customNotesText.sizeToFit()
+            }
+            
             bandLogo.contentMode = UIViewContentMode.top
-            priorityButtons.contentPositionAdjustment(forSegmentType: <#T##UISegmentedControlSegment#>, barMetrics: <#T##UIBarMetrics#>)
+            bandLogo.sizeToFit()
+            
             
         } else {
 
-            officialUrlButton.isHidden = false;
-            wikipediaUrlButton.isHidden = false;
-            youtubeUrlButton.isHidden = false;
-            metalArchivesButton.isHidden = false;
-            customNotesText.isHidden = false;
-            customNotesButton.isHidden = false;
+            if (UIDevice.current.userInterfaceIdiom == .phone){
+                Links.isHidden = false
+                extraData.isHidden = false
+                notesSection.isHidden = false
+                
+                Links.sizeToFit()
+                extraData.sizeToFit()
+                loadComments()
+            }
+            
             bandLogo.contentMode = UIViewContentMode.scaleAspectFit
+            bandLogo.sizeToFit()
         }
 
         showBandDetails();
@@ -371,8 +404,37 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                 }
             }
         }
+        hideEmptyData();
     }
     
+    func hideEmptyData() {
+        if (Event1.text?.isEmpty)!{
+            Event1.isHidden = true;
+        } else {
+            Event1.isHidden = false;
+        }
+        if (Event2.text?.isEmpty)!{
+            Event2.isHidden = true;
+        } else {
+            Event2.isHidden = false;
+        }
+        if (Event3.text?.isEmpty)!{
+            Event3.isHidden = true;
+        } else {
+            Event3.isHidden = false;
+        }
+        if (Event4.text?.isEmpty)!{
+            Event4.isHidden = true;
+        } else {
+            Event4.isHidden = false;
+        }
+        if (Event5.text?.isEmpty)!{
+            Event5.isHidden = true;
+        } else {
+            Event5.isHidden = false;
+        }
+    }
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -397,19 +459,6 @@ class DetailViewController: UIViewController, UITextViewDelegate{
 
         }
 
-    }
-    
-    @IBAction func wentToShowToggle(_ sender: UIButton) {
-        
-        if (sender.titleLabel?.text == "⬜️"){
-            sender.setTitle("☑️", for: UIControlState());
-            
-        } else {
-           sender.setTitle("⬜️", for: UIControlState());
-        }
-        
-        
-        
     }
     
 }

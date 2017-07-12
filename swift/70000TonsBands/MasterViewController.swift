@@ -518,6 +518,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let bandName = getNameFromSortable(currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy);
                  if (bandName.isEmpty == false){
                     print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
+                    bandListIndexCache = indexPath.row
                     let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
                 
                         print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
