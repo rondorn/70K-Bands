@@ -255,7 +255,13 @@ public class showBandDetails extends Activity {
                     } else {
                         htmlText += "<br><br>";
                     }
-                    htmlText += buildScheduleView();
+
+                    try {
+                        htmlText += buildScheduleView();
+                    } catch (Exception error){
+                      //if this causes an exception, no worries..just don't display the schedule
+                    }
+
                     htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + "</button></td>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " " + getResources().getString(R.string.must) + "</button></td>" +
