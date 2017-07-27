@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="H1p-Uh-vWS">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="H1p-Uh-vWS">
     <device id="retina4_0" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -160,10 +160,10 @@
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lTJ-bG-l3q">
-                                <rect key="frame" x="0.0" y="397" width="320" height="143"/>
+                                <rect key="frame" x="0.0" y="408" width="320" height="132"/>
                                 <subviews>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="4wQ-EF-ggP">
-                                        <rect key="frame" x="0.0" y="-7" width="317" height="24"/>
+                                        <rect key="frame" x="0.0" y="1" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" notEnabled="YES"/>
                                         </accessibility>
@@ -172,7 +172,7 @@
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="7sY-QX-Q0I">
-                                        <rect key="frame" x="0.0" y="18" width="317" height="24"/>
+                                        <rect key="frame" x="0.0" y="26" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" notEnabled="YES"/>
                                         </accessibility>
@@ -181,7 +181,7 @@
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="U4K-TS-T4N">
-                                        <rect key="frame" x="0.0" y="75" width="317" height="24"/>
+                                        <rect key="frame" x="0.0" y="83" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" notEnabled="YES"/>
                                         </accessibility>
@@ -193,7 +193,7 @@
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Fj0-mm-xh7">
-                                        <rect key="frame" x="0.0" y="99" width="317" height="24"/>
+                                        <rect key="frame" x="0.0" y="107" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" notEnabled="YES"/>
                                         </accessibility>
@@ -202,7 +202,7 @@
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="a3P-fX-csG">
-                                        <rect key="frame" x="0.0" y="50" width="317" height="24"/>
+                                        <rect key="frame" x="0.0" y="58" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" notEnabled="YES"/>
                                         </accessibility>
@@ -250,28 +250,16 @@
                                     <constraint firstItem="4wQ-EF-ggP" firstAttribute="trailing" secondItem="7sY-QX-Q0I" secondAttribute="trailing" id="zcJ-bl-Tfu"/>
                                 </constraints>
                             </view>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
-                                <rect key="frame" x="0.0" y="540" width="320" height="29"/>
-                                <segments>
-                                    <segment title="Must See"/>
-                                    <segment title="Might See"/>
-                                    <segment title="Wont See"/>
-                                    <segment title="Unknown"/>
-                                </segments>
-                                <connections>
-                                    <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
-                                </connections>
-                            </segmentedControl>
                             <view contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1L-g3-deM">
                                 <rect key="frame" x="0.0" y="289" width="320" height="108"/>
                                 <subviews>
-                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
-                                        <rect key="frame" x="71" y="8" width="241" height="55"/>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
+                                        <rect key="frame" x="71" y="-8" width="241" height="55"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HMD-xs-Zr1">
-                                        <rect key="frame" x="12" y="0.0" width="35" height="23"/>
+                                        <rect key="frame" x="12" y="-16" width="35" height="23"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="23" id="KX3-Hb-juj"/>
                                         </constraints>
@@ -286,16 +274,28 @@
                                     <constraint firstItem="EXR-5H-hTd" firstAttribute="leading" secondItem="HMD-xs-Zr1" secondAttribute="trailing" constant="24" id="19h-47-ggN"/>
                                     <constraint firstItem="EXR-5H-hTd" firstAttribute="trailing" secondItem="i1L-g3-deM" secondAttribute="trailingMargin" id="5p2-n9-zIS"/>
                                     <constraint firstItem="HMD-xs-Zr1" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" constant="12" id="D2P-B2-LOE"/>
-                                    <constraint firstAttribute="bottom" secondItem="HMD-xs-Zr1" secondAttribute="bottom" constant="85" id="Frn-7m-8vU"/>
-                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" constant="45" id="L6Z-dW-JuM"/>
-                                    <constraint firstItem="HMD-xs-Zr1" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="top" id="VmK-VU-fUd"/>
-                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="topMargin" id="qim-j8-yFp"/>
+                                    <constraint firstAttribute="bottom" secondItem="HMD-xs-Zr1" secondAttribute="bottom" constant="101" id="Frn-7m-8vU"/>
+                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" constant="61" id="L6Z-dW-JuM"/>
+                                    <constraint firstItem="HMD-xs-Zr1" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="top" constant="-16" id="VmK-VU-fUd"/>
+                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="topMargin" constant="-16" id="qim-j8-yFp"/>
                                 </constraints>
                             </view>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
+                                <rect key="frame" x="16" y="532" width="288" height="29"/>
+                                <segments>
+                                    <segment title="Must See"/>
+                                    <segment title="Might See"/>
+                                    <segment title="Wont See"/>
+                                    <segment title="Unknown"/>
+                                </segments>
+                                <connections>
+                                    <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
+                                </connections>
+                            </segmentedControl>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="bottom" secondItem="GAO-Cl-Wes" secondAttribute="top" id="1eo-R6-Pkt"/>
+                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="bottom" secondItem="GAO-Cl-Wes" secondAttribute="top" constant="-8" id="1eo-R6-Pkt"/>
                             <constraint firstAttribute="trailing" secondItem="xFH-H2-L3J" secondAttribute="trailing" id="1zo-hj-4hY"/>
                             <constraint firstItem="klk-SA-oTX" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" id="2Fv-2g-XTX"/>
                             <constraint firstItem="klk-SA-oTX" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="bottom" constant="10" id="3E7-bV-CHd"/>
@@ -303,12 +303,12 @@
                             <constraint firstItem="i1L-g3-deM" firstAttribute="trailing" secondItem="lTJ-bG-l3q" secondAttribute="trailing" id="6LV-62-Tpd"/>
                             <constraint firstItem="uaF-dJ-7Dc" firstAttribute="trailing" secondItem="klk-SA-oTX" secondAttribute="trailing" id="81Z-lb-dkx"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" id="Bi4-1M-Mjf"/>
-                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="bottom" id="CZ0-yc-ADc"/>
-                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="leading" secondItem="lEP-z4-PfZ" secondAttribute="leading" priority="500" id="GOl-hi-Amh"/>
+                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="bottom" constant="-8" id="CZ0-yc-ADc"/>
+                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="leading" secondItem="lEP-z4-PfZ" secondAttribute="leading" priority="500" constant="-16" id="GOl-hi-Amh"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="leading" secondItem="lTJ-bG-l3q" secondAttribute="leading" id="MrA-AF-N87"/>
-                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="trailing" secondItem="lEP-z4-PfZ" secondAttribute="trailing" priority="500" id="OqO-5x-tUb"/>
+                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="trailing" secondItem="lEP-z4-PfZ" secondAttribute="trailing" priority="500" constant="16" id="OqO-5x-tUb"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="bottom" constant="8" id="TFq-zt-pXk"/>
-                            <constraint firstAttribute="trailing" secondItem="lEP-z4-PfZ" secondAttribute="trailing" id="W8Q-jQ-UtS"/>
+                            <constraint firstAttribute="trailing" secondItem="lEP-z4-PfZ" secondAttribute="trailing" constant="16" id="W8Q-jQ-UtS"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="trailing" secondItem="uaF-dJ-7Dc" secondAttribute="trailing" id="Wr6-fE-Xwl"/>
                             <constraint firstItem="klk-SA-oTX" firstAttribute="trailing" secondItem="i1L-g3-deM" secondAttribute="trailing" id="aaF-wY-Hrr"/>
                             <constraint firstItem="lTJ-bG-l3q" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="bottom" priority="500" id="dGW-nk-hFZ"/>
@@ -316,7 +316,7 @@
                             <constraint firstItem="klk-SA-oTX" firstAttribute="top" secondItem="xFH-H2-L3J" secondAttribute="bottom" constant="89" id="gSX-rs-feV"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" id="itr-1r-dL3"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" id="izN-Ee-b3P"/>
-                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" id="j4M-ig-z9Q"/>
+                            <constraint firstItem="lEP-z4-PfZ" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leading" constant="16" id="j4M-ig-z9Q"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="top" secondItem="SYR-Wa-9uf" secondAttribute="bottom" id="wB9-Zt-9bG"/>
                             <constraint firstItem="uaF-dJ-7Dc" firstAttribute="leading" secondItem="klk-SA-oTX" secondAttribute="leading" id="yvR-la-gqu"/>
                         </constraints>

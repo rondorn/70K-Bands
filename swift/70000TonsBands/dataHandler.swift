@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreData
+import CloudKit
 
 var bandPriorityStorage = [String:Int]()
 
@@ -146,6 +147,24 @@ func writeiCloudData (){
     }
     
 }
+
+func writeNoteToCloud (bandnameValue:String, noteValue:String){
+    
+    let iCloudNotesStore = CKRecordID(recordName: bandnameValue)
+    iCloudNotesStore.setValue(noteValue as Any, forKey: "Note")
+    iCloudNotesStore.setValue(bandnameValue as Any, forKey: "Band")
+
+}
+
+func readNoteFromCloud (bandnameValue:String) -> String{
+    
+    let iCloudNotesStore = CKRecordID(recordName: bandnameValue)
+    let noteValue = iCloudNotesStore.value(forKeyPath: "Note")
+    
+    return noteValue as! String
+    
+}
+
 
 func writeFile(){
     

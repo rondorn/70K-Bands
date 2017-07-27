@@ -192,10 +192,14 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.isEmpty == false){
                 customNotesText.text = data;
+                //customNotesText.text = readNoteFromCloud(bandnameValue: bandName);
+                
                 customNotesText.textColor = UIColor.black
                 
-                notesSection.sizeToFit()
-                customNotesText.sizeToFit()
+                if (customNotesText.text.characters.count > 25){
+                    notesSection.sizeToFit()
+                    customNotesText.sizeToFit()
+                }
                 
             } else {
                 print ("Nothing in commentFile");
@@ -205,12 +209,6 @@ class DetailViewController: UIViewController, UITextViewDelegate{
            customNotesText.textColor = UIColor.gray
            print ("commentFile does not exist");
         }
-        
-        customNotesText.layer.borderWidth = 1
-        customNotesText.layer.borderColor = UIColor.black.cgColor
-        customNotesText.layer.cornerRadius = 8;
-
-
     }
     
     func saveComments(){
@@ -218,10 +216,13 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
             if (customNotesText.text != "Add your custom notes here"){
                 print ("saving commentFile");
+                
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
                     var commentString = self.customNotesText.text;
-                
+                    
+                    //writeNoteToCloud(bandnameValue: self.bandName, noteValue: commentString!)
+                    
                     print ("Wrote commentFile " + commentString!)
 
                     do {
