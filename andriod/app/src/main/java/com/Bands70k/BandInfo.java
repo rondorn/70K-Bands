@@ -254,7 +254,7 @@ public class BandInfo {
 
         getDownloadtUrls();
 
-        Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
+        //Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
         try {
             URL u = new URL(downloadUrls.get("artistUrl"));
             InputStream is = u.openStream();

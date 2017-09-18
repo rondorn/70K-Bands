@@ -13,6 +13,8 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
+
+
     @IBOutlet weak var officialUrlButton: UIButton!
     @IBOutlet weak var wikipediaUrlButton: UIButton!
     @IBOutlet weak var youtubeUrlButton: UIButton!
@@ -21,8 +23,9 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     @IBOutlet weak var customNotesButton: UIButton!
     @IBOutlet weak var customNotesText: UITextView!
     
-    @IBOutlet weak var notesSection: UIView!
     @IBOutlet weak var Links: UIView!
+    @IBOutlet weak var notesSection: UIView!
+
     @IBOutlet weak var extraData: UIView!
     @IBOutlet weak var eventView: UIView!
     
@@ -111,6 +114,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     func disableLinksWithEmptyData(){
         
+        print ("getofficalPage(bandName) is " + getofficalPage(bandName) )
         if (getofficalPage(bandName).isEmpty == true || getofficalPage(bandName) == "Unavailable"){
             officialUrlButton.isHidden = true;
             wikipediaUrlButton.isHidden = true;
@@ -311,6 +315,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBAction func openLink(_ sender: UIButton) {
         
+        print ("This should open up the link to " + (sender.titleLabel?.text)!);
         var sendToUrl = String()
         
         if (bandName != nil){
