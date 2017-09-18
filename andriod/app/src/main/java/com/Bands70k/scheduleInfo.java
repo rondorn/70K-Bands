@@ -23,6 +23,7 @@ public class scheduleInfo {
 
     public Map<String, scheduleTimeTracker> DownloadScheduleFile(String scheduleUrl){
 
+        Log.d("ScheduleLine", "Attempting to download file content from network");
         //Log.d("bandUrlIs", scheduleUrl);
         try {
             URL u = new URL(scheduleUrl);
@@ -49,6 +50,7 @@ public class scheduleInfo {
             Log.e("General Exception", "Downloading bandData", generalError);
         }
 
+        Log.d("ScheduleLine", "Attempting to download file content from file");
         Map<String, scheduleTimeTracker> bandSchedule = ParseScheduleCSV();
         return bandSchedule;
     }

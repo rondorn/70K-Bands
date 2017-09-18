@@ -46,22 +46,8 @@
                             <view contentMode="top" translatesAutoresizingMaskIntoConstraints="NO" id="uaF-dJ-7Dc">
                                 <rect key="frame" x="0.0" y="122" width="320" height="81"/>
                                 <subviews>
-                                    <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pII-w4-ri7">
-                                        <rect key="frame" x="0.0" y="13" width="320" height="0.0"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" id="cs3-Il-gK0"/>
-                                        </constraints>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <state key="normal" title="Offical Web Site">
-                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="vSW-pr-X4c"/>
-                                            <segue destination="ewv-Oo-aEW" kind="show" id="w7I-KM-Dbd"/>
-                                        </connections>
-                                    </button>
                                     <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gni-Y6-ugV">
-                                        <rect key="frame" x="0.0" y="23" width="320" height="22"/>
+                                        <rect key="frame" x="0.0" y="18" width="320" height="33"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <state key="normal" title="Wikipedia">
                                             <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
@@ -98,25 +84,33 @@
                                             <segue destination="ewv-Oo-aEW" kind="show" id="TIK-9n-mrX"/>
                                         </connections>
                                     </button>
+                                    <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pII-w4-ri7">
+                                        <rect key="frame" x="0.0" y="5" width="320" height="22"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <state key="normal" title="Offical Web Site">
+                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="vSW-pr-X4c"/>
+                                            <segue destination="ewv-Oo-aEW" kind="show" id="w7I-KM-Dbd"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <constraints>
-                                    <constraint firstItem="6Zv-yV-wLQ" firstAttribute="top" secondItem="gni-Y6-ugV" secondAttribute="bottom" constant="16" id="5en-Pc-prf"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="top" secondItem="pII-w4-ri7" secondAttribute="bottom" constant="10" id="8jU-Jj-qcl"/>
+                                    <constraint firstItem="6Zv-yV-wLQ" firstAttribute="top" secondItem="gni-Y6-ugV" secondAttribute="bottom" constant="10" id="BSh-5h-g7q"/>
+                                    <constraint firstItem="pII-w4-ri7" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" id="CF3-gj-QMR"/>
                                     <constraint firstItem="6Zv-yV-wLQ" firstAttribute="top" secondItem="KER-Ol-1XT" secondAttribute="bottom" constant="-1" id="Dbs-XC-rla"/>
-                                    <constraint firstAttribute="trailing" secondItem="pII-w4-ri7" secondAttribute="trailing" id="Kjk-KU-beB"/>
+                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="trailing" secondItem="pII-w4-ri7" secondAttribute="trailing" id="L2o-Rr-tZq"/>
+                                    <constraint firstItem="pII-w4-ri7" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="top" constant="5" id="MAP-5P-ncS"/>
                                     <constraint firstAttribute="bottom" secondItem="KER-Ol-1XT" secondAttribute="bottom" constant="19" id="SVv-Fn-A1E"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="trailing" secondItem="gni-Y6-ugV" secondAttribute="trailing" id="UbG-Vq-eCr"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="leading" secondItem="KER-Ol-1XT" secondAttribute="leading" id="Xrd-i5-ZPA"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="trailing" secondItem="KER-Ol-1XT" secondAttribute="trailing" id="biU-be-gUy"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="top" secondItem="pII-w4-ri7" secondAttribute="bottom" constant="10" id="dJg-2q-wIF"/>
-                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="top" secondItem="gni-Y6-ugV" secondAttribute="bottom" constant="1" id="dJo-Q9-wsA"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" id="eEV-Jc-IgG"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="leading" secondItem="gni-Y6-ugV" secondAttribute="leading" id="glB-A7-7dm"/>
+                                    <constraint firstAttribute="trailing" secondItem="pII-w4-ri7" secondAttribute="trailing" id="eXB-9L-hpO"/>
+                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="top" secondItem="pII-w4-ri7" secondAttribute="bottom" constant="19" id="fUm-gY-M7a"/>
+                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="trailing" secondItem="KER-Ol-1XT" secondAttribute="trailing" id="gAT-S4-J1c"/>
                                     <constraint firstAttribute="bottom" secondItem="6Zv-yV-wLQ" secondAttribute="bottom" constant="-1" id="gqF-RL-DV5"/>
-                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="top" secondItem="gni-Y6-ugV" secondAttribute="bottom" constant="1" id="iTM-5a-U7l"/>
                                     <constraint firstItem="KER-Ol-1XT" firstAttribute="trailing" secondItem="6Zv-yV-wLQ" secondAttribute="trailing" id="lPB-wI-BWl"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="top" constant="13" id="upQ-UV-ub4"/>
+                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="leading" secondItem="KER-Ol-1XT" secondAttribute="leading" id="uq2-aF-dUj"/>
                                     <constraint firstItem="KER-Ol-1XT" firstAttribute="leading" secondItem="6Zv-yV-wLQ" secondAttribute="leading" id="xRF-Gl-8Fb"/>
+                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="leading" secondItem="pII-w4-ri7" secondAttribute="leading" id="yuG-dX-ySf"/>
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="klk-SA-oTX">
