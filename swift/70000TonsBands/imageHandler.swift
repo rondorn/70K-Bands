@@ -50,12 +50,16 @@ func displayImage ( urlString: String, bandName: String, logoImage: UIImageView)
         if let httpResponse = response as? HTTPURLResponse {
             let statusCode = httpResponse.statusCode
             if statusCode == 200 {
-                image = UIImage(data: data!)!
-                imageCache[urlString] = image
-                logoImage.image =  image
+                do {
+                    try? image = UIImage(data: data!)!
+                    try? imageCache[urlString] = image
+                    try? logoImage.image =  image
                 
-                try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
-                
+                    try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
+                } catch {
+                    logoImage.image = UIImage(named: "70000TonsLogo")
+                    print("Could not Download image encountered image download error")
+                }
                 
             } else {
                 logoImage.image = UIImage(named: "70000TonsLogo")
