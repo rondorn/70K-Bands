@@ -12,9 +12,9 @@ import CoreData
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
-    //@IBOutlet weak var titleButton: UIButton!
     @IBOutlet weak var titleButton: UINavigationItem!
 
+    @IBOutlet weak var preferenceButton: UIBarButtonItem!
     @IBOutlet weak var mustSeeButton: UIButton!
     @IBOutlet weak var mightSeeButton: UIButton!
     @IBOutlet weak var willNotSeeButton: UIButton!
@@ -233,11 +233,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(priority: priority).async {
             
             gatherData();
-
+            
             if (offline == false){
                 schedule.DownloadCsv()
                 let validate = validateCSVSchedule()
                 validate.validateSchedule()
+            
+                bandNotes.getAllDescriptions()
             }
             self.bandsByName = [String]()
             self.bands =  [String]()
