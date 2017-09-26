@@ -256,15 +256,16 @@
                             <view contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1L-g3-deM">
                                 <rect key="frame" x="0.0" y="289" width="320" height="108"/>
                                 <subviews>
-                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
-                                        <rect key="frame" x="71" y="-8" width="241" height="55"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                    <textView clipsSubviews="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" alwaysBounceHorizontal="YES" pagingEnabled="YES" showsVerticalScrollIndicator="NO" contentInsetAdjustmentBehavior="scrollableAxes" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
+                                        <rect key="frame" x="71" y="-8" width="241" height="129"/>
+                                        <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="12"/>
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HMD-xs-Zr1">
                                         <rect key="frame" x="12" y="-16" width="35" height="23"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="23" id="KX3-Hb-juj"/>
+                                            <constraint firstAttribute="height" constant="23" identifier="NotesHeight" id="KX3-Hb-juj"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" pointSize="11"/>
                                         <state key="normal" title="Notes:">
@@ -278,7 +279,7 @@
                                     <constraint firstItem="EXR-5H-hTd" firstAttribute="trailing" secondItem="i1L-g3-deM" secondAttribute="trailingMargin" id="5p2-n9-zIS"/>
                                     <constraint firstItem="HMD-xs-Zr1" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" constant="12" id="D2P-B2-LOE"/>
                                     <constraint firstAttribute="bottom" secondItem="HMD-xs-Zr1" secondAttribute="bottom" constant="101" id="Frn-7m-8vU"/>
-                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" constant="61" id="L6Z-dW-JuM"/>
+                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" constant="-13" id="L6Z-dW-JuM"/>
                                     <constraint firstItem="HMD-xs-Zr1" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="top" constant="-16" id="VmK-VU-fUd"/>
                                     <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="topMargin" constant="-16" id="qim-j8-yFp"/>
                                 </constraints>
@@ -306,7 +307,9 @@
                             <constraint firstItem="i1L-g3-deM" firstAttribute="trailing" secondItem="lTJ-bG-l3q" secondAttribute="trailing" id="6LV-62-Tpd"/>
                             <constraint firstItem="uaF-dJ-7Dc" firstAttribute="trailing" secondItem="klk-SA-oTX" secondAttribute="trailing" id="81Z-lb-dkx"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" id="Bi4-1M-Mjf"/>
+                            <constraint firstItem="GAO-Cl-Wes" firstAttribute="top" secondItem="EXR-5H-hTd" secondAttribute="bottom" constant="158" id="CVJ-pi-ceS"/>
                             <constraint firstItem="lEP-z4-PfZ" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="bottom" constant="-8" id="CZ0-yc-ADc"/>
+                            <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="SYR-Wa-9uf" secondAttribute="bottom" constant="217" id="Cna-ff-0Bj"/>
                             <constraint firstItem="lTJ-bG-l3q" firstAttribute="leading" secondItem="lEP-z4-PfZ" secondAttribute="leading" priority="500" constant="-16" id="GOl-hi-Amh"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="leading" secondItem="lTJ-bG-l3q" secondAttribute="leading" id="MrA-AF-N87"/>
                             <constraint firstItem="lTJ-bG-l3q" firstAttribute="trailing" secondItem="lEP-z4-PfZ" secondAttribute="trailing" priority="500" constant="16" id="OqO-5x-tUb"/>
@@ -662,9 +665,9 @@
                             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                             <items>
-                                <barButtonItem style="plain" id="5va-1n-IZ8">
+                                <barButtonItem width="44" style="plain" id="5va-1n-IZ8">
                                     <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="vna-V9-U4m">
-                                        <rect key="frame" x="16" y="3" width="60" height="38"/>
+                                        <rect key="frame" x="16" y="0.0" width="44" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="🍺" image="willSeeIcon">
@@ -677,8 +680,8 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="jiI-qV-mcD"/>
                                 <barButtonItem style="plain" id="U7v-VF-EaZ">
-                                    <button key="customView" opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
-                                        <rect key="frame" x="76" y="3" width="60" height="38"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
+                                        <rect key="frame" x="61.5" y="0.0" width="44" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="✅" image="mightSeeIcon">
@@ -691,8 +694,8 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
                                 <barButtonItem style="plain" id="WGm-Pk-oWK">
-                                    <button key="customView" opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
-                                        <rect key="frame" x="136" y="3" width="60" height="38"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
+                                        <rect key="frame" x="107" y="0.0" width="44" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="🚫" image="willNotSee">
@@ -705,8 +708,8 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
                                 <barButtonItem style="plain" id="VdB-M1-Pt3">
-                                    <button key="customView" opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
-                                        <rect key="frame" x="196" y="3" width="60" height="38"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
+                                        <rect key="frame" x="153" y="0.0" width="44" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="❓" image="unknown">
@@ -719,8 +722,8 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
                                 <barButtonItem style="plain" id="5on-Su-FWN">
-                                    <button key="customView" opaque="NO" contentMode="scaleAspectFit" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
-                                        <rect key="frame" x="256" y="1" width="46" height="42"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
+                                        <rect key="frame" x="198.5" y="0.0" width="44" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="25"/>
                                         <state key="normal" title="⌚️">
@@ -733,16 +736,13 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
                                 <barButtonItem style="plain" id="N41-zI-gGY">
-                                    <button key="customView" opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="qWy-ef-Y14">
-                                        <rect key="frame" x="302" y="0.0" width="2" height="44"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="qWy-ef-Y14">
+                                        <rect key="frame" x="244" y="0.0" width="60" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <accessibility key="accessibilityConfiguration" label="Share">
                                             <accessibilityTraits key="traits" button="YES" image="YES"/>
                                         </accessibility>
-                                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
-                                        <state key="normal" backgroundImage="share">
-                                            <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        </state>
+                                        <state key="normal" image="share"/>
                                         <connections>
                                             <action selector="shareButtonClicked:" destination="7bK-jq-Zjz" eventType="touchUpInside" id="lRS-Ip-3ZT"/>
                                         </connections>
@@ -791,16 +791,10 @@
                                 <segue destination="NmW-NO-D53" kind="presentation" id="ZHl-C8-a0w"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" title="Item" image="ios-settings" landscapeImage="ios-settings" style="plain" id="R14-lg-DDg">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="OLx-09-OVA">
-                                <rect key="frame" x="274" y="7" width="30" height="30"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES" flexibleMaxY="YES"/>
-                                <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
-                                <state key="normal" image="ios-settings"/>
-                                <connections>
-                                    <segue destination="wME-gs-GWB" kind="show" identifier="Alerting Prefereneces" id="SPg-6q-bim"/>
-                                </connections>
-                            </button>
+                        <barButtonItem key="rightBarButtonItem" title="⚙️" style="plain" id="R14-lg-DDg" userLabel="Setting Item">
+                            <connections>
+                                <segue destination="wME-gs-GWB" kind="show" id="Inr-4y-5qN"/>
+                            </connections>
                         </barButtonItem>
                     </navigationItem>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
@@ -809,8 +803,8 @@
                         <outlet property="menuButton" destination="fqh-cn-Xu8" id="Oyz-3L-0ai"/>
                         <outlet property="mightSeeButton" destination="l6d-Sy-0B5" id="voq-34-Ek4"/>
                         <outlet property="mustSeeButton" destination="vna-V9-U4m" id="wOi-mZ-8tt"/>
+                        <outlet property="preferenceButton" destination="R14-lg-DDg" id="YUP-QP-xe7"/>
                         <outlet property="scheduleButton" destination="ZqH-lH-kF5" id="JKz-o8-Wwu"/>
-                        <outlet property="settingsButton" destination="OLx-09-OVA" id="nhL-Or-QTp"/>
                         <outlet property="titleButton" destination="Zdf-7t-Un8" id="sF7-Nd-23A"/>
                         <outlet property="titleLabel" destination="Zdf-7t-Un8" id="3Do-2q-WbH"/>
                         <outlet property="unknownButton" destination="O3z-DP-F5g" id="jKP-6f-Cab"/>
@@ -1088,15 +1082,14 @@
         </scene>
     </scenes>
     <resources>
-        <image name="ios-settings" width="30" height="30"/>
         <image name="mightSeeIcon" width="28" height="28"/>
-        <image name="share" width="174" height="166"/>
+        <image name="share" width="60" height="60"/>
         <image name="unknown" width="28" height="28"/>
         <image name="willNotSee" width="28" height="28"/>
         <image name="willSeeIcon" width="28" height="28"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="w7I-KM-Dbd"/>
+        <segue reference="TIK-9n-mrX"/>
         <segue reference="6S0-TO-JiA"/>
     </inferredMetricsTieBreakers>
 </document>

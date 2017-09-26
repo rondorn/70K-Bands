@@ -81,12 +81,17 @@ func readBandFile (){
                 
                 bandNames.append(lineData["bandName"]!);
                 
+                if (lineData["bandName"] == nil){
+                    continue
+                }
                 if (lineData.isEmpty == false){
                     if (lineData["imageUrl"] != nil){
                         bandImageUrl[lineData["bandName"]!] = "http://" + lineData["imageUrl"]!;
                     }
                     if (lineData["officalSite"] != nil){
-                        officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
+                        if (lineData["bandName"] != nil){
+                            officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
+                        }
                     }
                     if (lineData["wikipedia"] != nil){
                         wikipediaLink[lineData["bandName"]!] = lineData["wikipedia"]!;
@@ -146,7 +151,7 @@ func getUrlData(_ urlString: String) -> String{
     HTTPGet(urlString) {
         (data: String, error: String?) -> Void in
         if error != nil {
-            print("Error, well now what")
+            print("Error, well now what, \(urlString) failed")
             print(error)
             semaphore.signal()
         } else {

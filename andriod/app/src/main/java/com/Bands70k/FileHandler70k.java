@@ -19,6 +19,8 @@ public class FileHandler70k {
     public static final File bandRankings = new File(Environment.getExternalStorageDirectory() + "/70kBands/bandRankings.txt");
     public static final File bandRankingsBk = new File(Environment.getExternalStorageDirectory() + "/70kBands/bandRankings.bk");
     public static final File schedule = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kScheduleInfo.csv");
+    public static final File descriptionMapFile = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kbandDescriptionMap.csv");
+
 
     public FileHandler70k(){
         check70KDirExists();

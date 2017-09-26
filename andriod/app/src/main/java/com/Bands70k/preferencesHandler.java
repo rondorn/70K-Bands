@@ -38,6 +38,7 @@ public class preferencesHandler {
 
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
+    private String descriptionMapUrl = "Default";
 
     public void loadData() {
         try {
@@ -314,5 +315,13 @@ public class preferencesHandler {
 
     public void setScheduleUrl(String scheduleUrl) {
         this.scheduleUrl = scheduleUrl;
+    }
+
+    public String getDescriptionMapUrl() {
+        return descriptionMapUrl;
+    }
+
+    public void setDescriptionMapUrl(String descriptionMapUrl) {
+        this.descriptionMapUrl = descriptionMapUrl;
     }
 }

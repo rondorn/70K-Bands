@@ -15,9 +15,9 @@ var imageCache = [String: UIImage]()
 func displayImage ( urlString: String, bandName: String, logoImage: UIImageView) -> DarwinBoolean {
     
     
-    var bandName = bandName
-    var urlString = urlString
-    var logoImage = logoImage
+    let bandName = bandName
+    let urlString = urlString
+    let logoImage = logoImage
     print ("urlString is " + urlString);
     
     let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")
@@ -51,14 +51,16 @@ func displayImage ( urlString: String, bandName: String, logoImage: UIImageView)
             let statusCode = httpResponse.statusCode
             if statusCode == 200 {
                 do {
-                    try? image = UIImage(data: data!)!
-                    try? imageCache[urlString] = image
-                    try? logoImage.image =  image
-                
-                    try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
-                } catch {
-                    logoImage.image = UIImage(named: "70000TonsLogo")
-                    print("Could not Download image encountered image download error")
+                    if (data != nil){
+                        image = UIImage(data: data!)!
+                        imageCache[urlString] = image
+                        logoImage.image =  image
+                    
+                        try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
+                    } else {
+                        logoImage.image = UIImage(named: "70000TonsLogo")
+                        print("Could not Download image encountered image download error")
+                    }
                 }
                 
             } else {

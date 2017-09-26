@@ -26,11 +26,23 @@ public class BandNotes {
 
     }
 
+    public boolean fileExists(){
+        return bandNoteFile.exists();
+    }
+
     public boolean getNoteIsBlank(){
         return noteIsBlank;
     }
 
     public String getBandNote(){
+        CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
+        String bandNote = noteHandler.getDescription(bandName);
+
+        return bandNote;
+
+    }
+
+    public String getBandNoteFromFile(){
 
         String note = "";
         try {
@@ -55,7 +67,15 @@ public class BandNotes {
 
     public void saveBandNote(String notesData){
 
-        FileHandler70k.saveData(notesData, bandNoteFile);
+        if (notesData.startsWith("Comment text is not available yet") == false &&
+                notesData.length() > 2) {
+
+            Log.d("descriptionMapFile", "writing data to " + bandNoteFile + " - " + notesData);
+            FileHandler70k.saveData(notesData, bandNoteFile);
+
+        } else {
+            bandNoteFile.delete();
+        }
 
     }
 
