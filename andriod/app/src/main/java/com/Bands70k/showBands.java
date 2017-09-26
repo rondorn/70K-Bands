@@ -484,6 +484,9 @@ public class showBands extends Activity {
         AsyncListViewLoader mytask = new AsyncListViewLoader();
         mytask.execute();
 
+        AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
+        myNotesTask.execute();
+
         scheduleAlertHandler alerts = new scheduleAlertHandler(preferences, getApplicationContext());
         alerts.execute();
 
@@ -718,6 +721,53 @@ public class showBands extends Activity {
             try {
                 BandInfo bandInfo = new BandInfo();
                 bandInfo.DownloadBandFile();
+                //bandNotes.getAllDescriptions();
+            } catch (Exception error){
+                Log.d("bandInfo", error.getMessage());
+            }
+
+            return result;
+
+        }
+
+
+        @Override
+        protected void onPostExecute(ArrayList<String> result) {
+
+            BandInfo bandInfo = new BandInfo();
+            ArrayList<String> bandList = bandInfo.getBandNames();
+
+            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
+
+            showBands.this.bandNamesList.setAdapter(arrayAdapter);
+            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
+            showBands.this.bandNamesList.requestLayout();
+            fileDownloaded = true;
+            bandNamesPullRefresh.setRefreshing(false);
+
+        }
+    }
+
+    class AsyncNotesLoader extends AsyncTask<String, Void, ArrayList<String>> {
+
+        ArrayList<String> result;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+
+        @Override
+        protected ArrayList<String> doInBackground(String... params) {
+
+
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+
+            Log.d("AsyncTask", "Downloading data");
+
+            try {
                 bandNotes.getAllDescriptions();
             } catch (Exception error){
                 Log.d("bandInfo", error.getMessage());
