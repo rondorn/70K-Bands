@@ -684,7 +684,7 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="jiI-qV-mcD"/>
                                 <barButtonItem style="plain" id="U7v-VF-EaZ">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
-                                        <rect key="frame" x="61.5" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="68.5" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="✅" image="mightSeeIcon">
@@ -698,7 +698,7 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
                                 <barButtonItem style="plain" id="WGm-Pk-oWK">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
-                                        <rect key="frame" x="107" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="121" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="🚫" image="willNotSee">
@@ -712,7 +712,7 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
                                 <barButtonItem style="plain" id="VdB-M1-Pt3">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
-                                        <rect key="frame" x="152" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="174" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="❓" image="unknown">
@@ -726,7 +726,7 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
                                 <barButtonItem style="plain" id="5on-Su-FWN">
                                     <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
-                                        <rect key="frame" x="197.5" y="1" width="30" height="42"/>
+                                        <rect key="frame" x="226.5" y="1" width="30" height="42"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="25"/>
                                         <state key="normal" title="⌚️">
@@ -738,18 +738,10 @@
                                     </button>
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
-                                <barButtonItem style="plain" id="N41-zI-gGY">
-                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="qWy-ef-Y14">
-                                        <rect key="frame" x="244" y="0.0" width="60" height="44"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <accessibility key="accessibilityConfiguration" label="Share">
-                                            <accessibilityTraits key="traits" button="YES" image="YES"/>
-                                        </accessibility>
-                                        <state key="normal" image="share"/>
-                                        <connections>
-                                            <action selector="shareButtonClicked:" destination="7bK-jq-Zjz" eventType="touchUpInside" id="lRS-Ip-3ZT"/>
-                                        </connections>
-                                    </button>
+                                <barButtonItem style="plain" systemItem="action" id="N41-zI-gGY">
+                                    <connections>
+                                        <action selector="shareButtonClicked:" destination="7bK-jq-Zjz" id="0Rl-4s-tNb"/>
+                                    </connections>
                                 </barButtonItem>
                             </items>
                         </toolbar>
@@ -808,6 +800,7 @@
                         <outlet property="mustSeeButton" destination="vna-V9-U4m" id="wOi-mZ-8tt"/>
                         <outlet property="preferenceButton" destination="R14-lg-DDg" id="YUP-QP-xe7"/>
                         <outlet property="scheduleButton" destination="ZqH-lH-kF5" id="JKz-o8-Wwu"/>
+                        <outlet property="shareButton" destination="N41-zI-gGY" id="2Zr-Hx-emM"/>
                         <outlet property="titleButton" destination="Zdf-7t-Un8" id="sF7-Nd-23A"/>
                         <outlet property="titleLabel" destination="Zdf-7t-Un8" id="3Do-2q-WbH"/>
                         <outlet property="unknownButton" destination="O3z-DP-F5g" id="jKP-6f-Cab"/>
@@ -1086,7 +1079,6 @@
     </scenes>
     <resources>
         <image name="mightSeeIcon" width="28" height="28"/>
-        <image name="share" width="60" height="60"/>
         <image name="unknown" width="28" height="28"/>
         <image name="willNotSee" width="28" height="28"/>
         <image name="willSeeIcon" width="28" height="28"/>
