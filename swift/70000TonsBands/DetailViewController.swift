@@ -102,6 +102,11 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         }
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
+        notesSection.endEditing(true)
+        super.touchesBegan(touches, with: event)
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
@@ -236,6 +241,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             print ("ERROR: commentFile was not deleted")
         } else {
             print ("CONFIRMATION: commentFile was deleted")
+            loadComments()
         }
     }
     override func viewWillDisappear(_ animated : Bool) {

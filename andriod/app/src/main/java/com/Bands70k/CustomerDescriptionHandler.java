@@ -144,7 +144,9 @@ public class CustomerDescriptionHandler {
     }
 
     private String removeSpecialCharsFromString(String text) {
-        String fixedText = text.replaceAll("[^\\p{ASCII}]", "");
+        String fixedText = text.replaceAll("\\r", "<br><br>");
+        fixedText = fixedText.replaceAll("\\n", "<br><br>");
+        //fixedText = text.replaceAll("[^\\p{ASCII}]", "");
         fixedText = fixedText.replaceAll("\\?", "");
 
         return fixedText;
