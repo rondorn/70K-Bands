@@ -52,7 +52,7 @@ public class BandNotes {
             String line;
 
             while ((line = br.readLine()) != null) {
-                note += line + "<br>";
+                note += line + "<br><br>";
             }
 
             noteIsBlank = false;

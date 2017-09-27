@@ -12,7 +12,7 @@ open class CustomBandDescription {
     
     func getDescriptionMapFile(){
         
-        var mapUrl = getDefaultDescriptionMapUrl()
+        let mapUrl = getDefaultDescriptionMapUrl()
         let httpData = getUrlData(mapUrl)
         
         if (httpData.isEmpty == false){
@@ -84,9 +84,12 @@ open class CustomBandDescription {
     
     
     func removeSpecialCharsFromString(text: String) -> String {
+        
+        var newText = text;
+        newText = text.replacingOccurrences(of: "\r", with: "\n")
         let okayChars : Set<Character> =
             Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890+-*=(),.:!_\n".characters)
-        return String(text.characters.filter {okayChars.contains($0) })
+        return String(newText.characters.filter {okayChars.contains($0) })
     }
     
     func getDescriptionMap(){
