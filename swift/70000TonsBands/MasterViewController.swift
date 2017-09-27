@@ -22,7 +22,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var unknownButton: UIButton!
     
     @IBOutlet weak var Undefined: UIButton!
+
     @IBOutlet weak var shareButton: UIBarButtonItem!
+    
     @IBOutlet weak var contentController: UIView!
     @IBOutlet weak var scheduleButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
@@ -367,7 +369,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
     }
     
-    @IBAction func shareButtonClicked(_ sender: UIButton){
+    @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
         
         let intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
         var favoriteBands = "\n"
@@ -392,7 +394,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let popoverMenuViewController = activityVC.popoverPresentationController
         popoverMenuViewController?.permittedArrowDirections = .any
 
-        popoverMenuViewController?.sourceView = sender
+        popoverMenuViewController?.sourceView = unknownButton
         popoverMenuViewController?.sourceRect = CGRect()
 
 
