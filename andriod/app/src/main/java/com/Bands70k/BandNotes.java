@@ -52,13 +52,14 @@ public class BandNotes {
             String line;
 
             while ((line = br.readLine()) != null) {
-                note += line + "<br><br>";
+                note += line + "<br>";
             }
 
             noteIsBlank = false;
         } catch (Exception error) {
             Log.e("writingBandRankings", "backupFile " + error.getMessage());
-            note = "Enter your own custom note here";
+            note = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+
             noteIsBlank = true;
         }
 
@@ -70,6 +71,7 @@ public class BandNotes {
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2) {
 
+            notesData.replaceAll("\\n", "<br>");
             Log.d("descriptionMapFile", "writing data to " + bandNoteFile + " - " + notesData);
             FileHandler70k.saveData(notesData, bandNoteFile);
 

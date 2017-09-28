@@ -33,16 +33,18 @@ open class CustomBandDescription {
     
     func getAllDescriptions(){
         
-        print ("commentFile performaing getAll")
-        print ("commentFile getDescriptionMapFile")
-        getDescriptionMapFile();
-        print ("commentFile getDescriptionMap")
-        getDescriptionMap();
-        
-        print ("commentFile looping through bands")
-        for record in bandDescriptionUrl{
-            let bandName = record.key
-            _ = getDescription(bandName: bandName)
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            print ("commentFile performaing getAll")
+            print ("commentFile getDescriptionMapFile")
+            self.getDescriptionMapFile();
+            print ("commentFile getDescriptionMap")
+            self.getDescriptionMap();
+            
+            print ("commentFile looping through bands")
+            for record in bandDescriptionUrl{
+                let bandName = record.key
+                _ = self.getDescription(bandName: bandName)
+            }
         }
     }
     
@@ -57,27 +59,33 @@ open class CustomBandDescription {
         
         if (FileManager.default.fileExists(atPath: commentFile.path) == false){
             if (bandDescriptionUrl[bandName] != nil){
-                let httpData = getUrlData(bandDescriptionUrl[bandName]!);
                 
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    commentText = httpData;
-                    print ("Wrote commentFile for \(bandName) " + commentText)
-                    do {
-                        try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
-                    } catch {
-                        print("commentFile " + error.localizedDescription)
+                //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    let httpData = getUrlData(bandDescriptionUrl[bandName]!);
+                
+                    //do not write if we are getting 404 error
+                    if (httpData.starts(with: "<!DOCTYPE") == false){
+                        commentText = httpData;
+                        print ("commentFile text is '" + commentText + "'")
+                        
+                        print ("Wrote commentFile for \(bandName) " + commentText)
+                        do {
+                            try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                        } catch {
+                            print("commentFile " + error.localizedDescription)
+                        }
                     }
-                }
-            }
-        } else {
-            if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-                if (data.characters.count > 2){
-                    commentText = data
-                }
+                //}
             }
         }
         
-        sleep(1)
+        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
+            if (data.characters.count > 2){
+                commentText = data
+            }
+        }
+        
+        
         commentText = removeSpecialCharsFromString(text: commentText)
         return commentText;
     }
@@ -106,7 +114,7 @@ open class CustomBandDescription {
             
             for lineData in csvData.rows {
                 if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                    print ("descriptiopnMap Adding \(lineData[bandField]) with url \(lineData[urlField])")
+                    print ("descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
                     bandDescriptionUrl[(lineData[bandField])!] = lineData[urlField]
                 } else {
                     print ("Unable to parse descriptionMap line")
