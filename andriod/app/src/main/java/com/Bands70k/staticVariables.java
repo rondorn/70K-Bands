@@ -47,6 +47,10 @@ public class staticVariables {
 
     public final static String defaultUrls = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1";
 
+    //testing pointer
+    //public final static String defaultUrls = "https://www.dropbox.com/s/w2mz8p0mpght1yt/productionPointer3.txt?dl=1";
+
+
     public final static String previousYearArtist = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1";
     public final static String previousYearSchedule = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1";
     //public final static String previousYearSchedule = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1";
