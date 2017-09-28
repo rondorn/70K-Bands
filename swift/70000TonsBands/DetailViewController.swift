@@ -71,9 +71,9 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         }
         
         print ("bandName is " + bandName)
-
+        
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
-            
+        
             let imageURL = getBandImageUrl(bandName)
             print("imageUrl: " + imageURL)
             
@@ -102,12 +102,16 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         }
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
+        notesSection.endEditing(true)
+        super.touchesBegan(touches, with: event)
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         
         splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
         loadComments()
         super.viewDidAppear(animated)
-        customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
         
     }
     
@@ -191,43 +195,27 @@ class DetailViewController: UIViewController, UITextViewDelegate{
 
     func loadComments(){
         
-        let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
-        print ("Loading commentFile");
-        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-            if (data.isEmpty == false){
-                customNotesText.text = data;
-                //customNotesText.text = readNoteFromCloud(bandnameValue: bandName);
-                
-                customNotesText.textColor = UIColor.black
-                
-                if (customNotesText.text.characters.count > 25){
-                    notesSection.sizeToFit()
-                    customNotesText.sizeToFit()
-                }
-                
-            } else {
-                print ("Nothing in commentFile");
-            }
-        } else {
-           customNotesText.text = "Add your custom notes here";
-           customNotesText.textColor = UIColor.gray
-           print ("commentFile does not exist");
-        }
+        customNotesText.text = bandNotes.getDescription(bandName: bandName)
+        customNotesText.textColor = UIColor.black
+        setNotesHeight()
     }
     
     func saveComments(){
+        
         if (bandName != nil && bandName.isEmpty == false){
             let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
-            if (customNotesText.text != "Add your custom notes here"){
+            if (customNotesText.text.starts(with: "Comment text is not available yet") == true){
+                    removeBadNote(commentFile: commentFile)
+                
+            } else if (customNotesText.text.characters.count < 2){
+                removeBadNote(commentFile: commentFile)
+
+            } else {
                 print ("saving commentFile");
                 
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
-                    var commentString = self.customNotesText.text;
-                    
-                    //writeNoteToCloud(bandnameValue: self.bandName, noteValue: commentString!)
-                    
-                    print ("Wrote commentFile " + commentString!)
+                    let commentString = self.customNotesText.text;
+                    print ("Writting commentFile " + commentString!)
 
                     do {
                         try commentString?.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
@@ -236,9 +224,26 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                     }
                 }
             }
+
         }
     }
     
+    func removeBadNote(commentFile: URL){
+        do {
+            print ("commentFile being deleted")
+            try FileManager.default.removeItem(atPath: commentFile.path)
+            
+        } catch let error as NSError {
+            print ("Encountered an error removing old commentFile " + error.debugDescription)
+        }
+        
+        if (FileManager.default.fileExists(atPath: commentFile.path) == true){
+            print ("ERROR: commentFile was not deleted")
+        } else {
+            print ("CONFIRMATION: commentFile was deleted")
+            loadComments()
+        }
+    }
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         saveComments()
@@ -263,8 +268,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                 
                 notesSection.isHidden = true
                 customNotesText.text = "";
-                notesSection.sizeToFit()
-                customNotesText.sizeToFit()
+                setNotesHeight()
             }
             
             bandLogo.contentMode = UIViewContentMode.top
@@ -288,6 +292,12 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         }
 
         showBandDetails();
+    }
+    
+    func setNotesHeight(){
+
+        customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
+
     }
     
     func setButtonNames(){

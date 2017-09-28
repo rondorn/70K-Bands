@@ -31,7 +31,7 @@ public class BandInfo {
 
     public static Map<String, scheduleTimeTracker> scheduleRecords;
 
-    private Map<String,String> downloadUrls = new HashMap<String, String>();
+    public Map<String,String> downloadUrls = new HashMap<String, String>();
 
     public void onCreate() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -200,7 +200,7 @@ public class BandInfo {
         return data;
     }
 
-    private void getDownloadtUrls(){
+    public void getDownloadtUrls(){
 
         preferencesHandler preferences = new preferencesHandler();
         preferences.loadData();
@@ -245,7 +245,10 @@ public class BandInfo {
                 downloadUrls.put("artistUrl", preferences.getArtsistsUrl());
             }
             if (!preferences.getScheduleUrl().equals("Default")) {
-                downloadUrls.put("scheduleUrl", preferences.getArtsistsUrl());
+                downloadUrls.put("scheduleUrl", preferences.getScheduleUrl());
+            }
+            if (!preferences.getDescriptionMapUrl().equals("Default")) {
+                downloadUrls.put("descriptionMap", preferences.getDescriptionMapUrl());
             }
         }
     }

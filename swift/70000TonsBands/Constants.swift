@@ -20,6 +20,7 @@ var dateField = "Date"
 var startTimeField = "Start Time"
 var endTimeField = "End Time"
 var notesField = "Notes"
+var urlField = "URL"
 
 //link containers
 var wikipediaLink = [String: String]()
@@ -52,7 +53,9 @@ var metalArchivesButtonName = "Metal Archives"
 
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
+
 let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
+let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 //defaults preferences
 let artistUrlDefault = "Default"
@@ -60,7 +63,7 @@ let scheduleUrlDefault = "Default"
 
 let lastYearsartistUrlDefault = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1"
 let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1"
-//let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1"
+
 let defaultStorageUrl = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1"
 
 let mustSeeAlertDefault = "YES"
@@ -85,6 +88,10 @@ let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 
 var schedule = scheduleHandler()
+var bandNotes = CustomBandDescription();
+
+var bandDescriptionUrl = [String:String]()
+
 let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
 var listOfVenues = [String]()

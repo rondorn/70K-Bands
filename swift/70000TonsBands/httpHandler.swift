@@ -17,10 +17,11 @@ func HTTPsendRequest(_ request: URLRequest,
                 if error != nil {
                     callback("", error!.localizedDescription)
                 } else {
-                    callback(
-                        NSString(data: data!, encoding: String.Encoding.utf8.rawValue) as! String,
-                        nil
-                    )
+                  
+                    let stringVariable = String(data: data!, encoding: String.Encoding(rawValue: String.Encoding.ascii.rawValue))! as String
+                    //let stringVariable = String(data: data!, encoding: String.Encoding(rawValue: String.Encoding.utf8.rawValue))! as String
+                    callback(stringVariable, nil)
+
                 }
         })
         task.resume()
