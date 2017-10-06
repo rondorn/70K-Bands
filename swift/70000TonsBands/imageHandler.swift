@@ -78,3 +78,22 @@ func displayImage ( urlString: String, bandName: String, logoImage: UIImageView)
     return true;
     
 }
+
+func getAllImages(){
+    
+    bands = getBandNames()
+    for bandName in bands {
+        
+        let imageStoreName = bandName + ".png"
+        let imageStoreFile = directoryPath.appendingPathComponent( imageStoreName)
+        let nullImage : UIImageView = UIImageView.init()
+        
+        if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
+            
+            let imageURL = getBandImageUrl(bandName)
+            print ("Loading image in background so it will be cached by default " + imageURL);
+            displayImage(urlString: imageURL, bandName: bandName, logoImage: nullImage)
+        }
+    }
+}
+

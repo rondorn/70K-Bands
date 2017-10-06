@@ -242,6 +242,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 validate.validateSchedule()
             
                 bandNotes.getAllDescriptions()
+                getAllImages()
+                
             }
             self.bandsByName = [String]()
             self.bands =  [String]()
