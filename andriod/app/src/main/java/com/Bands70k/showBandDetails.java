@@ -218,10 +218,11 @@ public class showBandDetails extends Activity {
 
         SetButtonColors();
 
+        ImageHandler imageHandler = new ImageHandler(bandName);
             htmlText =
                     "<html><div style='height:100%;font-size:130%;'>" +
                             "<center>" + bandName + "</center><br>" +
-                            "<center><img style='max-height:15%;max-height:15vh' src='" + BandInfo.getImageUrl(bandName) + "'</img>";
+                            "<center><img style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
 
                 if (staticVariables.writeNoteHtml.isEmpty() == false) {
                     Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);

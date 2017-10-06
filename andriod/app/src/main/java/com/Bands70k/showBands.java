@@ -768,29 +768,18 @@ public class showBands extends Activity {
             Log.d("AsyncTask", "Downloading data");
 
             try {
+                //download all descriptions in the background
                 bandNotes.getAllDescriptions();
+
+                //download all band logos in the background
+                ImageHandler imageHandler = new ImageHandler();
+                imageHandler.getAllRemoteImages();
+
             } catch (Exception error){
                 Log.d("bandInfo", error.getMessage());
             }
 
             return result;
-
-        }
-
-
-        @Override
-        protected void onPostExecute(ArrayList<String> result) {
-
-            BandInfo bandInfo = new BandInfo();
-            ArrayList<String> bandList = bandInfo.getBandNames();
-
-            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
-
-            showBands.this.bandNamesList.setAdapter(arrayAdapter);
-            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-            showBands.this.bandNamesList.requestLayout();
-            fileDownloaded = true;
-            bandNamesPullRefresh.setRefreshing(false);
 
         }
     }
