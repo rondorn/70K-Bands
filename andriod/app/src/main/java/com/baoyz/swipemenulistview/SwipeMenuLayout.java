@@ -1,5 +1,6 @@
 package com.baoyz.swipemenulistview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.ScrollerCompat;
@@ -15,10 +16,10 @@ import android.widget.AbsListView;
 import android.widget.FrameLayout;
 
 /**
- * 
+ *
  * @author baoyz
  * @date 2014-8-23
- * 
+ *
  */
 public class SwipeMenuLayout extends FrameLayout {
 
@@ -89,6 +90,7 @@ public class SwipeMenuLayout extends FrameLayout {
 		mSwipeDirection = swipeDirection;
 	}
 
+	@SuppressLint("ResourceType")
 	private void init() {
 		setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.WRAP_CONTENT));
@@ -132,6 +134,7 @@ public class SwipeMenuLayout extends FrameLayout {
 		LayoutParams contentParams = new LayoutParams(
 				LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 		mContentView.setLayoutParams(contentParams);
+
 		if (mContentView.getId() < 1) {
 			mContentView.setId(CONTENT_VIEW_ID);
 		}

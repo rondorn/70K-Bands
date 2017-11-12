@@ -50,15 +50,21 @@ public class showBandDetails extends Activity {
         int orientationNum = getResources().getConfiguration().orientation;
         if (Configuration.ORIENTATION_LANDSCAPE == orientationNum) {
             orientation = "landscape";
-        }  else {
+        } else {
             orientation = "portrait";
         }
 
         bandName = BandInfo.getSelectedBand();
-        bandHandler = new BandNotes(bandName);
-        bandNote = bandHandler.getBandNote();
 
-        initializeWebContent();
+        if (bandName == null) {
+            onBackPressed();
+        } else if (bandName.isEmpty() == false) {
+            bandHandler = new BandNotes(bandName);
+            bandNote = bandHandler.getBandNote();
+            initializeWebContent();
+        } else {
+            onBackPressed();
+        }
     }
 
     @Override
