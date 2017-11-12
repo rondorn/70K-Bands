@@ -32,6 +32,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
+    //var backgroundColor = UIColor.white;//UIColor.black;
+    //var textColor = UIColor.black;//UIColor.white;
+    var backgroundColor = UIColor.white;
+    var textColor = UIColor.black;
+    
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
@@ -46,7 +51,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         sortedBy = "time"
-    
+        
+        //self.view.backgroundColor = UIColor.black;
+        self.tableView.backgroundColor = backgroundColor;
         
         //have a reference to this controller for external refreshes
         masterView = self;
@@ -148,16 +155,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func setFilterButtons(){
         
         if (getMustSeeOn() == false){
-            mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
+            //mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
+            mustSeeButton.setTitle(mustSeeIcon, for: UIControlState())
         }
         if (getMightSeeOn() == false){
-            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+            //mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
         }
         if (getWontSeeOn() == false){
-            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+            //wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
         }
         if (getUnknownSeeOn() == false){
-            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+            //unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
         }
     }
     
@@ -294,11 +302,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
-                sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+                sender.setTitle(mustSeeIcon, for: UIControlState())
+                //sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
             
             } else {
                 setMustSeeOn(true)
-                sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
+                sender.setTitle(mustSeeIcon, for: UIControlState())
+                //sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
 
             }
 
@@ -387,7 +397,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let outtro =  "\n\nhttp://www.facebook.com/70kBands\n"
         
         let objectsToShare = [intro, favoriteBands, outtro]
-        let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
+        let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
         
         activityVC.modalPresentationStyle = .popover
         activityVC.preferredContentSize = CGSize(width: 50, height: 100)
@@ -425,7 +435,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) 
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        cell.backgroundColor = UIColor.clear;
+        cell.textLabel?.textColor = textColor;
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
@@ -490,10 +502,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        mustSeeAction.backgroundColor = UIColor.white
-        mightSeeAction.backgroundColor = UIColor.white
-        wontSeeAction.backgroundColor = UIColor.white
-        setUnknownAction.backgroundColor = UIColor.white
+        //mustSeeAction.backgroundColor = UIColor.white
+        //mightSeeAction.backgroundColor = UIColor.white
+        //wontSeeAction.backgroundColor = UIColor.white
+        //setUnknownAction.backgroundColor = UIColor.white
         
         return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
     }

@@ -170,7 +170,9 @@ func getUrlData(_ urlString: String) -> String{
 func getBandNames () -> [String] {
     
     if (bandNames.isEmpty == false){
-        bandNames.sort{$0 < $1}
+        if (bandNames.count >= 2){
+            bandNames.sort{$0 < $1}
+        }
     }
     return bandNames
 }

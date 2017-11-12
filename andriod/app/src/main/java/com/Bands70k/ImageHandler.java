@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
 
 /**
  * Created by rdorn on 10/5/17.
@@ -24,6 +25,7 @@ public class ImageHandler {
 
     private String bandName;
     private File bandImageFile;
+    private File oldImageFile;
 
     public ImageHandler(){
 
@@ -31,21 +33,33 @@ public class ImageHandler {
 
     public ImageHandler(String bandNameValue){
         this.bandName = bandNameValue;
-        bandImageFile = new File(Environment.getExternalStorageDirectory() + "/70kBands/" + bandName + ".png");
+        oldImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
+        bandImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.imageDirectory + bandName + ".png");
+        this.moveOldToNew();
+    }
+
+    private void moveOldToNew() {
+        if (oldImageFile.exists()){
+            oldImageFile.renameTo(bandImageFile);
+        }
     }
 
     public URI getImage(){
 
         URI localURL;
 
+        if (this.bandName.isEmpty() == true){
+            return null;
+        }
+
         if (bandImageFile.exists() == false){
 
             AsyncImageLoader myImageTask = new AsyncImageLoader();
             myImageTask.execute(bandName);
 
-            Log.e("loadImageFile", "Downloading image file from URL" + BandInfo.getImageUrl(bandName));
+            Log.e("loadImageFile", "Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
 
-            URI remoteURl = URI.create(BandInfo.getImageUrl(bandName));
+            URI remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
             return remoteURl;
         }
 
@@ -82,7 +96,7 @@ public class ImageHandler {
         ArrayList<String> bandList = bandInfo.getBandNames();
 
         for (String bandName : bandList){
-            bandImageFile = new File(Environment.getExternalStorageDirectory() + "/70kBands/" + bandName + ".png");
+            bandImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
             if (bandImageFile.exists() == false) {
                 Log.e("loadImageFile", "loading all images files in background " + bandImageFile.getAbsolutePath());
                 ImageHandler imageHandler = new ImageHandler(bandName);

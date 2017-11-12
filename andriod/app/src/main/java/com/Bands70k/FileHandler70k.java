@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 /**
@@ -12,15 +13,27 @@ import java.io.OutputStreamWriter;
  */
 public class FileHandler70k {
 
-    private final File baseDirectory = new File(Environment.getExternalStorageDirectory() + "/70kBands");
-    public static final File alertData = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kAlertData.csv");
-    public static final File bandInfo = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kbandInfo.csv");
-    public static final File bandPrefs = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kbandPreferences.csv");
-    public static final File bandRankings = new File(Environment.getExternalStorageDirectory() + "/70kBands/bandRankings.txt");
-    public static final File bandRankingsBk = new File(Environment.getExternalStorageDirectory() + "/70kBands/bandRankings.bk");
-    public static final File schedule = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kScheduleInfo.csv");
-    public static final File descriptionMapFile = new File(Environment.getExternalStorageDirectory() + "/70kBands/70kbandDescriptionMap.csv");
 
+    public static final String directoryName = "/70kBands/";
+    public static final String oldDirectoryName = "/.70kBands/";
+
+    public static final File baseDirectory = new File(Environment.getExternalStorageDirectory() + directoryName);
+
+    public static final String imageDirectory = directoryName + "cachedImages/";
+    public static final File baseImageDirectory = new File(Environment.getExternalStorageDirectory() + imageDirectory);
+
+    public static final File bandInfo = new File(Environment.getExternalStorageDirectory() + directoryName + "70kbandInfo.csv");
+    public static final File alertData = new File(Environment.getExternalStorageDirectory() + directoryName + "70kAlertData.csv");
+    public static final File bandPrefs = new File(Environment.getExternalStorageDirectory() + directoryName + "70kbandPreferences.csv");
+    public static final File bandRankings = new File(Environment.getExternalStorageDirectory() + directoryName + "bandRankings.txt");
+    public static final File bandRankingsBk = new File(Environment.getExternalStorageDirectory() + directoryName + "bandRankings.bk");
+    public static final File schedule = new File(Environment.getExternalStorageDirectory() + directoryName + "70kScheduleInfo.csv");
+    public static final File descriptionMapFile = new File(Environment.getExternalStorageDirectory() + directoryName + "70kbandDescriptionMap.csv");
+
+    public static final File oldBandRankings = new File(Environment.getExternalStorageDirectory() + oldDirectoryName + "bandRankings.txt");
+
+    public static final File rootNoMedia = new File(Environment.getExternalStorageDirectory() + directoryName + ".nomedia");
+    public static final File mediaNoMedia = new File(Environment.getExternalStorageDirectory() + imageDirectory + ".nomedia");
 
     public FileHandler70k(){
         check70KDirExists();
@@ -58,7 +71,16 @@ public class FileHandler70k {
         if (oldSchedule.exists()){
             oldSchedule.renameTo(schedule);
         }
+
+        if (oldBandRankings.exists()){
+            if (bandRankings.exists()){
+                bandRankings.delete();
+            }
+            oldBandRankings.renameTo(bandRankings);
+        }
+
     }
+
 
     private void check70KDirExists(){
 
@@ -67,6 +89,33 @@ public class FileHandler70k {
         } else {
             baseDirectory.mkdirs();
         }
+
+        if (baseImageDirectory.exists() && baseImageDirectory.isDirectory()) {
+            //do nothing
+        } else {
+            baseImageDirectory.mkdir();
+        }
+
+        if (rootNoMedia.exists()){
+            //do nothing
+        } else {
+            try {
+                rootNoMedia.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (mediaNoMedia.exists()){
+            //do nothing
+        } else {
+            try {
+                mediaNoMedia.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     public static void saveData(String data, File fileHandle){

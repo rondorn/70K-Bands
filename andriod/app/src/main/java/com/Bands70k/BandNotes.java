@@ -22,7 +22,7 @@ public class BandNotes {
     public BandNotes(String bandValue){
 
         bandName = bandValue;
-        bandNoteFile = new File(Environment.getExternalStorageDirectory() + "/70kBands/" + bandName + ".note");
+        bandNoteFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".note");
 
     }
 
