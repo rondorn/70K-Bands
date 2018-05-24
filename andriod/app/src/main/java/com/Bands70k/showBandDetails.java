@@ -253,7 +253,7 @@ public class showBandDetails extends Activity {
                             }
                             htmlText += "</ul>";
                         }
-                        if (bandNote != "") {
+                        if (bandNote != "" && imageHandler.getImage().toString() != staticVariables.logo70kUrl) {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
                             htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:25%;overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";

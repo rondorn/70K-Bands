@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.Bands70k.staticVariables.*;
+import static java.lang.Thread.*;
 
 public class showBands extends Activity {
 
@@ -681,7 +682,18 @@ public class showBands extends Activity {
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
         listHandler = new mainListHandler(showBands.this, preferences);
-        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        try {
+            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        } catch (Exception error){
+            try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        }
+
         setFilterButton();
 
         //swip stuff

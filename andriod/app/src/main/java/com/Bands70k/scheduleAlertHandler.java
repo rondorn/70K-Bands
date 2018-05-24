@@ -123,7 +123,11 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
+        try {
+            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
+        } catch (Exception error){
+            Log.d("NotifLogs", "Encountered issue scheduling alert " + error.getMessage());
+        }
 
 
     }
