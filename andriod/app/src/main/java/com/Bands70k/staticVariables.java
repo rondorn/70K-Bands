@@ -45,7 +45,8 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1";
+    public final static String defaultUrls = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1";
+    public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
 
     //testing pointer
     //public final static String defaultUrls = "https://www.dropbox.com/s/w2mz8p0mpght1yt/productionPointer3.txt?dl=1";

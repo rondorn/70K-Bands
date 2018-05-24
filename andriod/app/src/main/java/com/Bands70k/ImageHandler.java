@@ -59,7 +59,13 @@ public class ImageHandler {
 
             Log.e("loadImageFile", "Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
 
-            URI remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
+            URI remoteURl = null;
+
+            try {
+                remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
+            } catch (Exception error){
+                remoteURl = URI.create(staticVariables.logo70kUrl);
+            }
             return remoteURl;
         }
 
