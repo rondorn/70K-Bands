@@ -19,9 +19,13 @@ func gatherData () {
     
     let defaults = UserDefaults.standard
     var artistUrl = defaults.string(forKey: "artistUrl")
-    
+
     if (artistUrl == "Default"){
-       artistUrl = getDefaultArtistUrl()
+        artistUrl = getPointerUrlData(keyValue: artistUrlpointer)
+    
+    } else if (artistUrl == "lastYear"){
+        artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
+    
     }
     
     print ("Getting band data from " + artistUrl!);
@@ -123,23 +127,6 @@ func readBandFile (){
             print ("Encountered an error on reading file" + error.debugDescription)
         }
     }
-}
-
-func getDefaultArtistUrl() -> String{
-    
-    var url = String()
-    let httpData = getUrlData(defaultStorageUrl)
-    
-    let dataArray = httpData.components(separatedBy: "\n")
-    for record in dataArray {
-        var valueArray = record.components(separatedBy: "::")
-        if (valueArray[0] == "artistUrl"){
-            url = valueArray[1]
-        }
-    }
-    
-    print ("Using default BandName URL of " + url)
-    return url
 }
 
 func getUrlData(_ urlString: String) -> String{

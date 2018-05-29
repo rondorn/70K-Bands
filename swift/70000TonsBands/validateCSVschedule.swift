@@ -108,15 +108,6 @@ class validateCSVSchedule {
                 regex = nil
             }
             
-            /*
-            var match = regex?.numberOfMatchesInString(lineData[fieldName]!, options: nil, range: NSRange(location:0, length:count(lineData[fieldName]!)))
-            
-            println(match)
-            
-            if (match == 0) {
-                errorMessage += fieldName + " of  '" + lineData[fieldName]! + "' does not appear valid at line " + String(count) + "\n"
-            }
-            */
         }
 
     }
