@@ -9,6 +9,13 @@
 import Foundation
 import CoreData
 
+//prevent alerts from being re-added all the time
+var alertTracker = [String]()
+
+//prevent mutiple threads doing the same thing
+var isAlertGenerationRunning = false
+var isLoadingBandData = false
+var isLoadingCommentData = false
 
 //CSV field names
 var typeField = "Type"
@@ -61,10 +68,15 @@ let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descrip
 let artistUrlDefault = "Default"
 let scheduleUrlDefault = "Default"
 
-let lastYearsartistUrlDefault = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1"
-let lastYearsScheduleUrlDefault = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1"
+let lastYearsartistUrlDefault = "lastYear"
+let lastYearsScheduleUrlDefault = "lastYear"
 
-let defaultStorageUrl = "https://www.dropbox.com/s/29ktavd9fksxw85/productionPointer1.txt?dl=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1"
+
+let artistUrlpointer = "artistUrl"
+let lastYearsartistUrlpointer = "lastYearsartistUrl"
+let scheduleUrlpointer = "scheduleUrl";
+let lastYearscheduleUrlpointer = "lastYearsScheduleUrl";
 
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
@@ -106,5 +118,22 @@ func getDocumentsDirectory() -> NSString {
     return documentsDirectory as NSString
 }
 
-
+func getPointerUrlData(keyValue: String) -> String {
+    
+    var url = String()
+    let httpData = getUrlData(defaultStorageUrl)
+    
+    let dataArray = httpData.components(separatedBy: "\n")
+    for record in dataArray {
+        var valueArray = record.components(separatedBy: "::")
+        print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
+        if (valueArray[0] == keyValue){
+            url = valueArray[1]
+            break
+        }
+    }
+    
+    print ("Using default " + keyValue + " of " + url)
+    return url
+}
 

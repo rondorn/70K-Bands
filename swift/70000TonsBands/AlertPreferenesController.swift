@@ -174,6 +174,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             defaults.set(minBeforeAlertTemp!, forKey: "minBeforeAlert")
             MinBeforeAlert.resignFirstResponder()
             
+            let localNotification = localNoticationHandler()
+            localNotification.clearNotifications()
+            
         } else {
             
             MinBeforeAlert.resignFirstResponder()

@@ -133,6 +133,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     func showReceivedMessage(_ notification: Notification) {
+        //print ("SendingAlert! recieved notification!! \(notification)")
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
                 showAlert("Message received", message: aps["alert"]!)
@@ -155,17 +156,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func setFilterButtons(){
         
         if (getMustSeeOn() == false){
-            //mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
-            mustSeeButton.setTitle(mustSeeIcon, for: UIControlState())
+            print ("Setting image to alt")
+            mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
+            //mustSeeButton.setTitle(mustSeeIcon, for: UIControlState())
         }
         if (getMightSeeOn() == false){
-            //mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
         }
         if (getWontSeeOn() == false){
-            //wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
         }
         if (getUnknownSeeOn() == false){
-            //unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
         }
     }
     
@@ -180,11 +182,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshAlerts(){
-        //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            let localNotication = localNoticationHandler()
-            localNotication.clearNotifications()
-            localNotication.addNotifications()
+        if (isAlertGenerationRunning == false){
+            
+            isAlertGenerationRunning == true
+            
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                if #available(iOS 10.0, *) {
+                    let localNotication = localNoticationHandler()
+                    localNotication.addNotifications()
+                } else {
+                    // Fallback on earlier versions
+                }
+                isAlertGenerationRunning == false
+            }
         }
     }
     
@@ -236,52 +246,58 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshData(){
         
-        refreshFromCache()
-        
-        let priority = DispatchQueue.GlobalQueuePriority.default
-        
-        DispatchQueue.global(priority: priority).async {
+        if (isLoadingBandData == false){
             
-            gatherData();
+            isLoadingBandData = true
+            refreshFromCache()
             
-            if (offline == false){
-                schedule.DownloadCsv()
-                let validate = validateCSVSchedule()
-                validate.validateSchedule()
+            let priority = DispatchQueue.GlobalQueuePriority.default
             
-                bandNotes.getAllDescriptions()
-                getAllImages()
+            DispatchQueue.global(priority: priority).async {
                 
-            }
-            self.bandsByName = [String]()
-            self.bands =  [String]()
-            
-            schedule.populateSchedule()
-            self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
-            self.bandsByName = self.bands
-            DispatchQueue.main.async{
+                gatherData();
                 
-                self.ensureCorrectSorting()
-                self.updateCountLable()
-                self.tableView.reloadData()
-                self.blankScreenActivityIndicator.stopAnimating()
+                if (offline == false){
+                    schedule.DownloadCsv()
+                    let validate = validateCSVSchedule()
+                    validate.validateSchedule()
+                
+                    bandNotes.getAllDescriptions()
+                    getAllImages()
+                    
+                }
+                self.bandsByName = [String]()
+                self.bands =  [String]()
+                
+                schedule.populateSchedule()
+                self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+                self.bandsByName = self.bands
+                DispatchQueue.main.async{
+                    
+                    self.ensureCorrectSorting()
+                    self.updateCountLable()
+                    self.tableView.reloadData()
+                    self.blankScreenActivityIndicator.stopAnimating()
+                }
             }
+            
+            if (bands.count == 0){
+                blankScreenActivityIndicator.startAnimating()
+            }
+            ensureCorrectSorting()
+            refreshAlerts()
+            
+            updateCountLable()
+            self.tableView.reloadData()
+            if (self.refreshControl?.isRefreshing == true){
+                sleep(5)
+                self.refreshControl?.endRefreshing()
+                let localNotification = localNoticationHandler()
+                localNotification.clearNotifications()
+            }
+        
+            isLoadingBandData = false
         }
-        
-        if (bands.count == 0){
-            blankScreenActivityIndicator.startAnimating()
-        }
-        ensureCorrectSorting()
-        refreshAlerts()
-        
-        updateCountLable()
-        self.tableView.reloadData()
-        if (self.refreshControl?.isRefreshing == true){
-            sleep(5)
-            self.refreshControl?.endRefreshing()
-        }
-        
-        
     } 
     
     func showHideFilterMenu(){
@@ -303,12 +319,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
                 sender.setTitle(mustSeeIcon, for: UIControlState())
-                //sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+                sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
             
             } else {
                 setMustSeeOn(true)
                 sender.setTitle(mustSeeIcon, for: UIControlState())
-                //sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
+                sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
 
             }
 
@@ -466,7 +482,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 1")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 1);
@@ -475,7 +491,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         })
 
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -484,7 +500,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -493,7 +509,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -501,11 +517,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        
-        //mustSeeAction.backgroundColor = UIColor.white
-        //mightSeeAction.backgroundColor = UIColor.white
-        //wontSeeAction.backgroundColor = UIColor.white
-        //setUnknownAction.backgroundColor = UIColor.white
         
         return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
     }

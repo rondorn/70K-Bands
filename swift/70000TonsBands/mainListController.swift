@@ -342,10 +342,10 @@ import Foundation
         
         if (indexString.count > 1){
             
-            let location = schedule.getData(bandName, index:timeIndex, variable: "Location")
-            let day = schedule.getData(bandName, index: timeIndex, variable: "Day")
-            let startTime = schedule.getData(bandName, index: timeIndex, variable: "Start Time")
-            let eventIcon = getEventTypeIcon(schedule.getData(bandName, index: timeIndex, variable: "Type"))
+            let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
+            let day = schedule.getData(bandName, index: timeIndex, variable: dayField)
+            let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
+            let eventIcon = getEventTypeIcon(schedule.getData(bandName, index: timeIndex, variable: typeField))
             
             if (listOfVenues.contains(location) == false){
                 print ("Adding location " + location)
@@ -353,9 +353,8 @@ import Foundation
             }
             
             print(bandName + " displaying timeIndex of \(timeIndex) ")
-            cellText += " - " + day
-            cellText += " " + startTime
-            cellText += " " + location + " " + eventIcon;
+            cellText += " - " + formatTimeValue(timeValue: startTime)
+            cellText += " " + location + " - " + day + " " + eventIcon;
             scheduleButton = false
             
         } else {

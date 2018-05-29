@@ -39,7 +39,7 @@ open class scheduleHandler {
                     unuiqueIndex[dateIndex] = 1
                     
                     let dateFormatter = DateFormatter();
-                    dateFormatter.dateFormat = "YYYY-M-d h:mm a"
+                    dateFormatter.dateFormat = "YYYY-M-d HH:mm"
                     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
                     
                     print("Adding index for band " + lineData[bandField]! + " ")
@@ -88,7 +88,11 @@ open class scheduleHandler {
         
         print ("Downloading Schedule URL " + scheduleUrl);
         if (scheduleUrl == "Default"){
-            scheduleUrl = getDefaultScheduleUrl()
+            scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
+            
+        } else if (scheduleUrl == "lastYear"){
+            scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
+        
         }
         
         print("scheduleUrl = " + scheduleUrl)
@@ -112,37 +116,20 @@ open class scheduleHandler {
             
         }
     }
-    
-    func getDefaultScheduleUrl() -> String{
-        
-        var url = String()
-        let httpData = getUrlData(defaultStorageUrl)
-        
-        let dataArray = httpData.components(separatedBy: "\n")
-        for record in dataArray {
-            var valueArray = record.components(separatedBy: "::")
-            if (valueArray[0] == "scheduleUrl"){
-                url = valueArray[1]
-            }
-        }
-        
-        print ("Using default Schedule URL of " + url)
-        return url
-    }
-    
+
     func getDateIndex (_ dateString: String, timeString: String, band:String) -> TimeInterval{
         
         var startTimeIndex = TimeInterval()
         let fullTimeString: String = dateString + " " + timeString;
         
         let dateFormatter = DateFormatter();
-        dateFormatter.dateFormat = "M-d-yy h:mm a"
+        dateFormatter.dateFormat = "M-d-yy HH:mm"
         dateFormatter.timeZone = TimeZone.current
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         if (fullTimeString.isEmpty == false){
-            print ("timeString '" + fullTimeString + "'");
-            print(dateFormatter.date(from: fullTimeString))
+            //print ("timeString '" + fullTimeString + "'");
+            //print(dateFormatter.date(from: fullTimeString))
             if (dateFormatter.date(from: fullTimeString) != nil){
                 startTimeIndex = dateFormatter.date(from: fullTimeString)!.timeIntervalSince1970
                 print(startTimeIndex)
@@ -188,8 +175,10 @@ open class scheduleHandler {
             if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
                 if (self.schedulingData[bandName]?.isEmpty == false){
                     if (self.schedulingData[bandName]![index] != nil){
-                        print ("value for variable is " + value)
-                        self.schedulingData[bandName]![index]![variable] = value
+                        if (value.isEmpty == false){
+                            print ("value for variable is " + value)
+                            self.schedulingData[bandName]![index]![variable] = value
+                        }
                     }
                 }
             }

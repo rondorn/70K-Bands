@@ -21,7 +21,7 @@ var lastFilters = directoryPath.appendingPathComponent("lastFilters")
 func writeFiltersFile(){
     
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-    //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
+        
         var prefsString = String()
         
         prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
