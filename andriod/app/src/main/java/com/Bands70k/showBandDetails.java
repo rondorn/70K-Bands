@@ -302,8 +302,8 @@ public class showBandDetails extends Activity {
 
                 htmlData += "<li>";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString() + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString() + " - ";
+                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString()) + " - ";
+                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
                 htmlData += location + locationIcon + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
                 htmlData += staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType());

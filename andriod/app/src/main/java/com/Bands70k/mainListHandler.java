@@ -251,9 +251,9 @@ public class mainListHandler {
             }
             if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
                 line += bandName + " - ";
+                line += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString()) + " ";
+                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()  + " - ";
                 line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowDay() + " ";
-                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString() + " ";
-                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                 line += " " + staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
             }
         } else {
