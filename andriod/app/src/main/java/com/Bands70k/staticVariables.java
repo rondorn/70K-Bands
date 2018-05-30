@@ -1,9 +1,13 @@
 package com.Bands70k;
 
+import android.content.Context;
 import android.os.Build;
 import android.os.Parcelable;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,14 +52,10 @@ public class staticVariables {
     public final static String defaultUrls = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1";
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
 
-    //testing pointer
-    //public final static String defaultUrls = "https://www.dropbox.com/s/w2mz8p0mpght1yt/productionPointer3.txt?dl=1";
-
-
-    public final static String previousYearArtist = "https://www.dropbox.com/s/0uz41zl8jbirca2/lastYeaysartistLineup.csv?dl=1";
-    public final static String previousYearSchedule = "https://www.dropbox.com/s/czrg31whgc0211p/lastYearsSchedule.csv?dl=1";
-    //public final static String previousYearSchedule = "https://www.dropbox.com/s/ufn4m1e2fn07arf/artistsSchedule2016.csv?dl=1";
-    //public final static String previousYearSchedule = "https://www.dropbox.com/s/wk73mdnvxu4jey5/lastYearsScheduleExp.csv?dl=1";
+    public static String artistURL;
+    public static String scheduleURL;
+    public static String previousYearArtist;
+    public static String previousYearSchedule;
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 
@@ -72,6 +72,8 @@ public class staticVariables {
     public static Boolean refreshActivated = false;
 
     public static String writeNoteHtml = "";
+
+    public static Context context;
 
     public static void staticVariablesInitialize (){
 
@@ -90,6 +92,14 @@ public class staticVariables {
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
             rinkVenueIcon = "\u26F8";
+        }
+
+        if (previousYearArtist == null) {
+            lookupUrls();
+        }
+
+        if (context == null){
+            context = Bands70k.getAppContext();
         }
     }
 
@@ -159,5 +169,44 @@ public class staticVariables {
         }
 
         return icon;
+    }
+
+    private static void lookupUrls(){
+
+        try {
+            URL url = new URL(staticVariables.defaultUrls);
+            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            String data = "";
+            String line;
+
+            Map<String, String> downloadUrls = new HashMap<String,String>();
+
+            while ((line = in.readLine()) != null) {
+                data += line + "\n";
+            }
+            in.close();
+
+            Log.d("defaultUrls", data);
+
+            String[] records = data.split("\\n");
+            for (String record : records) {
+                Log.d("defaultUrls 1", record);
+                String[] recordData = record.split("::");
+                //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
+                if (recordData.length >= 2) {
+                    downloadUrls.put(recordData[0], recordData[1]);
+                }
+
+            }
+
+            previousYearArtist = downloadUrls.get("lastYearsartistUrl");
+            previousYearSchedule = downloadUrls.get("lastYearsScheduleUrl");
+            artistURL = downloadUrls.get("artistUrl");
+            scheduleURL = downloadUrls.get("scheduleUrl");
+
+        } catch (Exception error){
+            Log.d("Error", error.getMessage());
+        }
+
     }
 }

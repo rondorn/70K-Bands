@@ -211,34 +211,9 @@ public class BandInfo {
 
 
         } else if (preferences.getArtsistsUrl().equals("Default") || preferences.getScheduleUrl().equals("Default")) {
-            String data = "";
-            try {
-                String line;
-                URL url = new URL(staticVariables.defaultUrls);
-                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            downloadUrls.put("artistUrl", staticVariables.artistURL);
+            downloadUrls.put("scheduleUrl", staticVariables.scheduleURL);
 
-                while ((line = in.readLine()) != null) {
-                    data += line + "\n";
-                }
-                in.close();
-
-                Log.d("defaultUrls", data);
-
-                String[] records = data.split("\\n");
-                for (String record : records) {
-                    Log.d("defaultUrls 1", record);
-                    String[] recordData = record.split("::");
-                    //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
-                    if (recordData.length >= 2) {
-                        downloadUrls.put(recordData[0], recordData[1]);
-                    }
-
-                }
-                Log.d("defaultUrls 2", downloadUrls.toString());
-
-            } catch (Exception error) {
-                Log.e("ErrorDefaultUrls", error.getMessage());
-            }
         }
         if (preferences.getUseLastYearsData() == false) {
             if (!preferences.getArtsistsUrl().equals("Default")) {
