@@ -186,7 +186,7 @@ public class BandInfo {
 
         String data = "";
         Log.d("The bandName is ", bandName);
-        Log.d("Here is the full map", bandData.toString());
+        //Log.d("Here is the full map", bandData.toString());
         Map<String, Map> detailedData = bandData.get(bandName);
 
         //Log.d("Here is the map", detailedData.toString());
@@ -202,28 +202,27 @@ public class BandInfo {
 
     public void getDownloadtUrls(){
 
-        preferencesHandler preferences = new preferencesHandler();
-        preferences.loadData();
+        //staticVariables.preferences.loadData();
 
-        if (preferences.getUseLastYearsData() == true){
+        if (staticVariables.preferences.getUseLastYearsData() == true){
             downloadUrls.put("artistUrl", staticVariables.previousYearArtist);
             downloadUrls.put("scheduleUrl", staticVariables.previousYearSchedule);
 
 
-        } else if (preferences.getArtsistsUrl().equals("Default") || preferences.getScheduleUrl().equals("Default")) {
+        } else if (staticVariables.preferences.getArtsistsUrl().equals("Default") || staticVariables.preferences.getScheduleUrl().equals("Default")) {
             downloadUrls.put("artistUrl", staticVariables.artistURL);
             downloadUrls.put("scheduleUrl", staticVariables.scheduleURL);
 
         }
-        if (preferences.getUseLastYearsData() == false) {
-            if (!preferences.getArtsistsUrl().equals("Default")) {
-                downloadUrls.put("artistUrl", preferences.getArtsistsUrl());
+        if (staticVariables.preferences.getUseLastYearsData() == false) {
+            if (!staticVariables.preferences.getArtsistsUrl().equals("Default")) {
+                downloadUrls.put("artistUrl", staticVariables.preferences.getArtsistsUrl());
             }
-            if (!preferences.getScheduleUrl().equals("Default")) {
-                downloadUrls.put("scheduleUrl", preferences.getScheduleUrl());
+            if (!staticVariables.preferences.getScheduleUrl().equals("Default")) {
+                downloadUrls.put("scheduleUrl", staticVariables.preferences.getScheduleUrl());
             }
-            if (!preferences.getDescriptionMapUrl().equals("Default")) {
-                downloadUrls.put("descriptionMap", preferences.getDescriptionMapUrl());
+            if (!staticVariables.preferences.getDescriptionMapUrl().equals("Default")) {
+                downloadUrls.put("descriptionMap", staticVariables.preferences.getDescriptionMapUrl());
             }
         }
     }
