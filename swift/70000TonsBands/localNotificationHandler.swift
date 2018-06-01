@@ -142,18 +142,21 @@ class localNoticationHandler {
                 for startTime in schedule.schedulingData[bandName.0]!{
                     let alertTime = NSDate(timeIntervalSince1970: startTime.0)
                     print ("Date provided is \(alertTime)")
-                    if (willAddToNotifications(bandName.0, eventTypeValue:schedule.schedulingData[bandName.0]![startTime.0]![typeField]!) == true){
-                        let compareResult = alertTime.compare(NSDate() as Date)
-                        if compareResult == ComparisonResult.orderedDescending {
-                            
-                            getAlertMessage(bandName.0, indexValue: alertTime as Date)
-                            if #available(iOS 10.0, *) {
-                                addNotification(message: alertTextMessage, showTime: alertTime)
-                            } else {
-                                // Fallback on earlier versions
+                    //if (startTime.0.isZero == false && bandName.0.isEmpty == false &&
+                    //    schedule.schedulingData[bandName.0]![startTime.0]![typeField] != nil){
+                        if (willAddToNotifications(bandName.0, eventTypeValue:schedule.schedulingData[bandName.0]![startTime.0]![typeField]!) == true){
+                            let compareResult = alertTime.compare(NSDate() as Date)
+                            if compareResult == ComparisonResult.orderedDescending {
+                                
+                                getAlertMessage(bandName.0, indexValue: alertTime as Date)
+                                if #available(iOS 10.0, *) {
+                                    addNotification(message: alertTextMessage, showTime: alertTime)
+                                } else {
+                                    // Fallback on earlier versions
+                                }
                             }
                         }
-                    }
+                    //}
                 }
             }
         }

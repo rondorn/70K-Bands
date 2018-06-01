@@ -155,10 +155,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func setFilterButtons(){
         
+        print ("Status of getWontSeeOn = \(getWontSeeOn())")
         if (getMustSeeOn() == false){
             print ("Setting image to alt")
             mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
-            //mustSeeButton.setTitle(mustSeeIcon, for: UIControlState())
         }
         if (getMightSeeOn() == false){
             mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())

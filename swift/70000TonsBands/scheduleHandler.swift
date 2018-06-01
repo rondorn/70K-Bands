@@ -174,18 +174,16 @@ open class scheduleHandler {
         if (variable.isEmpty == false && value.isEmpty == false){
             if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
                 if (self.schedulingData[bandName]?.isEmpty == false){
-                    if (self.schedulingData[bandName]![index] != nil){
+                    //if (self.schedulingData[bandName]![index]?.isEmpty == false){
                         if (value.isEmpty == false){
                             print ("value for variable is " + value)
                             self.schedulingData[bandName]![index]![variable] = value
                         }
-                    }
+                    //}
                 }
             }
         }
-        if (self.schedulingData[bandName]![index]![variable] == nil){
-            self.schedulingData[bandName]![index]![variable] = "";
-        }
+        
     }
     
     func getData(_ bandName:String, index:TimeInterval, variable:String) -> String{
