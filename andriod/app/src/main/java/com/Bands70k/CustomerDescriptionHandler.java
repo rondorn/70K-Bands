@@ -35,8 +35,12 @@ public class CustomerDescriptionHandler {
         BandInfo bandInfo = new BandInfo();
         bandInfo.getDownloadtUrls();
 
+        String descriptionMapPointer = "descriptionMap";
+        if (staticVariables.preferences.getUseLastYearsData() == true){
+            descriptionMapPointer = "descriptionMapLastYear";
+        }
         try {
-            URL u = new URL(bandInfo.downloadUrls.get("descriptionMap"));
+            URL u = new URL(bandInfo.downloadUrls.get(descriptionMapPointer));
             InputStream is = u.openStream();
 
             DataInputStream dis = new DataInputStream(is);
