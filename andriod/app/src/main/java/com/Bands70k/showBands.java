@@ -54,7 +54,6 @@ public class showBands extends Activity {
     private BandInfo bandInfo;
     private CustomerDescriptionHandler bandNotes;
     public Button sortButton;
-    private preferencesHandler preferences = new preferencesHandler();
 
     public static Boolean inBackground = true;
 
@@ -70,6 +69,7 @@ public class showBands extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_bands);
 
@@ -92,9 +92,17 @@ public class showBands extends Activity {
         // Registering BroadcastReceiver
         registerReceiver();
 
+        if (staticVariables.preferences == null) {
+            staticVariables.preferences = new preferencesHandler();
+        }
+
+        staticVariablesInitialize();
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
-        preferences.loadData();
+        staticVariables.preferences.loadData();
+
+        Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
+        Log.d("prefsData", "Show Unknown 2  = " + preferences.getShowUnknown());
 
         TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
         jumpToTop.setOnClickListener(new Button.OnClickListener() {
@@ -105,6 +113,8 @@ public class showBands extends Activity {
 
         populateBandList();
         showNotification();
+
+        setFilterDefaults();
     }
 
     private void setupSwipeList (){
@@ -338,6 +348,64 @@ public class showBands extends Activity {
         });
     };
 
+    private void setFilterDefaults(){
+
+        ToggleButton mustFilterButton = (ToggleButton)findViewById(R.id.mustSeeFilter);
+        //setMustFilterButtonInverted(mustFilterButton,preferences.getShowMust());
+        //filterToogle.put(mustSeeIcon, preferences.getShowMust());
+
+
+        ToggleButton mightFilterButton = (ToggleButton)findViewById(R.id.mightSeeFilter);
+        //setMightFilterButtonInverted(mightFilterButton,preferences.getShowMight());
+        //filterToogle.put(mightSeeIcon, preferences.getShowMight());
+
+        ToggleButton wontFilterButton = (ToggleButton)findViewById(R.id.wontSeeFilter);
+        //setWontFilterButtonInverted(wontFilterButton,preferences.getShowWont());
+        //filterToogle.put(wontSeeIcon, preferences.getShowWont());
+
+        ToggleButton unknownFilterButton = (ToggleButton)findViewById(R.id.unknownFilter);
+        if (staticVariables.preferences.getShowUnknown() == true) {
+            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+            unknownFilterButton.setChecked(true);
+        } else {
+            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+            unknownFilterButton.setChecked(false);
+        }
+        //setUnknownFilterButtonInverted(unknownFilterButton,preferences.getShowUnknown());
+        //filterToogle.put(unknownIcon, preferences.getShowUnknown());
+
+        Log.d(TAG, "settingFilters for ShowUnknown is " +  preferences.getShowUnknown());
+
+    }
+
+    private void setMustFilterButtonInverted(ToggleButton toggleButtonValue, Boolean setTo){
+        if (setTo == true){
+            setMustFilterButton(toggleButtonValue,false);
+        } else {
+            setMustFilterButton(toggleButtonValue,true);
+        }
+    }
+    private void setMightFilterButtonInverted(ToggleButton toggleButtonValue, Boolean setTo){
+        if (setTo == true){
+            setMightFilterButton(toggleButtonValue,false);
+        } else {
+            setMightFilterButton(toggleButtonValue,true);
+        }
+    }
+    private void setWontFilterButtonInverted(ToggleButton toggleButtonValue, Boolean setTo){
+        if (setTo == true){
+            setWontFilterButton(toggleButtonValue,false);
+        } else {
+            setWontFilterButton(toggleButtonValue,true);
+        }
+    }
+    private void setUnknownFilterButtonInverted(ToggleButton toggleButtonValue, Boolean setTo){
+        if (setTo == true){
+            setUnknownFilterButton(toggleButtonValue,false);
+        } else {
+            setUnknownFilterButton(toggleButtonValue,true);
+        }
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -353,6 +421,9 @@ public class showBands extends Activity {
 
         String message = "These are the bands I MUST see on the 70,000 Tons Cruise\n\n";
 
+        scheduleAlertHandler alertHandler = new scheduleAlertHandler();
+        alertHandler.sendLocalAlert("This is just a test", 10);
+
         for (String band: bandNames){
             String bandRank = rankStore.getRankForBand(band);
             Log.d("BandRank", bandRank);
@@ -367,79 +438,121 @@ public class showBands extends Activity {
 
     public void setupButtonFilters(){
 
-        staticVariablesInitialize();
-
         ToggleButton mustFilterButton = (ToggleButton)findViewById(R.id.mustSeeFilter);
         mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
 
         if (filterToogle.get(mustSeeIcon) == true) {
-            Log.d("filter is ", "true");
-            mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
-            mustFilterButton.setChecked(true);
+            setMustFilterButton(mustFilterButton, false);
 
         } else {
-            mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
-            mustFilterButton.setChecked(false);
+            setMustFilterButton(mustFilterButton, true);
         }
 
         ToggleButton mightFilterButton = (ToggleButton)findViewById(R.id.mightSeeFilter);
         mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
 
         if (filterToogle.get(mightSeeIcon) == true) {
-            mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
-            mightFilterButton.setChecked(true);
-
+            setMightFilterButton(mightFilterButton, false);
         } else {
-            mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
-            mightFilterButton.setChecked(false);
+            setMightFilterButton(mightFilterButton, true);
         }
 
         ToggleButton wontFilterButton = (ToggleButton)findViewById(R.id.wontSeeFilter);
         wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
 
         if (filterToogle.get(wontSeeIcon) == true) {
-            wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
-            wontFilterButton.setChecked(true);
+            setWontFilterButton(wontFilterButton, false);
 
         } else {
-            wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
-            wontFilterButton.setChecked(false);
+            setWontFilterButton(wontFilterButton, true);
         }
 
         ToggleButton unknownFilterButton = (ToggleButton)findViewById(R.id.unknownFilter);
         unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
 
         if (filterToogle.get(unknownIcon) == true) {
-            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
-            unknownFilterButton.setChecked(true);
+            setUnknownFilterButton(unknownFilterButton, false);
 
         } else {
-            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
-            unknownFilterButton.setChecked(false);
+            setUnknownFilterButton(unknownFilterButton, true);
         }
 
-        mustFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toogleDisplayFilter(mustSeeIcon);
-            }
-        });
-        mightFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+
+    private void setMustFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+            preferences.setshowMust(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+            preferences.setshowMust(false);
+        }
+
+        filterButton.setChecked(setTo);
+        preferences.saveData();
+
+        try {
+            filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    toogleDisplayFilter(mustSeeIcon);
+                }
+            });
+        } catch (Exception error){
+
+        }
+
+    }
+    private void setMightFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+            preferences.setshowMight(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+            preferences.setshowMight(false);
+        }
+        filterButton.setChecked(setTo);
+        preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(mightSeeIcon);
             }
         });
-        wontFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+    private void setWontFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+            preferences.setshowWont(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+            preferences.setshowWont(false);
+        }
+        filterButton.setChecked(setTo);
+        preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(wontSeeIcon);
             }
         });
-        unknownFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+    private void setUnknownFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
+            preferences.setshowUnknown(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+            preferences.setshowUnknown(false);
+        }
+        filterButton.setChecked(setTo);
+        preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(unknownIcon);
             }
         });
     }
-
 
     @Override
     public
@@ -488,7 +601,7 @@ public class showBands extends Activity {
         AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
         myNotesTask.execute();
 
-        scheduleAlertHandler alerts = new scheduleAlertHandler(preferences, getApplicationContext());
+        scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
         BandInfo bandInfoNames = new BandInfo();
@@ -577,6 +690,7 @@ public class showBands extends Activity {
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
         isReceiverRegistered = false;
+
     }
 
     @Override
@@ -644,6 +758,10 @@ public class showBands extends Activity {
     }
 
     @Override
+    protected void onDestroy(){
+        super.onDestroy();
+    }
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -681,7 +799,7 @@ public class showBands extends Activity {
 
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
-        listHandler = new mainListHandler(showBands.this, preferences);
+        listHandler = new mainListHandler(showBands.this);
         try {
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
         } catch (Exception error){
@@ -712,32 +830,39 @@ public class showBands extends Activity {
 
         @Override
         protected void onPreExecute() {
-            Log.d("AsyncList refresh", "Starting AsyncList refresh");
-            super.onPreExecute();
-            bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+
+            if (staticVariables.loadingBands == false) {
+                Log.d("AsyncList refresh", "Starting AsyncList refresh");
+                super.onPreExecute();
+                bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+                bandNamesPullRefresh.setRefreshing(true);
+                refreshData();
+                super.onPreExecute();
+            }
             bandNamesPullRefresh.setRefreshing(true);
-            refreshData();
-            super.onPreExecute();
         }
 
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
+            if (staticVariables.loadingBands == false) {
+                staticVariables.loadingBands = true;
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
 
-            Log.d("AsyncTask", "Downloading data");
+                Log.d("AsyncTask", "Downloading data");
 
-            try {
-                BandInfo bandInfo = new BandInfo();
-                bandInfo.DownloadBandFile();
-                //bandNotes.getAllDescriptions();
-            } catch (Exception error){
-                Log.d("bandInfo", error.getMessage());
+                try {
+                    BandInfo bandInfo = new BandInfo();
+                    bandInfo.DownloadBandFile();
+                    //bandNotes.getAllDescriptions();
+                } catch (Exception error) {
+                    Log.d("bandInfo", error.getMessage());
+                }
+                staticVariables.loadingBands = false;
             }
-
             return result;
 
         }
@@ -746,16 +871,19 @@ public class showBands extends Activity {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
-            BandInfo bandInfo = new BandInfo();
-            ArrayList<String> bandList = bandInfo.getBandNames();
+            if (staticVariables.loadingBands == false) {
+                BandInfo bandInfo = new BandInfo();
+                ArrayList<String> bandList = bandInfo.getBandNames();
 
-            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
+                ListAdapter arrayAdapter = updateList(bandInfo, bandList);
 
-            showBands.this.bandNamesList.setAdapter(arrayAdapter);
-            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-            showBands.this.bandNamesList.requestLayout();
-            fileDownloaded = true;
+                showBands.this.bandNamesList.setAdapter(arrayAdapter);
+                showBands.this.bandNamesList.setVisibility(View.VISIBLE);
+                showBands.this.bandNamesList.requestLayout();
+                fileDownloaded = true;
+            }
             bandNamesPullRefresh.setRefreshing(false);
+
 
         }
     }
@@ -773,22 +901,26 @@ public class showBands extends Activity {
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
+            if (staticVariables.loadingNotes == false) {
+                staticVariables.loadingNotes = true;
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
 
-            Log.d("AsyncTask", "Downloading data");
+                Log.d("AsyncTask", "Downloading data");
 
-            try {
-                //download all descriptions in the background
-                bandNotes.getAllDescriptions();
+                try {
+                    //download all descriptions in the background
+                    bandNotes.getAllDescriptions();
 
-                //download all band logos in the background
-                ImageHandler imageHandler = new ImageHandler();
-                imageHandler.getAllRemoteImages();
+                    //download all band logos in the background
+                    ImageHandler imageHandler = new ImageHandler();
+                    imageHandler.getAllRemoteImages();
 
-            } catch (Exception error){
-                Log.d("bandInfo", error.getMessage());
+                } catch (Exception error) {
+                    Log.d("bandInfo", error.getMessage());
+                }
+                staticVariables.loadingNotes = false;
             }
 
             return result;

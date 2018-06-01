@@ -9,7 +9,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by rdorn on 8/1/15.
@@ -71,9 +74,21 @@ public class staticVariables {
 
     public static Boolean refreshActivated = false;
 
+    public static Boolean prefsLoaded = false;
+
+    public static preferencesHandler preferences;
+
     public static String writeNoteHtml = "";
 
     public static Context context;
+
+    public static Boolean loadingBands = false;
+    public static Boolean loadingSchedule = false;
+    public static Boolean loadingNotes = false;
+    public static Boolean schedulingAlert = false;
+    public static Integer alertTracker = 0;
+
+    public static Set<String> alertMessages = new HashSet<String>();
 
     public static void staticVariablesInitialize (){
 

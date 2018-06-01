@@ -33,13 +33,11 @@ public class mainListHandler {
     public showBands showBands;
     public Integer numberOfEvents = 0;
     private Integer numberOfBands = 0;
-    private preferencesHandler preferences;
 
     public Integer allUpcomingEvents = 0;
 
-    public mainListHandler(showBands showBandsValue, preferencesHandler preferencesValue){
+    public mainListHandler(showBands showBandsValue){
         showBands = showBandsValue;
-        preferences = preferencesValue;
     }
 
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
@@ -109,21 +107,21 @@ public class mainListHandler {
         Boolean showVenue = false;
         Log.d("VenueFilter", "Venue is " + venue);
 
-        if (venue.equals("Pool") && preferences.getShowPoolShows() == true){
+        if (venue.equals("Pool") && staticVariables.preferences.getShowPoolShows() == true){
             showVenue = true;
 
-        } else if (venue.equals("Theater") && preferences.getShowTheaterShows() == true){
+        } else if (venue.equals("Theater") && staticVariables.preferences.getShowTheaterShows() == true){
             showVenue = true;
 
-        } else if (venue.equals("Rink") && preferences.getShowRinkShows()== true){
+        } else if (venue.equals("Rink") && staticVariables.preferences.getShowRinkShows()== true){
             showVenue = true;
 
-        } else if (venue.equals("Lounge") && preferences.getShowLoungeShows() == true){
+        } else if (venue.equals("Lounge") && staticVariables.preferences.getShowLoungeShows() == true){
             showVenue = true;
 
         } else if ( venue.equals("Lounge") == false && venue.equals("Rink") == false &&
                     venue.equals("Theater") == false && venue.equals("Pool") == false &&
-                    preferences.getShowOtherShows() == true){
+                    staticVariables.preferences.getShowOtherShows() == true){
 
             showVenue = true;
 
@@ -139,19 +137,19 @@ public class mainListHandler {
         Boolean showEvent = false;
         Log.d("EventFilter", "EventType is " + eventType);
 
-        if (eventType.equals("Special Event") && preferences.getShowSpecialEvents() == true){
+        if (eventType.equals("Special Event") && staticVariables.preferences.getShowSpecialEvents() == true){
             Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Meet and Greet") && preferences.getShowMeetAndGreet() == true){
+        } else if (eventType.equals("Meet and Greet") && staticVariables.preferences.getShowMeetAndGreet() == true){
             Log.d("EventFilter", "preferences.getHideMeetAndGreet() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Clinic") && preferences.getShowClinicEvents() == true){
+        } else if (eventType.equals("Clinic") && staticVariables.preferences.getShowClinicEvents() == true){
             Log.d("EventFilter", "preferences.getHideClinicEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Listening Party") && preferences.getShowAlbumListen() == true){
+        } else if (eventType.equals("Listening Party") && staticVariables.preferences.getShowAlbumListen() == true){
             Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
             showEvent = true;
 

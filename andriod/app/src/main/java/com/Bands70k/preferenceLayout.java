@@ -26,7 +26,6 @@ import java.util.ArrayList;
  */
 public class preferenceLayout  extends Activity {
 
-    private preferencesHandler alertPreferences = new preferencesHandler();
     private CheckBox mustSee;
     private CheckBox mightSee;
     private CheckBox alertForShows;
@@ -46,7 +45,7 @@ public class preferenceLayout  extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.preferences);
 
-        alertPreferences.loadData();
+        //staticVariables.preferences.loadData();
         setValues();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
@@ -79,7 +78,7 @@ public class preferenceLayout  extends Activity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         // Write your code here to execute after dialog
-                        alertPreferences.saveData();
+                        staticVariables.preferences.saveData();
 
                         //delete band file
                         Log.d("preferenceLayout", "Deleting band file");
@@ -93,10 +92,9 @@ public class preferenceLayout  extends Activity {
 
                         //erase existing alerts
                         Log.d("preferenceLayout", "Erasing alerts");
-                        preferencesHandler preferences = new preferencesHandler();
-                        scheduleAlertHandler alerts = new scheduleAlertHandler(preferences, getApplicationContext());
-                        alerts.clearAlerts();
 
+                        scheduleAlertHandler alerts = new scheduleAlertHandler();
+                        alerts.clearAlerts();
 
                         BandInfo bandInfo = new BandInfo();
                         ArrayList<String> bandList  = bandInfo.DownloadBandFile();
@@ -117,7 +115,7 @@ public class preferenceLayout  extends Activity {
                         } else {
                             lastYearsData.setChecked(true);
                         }
-                        alertPreferences.setUseLastYearsData(lastYearsData.isChecked());
+                        staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
                     }
                 });
 
@@ -128,105 +126,105 @@ public class preferenceLayout  extends Activity {
     private void setValues(){
 
         mustSee = (CheckBox)findViewById(R.id.mustSeecheckBox);
-        mustSee.setChecked(alertPreferences.getMustSeeAlert());
+        mustSee.setChecked(staticVariables.preferences.getMustSeeAlert());
         mustSee.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setMustSeeAlert(mustSee.isChecked());
+                staticVariables.preferences.setMustSeeAlert(mustSee.isChecked());
             }
         });
 
         mightSee = (CheckBox)findViewById(R.id.mightSeecheckBox);
-        mightSee.setChecked(alertPreferences.getMightSeeAlert());
+        mightSee.setChecked(staticVariables.preferences.getMightSeeAlert());
         mightSee.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setMightSeeAlert(mightSee.isChecked());
+                staticVariables.preferences.setMightSeeAlert(mightSee.isChecked());
             }
         });
 
         alertForShows = (CheckBox)findViewById(R.id.alertForShows);
-        alertForShows.setChecked(alertPreferences.getAlertForShows());
+        alertForShows.setChecked(staticVariables.preferences.getAlertForShows());
         alertForShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setAlertForShows(alertForShows.isChecked());
+                staticVariables.preferences.setAlertForShows(alertForShows.isChecked());
             }
         });
 
         alertForSpecial = (CheckBox)findViewById(R.id.alertForSpecialEvents);
-        alertForSpecial.setChecked(alertPreferences.getAlertForSpecialEvents());
+        alertForSpecial.setChecked(staticVariables.preferences.getAlertForSpecialEvents());
         alertForSpecial.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setAlertForSpecialEvents(alertForSpecial.isChecked());
+                staticVariables.preferences.setAlertForSpecialEvents(alertForSpecial.isChecked());
             }
         });
 
         alertForClinics = (CheckBox)findViewById(R.id.alertForClinics);
-        alertForClinics.setChecked(alertPreferences.getAlertForClinics());
+        alertForClinics.setChecked(staticVariables.preferences.getAlertForClinics());
         alertForClinics.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setAlertForClinics(alertForClinics.isChecked());
+                staticVariables.preferences.setAlertForClinics(alertForClinics.isChecked());
             }
         });
 
         alertForMeetAndGreet = (CheckBox)findViewById(R.id.alertForMeetAndGreet);
-        alertForMeetAndGreet.setChecked(alertPreferences.getAlertForMeetAndGreet());
+        alertForMeetAndGreet.setChecked(staticVariables.preferences.getAlertForMeetAndGreet());
         alertForMeetAndGreet.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setAlertForMeetAndGreet(alertForMeetAndGreet.isChecked());
+                staticVariables.preferences.setAlertForMeetAndGreet(alertForMeetAndGreet.isChecked());
             }
         });
 
         alertForAlbum = (CheckBox)findViewById(R.id.alertForAlbumListen);
-        alertForAlbum.setChecked(alertPreferences.getAlertForListeningParties());
+        alertForAlbum.setChecked(staticVariables.preferences.getAlertForListeningParties());
         alertForAlbum.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setAlertForListeningParties(alertForAlbum.isChecked());
+                staticVariables.preferences.setAlertForListeningParties(alertForAlbum.isChecked());
             }
         });
 
         lastYearsData = (CheckBox)findViewById(R.id.useLastYearsData);
-        lastYearsData.setChecked(alertPreferences.getUseLastYearsData());
+        lastYearsData.setChecked(staticVariables.preferences.getUseLastYearsData());
         lastYearsData.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setUseLastYearsData(lastYearsData.isChecked());
+                staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
                 buildRebootDialog();
             }
         });
 
         alertMin = (EditText)findViewById(R.id.minBeforeEvent);
-        alertMin.setText(alertPreferences.getMinBeforeToAlert().toString());
+        alertMin.setText(staticVariables.preferences.getMinBeforeToAlert().toString());
 
         bandsUrl = (EditText)findViewById(R.id.bandsUrl);
-        bandsUrl.setText(alertPreferences.getArtsistsUrl().toString());
+        bandsUrl.setText(staticVariables.preferences.getArtsistsUrl().toString());
 
         scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
-        scheduleUrl.setText(alertPreferences.getScheduleUrl().toString());
+        scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
     }
 
 
     @Override
     public void onBackPressed() {
 
-        alertPreferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
-        alertPreferences.setArtsistsUrl(bandsUrl.getText().toString());
-        alertPreferences.setScheduleUrl(scheduleUrl.getText().toString());
+        staticVariables.preferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
+        staticVariables.preferences.setArtsistsUrl(bandsUrl.getText().toString());
+        staticVariables.preferences.setScheduleUrl(scheduleUrl.getText().toString());
 
-        alertPreferences.saveData();
+        staticVariables.preferences.saveData();
         setResult(RESULT_OK, null);
         finish();
 
