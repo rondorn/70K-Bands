@@ -161,12 +161,12 @@ public class preferencesHandler {
                             setshowUnknown(Boolean.valueOf(RowData[1]));
                     }
                 }
-
             } catch (Exception error) {
                 Log.e("Load Data Error", error.getMessage() + "\n" + error.fillInStackTrace());
             }
         }
     }
+
 
     public void saveData() {
 
@@ -194,7 +194,7 @@ public class preferencesHandler {
         dataString += "showMust," + showMust.toString() + "\n";
         dataString += "showMight," + showMight.toString() + "\n";
         dataString += "showWont," + showWont.toString() + "\n";
-        dataString += "showUnknown," + showUnknown.toString() + "\n";
+        dataString += "showUnknown," + this.showUnknown.toString() + "\n";
 
         dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
@@ -274,7 +274,7 @@ public class preferencesHandler {
         return showWont;
     }
     public Boolean getShowUnknown() {
-        return showUnknown;
+        return this.showUnknown;
     }
 
     public void setShowPoolShows(Boolean showPoolShows) {
@@ -317,10 +317,7 @@ public class preferencesHandler {
         this.showWont = showWontValue;
     }
     public void setshowUnknown(Boolean showUnknownValue) {
-        miscCounter = miscCounter + 1;
-        //scheduleAlertHandler ah = new scheduleAlertHandler();
-        //ah.sendLocalAlert(miscCounter.toString() + " - " + loadCounter.toString() + " settingFilters for ShowUnknown is " +  showUnknownValue, 0);
-        showUnknown = showUnknownValue;
+        this.showUnknown = showUnknownValue;
     }
 
     public void setAlertForSpecialEvents(Boolean alertForSpecialEvents) {

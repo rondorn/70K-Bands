@@ -19,6 +19,8 @@ import java.util.Set;
  */
 public class staticVariables {
 
+
+    public static Boolean initializedSortButtons = false;
     public final static String mustSeeIcon = "\uD83C\uDF7A";
     public final static String mightSeeIcon = "\u2714"; //2705 //2611 //2714
     public final static String wontSeeIcon = "\uD83D\uDEAB";
