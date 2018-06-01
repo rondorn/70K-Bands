@@ -135,10 +135,17 @@ open class CustomBandDescription {
         var url = String()
         let httpData = getUrlData(defaultStorageUrl)
         
+        var descriptionPointer = "descriptionMap";
+        
+        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
+            descriptionPointer = "descriptionMapLastYear"
+        }
+        
+        print ("Using description pointer of \(descriptionPointer)")
         let dataArray = httpData.components(separatedBy: "\n")
         for record in dataArray {
             var valueArray = record.components(separatedBy: "::")
-            if (valueArray[0] == "descriptionMap"){
+            if (valueArray[0] == descriptionPointer){
                 url = valueArray[1]
             }
         }
