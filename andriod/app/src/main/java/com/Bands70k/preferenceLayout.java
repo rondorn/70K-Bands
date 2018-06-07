@@ -20,6 +20,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 
+import static android.app.PendingIntent.getActivity;
+
 
 /**
  * Created by rdorn on 8/15/15.
@@ -78,6 +80,7 @@ public class preferenceLayout  extends Activity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         // Write your code here to execute after dialog
+                        staticVariables.preferences.resetMainFilters();
                         staticVariables.preferences.saveData();
 
                         //delete band file
@@ -99,10 +102,10 @@ public class preferenceLayout  extends Activity {
                         BandInfo bandInfo = new BandInfo();
                         ArrayList<String> bandList  = bandInfo.DownloadBandFile();
 
-                        Intent intent = new Intent(preferenceLayout.this, showBands.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
                         finish();
+
+                        finishAffinity();
+                        System.exit(0);
 
                     }
                 });

@@ -1,35 +1,27 @@
 package com.Bands70k;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -39,6 +31,7 @@ import java.util.TimeZone;
 public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<String>> {
 
     private static String staticBandName;
+    private Map<Integer, String> alarmStorageStringHash = new HashMap<Integer, String>();
 
     ArrayList<String> result;
 
@@ -47,7 +40,6 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     @Override
     protected ArrayList<String> doInBackground(String... params) {
-        clearAlerts();
         scheduleAlerts();
 
         return result;
@@ -62,6 +54,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         if (staticVariables.schedulingAlert == false) {
             staticVariables.schedulingAlert = true;
+            clearAlerts();
 
             Calendar cal = Calendar.getInstance();
             long currentEpoch = cal.getTime().getTime();
@@ -102,6 +95,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                     }
                 }
             }
+            saveAlarmStrings(alarmStorageStringHash);
             staticVariables.schedulingAlert = false;
         }
     }
@@ -113,6 +107,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
         notificationIntent.putExtra("messageText", content);
         notificationIntent.setAction(content);
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, unuiqueID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
@@ -122,6 +117,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         } catch (Exception error){
             Log.d("NotifLogs", "Encountered issue scheduling alert " + error.getMessage());
         }
+
+        alarmStorageStringHash.put(unuiqueID, content);
 
 
     }
@@ -228,34 +225,30 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         Log.d ("ClearAlert", "Looping through previosu alerts");
 
-        try {
-            Integer counter = 0;
-            if (staticVariables.alertTracker == 0){
-                staticVariables.alertTracker = 300;
-            }
-            while (counter <= staticVariables.alertTracker){
+        Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
 
-                Log.d ("ClearAlert", "counter = " + counter + " staticVariables.alertTracker = " + staticVariables.alertTracker);
-                counter = counter + 1;
+        AlarmManager clearAlarm = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
 
-                AlarmManager clearAlarm = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
+        for (Integer id : alarmStorageStringHash.keySet()){
 
-                Notification clearNotification = getNotification("");
-                Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
-                notificationIntent.putExtra(String.valueOf(counter), 1);
-                notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, clearNotification);
-                notificationIntent.setAction("");
+            String messageContent = alarmStorageStringHash.get(id);
 
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, counter, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+            Notification tempNotification = getNotification(messageContent);
 
-                clearAlarm.cancel(pendingIntent);
+            Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
+            notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, tempNotification);
+            notificationIntent.putExtra("messageText", messageContent);
+            notificationIntent.setAction(messageContent);
 
-            }
-            staticVariables.alertTracker = 0;
-            staticVariables.alertMessages = new HashSet<String>();
-        } catch (Exception error){
-            Log.e("ERROR", error.getMessage());
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Log.d ("SchedNotications", "Clearing alert " + id.toString());
+            clearAlarm.cancel(pendingIntent);
         }
+
+        alarmStorageStringHash = new HashMap<Integer, String>();
+        saveAlarmStrings(alarmStorageStringHash);
+
     }
 
     public void sendLocalAlert(String alertMessage, int delay){
@@ -264,12 +257,58 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             staticVariables.alertMessages.add(alertMessage);
             staticVariables.alertTracker = staticVariables.alertTracker + 1;
-            int delayInMilliSeconds = delay * 1000;
+            int delayInMilliSeconds = (delay + 60) * 1000;
 
             Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker);
 
             Notification notifyMessage = this.getNotification(alertMessage);
             this.scheduleNotification(notifyMessage, delayInMilliSeconds, staticVariables.alertTracker, alertMessage);
         }
+    }
+
+    //    private Map<Integer, String> alarmStorageStringHash = new HashMap<Integer, String>();
+    //private Map<Integer, Notification> alarmStorageNotificationHash = new HashMap<Integer, Notification>();
+
+    public void saveAlarmStrings(Map<Integer, String> alarmStorageHash){
+
+        try {
+
+            //Saving of object in a file
+            FileOutputStream file = new FileOutputStream(FileHandler70k.alertStorageFile);
+            ObjectOutputStream out = new ObjectOutputStream(file);
+
+            // Method for serialization of object
+            out.writeObject(alarmStorageHash);
+
+            out.close();
+            file.close();
+
+        } catch (Exception error){
+            Log.e("Error", "Unable to save alert tracking data " + error.getLocalizedMessage());
+            Log.e("Error", "Unable to save alert tracking data " + error.fillInStackTrace());
+        }
+    }
+
+    public Map<Integer, String> loadAlarmStringStorage(){
+
+        Map<Integer, String> alarmStorageHash = new HashMap<Integer, String>();
+
+        try
+        {
+            // Reading the object from a file
+            FileInputStream file = new FileInputStream(FileHandler70k.alertStorageFile);
+            ObjectInputStream in = new ObjectInputStream(file);
+
+            // Method for deserialization of object
+            alarmStorageHash = (Map<Integer, String>)in.readObject();
+
+            in.close();
+            file.close();
+
+        } catch (Exception error){
+            Log.e("Error", "Unable to load alert tracking data " + error.getMessage());
+        }
+
+        return alarmStorageHash;
     }
 }

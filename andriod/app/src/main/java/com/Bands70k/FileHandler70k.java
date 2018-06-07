@@ -1,12 +1,19 @@
 package com.Bands70k;
 
+import android.app.PendingIntent;
 import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by rdorn on 6/5/16.
@@ -34,6 +41,10 @@ public class FileHandler70k {
 
     public static final File rootNoMedia = new File(Environment.getExternalStorageDirectory() + directoryName + ".nomedia");
     public static final File mediaNoMedia = new File(Environment.getExternalStorageDirectory() + imageDirectory + ".nomedia");
+
+
+    public static final File alertStorageFile = new File(Environment.getExternalStorageDirectory() + directoryName + "70kbandAlertStorage.data");
+
 
     public FileHandler70k(){
         check70KDirExists();
@@ -133,5 +144,4 @@ public class FileHandler70k {
         }
 
     }
-
 }

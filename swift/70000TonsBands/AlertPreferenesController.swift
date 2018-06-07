@@ -256,6 +256,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 //guess there was no file to delete
             }
             
+            setMustSeeOn(true);
+            setMightSeeOn(true);
+            setWontSeeOn(true);
+            setUnknownSeeOn(true);
+            writeFiltersFile();
+ 
             //clear all existing notifications
             let localNotification = localNoticationHandler()
             localNotification.clearNotifications();
