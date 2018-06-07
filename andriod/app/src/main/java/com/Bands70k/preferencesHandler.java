@@ -48,8 +48,6 @@ public class preferencesHandler {
     private String descriptionMapUrl = "Default";
 
     private Integer loadCounter = 0;
-    private Integer saveCounter = 0;
-    private Integer miscCounter = 0;
 
     public void loadData() {
 
@@ -170,7 +168,6 @@ public class preferencesHandler {
 
     public void saveData() {
 
-        saveCounter = saveCounter + 1;
         String dataString = "";
         dataString += "mustSeeAlert," + mustSeeAlert.toString() + "\n";
         dataString += "mightSeeAlert," + mightSeeAlert.toString() + "\n";
@@ -203,7 +200,14 @@ public class preferencesHandler {
 
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
+    }
 
+    public void resetMainFilters(){
+        this.setshowMust(true);
+        this.setshowMight(true);
+        this.setshowWont(true);
+        this.setshowUnknown(true);
+        this.loadCounter = 0;
     }
 
     public Boolean getMustSeeAlert() {

@@ -253,6 +253,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             let priority = DispatchQueue.GlobalQueuePriority.default
             
+            if (self.bands.count == 0){
+                self.blankScreenActivityIndicator.startAnimating()
+            }
             DispatchQueue.global(priority: priority).async {
                 
                 gatherData();
@@ -279,10 +282,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.tableView.reloadData()
                     self.blankScreenActivityIndicator.stopAnimating()
                 }
-            }
-            
-            if (bands.count == 0){
-                blankScreenActivityIndicator.startAnimating()
+                isLoadingBandData = false
             }
             ensureCorrectSorting()
             refreshAlerts()
@@ -295,8 +295,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let localNotification = localNoticationHandler()
                 localNotification.clearNotifications()
             }
-        
-            isLoadingBandData = false
+            blankScreenActivityIndicator.stopAnimating();
         }
     } 
     

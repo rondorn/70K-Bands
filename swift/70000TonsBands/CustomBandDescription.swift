@@ -48,8 +48,8 @@ open class CustomBandDescription {
                     let bandName = record.key
                     _ = self.getDescription(bandName: bandName)
                 }
+                 isLoadingCommentData = false
             }
-            isLoadingCommentData = false
         }
     }
     

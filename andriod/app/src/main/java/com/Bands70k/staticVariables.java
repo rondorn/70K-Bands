@@ -90,6 +90,7 @@ public class staticVariables {
     public static Boolean schedulingAlert = false;
     public static Integer alertTracker = 0;
 
+
     public static Set<String> alertMessages = new HashSet<String>();
 
     public static void staticVariablesInitialize (){

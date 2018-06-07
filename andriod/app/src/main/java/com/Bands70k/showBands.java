@@ -644,6 +644,9 @@ public class showBands extends Activity {
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
 
+            scheduleAlertHandler alerts = new scheduleAlertHandler();
+            alerts.execute();
+
             if (bandNames == null){
                 bandNames.add("Waiting for data to load, please standby....");
             }
@@ -847,7 +850,8 @@ public class showBands extends Activity {
                 try {
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();
-                    //bandNotes.getAllDescriptions();
+                    bandNotes.getAllDescriptions();
+
                 } catch (Exception error) {
                     Log.d("bandInfo", error.getMessage());
                 }
