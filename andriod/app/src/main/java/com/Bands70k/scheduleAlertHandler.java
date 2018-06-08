@@ -83,7 +83,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                 alertDateTime.setTimeZone(TimeZone.getTimeZone("PST8PDT"));
                                 String alertDateTimeText = alertDateTime.format(new Date(alertTime));
 
-                                int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert() + 1) * 60) * 1000);
+                                int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert()) * 60) * 1000);
                                 int delayInseconds = (delay / 1000);
 
                                 if (delay > 1) {
@@ -223,7 +223,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     public void clearAlerts (){
 
-        Log.d ("ClearAlert", "Looping through previosu alerts");
+        Log.d ("SendLocalAlert", "Looping through previosu alerts");
 
         Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
 
@@ -246,6 +246,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
             clearAlarm.cancel(pendingIntent);
         }
 
+        staticVariables.alertMessages.clear();
         alarmStorageStringHash = new HashMap<Integer, String>();
         saveAlarmStrings(alarmStorageStringHash);
 
@@ -255,9 +256,10 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         if (staticVariables.alertMessages.contains(alertMessage) == false) {
 
+            //delay = delay + 60;
             staticVariables.alertMessages.add(alertMessage);
             staticVariables.alertTracker = staticVariables.alertTracker + 1;
-            int delayInMilliSeconds = (delay + 60) * 1000;
+            int delayInMilliSeconds = delay * 1000;
 
             Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker);
 

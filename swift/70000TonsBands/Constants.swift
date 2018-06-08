@@ -123,16 +123,17 @@ func getPointerUrlData(keyValue: String) -> String {
     var url = String()
     let httpData = getUrlData(defaultStorageUrl)
     
+    if (httpData.isEmpty == false){
     let dataArray = httpData.components(separatedBy: "\n")
-    for record in dataArray {
-        var valueArray = record.components(separatedBy: "::")
-        print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
-        if (valueArray[0] == keyValue){
-            url = valueArray[1]
-            break
+        for record in dataArray {
+            var valueArray = record.components(separatedBy: "::")
+            print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
+            if (valueArray[0] == keyValue){
+                url = valueArray[1]
+                break
+            }
         }
     }
-    
     print ("Using default " + keyValue + " of " + url)
     return url
 }

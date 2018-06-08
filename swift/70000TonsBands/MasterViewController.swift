@@ -76,6 +76,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControlEvents.valueChanged)
         self.refreshControl = refreshControl
+
         scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
         
         readFiltersFile()
@@ -252,10 +253,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             refreshFromCache()
             
             let priority = DispatchQueue.GlobalQueuePriority.default
-            
-            if (self.bands.count == 0){
-                self.blankScreenActivityIndicator.startAnimating()
-            }
+
             DispatchQueue.global(priority: priority).async {
                 
                 gatherData();
@@ -280,10 +278,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.ensureCorrectSorting()
                     self.updateCountLable()
                     self.tableView.reloadData()
-                    self.blankScreenActivityIndicator.stopAnimating()
                 }
                 isLoadingBandData = false
+                self.refreshControl?.endRefreshing();
             }
+
             ensureCorrectSorting()
             refreshAlerts()
             
@@ -295,8 +294,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let localNotification = localNoticationHandler()
                 localNotification.clearNotifications()
             }
-            blankScreenActivityIndicator.stopAnimating();
         }
+        sleep(1);
+        refreshControl?.endRefreshing();
     } 
     
     func showHideFilterMenu(){

@@ -145,7 +145,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 item1.setBackground(new ColorDrawable(Color.WHITE));
                 // set width of an option (px)
-                item1.setWidth(75);
+                item1.setWidth(155);
                 item1.setTitle(mustSeeIcon);
                 item1.setTitleSize(18);
                 item1.setTitleColor(Color.LTGRAY);
@@ -155,7 +155,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item2.setBackground(new ColorDrawable(Color.WHITE));
-                item2.setWidth(75);
+                item2.setWidth(155);
                 item2.setTitle(mightSeeIcon);
                 item2.setTitleSize(18);
                 item2.setTitleColor(Color.LTGRAY);
@@ -165,7 +165,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item3.setBackground(new ColorDrawable(Color.WHITE));
-                item3.setWidth(75);
+                item3.setWidth(155);
                 item3.setTitle(wontSeeIcon);
                 item3.setTitleSize(18);
                 item3.setTitleColor(Color.LTGRAY);
@@ -175,7 +175,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item4.setBackground(new ColorDrawable(Color.WHITE));
-                item4.setWidth(75);
+                item4.setWidth(155);
                 item4.setTitle(unknownIcon);
                 item4.setTitleSize(18);
                 item4.setTitleColor(Color.LTGRAY);
@@ -533,7 +533,7 @@ public class showBands extends Activity {
     private void setUnknownFilterButton(ToggleButton filterButton, Boolean setTo){
         if (setTo == false) {
             filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
-            staticVariables.preferences.setshowUnknown(false);
+            staticVariables.preferences.setshowUnknown(true);
         } else {
             filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
             staticVariables.preferences.setshowUnknown(false);
@@ -629,6 +629,9 @@ public class showBands extends Activity {
             bandNamesList.setAdapter(arrayAdapter);
             bandNamesList.requestLayout();
 
+            scheduleAlertHandler alerts = new scheduleAlertHandler();
+            alerts.execute();
+
         }
     }
 
@@ -685,6 +688,7 @@ public class showBands extends Activity {
         Log.d("State Status", "Saving state during Pause");
         super.onPause();
 
+        staticVariables.preferences.saveData();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
         isReceiverRegistered = false;
 
