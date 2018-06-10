@@ -18,6 +18,23 @@ class localNoticationHandler {
     init(){
         schedule.populateSchedule()
     }
+
+    func refreshAlerts(){
+        if (isAlertGenerationRunning == false){
+            
+            isAlertGenerationRunning = true
+            
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                if #available(iOS 10.0, *) {
+                    let localNotication = localNoticationHandler()
+                    localNotication.addNotifications()
+                } else {
+                    // Fallback on earlier versions
+                }
+                isAlertGenerationRunning = false
+            }
+        }
+    }
     
     func willAddToNotifications(_ bandName: String, eventTypeValue: String) -> Bool{
         
@@ -206,6 +223,7 @@ class localNoticationHandler {
     
     func clearNotifications(){
         if #available(iOS 10.0, *) {
+            print ("sendLocalAlert! clearing all alerts")
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         } else {
         UIApplication.shared.cancelAllLocalNotifications()

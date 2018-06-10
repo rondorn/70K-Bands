@@ -109,6 +109,16 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.navigationItem.title = "Alert Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
+    override func viewWillDisappear(_ animated : Bool) {
+        super.viewWillDisappear(animated)
+        
+        print ("sendLocalAlert! Running new code");
+        //reset alerts
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        localNotification.addNotifications()
+    }
+    
     func setLocalizedLables (){
     
         mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
