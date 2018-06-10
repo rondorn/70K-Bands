@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreData
+import SystemConfiguration
 
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
@@ -99,6 +100,8 @@ let showRinkShowsDefault = "YES"
 let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 
+var internetAvailble = isInternetAvailable();
+
 var schedule = scheduleHandler()
 var bandNotes = CustomBandDescription();
 
@@ -138,3 +141,23 @@ func getPointerUrlData(keyValue: String) -> String {
     return url
 }
 
+func isInternetAvailable() -> Bool {
+    
+    var zeroAddress = sockaddr_in()
+    zeroAddress.sin_len = UInt8(MemoryLayout.size(ofValue: zeroAddress))
+    zeroAddress.sin_family = sa_family_t(AF_INET)
+    
+    let defaultRouteReachability = withUnsafePointer(to: &zeroAddress) {
+        $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {zeroSockAddress in
+            SCNetworkReachabilityCreateWithAddress(nil, zeroSockAddress)
+        }
+    }
+    
+    var flags = SCNetworkReachabilityFlags()
+    if !SCNetworkReachabilityGetFlags(defaultRouteReachability!, &flags) {
+        return false
+    }
+    let isReachable = flags.contains(.reachable)
+    let needsConnection = flags.contains(.connectionRequired)
+    return (isReachable && !needsConnection)
+}

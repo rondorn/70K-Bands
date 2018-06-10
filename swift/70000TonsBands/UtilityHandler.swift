@@ -49,8 +49,9 @@ func formatTimeValue(timeValue: String) -> String {
         if (displayTimeIn24() == false){
             dateFormatter.dateFormat = "h:mm a"
         }
-        
-        newDate = dateFormatter.string(from: date!)
+        if (date != nil){
+            newDate = dateFormatter.string(from: date!)
+        }
     }
     
     return newDate

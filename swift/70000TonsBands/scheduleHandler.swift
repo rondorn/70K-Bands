@@ -142,7 +142,7 @@ open class scheduleHandler {
         
         if (fullTimeString.isEmpty == false){
             print ("timeString '" + fullTimeString + "'");
-            print(dateFormatter.date(from: fullTimeString))
+            print(dateFormatter.date(from: fullTimeString) as Any)
             if (dateFormatter.date(from: fullTimeString) != nil){
                 startTimeIndex = dateFormatter.date(from: fullTimeString)!.timeIntervalSince1970
                 print(startTimeIndex)

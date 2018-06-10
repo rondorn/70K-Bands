@@ -16,9 +16,8 @@ func getWikipediaPage (_ bandName: String) -> String{
     if (wikipediaLink[bandName]?.isEmpty == false){
         wikipediaUrl = wikipediaLink[bandName]!;
 
-        var language: String = Locale.preferredLanguages[0]
+        let language: String = Locale.current.languageCode!
     
-        language = language.substring(to: language.characters.index(language.startIndex, offsetBy: 2))
         print ("Language is " + language);
         if (language != "en"){
             let replacement: String = language + ".wikipedia.org";

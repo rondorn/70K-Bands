@@ -185,16 +185,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func refreshAlerts(){
         if (isAlertGenerationRunning == false){
             
-            isAlertGenerationRunning == true
+            isAlertGenerationRunning = true
             
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 if #available(iOS 10.0, *) {
                     let localNotication = localNoticationHandler()
                     localNotication.addNotifications()
                 } else {
                     // Fallback on earlier versions
                 }
-                isAlertGenerationRunning == false
+                isAlertGenerationRunning = false
             }
         }
     }
@@ -247,14 +247,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshData(){
         
+        internetAvailble = isInternetAvailable();
+        print ("Internetavailable is  \(internetAvailble)");
+        if (internetAvailble == false){
+            self.refreshControl?.endRefreshing();
+        }
+        
         if (isLoadingBandData == false){
             
             isLoadingBandData = true
             refreshFromCache()
             
-            let priority = DispatchQueue.GlobalQueuePriority.default
-
-            DispatchQueue.global(priority: priority).async {
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
                 gatherData();
                 
@@ -273,30 +277,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 schedule.populateSchedule()
                 self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
                 self.bandsByName = self.bands
+                
                 DispatchQueue.main.async{
-                    
                     self.ensureCorrectSorting()
                     self.updateCountLable()
                     self.tableView.reloadData()
+                    self.refreshAlerts()
+                    self.refreshControl?.endRefreshing();
                 }
                 isLoadingBandData = false
-                self.refreshControl?.endRefreshing();
             }
-
-            ensureCorrectSorting()
-            refreshAlerts()
             
             updateCountLable()
             self.tableView.reloadData()
-            if (self.refreshControl?.isRefreshing == true){
-                sleep(5)
-                self.refreshControl?.endRefreshing()
-                let localNotification = localNoticationHandler()
-                localNotification.clearNotifications()
-            }
+            self.refreshControl?.endRefreshing();
         }
-        sleep(1);
-        refreshControl?.endRefreshing();
     } 
     
     func showHideFilterMenu(){
