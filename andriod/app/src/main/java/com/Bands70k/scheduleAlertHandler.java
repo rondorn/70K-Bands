@@ -201,23 +201,27 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     private static boolean checkEventType (scheduleHandler scheduleDetails){
 
-        if (scheduleDetails.getShowType() == staticVariables.show && staticVariables.preferences.getAlertForShows() == false){
+        Log.d ("SendLocalAlertCheck", "'" + staticVariables.meetAndGreet + "' Checking '" + scheduleDetails.getShowType() + "' should send is " +  staticVariables.preferences.getAlertForMeetAndGreet());
+
+        if (scheduleDetails.getShowType().equals(staticVariables.show) && staticVariables.preferences.getAlertForShows() == false){
             return false;
 
-        } else if (scheduleDetails.getShowType() == staticVariables.meetAndGreet && staticVariables.preferences.getAlertForMeetAndGreet() == false){
+        } else if (scheduleDetails.getShowType().equals(staticVariables.meetAndGreet) && staticVariables.preferences.getAlertForMeetAndGreet() == false){
+            Log.d ("SendLocalAlertCheck", "Rejecting alert");
             return false;
 
-        } else if (scheduleDetails.getShowType() == staticVariables.clinic && staticVariables.preferences.getAlertForClinics() == false){
+        } else if (scheduleDetails.getShowType().equals(staticVariables.clinic) && staticVariables.preferences.getAlertForClinics() == false){
             return false;
 
-        } else if (scheduleDetails.getShowType() == staticVariables.specialEvent && staticVariables.preferences.getAlertForSpecialEvents() == false){
+        } else if (scheduleDetails.getShowType().equals(staticVariables.specialEvent) && staticVariables.preferences.getAlertForSpecialEvents() == false){
             return false;
 
-        } else if (scheduleDetails.getShowType() == "Listening Party" && staticVariables.preferences.getAlertForListeningParties() == false){
+        } else if (scheduleDetails.getShowType().equals(staticVariables.listeningEvent) && staticVariables.preferences.getAlertForListeningParties() == false){
             return false;
 
         }
 
+        Log.d ("SendLocalAlertCheck", "alerting");
         return true;
     }
 
