@@ -40,7 +40,7 @@ public class NotificationPublisher extends BroadcastReceiver {
                 //if something goes wrong here...pass on it
             }
         } catch (Exception error){
-            Log.d(TAG, error.getMessage());
+            //Log.d(TAG, error.getMessage());
         }
     }
 

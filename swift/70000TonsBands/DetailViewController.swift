@@ -375,12 +375,15 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             for index in sortedArray {
                 
                 let location = schedule.getData(bandName, index:index, variable: locationField)
-                let day = schedule.getData(bandName, index: index, variable: "Day")
-                let startTime = schedule.getData(bandName, index: index, variable: "Start Time")
-                let endTime = schedule.getData(bandName, index: index, variable: "End Time")
-                let date = schedule.getData(bandName, index:index, variable: "Date")
-                let type = schedule.getData(bandName, index:index, variable: "Type")
-                let notes = schedule.getData(bandName, index:index, variable: "Notes")
+                let day = schedule.getData(bandName, index: index, variable: dayField)
+                var startTime = schedule.getData(bandName, index: index, variable: startTimeField)
+                var endTime = schedule.getData(bandName, index: index, variable: endTimeField)
+                let date = schedule.getData(bandName, index:index, variable: dateField)
+                let type = schedule.getData(bandName, index:index, variable: typeField)
+                let notes = schedule.getData(bandName, index:index, variable: notesField)
+                
+                startTime = formatTimeValue(timeValue: startTime)
+                endTime = formatTimeValue(timeValue: endTime)
                 
                 var scheduleText = String()
                 if (!date.isEmpty){
@@ -476,5 +479,4 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         }
 
     }
-    
 }

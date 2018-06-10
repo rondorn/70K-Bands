@@ -242,12 +242,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func extractAlertMessage (userInfo : Dictionary<String, AnyObject>){
         
+        print("sendLocalAlert! \(userInfo)")
         if let info = userInfo["aps"] as? Dictionary<String, AnyObject> {
             // Default printout of info = userInfo["aps"]
-            print("All of info: \n\(info)\n")
+            print("sendLocalAlert!  \n\(info)\n")
             
             for (key, value) in info {
-                print("APS: \(key) —> \(value)")
+                print("sendLocalAlert! APS: \(key) —> \(value)")
                 if (key == "alert"){
                     if (value is NSDictionary){
                         displayNotification(message: value["body"] as! String);
@@ -413,16 +414,17 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
         let userInfo = notification.request.content.userInfo
         // Print message ID.
         if let messageID = userInfo[gcmMessageIDKey] {
-            print("Message ID: \(messageID)")
+            print("sendLocalAlert! Message ID: \(messageID)")
+
+            // Print full message.
+            print("sendLocalAlert! 1 \(userInfo)")
+            extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
+            completionHandler([])
+        } else {
+             completionHandler([.alert, .badge, .sound])
         }
-        
-        // Print full message.
-        print(userInfo)
-        print ("Test3")
-        extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
-        completionHandler([])
     }
-    
+
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
@@ -434,7 +436,7 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
         
         // Print full message.
         print(userInfo)
-        print ("Test4")
+        print("sendLocalAlert! 2 \(userInfo)")
         extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
         completionHandler()
     }

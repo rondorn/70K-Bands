@@ -32,6 +32,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
+    //var backgroundColor = UIColor.white;//UIColor.black;
+    //var textColor = UIColor.black;//UIColor.white;
+    var backgroundColor = UIColor.white;
+    var textColor = UIColor.black;
+    
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
@@ -46,7 +51,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         sortedBy = "time"
-    
+        
+        //self.view.backgroundColor = UIColor.black;
+        self.tableView.backgroundColor = backgroundColor;
         
         //have a reference to this controller for external refreshes
         masterView = self;
@@ -69,6 +76,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControlEvents.valueChanged)
         self.refreshControl = refreshControl
+
         scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
         
         readFiltersFile()
@@ -126,6 +134,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     func showReceivedMessage(_ notification: Notification) {
+        //print ("SendingAlert! recieved notification!! \(notification)")
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
                 showAlert("Message received", message: aps["alert"]!)
@@ -147,7 +156,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func setFilterButtons(){
         
+        print ("Status of getWontSeeOn = \(getWontSeeOn())")
         if (getMustSeeOn() == false){
+            print ("Setting image to alt")
             mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
         }
         if (getMightSeeOn() == false){
@@ -172,11 +183,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshAlerts(){
-        //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            let localNotication = localNoticationHandler()
-            localNotication.clearNotifications()
-            localNotication.addNotifications()
+        if (isAlertGenerationRunning == false){
+            
+            isAlertGenerationRunning = true
+            
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                if #available(iOS 10.0, *) {
+                    let localNotication = localNoticationHandler()
+                    localNotication.addNotifications()
+                } else {
+                    // Fallback on earlier versions
+                }
+                isAlertGenerationRunning = false
+            }
         }
     }
     
@@ -228,50 +247,51 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshData(){
         
-        refreshFromCache()
+        internetAvailble = isInternetAvailable();
+        print ("Internetavailable is  \(internetAvailble)");
+        if (internetAvailble == false){
+            self.refreshControl?.endRefreshing();
+        }
         
-        let priority = DispatchQueue.GlobalQueuePriority.default
-        
-        DispatchQueue.global(priority: priority).async {
+        if (isLoadingBandData == false){
             
-            gatherData();
+            isLoadingBandData = true
+            refreshFromCache()
             
-            if (offline == false){
-                schedule.DownloadCsv()
-                let validate = validateCSVSchedule()
-                validate.validateSchedule()
-            
-                bandNotes.getAllDescriptions()
-            }
-            self.bandsByName = [String]()
-            self.bands =  [String]()
-            
-            schedule.populateSchedule()
-            self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
-            self.bandsByName = self.bands
-            DispatchQueue.main.async{
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
-                self.ensureCorrectSorting()
-                self.updateCountLable()
-                self.tableView.reloadData()
-                self.blankScreenActivityIndicator.stopAnimating()
+                gatherData();
+                
+                if (offline == false){
+                    schedule.DownloadCsv()
+                    let validate = validateCSVSchedule()
+                    validate.validateSchedule()
+                
+                    bandNotes.getAllDescriptions()
+                    getAllImages()
+                    
+                }
+                self.bandsByName = [String]()
+                self.bands =  [String]()
+                
+                schedule.populateSchedule()
+                self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+                self.bandsByName = self.bands
+                
+                DispatchQueue.main.async{
+                    self.ensureCorrectSorting()
+                    self.updateCountLable()
+                    self.tableView.reloadData()
+                    self.refreshAlerts()
+                    self.refreshControl?.endRefreshing();
+                }
+                isLoadingBandData = false
             }
+            
+            updateCountLable()
+            self.tableView.reloadData()
+            self.refreshControl?.endRefreshing();
         }
-        
-        if (bands.count == 0){
-            blankScreenActivityIndicator.startAnimating()
-        }
-        ensureCorrectSorting()
-        refreshAlerts()
-        
-        updateCountLable()
-        self.tableView.reloadData()
-        if (self.refreshControl?.isRefreshing == true){
-            sleep(5)
-            self.refreshControl?.endRefreshing()
-        }
-        
-        
     } 
     
     func showHideFilterMenu(){
@@ -292,10 +312,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
+                sender.setTitle(mustSeeIcon, for: UIControlState())
                 sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
             
             } else {
                 setMustSeeOn(true)
+                sender.setTitle(mustSeeIcon, for: UIControlState())
                 sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
 
             }
@@ -385,7 +407,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let outtro =  "\n\nhttp://www.facebook.com/70kBands\n"
         
         let objectsToShare = [intro, favoriteBands, outtro]
-        let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
+        let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
         
         activityVC.modalPresentationStyle = .popover
         activityVC.preferredContentSize = CGSize(width: 50, height: 100)
@@ -423,7 +445,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) 
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        cell.backgroundColor = UIColor.clear;
+        cell.textLabel?.textColor = textColor;
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
@@ -452,7 +476,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 1")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 1);
@@ -461,7 +485,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         })
 
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -470,7 +494,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -479,7 +503,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.default, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -487,11 +511,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        
-        mustSeeAction.backgroundColor = UIColor.white
-        mightSeeAction.backgroundColor = UIColor.white
-        wontSeeAction.backgroundColor = UIColor.white
-        setUnknownAction.backgroundColor = UIColor.white
         
         return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
     }

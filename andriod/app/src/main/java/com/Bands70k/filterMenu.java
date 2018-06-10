@@ -22,8 +22,6 @@ import java.util.ArrayList;
  */
 public class filterMenu extends Activity {
 
-    private preferencesHandler alertPreferences = new preferencesHandler();
-
     private CheckBox showSpecialEvents;
     private CheckBox showMeetAndGreet;
     private CheckBox showClinicEvents;
@@ -40,7 +38,7 @@ public class filterMenu extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.filter_menu);
 
-        alertPreferences.loadData();
+        //staticVariables.preferences.loadData();
         setValues();
         setLabels();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
@@ -75,92 +73,92 @@ public class filterMenu extends Activity {
     private void setValues(){
 
         showSpecialEvents = (CheckBox)findViewById(R.id.showSpecialEvent);
-        showSpecialEvents.setChecked(alertPreferences.getShowSpecialEvents());
+        showSpecialEvents.setChecked(staticVariables.preferences.getShowSpecialEvents());
         showSpecialEvents.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowSpecialEvents(showSpecialEvents.isChecked());
+                staticVariables.preferences.setShowSpecialEvents(showSpecialEvents.isChecked());
             }
         });
 
         showMeetAndGreet = (CheckBox)findViewById(R.id.showMeetAndGreet);
-        showMeetAndGreet.setChecked(alertPreferences.getShowMeetAndGreet());
+        showMeetAndGreet.setChecked(staticVariables.preferences.getShowMeetAndGreet());
         showMeetAndGreet.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowMeetAndGreet(showMeetAndGreet.isChecked());
+                staticVariables.preferences.setShowMeetAndGreet(showMeetAndGreet.isChecked());
             }
         });
 
         showClinicEvents = (CheckBox)findViewById(R.id.showClinic);
-        showClinicEvents.setChecked(alertPreferences.getShowClinicEvents());
+        showClinicEvents.setChecked(staticVariables.preferences.getShowClinicEvents());
         showClinicEvents.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowClinicEvents(showClinicEvents.isChecked());
+                staticVariables.preferences.setShowClinicEvents(showClinicEvents.isChecked());
             }
         });
 
         showAlbumListen = (CheckBox)findViewById(R.id.showListeningEvent);
-        showAlbumListen.setChecked(alertPreferences.getShowAlbumListen());
+        showAlbumListen.setChecked(staticVariables.preferences.getShowAlbumListen());
         showAlbumListen.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowAlbumListen(showAlbumListen.isChecked());
+                staticVariables.preferences.setShowAlbumListen(showAlbumListen.isChecked());
             }
         });
 
         showPoolShows = (CheckBox)findViewById(R.id.showPool);
-        showPoolShows.setChecked(alertPreferences.getShowPoolShows());
+        showPoolShows.setChecked(staticVariables.preferences.getShowPoolShows());
         showPoolShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowPoolShows(showPoolShows.isChecked());
+                staticVariables.preferences.setShowPoolShows(showPoolShows.isChecked());
             }
         });
 
         showTheaterShows = (CheckBox)findViewById(R.id.showTheater);
-        showTheaterShows.setChecked(alertPreferences.getShowTheaterShows());
+        showTheaterShows.setChecked(staticVariables.preferences.getShowTheaterShows());
         showTheaterShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowTheaterShows(showTheaterShows.isChecked());
+                staticVariables.preferences.setShowTheaterShows(showTheaterShows.isChecked());
             }
         });
 
         showRinkShows = (CheckBox)findViewById(R.id.showRink);
-        showRinkShows.setChecked(alertPreferences.getShowRinkShows());
+        showRinkShows.setChecked(staticVariables.preferences.getShowRinkShows());
         showRinkShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowRinkShows(showRinkShows.isChecked());
+                staticVariables.preferences.setShowRinkShows(showRinkShows.isChecked());
             }
         });
 
         showLoungeShows = (CheckBox)findViewById(R.id.showLounge);
-        showLoungeShows.setChecked(alertPreferences.getShowLoungeShows());
+        showLoungeShows.setChecked(staticVariables.preferences.getShowLoungeShows());
         showLoungeShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowLoungeShows(showLoungeShows.isChecked());
+                staticVariables.preferences.setShowLoungeShows(showLoungeShows.isChecked());
             }
         });
 
         showOtherShows = (CheckBox)findViewById(R.id.showOther);
-        showOtherShows.setChecked(alertPreferences.getShowOtherShows());
+        showOtherShows.setChecked(staticVariables.preferences.getShowOtherShows());
         showOtherShows.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                alertPreferences.setShowOtherShows(showOtherShows.isChecked());
+                staticVariables.preferences.setShowOtherShows(showOtherShows.isChecked());
             }
         });
     }
@@ -169,7 +167,7 @@ public class filterMenu extends Activity {
     @Override
     public void onBackPressed() {
 
-        alertPreferences.saveData();
+        staticVariables.preferences.saveData();
 
         setResult(RESULT_OK, null);
         finish();

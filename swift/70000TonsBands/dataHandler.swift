@@ -16,14 +16,15 @@ var directoryPath = URL(fileURLWithPath:dirs[0])
 var storageFile = directoryPath.appendingPathComponent( "data.txt")
 var dateFile = directoryPath.appendingPathComponent( "date.txt")
 var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
-var lastFilters = directoryPath.appendingPathComponent("lastFilters")
+var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
 
 func writeFiltersFile(){
     
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-    //DispatchQueue.global(priority: Int(DispatchQoS.QoSClass.background.rawValue)).async {
+        
         var prefsString = String()
         
+        print ("Status of getWontSeeOn save = \(getWontSeeOn())")
         prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
         prefsString += "mightSeeOn:" + boolToString(getMightSeeOn()) + ";"
         prefsString += "wontSeeOn:" + boolToString(getWontSeeOn()) + ";"
@@ -31,8 +32,10 @@ func writeFiltersFile(){
         
         print ("Wrote prefs " + prefsString)
         do {
-            try prefsString.write(toFile: String(contentsOf:lastFilters), atomically: false, encoding: String.Encoding.utf8)
-        } catch _ {
+            try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
+            print ("Status of getWontSeeOn saved")
+        } catch {
+            print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
         }
     }
 }
@@ -40,9 +43,12 @@ func writeFiltersFile(){
 
 func readFiltersFile(){
     
+    print ("Status of getWontSeeOn loading")
     if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
+        print ("Status of getWontSeeOn loading 1")
         let dataArray = data.components(separatedBy: ";")
         for record in dataArray {
+            print ("Status of getWontSeeOn loading loop")
             var valueArray = record.components(separatedBy: ":")
             switch valueArray[0] {
                 
@@ -54,6 +60,7 @@ func readFiltersFile(){
                
                 case "wontSeeOn":
                     setWontSeeOn(stringToBool(valueArray[1]))
+                    print ("Status of getWontSeeOn load = \(valueArray[1])")
                 
                 case "unknownSeeOn":
                     setUnknownSeeOn(stringToBool(valueArray[1]))

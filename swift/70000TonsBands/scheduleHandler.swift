@@ -15,6 +15,9 @@ open class scheduleHandler {
     
     func populateSchedule(){
         
+        schedulingData.removeAll();
+        schedulingDataByTime.removeAll();
+        
         if (FileManager.default.fileExists(atPath: scheduleFile) == false){
             DownloadCsv();
         }
@@ -39,30 +42,40 @@ open class scheduleHandler {
                     unuiqueIndex[dateIndex] = 1
                     
                     let dateFormatter = DateFormatter();
-                    dateFormatter.dateFormat = "YYYY-M-d h:mm a"
+                    dateFormatter.dateFormat = "YYYY-M-d HH:mm"
                     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
                     
                     print("Adding index for band " + lineData[bandField]! + " ")
                     print (dateIndex)
                     
-                    if (self.schedulingData[lineData[bandField]!] == nil){
-                        self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
+                    if (schedulingData[lineData[bandField]!] == nil){
+                        schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
                     }
-                    
-                    if (self.schedulingData[lineData[bandField]!]![dateIndex] == nil){
-                        self.schedulingData[lineData[bandField]!]![dateIndex] = [String : String]()
+                    if (schedulingData[lineData[bandField]!]?[dateIndex] == nil){
+                        schedulingData[lineData[bandField]!]?[dateIndex] = [String : String]()
                     }
+                
                     print ("Adding location of " + lineData[locationField]!)
                     
                     //doing this double for unknown reason, it wont work if the first entry is single
+                    print ("adding dayField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
                     
+                    print ("adding startTimeField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
+                    
+                    print ("adding dateField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
+                    
+                    print ("adding typeField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
+                    
+                    print ("adding notesField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
+                    
+                    print ("adding notesField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
                     
                 } else {
@@ -88,7 +101,11 @@ open class scheduleHandler {
         
         print ("Downloading Schedule URL " + scheduleUrl);
         if (scheduleUrl == "Default"){
-            scheduleUrl = getDefaultScheduleUrl()
+            scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
+            
+        } else if (scheduleUrl == "lastYear"){
+            scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
+        
         }
         
         print("scheduleUrl = " + scheduleUrl)
@@ -112,43 +129,26 @@ open class scheduleHandler {
             
         }
     }
-    
-    func getDefaultScheduleUrl() -> String{
-        
-        var url = String()
-        let httpData = getUrlData(defaultStorageUrl)
-        
-        let dataArray = httpData.components(separatedBy: "\n")
-        for record in dataArray {
-            var valueArray = record.components(separatedBy: "::")
-            if (valueArray[0] == "scheduleUrl"){
-                url = valueArray[1]
-            }
-        }
-        
-        print ("Using default Schedule URL of " + url)
-        return url
-    }
-    
+
     func getDateIndex (_ dateString: String, timeString: String, band:String) -> TimeInterval{
         
         var startTimeIndex = TimeInterval()
         let fullTimeString: String = dateString + " " + timeString;
         
         let dateFormatter = DateFormatter();
-        dateFormatter.dateFormat = "M-d-yy h:mm a"
+        dateFormatter.dateFormat = "M-d-yy HH:mm"
         dateFormatter.timeZone = TimeZone.current
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         if (fullTimeString.isEmpty == false){
             print ("timeString '" + fullTimeString + "'");
-            print(dateFormatter.date(from: fullTimeString))
+            print(dateFormatter.date(from: fullTimeString) as Any)
             if (dateFormatter.date(from: fullTimeString) != nil){
                 startTimeIndex = dateFormatter.date(from: fullTimeString)!.timeIntervalSince1970
                 print(startTimeIndex)
             } else {
                 print ("What the hell!!")
-                print(dateFormatter.date(from: fullTimeString))
+                print(dateFormatter.date(from: fullTimeString) as Any)
             }
         }
                 
@@ -159,14 +159,14 @@ open class scheduleHandler {
         
         let dateIndex = NSTimeIntervalSince1970
         
-        if (self.schedulingData[bandName]?.isEmpty == false){
+        if (schedulingData[bandName]?.isEmpty == false){
         
-            let keyValues = self.schedulingData[bandName]!.keys
+            let keyValues = schedulingData[bandName]!.keys
             let sortedArray = keyValues.reversed()
             
-            if (self.schedulingData[bandName] != nil){
+            if (schedulingData[bandName] != nil){
                 for dateIndexTemp in sortedArray {
-                    if (self.schedulingData[bandName]![dateIndexTemp]![typeField]! == showType){
+                    if (schedulingData[bandName]![dateIndexTemp]![typeField]! == showType){
                         let currentTime =  Date().timeIntervalSince1970
                         let currentTimePlusAnHour = currentTime - 3600
                         
@@ -184,33 +184,32 @@ open class scheduleHandler {
     
     func setData (bandName:String, index:TimeInterval, variable:String, value:String){
         
+        
         if (variable.isEmpty == false && value.isEmpty == false){
-            if (bandName.isEmpty == false && index.isZero == false && self.schedulingData[bandName] != nil){
-                if (self.schedulingData[bandName]?.isEmpty == false){
-                    if (self.schedulingData[bandName]![index] != nil){
-                        print ("value for variable is " + value)
-                        self.schedulingData[bandName]![index]![variable] = value
-                    }
+            if (bandName.isEmpty == false && index.isZero == false && (schedulingData[bandName]?.isEmpty)! == false){
+                if (schedulingData[bandName]?.isEmpty == false){
+                    //if (schedulingData[bandName]![index]?[variable]?.isEmpty == false){
+                        if (value.isEmpty == false){
+                            schedulingData[bandName]![index]![variable] = value as String;
+                        }
                 }
             }
         }
-        if (self.schedulingData[bandName]![index]![variable] == nil){
-            self.schedulingData[bandName]![index]![variable] = "";
-        }
+        
     }
     
     func getData(_ bandName:String, index:TimeInterval, variable:String) -> String{
         
         print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
-        print (self.schedulingData[bandName])
-        if (self.schedulingData[bandName] != nil && variable.isEmpty == false){
+        print (schedulingData[bandName] as Any)
+        if (schedulingData[bandName] != nil && variable.isEmpty == false){
             print ("schedule value lookup. loop 1")
-            if (self.schedulingData[bandName]![index]?.isEmpty == false){
+            if (schedulingData[bandName]![index]?.isEmpty == false){
                 print ("schedule value lookup. loop 2")
-                if (self.schedulingData[bandName]![index]![variable]?.isEmpty == false){
+                if (schedulingData[bandName]![index]![variable]?.isEmpty == false){
                     print ("schedule value lookup. loop 3")
-                    print ("schedule value lookup. Returning " + self.schedulingData[bandName]![index]![variable]!)
-                    return self.schedulingData[bandName]![index]![variable]!
+                    print ("schedule value lookup. Returning " + schedulingData[bandName]![index]![variable]!)
+                    return schedulingData[bandName]![index]![variable]!
                 }
             }
         }
@@ -221,10 +220,12 @@ open class scheduleHandler {
     func buildTimeSortedSchedulingData () {
         
         for bandName in schedulingData.keys {
-            for timeIndex in (schedulingData[bandName]!.keys){
-                print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
-                self.schedulingDataByTime[timeIndex] = [bandName:bandName]
-                
+            if (schedulingData[bandName]?.isEmpty == false){
+                for timeIndex in (schedulingData[bandName]?.keys)!{
+                    print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
+                    schedulingDataByTime[timeIndex] = [bandName:bandName]
+                    
+                }
             }
         }
         

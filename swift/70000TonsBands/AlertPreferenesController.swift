@@ -109,6 +109,16 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.navigationItem.title = "Alert Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
+    override func viewWillDisappear(_ animated : Bool) {
+        super.viewWillDisappear(animated)
+        
+        print ("sendLocalAlert! Running new code");
+        //reset alerts
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        localNotification.addNotifications()
+    }
+    
     func setLocalizedLables (){
     
         mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
@@ -173,6 +183,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         if (minBeforeAlertTemp >= 0 && minBeforeAlertTemp <= 60){
             defaults.set(minBeforeAlertTemp!, forKey: "minBeforeAlert")
             MinBeforeAlert.resignFirstResponder()
+            
+            let localNotification = localNoticationHandler()
+            localNotification.clearNotifications()
             
         } else {
             
@@ -253,6 +266,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 //guess there was no file to delete
             }
             
+            setMustSeeOn(true);
+            setMightSeeOn(true);
+            setWontSeeOn(true);
+            setUnknownSeeOn(true);
+            writeFiltersFile();
+ 
             //clear all existing notifications
             let localNotification = localNoticationHandler()
             localNotification.clearNotifications();

@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 
+import static com.Bands70k.staticVariables.preferences;
+
 
 /**
  * Created by rdorn on 8/12/15.
@@ -36,107 +38,133 @@ public class preferencesHandler {
     private Boolean showLoungeShows = true;
     private Boolean showOtherShows = true;
 
+    private Boolean showMust = true;
+    private Boolean showMight = true;
+    private Boolean showWont = true;
+    private Boolean showUnknown = true;
+
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
 
+    private Integer loadCounter = 0;
+
     public void loadData() {
-        try {
-            File file = FileHandler70k.bandPrefs;
 
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
+        Log.d("settingFilters", "Loading prefereces, already loaded" + staticVariables.prefsLoaded);
+        if (loadCounter == 0) {
+            loadCounter = loadCounter + 1;
+            try {
 
-            while ((line = br.readLine()) != null) {
-                String[] RowData = line.split(",");
-                Log.d("Load Data", line);
-                Log.d("Load Data", "Setting " + RowData[0] + " to be " + RowData[1]);
-                switch (RowData[0]) {
-                    case "mustSeeAlert":
-                        setMustSeeAlert(Boolean.valueOf(RowData[1]));
-                        break;
+                File file = FileHandler70k.bandPrefs;
 
-                    case "mightSeeAlert":
-                        setMightSeeAlert(Boolean.valueOf(RowData[1]));
-                        break;
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String line;
 
-                    case "alertForShows":
-                        setAlertForShows(Boolean.valueOf(RowData[1]));
-                        break;
+                while ((line = br.readLine()) != null) {
+                    String[] RowData = line.split(",");
+                    Log.d("Load Data", line);
+                    Log.d("Load Data", "Setting " + RowData[0] + " to be " + RowData[1]);
+                    switch (RowData[0]) {
+                        case "mustSeeAlert":
+                            setMustSeeAlert(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showSpecialEvents":
-                        setShowSpecialEvents(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "mightSeeAlert":
+                            setMightSeeAlert(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showMeetAndGreet":
-                        setShowMeetAndGreet(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "alertForShows":
+                            setAlertForShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showClinics":
-                        setShowClinicEvents(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showSpecialEvents":
+                            setShowSpecialEvents(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showListeningParties":
-                        setShowAlbumListen(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showMeetAndGreet":
+                            setShowMeetAndGreet(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showPoolShows":
-                        setShowPoolShows(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showClinics":
+                            setShowClinicEvents(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showTheaterShows":
-                        setShowTheaterShows(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showListeningParties":
+                            setShowAlbumListen(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showRinkShows":
-                        setShowRinkShows(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showPoolShows":
+                            setShowPoolShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showLoungeShows":
-                        setShowLoungeShows(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showTheaterShows":
+                            setShowTheaterShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "showOtherShows":
-                        setShowOtherShows(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showRinkShows":
+                            setShowRinkShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "alertForSpecialEvents":
-                        setAlertForSpecialEvents(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showLoungeShows":
+                            setShowLoungeShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "alertForMeetAndGreet":
-                        setAlertForMeetAndGreet(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "showOtherShows":
+                            setShowOtherShows(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "alertForClinics":
-                        setAlertForClinics(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "alertForSpecialEvents":
+                            setAlertForSpecialEvents(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "alertForListeningParties":
-                        setAlertForListeningParties(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "alertForMeetAndGreet":
+                            setAlertForMeetAndGreet(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "useLastYearsData":
-                        setUseLastYearsData(Boolean.valueOf(RowData[1]));
-                        break;
+                        case "alertForClinics":
+                            setAlertForClinics(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "minBeforeToAlert":
-                        setMinBeforeToAlert(Integer.valueOf(RowData[1]));
-                        break;
+                        case "alertForListeningParties":
+                            setAlertForListeningParties(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "artistsUrl":
-                        setArtsistsUrl(RowData[1]);
-                        break;
+                        case "useLastYearsData":
+                            setUseLastYearsData(Boolean.valueOf(RowData[1]));
+                            break;
 
-                    case "scheduleUrl":
-                        setScheduleUrl(RowData[1]);
-                        break;
+                        case "minBeforeToAlert":
+                            setMinBeforeToAlert(Integer.valueOf(RowData[1]));
+                            break;
+
+                        case "artistsUrl":
+                            setArtsistsUrl(RowData[1]);
+                            break;
+
+                        case "scheduleUrl":
+                            setScheduleUrl(RowData[1]);
+                            break;
+
+                        case "showMust":
+                            setshowMust(Boolean.valueOf(RowData[1]));
+
+                        case "showMight":
+                            setshowMight(Boolean.valueOf(RowData[1]));
+
+                        case "showWont":
+                            setshowWont(Boolean.valueOf(RowData[1]));
+
+                        case "showUnknown":
+                            setshowUnknown(Boolean.valueOf(RowData[1]));
+                    }
                 }
-            }
-        } catch (Exception error){
+            } catch (Exception error) {
                 Log.e("Load Data Error", error.getMessage() + "\n" + error.fillInStackTrace());
+            }
         }
     }
+
 
     public void saveData() {
 
@@ -160,6 +188,11 @@ public class preferencesHandler {
         dataString += "showLoungeShows," + showLoungeShows.toString() + "\n";
         dataString += "showOtherShows," + showOtherShows.toString() + "\n";
 
+        dataString += "showMust," + showMust.toString() + "\n";
+        dataString += "showMight," + showMight.toString() + "\n";
+        dataString += "showWont," + showWont.toString() + "\n";
+        dataString += "showUnknown," + this.showUnknown.toString() + "\n";
+
         dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
@@ -167,7 +200,14 @@ public class preferencesHandler {
 
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
+    }
 
+    public void resetMainFilters(){
+        this.setshowMust(true);
+        this.setshowMight(true);
+        this.setshowWont(true);
+        this.setshowUnknown(true);
+        this.loadCounter = 0;
     }
 
     public Boolean getMustSeeAlert() {
@@ -227,6 +267,20 @@ public class preferencesHandler {
         return showOtherShows;
     }
 
+
+    public Boolean getShowMust() {
+        return showMust;
+    }
+    public Boolean getShowMight() {
+        return showMight;
+    }
+    public Boolean getShowWont() {
+        return showWont;
+    }
+    public Boolean getShowUnknown() {
+        return this.showUnknown;
+    }
+
     public void setShowPoolShows(Boolean showPoolShows) {
         this.showPoolShows = showPoolShows;
     }
@@ -255,6 +309,19 @@ public class preferencesHandler {
     }
     public void setShowAlbumListen(Boolean hideAlbumListen) {
         this.showAlbumListen = hideAlbumListen;
+    }
+
+    public void setshowMust(Boolean showMustValue) {
+        this.showMust = showMustValue;
+    }
+    public void setshowMight(Boolean showMightValue) {
+        this.showMight = showMightValue;
+    }
+    public void setshowWont(Boolean showWontValue) {
+        this.showWont = showWontValue;
+    }
+    public void setshowUnknown(Boolean showUnknownValue) {
+        this.showUnknown = showUnknownValue;
     }
 
     public void setAlertForSpecialEvents(Boolean alertForSpecialEvents) {

@@ -83,7 +83,7 @@ public class scheduleHandler {
 
     public void setStartTime(String dateValue, String startTimeValue){
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy hh:mm aa");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
         try {
             startTime = dateFormat.parse(dateValue + ' ' + startTimeValue);
             Log.d("startTime", "starttime is " + startTime + " " + dateValue + " " + startTimeValue);
@@ -97,7 +97,7 @@ public class scheduleHandler {
 
     public void setEndTime(String dateValue, String endTimeValue){
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy hh:mm aa");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
         try {
             endTime = dateFormat.parse(dateValue + ' ' + endTimeValue);
         } catch (ParseException e) {
