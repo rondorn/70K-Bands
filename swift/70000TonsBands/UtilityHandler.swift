@@ -21,3 +21,38 @@ func showAlert (_ message: String, title:String){
         alert.show()
     }
 }
+
+func displayTimeIn24() -> Bool {
+    
+    var is24 = false
+    
+    let locale = NSLocale.current
+    let formatter : String = DateFormatter.dateFormat(fromTemplate: "j", options:0, locale:locale)!
+    if formatter.contains("a") {
+        is24 = false
+    } else {
+        is24 = true
+    }
+    
+    return is24
+}
+
+func formatTimeValue(timeValue: String) -> String {
+    
+    var newDate = ""
+    
+    if (timeValue.isEmpty == false){
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "HH:mm"
+        let date = dateFormatter.date(from: timeValue)
+        
+        if (displayTimeIn24() == false){
+            dateFormatter.dateFormat = "h:mm a"
+        }
+        if (date != nil){
+            newDate = dateFormatter.string(from: date!)
+        }
+    }
+    
+    return newDate
+}

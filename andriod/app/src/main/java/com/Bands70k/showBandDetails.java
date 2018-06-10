@@ -50,15 +50,21 @@ public class showBandDetails extends Activity {
         int orientationNum = getResources().getConfiguration().orientation;
         if (Configuration.ORIENTATION_LANDSCAPE == orientationNum) {
             orientation = "landscape";
-        }  else {
+        } else {
             orientation = "portrait";
         }
 
         bandName = BandInfo.getSelectedBand();
-        bandHandler = new BandNotes(bandName);
-        bandNote = bandHandler.getBandNote();
 
-        initializeWebContent();
+        if (bandName == null) {
+            onBackPressed();
+        } else if (bandName.isEmpty() == false) {
+            bandHandler = new BandNotes(bandName);
+            bandNote = bandHandler.getBandNote();
+            initializeWebContent();
+        } else {
+            onBackPressed();
+        }
     }
 
     @Override
@@ -218,10 +224,11 @@ public class showBandDetails extends Activity {
 
         SetButtonColors();
 
+        ImageHandler imageHandler = new ImageHandler(bandName);
             htmlText =
                     "<html><div style='height:100%;font-size:130%;'>" +
                             "<center>" + bandName + "</center><br>" +
-                            "<center><img style='max-height:15%;max-height:15vh' src='" + BandInfo.getImageUrl(bandName) + "'</img>";
+                            "<center><img style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
 
                 if (staticVariables.writeNoteHtml.isEmpty() == false) {
                     Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
@@ -246,7 +253,7 @@ public class showBandDetails extends Activity {
                             }
                             htmlText += "</ul>";
                         }
-                        if (bandNote != "") {
+                        if (bandNote != "" && imageHandler.getImage().toString() != staticVariables.logo70kUrl) {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
                             htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:25%;overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
@@ -295,8 +302,8 @@ public class showBandDetails extends Activity {
 
                 htmlData += "<li>";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString() + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString() + " - ";
+                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString()) + " - ";
+                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
                 htmlData += location + locationIcon + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
                 htmlData += staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType());

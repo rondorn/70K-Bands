@@ -35,7 +35,7 @@ class InterfaceController: WKInterfaceController {
        
         //register application testing defaults
         let defaultValues = ["artistUrl": lastYearsartistUrlDefault,
-            "scheduleUrl": "https://www.dropbox.com/s/902zj4tq0w9l5kg/PreviousSchedule1.csv?dl=1",
+            "scheduleUrl": lastYearsScheduleUrlDefault,
             "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
             "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
             "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
@@ -105,15 +105,11 @@ class InterfaceController: WKInterfaceController {
             //var count = 1
             for index in sortedArray {
                 
-                let location = schedule.getData(bandName, index: Double(index.0), variable: "Location")
-                let day = schedule.getData(bandName, index: Double(index.0), variable: "Day")
-                let startTime = schedule.getData(bandName, index: Double(index.0), variable: "Start Time")
-                //var endTime = schedule.getData(bandName, index: Double(index.0), variable: "End Time")
-                let date = schedule.getData(bandName, index:Double(index.0), variable: "Date")
-                //var type = schedule.getData(bandName, index:Double(index.0), variable: "Type")
-                //var notes = schedule.getData(bandName, index:Double(index.0), variable: "Notes")
-                
-                //var scheduleText = String()
+                let location = schedule.getData(bandName, index: Double(index.0), variable: locationField)
+                let day = schedule.getData(bandName, index: Double(index.0), variable: dayField)
+                let startTime = schedule.getData(bandName, index: Double(index.0), variable: startTimeField)
+                let date = schedule.getData(bandName, index:Double(index.0), variable: dateField)
+
                 if (date.isEmpty == false){
                     DayTimeText = day + " " + startTime
                     LocationText = location;

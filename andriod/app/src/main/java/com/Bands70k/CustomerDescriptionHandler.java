@@ -35,8 +35,12 @@ public class CustomerDescriptionHandler {
         BandInfo bandInfo = new BandInfo();
         bandInfo.getDownloadtUrls();
 
+        String descriptionMapPointer = "descriptionMap";
+        if (staticVariables.preferences.getUseLastYearsData() == true){
+            descriptionMapPointer = "descriptionMapLastYear";
+        }
         try {
-            URL u = new URL(bandInfo.downloadUrls.get("descriptionMap"));
+            URL u = new URL(bandInfo.downloadUrls.get(descriptionMapPointer));
             InputStream is = u.openStream();
 
             DataInputStream dis = new DataInputStream(is);
@@ -149,8 +153,13 @@ public class CustomerDescriptionHandler {
     private void loadNoteFromURL(String bandName){
         try {
 
-            Map<String, String> descriptionMap = this.getDescriptionMap();
             BandNotes bandNoteHandler = new BandNotes(bandName);
+
+            if (bandNoteHandler.fileExists() == true){
+                return;
+            }
+
+            Map<String, String> descriptionMap = this.getDescriptionMap();
 
             Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMap.get(bandName));
             URL url = new URL(descriptionMap.get(bandName));

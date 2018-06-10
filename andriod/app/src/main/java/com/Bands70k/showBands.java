@@ -38,6 +38,7 @@ import java.util.List;
 
 import static com.Bands70k.staticVariables.*;
 
+
 public class showBands extends Activity {
 
     String notificationTag = "notificationTag";
@@ -53,7 +54,6 @@ public class showBands extends Activity {
     private BandInfo bandInfo;
     private CustomerDescriptionHandler bandNotes;
     public Button sortButton;
-    private preferencesHandler preferences = new preferencesHandler();
 
     public static Boolean inBackground = true;
 
@@ -69,6 +69,7 @@ public class showBands extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_bands);
 
@@ -91,9 +92,16 @@ public class showBands extends Activity {
         // Registering BroadcastReceiver
         registerReceiver();
 
+        if (staticVariables.preferences == null) {
+            staticVariables.preferences = new preferencesHandler();
+        }
+
+        staticVariablesInitialize();
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
-        preferences.loadData();
+        staticVariables.preferences.loadData();
+
+        Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
 
         TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
         jumpToTop.setOnClickListener(new Button.OnClickListener() {
@@ -104,6 +112,9 @@ public class showBands extends Activity {
 
         populateBandList();
         showNotification();
+        setFilterDefaults();
+
+        setupButtonFilters();
     }
 
     private void setupSwipeList (){
@@ -134,7 +145,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 item1.setBackground(new ColorDrawable(Color.WHITE));
                 // set width of an option (px)
-                item1.setWidth(75);
+                item1.setWidth(155);
                 item1.setTitle(mustSeeIcon);
                 item1.setTitleSize(18);
                 item1.setTitleColor(Color.LTGRAY);
@@ -144,7 +155,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item2.setBackground(new ColorDrawable(Color.WHITE));
-                item2.setWidth(75);
+                item2.setWidth(155);
                 item2.setTitle(mightSeeIcon);
                 item2.setTitleSize(18);
                 item2.setTitleColor(Color.LTGRAY);
@@ -154,7 +165,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item3.setBackground(new ColorDrawable(Color.WHITE));
-                item3.setWidth(75);
+                item3.setWidth(155);
                 item3.setTitle(wontSeeIcon);
                 item3.setTitleSize(18);
                 item3.setTitleColor(Color.LTGRAY);
@@ -164,7 +175,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 // set item background
                 item4.setBackground(new ColorDrawable(Color.WHITE));
-                item4.setWidth(75);
+                item4.setWidth(155);
                 item4.setTitle(unknownIcon);
                 item4.setTitleSize(18);
                 item4.setTitleColor(Color.LTGRAY);
@@ -302,6 +313,7 @@ public class showBands extends Activity {
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             // argument position gives the index of item which is clicked
             public void onClick(View v) {
+                setupButtonFilters();
                 Intent showFilterMenu = new Intent(showBands.this, filterMenu.class);
                 startActivityForResult(showFilterMenu, 1);
                 //startActivity(showFilterMenu);
@@ -337,6 +349,62 @@ public class showBands extends Activity {
         });
     };
 
+    private void setFilterDefaults(){
+
+        if (staticVariables.initializedSortButtons == false) {
+
+            staticVariables.initializedSortButtons = true;
+
+            Log.d(TAG, "1 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
+
+            ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
+            if (staticVariables.preferences.getShowMust() == true) {
+                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+                mustFilterButton.setChecked(false);
+                filterToogle.put(mustSeeIcon, true);
+            } else {
+                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+                mustFilterButton.setChecked(true);
+                filterToogle.put(mustSeeIcon, false);
+            }
+
+            ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
+            if (staticVariables.preferences.getShowMight() == true) {
+                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+                mightFilterButton.setChecked(false);
+                filterToogle.put(mightSeeIcon, true);
+            } else {
+                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+                mightFilterButton.setChecked(true);
+                filterToogle.put(mightSeeIcon, false);
+            }
+
+            ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
+            if (staticVariables.preferences.getShowWont() == true) {
+                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+                wontFilterButton.setChecked(false);
+                filterToogle.put(wontSeeIcon, true);
+            } else {
+                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+                wontFilterButton.setChecked(true);
+                filterToogle.put(wontSeeIcon, false);
+            }
+
+            ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
+            if (staticVariables.preferences.getShowUnknown() == true) {
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+                unknownFilterButton.setChecked(false);
+                filterToogle.put(unknownIcon, true);
+            } else {
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+                unknownFilterButton.setChecked(true);
+                filterToogle.put(unknownIcon, false);
+            }
+
+            Log.d(TAG, "2 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -366,79 +434,119 @@ public class showBands extends Activity {
 
     public void setupButtonFilters(){
 
-        staticVariablesInitialize();
-
         ToggleButton mustFilterButton = (ToggleButton)findViewById(R.id.mustSeeFilter);
         mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
 
         if (filterToogle.get(mustSeeIcon) == true) {
-            Log.d("filter is ", "true");
-            mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
-            mustFilterButton.setChecked(true);
+            setMustFilterButton(mustFilterButton, false);
 
         } else {
-            mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
-            mustFilterButton.setChecked(false);
+            setMustFilterButton(mustFilterButton, true);
         }
 
         ToggleButton mightFilterButton = (ToggleButton)findViewById(R.id.mightSeeFilter);
         mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
 
         if (filterToogle.get(mightSeeIcon) == true) {
-            mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
-            mightFilterButton.setChecked(true);
-
+            setMightFilterButton(mightFilterButton, false);
         } else {
-            mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
-            mightFilterButton.setChecked(false);
+            setMightFilterButton(mightFilterButton, true);
         }
 
         ToggleButton wontFilterButton = (ToggleButton)findViewById(R.id.wontSeeFilter);
         wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
 
         if (filterToogle.get(wontSeeIcon) == true) {
-            wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
-            wontFilterButton.setChecked(true);
+            setWontFilterButton(wontFilterButton, false);
 
         } else {
-            wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
-            wontFilterButton.setChecked(false);
+            setWontFilterButton(wontFilterButton, true);
         }
 
         ToggleButton unknownFilterButton = (ToggleButton)findViewById(R.id.unknownFilter);
         unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
 
         if (filterToogle.get(unknownIcon) == true) {
-            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
-            unknownFilterButton.setChecked(true);
+            setUnknownFilterButton(unknownFilterButton, false);
 
         } else {
-            unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
-            unknownFilterButton.setChecked(false);
+            setUnknownFilterButton(unknownFilterButton, true);
         }
 
-        mustFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+
+    private void setMustFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+            staticVariables.preferences.setshowMust(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+            staticVariables.preferences.setshowMust(false);
+        }
+
+        filterButton.setChecked(setTo);
+        staticVariables.preferences.saveData();
+
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(mustSeeIcon);
             }
         });
-        mightFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+
+    }
+    private void setMightFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+            staticVariables.preferences.setshowMight(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+            staticVariables.preferences.setshowMight(false);
+        }
+        filterButton.setChecked(setTo);
+        staticVariables.preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(mightSeeIcon);
             }
         });
-        wontFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+    private void setWontFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+            staticVariables.preferences.setshowWont(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+            staticVariables.preferences.setshowWont(false);
+        }
+        filterButton.setChecked(setTo);
+        staticVariables.preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(wontSeeIcon);
             }
         });
-        unknownFilterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    }
+    private void setUnknownFilterButton(ToggleButton filterButton, Boolean setTo){
+        if (setTo == false) {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
+            staticVariables.preferences.setshowUnknown(true);
+        } else {
+            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+            staticVariables.preferences.setshowUnknown(false);
+        }
+        filterButton.setChecked(setTo);
+        staticVariables.preferences.saveData();
+
+        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 toogleDisplayFilter(unknownIcon);
             }
         });
     }
-
 
     @Override
     public
@@ -471,8 +579,8 @@ public class showBands extends Activity {
         } else {
             filterButton.setVisibility(View.VISIBLE);
         }
-
     }
+
     private void refreshNewData(){
 
         RelativeLayout showBandLayout = (RelativeLayout)findViewById(R.id.showBandsView);
@@ -487,7 +595,7 @@ public class showBands extends Activity {
         AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
         myNotesTask.execute();
 
-        scheduleAlertHandler alerts = new scheduleAlertHandler(preferences, getApplicationContext());
+        scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
         BandInfo bandInfoNames = new BandInfo();
@@ -521,6 +629,9 @@ public class showBands extends Activity {
             bandNamesList.setAdapter(arrayAdapter);
             bandNamesList.requestLayout();
 
+            scheduleAlertHandler alerts = new scheduleAlertHandler();
+            alerts.execute();
+
         }
     }
 
@@ -535,6 +646,9 @@ public class showBands extends Activity {
 
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
+
+            scheduleAlertHandler alerts = new scheduleAlertHandler();
+            alerts.execute();
 
             if (bandNames == null){
                 bandNames.add("Waiting for data to load, please standby....");
@@ -574,8 +688,10 @@ public class showBands extends Activity {
         Log.d("State Status", "Saving state during Pause");
         super.onPause();
 
+        staticVariables.preferences.saveData();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
         isReceiverRegistered = false;
+
     }
 
     @Override
@@ -612,9 +728,6 @@ public class showBands extends Activity {
                     String selectedBand;
                     getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
-                    //if (scheduleSortedBandNames == null) {
-                    //    scheduleSortedBandNames = bandNames;
-                    //}
                     selectedBand = listHandler.bandNamesIndex.get(position);
 
                     //Log.d("The follow band was clicked ", selectedBand);
@@ -634,7 +747,7 @@ public class showBands extends Activity {
             bandNamesList.onRestoreInstanceState(listState);
         }
         setupNoneFilterButtons();
-        setupButtonFilters();
+        //setupButtonFilters();
         registerReceiver();
 
         Log.d(TAG, notificationTag + " calling showNotification");
@@ -642,6 +755,10 @@ public class showBands extends Activity {
 
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -675,13 +792,23 @@ public class showBands extends Activity {
             sortButton.setEnabled(false);
             sortButton.setVisibility(View.INVISIBLE);
         }
-
     }
 
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
-        listHandler = new mainListHandler(showBands.this, preferences);
-        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        listHandler = new mainListHandler(showBands.this);
+        try {
+            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        } catch (Exception error){
+            try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
+        }
+
         setFilterButton();
 
         //swip stuff
@@ -700,32 +827,40 @@ public class showBands extends Activity {
 
         @Override
         protected void onPreExecute() {
-            Log.d("AsyncList refresh", "Starting AsyncList refresh");
-            super.onPreExecute();
-            bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+
+            if (staticVariables.loadingBands == false) {
+                Log.d("AsyncList refresh", "Starting AsyncList refresh");
+                super.onPreExecute();
+                bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+                bandNamesPullRefresh.setRefreshing(true);
+                refreshData();
+                super.onPreExecute();
+            }
             bandNamesPullRefresh.setRefreshing(true);
-            refreshData();
-            super.onPreExecute();
         }
 
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
+            if (staticVariables.loadingBands == false) {
+                staticVariables.loadingBands = true;
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
 
-            Log.d("AsyncTask", "Downloading data");
+                Log.d("AsyncTask", "Downloading data");
 
-            try {
-                BandInfo bandInfo = new BandInfo();
-                bandInfo.DownloadBandFile();
-                //bandNotes.getAllDescriptions();
-            } catch (Exception error){
-                Log.d("bandInfo", error.getMessage());
+                try {
+                    BandInfo bandInfo = new BandInfo();
+                    bandInfo.DownloadBandFile();
+                    bandNotes.getAllDescriptions();
+
+                } catch (Exception error) {
+                    Log.d("bandInfo", error.getMessage());
+                }
+                staticVariables.loadingBands = false;
             }
-
             return result;
 
         }
@@ -734,16 +869,19 @@ public class showBands extends Activity {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
-            BandInfo bandInfo = new BandInfo();
-            ArrayList<String> bandList = bandInfo.getBandNames();
+            if (staticVariables.loadingBands == false) {
+                BandInfo bandInfo = new BandInfo();
+                ArrayList<String> bandList = bandInfo.getBandNames();
 
-            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
+                ListAdapter arrayAdapter = updateList(bandInfo, bandList);
 
-            showBands.this.bandNamesList.setAdapter(arrayAdapter);
-            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-            showBands.this.bandNamesList.requestLayout();
-            fileDownloaded = true;
+                showBands.this.bandNamesList.setAdapter(arrayAdapter);
+                showBands.this.bandNamesList.setVisibility(View.VISIBLE);
+                showBands.this.bandNamesList.requestLayout();
+                fileDownloaded = true;
+            }
             bandNamesPullRefresh.setRefreshing(false);
+
 
         }
     }
@@ -761,36 +899,29 @@ public class showBands extends Activity {
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
+            if (staticVariables.loadingNotes == false) {
+                staticVariables.loadingNotes = true;
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
+                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+                StrictMode.setThreadPolicy(policy);
 
-            Log.d("AsyncTask", "Downloading data");
+                Log.d("AsyncTask", "Downloading data");
 
-            try {
-                bandNotes.getAllDescriptions();
-            } catch (Exception error){
-                Log.d("bandInfo", error.getMessage());
+                try {
+                    //download all descriptions in the background
+                    bandNotes.getAllDescriptions();
+
+                    //download all band logos in the background
+                    ImageHandler imageHandler = new ImageHandler();
+                    imageHandler.getAllRemoteImages();
+
+                } catch (Exception error) {
+                    Log.d("bandInfo", error.getMessage());
+                }
+                staticVariables.loadingNotes = false;
             }
 
             return result;
-
-        }
-
-
-        @Override
-        protected void onPostExecute(ArrayList<String> result) {
-
-            BandInfo bandInfo = new BandInfo();
-            ArrayList<String> bandList = bandInfo.getBandNames();
-
-            ListAdapter arrayAdapter = updateList(bandInfo, bandList);
-
-            showBands.this.bandNamesList.setAdapter(arrayAdapter);
-            showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-            showBands.this.bandNamesList.requestLayout();
-            fileDownloaded = true;
-            bandNamesPullRefresh.setRefreshing(false);
 
         }
     }
