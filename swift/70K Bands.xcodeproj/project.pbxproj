@@ -58,6 +58,7 @@
 		11AC1D6F1A68282C00267A8F /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6E1A68282C00267A8F /* QuartzCore.framework */; };
 		11AC1D711A68283600267A8F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D701A68283600267A8F /* Security.framework */; };
 		11AC1D751A68284A00267A8F /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
+		11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		11BE68F11A5992A600602EC7 /* externalUrls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F01A5992A600602EC7 /* externalUrls.swift */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
@@ -148,6 +149,7 @@
 		11AC1D701A68283600267A8F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		11AC1D741A68284A00267A8F /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		11AC1D7C1A682AF100267A8F /* ApiKeys.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ApiKeys.plist; sourceTree = "<group>"; };
+		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		11BE68F01A5992A600602EC7 /* externalUrls.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = externalUrls.swift; sourceTree = "<group>"; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
@@ -257,6 +259,7 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
@@ -622,6 +625,7 @@
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */,
+				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
