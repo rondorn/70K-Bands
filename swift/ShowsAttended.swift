@@ -4,24 +4,10 @@
 //
 //  Created by Ron Dorn on 6/10/18.
 //
-import Foundation
-
-
-var showsAttendedArray: [String : String] = [String : String]();
 
 open class ShowsAttended {
     
-    func saveShowsAttended(){
-        
-        var json : Data;
-        
-        do {
-            json = try JSONEncoder().encode(showsAttendedArray)
-        } catch {
-            
-        }
-        
-    }
+    //var showsAttendedArray: [String : String] = [String : String]();
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String)->String{
         
@@ -29,20 +15,20 @@ open class ShowsAttended {
         
         var value = ""
         
-        if (showsAttendedArray.isEmpty == true || showsAttendedArray[index]?.isEmpty == true){
+        if (showsAttendedArray[index]?.isEmpty == true){
             value = "Attended";
-         
+            
         } else if (showsAttendedArray[index] == "Attended"){
             value = "Partially Attended";
-         
+            
         } else if (showsAttendedArray[index] == "Attended"){
             value = "";
-         
+            
         }
         
-        showsAttendedArray[index] = value
+        //showsAttendedArray[index] = value
         
         return value
     }
+    
 }
-

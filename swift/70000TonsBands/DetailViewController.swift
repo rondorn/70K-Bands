@@ -482,17 +482,54 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBAction func clickedOnEvent(_ sender: UITextField) {
         
+        var message = "";
         let fieldText = sender.text;
-        sender.backgroundColor = UIColor.blue
-        let message = "I saw " + bandName + " on " + fieldText!;
+
+        let parseableText = fieldText?.replacingOccurrences(of: " - ", with: "-");
+        let textFields = parseableText?.split(separator: "-")
+        
+        let attended = ShowsAttended();
+        let location = String(textFields![3])
+        let startTime = String(textFields![1])
+        let eventType = String(textFields![4])
+        
+        let rootText = bandName + " " + eventType + " " + location;
+        
+        var status = attended.addShowsAttended(band: bandName, location: location, startTime: startTime, eventType: eventType);
+        
+        if (status == "Attended"){
+            sender.textColor = UIColor.blue
+            //sender.font = UIFont.boldSystemFont(ofSize: 12);
+            if #available(iOS 10.0, *) {
+                sender.adjustsFontForContentSizeCategory = true
+            } else {
+                // Fallback on earlier versions
+            }
+            message = "I saw " + rootText;
+            
+        } else if (status == "Partially Attended"){
+            sender.textColor = UIColor.brown
+            //sender.font = UIFont.boldSystemFont(ofSize: 12);
+            if #available(iOS 10.0, *) {
+                sender.adjustsFontForContentSizeCategory = true
+            } else {
+                // Fallback on earlier versions
+            }
+            message = "I saw some of " + rootText;
+        
+        } else {
+            sender.textColor = UIColor.black
+            //sender.font = UIFont.systemFont(ofSize: 12)
+            if #available(iOS 10.0, *) {
+                sender.adjustsFontForContentSizeCategory = true
+            } else {
+                // Fallback on earlier versions
+            }
+            message = "I did not see " + rootText;
+        }
         
         showToast(message: message);
         print ("User clicked on an event \(bandName) \(fieldText)");
-
-        //var showsAtten = ShowsAttended();
-        
-        //showsAtten.addShowsAttended();
-        //showsAttendedShowAttendedTracker.addShowsAttended();
         
     }
     
