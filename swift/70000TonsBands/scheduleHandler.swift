@@ -12,6 +12,7 @@ open class scheduleHandler {
     
     var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
+    var scheduleReleased = false
     
     func populateSchedule(){
         
@@ -49,6 +50,7 @@ open class scheduleHandler {
                     print (dateIndex)
                     
                     if (schedulingData[lineData[bandField]!] == nil){
+                        scheduleReleased = true
                         schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
                     }
                     if (schedulingData[lineData[bandField]!]?[dateIndex] == nil){

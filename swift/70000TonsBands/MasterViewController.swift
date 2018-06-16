@@ -32,8 +32,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
-    //var backgroundColor = UIColor.white;//UIColor.black;
-    //var textColor = UIColor.black;//UIColor.white;
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
     
@@ -112,8 +110,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
-        //let indexPath = NSIndexPath(forRow: 0, inSection: 0)
-        //self.tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: .Top, animated: true)
         self.tableView.contentOffset = CGPoint(x: 0, y: 0 - self.tableView.contentInset.top);
     }
     
@@ -237,12 +233,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func quickRefresh(){
         
-        self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
-        self.bandsByName = self.bands
-        ensureCorrectSorting()
-        updateCountLable()
-        
-        self.tableView.reloadData()
+        if (isLoadingBandData == false){
+            isLoadingBandData = true
+            self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+            self.bandsByName = self.bands
+            ensureCorrectSorting()
+            updateCountLable()
+            
+            self.tableView.reloadData()
+            isLoadingBandData = false
+        }
     }
     
     func refreshData(){
@@ -306,7 +306,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBAction func filterContent(_ sender: UIButton) {
-        
         
         if (sender.titleLabel?.text == getMustSeeIcon()){
             
@@ -393,14 +392,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
         
-        let intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
+        var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
         var favoriteBands = "\n"
         
-        bands = getBandNames()
-        for band in bands {
-            if (getPriorityData(band) == 1){
-                print ("Adding band " + band)
-                favoriteBands += "\t" + getMustSeeIcon() + "\t" +  band + "\n"
+        if (schedule.scheduleReleased == true){
+            intro = "These are the events I attended on the 70,000 Tons Cruise\n"
+            let reportHandler = showAttendenceReport()
+            reportHandler.assembleReport()
+            
+            favoriteBands += reportHandler.buildMessage()
+            
+        } else {
+            bands = getBandNames()
+            for band in bands {
+                if (getPriorityData(band) == 1){
+                    print ("Adding band " + band)
+                    favoriteBands += "\t" + getMustSeeIcon() + "\t" +  band + "\n"
+                }
             }
         }
         
@@ -474,8 +482,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return bandName
     }
     
+    func showToast(message : String) {
+        
+        let toastLabel = UILabel(frame: CGRect(x: 10, y: self.view.frame.size.height-250, width: self.view.frame.size.width - 10, height: 45))
+        
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        toastLabel.textColor = UIColor.white
+        toastLabel.textAlignment = .center;
+        toastLabel.font = UIFont(name: "Montserrat-Light", size: 12.0)
+        toastLabel.text = message
+        toastLabel.alpha = 1.0
+        toastLabel.layer.cornerRadius = 10;
+        toastLabel.clipsToBounds  =  true
+        self.view.addSubview(toastLabel)
+        UIView.animate(withDuration: 4.0, delay: 0.1, options: .curveEaseOut, animations: {
+            toastLabel.alpha = 0.0
+        }, completion: {(isCompleted) in
+            toastLabel.removeFromSuperview()
+        })
+    }
+    
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
+        let sawAllShow = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: attendedShowIcon , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+            let currentCel = tableView.cellForRow(at: indexPath)
+            
+            let cellText = currentCel?.textLabel?.text;
+            let cellData = getScheduleIndexByCall();
+            
+            let cellBandName = cellData[cellText!]!["bandName"]
+            let cellStartTime = cellData[cellText!]!["startTime"]
+            let cellEventType = cellData[cellText!]!["event"]
+            let cellLocation = cellData[cellText!]!["location"]
+            
+            let status = attendedHandler.addShowsAttended(band: cellBandName!, location: cellLocation!, startTime: cellStartTime!, eventType: cellEventType!);
+            
+            let empty : UITextField = UITextField();
+            let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
+            
+            self.showToast(message: message);
+            self.quickRefresh()
+        })
+ 
         let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 1")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -512,7 +560,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+        if (hasScheduleData == true){
+            print ("show menu ALL")
+            return [sawAllShow, setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+            
+        } else {
+            
+            return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+        }
     }
     
     //swip code end

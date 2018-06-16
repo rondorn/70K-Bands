@@ -156,10 +156,10 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="lTJ-bG-l3q">
                                 <rect key="frame" x="0.0" y="408" width="320" height="132"/>
                                 <subviews>
-                                    <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="4wQ-EF-ggP">
+                                    <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" textAlignment="center" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="4wQ-EF-ggP">
                                         <rect key="frame" x="0.0" y="1" width="320" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
-                                            <accessibilityTraits key="traits" button="YES" link="YES"/>
+                                            <accessibilityTraits key="traits" button="YES" link="YES" staticText="YES"/>
                                         </accessibility>
                                         <nil key="textColor"/>
                                         <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="17"/>

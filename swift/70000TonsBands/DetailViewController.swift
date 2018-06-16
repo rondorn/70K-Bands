@@ -9,11 +9,10 @@
 import UIKit
 import CoreData
 
-class DetailViewController: UIViewController, UITextViewDelegate{
+class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate{
     
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
-
 
     @IBOutlet weak var officialUrlButton: UIButton!
     @IBOutlet weak var wikipediaUrlButton: UIButton!
@@ -48,6 +47,8 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     var schedule = scheduleHandler()
     var imagePosition = CGFloat(0);
     
+    var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
+    
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
@@ -78,9 +79,9 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             print("imageUrl: " + imageURL)
             
             //called twice to ensure image is loaded even if delayed
-            displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
+            _ = displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
             sleep(1)
-            displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
+            _ = displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(getPriorityData(bandName))
@@ -97,9 +98,22 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             disableButtonsIfNeeded()
             disableLinksWithEmptyData();
             
+            //used to disable keyboard input for these fields
+            self.Event1.delegate = self
+            self.Event2.delegate = self
+            self.Event3.delegate = self
+            self.Event4.delegate = self
+            self.Event5.delegate = self
+            
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
             
         }
+    
+    }
+    
+    //used to disable keyboard input for event fields
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        return false
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
@@ -114,7 +128,6 @@ class DetailViewController: UIViewController, UITextViewDelegate{
         super.viewDidAppear(animated)
         
     }
-    
     
     func disableLinksWithEmptyData(){
         
@@ -207,7 +220,7 @@ class DetailViewController: UIViewController, UITextViewDelegate{
             if (customNotesText.text.starts(with: "Comment text is not available yet") == true){
                     removeBadNote(commentFile: commentFile)
                 
-            } else if (customNotesText.text.characters.count < 2){
+            } else if (customNotesText.text.count < 2){
                 removeBadNote(commentFile: commentFile)
 
             } else {
@@ -382,6 +395,8 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                 let type = schedule.getData(bandName, index:index, variable: typeField)
                 let notes = schedule.getData(bandName, index:index, variable: notesField)
                 
+                let rawStartTime = startTime
+                
                 startTime = formatTimeValue(timeValue: startTime)
                 endTime = formatTimeValue(timeValue: endTime)
                 
@@ -397,22 +412,35 @@ class DetailViewController: UIViewController, UITextViewDelegate{
                         scheduleText += " - " + notes
                     }
                     
+                    scheduleIndex[scheduleText] = [String:String]()
                 
+                    scheduleIndex[scheduleText]!["bandName"] = bandName;
+                    scheduleIndex[scheduleText]!["location"] = location;
+                    scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
+                    scheduleIndex[scheduleText]!["eventType"] = type;
+                    
+                    let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type);
+                    print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
                     switch count {
                     case 1:
                         Event1.text = scheduleText
+                        _ = attendedHandler.setShowsAttendedStatus(Event1,status: status);
                         
                     case 2:
                         Event2.text = scheduleText
+                        _ = attendedHandler.setShowsAttendedStatus(Event2,status: status);
                         
                     case 3:
                         Event3.text = scheduleText
+                        _ = attendedHandler.setShowsAttendedStatus(Event3,status: status);
                         
                     case 4:
                         Event4.text = scheduleText
+                        _ = attendedHandler.setShowsAttendedStatus(Event4,status: status);
 
                     case 5:
                         Event5.text = scheduleText
+                        _ = attendedHandler.setShowsAttendedStatus(Event5,status: status);
                         
                     default:
                         print("To many events")
@@ -482,60 +510,25 @@ class DetailViewController: UIViewController, UITextViewDelegate{
     
     @IBAction func clickedOnEvent(_ sender: UITextField) {
         
-        var message = "";
-        let fieldText = sender.text;
-
-        let parseableText = fieldText?.replacingOccurrences(of: " - ", with: "-");
-        let textFields = parseableText?.split(separator: "-")
+        sender.resignFirstResponder()
+        let scheduleText = attendedHandler.removeIcons(text: sender.text!);
         
-        let attended = ShowsAttended();
-        let location = String(textFields![3])
-        let startTime = String(textFields![1])
-        let eventType = String(textFields![4])
+        print ("scheduleIndex = \(scheduleText)")
+        let location = scheduleIndex[scheduleText]!["location"]
+        let startTime = scheduleIndex[scheduleText]!["startTime"]
+        let eventType = scheduleIndex[scheduleText]!["eventType"]
         
-        let rootText = bandName + " " + eventType + " " + location;
+        let status = attendedHandler.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!);
         
-        var status = attended.addShowsAttended(band: bandName, location: location, startTime: startTime, eventType: eventType);
-        
-        if (status == "Attended"){
-            sender.textColor = UIColor.blue
-            //sender.font = UIFont.boldSystemFont(ofSize: 12);
-            if #available(iOS 10.0, *) {
-                sender.adjustsFontForContentSizeCategory = true
-            } else {
-                // Fallback on earlier versions
-            }
-            message = "I saw " + rootText;
-            
-        } else if (status == "Partially Attended"){
-            sender.textColor = UIColor.brown
-            //sender.font = UIFont.boldSystemFont(ofSize: 12);
-            if #available(iOS 10.0, *) {
-                sender.adjustsFontForContentSizeCategory = true
-            } else {
-                // Fallback on earlier versions
-            }
-            message = "I saw some of " + rootText;
-        
-        } else {
-            sender.textColor = UIColor.black
-            //sender.font = UIFont.systemFont(ofSize: 12)
-            if #available(iOS 10.0, *) {
-                sender.adjustsFontForContentSizeCategory = true
-            } else {
-                // Fallback on earlier versions
-            }
-            message = "I did not see " + rootText;
-        }
+        let message = attendedHandler.setShowsAttendedStatus(sender,status: status);
         
         showToast(message: message);
-        print ("User clicked on an event \(bandName) \(fieldText)");
-        
     }
     
     func showToast(message : String) {
         
         let toastLabel = UILabel(frame: CGRect(x: 10, y: self.view.frame.size.height-250, width: self.view.frame.size.width - 10, height: 45))
+        
         toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         toastLabel.textColor = UIColor.white
         toastLabel.textAlignment = .center;
