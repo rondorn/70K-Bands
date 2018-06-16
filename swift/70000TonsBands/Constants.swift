@@ -9,7 +9,7 @@
 import Foundation
 import CoreData
 import SystemConfiguration
-
+import UIKit
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
 
@@ -59,6 +59,20 @@ var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
+//shows attended
+let sawAllIcon = "🤘"
+let sawSomeIcon = "👍"
+let sawNoneIcon = ""
+let attendedShowIcon = "🎟"
+
+let attendedHandler = ShowsAttended()
+let sawAllColor = UIColor.blue
+let sawSomeColor = UIColor.brown
+let sawNoneColor = UIColor.black
+let sawAllStatus = "sawAll";
+let sawSomeStatus = "sawSome";
+let sawNoneStatus = "sawNone";
+
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
 
@@ -101,6 +115,8 @@ let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 
 var internetAvailble = isInternetAvailable();
+
+var hasScheduleData = false;
 
 var schedule = scheduleHandler()
 var bandNotes = CustomBandDescription();
