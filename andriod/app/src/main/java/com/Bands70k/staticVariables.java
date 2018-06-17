@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.content.Context;
+import android.graphics.Paint;
 import android.os.Build;
 import android.os.Parcelable;
 import android.util.Log;
@@ -37,6 +38,20 @@ public class staticVariables {
     public final static String  theaterVenueIcon = "🎭";
     public final static String  loungeVenueIcon = "🎤";
     public static String  rinkVenueIcon = "\uD83D\uDD03";
+
+    //shows attended
+    public static String sawAllIcon = "\uD83C\uDFC3\u200D";
+    public static String sawSomeIcon = "\uD83D\uDEB6\u200D";
+    public final static String sawNoneIcon = "";
+    public static String attendedShowIcon = "\uD83C\uDFC3\u200D";
+
+    public final static String sawAllColor = "blue";
+    public final static String sawSomeColor = "brown";
+    public final static String sawNoneColor = "black";
+    public final static String sawAllStatus = "sawAll";
+    public final static String sawSomeStatus = "sawSome";
+    public final static String sawNoneStatus = "sawNone";
+
 
     public final static String  poolVenueText = "Pool";
     public final static String  theaterVenueText = "Theater";
@@ -112,12 +127,42 @@ public class staticVariables {
             rinkVenueIcon = "\u26F8";
         }
 
+        //use more update to date icons, but only if present
+        if (canShowFlagEmoji("\uD83E\uDD18") == true){
+            sawAllIcon = "\uD83E\uDD18";
+            sawSomeIcon = "\uD83D\uDC4D";
+        }
+        if (canShowFlagEmoji("\uD83C\uDF9F") == true){
+            attendedShowIcon = "\uD83C\uDF9F";
+        }
+
         if (previousYearArtist == null) {
             lookupUrls();
         }
 
         if (context == null){
             context = Bands70k.getAppContext();
+        }
+    }
+
+    private static boolean canShowFlagEmoji(String emoji) {
+        Paint paint = new Paint();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                return paint.hasGlyph(emoji);
+            } else {
+                return false;
+            }
+
+        } catch (NoSuchMethodError e) {
+            // Compare display width of single-codepoint emoji to width of flag emoji to determine
+            // whether flag is rendered as single glyph or two adjacent regional indicator symbols.
+            float flagWidth = paint.measureText(emoji);
+            float standardWidth = paint.measureText("\uD83D\uDC27"); //  U+1F427 Penguin
+            return flagWidth < standardWidth * 1.25;
+            // This assumes that a valid glyph for the flag emoji must be less than 1.25 times
+            // the width of the penguin.
         }
     }
 

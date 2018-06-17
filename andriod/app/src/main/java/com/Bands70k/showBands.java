@@ -26,6 +26,7 @@ import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -65,7 +66,7 @@ public class showBands extends Activity {
 
     private mainListHandler listHandler;
     private CustomArrayAdapter adapter;
-
+    private showsAttended attendedHandler = new showsAttended();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -180,6 +181,16 @@ public class showBands extends Activity {
                 item4.setTitleSize(18);
                 item4.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item4);
+
+                SwipeMenuItem item5 = new SwipeMenuItem(
+                        getApplicationContext());
+                // set item background
+                item5.setBackground(new ColorDrawable(Color.WHITE));
+                item5.setWidth(155);
+                item5.setTitle(attendedShowIcon);
+                item5.setTitleSize(18);
+                item5.setTitleColor(Color.LTGRAY);
+                menu.addMenuItem(item5);
             }
         };
         //set MenuCreator
@@ -224,7 +235,6 @@ public class showBands extends Activity {
             @Override
             public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
                 String value = listHandler.getBandNameFromIndex(adapter.getItem(position));
-
                 listState = bandNamesList.onSaveInstanceState();
 
                 switch (index) {
@@ -242,6 +252,30 @@ public class showBands extends Activity {
 
                     case 3:
                         rankStore.saveBandRanking(value, unknownIcon);
+                        break;
+
+                    case 4:
+
+                        String message = "";
+                        String attendedValue = listHandler.getAttendedListMap(position);
+                        Log.d ("attendedValue", "attendedValue = " + attendedValue);
+                        String[] bandAndTimeIndex = attendedValue.split(":");
+
+                        String bandName = bandAndTimeIndex[0];
+                        Long timeIndex = Long.parseLong(bandAndTimeIndex[1]);
+
+                        if (timeIndex != 0) {
+                            String location = listHandler.getLocation(bandName, timeIndex);
+                            String startTime = listHandler.getStartTime(bandName, timeIndex);
+                            String eventType = listHandler.getEventType(bandName, timeIndex);
+
+                            String status = attendedHandler.addShowsAttended(bandName, location, startTime, eventType);
+                            message = attendedHandler.setShowsAttendedStatus(status);
+                        } else {
+                            message = "No Show Is Associated With This Entry";
+                        }
+                        Toast.makeText(staticVariables.context, message,
+                                Toast.LENGTH_LONG).show();
                         break;
                 }
 
@@ -325,7 +359,19 @@ public class showBands extends Activity {
             public void onClick(View v) {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
-                String shareBody = buildShareMessage();
+
+                String shareBody;
+
+                if (initializedSortButtons == true){
+                    showsAttendedReport reportHandler = new showsAttendedReport();
+                    reportHandler.assembleReport();
+                    shareBody = reportHandler.buildMessage();
+
+                } else {
+                    shareBody = buildShareMessage();
+                }
+
+                Log.d("ShareMessage", shareBody);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Bands I MUST see on 70,000 Tons");
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
                 startActivity(Intent.createChooser(sharingIntent, "Share via"));

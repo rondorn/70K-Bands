@@ -12,6 +12,7 @@ import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,10 @@ public class mainListHandler {
     public mainListHandler(showBands showBandsValue){
         showBands = showBandsValue;
     }
+
+    private showsAttended attendedHandler = new showsAttended();
+
+    private Map<Integer,String> attendedListMap = new HashMap<Integer,String>();
 
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
@@ -163,20 +168,27 @@ public class mainListHandler {
         return showEvent;
     }
 
+    public String getAttendedListMap(Integer index){
+        return attendedListMap.get(index);
+    }
+
     private void turnSortedListIntoArrayAdapter(){
 
         ArrayList<String> displayableBandList = new ArrayList<String>();
 
+        Integer counter = 0;
         for (String bandIndex: sortableBandNames){
             Log.d(TAG, "bandIndex=" + bandIndex);
             String bandName = getBandNameFromIndex(bandIndex);
             Long timeIndex = getBandTimeFromIndex(bandIndex);
 
+            attendedListMap.put(counter, bandName + ":" + timeIndex);
             String line = buildLines(timeIndex, bandName);
 
             if (checkFiltering(bandName) == true) {
                 displayableBandList.add(line);
                 bandNamesIndex.add(bandName);
+                counter = counter + 1;
             }
         }
 
@@ -186,6 +198,7 @@ public class mainListHandler {
 
     public String getBandNameFromIndex(String value){
 
+        Log.d("getBandNameFromIndex", "getBandNameFromIndex value is " + value);
         String[] indexData = value.split(":");
 
         if (indexData.length != 0) {
@@ -237,22 +250,43 @@ public class mainListHandler {
         return displayText;
     }
 
+    public String getStartTime(String bandName, Long timeIndex){
+        return BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
+    }
+    public String getLocation(String bandName, Long timeIndex){
+        return BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
+    }
+    public String getEventType(String bandName, Long timeIndex){
+        return BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+    }
+
     private String buildLines(Long timeIndex,String bandName){
 
         String line = null;
 
         if (timeIndex > 0){
-            line = rankStore.getRankForBand(bandName);
+            String rankIcon = rankStore.getRankForBand(bandName);
+            line = rankIcon;
 
             if (!rankStore.getRankForBand(bandName).equals("")) {
                 line += " - ";
             }
             if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
+
+                String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
+                String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
+                String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+                String attendedIcon = attendedHandler.getShowAttendedIcon(bandName,location,startTime,eventType);
+
+                line = attendedIcon + " " + rankIcon;
+                if (!rankStore.getRankForBand(bandName).equals("")) {
+                    line += " - ";
+                }
                 line += bandName + " - ";
-                line += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString()) + " ";
-                line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()  + " - ";
+                line += dateTimeFormatter.formatScheduleTime(startTime) + " ";
+                line += location  + " - ";
                 line += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowDay() + " ";
-                line += " " + staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
+                line += " " + staticVariables.getEventTypeIcon(eventType);
             }
         } else {
 

@@ -69,7 +69,7 @@ class showAttendenceReport {
         }
         
         //bandCounts[eventType]![bandName]![sawStatus]!
-        message += "\n\n"
+        message += "\n"
         for index in bandCounts {
             let eventType = index.key
             var sawSomeCount = 0
@@ -77,7 +77,7 @@ class showAttendenceReport {
             let sortedBandNames = Array(index.value.keys).sorted()
             
             if (eventCountExists[eventType] == true){
-                message += "\nFor " + eventType + "s\n"
+                message += "For " + eventType + "s\n"
 
                 for bandName in sortedBandNames {
 
@@ -92,9 +92,9 @@ class showAttendenceReport {
                         if (sawCount >= 1){
                             let sawCountString = String(sawCount)
                             if (eventType == showType){
-                                message += bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                                message += "\t" + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
                             } else {
-                                message += bandName + "\n";
+                                message += "\t" + bandName + "\n";
                             }
                         }
                     //}
@@ -103,7 +103,7 @@ class showAttendenceReport {
                     let sawSomeCountString = String(sawSomeCount)
                     message += "\n" + sawSomeCountString + " of those were partial shows"
                 }
-                message += "\n";
+                //message += "\n";
             }
  
         }

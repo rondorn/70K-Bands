@@ -40,6 +40,9 @@ public class CustomerDescriptionHandler {
             descriptionMapPointer = "descriptionMapLastYear";
         }
         try {
+
+            Log.d("descriptionMapPointer", bandInfo.downloadUrls.get(descriptionMapPointer));
+
             URL u = new URL(bandInfo.downloadUrls.get(descriptionMapPointer));
             InputStream is = u.openStream();
 

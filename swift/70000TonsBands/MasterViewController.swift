@@ -396,7 +396,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var favoriteBands = "\n"
         
         if (schedule.scheduleReleased == true){
-            intro = "These are the events I attended on the 70,000 Tons Cruise\n"
+            intro = "These are the events I attended on the 70,000 Tons Cruise"
             let reportHandler = showAttendenceReport()
             reportHandler.assembleReport()
             
@@ -412,7 +412,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        let outtro =  "\n\nhttp://www.facebook.com/70kBands\n"
+        let outtro =  "\nhttp://www.facebook.com/70kBands"
         
         let objectsToShare = [intro, favoriteBands, outtro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
