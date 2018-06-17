@@ -481,47 +481,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         return bandName
     }
-    
-    func showToast(message : String) {
-        
-        let toastLabel = UILabel(frame: CGRect(x: 10, y: self.view.frame.size.height-250, width: self.view.frame.size.width - 10, height: 45))
-        
-        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        toastLabel.textColor = UIColor.white
-        toastLabel.textAlignment = .center;
-        toastLabel.font = UIFont(name: "Montserrat-Light", size: 12.0)
-        toastLabel.text = message
-        toastLabel.alpha = 1.0
-        toastLabel.layer.cornerRadius = 10;
-        toastLabel.clipsToBounds  =  true
-        self.view.addSubview(toastLabel)
-        UIView.animate(withDuration: 4.0, delay: 0.1, options: .curveEaseOut, animations: {
-            toastLabel.alpha = 0.0
-        }, completion: {(isCompleted) in
-            toastLabel.removeFromSuperview()
-        })
-    }
-    
+
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
         let sawAllShow = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: attendedShowIcon , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+            
             let currentCel = tableView.cellForRow(at: indexPath)
             
             let cellText = currentCel?.textLabel?.text;
-            let cellData = getScheduleIndexByCall();
+
+            let placementOfCell = currentCel?.frame
             
-            let cellBandName = cellData[cellText!]!["bandName"]
-            let cellStartTime = cellData[cellText!]!["startTime"]
-            let cellEventType = cellData[cellText!]!["event"]
-            let cellLocation = cellData[cellText!]!["location"]
-            
-            let status = attendedHandler.addShowsAttended(band: cellBandName!, location: cellLocation!, startTime: cellStartTime!, eventType: cellEventType!);
-            
-            let empty : UITextField = UITextField();
-            let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
-            
-            self.showToast(message: message);
-            self.quickRefresh()
+            if (cellText?.contains("Day") == true){
+                let cellData = getScheduleIndexByCall();
+                
+                let cellBandName = cellData[cellText!]!["bandName"]
+                let cellStartTime = cellData[cellText!]!["startTime"]
+                let cellEventType = cellData[cellText!]!["event"]
+                let cellLocation = cellData[cellText!]!["location"]
+                
+                let status = attendedHandler.addShowsAttended(band: cellBandName!, location: cellLocation!, startTime: cellStartTime!, eventType: cellEventType!);
+                
+                let empty : UITextField = UITextField();
+                let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
+                ToastMessages(message).show(self, cellLocation: placementOfCell!)
+                self.quickRefresh()
+            } else {
+                let message =  "No Show Is Associated With This Entry"
+                ToastMessages(message).show(self, cellLocation: placementOfCell!)
+                //ToastMessages.show(message: message, controller: self)
+                //self.showToast(message: message);
+            }
         })
  
         let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in

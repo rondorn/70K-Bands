@@ -522,7 +522,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         let message = attendedHandler.setShowsAttendedStatus(sender,status: status);
         
-        showToast(message: message);
+        ToastMessages(message).show(self, cellLocation: self.view.frame)
     }
     
     func showToast(message : String) {
