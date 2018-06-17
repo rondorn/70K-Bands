@@ -227,33 +227,36 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     public void clearAlerts (){
 
-        Log.d ("SendLocalAlert", "Looping through previosu alerts");
+        try {
+            Log.d("SendLocalAlert", "Looping through previosu alerts");
 
-        Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
+            Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
 
-        AlarmManager clearAlarm = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
+            AlarmManager clearAlarm = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
 
-        for (Integer id : alarmStorageStringHash.keySet()){
+            for (Integer id : alarmStorageStringHash.keySet()) {
 
-            String messageContent = alarmStorageStringHash.get(id);
+                String messageContent = alarmStorageStringHash.get(id);
 
-            Notification tempNotification = getNotification(messageContent);
+                Notification tempNotification = getNotification(messageContent);
 
-            Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
-            notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, tempNotification);
-            notificationIntent.putExtra("messageText", messageContent);
-            notificationIntent.setAction(messageContent);
+                Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
+                notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, tempNotification);
+                notificationIntent.putExtra("messageText", messageContent);
+                notificationIntent.setAction(messageContent);
 
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            Log.d ("SchedNotications", "Clearing alert " + id.toString());
-            clearAlarm.cancel(pendingIntent);
+                Log.d("SchedNotications", "Clearing alert " + id.toString());
+                clearAlarm.cancel(pendingIntent);
+            }
+
+            staticVariables.alertMessages.clear();
+            alarmStorageStringHash = new HashMap<Integer, String>();
+            saveAlarmStrings(alarmStorageStringHash);
+        } catch (Exception error){
+            Log.e("SchedNotications", "Something has gone wrong " + error.getLocalizedMessage() + "\n" + error.fillInStackTrace());
         }
-
-        staticVariables.alertMessages.clear();
-        alarmStorageStringHash = new HashMap<Integer, String>();
-        saveAlarmStrings(alarmStorageStringHash);
-
     }
 
     public void sendLocalAlert(String alertMessage, int delay){

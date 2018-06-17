@@ -21,6 +21,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -41,6 +42,7 @@ public class showBandDetails extends Activity {
     private String bandNote;
     private String bandName;
     private BandNotes bandHandler;
+    private showsAttended attendedHandler = new showsAttended();
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,6 +100,18 @@ public class showBandDetails extends Activity {
                 if (value.equals("Notes")) {
                     Log.d("Variable is", " Lets run this code");
                     staticVariables.writeNoteHtml = createEditNoteInterface(BandInfo.getSelectedBand());
+                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+                    startActivity(showDetails);
+                    finish();
+
+                }else if (value.startsWith(bandName + ":")){
+
+                    Log.d("showAttended", " Lets set this value of " + value);
+                    String status = attendedHandler.addShowsAttended(value);
+                    String message = attendedHandler.setShowsAttendedStatus(status);
+                    Toast.makeText(staticVariables.context, message,
+                            Toast.LENGTH_LONG).show();
+
                     Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                     startActivity(showDetails);
                     finish();
@@ -263,11 +277,11 @@ public class showBandDetails extends Activity {
                         htmlText += "<br><br>";
                     }
 
-                    try {
+                    //try {
                         htmlText += buildScheduleView();
-                    } catch (Exception error){
+                    //} catch (Exception error){
                       //if this causes an exception, no worries..just don't display the schedule
-                    }
+                    //}
 
                     htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + "</button></td>" +
@@ -300,15 +314,25 @@ public class showBandDetails extends Activity {
                 String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
                 String locationIcon = staticVariables.getVenuIcon(location);
 
-                htmlData += "<li>";
+                String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString();
+                String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
+
+                String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType;
+                String color = attendedHandler.getShowAttendedColor(attendIndex);
+
+                htmlData += "<li onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                htmlData += "<font color='" + color + "' >";
+                htmlData += attendedHandler.getShowAttendedIcon(attendIndex) + " ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
-                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString()) + " - ";
+                htmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
                 htmlData += location + locationIcon + " - ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
-                htmlData += staticVariables.getEventTypeIcon(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType());
+                htmlData += staticVariables.getEventTypeIcon(eventType);
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
-                htmlData += "</li>";
+                htmlData += "</font></li>";
+
+                Log.d("htmlData is", "Adding HTML text of " + htmlData);
             }
 
             htmlData += "</ul>";
