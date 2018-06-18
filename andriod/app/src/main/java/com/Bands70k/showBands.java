@@ -361,18 +361,21 @@ public class showBands extends Activity {
                 sharingIntent.setType("text/plain");
 
                 String shareBody;
+                String subject;
 
                 if (initializedSortButtons == true){
                     showsAttendedReport reportHandler = new showsAttendedReport();
                     reportHandler.assembleReport();
                     shareBody = reportHandler.buildMessage();
+                    subject = "These are the events I attended on the 70,000 Tons Cruise";
 
                 } else {
                     shareBody = buildShareMessage();
+                    subject = "Bands I MUST see on 70,000 Tons";
                 }
 
                 Log.d("ShareMessage", shareBody);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Bands I MUST see on 70,000 Tons");
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
                 startActivity(Intent.createChooser(sharingIntent, "Share via"));
             }
