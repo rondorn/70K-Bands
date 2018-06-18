@@ -182,15 +182,18 @@ public class showBands extends Activity {
                 item4.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item4);
 
-                SwipeMenuItem item5 = new SwipeMenuItem(
-                        getApplicationContext());
-                // set item background
-                item5.setBackground(new ColorDrawable(Color.WHITE));
-                item5.setWidth(155);
-                item5.setTitle(attendedShowIcon);
-                item5.setTitleSize(18);
-                item5.setTitleColor(Color.LTGRAY);
-                menu.addMenuItem(item5);
+
+                if (listHandler.allUpcomingEvents >= 1) {
+                    SwipeMenuItem item5 = new SwipeMenuItem(
+                            getApplicationContext());
+                    // set item background
+                    item5.setBackground(new ColorDrawable(Color.WHITE));
+                    item5.setWidth(155);
+                    item5.setTitle(attendedShowIcon);
+                    item5.setTitleSize(18);
+                    item5.setTitleColor(Color.LTGRAY);
+                    menu.addMenuItem(item5);
+                }
             }
         };
         //set MenuCreator
@@ -363,7 +366,7 @@ public class showBands extends Activity {
                 String shareBody;
                 String subject;
 
-                if (initializedSortButtons == true){
+                if (staticVariables.schedulePresent == true){
                     showsAttendedReport reportHandler = new showsAttendedReport();
                     reportHandler.assembleReport();
                     shareBody = reportHandler.buildMessage();
@@ -878,14 +881,16 @@ public class showBands extends Activity {
         protected void onPreExecute() {
 
             if (staticVariables.loadingBands == false) {
+                staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
                 super.onPreExecute();
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(true);
                 refreshData();
                 super.onPreExecute();
+                bandNamesPullRefresh.setRefreshing(true);
+                staticVariables.loadingBands = false;
             }
-            bandNamesPullRefresh.setRefreshing(true);
         }
 
 

@@ -35,15 +35,14 @@ public class CustomerDescriptionHandler {
         BandInfo bandInfo = new BandInfo();
         bandInfo.getDownloadtUrls();
 
-        String descriptionMapPointer = "descriptionMap";
+        String descriptionMapURL = staticVariables.descriptionMap;
         if (staticVariables.preferences.getUseLastYearsData() == true){
-            descriptionMapPointer = "descriptionMapLastYear";
+            descriptionMapURL = staticVariables.previousYearDescriptionMap;
         }
+        Log.d("descriptionMapPointer", descriptionMapURL);
         try {
 
-            Log.d("descriptionMapPointer", bandInfo.downloadUrls.get(descriptionMapPointer));
-
-            URL u = new URL(bandInfo.downloadUrls.get(descriptionMapPointer));
+            URL u = new URL(descriptionMapURL);
             InputStream is = u.openStream();
 
             DataInputStream dis = new DataInputStream(is);
@@ -102,13 +101,17 @@ public class CustomerDescriptionHandler {
     }
 
     public void getAllDescriptions(){
-        getDescriptionMapFile();
-        getDescriptionMap();
 
-        Map<String, String> descriptionMap = this.getDescriptionMap();
+        if (staticVariables.notesLoaded == false){
+            staticVariables.notesLoaded =true;
+            getDescriptionMapFile();
+            getDescriptionMap();
 
-        for (String bandName : descriptionMap.keySet()){
-            loadNoteFromURL(bandName);
+            Map<String, String> descriptionMap = this.getDescriptionMap();
+
+            for (String bandName : descriptionMap.keySet()) {
+                loadNoteFromURL(bandName);
+            }
         }
 
     }

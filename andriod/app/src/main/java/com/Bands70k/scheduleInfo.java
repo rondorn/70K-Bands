@@ -73,6 +73,7 @@ public class scheduleInfo {
                         scheduleHandler scheduleLine = new scheduleHandler();
 
                         if (RowData.length >= 6) {
+                            staticVariables.schedulePresent = true;
                             scheduleLine.setBandName(RowData[0]);
                             scheduleLine.setShowLocation(RowData[1]);
                             scheduleLine.setShowDay(RowData[3]);

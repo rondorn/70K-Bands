@@ -13,9 +13,11 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 
 import android.os.SystemClock;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
 
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -43,6 +45,7 @@ public class showBandDetails extends Activity {
     private String bandName;
     private BandNotes bandHandler;
     private showsAttended attendedHandler = new showsAttended();
+    private Boolean clickedOnEvent = false;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,17 +107,20 @@ public class showBandDetails extends Activity {
                     startActivity(showDetails);
                     finish();
 
-                }else if (value.startsWith(bandName + ":")){
+                } else if (value.startsWith(bandName + ":")){
 
-                    Log.d("showAttended", " Lets set this value of " + value);
-                    String status = attendedHandler.addShowsAttended(value);
-                    String message = attendedHandler.setShowsAttendedStatus(status);
-                    Toast.makeText(staticVariables.context, message,
-                            Toast.LENGTH_LONG).show();
+                    if (clickedOnEvent == false){
+                        clickedOnEvent = true;
+                        Log.d("showAttended", " Lets set this value of " + value);
+                        String status = attendedHandler.addShowsAttended(value);
+                        String message = attendedHandler.setShowsAttendedStatus(status);
+                        Toast.makeText(staticVariables.context, message,
+                                Toast.LENGTH_LONG).show();
 
-                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                    startActivity(showDetails);
-                    finish();
+                        Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+                        startActivity(showDetails);
+                        finish();
+                    }
 
                 }else if (value.startsWith("UserNoteSubmit:")){
 
@@ -178,6 +184,9 @@ public class showBandDetails extends Activity {
             SystemClock.sleep(70);
             setResult(RESULT_OK, null);
             finish();
+            NavUtils.navigateUpTo(this, new Intent(this,
+                    showBands.class));
+
         }
     }
 
@@ -300,9 +309,9 @@ public class showBandDetails extends Activity {
 
         String htmlData;
         if (orientation == "portrait") {
-            htmlData = "<ul style='font-size:12px;font-size:3.0vw;list-style-type:none;text-align:left;margin-left:-20px'>";
+            htmlData = "<ul style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-30px;margin-top:20px;face=\"sans-serif-thin\">";
         } else {
-            htmlData = "<ul style='font-size:12px;font-size:3.0vw;list-style-type:none;text-align:left;margin-left:-20px'>";
+            htmlData = "<ul style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-30px;margin-top:20px;face=\"sans-serif-thin\">";
         }
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
@@ -320,7 +329,7 @@ public class showBandDetails extends Activity {
                 String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType;
                 String color = attendedHandler.getShowAttendedColor(attendIndex);
 
-                htmlData += "<li onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
                 htmlData += "<font color='" + color + "' >";
                 htmlData += attendedHandler.getShowAttendedIcon(attendIndex) + " ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
