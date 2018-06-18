@@ -92,9 +92,9 @@ class showAttendenceReport {
                         if (sawCount >= 1){
                             let sawCountString = String(sawCount)
                             if (eventType == showType){
-                                message += "\t" + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
                             } else {
-                                message += "\t" + bandName + "\n";
+                                message += "     " + bandName + "\n";
                             }
                         }
                     //}
@@ -103,7 +103,6 @@ class showAttendenceReport {
                     let sawSomeCountString = String(sawSomeCount)
                     message += "\n" + sawSomeCountString + " of those were partial shows"
                 }
-                //message += "\n";
             }
  
         }
