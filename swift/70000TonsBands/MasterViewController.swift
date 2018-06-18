@@ -550,13 +550,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        if (hasScheduleData == true){
+        if (eventCount == 0){
+            return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+        } else {
             print ("show menu ALL")
             return [sawAllShow, setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
-            
-        } else {
-            
-            return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
         }
     }
     

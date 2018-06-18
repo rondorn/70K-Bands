@@ -76,6 +76,11 @@ public class staticVariables {
     public static String scheduleURL;
     public static String previousYearArtist;
     public static String previousYearSchedule;
+    public static String descriptionMap;
+    public static String previousYearDescriptionMap;
+
+    public static Boolean schedulePresent = false;
+    public static Boolean notesLoaded = false;
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 
@@ -266,6 +271,8 @@ public class staticVariables {
             previousYearSchedule = downloadUrls.get("lastYearsScheduleUrl");
             artistURL = downloadUrls.get("artistUrl");
             scheduleURL = downloadUrls.get("scheduleUrl");
+            descriptionMap = downloadUrls.get("descriptionMap");
+            previousYearDescriptionMap = downloadUrls.get("descriptionMapLastYear");
 
         } catch (Exception error){
             Log.d("Error", error.getMessage());
