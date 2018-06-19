@@ -40,12 +40,11 @@ class ToastMessages : UILabel {
     
     public func show(_ parent: UIViewController, cellLocation: CGRect) {
         
-        //CGRect(layout.Frame.Width / 2 - containerWidth / 2, containerHeight / 2 - 100 / 2, containerWidth, containerHeight);
-        
+        //width: UIScreen.main.bounds.width - 2
         print ("ToastMessage = \(cellLocation) - \(text)")
         
         
-        frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY, width: UIScreen.main.bounds.width - 2 * SIDE_MARGIN, height: HEIGHT)
+        frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
         ToastMessages.cellLocationStore = frame
         
         if ToastMessages.showing == nil {
