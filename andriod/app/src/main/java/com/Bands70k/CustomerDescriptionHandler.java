@@ -3,8 +3,6 @@ package com.Bands70k;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.util.Log;
-import android.view.View;
-import android.widget.ListAdapter;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -19,9 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.PriorityQueue;
 
-import static com.Bands70k.staticVariables.fileDownloaded;
 
 /**
  * Created by rdorn on 9/25/17.
@@ -29,6 +25,7 @@ import static com.Bands70k.staticVariables.fileDownloaded;
 
 public class CustomerDescriptionHandler {
 
+    private Map<String, String> descriptionMapData = new HashMap<String,String>();
 
     public void getDescriptionMapFile(){
 
@@ -71,8 +68,6 @@ public class CustomerDescriptionHandler {
 
     public Map<String, String>  getDescriptionMap(){
 
-        Map<String, String> descriptionMap = new HashMap<String, String>();
-
         if (FileHandler70k.descriptionMapFile.exists() == false){
             this.getDescriptionMapFile();
         }
@@ -83,13 +78,11 @@ public class CustomerDescriptionHandler {
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
-
-
             while ((line = br.readLine()) != null) {
                 String[] rowData = line.split(",");
                 if (rowData[0] != "Band") {
                     Log.d("descriptionMapFile", "Adding " + rowData[0] + "-" + rowData[1]);
-                    descriptionMap.put(rowData[0], rowData[1]);
+                    descriptionMapData.put(rowData[0], rowData[1]);
                 }
             }
 
@@ -97,23 +90,13 @@ public class CustomerDescriptionHandler {
             Log.e("General Exception", "Unable to parse descriptionMapFile", error);
         }
 
-        return descriptionMap;
+        return descriptionMapData;
     }
 
     public void getAllDescriptions(){
 
-        if (staticVariables.notesLoaded == false){
-            staticVariables.notesLoaded =true;
-            getDescriptionMapFile();
-            getDescriptionMap();
-
-            Map<String, String> descriptionMap = this.getDescriptionMap();
-
-            for (String bandName : descriptionMap.keySet()) {
-                loadNoteFromURL(bandName);
-            }
-        }
-
+        AsyncAllDescriptionLoader myNotesTask = new AsyncAllDescriptionLoader();
+        myNotesTask.execute();
     }
 
     public String getDescription (String bandNameValue){
@@ -122,12 +105,11 @@ public class CustomerDescriptionHandler {
         String bandName = bandNameValue;
         String bandNote = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
 
-        Map<String, String> descriptionMap = this.getDescriptionMap();
-
-        if (descriptionMap == null){
-            this.getDescriptionMap();
+        if (descriptionMapData.keySet().size() == 0) {
+            descriptionMapData = this.getDescriptionMap();
         }
-        if (descriptionMap.containsKey(bandName) == false){
+
+        if (descriptionMapData.containsKey(bandName) == false){
             return bandNote;
         }
 
@@ -165,10 +147,13 @@ public class CustomerDescriptionHandler {
                 return;
             }
 
-            Map<String, String> descriptionMap = this.getDescriptionMap();
+            if (descriptionMapData.containsKey(bandName) == false) {
+                getDescriptionMapFile();
+                descriptionMapData = this.getDescriptionMap();
+            }
 
-            Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMap.get(bandName));
-            URL url = new URL(descriptionMap.get(bandName));
+            Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMapData.get(bandName));
+            URL url = new URL(descriptionMapData.get(bandName));
 
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
             String line;
@@ -193,6 +178,47 @@ public class CustomerDescriptionHandler {
         }
     }
 
+    class AsyncAllDescriptionLoader extends AsyncTask<String, Void, ArrayList<String>> {
+
+        ArrayList<String> result;
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+
+        @Override
+        protected ArrayList<String> doInBackground(String... params) {
+
+            CustomerDescriptionHandler descriptionHandler = new CustomerDescriptionHandler();
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+
+            Log.d("AsyncTask", "Downloading NoteData for all bands in background");
+            if (staticVariables.notesLoaded == false){
+                staticVariables.notesLoaded =true;
+                getDescriptionMapFile();
+                descriptionMapData = descriptionHandler.getDescriptionMap();
+
+
+                for (String bandName : descriptionMapData.keySet()) {
+                    descriptionHandler.loadNoteFromURL(bandName);
+                }
+                staticVariables.notesLoaded = false;
+            }
+
+
+            return result;
+
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<String> result) {
+
+        }
+    }
 
     class AsyncDescriptionLoader extends AsyncTask<String, Void, ArrayList<String>> {
 
@@ -220,7 +246,6 @@ public class CustomerDescriptionHandler {
             return result;
 
         }
-
 
         @Override
         protected void onPostExecute(ArrayList<String> result) {
