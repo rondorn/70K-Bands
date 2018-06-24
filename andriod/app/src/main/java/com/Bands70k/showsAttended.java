@@ -25,22 +25,24 @@ public class showsAttended {
 
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
 
-        Log.d("Save showsAttendedHash", showsAttendedHash.toString());
-        try {
+        if (showsAttendedHash.size() > 0) {
+            Log.d("Save showsAttendedHash", showsAttendedHash.toString());
+            try {
 
-            //Saving of object in a file
-            FileOutputStream file = new FileOutputStream(showsAttendedFile);
-            ObjectOutputStream out = new ObjectOutputStream(file);
+                //Saving of object in a file
+                FileOutputStream file = new FileOutputStream(showsAttendedFile);
+                ObjectOutputStream out = new ObjectOutputStream(file);
 
-            // Method for serialization of object
-            out.writeObject(showsAttendedHash);
+                // Method for serialization of object
+                out.writeObject(showsAttendedHash);
 
-            out.close();
-            file.close();
+                out.close();
+                file.close();
 
-        } catch (Exception error){
-            Log.e("Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
-            Log.e("Error", "Unable to save attended tracking data " + error.fillInStackTrace());
+            } catch (Exception error) {
+                Log.e("Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
+                Log.e("Error", "Unable to save attended tracking data " + error.fillInStackTrace());
+            }
         }
     }
 

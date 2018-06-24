@@ -50,7 +50,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default().synchronize()
-        updateBandFromICloud()
+        readiCloudData()
         
         //register Application Defaults
         let defaults = ["artistUrl": artistUrlDefault,
@@ -68,8 +68,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         UserDefaults.standard.register(defaults: defaults)
         
-        readFile()
-        
+        bandPriorityStorage = readFile(dateWinnerPassed: "")
+        attendedHandler.loadShowsAttended()
 
         // Register for remote notifications. This shows a permission dialog on first run, to
         // show the dialog at a more appropriate time move this registration accordingly.
@@ -206,14 +206,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("APNs token retrieved: \(token)")
         
-        //#if PROD_BUILD
-            InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
-            //InstanceID.instanceID().setAPNSToken(deviceToken, type: InstanceIDAPNSTokenType.prod)
-        //#else
-            //InstanceID.instanceID().setAPNSToken(deviceToken, type: .sandbox)
-            //InstanceID.instanceID().setAPNSToken(deviceToken, type: InstanceIDAPNSTokenType.sandbox)
-        //#endif
-        
     }
     
     // [START connect_on_active]
@@ -281,27 +273,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
 
     func iCloudKeysChanged(_ notification: Notification) {
-        updateBandFromICloud()
+        readiCloudData()
     }
 
-    fileprivate func updateBandFromICloud() {
-        let bandInfo = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
-        if (bandInfo.count >= 1) {
-            getPriorityDataFromiCloud()
-        }
-    }
+
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
         writeFiltersFile()
         writeFile()
+        attendedHandler.saveShowsAttended()
+        saveFileToiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
         
     }
 
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+        
+        loadFileFromiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
+        attendedHandler.loadShowsAttended()
     }
 
 
@@ -310,6 +302,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Saves changes in the application's managed object context before the application terminates.
         writeFiltersFile()
         writeFile()
+        attendedHandler.saveShowsAttended()
+        saveFileToiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
         self.saveContext()
     }
 

@@ -9,12 +9,15 @@ import UIKit
 import CoreData
 
 var showsAttendedArray: [String : String] = [String : String]();
-var showsAttended = directoryPath.appendingPathComponent("showsAttended.data")
 
 open class ShowsAttended {
     
     init(){
         loadShowsAttended()
+    }
+    
+    func setShowsAttended(attendedData: [String : String]){
+        showsAttendedArray = attendedData
     }
     
     func getShowsAttended()->[String : String]{
@@ -23,20 +26,25 @@ open class ShowsAttended {
     
     func saveShowsAttended(){
         
-        var json : Data;
-        
-        do {
-            json = try JSONEncoder().encode(showsAttendedArray)
-            try json.write(to: showsAttended)
-            print ("saved showData \(showsAttendedArray)")
-        } catch {
-            print ("Error, unable to save showsAtteneded Data \(error.localizedDescription)")
+        if (showsAttendedArray.count > 0){
+            do {
+                
+                let json = try JSONEncoder().encode(showsAttendedArray)
+                try json.write(to: showsAttended)
+            
+                //saveFileToiCloudDrive(localFile: showsAttended)
+            
+                print ("saved showData \(showsAttendedArray)")
+            } catch {
+                print ("Error, unable to save showsAtteneded Data \(error.localizedDescription)")
+            }
         }
     }
 
     func loadShowsAttended(){
         
         do {
+            //loadFileFromiCloudDrive(localFile: showsAttended)
             let data = try Data(contentsOf: showsAttended, options: [])
             showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
             
@@ -47,6 +55,10 @@ open class ShowsAttended {
     }
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String)->String{
+        
+        if (showsAttendedArray.count == 0){
+            loadShowsAttended();
+        }
         
         let index = band + ":" + location + ":" + startTime + ":" + eventType
         
