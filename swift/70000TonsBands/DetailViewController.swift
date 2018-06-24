@@ -63,7 +63,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         customNotesText.delegate = self as? UITextViewDelegate
         
-        readFile()
+        bandPriorityStorage = readFile(dateWinnerPassed: "")
         
         if (bandName == nil || bands.isEmpty == true) {
             var bands = getBandNames()

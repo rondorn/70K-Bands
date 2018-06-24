@@ -15,11 +15,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>201806191</string>
+	<string>201806247</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>201806191</string>
+	<string>201806247</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -66,5 +66,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>iCloud.com.rdorn.-0000TonsBands</key>
+	<dict>
+		<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+		<true/>
+		<key>NSUbiquitousContainerName</key>
+		<string>70KBands</string>
+		<key>NSUbiquitousContainerSupportedFolderLevels</key>
+		<string>One</string>
+	</dict>
 </dict>
 </plist>

@@ -13,6 +13,22 @@ import UIKit
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
 
+//file locations
+var showsAttendedFileName = "showsAttended.data";
+
+//icloud data types
+var PRIORITY = "priority";
+var ATTENDED = "attended";
+var NOTE = "note";
+
+var directoryPath = URL(fileURLWithPath:dirs[0])
+var storageFile = directoryPath.appendingPathComponent( "data.txt")
+var dateFile = directoryPath.appendingPathComponent( "date.txt")
+var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
+var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
+var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
+var iCloudCheck = false;
+
 //prevent mutiple threads doing the same thing
 var isAlertGenerationRunning = false
 var isLoadingBandData = false
@@ -58,12 +74,6 @@ var officalSiteButtonName = "Offical Web Site"
 var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
-
-//shows attended
-let sawAllIcon = "🤘"
-let sawSomeIcon = "👍"
-let sawNoneIcon = ""
-let attendedShowIcon = "🎟"
 
 let attendedHandler = ShowsAttended()
 let sawAllColor = UIColor.blue

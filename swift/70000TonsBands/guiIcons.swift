@@ -28,6 +28,12 @@ let mAndmEventTypeIcon = "📸";
 let listeningEventTypeIcon = "💽";
 let clinicEventTypeIcon = "🎸";
 
+//shows attended
+let sawAllIcon = "🤘"
+let sawSomeIcon = "👍"
+let sawNoneIcon = ""
+let attendedShowIcon = "🎟"
+
 func getEventTypeIcon (_ eventType: String) -> String {
 
     switch eventType {

@@ -77,7 +77,7 @@ class InterfaceController: WKInterfaceController {
         
         bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
         sortBandsByTime()
-        getPriorityDataFromiCloud()
+        readiCloudData()
         print(schedule.schedulingData);
         
         let bandText = getPriorityIcon(getPriorityData(bandsByTime[index])) + bandsByTime[index]
@@ -123,7 +123,7 @@ class InterfaceController: WKInterfaceController {
     fileprivate func updateBandFromICloud() {
         let bandInfo = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
         if (bandInfo.count >= 1) {
-            getPriorityDataFromiCloud()
+            readiCloudData()
         }
     }
     
