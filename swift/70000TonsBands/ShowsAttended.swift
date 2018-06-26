@@ -32,7 +32,7 @@ open class ShowsAttended {
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
             
-                //saveFileToiCloudDrive(localFile: showsAttended)
+                writeiCloudData();
             
                 print ("saved showData \(showsAttendedArray)")
             } catch {
