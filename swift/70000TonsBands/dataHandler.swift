@@ -170,6 +170,8 @@ func readiCloudData(){
     
     var showsAttendedData : [String : String] = [String : String]();
     
+    var conversion = false;
+    
     print ("iCloud - " + String(describing: values))
     if values["bandPriorities"] != nil {
         let dataString = String(NSUbiquitousKeyValueStore.default().string(forKey: "bandPriorities")!)
@@ -187,18 +189,25 @@ func readiCloudData(){
                     print ("Adding icloud ATTENDED \(split2[1]) - \(split2[2])")
                 }
         
-            } else if (split2.count == 0){
-                    split2 = record.components(separatedBy: ":")
-                    print ("Number of variable is split2-0 \(split2[0]) split2-1 \(split2[1])")
+            } else if (split2.count == 1){
+                split2 = record.components(separatedBy: ":")
+                if (split2.count == 2){
+                    print ("Number of variable is split2-0 \(split2)")
                     bandPriorityStorage[split2[0]] = Int(split2[1])
-                    writeiCloudData()
+                    print ("Adding icloud PRIORITIES compatMode \(split2[0]) - \(split2[1])")
+                    conversion = true;
+                }
             }
         }
     }
-
+    
     writeFile();
     attendedHandler.setShowsAttended(attendedData: showsAttendedData)
     attendedHandler.saveShowsAttended()
+
+    if (conversion == true){
+        writeiCloudData();
+    }
 }
 
 func writeFile(){
