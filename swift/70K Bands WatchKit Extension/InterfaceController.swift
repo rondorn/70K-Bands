@@ -37,6 +37,7 @@ class InterfaceController: WKInterfaceController {
         let defaultValues = ["artistUrl": lastYearsartistUrlDefault,
             "scheduleUrl": lastYearsScheduleUrlDefault,
             "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
+            "onlyAlertForAttended": onlyAlertForAttendedDefault,
             "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
             "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
             "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
@@ -49,7 +50,6 @@ class InterfaceController: WKInterfaceController {
 
         gatherData()
         schedule.DownloadCsv()
-        //readBandFile()
         schedule.populateSchedule()
         refreshData()
         

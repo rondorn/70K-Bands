@@ -55,10 +55,11 @@ public class showBands extends Activity {
     private BandInfo bandInfo;
     private CustomerDescriptionHandler bandNotes;
     public Button sortButton;
+    public Button willAttendFilterButton;
 
     public static Boolean inBackground = true;
 
-    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
 
     private BroadcastReceiver mRegistrationBroadcastReceiver;
@@ -66,7 +67,6 @@ public class showBands extends Activity {
 
     private mainListHandler listHandler;
     private CustomArrayAdapter adapter;
-    private showsAttended attendedHandler = new showsAttended();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +96,9 @@ public class showBands extends Activity {
         if (staticVariables.preferences == null) {
             staticVariables.preferences = new preferencesHandler();
         }
+        if (staticVariables.attendedHandler == null){
+            staticVariables.attendedHandler = new showsAttended();
+        }
 
         staticVariablesInitialize();
         bandInfo = new BandInfo();
@@ -116,6 +119,7 @@ public class showBands extends Activity {
         setFilterDefaults();
 
         setupButtonFilters();
+
     }
 
     private void setupSwipeList (){
@@ -399,7 +403,64 @@ public class showBands extends Activity {
                 finish();
             }
         });
+
+        willAttendFilterButton = (Button) findViewById(R.id.willAttendFilter);
+        willAttendFilterButton.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                setShowAttendedFilter();
+                Intent showBandList = new Intent(showBands.this, showBands.class);
+                startActivity(showBandList);
+                finish();
+            }
+        });
     };
+
+    private void setShowAttendedFilter(){
+
+        ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
+        Button filterButton = (Button) findViewById(R.id.filterMenu);
+
+        if (staticVariables.preferences.getShowWillAttend() == false) {
+            Toast.makeText(staticVariables.context, getString(R.string.showAttendedFilterTrueHelp),
+                    Toast.LENGTH_LONG).show();
+
+            filterButton.setVisibility(View.INVISIBLE);
+            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon));
+            showAttendedFilterButton.setChecked(true);
+            staticVariables.preferences.setShowWillAttend(true);
+            turnOffMustMightWont();
+
+        } else {
+
+            Toast.makeText(staticVariables.context, getString(R.string.showAttendedFilterFalseHelp),
+                    Toast.LENGTH_LONG).show();
+
+            filterButton.setVisibility(View.VISIBLE);
+            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon_alt));
+            showAttendedFilterButton.setChecked(false);
+            staticVariables.preferences.setShowWillAttend(false);
+            setFilterDefaults();
+        }
+
+    }
+
+    private void turnOffMustMightWont(){
+        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
+        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+        mustFilterButton.setEnabled(false);
+
+        ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
+        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+        mightFilterButton.setEnabled(false);
+
+        ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
+        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+        wontFilterButton.setEnabled(false);
+
+        ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
+        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+        unknownFilterButton.setEnabled(false);
+    }
 
     private void setFilterDefaults(){
 
@@ -444,16 +505,43 @@ public class showBands extends Activity {
 
             ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
             if (staticVariables.preferences.getShowUnknown() == true) {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
                 unknownFilterButton.setChecked(false);
                 filterToogle.put(unknownIcon, true);
             } else {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
                 unknownFilterButton.setChecked(true);
                 filterToogle.put(unknownIcon, false);
             }
 
-            Log.d(TAG, "2 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
+            Log.d(TAG, "settingFilter for ShowWillAttend is " + staticVariables.preferences.getShowWillAttend());
+        }
+    }
+
+    private void setShowAttendedFilterButton(){
+
+        ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
+
+        if (listHandler.numberOfEvents != 0) {
+            showAttendedFilterButton.setEnabled(true);
+            showAttendedFilterButton.setClickable(true);
+            showAttendedFilterButton.setVisibility(View.VISIBLE);
+
+            if (staticVariables.preferences.getShowWillAttend() == true) {
+                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon));
+                showAttendedFilterButton.setChecked(true);
+
+                turnOffMustMightWont();
+
+            } else {
+                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon_alt));
+                showAttendedFilterButton.setChecked(false);
+                staticVariables.preferences.setShowWillAttend(false);
+            }
+        } else {
+            showAttendedFilterButton.setEnabled(false);
+            showAttendedFilterButton.setClickable(false);
+            showAttendedFilterButton.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -524,7 +612,6 @@ public class showBands extends Activity {
         } else {
             setUnknownFilterButton(unknownFilterButton, true);
         }
-
     }
 
     private void setMustFilterButton(ToggleButton filterButton, Boolean setTo){
@@ -600,6 +687,7 @@ public class showBands extends Activity {
         });
     }
 
+
     @Override
     public
     boolean onCreateOptionsMenu(Menu menu) {
@@ -629,7 +717,9 @@ public class showBands extends Activity {
         if (listHandler.allUpcomingEvents == 0) {
             filterButton.setVisibility(View.INVISIBLE);
         } else {
-            filterButton.setVisibility(View.VISIBLE);
+            if (staticVariables.preferences.getShowWillAttend() == false) {
+                filterButton.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -867,6 +957,7 @@ public class showBands extends Activity {
         setupSwipeList();
 
         setSortButton();
+        setShowAttendedFilterButton();
 
         ListAdapter arrayAdapter = listHandler.arrayAdapter;
 

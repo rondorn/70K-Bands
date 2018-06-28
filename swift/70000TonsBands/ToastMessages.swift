@@ -31,8 +31,9 @@ class ToastMessages : UILabel {
         textAlignment = .center
         self.layer.backgroundColor = BACKGROUND_COLOR
         self.layer.cornerRadius = 5
+
     }
-        
+    
     public func show(_ parent: UIViewController) {
         
         show(parent,cellLocation: ToastMessages.cellLocationStore)
@@ -45,21 +46,24 @@ class ToastMessages : UILabel {
         
         
         frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
+
         ToastMessages.cellLocationStore = frame
         
-        if ToastMessages.showing == nil {
-            //Log.d("showing \(String(describing: text))")
-            ToastMessages.showing = self
-            alpha = 0
-            parent.view.addSubview(self)
-            UIView.animate(withDuration: ANIMATION_DURATION_SEC, animations: {
-                self.alpha = 1
-            }, completion: { (completed) in
-                Timer.scheduledTimer(timeInterval: self.SHOW_TIME_SECONDS, target: self, selector: #selector(self.onTimeout), userInfo: nil, repeats: false)
-            })
-        } else {
-            ToastMessages.queue.append(ToastHolder(self, parent))
-        }
+        //Log.d("showing \(String(describing: text))")
+        ToastMessages.showing = self
+        alpha = 0
+        parent.view.addSubview(self)
+        
+        self.lineBreakMode = NSLineBreakMode.byWordWrapping
+        self.numberOfLines = 4
+        self.sizeToFit()
+        
+        UIView.animate(withDuration: ANIMATION_DURATION_SEC, animations: {
+            self.alpha = 1
+        }, completion: { (completed) in
+            Timer.scheduledTimer(timeInterval: self.SHOW_TIME_SECONDS, target: self, selector: #selector(self.onTimeout), userInfo: nil, repeats: false)
+        })
+
     }
     
     @objc func onTimeout() {

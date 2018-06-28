@@ -36,11 +36,13 @@ class localNoticationHandler {
         }
     }
     
-    func willAddToNotifications(_ bandName: String, eventTypeValue: String) -> Bool{
+    func willAddToNotifications(_ bandName: String, eventType :String, startTime: String, location:String) -> Bool{
         
         let defaults = UserDefaults.standard
         let mustSeeAlert = defaults.bool(forKey: "mustSeeAlert")
         let mightSeeAlert = defaults.bool(forKey: "mightSeeAlert")
+        let onlyAlertForAttended = defaults.bool(forKey: "onlyAlertForAttended")
+        
         let alertForShows = defaults.bool(forKey: "alertForShows")
         let alertForSpecial = defaults.bool(forKey: "alertForSpecial")
         let alertForMandG = defaults.bool(forKey: "alertForMandG")
@@ -51,20 +53,26 @@ class localNoticationHandler {
         
         var alertStatus = false
         
-        if (eventTypeValue == specialEventType && alertForSpecial == true){
-            alertStatus = true
-        }
-        if (eventTypeValue == showType && alertForShows == true){
-            alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
-        }
-        if (eventTypeValue == listeningPartyType && alertForListening == true){
-            alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
-        }
-        if (eventTypeValue == meetAndGreetype && alertForMandG == true){
-            alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
-        }
-        if (eventTypeValue == clinicType && alertForClinics == true){
-            alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+        if (onlyAlertForAttended == true){
+            if (attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType) != sawNoneStatus){
+                alertStatus = true
+            }
+        } else {
+            if (eventType == specialEventType && alertForSpecial == true){
+                alertStatus = true
+            }
+            if (eventType == showType && alertForShows == true){
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+            }
+            if (eventType == listeningPartyType && alertForListening == true){
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+            }
+            if (eventType == meetAndGreetype && alertForMandG == true){
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+            }
+            if (eventType == clinicType && alertForClinics == true){
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+            }
         }
         
         return alertStatus
@@ -162,7 +170,11 @@ class localNoticationHandler {
                     if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                         
                         if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
-                            let addToNoticication = willAddToNotifications(bandName.0, eventTypeValue:(schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!)
+                            let eventTypeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!
+                            let startTimeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[startTimeField])!
+                            let locationValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[locationField])!
+                            
+                            let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
                             
                             if (addToNoticication == true){
                                 let compareResult = alertTime.compare(NSDate() as Date)

@@ -56,6 +56,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let defaults = ["artistUrl": artistUrlDefault,
             "scheduleUrl": scheduleUrlDefault,
             "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
+            "onlyAlertForAttended": onlyAlertForAttendedDefault,
             "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
             "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
             "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,

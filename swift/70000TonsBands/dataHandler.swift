@@ -23,6 +23,7 @@ func writeFiltersFile(){
         prefsString += "mightSeeOn:" + boolToString(getMightSeeOn()) + ";"
         prefsString += "wontSeeOn:" + boolToString(getWontSeeOn()) + ";"
         prefsString += "unknownSeeOn:" + boolToString(getUnknownSeeOn()) + ";"
+        prefsString += "showOnlyWillAttened:" + boolToString(getShowOnlyWillAttened()) + ";"
         
         print ("Wrote prefs " + prefsString)
         do {
@@ -59,6 +60,9 @@ func readFiltersFile(){
                 case "unknownSeeOn":
                     setUnknownSeeOn(stringToBool(valueArray[1]))
                 
+                case "showOnlyWillAttened":
+                    setShowOnlyWillAttened(stringToBool(valueArray[1]))
+
                 default:
                     print("Not sure why this would happen")
             }

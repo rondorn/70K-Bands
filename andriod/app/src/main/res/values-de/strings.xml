@@ -33,4 +33,8 @@
     <string name="restarTitle">Neustart erforderlich</string>
     <string name="restartMessage">NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
 
+    <string name="showAttendedFilterTrueHelp">Zeige nur Ereignisse, an denen du teilgenommen hast. Andere Filter werden nicht angewendet</string>
+    <string name="showAttendedFilterFalseHelp">Zeigen Sie Bands und Shows nach Filtern</string>
+
+    <string name="alertOnlyForShowWillAttend">Warnung nur für Ereignisse</string>
 </resources>

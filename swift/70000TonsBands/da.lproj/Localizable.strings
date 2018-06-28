@@ -17,6 +17,8 @@
 
 "Alert On Must See Bands"="Notifikation ved bands der skal ses";
 "Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
+"Alert Only for Will Attend Events"="Alarmer kun for at deltage i begivenheder";
+
 "Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
 "Alert For Shows"="Notifikation for shows";
 "Alert For Special Events"="Notifikation for specielle begivenheder";

@@ -160,6 +160,17 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     public static boolean showAlert(scheduleHandler scheduleDetails, String bandName) {
 
         staticBandName = bandName;
+        Calendar cal = Calendar.getInstance();
+
+        if (staticVariables.preferences.getAlertOnlyForShowWillAttend() == true){
+            String attendStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName,scheduleDetails.getShowLocation(),scheduleDetails.getStartTimeString(),scheduleDetails.getShowType());
+            if (attendStatus != staticVariables.sawNoneStatus){
+                if (scheduleDetails.getEpochStart() > cal.getTime().getTime()) {
+                    Log.d("SchedNotications", "!ShowTiming " + bandName + " at " + scheduleDetails.getShowLocation() + " will get an alert " + attendStatus);
+                    return true;
+                }
+            }
+        }
 
         String rank = rankStore.getRankForBand(bandName);
 

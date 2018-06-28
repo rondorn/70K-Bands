@@ -34,4 +34,8 @@
     <string name="restarTitle">Redémarrage Nécessaire</string>
     <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 
+    <string name="showAttendedFilterTrueHelp">N'affichez que les événements auxquels vous avez participé. Les autres filtres ne s'appliqueront pas</string>
+    <string name="showAttendedFilterFalseHelp">Afficher les groupes et les émissions en fonction des filtres</string>
+
+    <string name="alertOnlyForShowWillAttend">Alerte uniquement pour les événements liés à la volonté</string>
 </resources>

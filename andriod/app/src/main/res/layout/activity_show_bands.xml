@@ -111,6 +111,22 @@
             android:layout_height="50dp"
             android:layout_weight="1" />
 
+        <ToggleButton
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:text="willAttend"
+            android:id="@+id/willAttendFilter"
+            android:textOff=""
+            android:textOn=""
+            android:textSize="30dp"
+            android:background="@drawable/ticket_icon_alt"
+            android:layout_marginTop="10dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
         <Button
             android:layout_width="35dp"
             android:layout_height="35dp"

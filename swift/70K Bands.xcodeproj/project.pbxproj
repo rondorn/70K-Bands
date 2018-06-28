@@ -73,6 +73,7 @@
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
 		11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
+		11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
@@ -694,6 +695,7 @@
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
+				11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
 				11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */,

@@ -16,6 +16,8 @@ import Foundation
     var mightSeeOn = true;
     var wontSeeOn = true;
     var unknownSeeOn = true;
+
+    var showOnlyWillAttened = false;
     
     var sortedBy = String();
     var bandCount = Int();
@@ -64,6 +66,7 @@ import Foundation
     func getWontSeeOn() -> Bool{
         return wontSeeOn
     }
+
     func setUnknownSeeOn(_ value: Bool){
         unknownSeeOn = value
     }
@@ -71,9 +74,15 @@ import Foundation
         return unknownSeeOn
     }
 
+    func setShowOnlyWillAttened(_ value: Bool){
+        showOnlyWillAttened = value
+    }
+    func getShowOnlyWillAttened() -> Bool{
+        return showOnlyWillAttened
+    }
+
     func determineBandOrScheduleList (_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
     
-        
         var newAllBands = [String]()
         var presentCheck = [String]();
         listOfVenues = ["All"]
@@ -91,13 +100,9 @@ import Foundation
                     if (timeIndex > Date().timeIntervalSince1970 - 3600){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField] != nil){
-                            if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                                if (venueFiltering((schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]![locationField]!)!) == true){
-                                    if (rankFiltering(bandName) == true){
-                                        newAllBands.append(bandName + ":" + String(timeIndex));
-                                        presentCheck.append(bandName);
-                                    }
-                                }
+                            if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                                newAllBands.append(bandName + ":" + String(timeIndex));
+                                presentCheck.append(bandName);
                             }
                         }
                     }
@@ -114,13 +119,9 @@ import Foundation
                         if (timeIndex > Date().timeIntervalSince1970 - 3600){
                             totalUpcomingEvents += 1;
                             if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
-                                if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
-                                    if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
-                                        if (rankFiltering(bandName) == true){
-                                            newAllBands.append(String(timeIndex) + ":" + bandName);
-                                            presentCheck.append(bandName);
-                                        }
-                                    }
+                                if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                                    newAllBands.append(String(timeIndex) + ":" + bandName);
+                                    presentCheck.append(bandName);
                                 }
                             }
                         }
@@ -144,18 +145,51 @@ import Foundation
  
         newAllBands.sort();
         
+        if (newAllBands.count == 0 && getShowOnlyWillAttened() == true){
+            setShowOnlyWillAttened(false);
+            newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy)
+        }
+        
         if (schedule.getTimeSortedSchedulingData().count > 2){
             //add any bands without shows to the bottom of the list
             for bandName in allBands {
                 if (presentCheck.contains(bandName) == false){
-                    print("Adding!! bandName  " + bandName)
-                    newAllBands.append(bandName);
-                    presentCheck.append(bandName);
+                    if (applyFilters(bandName: bandName,timeIndex: 0) == true){
+                        print("Adding!! bandName  " + bandName)
+                        newAllBands.append(bandName);
+                        presentCheck.append(bandName);
+                    }
                 }
             }
         }
         
         return newAllBands
+    }
+
+    func applyFilters(bandName:String, timeIndex:TimeInterval)-> Bool{
+        
+        var include = false;
+        
+        if (timeIndex.isZero == false){
+            if (getShowOnlyWillAttened() == true){
+                include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex);
+            
+            } else {
+                if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                    if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
+                        if (rankFiltering(bandName) == true){
+                            include = true
+                        }
+                    }
+                }
+            }
+        } else {
+            if (getShowOnlyWillAttened() == false){
+                include = rankFiltering(bandName);
+            }
+        }
+        
+        return include
     }
 
     func getFilteredBands(_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String] {
@@ -166,37 +200,41 @@ import Foundation
         
         newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy);
         
-        for bandNameIndex in newAllBands {
+        if (getShowOnlyWillAttened() == true){
+            filteredBands = newAllBands;
             
-            let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
-            
-            switch getPriorityData(bandName) {
-            case 1:
-                if (getMustSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
+        } else {
+            for bandNameIndex in newAllBands {
                 
-            case 2:
-                if (getMightSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
+                let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
                 
-            case 3:
-                if (getWontSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
+                switch getPriorityData(bandName) {
+                case 1:
+                    if (getMustSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 2:
+                    if (getMightSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 3:
+                    if (getWontSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 0:
+                    if (getUnknownSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                default:
+                    print("Encountered unexpected value of ", terminator: "")
+                    print (getPriorityData(bandName))
                 }
-                
-            case 0:
-                if (getUnknownSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            default:
-                print("Encountered unexpected value of ", terminator: "")
-                print (getPriorityData(bandName))
             }
         }
-        
         return filteredBands
     }
 
@@ -275,6 +313,30 @@ import Foundation
         
         return showBand
     
+    }
+
+func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
+    
+        var showEvent = true;
+
+        let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
+        let location = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!
+        let startTime = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![startTimeField]!
+    
+        if (timeIndex.isZero){
+            showEvent = false
+        
+        } else {
+            let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType)
+    
+            if (getShowOnlyWillAttened() == true){
+                if (status == sawNoneStatus){
+                    showEvent = false
+                }
+            }
+        }
+    
+        return showEvent;
     }
 
     func eventTypeFiltering(_ eventType: String) -> Bool{

@@ -57,38 +57,32 @@ public class mainListHandler {
                     if (staticVariables.sortBySchedule == true) {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
                             allUpcomingEvents++;
-                            if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true){
-                                if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true){
-                                    if (checkFiltering(bandName) == true) {
-                                        sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
-                                        bandPresent.add(bandName);
-                                        numberOfEvents++;
-                                    }
-                                }
+                            if (applyFilters(bandName, timeIndex) == true) {
+                                sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
+                                bandPresent.add(bandName);
+                                numberOfEvents++;
                             }
                         }
                     } else {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
                             allUpcomingEvents++;
-                            if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType())  == true) {
-                                if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true) {
-                                    if (checkFiltering(bandName) == true) {
-                                        sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
-                                        numberOfEvents++;
-                                    }
-                                }
+                            if (applyFilters(bandName, timeIndex) == true) {
+                                sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
+                                bandPresent.add(bandName);
+                                numberOfEvents++;
                             }
                         }
-                        bandPresent.add(bandName);
                     }
                 }
             }
             Collections.sort(sortableBandNames);
             for (String bandName : bandList){
-                if (bandPresent.contains(bandName) == false){
-                    sortableBandNames.add(bandName + ":");
-                    if (numberOfEvents == 0) {
-                        numberOfBands++;
+                if (staticVariables.preferences.getShowWillAttend() == false) {
+                    if (bandPresent.contains(bandName) == false) {
+                        sortableBandNames.add(bandName + ":");
+                        if (numberOfEvents == 0) {
+                            numberOfBands++;
+                        }
                     }
                 }
             }
@@ -101,10 +95,62 @@ public class mainListHandler {
 
         turnSortedListIntoArrayAdapter();
 
+        //ensure that if there is no list for getShowWillAttend(), we turn this off and recollect
+        if (sortableBandNames.isEmpty() && staticVariables.preferences.getShowWillAttend() == true){
+            staticVariables.preferences.setShowWillAttend(false);
+            sortableBandNames = populateBandInfo(bandInfo, bandList);
+        }
+
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
         bandCount.setText(this.getSizeDisplay());
 
         return sortableBandNames;
+    }
+
+    private boolean applyFilters(String bandName, Long timeIndex) {
+
+        boolean status = true;
+
+        if (staticVariables.preferences.getShowWillAttend() == true) {
+            status = filterByWillAttend(bandName, timeIndex);
+
+        } else if (timeIndex == null){
+            if (checkFiltering(bandName) == true) {
+                status = true;
+            } else {
+                status = false;
+            }
+        } else {
+            if (checkFiltering(bandName) == true){
+                if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true) {
+                    if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true) {
+                        status = true;
+                    }
+                }
+            }
+        }
+        Log.d("applyFilter", "bandName = " + bandName + " timeIndex = " + timeIndex.toString() + " status = " + status);
+        return status;
+    }
+
+    private boolean filterByWillAttend(String bandName, Long timeIndex){
+
+        boolean status = true;
+
+        if (timeIndex == null){
+            status = false;
+        } else {
+            String showType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+            String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
+            String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
+            String attendedStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName, location, startTime, showType);
+
+            if (attendedStatus.equals(staticVariables.sawNoneStatus)) {
+                status = false;
+            }
+        }
+
+        return status;
     }
 
     private boolean filterByVenue(String venue){
@@ -185,7 +231,7 @@ public class mainListHandler {
             attendedListMap.put(counter, bandName + ":" + timeIndex);
             String line = buildLines(timeIndex, bandName);
 
-            if (checkFiltering(bandName) == true) {
+            if (checkFiltering(bandName) == true || staticVariables.preferences.getShowWillAttend() == true) {
                 displayableBandList.add(line);
                 bandNamesIndex.add(bandName);
                 counter = counter + 1;

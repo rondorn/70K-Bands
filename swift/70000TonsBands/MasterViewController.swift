@@ -21,6 +21,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var wontSeeButton: UIButton!
     @IBOutlet weak var unknownButton: UIButton!
     
+    @IBOutlet weak var willAttendButton: UIButton!
+    
     @IBOutlet weak var Undefined: UIButton!
 
     @IBOutlet weak var shareButton: UIBarButtonItem!
@@ -130,7 +132,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     func showReceivedMessage(_ notification: Notification) {
-        //print ("SendingAlert! recieved notification!! \(notification)")
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
                 showAlert("Message received", message: aps["alert"]!)
@@ -153,18 +154,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func setFilterButtons(){
         
         print ("Status of getWontSeeOn = \(getWontSeeOn())")
-        if (getMustSeeOn() == false){
-            print ("Setting image to alt")
-            mustSeeButton.setImage(UIImage(named: "mustSeeIconAlt"), for: UIControlState())
+        if (getMustSeeOn() == false || getShowOnlyWillAttened() == true){
+            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
         }
-        if (getMightSeeOn() == false){
+        if (getMightSeeOn() == false || getShowOnlyWillAttened() == true){
             mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
         }
-        if (getWontSeeOn() == false){
+        if (getWontSeeOn() == false || getShowOnlyWillAttened() == true){
             wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
         }
-        if (getUnknownSeeOn() == false){
+        if (getUnknownSeeOn() == false || getShowOnlyWillAttened() == true){
             unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+        }
+        
+        if (getShowOnlyWillAttened() == true){
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+        } else {
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
         }
     }
     
@@ -211,12 +217,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (eventCount == 0){
             print("Schedule is empty, stay hidden")
             self.scheduleButton.isHidden = true;
+            willAttendButton.isHidden = true;
+            setShowOnlyWillAttened(false);
             sortedBy = "name"
+            resetFilterIcons();
             self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
             
         } else if (sortedBy == "name"){
             print("Sort By is Name, Show")
             self.scheduleButton.isHidden = false;
+            willAttendButton.isHidden = false;
             self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
             
         } else {
@@ -224,6 +234,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Sort By is Time, Show")
             //self.sortBandsByTime()
             self.scheduleButton.isHidden = false;
+            willAttendButton.isHidden = false;
             self.scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
             
         }
@@ -296,13 +307,76 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func showHideFilterMenu(){
         print ("totalUpcomingEvents is " + String(totalUpcomingEvents))
-        if (totalUpcomingEvents == 0){
+        if (totalUpcomingEvents == 0 || showOnlyWillAttened == true){
             menuButton.title = "";
             menuButton.isEnabled = false;
         } else {
             menuButton.title = "Filters";
             menuButton.isEnabled = true;
         }
+    }
+    
+    func resetFilterIcons(){
+
+        if (getMustSeeOn() == true){
+            mustSeeButton.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
+        }
+        mustSeeButton.isEnabled = true
+        
+        if (getMightSeeOn() == true){
+            mightSeeButton.setImage(UIImage(named: "mightSeeIcon"), for: UIControlState())
+        }
+        mightSeeButton.isEnabled = true
+        
+        if (getWontSeeOn() == true){
+            wontSeeButton.setImage(UIImage(named: "willNotSee"), for: UIControlState())
+        }
+        wontSeeButton.isEnabled = true
+        
+        if (getUnknownSeeOn() == true){
+            unknownButton.setImage(UIImage(named: "unknown"), for: UIControlState())
+        }
+        unknownButton.isEnabled = true
+    }
+    
+    @IBAction func onlyShowAttendedFilter(_ sender: UIButton) {
+
+        if (getShowOnlyWillAttened() == false){
+            setShowOnlyWillAttened(true)
+            
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+            
+            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+            mustSeeButton.isEnabled = false
+            
+            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+            mightSeeButton.isEnabled = false
+            
+            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+            wontSeeButton.isEnabled = false
+            
+            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+            unknownButton.isEnabled = false
+            let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
+            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            
+        } else {
+            let message = NSLocalizedString("showAttendedFilterFalseHelp", comment: "")
+            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            
+            setShowOnlyWillAttened(false)
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
+            resetFilterIcons();
+        }
+        
+        writeFiltersFile();
+        
+        bands =  [String]()
+        quickRefresh()
+        bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
+        
+        updateCountLable()
+        tableView.reloadData()
     }
     
     @IBAction func filterContent(_ sender: UIButton) {
@@ -357,6 +431,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
+        writeFiltersFile()
         print("Sorted  by is " + sortedBy)
         bands =  [String]()
         quickRefresh()
@@ -509,8 +584,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             } else {
                 let message =  "No Show Is Associated With This Entry"
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
-                //ToastMessages.show(message: message, controller: self)
-                //self.showToast(message: message);
             }
         })
  

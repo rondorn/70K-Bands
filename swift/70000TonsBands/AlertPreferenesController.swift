@@ -48,12 +48,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     var mustSeeAlertValue = Bool()
     var mightSeeAlertValue = Bool()
+    var onlyAlertForAttendedValue = Bool()
+    
     var alertForShowsValue = Bool()
     var alertForSpecialValue = Bool()
     var alertForMandGValue = Bool()
     var alertForClinicsValue = Bool()
     var alertForListeningValue = Bool()
-    
     
     var minBeforeAlertValue = Double()
     
@@ -65,6 +66,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBOutlet weak var AlertOnMustSee: UISwitch!
     @IBOutlet weak var AlertOnMightSee: UISwitch!
+    
+    @IBOutlet weak var AlertOnlyForAttended: UISwitch!
+    
     @IBOutlet weak var AlertForShows: UISwitch!
     @IBOutlet weak var AlertForSpecialEvents: UISwitch!
     @IBOutlet weak var AlertForMeetAndGreets: UISwitch!
@@ -77,6 +81,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     //labels
     @IBOutlet weak var mustSeeAlertLable: UILabel!
     @IBOutlet weak var mightSeeAlertLable: UILabel!
+    @IBOutlet weak var onlyAlertForAttendedLable: UILabel!
     @IBOutlet weak var minBeforeAlertLable: UILabel!
     @IBOutlet weak var alertForShowsLable: UILabel!
     @IBOutlet weak var alertForSpecialLable: UILabel!
@@ -123,6 +128,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
         mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
         mightSeeAlertLable.text = NSLocalizedString("Alert On Might See Bands", comment: "")
+        onlyAlertForAttendedLable.text = NSLocalizedString("Alert Only for Will Attend Events", comment: "")
+        
         minBeforeAlertLable.text = NSLocalizedString("Minutes Before Event to Alert", comment: "")
         alertForShowsLable.text = NSLocalizedString("Alert For Shows", comment: "")
         alertForSpecialLable.text = NSLocalizedString("Alert For Special Events", comment: "")
@@ -144,6 +151,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         mustSeeAlertValue = defaults.bool(forKey: "mustSeeAlert")
         mightSeeAlertValue = defaults.bool(forKey: "mightSeeAlert")
+        onlyAlertForAttendedValue = defaults.bool(forKey: "onlyAlertForAttended")
+        
         alertForShowsValue = defaults.bool(forKey: "alertForShows")
         alertForSpecialValue = defaults.bool(forKey: "alertForSpecial")
         alertForMandGValue = defaults.bool(forKey: "alertForMandG")
@@ -154,6 +163,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         AlertOnMustSee.isOn = mustSeeAlertValue
         AlertOnMightSee.isOn = mightSeeAlertValue
+        AlertOnlyForAttended.isOn = onlyAlertForAttendedValue
         
         MinBeforeAlert.text = String(format: "%.0f", minBeforeAlertValue)
         AlertForShows.isOn = alertForShowsValue
@@ -206,6 +216,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func MightSeeChange() {
         defaults.set(AlertOnMightSee.isOn, forKey: "mightSeeAlert")
+    }
+    
+    @IBAction func AlertOnlyForAttendedChange() {
+        defaults.set(AlertOnlyForAttended.isOn, forKey: "onlyAlertForAttended")
     }
     
     @IBAction func AlertForShowsChange() {
@@ -270,6 +284,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             setMightSeeOn(true);
             setWontSeeOn(true);
             setUnknownSeeOn(true);
+            
             writeFiltersFile();
  
             //clear all existing notifications

@@ -82,6 +82,27 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/alertOnlyForShowWillAttend"
+                    android:layout_column="9"
+                    android:layout_marginLeft="10dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/alertOnlyForShowWillAttendCheckBox"
+                    android:enabled="true"
+                    android:layout_column="27"
+                    android:layout_marginLeft="10dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/MinutesBeforeEventtoAlert"
                     android:layout_column="9"
                     android:layout_marginLeft="10dp" />
