@@ -16,6 +16,12 @@
 
 "Alert On Must See Bands"="Alert On Must See Bands";
 "Alert On Might See Bands"="Alert On Might See Bands";
+"Alert Only for Will Attend Events"="Alert Only for Will Attend Events";
+
+"showAttendedFilterTrueHelp"="Only show events that you indicated you will attend. Other filters will not apply";
+"showAttendedFilterFalseHelp"="Show bands and shows according to filters";
+
+
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
 "Alert For Shows"="Alert For Shows";
 "Alert For Special Events"="Alert For Special Events";
@@ -31,7 +37,6 @@
 
 
 "LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
-
 
 "restarTitle" = "Restart Required";
 "restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";

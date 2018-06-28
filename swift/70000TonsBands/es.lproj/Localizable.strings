@@ -17,6 +17,7 @@
 
 "Alert On Must See Bands"="Alerta para bandas que quiero ver";
 "Alert On Might See Bands"="Alerta para bandas que quizás vea";
+"Alert Only for Will Attend Events"="Alerta solo por Will Attend Events";
 "Minutes Before Event to Alert"="Alerta antes del evento (minutos)"; //I NEED CONTEXT FOR A BETTER ONE HERE
 "Alert For Shows"="Alerta Para Conciertos";
 "Alert For Special Events"="Alerta Para Eventos Especiales";

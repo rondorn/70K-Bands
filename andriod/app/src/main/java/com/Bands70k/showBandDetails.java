@@ -44,7 +44,6 @@ public class showBandDetails extends Activity {
     private String bandNote;
     private String bandName;
     private BandNotes bandHandler;
-    private showsAttended attendedHandler = new showsAttended();
     private Boolean clickedOnEvent = false;
 
     public void onCreate(Bundle savedInstanceState) {
@@ -112,8 +111,8 @@ public class showBandDetails extends Activity {
                     if (clickedOnEvent == false){
                         clickedOnEvent = true;
                         Log.d("showAttended", " Lets set this value of " + value);
-                        String status = attendedHandler.addShowsAttended(value);
-                        String message = attendedHandler.setShowsAttendedStatus(status);
+                        String status = staticVariables.attendedHandler.addShowsAttended(value);
+                        String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
                         Toast.makeText(staticVariables.context, message,
                                 Toast.LENGTH_LONG).show();
 
@@ -327,11 +326,11 @@ public class showBandDetails extends Activity {
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
 
                 String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType;
-                String color = attendedHandler.getShowAttendedColor(attendIndex);
+                String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
                 htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
                 htmlData += "<font color='" + color + "' >";
-                htmlData += attendedHandler.getShowAttendedIcon(attendIndex) + " ";
+                htmlData += staticVariables.attendedHandler.getShowAttendedIcon(attendIndex) + " ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";

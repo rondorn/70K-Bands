@@ -43,6 +43,9 @@ public class preferencesHandler {
     private Boolean showWont = true;
     private Boolean showUnknown = true;
 
+    private Boolean showWillAttend = false;
+    private Boolean alertOnlyForShowWillAttend = false;
+
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
@@ -157,6 +160,12 @@ public class preferencesHandler {
 
                         case "showUnknown":
                             setshowUnknown(Boolean.valueOf(RowData[1]));
+
+                        case "showWillAttend":
+                            setShowWillAttend(Boolean.valueOf(RowData[1]));
+
+                        case "alertOnlyForShowWillAttend":
+                            setAlertOnlyForShowWillAttend(Boolean.valueOf(RowData[1]));
                     }
                 }
             } catch (Exception error) {
@@ -193,6 +202,9 @@ public class preferencesHandler {
         dataString += "showWont," + showWont.toString() + "\n";
         dataString += "showUnknown," + this.showUnknown.toString() + "\n";
 
+        dataString += "showWillAttend," + this.showWillAttend.toString() + "\n";
+        dataString += "alertOnlyForShowWillAttend," + this.alertOnlyForShowWillAttend.toString() + "\n";
+
         dataString += "useLastYearsData," + useLastYearsData.toString() + "\n";
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
@@ -213,7 +225,6 @@ public class preferencesHandler {
     public Boolean getMustSeeAlert() {
         return mustSeeAlert;
     }
-
     public void setMustSeeAlert(Boolean mustSeeAlert) {
         this.mustSeeAlert = mustSeeAlert;
     }
@@ -221,7 +232,6 @@ public class preferencesHandler {
     public Boolean getMightSeeAlert() {
         return mightSeeAlert;
     }
-
     public void setMightSeeAlert(Boolean mightSeeAlert) {
         this.mightSeeAlert = mightSeeAlert;
     }
@@ -229,15 +239,16 @@ public class preferencesHandler {
     public Boolean getAlertForShows() {
         return alertForShows;
     }
-
     public void setAlertForShows(Boolean alertForShows) {
         this.alertForShows = alertForShows;
     }
 
+    public Boolean getAlertOnlyForShowWillAttend(){ return alertOnlyForShowWillAttend; }
+    public void setAlertOnlyForShowWillAttend (Boolean value) {this.alertOnlyForShowWillAttend = value; }
+
     public Boolean getAlertForSpecialEvents() {
         return alertForSpecialEvents;
     }
-
     public Boolean getShowSpecialEvents() {
         return showSpecialEvents;
     }
@@ -281,6 +292,8 @@ public class preferencesHandler {
         return this.showUnknown;
     }
 
+    public Boolean getShowWillAttend() { return this.showWillAttend;}
+
     public void setShowPoolShows(Boolean showPoolShows) {
         this.showPoolShows = showPoolShows;
     }
@@ -322,6 +335,10 @@ public class preferencesHandler {
     }
     public void setshowUnknown(Boolean showUnknownValue) {
         this.showUnknown = showUnknownValue;
+    }
+
+    public void setShowWillAttend(Boolean showWillAttendValue) {
+        this.showWillAttend = showWillAttendValue;
     }
 
     public void setAlertForSpecialEvents(Boolean alertForSpecialEvents) {

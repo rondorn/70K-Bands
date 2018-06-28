@@ -35,4 +35,8 @@
     <string name="restarTitle">uudelleenkäynnistykseen</string>
     <string name="restartMessage">ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot</string>
 
+    <string name="showAttendedFilterTrueHelp">Näytä vain tapahtumat, joihin ilmoitit osallistuessasi. Muita suodattimia ei sovelleta</string>
+    <string name="showAttendedFilterFalseHelp">Näytä yhtyeet ja näytöt suodattimien mukaan</string>
+
+    <string name="alertOnlyForShowWillAttend">Vain kuulustelu osallistuu tapahtumiin</string>
 </resources>

@@ -105,6 +105,9 @@ let lastYearscheduleUrlpointer = "lastYearsScheduleUrl";
 
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
+
+let onlyAlertForAttendedDefault = "NO"
+
 let minBeforeAlertDefault = "10"
 let alertForShowsDefault = "YES"
 let alertForSpecialDefault = "YES"

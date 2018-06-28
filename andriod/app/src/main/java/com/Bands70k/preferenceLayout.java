@@ -36,6 +36,7 @@ public class preferenceLayout  extends Activity {
     private CheckBox alertForMeetAndGreet;
     private CheckBox alertForAlbum;
     private CheckBox lastYearsData;
+    private CheckBox onlyForShowWillAttend;
 
     private EditText alertMin;
 
@@ -145,6 +146,16 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setMightSeeAlert(mightSee.isChecked());
+            }
+        });
+
+        onlyForShowWillAttend = (CheckBox)findViewById(R.id.alertOnlyForShowWillAttendCheckBox);
+        onlyForShowWillAttend.setChecked(staticVariables.preferences.getAlertOnlyForShowWillAttend());
+        onlyForShowWillAttend.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setAlertOnlyForShowWillAttend(onlyForShowWillAttend.isChecked());
             }
         });
 

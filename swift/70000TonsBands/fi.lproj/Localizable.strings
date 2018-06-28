@@ -17,6 +17,8 @@
 
 "Alert On Must See Bands"="Hälytys Kyllä-bändeille";
 "Alert On Might See Bands"="Hälytys Ehkä-bändeille";
+"Alert Only for Will Attend Events"="Vain kuulustelu osallistuu tapahtumiin";
+
 "Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
 "Alert For Shows"="Hälytys keikoille";
 "Alert For Special Events"="Hälytys muihin tapahtumiin";

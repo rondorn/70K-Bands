@@ -99,6 +99,7 @@ public class staticVariables {
     public static Boolean prefsLoaded = false;
 
     public static preferencesHandler preferences;
+    public static showsAttended attendedHandler;
 
     public static String writeNoteHtml = "";
 

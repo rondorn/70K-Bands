@@ -18,6 +18,8 @@
 
 "Alert On Must See Bands"="Alarm für 'Ja' Bands";
 "Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
+"Alert Only for Will Attend Events"="Warnung nur für Ereignisse";
+
 "Minutes Before Event to Alert"="Alarm X minuten vor Event";
 "Alert For Shows"="Alarm für Shows";
 "Alert For Special Events"="Alarm für 'Special Events'";
