@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 public class showsAttended {
 
@@ -207,34 +208,14 @@ public class showsAttended {
         String message = "";
 
         if (status.equals(staticVariables.sawAllStatus)){
-            // set color code
-            // sender.textColor = sawAllColor
-
-            //set new field text code
-            //fieldText = sawAllIcon + fieldText!
-            //        sender.text = fieldText
-
-            message = "I saw all of this event!";
+            message = staticVariables.context.getResources().getString(R.string.AllOfEvent);
 
         } else if (status.equals(staticVariables.sawSomeStatus)){
-            // set color code
-            // sender.textColor = sawAllColor
-
-            //set new field text code
-            //fieldText = sawAllIcon + fieldText!
-            //        sender.text = fieldText
-
-            message = "I saw some of this event!";
+            message = staticVariables.context.getResources().getString(R.string.PartOfEvent);
 
         } else {
-            // set color code
-            // sender.textColor = sawAllColor
+            message = staticVariables.context.getResources().getString(R.string.NoneOfEvent);
 
-            //set new field text code
-            //fieldText = sawAllIcon + fieldText!
-            //        sender.text = fieldText
-
-            message = "I saw none of this event!";
         }
 
         return message;

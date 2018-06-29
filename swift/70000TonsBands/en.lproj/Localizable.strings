@@ -18,9 +18,15 @@
 "Alert On Might See Bands"="Alert On Might See Bands";
 "Alert Only for Will Attend Events"="Alert Only for Will Attend Events";
 
-"showAttendedFilterTrueHelp"="Only show events that you indicated you will attend. Other filters will not apply";
+"showAttendedFilterTrueHelp"="Only show events that you indicate you will attend. Other filters will not apply";
 "showAttendedFilterFalseHelp"="Show bands and shows according to filters";
 
+"Sorting Chronologically"="Sorting Chronologically";
+"Sorting Alphabetically"="Sorting Alphabetically";
+
+"All Of Event"="Attending all of this event";
+"Part Of Event"="Attending some of this event";
+"None Of Event"="I will not see this event";
 
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
 "Alert For Shows"="Alert For Shows";

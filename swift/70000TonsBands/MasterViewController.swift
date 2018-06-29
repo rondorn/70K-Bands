@@ -116,7 +116,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBAction func menuButtonAction(_ sender: AnyObject) {
-
+        
         let secondViewController = self.storyboard?.instantiateViewController(withIdentifier: "sortMenuNavigation")
         let window = UIApplication.shared.windows[0] as UIWindow
         UIView.transition(
@@ -680,17 +680,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func resortBands(_ sender: UIButton) {
         
+        var message = "";
         if (sortedBy == "name"){
             sortedBy = "time"
-            ensureCorrectSorting()
+            message = NSLocalizedString("Sorting Chronologically", comment: "")
             
         } else {
-            
+            message = NSLocalizedString("Sorting Alphabetically", comment: "")
             sortedBy = "name"
-            ensureCorrectSorting()
-            
         }
-        
+        ToastMessages(message).show(self, cellLocation: self.view.frame)
+        ensureCorrectSorting()
         self.tableView.reloadData()
     
     }

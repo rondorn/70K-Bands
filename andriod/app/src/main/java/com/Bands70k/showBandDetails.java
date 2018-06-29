@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 
 import android.os.SystemClock;
@@ -17,13 +16,12 @@ import android.support.v4.app.NavUtils;
 import android.util.Log;
 
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.Toast;
+
 
 import java.util.Iterator;
 import java.util.Map;
@@ -113,8 +111,7 @@ public class showBandDetails extends Activity {
                         Log.d("showAttended", " Lets set this value of " + value);
                         String status = staticVariables.attendedHandler.addShowsAttended(value);
                         String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
-                        Toast.makeText(staticVariables.context, message,
-                                Toast.LENGTH_LONG).show();
+                        HelpMessageHandler.showMessage(message);
 
                         Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                         startActivity(showDetails);

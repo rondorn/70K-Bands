@@ -25,6 +25,15 @@
 "Alert For Clinics"="Alerta para Clinics";
 "Alert For Album Listening Events"="Alerta para escuchas de álbums";
 
+"showAttendedFilterTrueHelp"="Solo muestre los eventos a los que indica que asistirá. Otros filtros no se aplicarán";
+"showAttendedFilterFalseHelp"="Mostrar bandas y shows de acuerdo a los filtros";
+
+"Sorting Chronologically"="Ordenando cronológicamente";
+"Sorting Alphabetically"="Ordenando alfabéticamente";
+
+"All Of Event"="Asistir a todo este evento";
+"Part Of Event"="Asistir a parte de este evento";
+"None Of Event"="No voy a ver este evento";
 
 "Special Event"="Eventos Especiales";
 "Meet and Greet"="Meet and Greets";

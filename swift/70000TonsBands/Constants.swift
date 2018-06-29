@@ -130,7 +130,6 @@ let showOtherShowsDefault = "YES"
 var internetAvailble = isInternetAvailable();
 
 var hasScheduleData = false;
-
 var schedule = scheduleHandler()
 var bandNotes = CustomBandDescription();
 

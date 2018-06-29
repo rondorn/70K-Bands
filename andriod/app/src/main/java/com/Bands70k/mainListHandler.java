@@ -121,6 +121,9 @@ public class mainListHandler {
                 status = false;
             }
         } else {
+
+            status = false;
+
             if (checkFiltering(bandName) == true){
                 if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true) {
                     if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true) {

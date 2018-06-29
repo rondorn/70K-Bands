@@ -39,4 +39,12 @@
     <string name="showAttendedFilterFalseHelp">Näytä yhtyeet ja näytöt suodattimien mukaan</string>
 
     <string name="alertOnlyForShowWillAttend">Vain kuulustelu osallistuu tapahtumiin</string>
+
+    <string name="SortingChronologically">Lajittelu kronologisesti</string>
+    <string name="SortingAlphabetically">Lajittelu aakkosjärjestyksessä</string>
+
+    <string name="AllOfEvent">Osallistuu kaikkiin tähän tapahtumaan</string>
+    <string name="PartOfEvent">Osallistuu osaan tästä tapahtumasta</string>
+    <string name="NoneOfEvent">En näe tätä tapahtumaa</string>
+
 </resources>

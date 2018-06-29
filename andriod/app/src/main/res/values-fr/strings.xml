@@ -38,4 +38,12 @@
     <string name="showAttendedFilterFalseHelp">Afficher les groupes et les émissions en fonction des filtres</string>
 
     <string name="alertOnlyForShowWillAttend">Alerte uniquement pour les événements liés à la volonté</string>
+
+    <string name="SortingChronologically">Tri chronologique</string>
+    <string name="SortingAlphabetically">Tri alphabétique</string>
+
+    <string name="AllOfEvent">Assister à tous cet événement</string>
+    <string name="PartOfEvent">Assister à certains de cet événement</string>
+    <string name="NoneOfEvent">Je ne verrai pas cet événement</string>
+
 </resources>

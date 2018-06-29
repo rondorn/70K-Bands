@@ -28,6 +28,7 @@ class ToastMessages : UILabel {
         
         self.text = text
         self.textColor = TEXT_COLOR
+
         textAlignment = .center
         self.layer.backgroundColor = BACKGROUND_COLOR
         self.layer.cornerRadius = 5
@@ -44,8 +45,9 @@ class ToastMessages : UILabel {
         //width: UIScreen.main.bounds.width - 2
         print ("ToastMessage = \(cellLocation) - \(text)")
         
+        let heightOffSet = cellLocation.height/8;
         
-        frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
+        frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY - heightOffSet, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
 
         ToastMessages.cellLocationStore = frame
         
@@ -56,7 +58,9 @@ class ToastMessages : UILabel {
         
         self.lineBreakMode = NSLineBreakMode.byWordWrapping
         self.numberOfLines = 4
-        self.sizeToFit()
+        if ((text?.count)! > 40){
+            self.sizeToFit()
+        }
         
         UIView.animate(withDuration: ANIMATION_DURATION_SEC, animations: {
             self.alpha = 1
