@@ -38,4 +38,12 @@
     <string name="showAttendedFilterFalseHelp">Mostrar bandas e shows de acordo com filtros</string>
 
     <string name="alertOnlyForShowWillAttend">Alerta somente para Will Attend Events</string>
+
+    <string name="SortingChronologically">Classificando Cronologicamente</string>
+    <string name="SortingAlphabetically">Classificando Alfabeticamente</string>
+
+    <string name="AllOfEvent">Atendendo a todo este evento</string>
+    <string name="PartOfEvent">Assistindo alguns deste evento</string>
+    <string name="NoneOfEvent">Eu não vou ver esse evento</string>
+
 </resources>

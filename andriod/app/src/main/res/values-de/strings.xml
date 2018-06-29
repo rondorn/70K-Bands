@@ -37,4 +37,11 @@
     <string name="showAttendedFilterFalseHelp">Zeigen Sie Bands und Shows nach Filtern</string>
 
     <string name="alertOnlyForShowWillAttend">Warnung nur für Ereignisse</string>
+
+    <string name="SortingChronologically">Chronologisch sortieren</string>
+    <string name="SortingAlphabetically">Alphabetisch sortieren</string>
+
+    <string name="AllOfEvent">An diesem Event teilnehmen</string>
+    <string name="PartOfEvent">Teilnehmen an dieser Veranstaltung</string>
+    <string name="NoneOfEvent">Ich werde dieses Ereignis nicht sehen</string>
 </resources>

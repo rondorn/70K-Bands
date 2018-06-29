@@ -158,7 +158,7 @@ open class ShowsAttended {
             sender.textColor = sawAllColor
             fieldText = sawAllIcon + fieldText!
             sender.text = fieldText
-            message = "I saw all of this event!";
+            message = NSLocalizedString("All Of Event", comment: "")
             
         } else if (status == sawSomeStatus){
             sender.textColor = sawSomeColor
@@ -166,13 +166,13 @@ open class ShowsAttended {
             fieldText = removeIcons(text: fieldText!)
             fieldText = sawSomeIcon + fieldText!
             sender.text = fieldText
-            message = "I saw some of this event!";
+            message = NSLocalizedString("Part Of Event", comment: "")
             
         } else {
             sender.textColor = sawNoneColor
             fieldText = removeIcons(text: fieldText!)
             sender.text = fieldText
-            message = "I saw none of this event!";
+            message = NSLocalizedString("None Of Event", comment: "")
         }
         
         return message;

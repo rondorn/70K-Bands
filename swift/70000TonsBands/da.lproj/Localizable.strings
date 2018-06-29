@@ -19,6 +19,17 @@
 "Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
 "Alert Only for Will Attend Events"="Alarmer kun for at deltage i begivenheder";
 
+"showAttendedFilterTrueHelp"="Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke";
+"showAttendedFilterFalseHelp"="Vis bands og shows i henhold til filtre";
+
+"Sorting Chronologically"="Sortering Kronologisk";
+"Sorting Alphabetically"="Sortering Alfabetisk";
+
+"All Of Event"="Deltager i alt dette arrangement";
+"Part Of Event"="Deltager nogle af denne begivenhed";
+"None Of Event"="Jeg vil ikke se denne begivenhed";
+
+
 "Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
 "Alert For Shows"="Notifikation for shows";
 "Alert For Special Events"="Notifikation for specielle begivenheder";

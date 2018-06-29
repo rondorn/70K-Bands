@@ -27,6 +27,16 @@
 "Alert On Might See Bands"="Alerta para bandas que quizás vea";
 "Alert Only for Will Attend Events"="Alerta solo por Will Attend Events";
 
+"showAttendedFilterTrueHelp"="Solo muestre los eventos a los que indica que asistirá. Otros filtros no se aplicarán";
+"showAttendedFilterFalseHelp"="Mostrar bandas y shows de acuerdo a los filtros";
+
+"Sorting Chronologically"="Ordenando cronológicamente";
+"Sorting Alphabetically"="Ordenando alfabéticamente";
+
+"All Of Event"="Asistir a todo este evento";
+"Part Of Event"="Asistir a parte de este evento";
+"None Of Event"="No voy a ver este evento";
+
 "Minutes Before Event to Alert"="Alerta antes del evento (minutos)"; //I NEED CONTEXT FOR A BETTER ONE HERE
 "Alert For Shows"="Alerta Para Conciertos";
 "Alert For Special Events"="Alerta Para Eventos Especiales";

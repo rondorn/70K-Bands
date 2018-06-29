@@ -19,6 +19,16 @@
 "Alert On Might See Bands"="Hälytys Ehkä-bändeille";
 "Alert Only for Will Attend Events"="Vain kuulustelu osallistuu tapahtumiin";
 
+"showAttendedFilterTrueHelp"="Näytä vain tapahtumat, joihin ilmoitat, että osallistut. Muita suodattimia ei sovelleta";
+"showAttendedFilterFalseHelp"="Näytä yhtyeet ja näytöt suodattimien mukaan";
+
+"Sorting Chronologically"="Lajittelu kronologisesti";
+"Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
+
+"All Of Event"="Osallistuu kaikkiin tähän tapahtumaan";
+"Part Of Event"="Osallistuu osaan tästä tapahtumasta";
+"None Of Event"="En näe tätä tapahtumaa";
+
 "Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
 "Alert For Shows"="Hälytys keikoille";
 "Alert For Special Events"="Hälytys muihin tapahtumiin";

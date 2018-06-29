@@ -26,7 +26,6 @@ import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -281,8 +280,7 @@ public class showBands extends Activity {
                         } else {
                             message = "No Show Is Associated With This Entry";
                         }
-                        Toast.makeText(staticVariables.context, message,
-                                Toast.LENGTH_LONG).show();
+                        HelpMessageHandler.showMessage(message);
                         break;
                 }
 
@@ -393,9 +391,11 @@ public class showBands extends Activity {
             public void onClick(View v) {
                 setContentView(R.layout.activity_show_bands);
                 if (sortBySchedule == true) {
+                    HelpMessageHandler.showMessage(getString(R.string.SortingAlphabetically));
                     sortBySchedule = false;
                 } else {
                     sortBySchedule = true;
+                    HelpMessageHandler.showMessage(getString(R.string.SortingChronologically));
                 }
                 setSortButton();
                 Intent showBandList = new Intent(showBands.this, showBands.class);
@@ -421,8 +421,7 @@ public class showBands extends Activity {
         Button filterButton = (Button) findViewById(R.id.filterMenu);
 
         if (staticVariables.preferences.getShowWillAttend() == false) {
-            Toast.makeText(staticVariables.context, getString(R.string.showAttendedFilterTrueHelp),
-                    Toast.LENGTH_LONG).show();
+            HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterTrueHelp));
 
             filterButton.setVisibility(View.INVISIBLE);
             showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon));
@@ -431,9 +430,7 @@ public class showBands extends Activity {
             turnOffMustMightWont();
 
         } else {
-
-            Toast.makeText(staticVariables.context, getString(R.string.showAttendedFilterFalseHelp),
-                    Toast.LENGTH_LONG).show();
+            HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterFalseHelp));
 
             filterButton.setVisibility(View.VISIBLE);
             showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon_alt));

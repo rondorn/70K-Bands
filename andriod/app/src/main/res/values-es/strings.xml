@@ -36,4 +36,11 @@
     <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET. \nEste cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
+
+    <string name="SortingChronologically">Ordenando cronológicamente</string>
+    <string name="SortingAlphabetically">Ordenando alfabéticamente</string>
+
+    <string name="AllOfEvent">Asistir a todo este evento</string>
+    <string name="PartOfEvent">Asistir a parte de este evento</string>
+    <string name="NoneOfEvent">No voy a ver este evento</string>
 </resources>

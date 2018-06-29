@@ -33,8 +33,15 @@
     <string name="restarTitle">Genstart Påkrævet</string>
     <string name="restartMessage">Gør ikke dette på krydstogt.\nInterent FORBINDELSE PÅKRÆVET.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
 
-    <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angav, at du vil deltage. Andre filtre gælder ikke</string>
+    <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 
     <string name="alertOnlyForShowWillAttend">Alarmer kun for at deltage i begivenheder</string>
+
+    <string name="SortingChronologically">Sortering Kronologisk</string>
+    <string name="SortingAlphabetically">Sortering Alfabetisk</string>
+
+    <string name="AllOfEvent">Deltager i alt dette arrangement</string>
+    <string name="PartOfEvent">Deltager nogle af denne begivenhed</string>
+    <string name="NoneOfEvent">Jeg vil ikke se denne begivenhed</string>
 </resources>

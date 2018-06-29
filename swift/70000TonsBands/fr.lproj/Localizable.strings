@@ -19,6 +19,17 @@
 "Alert On Must See Bands"="Alerte Pour OUI Salons";
 "Alert On Might See Bands"="Alerte pour peut-être Shows";
 "Alert Only for Will Attend Events"="Alerte uniquement pour les événements liés à la volonté";
+
+"showAttendedFilterTrueHelp"="N'affichez que les événements que vous indiquez. Les autres filtres ne s'appliqueront pas";
+"showAttendedFilterFalseHelp"="Afficher les groupes et les émissions en fonction des filtres";
+
+"Sorting Chronologically"="Tri chronologique";
+"Sorting Alphabetically"="Tri alphabétique";
+
+"All Of Event"="Assister à tous cet événement";
+"Part Of Event"="Assister à certains de cet événement";
+"None Of Event"="Je ne verrai pas cet événement";
+
 "Minutes Before Event to Alert"="Alertez-moi avant l'événement (minutes)";
 "Alert For Shows"="Alerte pour les spectacles";
 "Alert For Special Events"="Alerte pour des événements spéciaux";

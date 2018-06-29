@@ -20,6 +20,16 @@
 "Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
 "Alert Only for Will Attend Events"="Warnung nur für Ereignisse";
 
+"showAttendedFilterTrueHelp"="Zeige nur Ereignisse an, an denen du teilnimmst. Andere Filter werden nicht angewendet";
+"showAttendedFilterFalseHelp"="Zeigen Sie Bands und Shows nach Filtern";
+
+"Sorting Chronologically"="Chronologisch sortieren";
+"Sorting Alphabetically"="Alphabetisch sortieren";
+
+"All Of Event"="An diesem Event teilnehmen";
+"Part Of Event"="Teilnehmen an dieser Veranstaltung";
+"None Of Event"="Ich werde dieses Ereignis nicht sehen";
+
 "Minutes Before Event to Alert"="Alarm X minuten vor Event";
 "Alert For Shows"="Alarm für Shows";
 "Alert For Special Events"="Alarm für 'Special Events'";

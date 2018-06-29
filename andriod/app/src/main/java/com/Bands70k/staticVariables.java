@@ -5,6 +5,7 @@ import android.graphics.Paint;
 import android.os.Build;
 import android.os.Parcelable;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
