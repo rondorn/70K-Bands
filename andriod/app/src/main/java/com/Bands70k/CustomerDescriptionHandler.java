@@ -36,6 +36,9 @@ public class CustomerDescriptionHandler {
         if (staticVariables.preferences.getUseLastYearsData() == true){
             descriptionMapURL = staticVariables.previousYearDescriptionMap;
         }
+        if (descriptionMapURL == null){
+            return;
+        }
         Log.d("descriptionMapPointer", descriptionMapURL);
         try {
 

@@ -50,6 +50,7 @@ public class mainListHandler {
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, bandList);
 
         List<String> bandPresent = new ArrayList<String>();
+        staticVariables.showsIwillAttend = 0;
 
         if (BandInfo.scheduleRecords != null) {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
@@ -104,12 +105,17 @@ public class mainListHandler {
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
         bandCount.setText(this.getSizeDisplay());
 
+        Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
         return sortableBandNames;
     }
 
     private boolean applyFilters(String bandName, Long timeIndex) {
 
         boolean status = true;
+
+        if (filterByWillAttend(bandName, timeIndex) == true){
+            staticVariables.showsIwillAttend = staticVariables.showsIwillAttend + 1;
+        }
 
         if (staticVariables.preferences.getShowWillAttend() == true) {
             status = filterByWillAttend(bandName, timeIndex);

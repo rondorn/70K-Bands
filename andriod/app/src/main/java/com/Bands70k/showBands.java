@@ -519,7 +519,7 @@ public class showBands extends Activity {
 
         ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
 
-        if (listHandler.numberOfEvents != 0) {
+        if (listHandler.numberOfEvents != 0 && staticVariables.showsIwillAttend != 0) {
             showAttendedFilterButton.setEnabled(true);
             showAttendedFilterButton.setClickable(true);
             showAttendedFilterButton.setVisibility(View.VISIBLE);
@@ -539,6 +539,8 @@ public class showBands extends Activity {
             showAttendedFilterButton.setEnabled(false);
             showAttendedFilterButton.setClickable(false);
             showAttendedFilterButton.setVisibility(View.INVISIBLE);
+            setupButtonFilters();
+
         }
     }
 

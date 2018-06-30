@@ -94,6 +94,7 @@ public class staticVariables {
     public static String REGISTRATION_COMPLETE = "registrationComplete";
 
     public static Integer alarmCount = 1;
+    public static Integer showsIwillAttend = 0;
 
     public static Boolean refreshActivated = false;
 

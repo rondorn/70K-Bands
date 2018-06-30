@@ -36,7 +36,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
-    
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
@@ -78,7 +77,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.refreshControl = refreshControl
 
         scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
-        
         readFiltersFile()
         setFilterButtons()
         refreshData()
@@ -209,7 +207,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         schedule.populateSchedule()
         bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
         bandsByName = bands
-        
+        setShowOnlyAttenedFilterStatus()
     }
     
     func ensureCorrectSorting(){
@@ -244,13 +242,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func quickRefresh(){
         
+        if (isInternetAvailable() == false){
+            isLoadingBandData = false
+        }
         if (isLoadingBandData == false){
             isLoadingBandData = true
+            
             self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
             
+            setShowOnlyAttenedFilterStatus()
             self.tableView.reloadData()
             isLoadingBandData = false
         }
@@ -262,6 +265,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
+            isLoadingBandData = false;
         }
         
         if (isLoadingBandData == false){
@@ -295,15 +299,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.tableView.reloadData()
                     self.refreshAlerts()
                     self.refreshControl?.endRefreshing();
+                    self.setShowOnlyAttenedFilterStatus()
                 }
+                
+                
                 isLoadingBandData = false
             }
-            
+            setShowOnlyAttenedFilterStatus()
             updateCountLable()
             self.tableView.reloadData()
             self.refreshControl?.endRefreshing();
         }
     } 
+    
+    func setShowOnlyAttenedFilterStatus(){
+        
+        print ("attendingCount is \(attendingCount)")
+        if (attendingCount == 0){
+            willAttendButton.isHidden = true;
+            willAttendButton.isEnabled = false;
+            showOnlyWillAttened = false;
+            setShowOnlyWillAttened(false)
+            resetFilterIcons();
+        } else {
+            willAttendButton.isHidden = false;
+            willAttendButton.isEnabled = true;
+        }
+    }
     
     func showHideFilterMenu(){
         print ("totalUpcomingEvents is " + String(totalUpcomingEvents))
@@ -527,7 +549,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         cell.backgroundColor = UIColor.clear;
         cell.textLabel?.textColor = textColor;
