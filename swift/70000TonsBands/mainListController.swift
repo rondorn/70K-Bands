@@ -17,11 +17,14 @@ import Foundation
     var wontSeeOn = true;
     var unknownSeeOn = true;
 
+    var attendingCount = 0;
+
     var showOnlyWillAttened = false;
     
     var sortedBy = String();
     var bandCount = Int();
     var eventCount = Int();
+
     var totalUpcomingEvents = Int()
 
     var scheduleIndexByCall : [String:[String:String]] = [String:[String:String]]();
@@ -82,11 +85,11 @@ import Foundation
     }
 
     func determineBandOrScheduleList (_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
-    
+        
         var newAllBands = [String]()
         var presentCheck = [String]();
         listOfVenues = ["All"]
-        
+        attendingCount = 0
         if (typeField.isEmpty == true){
             return allBands;
         }
@@ -171,6 +174,12 @@ import Foundation
         var include = false;
         
         if (timeIndex.isZero == false){
+            
+            if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                attendingCount = attendingCount + 1;
+                print ("attendingCount is \(attendingCount) after adding 1")
+            }
+            
             if (getShowOnlyWillAttened() == true){
                 include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex);
             
@@ -329,10 +338,8 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
         } else {
             let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType)
     
-            if (getShowOnlyWillAttened() == true){
-                if (status == sawNoneStatus){
-                    showEvent = false
-                }
+            if (status == sawNoneStatus){
+                showEvent = false
             }
         }
     

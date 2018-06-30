@@ -9,8 +9,8 @@ android {
     defaultConfig {
         applicationId "com.Bands70k"
         minSdkVersion 16
-        versionCode 220180629
-        versionName "220180629"
+        versionCode 220180630
+        versionName "220180630"
         android.compileOptions.incremental = false
         multiDexEnabled true
     }
@@ -35,6 +35,7 @@ configurations.all {
 }
 
 dependencies {
+    compile 'com.wdullaer:swipeactionadapter:2.0.0'
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.google.firebase:firebase-core:11.4.2'

@@ -131,6 +131,7 @@
     <orderEntry type="library" name="Gradle: com.android.support:appcompat-v7-23.4.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.android.gms:play-services-basement-license-11.4.2" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.android.support:multidex-instrumentation-1.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: com.wdullaer:swipeactionadapter-2.0.0" level="project" />
     <orderEntry type="library" name="Gradle: com.android.support:animated-vector-drawable-23.4.0" level="project" />
     <orderEntry type="library" name="Gradle: com.google.firebase:firebase-messaging-11.4.2" level="project" />
     <orderEntry type="library" name="Gradle: com.google.firebase:firebase-common-license-11.4.2" level="project" />
