@@ -4,6 +4,7 @@
     <string name="might">Noite</string>
     <string name="must">Obrigatório</string>
     <string name="wont">Não</string>
+    <string name="unknown">Desconhecido</string>
 
     <string name="Ok">Sim</string>
     <string name="Cancel">Não</string>

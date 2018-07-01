@@ -3,6 +3,7 @@
     <string name="must">Must</string>
     <string name="might">Might</string>
     <string name="wont">Wont</string>
+    <string name="unknown">Unknown</string>
 
     <string name="Ok">Ok</string>
     <string name="Cancel">Cancel</string>

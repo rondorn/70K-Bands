@@ -221,14 +221,4 @@ public class showsAttended {
         return message;
     }
 
-    private String removeIcons(String text){
-
-        String textValue = text;
-
-        textValue = text.replace(staticVariables.sawAllIcon,"");
-        textValue = text.replace(staticVariables.sawSomeIcon,"");
-
-        return textValue;
-
-    }
 }

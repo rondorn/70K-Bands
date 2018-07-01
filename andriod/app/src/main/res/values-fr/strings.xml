@@ -4,6 +4,7 @@
     <string name="might">Peut Être</string>
     <string name="wont">Non</string>
     <string name="must">Oui</string>
+    <string name="unknown">Inconnu</string>
 
     <string name="Ok">Oui</string>
     <string name="Cancel">Non</string>
