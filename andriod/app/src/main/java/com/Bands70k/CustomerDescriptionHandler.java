@@ -36,10 +36,7 @@ public class CustomerDescriptionHandler {
         if (staticVariables.preferences.getUseLastYearsData() == true){
             descriptionMapURL = staticVariables.previousYearDescriptionMap;
         }
-        if (descriptionMapURL == null){
-            return;
-        }
-        Log.d("descriptionMapPointer", descriptionMapURL);
+
         try {
 
             URL u = new URL(descriptionMapURL);
@@ -108,11 +105,15 @@ public class CustomerDescriptionHandler {
         String bandName = bandNameValue;
         String bandNote = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
 
+        Log.d("descriptionMapFile", "Looking up note for  " + bandName);
+
         if (descriptionMapData.keySet().size() == 0) {
             descriptionMapData = this.getDescriptionMap();
         }
 
+
         if (descriptionMapData.containsKey(bandName) == false){
+            Log.d("descriptionMapFile",  bandName + " does not have data in the descriptionMapData");
             return bandNote;
         }
 
@@ -200,16 +201,17 @@ public class CustomerDescriptionHandler {
             StrictMode.setThreadPolicy(policy);
 
             Log.d("AsyncTask", "Downloading NoteData for all bands in background");
-            if (staticVariables.notesLoaded == false){
-                staticVariables.notesLoaded =true;
+            if (staticVariables.notesLoaded == false) {
+                staticVariables.notesLoaded = true;
                 getDescriptionMapFile();
                 descriptionMapData = descriptionHandler.getDescriptionMap();
 
-
-                for (String bandName : descriptionMapData.keySet()) {
-                    descriptionHandler.loadNoteFromURL(bandName);
+                if (descriptionMapData != null) {
+                    for (String bandName : descriptionMapData.keySet()) {
+                        descriptionHandler.loadNoteFromURL(bandName);
+                    }
+                    staticVariables.notesLoaded = false;
                 }
-                staticVariables.notesLoaded = false;
             }
 
 

@@ -57,10 +57,13 @@ public class rankStore {
 
         String rankingDataString = "";
 
+        if (bandRankings.size() == 0){
+            return;
+        }
+
         for (Map.Entry<String,String> entry : bandRankings.entrySet()) {
             String band = entry.getKey();
             String ranking = entry.getValue();
-
             rankingDataString += band + ':' + ranking + "\n";
         }
 
