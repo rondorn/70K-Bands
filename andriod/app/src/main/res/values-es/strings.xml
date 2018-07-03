@@ -38,6 +38,9 @@
 
     <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
 
+    <string name="showAttendedFilterTrueHelp">Solo muestre los eventos a los que indica que asistirá. Otros filtros no se aplicarán</string>
+    <string name="showAttendedFilterFalseHelp">Mostrar bandas y shows de acuerdo a los filtros</string>
+
     <string name="SortingChronologically">Ordenando cronológicamente</string>
     <string name="SortingAlphabetically">Ordenando alfabéticamente</string>
 

@@ -601,6 +601,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let empty : UITextField = UITextField();
                 let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
+                isLoadingBandData = false
                 self.quickRefresh()
             } else {
                 let message =  "No Show Is Associated With This Entry"
@@ -609,10 +610,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         })
  
         let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
-            print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 1")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
+            isLoadingBandData = false
             self.quickRefresh()
 
         })
@@ -622,6 +623,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 2);
+            isLoadingBandData = false
             self.quickRefresh()
             
         })
@@ -631,6 +633,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 3);
+            isLoadingBandData = false
             self.quickRefresh()
             
         })
@@ -640,6 +643,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 0);
+            isLoadingBandData = false
             self.quickRefresh()
             
         })
@@ -647,7 +651,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
         } else {
-            print ("show menu ALL")
             return [sawAllShow, setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
         }
     }
