@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
@@ -136,6 +137,9 @@ public class showBands extends Activity {
             sortedList = bandNames;
         }
 
+        Integer screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        final Integer menuWidth = screenWidth/8;
+
         adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, sortedList);
 
         bandNamesList.setAdapter(adapter);
@@ -148,40 +152,36 @@ public class showBands extends Activity {
                 SwipeMenuItem item1 = new SwipeMenuItem(
                         getApplicationContext());
                 item1.setBackground(new ColorDrawable(Color.WHITE));
-                // set width of an option (px)
-                item1.setWidth(155);
+                item1.setWidth(menuWidth);
                 item1.setTitle(mustSeeIcon);
-                item1.setTitleSize(18);
+                item1.setTitleSize(25);
                 item1.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item1);
 
                 SwipeMenuItem item2 = new SwipeMenuItem(
                         getApplicationContext());
-                // set item background
                 item2.setBackground(new ColorDrawable(Color.WHITE));
-                item2.setWidth(155);
+                item2.setWidth(menuWidth);
                 item2.setTitle(mightSeeIcon);
-                item2.setTitleSize(18);
+                item2.setTitleSize(25);
                 item2.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item2);
 
                 SwipeMenuItem item3 = new SwipeMenuItem(
                         getApplicationContext());
-                // set item background
                 item3.setBackground(new ColorDrawable(Color.WHITE));
-                item3.setWidth(155);
+                item3.setWidth(menuWidth);
                 item3.setTitle(wontSeeIcon);
-                item3.setTitleSize(18);
+                item3.setTitleSize(25);
                 item3.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item3);
 
                 SwipeMenuItem item4 = new SwipeMenuItem(
                         getApplicationContext());
-                // set item background
                 item4.setBackground(new ColorDrawable(Color.WHITE));
-                item4.setWidth(155);
+                item4.setWidth(menuWidth);
                 item4.setTitle(unknownIcon);
-                item4.setTitleSize(18);
+                item4.setTitleSize(25);
                 item4.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item4);
 
@@ -189,11 +189,10 @@ public class showBands extends Activity {
                 if (listHandler.allUpcomingEvents >= 1) {
                     SwipeMenuItem item5 = new SwipeMenuItem(
                             getApplicationContext());
-                    // set item background
                     item5.setBackground(new ColorDrawable(Color.WHITE));
-                    item5.setWidth(155);
+                    item5.setWidth(menuWidth);
                     item5.setTitle(attendedShowIcon);
-                    item5.setTitleSize(18);
+                    item5.setTitleSize(25);
                     item5.setTitleColor(Color.LTGRAY);
                     menu.addMenuItem(item5);
                 }
@@ -201,16 +200,19 @@ public class showBands extends Activity {
         };
         //set MenuCreator
         bandNamesList.setMenuCreator(creator);
+
         // set SwipeListener
         bandNamesList.setOnSwipeListener(new SwipeMenuListView.OnSwipeListener() {
 
             @Override
             public void onSwipeStart(int position) {
+                bandNamesList.smoothOpenMenu(position);
                 // swipe start
             }
 
             @Override
             public void onSwipeEnd(int position) {
+                //bandNamesList.smoothCloseMenu();
                 // swipe end
             }
         });
@@ -713,7 +715,7 @@ public class showBands extends Activity {
 
         Button filterButton = (Button) findViewById(R.id.filterMenu);
 
-        if (listHandler.allUpcomingEvents == 0) {
+        if (listHandler.allUpcomingEvents == 0 || staticVariables.preferences.getShowWillAttend() == true) {
             filterButton.setVisibility(View.INVISIBLE);
         } else {
             if (staticVariables.preferences.getShowWillAttend() == false) {
