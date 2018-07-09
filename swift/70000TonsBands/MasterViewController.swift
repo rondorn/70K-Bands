@@ -242,11 +242,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func quickRefresh(){
         
-        if (isInternetAvailable() == false){
-            isLoadingBandData = false
-        }
-        if (isLoadingBandData == false){
-            isLoadingBandData = true
+        if (isPerformingQuickLoad == false){
+            isPerformingQuickLoad = true
             
             self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
             self.bandsByName = self.bands
@@ -255,17 +252,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             setShowOnlyAttenedFilterStatus()
             self.tableView.reloadData()
-            isLoadingBandData = false
+            isPerformingQuickLoad = false
         }
     }
     
     func refreshData(){
         
+        //check if the timezonr has changes for whatever reason
+        localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
+        
         internetAvailble = isInternetAvailable();
         print ("Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
-            isLoadingBandData = false;
         }
         
         if (isLoadingBandData == false){
@@ -492,8 +491,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
         var favoriteBands = "\n"
         
-        if (schedule.scheduleReleased == true){
-            intro = "These are the events I attended on the 70,000 Tons Cruise"
+        if (attendingCount > 0){
+            intro = "These are the events I attended on the 70,000 Tons Of Metal Cruise"
             let reportHandler = showAttendenceReport()
             reportHandler.assembleReport()
             

@@ -269,8 +269,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         writeFiltersFile()
         writeFile()
         
+        let localNotication = localNoticationHandler()
+        localNotication.clearNotifications()
+        localNotication.addNotifications()
         Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
+        
     }
 
     func iCloudKeysChanged(_ notification: Notification) {

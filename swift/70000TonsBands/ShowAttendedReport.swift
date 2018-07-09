@@ -88,20 +88,23 @@ class showAttendenceReport {
                     if (bandCounts[index.key]![bandName]![sawSomeStatus] != nil){
                         sawCount = sawCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
                         sawSomeCount = sawSomeCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
+                    }
+                    if (sawCount >= 1){
+                        let sawCountString = String(sawCount)
+                        if (eventType == showType){
+                            message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                        } else {
+                            message += "     " + bandName + "\n";
                         }
-                        if (sawCount >= 1){
-                            let sawCountString = String(sawCount)
-                            if (eventType == showType){
-                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
-                            } else {
-                                message += "     " + bandName + "\n";
-                            }
-                        }
-                    //}
+                    }
                 }
                 if (sawSomeCount >= 1){
                     let sawSomeCountString = String(sawSomeCount)
-                    message += "\n" + sawSomeCountString + " of those were partial shows"
+                    if (sawSomeCount == 1){
+                            message += sawSomeCountString + " of those was a partial show\n"
+                    } else {
+                        message += sawSomeCountString + " of those were partial shows\n"
+                    }
                 }
             }
  

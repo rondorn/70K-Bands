@@ -33,6 +33,8 @@ var iCloudCheck = false;
 var isAlertGenerationRunning = false
 var isLoadingBandData = false
 var isLoadingCommentData = false
+var isPerformingQuickLoad = false
+var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
 
 //CSV field names
 var typeField = "Type"

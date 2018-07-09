@@ -238,7 +238,7 @@ class localNoticationHandler {
             print ("sendLocalAlert! clearing all alerts")
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         } else {
-        UIApplication.shared.cancelAllLocalNotifications()
+            UIApplication.shared.cancelAllLocalNotifications()
         };
         alertTracker = [String]()
     }
