@@ -24,7 +24,7 @@ func writeFiltersFile(){
         prefsString += "wontSeeOn:" + boolToString(getWontSeeOn()) + ";"
         prefsString += "unknownSeeOn:" + boolToString(getUnknownSeeOn()) + ";"
         prefsString += "showOnlyWillAttened:" + boolToString(getShowOnlyWillAttened()) + ";"
-        
+        prefsString += "currentTimeZone:" + localTimeZoneAbbreviation + ";"
         print ("Wrote prefs " + prefsString)
         do {
             try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
@@ -37,6 +37,8 @@ func writeFiltersFile(){
 
 
 func readFiltersFile(){
+    
+    var tempCurrentTimeZone = "";
     
     print ("Status of getWontSeeOn loading")
     if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
@@ -62,11 +64,21 @@ func readFiltersFile(){
                 
                 case "showOnlyWillAttened":
                     setShowOnlyWillAttened(stringToBool(valueArray[1]))
+                
+                case "currentTimeZone:":
+                    tempCurrentTimeZone = valueArray[1]
 
                 default:
                     print("Not sure why this would happen")
             }
         }
+    }
+    
+    if (tempCurrentTimeZone != localTimeZoneAbbreviation){
+        alertTracker = [String]()
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        localNotification.addNotifications()
     }
 }
 

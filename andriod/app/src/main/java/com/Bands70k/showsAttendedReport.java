@@ -42,7 +42,7 @@ public class showsAttendedReport {
         if (count >= 2){
             message += "s";
         }
-        message += "\n";
+        //message += "\n";
 
         return message;
 
@@ -50,7 +50,7 @@ public class showsAttendedReport {
 
     public String buildMessage() {
 
-        String message = "";
+        String message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n\n";
 
         Map<String, Boolean> eventCountExists = new HashMap<String, Boolean>();
 
@@ -78,7 +78,7 @@ public class showsAttendedReport {
             }
         }
 
-        message += "\n";
+        message += "\n\n";
 
         for (String eventType : bandCounts.keySet()) {
 
@@ -91,7 +91,7 @@ public class showsAttendedReport {
 
             if (eventCountExists.containsKey(eventType) == true){
 
-                message += "For " + eventType + "s\n";
+                message += "\nFor " + eventType + "s";
 
                 for (String bandName : sortedBandNamesArray){
 
@@ -106,20 +106,25 @@ public class showsAttendedReport {
                     if (sawCount >= 1){
                         String sawCountString = sawCount.toString();
                         if (eventType.equals(staticVariables.show)){
-                            message += "     " + bandName + " " + sawCountString + " time" + addPlural(sawCount);
+                            message += "\n     " + bandName + " " + sawCountString + " time" + addPlural(sawCount);
                         } else {
-                            message += "      " + bandName + "\n";
+                            message += "\n      " + bandName;
                         }
                     }
                 }
                 if (sawSomeCount >= 1){
                     String sawSomeCountString = sawSomeCount.toString();
-                    message += "\n" + sawSomeCountString + " of those were partial shows";
+                    if (sawSomeCount == 1){
+                        message += "\n" + sawSomeCountString + " of those was a partial show";
+                    } else {
+                        message += "\n" + sawSomeCountString + " of those were partial shows";
+                    }
                 }
             }
 
         }
 
+        message +=  "\n\nhttp://www.facebook.com/70kBands\n";
         return message;
     }
 

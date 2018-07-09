@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
+<android.support.v7.widget.AppCompatTextView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@android:id/text1"
     android:layout_width="match_parent"
     android:layout_height="100dp"
@@ -9,9 +10,9 @@
     android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
     android:textAppearance="?android:attr/textAppearanceListItemSmall"
     android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    android:autoSizeTextType="uniform"
-    android:autoSizeMinTextSize="3sp"
-    android:autoSizeMaxTextSize="15sp"
-    android:autoSizeStepGranularity="1sp"
+    app:autoSizeTextType="uniform"
+    app:autoSizeMinTextSize="3sp"
+    app:autoSizeMaxTextSize="15sp"
+    app:autoSizeStepGranularity="1sp"
     android:maxLines="1"
     xmlns:tools="http://schemas.android.com/tools" />
