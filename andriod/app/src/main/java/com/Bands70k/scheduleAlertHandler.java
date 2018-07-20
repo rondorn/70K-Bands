@@ -170,6 +170,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                     return true;
                 }
             }
+            return false;
         }
 
         String rank = rankStore.getRankForBand(bandName);

@@ -51,6 +51,8 @@
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
 		115A52B01CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
 		115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
+		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
+		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -142,6 +144,7 @@
 		1156B4F21A660BE500D48D12 /* guiIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = guiIcons.swift; sourceTree = "<group>"; };
 		1156B4F41A6613E700D48D12 /* urlStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = urlStorage.swift; sourceTree = "<group>"; };
 		115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		1169374420F555CD00038DA5 /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -306,6 +309,7 @@
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
 				110C7DE920DC600000525283 /* iCloudFileHandler.swift */,
+				1169374420F555CD00038DA5 /* Reachability.swift */,
 			);
 			path = 70000TonsBands;
 			sourceTree = "<group>";
@@ -654,6 +658,7 @@
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
+				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
 				1154F6331A5758D3003F4764 /* bandNames.swift in Sources */,
 				11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */,
 				11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */,
@@ -681,6 +686,7 @@
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
+				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				1155E3A81A8B121000D51ED9 /* externalUrls.swift in Sources */,
