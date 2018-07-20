@@ -282,11 +282,11 @@ public class showBandDetails extends Activity {
                         htmlText += "<br><br>";
                     }
 
-                    //try {
+                    try {
                         htmlText += buildScheduleView();
-                    //} catch (Exception error){
+                    } catch (Exception error){
                       //if this causes an exception, no worries..just don't display the schedule
-                    //}
+                    }
 
                     htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " Must</button></td>" +
@@ -350,14 +350,23 @@ public class showBandDetails extends Activity {
 
         String html = "<br><br><br><br><br><br><br><br><br><br><br>";
 
+        String disable;
+        if (OnlineStatus.isOnline() == true) {
+            disable = "";
+        } else {
+            //disable and gray out link if offline
+            disable = "style='pointer-events:none;cursor:default;color:grey'";
+        }
         if (BandInfo.getOfficalWebLink(bandName).equals("http://") == false) {
+
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
             html = "<center><ul style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
-                    "<li><a href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'>Offical Link</a></li>" +
-                    "<li><a href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
-                    "<li><a href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
-                    "<li><a href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
+                    "<li><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'>Offical Link</a></li>" +
+                    "<li><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
+                    "<li><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
+                    "<li><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
                     "</ul></center>";
+
         }
 
         return html;

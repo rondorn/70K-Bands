@@ -108,7 +108,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
             
         }
-    
+        
     }
     
     //used to disable keyboard input for event fields
@@ -489,8 +489,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func disableButtonsIfNeeded(){
         
+        if Reachability.isConnectedToNetwork(){
+            offline = false;
+        } else {
+            offline = true;
+        }
+        
         print ("Checking button status " + bandName)
         if (offline == true || bandName == nil){
+            
+            
             print ("Offline is active")
             officialUrlButton.isUserInteractionEnabled = false
             officialUrlButton.tintColor = UIColor.gray
