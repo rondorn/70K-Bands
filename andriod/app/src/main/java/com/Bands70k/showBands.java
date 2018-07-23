@@ -2,6 +2,8 @@ package com.Bands70k;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
@@ -12,9 +14,14 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Environment;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Layout;
@@ -30,22 +37,30 @@ import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.Bands70k.staticVariables.*;
+import static java.lang.Thread.sleep;
 
 
 public class showBands extends Activity {
 
     String notificationTag = "notificationTag";
+
+    public static String newRootDir =  Environment.getExternalStorageDirectory().toString();
 
     private ArrayList<String> bandNames;
     public List<String> scheduleSortedBandNames;
@@ -71,15 +86,40 @@ public class showBands extends Activity {
     private mainListHandler listHandler;
     private CustomArrayAdapter adapter;
 
+    // inside my class
+    private static final String[] INITIAL_PERMS = {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            android.Manifest.permission.INTERNET,
+            android.Manifest.permission.ACCESS_NETWORK_STATE,
+            android.Manifest.permission.WAKE_LOCK,
+            android.Manifest.permission.VIBRATE
+    };
+    private static final int REQUEST = 1337;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            if (permission != 0) {
+                requestPermissions(INITIAL_PERMS, REQUEST);
+                while (permission != 0) {
+                    permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    try {
+                        sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            newRootDir =Bands70k.getAppContext().getFilesDir().getPath();
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_bands);
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
 
         setContentView(R.layout.activity_show_bands);
 
@@ -95,6 +135,21 @@ public class showBands extends Activity {
 
         // Registering BroadcastReceiver
         registerReceiver();
+
+        //get FCM token for testing
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "getInstanceId failed", task.getException());
+                            return;
+                        }
+                        // Get new Instance ID token
+                        String token = task.getResult().getToken();
+                        Log.d(TAG, "FCM Token Is " + token);
+                    }
+                });
 
         if (staticVariables.preferences == null) {
             staticVariables.preferences = new preferencesHandler();
@@ -122,6 +177,9 @@ public class showBands extends Activity {
         setFilterDefaults();
 
         setupButtonFilters();
+
+        scheduleAlertHandler alertHandler = new scheduleAlertHandler();
+        alertHandler.sendLocalAlert("Alert test message", 900);
 
     }
 
@@ -954,7 +1012,7 @@ public class showBands extends Activity {
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
         } catch (Exception error){
             try {
-                Thread.sleep(4000);
+                sleep(4000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
