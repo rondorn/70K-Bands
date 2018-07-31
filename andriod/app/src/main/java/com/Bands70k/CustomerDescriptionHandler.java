@@ -156,8 +156,15 @@ public class CustomerDescriptionHandler {
                 descriptionMapData = this.getDescriptionMap();
             }
 
-            Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMapData.get(bandName));
-            URL url = new URL(descriptionMapData.get(bandName));
+            URL url;
+            try {
+                Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMapData.get(bandName));
+                url = new URL(descriptionMapData.get(bandName));
+
+            } catch (Exception error){
+                Log.d("descriptionMapFile", "could not load! " + descriptionMapData.get(bandName));
+                return;
+            }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
             String line;

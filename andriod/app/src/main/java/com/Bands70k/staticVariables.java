@@ -1,9 +1,15 @@
 package com.Bands70k;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 
@@ -52,6 +58,10 @@ public class staticVariables {
     public final static String sawSomeStatus = "sawSome";
     public final static String sawNoneStatus = "sawNone";
 
+    public static String notificationChannelID = "70KBandsCustomSound1";
+    public static CharSequence notificationChannelName = "70KBandsCustomSound1";
+    public static String notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
+    public final static Uri alarmSound = Uri.parse("android.resource://com.Bands70k/" + R.raw.onmywaytodeath);
 
     public final static String  poolVenueText = "Pool";
     public final static String  theaterVenueText = "Theater";
@@ -281,4 +291,5 @@ public class staticVariables {
         }
 
     }
+
 }

@@ -10,8 +10,8 @@ android {
         applicationId "com.Bands70k"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 220180721
-        versionName "220180721"
+        versionCode 220180727
+        versionName "220180727"
         android.compileOptions.incremental = false
         multiDexEnabled true
     }
