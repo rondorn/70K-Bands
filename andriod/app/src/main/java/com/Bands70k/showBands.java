@@ -2,8 +2,6 @@ package com.Bands70k;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
@@ -21,23 +19,18 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.text.Layout;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -117,6 +110,7 @@ public class showBands extends Activity {
         }
 
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_show_bands);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -163,6 +157,9 @@ public class showBands extends Activity {
         bandNotes = new CustomerDescriptionHandler();
         staticVariables.preferences.loadData();
 
+        scheduleAlertHandler alertHandler = new scheduleAlertHandler();
+        //alertHandler.sendLocalAlert("Testing after 10 seconds", 5);
+
         Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
 
         TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
@@ -178,11 +175,8 @@ public class showBands extends Activity {
 
         setupButtonFilters();
 
-        scheduleAlertHandler alertHandler = new scheduleAlertHandler();
-        alertHandler.sendLocalAlert("Alert test message", 900);
 
     }
-
 
     private void setupSwipeList (){
 

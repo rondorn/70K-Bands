@@ -1,10 +1,13 @@
 package com.Bands70k;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.util.Log;
 
 //import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -19,7 +22,15 @@ public class NotificationPublisher extends BroadcastReceiver {
     public static String NOTIFICATION = "notification";
     public static String TAG = "NotifLogs";
 
+
+    @Override
     public void onReceive(Context context, Intent intent) {
+
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+       //     context.startForegroundService(new Intent(context, BackgroundService.class));
+       // } else {
+       //     context.startService(new Intent(context, BackgroundService.class));
+       // }
 
         NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -37,10 +48,10 @@ public class NotificationPublisher extends BroadcastReceiver {
             try {
                 notificationManager.notify(intent_id, notification);
             } catch (Exception error) {
-                //if something goes wrong here...pass on it
+                Log.d(TAG, error.getMessage());
             }
         } catch (Exception error){
-            //Log.d(TAG, error.getMessage());
+            Log.d(TAG, error.getMessage());
         }
     }
 

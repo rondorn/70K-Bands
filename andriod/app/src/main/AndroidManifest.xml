@@ -41,6 +41,7 @@
             android:name=".filterMenu"
             android:label="Filter" >
         </activity>
+
         <receiver
             android:name="com.Bands70k.NotificationPublisher"
             android:permission="com.google.android.c2dm.permission.SEND">
@@ -52,10 +53,15 @@
                 <category android:name="com.Bands70K"/>
             </intent-filter>
         </receiver>
-
+        <service android:name=".BackgroundService" />
         <service
             android:name=".MyFcmListenerService">
             <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- The following two intent-filters are the key to set homescreen -->
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
                 <action android:name="android.intent.action.RESPOND_VIA_MESSAGE"/>
             </intent-filter>
@@ -79,6 +85,6 @@
             android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/bands_70k_icon" />
+            android:resource="@drawable/new_bands_70k_icon" />
     </application>
 </manifest>

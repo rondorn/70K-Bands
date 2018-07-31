@@ -2,14 +2,20 @@ package com.Bands70k;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.support.v4.app.AlarmManagerCompat;
 import android.util.Log;
 
 import java.io.FileInputStream;
@@ -25,6 +31,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TimeZone;
 
+import static com.Bands70k.staticVariables.context;
+
 /**
  * Created by rdorn on 5/26/16.
  */
@@ -36,6 +44,28 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     ArrayList<String> result;
 
     public scheduleAlertHandler(){
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            AudioAttributes att = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .build();
+
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel mChannel = new NotificationChannel(staticVariables.notificationChannelID, staticVariables.notificationChannelName, importance);
+            mChannel.setDescription(staticVariables.notificationChannelDescription);
+            mChannel.setSound(staticVariables.alarmSound, att);
+            mChannel.enableLights(true);
+            mChannel.setLightColor(Color.RED);
+            mChannel.enableVibration(true);
+            mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+            mChannel.setShowBadge(true);
+            mChannel.setLockscreenVisibility(1);
+            mChannel.setImportance(NotificationManager.IMPORTANCE_HIGH);
+            notificationManager.createNotificationChannel(mChannel);
+        }
     }
 
     @Override
@@ -74,7 +104,6 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                             Long alertTime = Long.valueOf(key.toString());// - (Long.valueOf(preferences.getMinBeforeToAlert())) * 60 * 100);
 
                             boolean showAlerts = scheduleAlertHandler.showAlert(scheduleDetails, bandName);
-                            Log.d("SchedNotications", "!Timing1 " + bandName + " perferences returned " + showAlerts + ":" + alertTime);
                             if (alertTime > 0 && showAlerts == true) {
 
                                 String alertMessage = bandName + " has a " + scheduleDetails.getShowType() + " in " + staticVariables.preferences.getMinBeforeToAlert() + " min at the " + scheduleDetails.getShowLocation();
@@ -87,6 +116,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                 int delayInseconds = (delay / 1000);
 
                                 if (delay > 1) {
+                                    Log.d("SchedNotications", "!Timing1 " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
+
                                     sendLocalAlert(alertMessage, delayInseconds);
                                 }
 
@@ -100,57 +131,97 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         }
     }
 
+    public void sendLocalAlert(String alertMessage, int delay){
+
+        if (staticVariables.alertMessages.contains(alertMessage) == false) {
+
+            //delay = delay + 60;
+            staticVariables.alertMessages.add(alertMessage);
+            staticVariables.alertTracker = staticVariables.alertTracker + 1;
+            int delayInMilliSeconds = delay * 1000;
+
+            Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker);
+
+            Notification notifyMessage = this.getNotification(alertMessage);
+            this.scheduleNotification(notifyMessage, delayInMilliSeconds, staticVariables.alertTracker, alertMessage);
+        }
+    }
+
     public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content) {
 
-        Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
+
+        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
         notificationIntent.putExtra(String.valueOf(delay), 1);
         notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
         notificationIntent.putExtra("messageText", content);
         notificationIntent.setAction(content);
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, unuiqueID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
-        AlarmManager alarmManager = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         try {
-            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
+
+            int ALARM_TYPE = AlarmManager.ELAPSED_REALTIME_WAKEUP;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                Log.d("SendLocalAlert", "Using setExactAndAllowWhileIdle with delay of " + String.valueOf(futureInMillis));
+                alarmManager.setExactAndAllowWhileIdle(ALARM_TYPE, futureInMillis, pendingIntent);
+
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                Log.d("SendLocalAlert", "Using AlarmManagerCompat.setExact with delay of " + String.valueOf(futureInMillis));
+                AlarmManagerCompat.setExact(alarmManager, ALARM_TYPE, futureInMillis, pendingIntent);
+
+            } else {
+                Log.d("SendLocalAlert", "Using AlarmManagerCompat.set with delay of " + String.valueOf(futureInMillis));
+                alarmManager.set(ALARM_TYPE, futureInMillis, pendingIntent);
+            }
+
+
         } catch (Exception error){
             Log.d("NotifLogs", "Encountered issue scheduling alert " + error.getMessage());
         }
 
         alarmStorageStringHash.put(unuiqueID, content);
 
-
     }
 
     public Notification getNotification(String content) {
 
-        Log.d("NotifLogs", "Scheduled alert to day " + content);
+        Log.d("NotifLogs", "Scheduled alert to day " + context.getPackageName());
 
-        Intent showApp = new Intent(staticVariables.context, showBands.class);
+        Intent showApp = new Intent(context, showBands.class);
         //Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        Uri defaultSoundUri = Settings.System.DEFAULT_NOTIFICATION_URI;
+
         PendingIntent launchApp = PendingIntent.getActivity(
-                staticVariables.context,
+                context,
                 0,
                 showApp,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification.Builder builder = new Notification.Builder(staticVariables.context);
+        Notification.Builder builder = new Notification.Builder(context);
+
         builder.setContentTitle("70K Bands");
         builder.setContentText(content);
         builder.setSmallIcon(getNotificationIcon());
         builder.setContentIntent(launchApp);
-        builder.setSound(defaultSoundUri);
+        builder.setSound(staticVariables.alarmSound);
         builder.setAutoCancel(true);
         builder.setVibrate(new long[]{1000,1000,1000,1000});
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setChannelId(staticVariables.notificationChannelID);
+        }
+
         return builder.build();
     }
 
     private int getNotificationIcon() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return R.drawable.bands_70k_icon;
+            return R.drawable.new_bands_70k_icon;
 
         } else {
             return R.drawable.alert_icon;
@@ -244,7 +315,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
 
-            AlarmManager clearAlarm = (AlarmManager) staticVariables.context.getSystemService(Context.ALARM_SERVICE);
+            AlarmManager clearAlarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
             for (Integer id : alarmStorageStringHash.keySet()) {
 
@@ -252,12 +323,12 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
                 Notification tempNotification = getNotification(messageContent);
 
-                Intent notificationIntent = new Intent(staticVariables.context, NotificationPublisher.class);
+                Intent notificationIntent = new Intent(context, NotificationPublisher.class);
                 notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, tempNotification);
                 notificationIntent.putExtra("messageText", messageContent);
                 notificationIntent.setAction(messageContent);
 
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(staticVariables.context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
                 Log.d("SchedNotications", "Clearing alert " + id.toString());
                 clearAlarm.cancel(pendingIntent);
@@ -268,22 +339,6 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
             saveAlarmStrings(alarmStorageStringHash);
         } catch (Exception error){
             Log.e("SchedNotications", "Something has gone wrong " + error.getLocalizedMessage() + "\n" + error.fillInStackTrace());
-        }
-    }
-
-    public void sendLocalAlert(String alertMessage, int delay){
-
-        if (staticVariables.alertMessages.contains(alertMessage) == false) {
-
-            //delay = delay + 60;
-            staticVariables.alertMessages.add(alertMessage);
-            staticVariables.alertTracker = staticVariables.alertTracker + 1;
-            int delayInMilliSeconds = delay * 1000;
-
-            Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker);
-
-            Notification notifyMessage = this.getNotification(alertMessage);
-            this.scheduleNotification(notifyMessage, delayInMilliSeconds, staticVariables.alertTracker, alertMessage);
         }
     }
 

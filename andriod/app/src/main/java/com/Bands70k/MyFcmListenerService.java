@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -57,20 +58,21 @@ public class MyFcmListenerService extends FirebaseMessagingService {
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
-        Uri defaultSoundUri = Settings.System.DEFAULT_NOTIFICATION_URI;
-
         android.support.v4.app.NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(getNotificationIcon())
                 .setContentTitle("70K Bands")
                 .setContentText(messageString)
                 .setAutoCancel(true)
-                .setSound(defaultSoundUri)
+                .setSound(staticVariables.alarmSound)
                 .setVibrate(new long[]{1000, 1000, 1000})
                 .setContentIntent(pendingIntent);
 
-        notificationBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
+        notificationBuilder.setDefaults(Notification.DEFAULT_SOUND);
         notificationBuilder.setLights(Color.YELLOW, 1000, 300);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationBuilder.setChannelId(staticVariables.notificationChannelID);
+        }
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, notificationBuilder.build());
 
@@ -79,7 +81,7 @@ public class MyFcmListenerService extends FirebaseMessagingService {
     private int getNotificationIcon() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return R.drawable.bands_70k_icon;
+            return R.drawable.new_bands_70k_icon;
 
         } else {
             return R.drawable.alert_icon;
