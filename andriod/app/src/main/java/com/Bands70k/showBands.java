@@ -244,7 +244,9 @@ public class showBands extends Activity {
                 item4.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item4);
 
-
+                if (listHandler == null){
+                    listHandler = new mainListHandler(showBands.this);
+                }
                 if (listHandler.allUpcomingEvents >= 1) {
                     SwipeMenuItem item5 = new SwipeMenuItem(
                             getApplicationContext());
