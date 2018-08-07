@@ -69,12 +69,12 @@ public class showsAttendedReport {
             if (sawAllCount != null && sawAllCount >= 1) {
                 eventCountExists.put(eventType, true);
                 String sawAllCountString = sawAllCount.toString();
-                message += "Saw " + sawAllCountString + " " + eventType + addPlural(sawAllCount);
+                message += "Saw " + sawAllCountString + " " + eventType + addPlural(sawAllCount) + "\n";
             }
             if (sawSomeCount != null && sawSomeCount >= 1) {
                 eventCountExists.put(eventType, true);
                 String sawSomeCountString = sawSomeCount.toString();
-                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(sawSomeCount);
+                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(sawSomeCount) + "\n";
             }
         }
 
