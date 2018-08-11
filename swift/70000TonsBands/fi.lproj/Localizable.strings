@@ -29,6 +29,9 @@
 "Part Of Event"="Osallistuu osaan tästä tapahtumasta";
 "None Of Event"="En näe tätä tapahtumaa";
 
+"Only alert for shows you will attend"="Vain hälytyksiä näytöille, joihin osallistut";
+"Alert for shows according to your favorites selection"="Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukset";
+
 "Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
 "Alert For Shows"="Hälytys keikoille";
 "Alert For Special Events"="Hälytys muihin tapahtumiin";

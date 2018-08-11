@@ -22,6 +22,9 @@
 "showAttendedFilterTrueHelp"="Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke";
 "showAttendedFilterFalseHelp"="Vis bands og shows i henhold til filtre";
 
+"Only alert for shows you will attend"="Kun advarsel om shows, du vil deltage i";
+"Alert for shows according to your favorites selection"="Advarsel til shows i henhold til dit valgvalg og de indstillinger, der er angivet på denne skærm";
+
 "Sorting Chronologically"="Sortering Kronologisk";
 "Sorting Alphabetically"="Sortering Alfabetisk";
 

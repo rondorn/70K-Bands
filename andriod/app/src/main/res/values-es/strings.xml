@@ -13,6 +13,9 @@
     <string name="AlertOnMustSeeBands">Alerta para bandas que quiero ver</string>
     <string name="AlertOnMightSeeBands">Alerta para bandas que quizás vea</string>
 
+    <string name="OnlyAlertForShowsYouWillAttend">Solo alerta para espectáculos a los que asistirá</string>
+    <string name="AlertForShowsAccordingToSelection">Alerta para mostrar de acuerdo a su selección de favoritos, y las configuraciones indicadas en esta pantalla</string>
+
     <string name="MinutesBeforeEventtoAlert">Alerta antes del evento (minutos)</string>
     <string name="AlertForShows">Alerta Para Conciertos</string>
     <string name="AlertForSpecialEvents">Alerta Para Eventos Especiales</string>
