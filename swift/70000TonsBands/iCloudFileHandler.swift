@@ -52,7 +52,7 @@ func copyDocumentsToiCloudDrive() {
 }
 
 func saveFileToiCloudDrive(localFile : URL, fileName : String){
-    return;
+
     createiCloudDirectory()
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
 
@@ -81,7 +81,7 @@ func saveFileToiCloudDrive(localFile : URL, fileName : String){
 
 
 func loadFileFromiCloudDrive(localFile : URL, fileName : String){
-    return;
+
     let iCloudDocumentsURL = FileManager.default.url(forUbiquityContainerIdentifier:nil)?.appendingPathComponent("Documents").appendingPathComponent(fileName, isDirectory: false)
     
     if (iCloudDocumentsURL?.absoluteString.isEmpty == false){

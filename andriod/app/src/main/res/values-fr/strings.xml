@@ -12,6 +12,9 @@
     <string name="AlertOnMustSeeBands">Alerte Pour OUI Salons</string>
     <string name="AlertOnMightSeeBands">Alerte pour peut-être Shows</string>
 
+    <string name="OnlyAlertForShowsYouWillAttend">Seulement alerte pour les spectacles auxquels vous assisterez</string>
+    <string name="AlertForShowsAccordingToSelection">Alerte pour les spectacles en fonction de votre sélection de favoris et des paramètres indiqués sur cet écran</string>
+
     <string name="MinutesBeforeEventtoAlert">Alertez-moi avant l\'événement (minutes)</string>
     <string name="AlertForShows">Alerte pour les spectacles</string>
     <string name="AlertForSpecialEvents">Alerte pour des événements spéciaux</string>
@@ -35,7 +38,7 @@
     <string name="restarTitle">Redémarrage Nécessaire</string>
     <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 
-    <string name="showAttendedFilterTrueHelp">N'affichez que les événements auxquels vous avez participé. Les autres filtres ne s'appliqueront pas</string>
+    <string name="showAttendedFilterTrueHelp">N`affichez que les événements auxquels vous avez participé. Les autres filtres ne s`appliqueront pas</string>
     <string name="showAttendedFilterFalseHelp">Afficher les groupes et les émissions en fonction des filtres</string>
 
     <string name="alertOnlyForShowWillAttend">Alerte uniquement pour les événements liés à la volonté</string>

@@ -18,6 +18,10 @@
     <string name="AlertForClinics">Notifikation for clinics</string>
     <string name="AlertForAlbumListeningEvents">Notifikation for prÊsentation af nyt album</string>
 
+    <string name="OnlyAlertForShowsYouWillAttend">Kun advarsel om shows, du vil deltage i</string>
+    <string name="AlertForShowsAccordingToSelection">Advarsel til shows i henhold til dit valgvalg og de indstillinger, der er angivet på denne skærm</string>
+
+
     <string name="PoolVenue">Pool</string>
     <string name="TheaterVenue">Theater</string>
     <string name="LoungeVenue">Lounge</string>

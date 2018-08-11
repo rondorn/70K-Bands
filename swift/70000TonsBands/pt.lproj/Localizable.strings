@@ -23,6 +23,9 @@
 "showAttendedFilterTrueHelp"="Apenas mostre os eventos que você indicar que participará. Outros filtros não serão aplicados";
 "showAttendedFilterFalseHelp"="Mostrar bandas e shows de acordo com filtros";
 
+"Only alert for shows you will attend"="Apenas alerta para shows que você vai participar";
+"Alert for shows according to your favorites selection"="Alerta para shows de acordo com sua seleção de favoritos e as configurações indicadas nesta tela";
+
 "Sorting Chronologically"="Classificando Cronologicamente";
 "Sorting Alphabetically"="Classificando Alfabeticamente";
 

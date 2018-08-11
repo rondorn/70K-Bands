@@ -92,6 +92,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             sortedBy = "time";
         }
         
+        if (getShowOnlyWillAttened() == true){
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+        } else {
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
+        }
+        
     }
     
     override func awakeFromNib() {

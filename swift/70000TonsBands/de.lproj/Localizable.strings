@@ -20,6 +20,9 @@
 "Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
 "Alert Only for Will Attend Events"="Warnung nur für Ereignisse";
 
+"Only alert for shows you will attend"="Nur Benachrichtigungen für Shows, an denen Sie teilnehmen werden";
+"Alert for shows according to your favorites selection"="Alarm für Sendungen entsprechend Ihrer Favoritenauswahl und den auf diesem Bildschirm angezeigten Einstellungen";
+
 "showAttendedFilterTrueHelp"="Zeige nur Ereignisse an, an denen du teilnimmst. Andere Filter werden nicht angewendet";
 "showAttendedFilterFalseHelp"="Zeigen Sie Bands und Shows nach Filtern";
 

@@ -111,6 +111,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setExistingValues()
         setLocalizedLables()
         
+        disableAlertButtonsIfNeeded()
         self.navigationItem.title = "Alert Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
@@ -186,6 +187,45 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         return false;
     }
     
+    func disableAlertButtonsIfNeeded(){
+        
+        if (AlertOnlyForAttended.isOn == true){
+            AlertOnMustSee.isEnabled = false;
+            AlertOnMightSee.isEnabled = false;
+            AlertForShows.isEnabled = false;
+            AlertForSpecialEvents.isEnabled = false;
+            AlertForMeetAndGreets.isEnabled = false;
+            AlertForClinic.isEnabled = false;
+            AlertForListeningEvent.isEnabled = false;
+            
+            mustSeeAlertLable.isEnabled = false
+            mightSeeAlertLable.isEnabled = false
+            alertForShowsLable.isEnabled = false
+            alertForSpecialLable.isEnabled = false
+            alertForMandGLable.isEnabled = false
+            alertForClinicsLable.isEnabled = false
+            alertForListeningLable.isEnabled = false
+            
+        } else {
+            AlertOnMustSee.isEnabled = true;
+            AlertOnMightSee.isEnabled = true;
+            AlertForShows.isEnabled = true;
+            AlertForSpecialEvents.isEnabled = true;
+            AlertForMeetAndGreets.isEnabled = true;
+            AlertForClinic.isEnabled = true;
+            AlertForListeningEvent.isEnabled = true;
+            
+            mustSeeAlertLable.isEnabled = true
+            mightSeeAlertLable.isEnabled = true
+            alertForShowsLable.isEnabled = true
+            alertForSpecialLable.isEnabled = true
+            alertForMandGLable.isEnabled = true
+            alertForClinicsLable.isEnabled = true
+            alertForListeningLable.isEnabled = true
+        }
+    }
+    
+    
     @IBAction func MinBeforeAlertAction() {
         
         let minBeforeAlertTemp = Int(MinBeforeAlert.text!)
@@ -220,6 +260,16 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func AlertOnlyForAttendedChange() {
         defaults.set(AlertOnlyForAttended.isOn, forKey: "onlyAlertForAttended")
+        disableAlertButtonsIfNeeded()
+        
+        var helpMessage = "";
+        if (AlertOnlyForAttended.isOn == true){
+            helpMessage = NSLocalizedString("Only alert for shows you will attend", comment: "")
+        } else {
+            helpMessage = NSLocalizedString("Alert for shows according to your favorites selection", comment: "")
+        }
+        
+        ToastMessages(helpMessage).show(self, cellLocation: self.view.frame)
     }
     
     @IBAction func AlertForShowsChange() {

@@ -44,6 +44,7 @@ public class preferenceLayout  extends Activity {
     private EditText scheduleUrl;
     private String versionString = "";
 
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.preferences);
@@ -59,6 +60,7 @@ public class preferenceLayout  extends Activity {
             //do nothing
         }
 
+        disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.headerText);
         headerText.setText("Alert Preferences - Build:" + versionString);
     }
@@ -127,6 +129,31 @@ public class preferenceLayout  extends Activity {
         restartDialog.show();
     }
 
+    private void disableAlertButtonsIfNeeded(){
+
+        if (onlyForShowWillAttend.isChecked() == true){
+            mustSee.setEnabled(false);
+            mightSee.setEnabled(false);
+            alertForShows.setEnabled(false);
+            alertForSpecial.setEnabled(false);
+            alertForMeetAndGreet.setEnabled(false);
+            alertForClinics.setEnabled(false);
+            alertForAlbum.setEnabled(false);
+
+
+        } else {
+            mustSee.setEnabled(true);
+            mightSee.setEnabled(true);
+            alertForShows.setEnabled(true);
+            alertForSpecial.setEnabled(true);
+            alertForMeetAndGreet.setEnabled(true);
+            alertForClinics.setEnabled(true);
+            alertForAlbum.setEnabled(true);
+
+        }
+
+    }
+
     private void setValues(){
 
         mustSee = (CheckBox)findViewById(R.id.mustSeecheckBox);
@@ -156,6 +183,12 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setAlertOnlyForShowWillAttend(onlyForShowWillAttend.isChecked());
+                disableAlertButtonsIfNeeded();
+                if (onlyForShowWillAttend.isChecked() == true){
+                    HelpMessageHandler.showMessage(getString(R.string.OnlyAlertForShowsYouWillAttend));
+                } else {
+                    HelpMessageHandler.showMessage(getString(R.string.AlertForShowsAccordingToSelection));
+                }
             }
         });
 
@@ -229,7 +262,6 @@ public class preferenceLayout  extends Activity {
         scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
         scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
     }
-
 
     @Override
     public void onBackPressed() {

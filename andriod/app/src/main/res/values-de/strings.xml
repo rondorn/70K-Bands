@@ -18,6 +18,9 @@
     <string name="AlertForClinics">Alarm für Kliniken</string>
     <string name="AlertForAlbumListeningEvents">Alarm für \'Album Listening Events\'</string>
 
+    <string name="OnlyAlertForShowsYouWillAttend">Nur Benachrichtigungen für Shows, an denen Sie teilnehmen werden</string>
+    <string name="AlertForShowsAccordingToSelection">Alarm für Sendungen entsprechend Ihrer Favoritenauswahl und den auf diesem Bildschirm angezeigten Einstellungen</string>
+
     <string name="PoolVenue">Pool</string>
     <string name="TheaterVenue">Theater</string>
     <string name="LoungeVenue">Lounge</string>

@@ -9,9 +9,11 @@
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
 
-
     <string name="AlertOnMustSeeBands">Hälyttävät Kyllä ohjelmat</string>
     <string name="AlertOnMightSeeBands">Hälyttävät Voi Olla ohjelmat</string>
+
+    <string name="OnlyAlertForShowsYouWillAttend">Vain hälytyksiä näytöille, joihin osallistut</string>
+    <string name="AlertForShowsAccordingToSelection">Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukse</string>
 
     <string name="MinutesBeforeEventtoAlert">Ilmoita, ennen tapahtumaa (minuuttia)</string>
     <string name="AlertForShows">Alert näytöksiin</string>

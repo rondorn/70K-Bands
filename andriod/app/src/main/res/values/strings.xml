@@ -12,6 +12,9 @@
     <string name="AlertOnMustSeeBands">Alert On Must See Bands</string>
     <string name="AlertOnMightSeeBands">Alert On Might See Bands</string>
 
+    <string name="OnlyAlertForShowsYouWillAttend">Only alert for shows you will attend</string>
+    <string name="AlertForShowsAccordingToSelection">Alert for shows according to your favorites selection, and the settings indicated on this screen</string>
+
     <string name="MinutesBeforeEventtoAlert">Minutes Before Event to Alert</string>
     <string name="AlertForShows">Alert For Shows</string>
     <string name="AlertForSpecialEvents">Alert For Special Events</string>
