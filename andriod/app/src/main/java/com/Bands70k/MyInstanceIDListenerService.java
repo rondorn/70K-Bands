@@ -28,9 +28,9 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
         sendRegistrationToServer(refreshedToken);
 
         Log.d(TAG, "Subscribing to topics");
-        //FirebaseMessaging.getInstance().subscribeToTopic("/topic/global");
-        FirebaseMessaging.getInstance().subscribeToTopic("AndroidTesting");
-        FirebaseMessaging.getInstance().subscribeToTopic("global");
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+
     }
 
     private void sendRegistrationToServer(String token) {

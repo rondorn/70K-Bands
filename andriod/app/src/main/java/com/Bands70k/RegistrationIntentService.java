@@ -59,9 +59,11 @@ public class RegistrationIntentService extends IntentService {
             // Subscribe to topic channels
             //subscribeTopics(token);
 
-            FirebaseMessaging.getInstance().subscribeToTopic("70KbandsFireBase");
-            FirebaseMessaging.getInstance().subscribeToTopic("topic/global");
-            FirebaseMessaging.getInstance().subscribeToTopic("global");
+            FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.mainAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
+
+            FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.testAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
 
             // You should store a boolean that indicates whether the generated token has been
             // sent to your server. If the boolean is false, send the token to your server,

@@ -243,9 +243,22 @@ public class showBandDetails extends Activity {
 
         SetButtonColors();
 
+        String scheduleText = "";
+        String commentHeight;
         ImageHandler imageHandler = new ImageHandler(bandName);
+        try {
+            scheduleText = buildScheduleView();
+        } catch (Exception error){
+            //if this causes an exception, no worries..just don't display the schedule
+        }
+
+        if (scheduleText.contains("onclick") == false){
+            commentHeight = "46%";
+        } else {
+            commentHeight = "20%";
+        }
             htmlText =
-                    "<html><div style='height:100%;font-size:130%;'>" +
+                    "<html><div style='height:82%;font-size:130%;'>" +
                             "<center>" + bandName + "</center><br>" +
                             "<center><img style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
 
@@ -275,18 +288,15 @@ public class showBandDetails extends Activity {
                         if (bandNote != "" && imageHandler.getImage().toString() != staticVariables.logo70kUrl) {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
                             htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
-                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:20%;overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
+                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:" + commentHeight + ";overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
                             htmlText += "</ul>";
                         }
                     } else {
                         htmlText += "<br><br>";
                     }
 
-                    try {
-                        htmlText += buildScheduleView();
-                    } catch (Exception error){
-                      //if this causes an exception, no worries..just don't display the schedule
-                    }
+
+                    htmlText += scheduleText;
 
                     htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
                             "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " Must</button></td>" +
@@ -294,7 +304,7 @@ public class showBandDetails extends Activity {
                             "<td><button style='background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.wontSeeIcon + " Wont</button></td>" +
                             "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + " Unknown</button></td>" +
                             "</tr></table></div>" +
-                            "</html></div>";
+                            "</html>";
                 }
 
             mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);

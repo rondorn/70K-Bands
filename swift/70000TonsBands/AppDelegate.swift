@@ -24,9 +24,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     var notificationDisplayed = false;
     let registrationKey = "onRegistrationCompleted"
     let messageKey = "onMessageReceived"
-    let subscriptionTopic1 = "/topics/IOStesting"
-    let subscriptionTopic2 = "/topics/global"
-    let subscriptionTopic3 = "/topics/version20170706"
+    let subscriptionTopic = "/topics/global"
+    let subscriptionTopicTest = "/topics/Testing2019"
     
     let gcmMessageIDKey = "gcm.message_id"
     
@@ -186,9 +185,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             } else {
                 print("Connected to FCM.")
                 print("Token Connected to FCM.")
-                Messaging.messaging().subscribe(toTopic: self.subscriptionTopic1)
-                Messaging.messaging().subscribe(toTopic: self.subscriptionTopic2)
-                Messaging.messaging().subscribe(toTopic: self.subscriptionTopic3)
+                Messaging.messaging().subscribe(toTopic: self.subscriptionTopic)
+                Messaging.messaging().subscribe(toTopic: self.subscriptionTopicTest)
+                
             }
         }
         
@@ -206,7 +205,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("APNs token retrieved: \(token)")
-        
+
+        InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
     }
     
     // [START connect_on_active]
@@ -447,6 +447,10 @@ extension AppDelegate : MessagingDelegate {
     // [START refresh_token]
     func messaging(_ messaging: Messaging, didRefreshRegistrationToken fcmToken: String) {
         print("Firebase registration token: \(fcmToken)")
+        //let helpMessage = "Firebase registration token: \(fcmToken)"
+        
+        //let pasteBoard = UIPasteboard.general
+        //pasteBoard.string = helpMessage
     }
     // [END refresh_token]
 }
