@@ -58,7 +58,7 @@ func saveFileToiCloudDrive(localFile : URL, fileName : String){
 
         let iCloudDocumentsURL = FileManager.default.url(forUbiquityContainerIdentifier:nil)?.appendingPathComponent("Documents").appendingPathComponent(fileName, isDirectory: false)
         
-        //if (iCloudDocumentsURL?.absoluteString.isEmpty == false){
+        if (iCloudDocumentsURL?.absoluteString.isEmpty == false){
             do {
                 
                 if (FileManager.default.fileExists(atPath: (iCloudDocumentsURL?.path)!) == true){
@@ -73,9 +73,9 @@ func saveFileToiCloudDrive(localFile : URL, fileName : String){
             } catch {
                 print("iCloud Drive error on load of single file of \(localFile.path) could not be copied to \(iCloudDocumentsURL?.path) " + error.localizedDescription);
             }
-        //} else {
-        //    print("iCloud Drive file \(fileName) is not available in the cloud")
-        //}
+        } else {
+            print("iCloud Drive file \(fileName) is not available in the cloud")
+        }
     }
 }
 

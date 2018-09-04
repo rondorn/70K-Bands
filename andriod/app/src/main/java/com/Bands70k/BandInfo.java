@@ -60,7 +60,7 @@ public class BandInfo {
         for (String bandName: bandNames){
             String bandRank = rankStore.getRankForBand(bandName);
 
-            if (bandName == null){
+            if (bandName.isEmpty()){
                 continue;
             }
             staticVariables.staticVariablesInitialize();

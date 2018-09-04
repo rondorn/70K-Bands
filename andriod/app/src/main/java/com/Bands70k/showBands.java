@@ -98,11 +98,6 @@ public class showBands extends Activity {
                 requestPermissions(INITIAL_PERMS, REQUEST);
                 while (permission != 0) {
                     permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    try {
-                        sleep(300);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
         } else {

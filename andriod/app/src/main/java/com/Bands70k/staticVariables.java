@@ -1,13 +1,9 @@
 package com.Bands70k;
 
-import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -16,8 +12,10 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,6 +42,11 @@ public class staticVariables {
     public final static String  theaterVenueIcon = "🎭";
     public final static String  loungeVenueIcon = "🎤";
     public static String  rinkVenueIcon = "\uD83D\uDD03";
+
+
+    //firebase channels
+    public final static String mainAlertChannel = "global";
+    public final static String testAlertChannel = "testing20190903";
 
     //shows attended
     public static String sawAllIcon = "\uD83C\uDFC3\u200D";

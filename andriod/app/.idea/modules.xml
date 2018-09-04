@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../Banks70k.iml" filepath="$PROJECT_DIR$/../Banks70k.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../andriod.iml" filepath="$PROJECT_DIR$/../andriod.iml" />
       <module fileurl="file://$PROJECT_DIR$/app.iml" filepath="$PROJECT_DIR$/app.iml" />
     </modules>
   </component>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">70K Bands</string>
-    <string name="might">MÂske</string>
-    <string name="must">Skal</string>
-    <string name="wont">Skal ikke</string>
+    <string name="might">Vielleicht</string>
+    <string name="must">Ja</string>
+    <string name="wont">Nein ikke</string>
     <string name="unknown">Ukendt</string>
 
     <string name="Ok">Ja</string>
