@@ -98,6 +98,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
         }
         
+        refreshDisplayAfterWake();
     }
     
     override func awakeFromNib() {
@@ -271,6 +272,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
+        
+        } else {
+            //clear busy indicator after a 3 second delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                self.refreshControl?.endRefreshing();
+            })
         }
         
         if (isLoadingBandData == false){
@@ -303,7 +310,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.updateCountLable()
                     self.tableView.reloadData()
                     self.refreshAlerts()
-                    self.refreshControl?.endRefreshing();
+                    //self.refreshControl?.endRefreshing();
                     self.setShowOnlyAttenedFilterStatus()
                 }
                 
@@ -313,7 +320,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             setShowOnlyAttenedFilterStatus()
             updateCountLable()
             self.tableView.reloadData()
-            self.refreshControl?.endRefreshing();
+            //self.refreshControl?.endRefreshing();
+            
         }
     } 
     
@@ -494,7 +502,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
         
-        var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
+        var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise"
         var favoriteBands = "\n"
         
         if (attendingCount > 0){
@@ -509,7 +517,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             for band in bands {
                 if (getPriorityData(band) == 1){
                     print ("Adding band " + band)
-                    favoriteBands += "\t" + getMustSeeIcon() + "\t" +  band + "\n"
+                    favoriteBands += "\t\t" +  band + "\n"
+                }
+            }
+            favoriteBands += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
+            for band in bands {
+                if (getPriorityData(band) == 2){
+                    print ("Adding band " + band)
+                    favoriteBands += "\t\t" +  band + "\n"
                 }
             }
         }

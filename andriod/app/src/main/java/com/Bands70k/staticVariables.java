@@ -46,7 +46,7 @@ public class staticVariables {
 
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "testing20190903";
+    public final static String testAlertChannel = "testing20000";
 
     //shows attended
     public static String sawAllIcon = "\uD83C\uDFC3\u200D";
@@ -83,6 +83,8 @@ public class staticVariables {
     public final static String unknownKey = "unknown";
 
     public final static String defaultUrls = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1";
+    //public final static String defaultUrls = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1";
+
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
 
     public static String artistURL;

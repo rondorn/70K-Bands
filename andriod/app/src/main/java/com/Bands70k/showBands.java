@@ -14,6 +14,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -164,6 +165,30 @@ public class showBands extends Activity {
             }
         });
 
+        bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        bandNamesPullRefresh.setOnRefreshListener(
+                new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+
+                        new Handler().postDelayed(new Runnable() {
+                            @Override public void run() {
+                                bandNamesPullRefresh.setRefreshing(false);
+                            }
+                        }, 5000);
+
+                        Log.i("AsyncList refresh", "onRefresh called from SwipeRefreshLayout");
+
+                        //start spinner and stop after 5 seconds
+                        bandNamesPullRefresh.setRefreshing(true);
+                        refreshNewData();
+
+                    }
+
+                }
+
+        );
+
         populateBandList();
         showNotification();
         setFilterDefaults();
@@ -280,16 +305,6 @@ public class showBands extends Activity {
         * performs a swipe-to-refresh gesture.
         */
 
-        bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
-        bandNamesPullRefresh.setOnRefreshListener(
-                new SwipeRefreshLayout.OnRefreshListener() {
-                    @Override
-                    public void onRefresh() {
-                        Log.i("RefreshCalled", "onRefresh called from SwipeRefreshLayout");
-                        refreshNewData();
-                    }
-                }
-        );
     }
 
     private void setupOnSwipeListener(){
@@ -850,6 +865,9 @@ public class showBands extends Activity {
             alerts.execute();
 
             if (bandNames == null){
+
+                bandNamesPullRefresh.setRefreshing(true);
+
                 bandNames.add("Waiting for data to load, please standby....");
             }
             ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
@@ -922,6 +940,8 @@ public class showBands extends Activity {
         super.onResume();
         inBackground = false;
 
+        refreshNewData();
+
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // argument position gives the index of item which is clicked
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
@@ -952,6 +972,7 @@ public class showBands extends Activity {
         //setupButtonFilters();
         registerReceiver();
 
+        //populateBandList();
         Log.d(TAG, notificationTag + " calling showNotification");
         showNotification();
 
@@ -1031,16 +1052,14 @@ public class showBands extends Activity {
         @Override
         protected void onPreExecute() {
 
+            super.onPreExecute();
             if (staticVariables.loadingBands == false) {
+
                 staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
-                super.onPreExecute();
-                bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
-                bandNamesPullRefresh.setRefreshing(true);
                 refreshData();
-                super.onPreExecute();
-                bandNamesPullRefresh.setRefreshing(true);
                 staticVariables.loadingBands = false;
+
             }
         }
 
@@ -1083,9 +1102,13 @@ public class showBands extends Activity {
                 showBands.this.bandNamesList.setAdapter(arrayAdapter);
                 showBands.this.bandNamesList.setVisibility(View.VISIBLE);
                 showBands.this.bandNamesList.requestLayout();
+
+                bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+                bandNamesPullRefresh.setRefreshing(false);
+
                 fileDownloaded = true;
             }
-            bandNamesPullRefresh.setRefreshing(false);
+
 
 
         }
