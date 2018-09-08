@@ -99,6 +99,7 @@ let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
 
 let defaultStorageUrl = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1"
+//let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1"
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"

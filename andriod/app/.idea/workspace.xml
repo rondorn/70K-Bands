@@ -6,7 +6,9 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
+    <option name="TOOL_WINDOW_REGEXP_FILTER" value="false" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="da3a7138-a25a-4f24-b988-699f976c644e" name="Default" comment="" />
@@ -34,14 +36,97 @@
       <file leaf-file-name="showBands.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="340" column="24" lean-forward="false" selection-start-line="340" selection-start-column="24" selection-end-line="340" selection-end-column="64" />
+            <state relative-caret-position="518">
+              <caret line="188" column="0" lean-forward="false" selection-start-line="188" selection-start-column="0" selection-end-line="188" selection-end-column="0" />
+              <folding>
+                <element signature="e#4129#4522#0" expanded="true" />
+                <element signature="e#4521#4522#0" expanded="true" />
+                <element signature="e#4727#5305#0" expanded="true" />
+                <element signature="e#5304#5305#0" expanded="true" />
+                <element signature="e#6099#6256#0" expanded="true" />
+                <element signature="e#6255#6256#0" expanded="true" />
+                <element signature="e#6412#7110#0" expanded="true" />
+                <element signature="e#6584#6789#0" expanded="true" />
+                <element signature="e#6788#6789#0" expanded="true" />
+                <element signature="e#7109#7110#0" expanded="true" />
+                <element signature="e#8068#10503#0" expanded="true" />
+                <element signature="e#10502#10503#0" expanded="true" />
+                <element signature="e#11341#13621#0" expanded="true" />
+                <element signature="e#13620#13621#0" expanded="true" />
+                <element signature="e#15067#15303#0" expanded="true" />
+                <element signature="e#15302#15303#0" expanded="true" />
+                <element signature="e#15658#15981#0" expanded="true" />
+                <element signature="e#15980#15981#0" expanded="true" />
+                <element signature="e#16104#16506#0" expanded="true" />
+                <element signature="e#16505#16506#0" expanded="true" />
+                <element signature="e#16619#17737#0" expanded="true" />
+                <element signature="e#17736#17737#0" expanded="true" />
+                <element signature="e#17834#18546#0" expanded="true" />
+                <element signature="e#18066#18107#0" expanded="true" />
+                <element signature="e#18273#18315#0" expanded="true" />
+                <element signature="e#18545#18546#0" expanded="true" />
+                <element signature="e#18679#18970#0" expanded="true" />
+                <element signature="e#18969#18970#0" expanded="true" />
+                <element signature="e#19310#19356#0" expanded="true" />
+                <element signature="e#19745#19792#0" expanded="true" />
+                <element signature="e#28445#28654#0" expanded="true" />
+                <element signature="e#28653#28654#0" expanded="true" />
+                <element signature="e#29273#29483#0" expanded="true" />
+                <element signature="e#29482#29483#0" expanded="true" />
+                <element signature="e#30091#30300#0" expanded="true" />
+                <element signature="e#30299#30300#0" expanded="true" />
+                <element signature="e#30929#31138#0" expanded="true" />
+                <element signature="e#31137#31138#0" expanded="true" />
+                <element signature="e#34413#34414#0" expanded="true" />
+                <element signature="e#34449#34450#0" expanded="true" />
+                <element signature="e#36059#36970#0" expanded="true" />
+                <element signature="e#36969#36970#0" expanded="true" />
+                <element signature="e#37416#37417#0" expanded="true" />
+                <element signature="e#37449#37450#0" expanded="true" />
+                <element signature="e#41805#41806#0" expanded="true" />
+                <element signature="e#41849#41850#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="bandlist70k.xml" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
+          <provider editor-type-id="android-designer2">
+            <state />
+          </provider>
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="build.gradle" pinned="false" current-in-tab="true">
+      <file leaf-file-name="activity_show_bands.xml" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
+          <provider editor-type-id="android-designer2">
+            <state />
+          </provider>
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="610">
+              <caret line="178" column="45" lean-forward="false" selection-start-line="178" selection-start-column="33" selection-end-line="178" selection-end-column="45" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="OnlineStatus.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="120">
+              <caret line="14" column="25" lean-forward="false" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="25" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="build.gradle" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/build.gradle">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="180">
@@ -54,8 +139,8 @@
       <file leaf-file-name="staticVariables.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="217">
-              <caret line="48" column="66" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="66" />
+            <state relative-caret-position="329">
+              <caret line="84" column="4" lean-forward="false" selection-start-line="84" selection-start-column="4" selection-end-line="84" selection-end-column="4" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -63,10 +148,20 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="NotificationPublisher.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/NotificationPublisher.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="675">
+              <caret line="53" column="14" lean-forward="false" selection-start-line="53" selection-start-column="14" selection-end-line="53" selection-end-column="14" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="showBandDetails.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="237">
+            <state relative-caret-position="3495">
               <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
               <folding />
             </state>
@@ -83,6 +178,24 @@
       <find>scheduleSortedBandNames</find>
       <find>help</find>
       <find>div</find>
+      <find>wake</find>
+      <find>on</find>
+      <find>@o</find>
+      <find>populateBandList</find>
+      <find>refreshData();</find>
+      <find>AsyncSpinnerControll</find>
+      <find>setupSwipeList</find>
+      <find>pull</find>
+      <find>AsyncList refresh</find>
+      <find>AsyncListViewLoader</find>
+      <find>refreshNewData</find>
+      <find>@Override</find>
+      <find>position</find>
+      <find>Override</find>
+      <find>onRefresh()</find>
+      <find>refreshActivated</find>
+      <find>refreshData</find>
+      <find>setRefreshing</find>
     </findStrings>
   </component>
   <component name="GenerateSignedApkSettings">
@@ -2138,22 +2251,23 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/BandInfo.java" />
         <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/MyInstanceIDListenerService.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/RegistrationIntentService.java" />
         <option value="$PROJECT_DIR$/src/main/res/values-da/strings.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
         <option value="$PROJECT_DIR$/build.gradle" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/NotificationPublisher.java" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="y" value="562" />
-    <option name="width" value="1442" />
-    <option name="height" value="878" />
+    <option name="y" value="102" />
+    <option name="width" value="2395" />
+    <option name="height" value="1338" />
   </component>
   <component name="ProjectView">
     <navigator currentView="AndroidView" proportions="" version="1">
@@ -2170,7 +2284,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="ProjectPane" />
       <pane id="AndroidView">
         <subPane>
           <expand>
@@ -2204,9 +2317,10 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="PackagesPane" />
+      <pane id="Scope" />
+      <pane id="Scratches" />
+      <pane id="ProjectPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -2221,7 +2335,7 @@
     <property name="android.project.structure.proportion" value="0.15" />
     <property name="android.sdk.path" value="$USER_HOME$/Library/Android/sdk" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="device.picker.selection" value="FA61CSY01149" />
+    <property name="device.picker.selection" value="Pixel_XL_API_23" />
     <property name="android.profiler.active" value="true" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/src/main/res/drawable-mdpi-v11" />
     <property name="ExportApk.ApkPath" value="$PROJECT_DIR$" />
@@ -2423,29 +2537,31 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="2560" height="1417" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info id="Android Profiler" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32938075" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Android Profiler" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32794458" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32938075" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Build Variants" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32938075" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3287144" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Logcat" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32938075" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Logcat" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19245574" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Captures" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13860206" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Build" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19168591" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23431295" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Build" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.11162432" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Device File Explorer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -2458,6 +2574,11 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/../.." />
+    </ignored-roots>
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
     <watches-manager />
@@ -2465,9 +2586,469 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="14" column="25" lean-forward="false" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" column="30" lean-forward="false" selection-start-line="13" selection-start-column="30" selection-end-line="13" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3495">
+          <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1110">
+          <caret line="91" column="44" lean-forward="false" selection-start-line="91" selection-start-column="44" selection-end-line="91" selection-end-column="44" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5100">
+          <caret line="340" column="24" lean-forward="false" selection-start-line="340" selection-start-column="24" selection-end-line="340" selection-end-column="64" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="19" lean-forward="false" selection-start-line="8" selection-start-column="19" selection-end-line="8" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3495">
+          <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="48" column="63" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="63" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4380">
+          <caret line="340" column="24" lean-forward="false" selection-start-line="340" selection-start-column="24" selection-end-line="340" selection-end-column="64" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3495">
+          <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="19" lean-forward="false" selection-start-line="8" selection-start-column="19" selection-end-line="8" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="48" column="66" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="66" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5100">
+          <caret line="340" column="24" lean-forward="false" selection-start-line="340" selection-start-column="24" selection-end-line="340" selection-end-column="64" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="48" column="66" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="66" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3495">
+          <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="19" lean-forward="false" selection-start-line="8" selection-start-column="19" selection-end-line="8" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build.gradle">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="48" column="66" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="66" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3495">
+          <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1515">
           <caret line="101" column="13" lean-forward="false" selection-start-line="101" selection-start-column="13" selection-end-line="101" selection-end-column="13" />
-          <folding />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -2483,7 +3064,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
           <caret line="5" column="28" lean-forward="false" selection-start-line="5" selection-start-column="28" selection-end-line="5" selection-end-column="28" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2491,7 +3071,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="310">
           <caret line="71" column="37" lean-forward="false" selection-start-line="71" selection-start-column="37" selection-end-line="71" selection-end-column="37" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2499,7 +3078,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="191">
           <caret line="30" column="40" lean-forward="false" selection-start-line="30" selection-start-column="40" selection-end-line="30" selection-end-column="56" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2507,11 +3085,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="151">
           <caret line="29" column="68" lean-forward="false" selection-start-line="29" selection-start-column="44" selection-end-line="29" selection-end-column="68" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
+      <provider editor-type-id="android-manifest">
+        <state />
+      </provider>
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
           <caret line="18" column="40" lean-forward="false" selection-start-line="18" selection-start-column="40" selection-end-line="18" selection-end-column="40" />
@@ -2522,41 +3102,137 @@
           </folding>
         </state>
       </provider>
-      <provider editor-type-id="android-manifest">
-        <state />
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/BandInfo.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="241">
           <caret line="62" column="34" lean-forward="false" selection-start-line="62" selection-start-column="34" selection-end-line="62" selection-end-column="34" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="217">
-          <caret line="48" column="66" lean-forward="false" selection-start-line="48" selection-start-column="51" selection-end-line="48" selection-end-column="66" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="340" column="24" lean-forward="false" selection-start-line="340" selection-start-column="24" selection-end-line="340" selection-end-column="64" />
+        <state relative-caret-position="120">
+          <caret line="14" column="25" lean-forward="false" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="25" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="237">
+        <state relative-caret-position="3495">
           <caret line="255" column="31" lean-forward="false" selection-start-line="255" selection-start-column="31" selection-end-line="255" selection-end-column="31" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout-v26/bandlist70k.xml">
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout-v16/bandlist70k.xml">
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/band_details.xml">
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="610">
+          <caret line="178" column="45" lean-forward="false" selection-start-line="178" selection-start-column="33" selection-end-line="178" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="518">
+          <caret line="188" column="0" lean-forward="false" selection-start-line="188" selection-start-column="0" selection-end-line="188" selection-end-column="0" />
+          <folding>
+            <element signature="e#4129#4522#0" expanded="true" />
+            <element signature="e#4521#4522#0" expanded="true" />
+            <element signature="e#4727#5305#0" expanded="true" />
+            <element signature="e#5304#5305#0" expanded="true" />
+            <element signature="e#6099#6256#0" expanded="true" />
+            <element signature="e#6255#6256#0" expanded="true" />
+            <element signature="e#6412#7110#0" expanded="true" />
+            <element signature="e#6584#6789#0" expanded="true" />
+            <element signature="e#6788#6789#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#8068#10503#0" expanded="true" />
+            <element signature="e#10502#10503#0" expanded="true" />
+            <element signature="e#11341#13621#0" expanded="true" />
+            <element signature="e#13620#13621#0" expanded="true" />
+            <element signature="e#15067#15303#0" expanded="true" />
+            <element signature="e#15302#15303#0" expanded="true" />
+            <element signature="e#15658#15981#0" expanded="true" />
+            <element signature="e#15980#15981#0" expanded="true" />
+            <element signature="e#16104#16506#0" expanded="true" />
+            <element signature="e#16505#16506#0" expanded="true" />
+            <element signature="e#16619#17737#0" expanded="true" />
+            <element signature="e#17736#17737#0" expanded="true" />
+            <element signature="e#17834#18546#0" expanded="true" />
+            <element signature="e#18066#18107#0" expanded="true" />
+            <element signature="e#18273#18315#0" expanded="true" />
+            <element signature="e#18545#18546#0" expanded="true" />
+            <element signature="e#18679#18970#0" expanded="true" />
+            <element signature="e#18969#18970#0" expanded="true" />
+            <element signature="e#19310#19356#0" expanded="true" />
+            <element signature="e#19745#19792#0" expanded="true" />
+            <element signature="e#28445#28654#0" expanded="true" />
+            <element signature="e#28653#28654#0" expanded="true" />
+            <element signature="e#29273#29483#0" expanded="true" />
+            <element signature="e#29482#29483#0" expanded="true" />
+            <element signature="e#30091#30300#0" expanded="true" />
+            <element signature="e#30299#30300#0" expanded="true" />
+            <element signature="e#30929#31138#0" expanded="true" />
+            <element signature="e#31137#31138#0" expanded="true" />
+            <element signature="e#34413#34414#0" expanded="true" />
+            <element signature="e#34449#34450#0" expanded="true" />
+            <element signature="e#36059#36970#0" expanded="true" />
+            <element signature="e#36969#36970#0" expanded="true" />
+            <element signature="e#37416#37417#0" expanded="true" />
+            <element signature="e#37449#37450#0" expanded="true" />
+            <element signature="e#41805#41806#0" expanded="true" />
+            <element signature="e#41849#41850#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -2564,6 +3240,24 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
           <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="329">
+          <caret line="84" column="4" lean-forward="false" selection-start-line="84" selection-start-column="4" selection-end-line="84" selection-end-column="4" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/NotificationPublisher.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="53" column="14" lean-forward="false" selection-start-line="53" selection-start-column="14" selection-end-line="53" selection-end-column="14" />
           <folding />
         </state>
       </provider>
