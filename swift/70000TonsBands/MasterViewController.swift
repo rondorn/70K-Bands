@@ -502,8 +502,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
         
-        var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise"
-        var favoriteBands = "\n"
+        var intro:String = ""
+        var favoriteBands:String = ""
         
         if (attendingCount > 0){
             intro = "These are the events I attended on the 70,000 Tons Of Metal Cruise"
@@ -513,6 +513,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             favoriteBands += reportHandler.buildMessage()
             
         } else {
+            
+            intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
+            
             bands = getBandNames()
             for band in bands {
                 if (getPriorityData(band) == 1){

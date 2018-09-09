@@ -630,13 +630,22 @@ public class showBands extends Activity {
 
     private String buildShareMessage(){
 
-        String message = "These are the bands I MUST see on the 70,000 Tons Cruise\n\n";
+        String message = mustSeeIcon + " These are the bands I MUST see on the 70,000 Tons Cruise\n\n";
 
         for (String band: bandNames){
             String bandRank = rankStore.getRankForBand(band);
             Log.d("BandRank", bandRank);
             if (bandRank.equals(mustSeeIcon)) {
-                message += mustSeeIcon + "\t" + band + "\n";
+                message += "\t\t" + band + "\n";
+            }
+        }
+        message += "\n" + mightSeeIcon + " These are the bands I might see\n\n";
+
+        for (String band: bandNames){
+            String bandRank = rankStore.getRankForBand(band);
+            Log.d("BandRank", bandRank);
+            if (bandRank.equals(mightSeeIcon)) {
+                message += "\t\t" + band + "\n";
             }
         }
 
