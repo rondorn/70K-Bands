@@ -290,6 +290,7 @@
 				11BE68F01A5992A600602EC7 /* externalUrls.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
+				110C7DE920DC600000525283 /* iCloudFileHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
 				1154F6191A575893003F4764 /* LaunchScreen.xib */,
@@ -298,18 +299,17 @@
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
+				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
 				11942FD31D0CE33D0078A422 /* SortMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
+				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
 				11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
-				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
-				110C7DE920DC600000525283 /* iCloudFileHandler.swift */,
-				1169374420F555CD00038DA5 /* Reachability.swift */,
 			);
 			path = 70000TonsBands;
 			sourceTree = "<group>";
