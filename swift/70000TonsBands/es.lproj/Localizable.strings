@@ -24,6 +24,7 @@
 "Alert For Meeting and Greet Events"="Alerta para 'Meet and Greet's ";
 "Alert For Clinics"="Alerta para Clinics";
 "Alert For Album Listening Events"="Alerta para escuchas de álbums";
+"Alert For Unofficial Events"="Alerta para eventos no oficiales";
 
 "Only alert for shows you will attend"="Solo alerta para espectáculos a los que asistirá";
 "Alert for shows according to your favorites selection"="Alerta para mostrar de acuerdo a su selección de favoritos, y las configuraciones indicadas en esta pantalla";
@@ -42,7 +43,7 @@
 "Meet and Greet"="Meet and Greets";
 "Clinic"="Clinicas";
 "Listening Party"="Escuchas De álbums";
-
+"Unofficial Events"="Evento no oficiales";
 
 "Use Last Years Data"="Utilizar datos del año pasado";
 

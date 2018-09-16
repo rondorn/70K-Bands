@@ -48,6 +48,7 @@ class localNoticationHandler {
         let alertForMandG = defaults.bool(forKey: "alertForMandG")
         let alertForClinics = defaults.bool(forKey: "alertForClinics")
         let alertForListening = defaults.bool(forKey: "alertForListening")
+        let alertForUnoffical = defaults.bool(forKey: "alertForUnofficalEvents")
         
         print ("Checking for alert for bands " + bandName + " ... ", terminator: "")
         
@@ -72,6 +73,11 @@ class localNoticationHandler {
             }
             if (eventType == clinicType && alertForClinics == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+            }
+            print ("For \(eventType) = \(unofficalEventType) alertUnoffice is set to \(alertForUnoffical)")
+            if (eventType == unofficalEventType && alertForUnoffical == true){
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
         }
         
@@ -112,6 +118,9 @@ class localNoticationHandler {
             
         case listeningPartyType:
             listeningPartyMessage (name, indexValue: indexValue)
+        
+        case unofficalEventType:
+            unofficalEventMessage(name, indexValue: indexValue)
             
         default:
             print("Unknown type")
@@ -132,7 +141,15 @@ class localNoticationHandler {
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
         let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
         
-        alertTextMessage = "Special event '" + name + "' taking place at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
+        alertTextMessage = "Special event '" + name + "' is taking place at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
+    }
+
+    func unofficalEventMessage(_ name:String, indexValue: Date){
+        
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        
+        alertTextMessage = "Unoffical event '" + name + "' is taking place at " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
     func meetingAndGreetMessage(_ name:String, indexValue: Date){

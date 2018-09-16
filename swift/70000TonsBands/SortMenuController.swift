@@ -24,7 +24,7 @@ class SortMenuController: UIViewController  {
     @IBOutlet weak var listeningEventLabel: UILabel!
     @IBOutlet weak var clinicLabel: UILabel!
     @IBOutlet weak var meetAndGreetLable: UILabel!
-    
+    @IBOutlet weak var unofficalEventsLabel: UILabel!
     
     @IBOutlet weak var poolToggle: UISwitch!
     @IBOutlet weak var theaterToggle: UISwitch!
@@ -36,6 +36,8 @@ class SortMenuController: UIViewController  {
     @IBOutlet weak var clinicToggle: UISwitch!
     @IBOutlet weak var listeningEventToggle: UISwitch!
     
+    @IBOutlet weak var unofficialEventsToggle: UISwitch!
+    
     var showSpecialValue = Bool()
     var showMandGValue = Bool()
     var showClinicsValue = Bool()
@@ -46,6 +48,7 @@ class SortMenuController: UIViewController  {
     var showRinkShows = Bool()
     var showLoungeShows = Bool()
     var showOtherShows = Bool()
+    var showUnofficalEvents = Bool()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +68,7 @@ class SortMenuController: UIViewController  {
         meetAndGreetLable.text = NSLocalizedString(meetAndGreetype, comment: "") + " " + mAndmEventTypeIcon
         clinicLabel.text = NSLocalizedString(clinicType, comment: "") + " " + clinicEventTypeIcon
         listeningEventLabel.text = NSLocalizedString(listeningPartyType, comment: "") + " " + listeningEventTypeIcon
-        
+        unofficalEventsLabel.text =  NSLocalizedString(unofficalEventType, comment: "") + " " + unofficalEventTypeIcon
     }
     
     
@@ -81,6 +84,7 @@ class SortMenuController: UIViewController  {
         showRinkShows = defaults.bool(forKey: "showRinkShows")
         showLoungeShows = defaults.bool(forKey: "showLoungeShows")
         showOtherShows = defaults.bool(forKey: "showOtherShows")
+        showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
         
         specialEventToggle.isOn = showSpecialValue;
         meetAndGreetToggle.isOn = showMandGValue;
@@ -92,6 +96,7 @@ class SortMenuController: UIViewController  {
         rinkToggle.isOn = showRinkShows;
         loungeToggle.isOn = showLoungeShows;
         otherToggle.isOn = showOtherShows;
+        unofficialEventsToggle.isOn = showUnofficalEvents
     }
     
  
@@ -129,6 +134,10 @@ class SortMenuController: UIViewController  {
     
     @IBAction func ListeningEventSwitchAction(_ sender: UISwitch) {
         defaults.set(listeningEventToggle.isOn, forKey: "showListening")
+    }
+    
+    @IBAction func unofficalEventsSwitchAction(_ sender: Any) {
+        defaults.set(unofficialEventsToggle.isOn, forKey: "showUnofficalEvents")
     }
     
     override func viewDidDisappear(_ animated: Bool) {

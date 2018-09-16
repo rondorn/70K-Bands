@@ -75,10 +75,21 @@ open class scheduleHandler {
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
                     
                     print ("adding notesField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: lineData[notesField]!)
+                    if let noteValue = lineData[notesField] {
+                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: noteValue)
+                    }
                     
-                    print ("adding notesField");
+                    print ("adding locationField");
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
+                    
+                    print ("adding descriptionUrlField \(lineData)")
+
+                    if let descriptUrl = lineData[descriptionUrlField] {
+                        print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
+                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
+                    } else {
+                        print ("field descriptionUrlField not present for " + lineData[bandField]!);
+                    }
                     
                 } else {
                     print ("Unable to parse schedule file")
@@ -215,7 +226,7 @@ open class scheduleHandler {
                 }
             }
         }
-        print ("schedule value lookup. Returning nothing")
+        print ("schedule value lookup. Returning nothing for " + variable + " - " + bandName)
         return String()
     }
 

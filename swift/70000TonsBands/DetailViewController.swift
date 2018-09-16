@@ -86,13 +86,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(getPriorityData(bandName))
             
-            print ("showBandDetails");
-            showBandDetails()
-            
             print ("showFullSchedule");
             showFullSchedule()
             setButtonNames()
             rotationChecking()
+            
+            print ("showBandDetails");
+            showBandDetails()
             
             print ("Checking button status:" + bandName)
             disableButtonsIfNeeded()
@@ -207,7 +207,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
 
     func loadComments(){
-        
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
         customNotesText.textColor = UIColor.black
         setNotesHeight()
@@ -394,6 +393,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 let date = schedule.getData(bandName, index:index, variable: dateField)
                 let type = schedule.getData(bandName, index:index, variable: typeField)
                 let notes = schedule.getData(bandName, index:index, variable: notesField)
+                let scheduleDescriptionUrl = schedule.getData(bandName, index:index, variable: descriptionUrlField)
+                
+                if (scheduleDescriptionUrl.isEmpty == false){
+                    print ("Loading customNotesTest from URL")
+                    customNotesText.text = bandNotes.getDescriptionFromUrl(bandName: bandName, descriptionUrl: scheduleDescriptionUrl)
+                }
                 
                 let rawStartTime = startTime
                 

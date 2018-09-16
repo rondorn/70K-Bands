@@ -27,6 +27,7 @@ let specialEventTypeIcon = "🌟";
 let mAndmEventTypeIcon = "📸";
 let listeningEventTypeIcon = "💽";
 let clinicEventTypeIcon = "🎸";
+let unofficalEventTypeIcon = "😜";
 
 //shows attended
 let sawAllIcon = "🤘"
@@ -51,6 +52,9 @@ func getEventTypeIcon (_ eventType: String) -> String {
 
     case listeningPartyType:
         return listeningEventTypeIcon
+    
+    case unofficalEventType:
+        return unofficalEventTypeIcon
         
     default:
         return unknownVenue

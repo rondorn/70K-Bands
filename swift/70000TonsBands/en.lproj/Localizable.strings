@@ -37,13 +37,14 @@
 "Alert For Meeting and Greet Events"="Alert For Meeting and Greet Events";
 "Alert For Clinics"="Alert For Clinics";
 "Alert For Album Listening Events"="Alert For Album Listening Events";
+"Alert For Unofficial Events"="Alert For Unofficial Events";
 "Use Last Years Data"="Use Last Years Data";
 
 "Special Event"="Special Event";
 "Meet and Greet"="Meet and Greet";
 "Clinic"="Clinic";
 "Listening Party"="Listening Party";
-
+"Unofficial Events"="Unofficial Events";
 
 "LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 

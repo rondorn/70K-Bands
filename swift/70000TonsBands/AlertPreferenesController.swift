@@ -56,6 +56,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var alertForClinicsValue = Bool()
     var alertForListeningValue = Bool()
     
+    var alertForUnofficalEventsValue = Bool()
+
     var minBeforeAlertValue = Double()
     
     var minBeforeAlertLabel = String()
@@ -77,6 +79,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var MinBeforeAlert: UITextField!
     @IBOutlet weak var UseLastYearsData: UISwitch!
     
+    @IBOutlet weak var alertForUnofficalEvents: UISwitch!
 
     //labels
     @IBOutlet weak var mustSeeAlertLable: UILabel!
@@ -89,6 +92,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var alertForClinicsLable: UILabel!
     @IBOutlet weak var useLastYearsLable: UILabel!
     @IBOutlet weak var alertForListeningLable: UILabel!
+ 
+    
+    @IBOutlet weak var alertForUnofficalEventsLable: UILabel!
+
     @IBOutlet weak var lastYearsDetailsLable: UITextView!
     
     @IBOutlet var scrollView: UIScrollView!
@@ -137,6 +144,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForMandGLable.text = NSLocalizedString("Alert For Meeting and Greet Events", comment: "")
         alertForClinicsLable.text = NSLocalizedString("Alert For Clinics", comment: "")
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
+        alertForUnofficalEventsLable.text = NSLocalizedString("Alert For Unofficial Events", comment: "")
         
         useLastYearsLable.text = NSLocalizedString("Use Last Years Data", comment: "")
         lastYearsDetailsLable.text = NSLocalizedString("LastYearsFeatureExplication", comment: "")
@@ -160,6 +168,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForClinicsValue = defaults.bool(forKey: "alertForClinics")
         alertForListeningValue = defaults.bool(forKey: "alertForListening")
         
+        alertForUnofficalEventsValue = defaults.bool(forKey: "alertForUnofficalEvents")
+
         minBeforeAlertValue = Double(defaults.integer(forKey: "minBeforeAlert"))
         
         AlertOnMustSee.isOn = mustSeeAlertValue
@@ -172,7 +182,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         AlertForMeetAndGreets.isOn = alertForMandGValue
         AlertForClinic.isOn = alertForClinicsValue
         AlertForListeningEvent.isOn = alertForListeningValue
-        
+        alertForUnofficalEvents.isOn = alertForUnofficalEventsValue
+
         self.MinBeforeAlert.delegate = self
         
         if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
@@ -197,6 +208,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             AlertForMeetAndGreets.isEnabled = false;
             AlertForClinic.isEnabled = false;
             AlertForListeningEvent.isEnabled = false;
+            alertForUnofficalEvents.isEnabled = false;
             
             mustSeeAlertLable.isEnabled = false
             mightSeeAlertLable.isEnabled = false
@@ -205,6 +217,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             alertForMandGLable.isEnabled = false
             alertForClinicsLable.isEnabled = false
             alertForListeningLable.isEnabled = false
+            alertForUnofficalEventsLable.isEnabled = false
             
         } else {
             AlertOnMustSee.isEnabled = true;
@@ -214,6 +227,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             AlertForMeetAndGreets.isEnabled = true;
             AlertForClinic.isEnabled = true;
             AlertForListeningEvent.isEnabled = true;
+            alertForUnofficalEvents.isEnabled = true;
             
             mustSeeAlertLable.isEnabled = true
             mightSeeAlertLable.isEnabled = true
@@ -222,6 +236,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             alertForMandGLable.isEnabled = true
             alertForClinicsLable.isEnabled = true
             alertForListeningLable.isEnabled = true
+            alertForUnofficalEventsLable.isEnabled = true
         }
     }
     
@@ -294,6 +309,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func backgroundTap (_ sender: UIControl){
         MinBeforeAlert.resignFirstResponder()
+    }
+    
+    @IBAction func alertForUnofficalEventChange(_ sender: Any) {
+        defaults.set(alertForUnofficalEvents.isOn, forKey: "alertForUnofficalEvents")
     }
     
     @IBAction func UseLastYearsDataAction() {

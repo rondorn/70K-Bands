@@ -53,6 +53,41 @@ open class CustomBandDescription {
         }
     }
     
+    func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
+        
+        var commentText = "Comment text is not available yet."
+        
+        let commentFileName = bandName + "_comment.txt";
+        let commentFile = directoryPath.appendingPathComponent( commentFileName)
+        
+        if (FileManager.default.fileExists(atPath: commentFile.path) == false){
+
+                //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                let httpData = getUrlData(descriptionUrl);
+                
+                //do not write if we are getting 404 error
+                if (httpData.starts(with: "<!DOCTYPE") == false){
+                    commentText = httpData;
+                    print ("commentFile text is '" + commentText + "'")
+                    
+                    print ("Wrote commentFile for \(bandName) " + commentText)
+                    do {
+                        try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                    } catch {
+                        print("commentFile " + error.localizedDescription)
+                    }
+                }
+            }
+
+        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
+            if (data.characters.count > 2){
+                commentText = data
+            }
+        }
+    
+    commentText = removeSpecialCharsFromString(text: commentText)
+    return commentText;
+}
     
     func getDescription(bandName: String) -> String {
         
