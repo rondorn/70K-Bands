@@ -90,6 +90,7 @@ import Foundation
         var presentCheck = [String]();
         listOfVenues = ["All"]
         attendingCount = 0
+        unofficalEventCount = 0
         if (typeField.isEmpty == true){
             return allBands;
         }
@@ -137,6 +138,7 @@ import Foundation
             eventCount = newAllBands.count;
         } else {
             
+            print ("returning Bands!!!");
             //return immediatly. Dont need to do schedule sorting magic
             newAllBands = allBands;
             newAllBands.sort();
@@ -184,9 +186,13 @@ import Foundation
                 include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex);
             
             } else {
-                if (eventTypeFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!) == true){
+                let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
+                if (eventTypeFiltering(eventType) == true){
                     if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
                         if (rankFiltering(bandName) == true){
+                            if (eventType == unofficalEventType){
+                                unofficalEventCount = unofficalEventCount + 1
+                            }
                             include = true
                         }
                     }
@@ -354,6 +360,7 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
         let showMandGValue = defaults.bool(forKey: "showMandG")
         let showClinicsValue = defaults.bool(forKey: "showClinics")
         let showListeningValue = defaults.bool(forKey: "showListening")
+        let showUnofficalValue = defaults.bool(forKey: "showUnofficalEvents")
         
         if (eventType == specialEventType && showSpecialValue == true){
             showEvent = true;
@@ -363,12 +370,16 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
         
         } else if (eventType == clinicType && showClinicsValue == true){
             showEvent = true;
-        
+ 
         } else if (eventType == listeningPartyType && showListeningValue == true){
+            showEvent = true;
+            
+        } else if (eventType == unofficalEventType && showUnofficalValue == true){
             showEvent = true;
         
         } else if (eventType == showType){
            showEvent = true; 
+    
         }
         
         return showEvent

@@ -39,12 +39,13 @@
 "Alert For Meeting and Greet Events"="Alarm für 'Meet and Greet'";
 "Alert For Clinics"="Alarm für Kliniken";
 "Alert For Album Listening Events"="Alarm für 'Album Listening Events'";
+"Alert For Unofficial Events"="Warnung für inoffizielle Ereignisse";
 
 "Special Event"="Special Events";
 "Meet and Greet"="Meet and Greet Events";
 "Clinic"="Kliniken";
 "Listening Party"="Album Listening Events";
-
+"Unofficial Events"="Inoffizielle Ereignisse";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 

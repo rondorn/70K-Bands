@@ -17,7 +17,7 @@ var alertTracker = [String]()
 var showsAttendedFileName = "showsAttended.data";
 
 //icloud data types
-var PRIORITY = "priority";
+var PRIORITY = "priority";  
 var ATTENDED = "attended";
 var NOTE = "note";
 
@@ -47,6 +47,7 @@ var startTimeField = "Start Time"
 var endTimeField = "End Time"
 var notesField = "Notes"
 var urlField = "URL"
+var descriptionUrlField = "Description URL"
 
 //link containers
 var wikipediaLink = [String: String]()
@@ -59,12 +60,16 @@ var bandNoteWorthy = [String: String]()
 //var band list placeHolder
 var bandListIndexCache = 0
 
+//number of unoffical events
+var unofficalEventCount = 0
+
 //valid event types
 var showType = "Show"
 var meetAndGreetype = "Meet and Greet"
 var clinicType = "Clinic"
 var listeningPartyType = "Listening Party"
 var specialEventType = "Special Event"
+var unofficalEventType = "Unofficial Events"
 
 var poolVenueText = "Pool"
 var rinkVenueText = "Rink"
@@ -84,6 +89,11 @@ let sawNoneColor = UIColor.black
 let sawAllStatus = "sawAll";
 let sawSomeStatus = "sawSome";
 let sawNoneStatus = "sawNone";
+
+//alert topics
+let subscriptionTopic = "/topics/global"
+let subscriptionTopicTest = "/topics/Testing09162019"
+let subscriptionUnofficalTopic = "/topics/unofficalEvents"
 
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
@@ -114,6 +124,7 @@ let onlyAlertForAttendedDefault = "NO"
 let minBeforeAlertDefault = "10"
 let alertForShowsDefault = "YES"
 let alertForSpecialDefault = "YES"
+let alertForUnofficalDefault = "YES"
 let alertForMandGDefault = "NO"
 let alertForClinicsDefault = "NO"
 let alertForListeningDefault = "NO"
@@ -129,6 +140,7 @@ let showTheaterShowsDefault = "YES"
 let showRinkShowsDefault = "YES"
 let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
+let showUnofficalEventsDefault = "YES"
 
 var internetAvailble = isInternetAvailable();
 

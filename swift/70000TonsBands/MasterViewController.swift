@@ -480,9 +480,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var lableCounterString = String();
         var labeleCounter = Int()
-        
+
+        print ("eventCount = \(eventCount) and unofficalEventCount = \(unofficalEventCount)")
         if eventCount == 0 {
             labeleCounter = bandsByName.count
+            lableCounterString = " bands";
+        
+        } else if eventCount == unofficalEventCount {
+            labeleCounter = bandsByName.count - unofficalEventCount
             lableCounterString = " bands";
             
         } else {
@@ -611,7 +616,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             let placementOfCell = currentCel?.frame
             
-            if (cellText?.contains("Day") == true){
+            if (cellText?.contains("Day") == true || cellText?.contains(unofficalEventTypeIcon) == true){
                 let cellData = getScheduleIndexByCall();
                 
                 let cellBandName = cellData[cellText!]!["bandName"]

@@ -24,8 +24,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     var notificationDisplayed = false;
     let registrationKey = "onRegistrationCompleted"
     let messageKey = "onMessageReceived"
-    let subscriptionTopic = "/topics/global"
-    let subscriptionTopicTest = "/topics/Testing2019"
     
     let gcmMessageIDKey = "gcm.message_id"
     
@@ -63,7 +61,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             "showMandG": showMandGDefault, "showClinics": showClinicsDefault,
             "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
             "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
-            "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault]
+            "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
+            "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault ]
         
         
         UserDefaults.standard.register(defaults: defaults)
@@ -185,9 +184,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             } else {
                 print("Connected to FCM.")
                 print("Token Connected to FCM.")
-                Messaging.messaging().subscribe(toTopic: self.subscriptionTopic)
-                Messaging.messaging().subscribe(toTopic: self.subscriptionTopicTest)
+                Messaging.messaging().subscribe(toTopic: subscriptionTopic)
+                Messaging.messaging().subscribe(toTopic: subscriptionTopicTest)
                 
+                if (defaults.bool(forKey: "alertForUnofficalEvents") == true){
+                    Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
+                } else {
+                    Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
+                }
             }
         }
         
