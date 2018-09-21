@@ -18,6 +18,7 @@
     <string name="MinutesBeforeEventtoAlert">Minutes Before Event to Alert</string>
     <string name="AlertForShows">Alert For Shows</string>
     <string name="AlertForSpecialEvents">Alert For Special Events</string>
+    <string name="AlertForUnoffical">Alert For Unoffical Events</string>
     <string name="AlertForMeetingandGreetEvents">Alert For Meeting and Greet Events</string>
     <string name="AlertForClinics">Alert For Clinics</string>
     <string name="AlertForAlbumListeningEvents">Alert For Album Listening Events</string>
@@ -31,6 +32,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Clinics</string>
     <string name="AlbumListeningEvents">Listening Party</string>
+    <string name="unofficalEventLable">Unoffical Events</string>
 
     <string name="UseLastYearsData">Use Last Years Data</string>
     <string name="LastYearsFeatureExplication">Activating \'Use Last Years Data\' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>

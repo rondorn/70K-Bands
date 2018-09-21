@@ -33,6 +33,8 @@ public class mainListHandler {
     public ListAdapter arrayAdapter;
     public showBands showBands;
     public Integer numberOfEvents = 0;
+    public Integer numberOfUnofficalEvents = 0;
+    private Integer altNumberOfBands = 0;
     private Integer numberOfBands = 0;
 
     public Integer allUpcomingEvents = 0;
@@ -62,6 +64,10 @@ public class mainListHandler {
                                 sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
                                 bandPresent.add(bandName);
                                 numberOfEvents++;
+                                Log.d("countInfo", "eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
+                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent)){
+                                    numberOfUnofficalEvents = numberOfUnofficalEvents + 1;
+                                }
                             }
                         }
                     } else {
@@ -71,6 +77,10 @@ public class mainListHandler {
                                 sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
                                 bandPresent.add(bandName);
                                 numberOfEvents++;
+                                Log.d("countInfo", "eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
+                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent)){
+                                    numberOfUnofficalEvents = numberOfUnofficalEvents + 1;
+                                }
                             }
                         }
                     }
@@ -84,6 +94,7 @@ public class mainListHandler {
                         if (numberOfEvents == 0) {
                             numberOfBands++;
                         }
+                        altNumberOfBands++;
                     }
                 }
             }
@@ -197,20 +208,24 @@ public class mainListHandler {
         Boolean showEvent = false;
         Log.d("EventFilter", "EventType is " + eventType);
 
-        if (eventType.equals("Special Event") && staticVariables.preferences.getShowSpecialEvents() == true){
+        if (eventType.equals(staticVariables.specialEvent) && staticVariables.preferences.getShowSpecialEvents() == true){
             Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Meet and Greet") && staticVariables.preferences.getShowMeetAndGreet() == true){
+        } else if (eventType.equals(staticVariables.meetAndGreet) && staticVariables.preferences.getShowMeetAndGreet() == true){
             Log.d("EventFilter", "preferences.getHideMeetAndGreet() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Clinic") && staticVariables.preferences.getShowClinicEvents() == true){
+        } else if (eventType.equals(staticVariables.clinic) && staticVariables.preferences.getShowClinicEvents() == true){
             Log.d("EventFilter", "preferences.getHideClinicEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Listening Party") && staticVariables.preferences.getShowAlbumListen() == true){
+        } else if (eventType.equals(staticVariables.listeningEvent) && staticVariables.preferences.getShowAlbumListen() == true){
             Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
+            showEvent = true;
+
+        } else if (eventType.equals(staticVariables.unofficalEvent) && staticVariables.preferences.getShowUnofficalEvents() == true){
+            Log.d("EventFilter", "preferences.getShowUnofficalEvents() is true");
             showEvent = true;
 
         } else if (eventType.equals("Show")) {
@@ -294,6 +309,9 @@ public class mainListHandler {
 
         if (numberOfBands != 0) {
             displayText = "70,0000 Tons " + numberOfBands + " bands";
+
+        } else if (numberOfUnofficalEvents == numberOfEvents){
+            displayText = "70,0000 Tons " + altNumberOfBands + " bands";
 
         } else if (numberOfEvents != 0) {
             displayText = "70,0000 Tons " + numberOfEvents + " events";

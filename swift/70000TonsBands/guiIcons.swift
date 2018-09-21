@@ -27,7 +27,7 @@ let specialEventTypeIcon = "🌟";
 let mAndmEventTypeIcon = "📸";
 let listeningEventTypeIcon = "💽";
 let clinicEventTypeIcon = "🎸";
-let unofficalEventTypeIcon = "😜";
+let unofficalEventTypeIcon = "👹";
 
 //shows attended
 let sawAllIcon = "🤘"

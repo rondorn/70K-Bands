@@ -35,6 +35,7 @@ public class preferenceLayout  extends Activity {
     private CheckBox alertForClinics;
     private CheckBox alertForMeetAndGreet;
     private CheckBox alertForAlbum;
+    private CheckBox alertUnofficalEvents;
     private CheckBox lastYearsData;
     private CheckBox onlyForShowWillAttend;
 
@@ -139,7 +140,7 @@ public class preferenceLayout  extends Activity {
             alertForMeetAndGreet.setEnabled(false);
             alertForClinics.setEnabled(false);
             alertForAlbum.setEnabled(false);
-
+            alertUnofficalEvents.setEnabled(false);
 
         } else {
             mustSee.setEnabled(true);
@@ -149,6 +150,7 @@ public class preferenceLayout  extends Activity {
             alertForMeetAndGreet.setEnabled(true);
             alertForClinics.setEnabled(true);
             alertForAlbum.setEnabled(true);
+            alertUnofficalEvents.setEnabled(true);
 
         }
 
@@ -239,6 +241,16 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setAlertForListeningParties(alertForAlbum.isChecked());
+            }
+        });
+
+        alertUnofficalEvents = (CheckBox)findViewById(R.id.alertForUnofficalEvents);
+        alertUnofficalEvents.setChecked(staticVariables.preferences.getAlertForUnofficalEvents());
+        alertUnofficalEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setAlertForUnofficalEvents(alertUnofficalEvents.isChecked());
             }
         });
 

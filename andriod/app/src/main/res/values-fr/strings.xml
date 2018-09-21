@@ -18,6 +18,7 @@
     <string name="MinutesBeforeEventtoAlert">Alertez-moi avant l\'événement (minutes)</string>
     <string name="AlertForShows">Alerte pour les spectacles</string>
     <string name="AlertForSpecialEvents">Alerte pour des événements spéciaux</string>
+    <string name="AlertForUnoffical">Alerte pour les événements non officiels</string>
     <string name="AlertForMeetingandGreetEvents">Alerte pour Meeting and Greet Evénements</string>
     <string name="AlertForClinics">Alerte pour les cliniques</string>
     <string name="AlertForAlbumListeningEvents">Alerte pour l\'album Listening Evénements</string>
@@ -31,6 +32,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Cliniques</string>
     <string name="AlbumListeningEvents">l\'album Listening Evénements</string>
+    <string name="unofficalEventLable">Événements non officiels</string>
 
     <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
     <string name="LastYearsFeatureExplication">Activation \'utilisation dernières années information\' va charger le calendrier de spectacle à partir de l\'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.</string>

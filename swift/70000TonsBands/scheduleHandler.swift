@@ -91,6 +91,9 @@ open class scheduleHandler {
                         print ("field descriptionUrlField not present for " + lineData[bandField]!);
                     }
                     
+                    if let imageUrl = lineData[imageUrlField] {
+                        imageUrls[lineData[bandField]!] = imageUrl
+                    }
                 } else {
                     print ("Unable to parse schedule file")
                 }

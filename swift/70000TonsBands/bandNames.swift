@@ -168,6 +168,10 @@ func getBandImageUrl(_ band: String) -> String {
     
     if (bandImageUrl[band]?.isEmpty == false){
         return bandImageUrl[band]!
+    
+    } else if (imageUrls[band] != nil) {
+        return imageUrls[band]!
+        
     } else {
         return ""
     }

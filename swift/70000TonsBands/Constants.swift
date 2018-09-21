@@ -48,6 +48,7 @@ var endTimeField = "End Time"
 var notesField = "Notes"
 var urlField = "URL"
 var descriptionUrlField = "Description URL"
+var imageUrlField = "ImageURL"
 
 //link containers
 var wikipediaLink = [String: String]()
@@ -69,7 +70,7 @@ var meetAndGreetype = "Meet and Greet"
 var clinicType = "Clinic"
 var listeningPartyType = "Listening Party"
 var specialEventType = "Special Event"
-var unofficalEventType = "Unofficial Events"
+var unofficalEventType = "Unofficial Event"
 
 var poolVenueText = "Pool"
 var rinkVenueText = "Rink"
@@ -108,7 +109,7 @@ let scheduleUrlDefault = "Default"
 let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
 
-let defaultStorageUrl = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1"
 //let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1"
 
 let artistUrlpointer = "artistUrl"
@@ -149,6 +150,7 @@ var schedule = scheduleHandler()
 var bandNotes = CustomBandDescription();
 
 var bandDescriptionUrl = [String:String]()
+var imageUrls = [String:String]()
 
 let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false

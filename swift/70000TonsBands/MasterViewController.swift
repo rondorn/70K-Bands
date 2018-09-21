@@ -508,14 +508,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
         
         var intro:String = ""
-        var favoriteBands:String = ""
         
-        if (attendingCount > 0){
+        if (attendingCount > 0 && eventCount != unofficalEventCount){
             intro = "These are the events I attended on the 70,000 Tons Of Metal Cruise"
             let reportHandler = showAttendenceReport()
             reportHandler.assembleReport()
             
-            favoriteBands += reportHandler.buildMessage()
+            intro += reportHandler.buildMessage()
             
         } else {
             
@@ -525,21 +524,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             for band in bands {
                 if (getPriorityData(band) == 1){
                     print ("Adding band " + band)
-                    favoriteBands += "\t\t" +  band + "\n"
+                    intro += "\t\t" +  band + "\n"
                 }
             }
-            favoriteBands += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
+            intro += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
             for band in bands {
                 if (getPriorityData(band) == 2){
                     print ("Adding band " + band)
-                    favoriteBands += "\t\t" +  band + "\n"
+                    intro += "\t\t" +  band + "\n"
                 }
             }
         }
         
-        let outtro =  "\nhttp://www.facebook.com/70kBands"
+        intro +=  "\nhttp://www.facebook.com/70kBands"
         
-        let objectsToShare = [intro, favoriteBands, outtro]
+        let objectsToShare = [intro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
         
         activityVC.modalPresentationStyle = .popover

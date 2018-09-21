@@ -170,6 +170,27 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/AlertForUnoffical"
+                    android:layout_column="9"
+                    android:layout_marginLeft="10dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/alertForUnofficalEvents"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="10dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForMeetingandGreetEvents"
                     android:layout_column="9"
                     android:layout_marginLeft="1dp" />
@@ -272,7 +293,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="450dp">
+        android:layout_marginTop="480dp">
 
         <TextView
             android:layout_width="fill_parent"
@@ -292,7 +313,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="490dp">
+        android:layout_marginTop="510dp">
 
     <TableLayout
         android:layout_width="match_parent"

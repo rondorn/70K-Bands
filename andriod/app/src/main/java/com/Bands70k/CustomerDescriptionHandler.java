@@ -103,22 +103,27 @@ public class CustomerDescriptionHandler {
 
 
         String bandName = bandNameValue;
-        String bandNote = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
-
+        String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+        String bandNote = bandNoteDefault;
         Log.d("descriptionMapFile", "Looking up note for  " + bandName);
 
         if (descriptionMapData.keySet().size() == 0) {
             descriptionMapData = this.getDescriptionMap();
         }
 
-
-        if (descriptionMapData.containsKey(bandName) == false){
-            Log.d("descriptionMapFile",  bandName + " does not have data in the descriptionMapData");
-            return bandNote;
-        }
-
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
+        if (descriptionMapData.containsKey(bandName) == false){
+            Log.d("descriptionMapFileError",  bandName + " does not have data in the descriptionMapData");
+            if (staticVariables.showNotesMap.containsKey(bandName) == true) {
+                Log.d("descriptionMapFileError",  bandName + " loading from static " + staticVariables.showNotesMap.get(bandName));
+                loadNoteFromURL(bandName);
+                bandNote = bandNoteHandler.getBandNoteFromFile();
+            }
+
+            Log.d("descriptionMapFileError",  "bandNote = " + bandNote);
+            return bandNote;
+        }
 
         if (bandNoteHandler.fileExists() == false) {
 
@@ -156,13 +161,22 @@ public class CustomerDescriptionHandler {
                 descriptionMapData = this.getDescriptionMap();
             }
 
+
             URL url;
             try {
-                Log.d("descriptionMapFile", "Looking up NoteData at URL " + descriptionMapData.get(bandName));
-                url = new URL(descriptionMapData.get(bandName));
+                if (staticVariables.showNotesMap.containsKey(bandName)){
+                    url = new URL(staticVariables.showNotesMap.get(bandName));
+                    Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                } else if (descriptionMapData.containsKey(bandName) == true) {
+                    url = new URL(descriptionMapData.get(bandName));
+                    Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                } else {
+                    Log.d("descriptionMapFile!", "no description for bandName " + bandName );
+                    return;
+                }
 
             } catch (Exception error){
-                Log.d("descriptionMapFile", "could not load! " + descriptionMapData.get(bandName));
+                Log.d("descriptionMapFile!", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
                 return;
             }
 

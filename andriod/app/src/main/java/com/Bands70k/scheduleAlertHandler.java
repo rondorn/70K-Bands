@@ -302,6 +302,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         } else if (scheduleDetails.getShowType().equals(staticVariables.listeningEvent) && staticVariables.preferences.getAlertForListeningParties() == false){
             return false;
 
+        } else if (scheduleDetails.getShowType().equals(staticVariables.unofficalEvent) && staticVariables.preferences.getAlertForUnofficalEvents() == false){
+            return false;
         }
 
         Log.d ("SendLocalAlertCheck", "alerting");
