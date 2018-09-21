@@ -21,6 +21,7 @@ public class preferencesHandler {
     private Boolean mightSeeAlert = true;
     private Boolean alertForShows = true;
     private Boolean alertForSpecialEvents = true;
+    private Boolean alertForUnofficalEvents = true;
     private Boolean alertForMeetAndGreet = false;
     private Boolean alertForClinics = false;
     private Boolean alertForListeningParties = false;
@@ -37,6 +38,7 @@ public class preferencesHandler {
     private Boolean showRinkShows = true;
     private Boolean showLoungeShows = true;
     private Boolean showOtherShows = true;
+    private Boolean showUnofficalEvents = true;
 
     private Boolean showMust = true;
     private Boolean showMight = true;
@@ -81,12 +83,20 @@ public class preferencesHandler {
                             setAlertForShows(Boolean.valueOf(RowData[1]));
                             break;
 
+                        case "alertForUnofficalEvents":
+                            setAlertForUnofficalEvents(Boolean.valueOf(RowData[1]));
+                            break;
+
                         case "showSpecialEvents":
                             setShowSpecialEvents(Boolean.valueOf(RowData[1]));
                             break;
 
                         case "showMeetAndGreet":
                             setShowMeetAndGreet(Boolean.valueOf(RowData[1]));
+                            break;
+
+                        case "showUnofficalEvents":
+                            setShowUnofficalEvents(Boolean.valueOf(RowData[1]));
                             break;
 
                         case "showClinics":
@@ -185,11 +195,13 @@ public class preferencesHandler {
         dataString += "alertForMeetAndGreet," + alertForMeetAndGreet.toString() + "\n";
         dataString += "alertForClinics," + alertForClinics.toString() + "\n";
         dataString += "alertForListeningParties," + alertForListeningParties.toString() + "\n";
+        dataString += "alertForUnofficalEvents," + alertForUnofficalEvents.toString() + "\n";
 
         dataString += "showSpecialEvents," + showSpecialEvents.toString() + "\n";
         dataString += "showMeetAndGreet," + showMeetAndGreet.toString() + "\n";
         dataString += "showClinics," + showClinicEvents.toString() + "\n";
         dataString += "showListeningParties," + showAlbumListen.toString() + "\n";
+        dataString += "showUnofficalEvents," + showUnofficalEvents.toString() + "\n";
 
         dataString += "showPoolShows," + showPoolShows.toString() + "\n";
         dataString += "showTheaterShows," + showTheaterShows.toString() + "\n";
@@ -220,6 +232,21 @@ public class preferencesHandler {
         this.setshowWont(true);
         this.setshowUnknown(true);
         this.loadCounter = 0;
+    }
+
+    public Boolean getShowUnofficalEvents() {
+        return showUnofficalEvents;
+    }
+
+    public void setShowUnofficalEvents(Boolean showUnofficalEvents) {
+        this.showUnofficalEvents = showUnofficalEvents;
+    }
+
+    public Boolean getAlertForUnofficalEvents() {
+        return alertForUnofficalEvents;
+    }
+    public void setAlertForUnofficalEvents(Boolean alertUnofficalEvents) {
+        this.alertForUnofficalEvents = alertUnofficalEvents;
     }
 
     public Boolean getMustSeeAlert() {

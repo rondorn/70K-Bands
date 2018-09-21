@@ -26,6 +26,7 @@ public class filterMenu extends Activity {
     private CheckBox showMeetAndGreet;
     private CheckBox showClinicEvents;
     private CheckBox showAlbumListen;
+    private CheckBox showUnoffical;
 
     private CheckBox showPoolShows;
     private CheckBox showTheaterShows;
@@ -68,6 +69,9 @@ public class filterMenu extends Activity {
 
         TextView albumListeningEventLable = (TextView)findViewById(R.id.albumListeningEventLable);
         albumListeningEventLable.setText(getResources().getString(R.string.AlbumListeningEvents) + " " + staticVariables.listeningEventTypeIcon);
+
+        TextView unofficalEventLable = (TextView)findViewById(R.id.unofficalEventLable);
+        unofficalEventLable.setText(getResources().getString(R.string.unofficalEventLable) + " " + staticVariables.unofficalEventTypeIcon);
     }
 
     private void setValues(){
@@ -109,6 +113,16 @@ public class filterMenu extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setShowAlbumListen(showAlbumListen.isChecked());
+            }
+        });
+
+        showUnoffical = (CheckBox)findViewById(R.id.unofficalEvent);
+        showUnoffical.setChecked(staticVariables.preferences.getShowUnofficalEvents());
+        showUnoffical.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowUnofficalEvents(showUnoffical.isChecked());
             }
         });
 

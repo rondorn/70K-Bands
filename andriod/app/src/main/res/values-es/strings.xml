@@ -19,6 +19,7 @@
     <string name="MinutesBeforeEventtoAlert">Alerta antes del evento (minutos)</string>
     <string name="AlertForShows">Alerta Para Conciertos</string>
     <string name="AlertForSpecialEvents">Alerta Para Eventos Especiales</string>
+    <string name="AlertForUnoffical">Alerta para eventos no oficiales</string>
     <string name="AlertForMeetingandGreetEvents">Alerta para \'Meet and Greets\'</string>
     <string name="AlertForClinics">Alerta para Clinics</string>
     <string name="AlertForAlbumListeningEvents">Alerta para escuchas de álbums</string>
@@ -32,6 +33,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Clinicas</string>
     <string name="AlbumListeningEvents">Escuchas De álbums</string>
+    <string name="unofficalEventLable">Eventos no oficiales</string>
 
     <string name="UseLastYearsData">Utilizar datos del año pasado</string>
     <string name="LastYearsFeatureExplication">Al activar \'utilizar datos del año pasado\' se cargará el programa de conciertos del año pasado, pero utilizando una simulación de jueves a domingo basado en tu semana actual. La finalidad de esta característica es demostrar y testear las funcionalidades de programación de eventos.</string>

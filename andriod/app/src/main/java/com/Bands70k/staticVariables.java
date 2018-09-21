@@ -37,6 +37,7 @@ public class staticVariables {
     public final static String mAndmEventTypeIcon = "\uD83D\uDCF7";
     public final static String listeningEventTypeIcon =  "💽";
     public final static String clinicEventTypeIcon = "🎸";
+    public final static String unofficalEventTypeIcon = "\uD83D\uDC79";
 
     public final static String  poolVenueIcon = "🏊";
     public final static String  theaterVenueIcon = "🎭";
@@ -53,6 +54,9 @@ public class staticVariables {
     public static String sawSomeIcon = "\uD83D\uDEB6\u200D";
     public final static String sawNoneIcon = "";
     public static String attendedShowIcon = "\uD83C\uDFC3\u200D";
+
+    public static Map<String,String> showNotesMap = new HashMap<String, String>();
+    public static Map<String,String> imageUrlMap = new HashMap<String, String>();
 
     public final static String sawAllColor = "blue";
     public final static String sawSomeColor = "brown";
@@ -76,13 +80,28 @@ public class staticVariables {
     public final static String clinic = "Clinic";
     public final static String specialEvent = "Special Event";
     public final static String listeningEvent = "Listening Party";
+    public final static String unofficalEvent = "Unofficial Event";
+    public final static String imageUrl = "ImageURL";
+
+    //schedule file header rows
+    public final static String schedBandRow = "Band";
+    public final static String schedLocationRow = "Location";
+    public final static String schedDateRow = "Date";
+    public final static String schedDayRow = "Day";
+    public final static String schedStartTimeRow = "Start Time";
+    public final static String schedEndTimeRow = "End Time";
+    public final static String schedTypeRow = "Type";
+    public final static String schedDescriptionURLRow = "Description URL";
+    public final static String schedNotesRow = "Notes";
+    public final static String schedImageURLRow = "ImageURL";
+
 
     public final static String mustSeeKey = "mustSee";
     public final static String mightSeeKey = "mightSee";
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://www.dropbox.com/s/ezquwptowec4wy7/productionPointer2019.txt?dl=1";
+    public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1";
     //public final static String defaultUrls = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
@@ -206,6 +225,9 @@ public class staticVariables {
 
         } else if (eventType.equals(staticVariables.listeningEvent)) {
             icon = listeningEventTypeIcon;
+
+        } else if (eventType.equals(staticVariables.unofficalEvent)) {
+            icon = unofficalEventTypeIcon;
 
         } else {
             icon = unknownIcon;

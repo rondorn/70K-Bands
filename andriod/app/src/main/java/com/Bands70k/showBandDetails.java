@@ -63,6 +63,8 @@ public class showBandDetails extends Activity {
         } else if (bandName.isEmpty() == false) {
             bandHandler = new BandNotes(bandName);
             bandNote = bandHandler.getBandNote();
+
+            Log.d("descriptionMapFileError",  "1 bandNote = " + bandNote);
             initializeWebContent();
         } else {
             onBackPressed();
@@ -245,6 +247,7 @@ public class showBandDetails extends Activity {
 
         String scheduleText = "";
         String commentHeight;
+        String startHeight;
         ImageHandler imageHandler = new ImageHandler(bandName);
         try {
             scheduleText = buildScheduleView();
@@ -252,9 +255,15 @@ public class showBandDetails extends Activity {
             //if this causes an exception, no worries..just don't display the schedule
         }
 
-        if (scheduleText.contains("onclick") == false){
+        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == false) {
+            Log.d("descriptionMapFileError", "setting comment Higher 80 " + BandInfo.getOfficalWebLink(bandName));
+            commentHeight = "60%";
+
+        } else if (scheduleText.contains("onclick") == false ){
+            Log.d("descriptionMapFileError",  "setting comment Higher 46 " + BandInfo.getOfficalWebLink(bandName));
             commentHeight = "46%";
         } else {
+            Log.d("descriptionMapFileError",  "setting comment Higher 20 " + BandInfo.getOfficalWebLink(bandName));
             commentHeight = "20%";
         }
             htmlText =
@@ -285,7 +294,7 @@ public class showBandDetails extends Activity {
                             }
                             htmlText += "</ul>";
                         }
-                        if (bandNote != "" && imageHandler.getImage().toString() != staticVariables.logo70kUrl) {
+                        if (bandNote != "") {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
                             htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:" + commentHeight + ";overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
@@ -358,16 +367,19 @@ public class showBandDetails extends Activity {
 
     private String displayLinks(String bandName){
 
-        String html = "<br><br><br><br><br><br><br><br><br><br><br>";
+        String html = "<br><br><br>";
 
-        String disable;
-        if (OnlineStatus.isOnline() == true) {
-            disable = "";
-        } else {
-            //disable and gray out link if offline
-            disable = "style='pointer-events:none;cursor:default;color:grey'";
-        }
-        if (BandInfo.getOfficalWebLink(bandName).equals("http://") == false) {
+        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == true) {
+            html = "<br><br><br><br><br><br><br><br><br><br><br>";
+
+            String disable;
+            if (OnlineStatus.isOnline() == true) {
+                disable = "";
+            } else {
+                //disable and gray out link if offline
+                disable = "style='pointer-events:none;cursor:default;color:grey'";
+            }
+
 
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
             html = "<center><ul style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +

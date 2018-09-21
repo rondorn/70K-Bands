@@ -257,7 +257,27 @@
                         android:enabled="true"
                         android:layout_marginLeft="40dp" />
                 </TableRow>
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="unofficalEventLable"
+                        android:id="@+id/unofficalEventLable"
+                        android:layout_column="9"
+                        android:layout_marginLeft="40dp" />
+
+                    <CheckBox
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/unofficalEvent"
+                        android:layout_column="27"
+                        android:enabled="true"
+                        android:layout_marginLeft="40dp" />
+                </TableRow>
             </TableLayout>
         </LinearLayout>
     </RelativeLayout>

@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by rdorn on 8/19/15.
@@ -65,41 +66,61 @@ public class scheduleInfo {
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
+            boolean labelRow = true;
+            Map<String, Integer> labelKeys = new HashMap<>();
+
             while ((line = br.readLine()) != null) {
                 Log.d("ScheduleLine", line);
                 try {
                     String[] RowData = line.split(",");
-                    if (!RowData[0].equals("Band")) {
+                    if (labelRow == true){
+                        Integer subCounter = 0;
+                        for (String row : RowData){
+                            labelKeys.put(row,subCounter);
+                            subCounter = subCounter + 1;
+                        }
+                        labelRow = false;
+                    } else {
                         scheduleHandler scheduleLine = new scheduleHandler();
 
-                        if (RowData.length >= 6) {
+                        String bandName = RowData[labelKeys.get(staticVariables.schedBandRow)];
+
+                        if (labelKeys.containsKey(staticVariables.schedStartTimeRow)) {
                             staticVariables.schedulePresent = true;
-                            scheduleLine.setBandName(RowData[0]);
-                            scheduleLine.setShowLocation(RowData[1]);
-                            scheduleLine.setShowDay(RowData[3]);
-                            scheduleLine.setShowType(RowData[6]);
-                            scheduleLine.setStartTimeString(RowData[4]);
-                            scheduleLine.setEndTimeString(RowData[5]);
-                            scheduleLine.setStartTime(RowData[2], RowData[4]);
-                            scheduleLine.setEndTime(RowData[2], RowData[5]);
+                            scheduleLine.setBandName(RowData[labelKeys.get(staticVariables.schedBandRow)]);
+                            scheduleLine.setShowLocation(RowData[labelKeys.get(staticVariables.schedLocationRow)]);
+                            scheduleLine.setShowDay(RowData[labelKeys.get(staticVariables.schedDayRow)]);
+                            scheduleLine.setShowType(RowData[labelKeys.get(staticVariables.schedTypeRow)]);
+                            scheduleLine.setStartTimeString(RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
+                            scheduleLine.setEndTimeString(RowData[labelKeys.get(staticVariables.schedEndTimeRow)]);
+                            scheduleLine.setStartTime(RowData[labelKeys.get(staticVariables.schedDateRow)],
+                                    RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
+                            scheduleLine.setEndTime(RowData[labelKeys.get(staticVariables.schedDateRow)],
+                                    RowData[labelKeys.get(staticVariables.schedEndTimeRow)]);
                         }
 
-                        if (RowData.length == 7) {
-                            scheduleLine.setShowNotes("");
-                        } else {
-                            Log.d("ScheduleLine7", "Here is the RawData length:" + RowData.length);
-                            scheduleLine.setShowNotes(RowData[7]);
+                        if (RowData.length > labelKeys.get(staticVariables.schedDescriptionURLRow)) {
+                            staticVariables.showNotesMap.put(bandName, RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)]);
+                        }
+
+                        if (RowData.length > labelKeys.get(staticVariables.schedNotesRow)) {
+                            Log.d("ScheduleLine2", staticVariables.schedNotesRow + " RowData.length = " + RowData.length);
+                            scheduleLine.setShowNotes(RowData[labelKeys.get(staticVariables.schedNotesRow)]);
+                        }
+
+                        if (RowData.length > labelKeys.get(staticVariables.schedImageURLRow)) {
+                            staticVariables.imageUrlMap.put(bandName, RowData[labelKeys.get(staticVariables.schedImageURLRow)]);
                         }
 
                         Log.d("ScheduleLine 1", scheduleLine.toString());
-                        if (bandSchedule.get(RowData[0]) == null){
-                            //Log.d("ScheduleLine 2", "Adding:" + RowData[0] + ":" + scheduleLine.getEpochStart() + ":" + scheduleLine);
+                        if (bandSchedule.get(bandName) == null){
+                            Log.d("ScheduleLine2", "Adding:" +bandName + ":" + scheduleLine.getEpochStart() + ":" + scheduleLine);
                             scheduleTimeTracker timeTrack = new scheduleTimeTracker();
                             timeTrack.addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
-                            bandSchedule.put(RowData[0], timeTrack);
+                            bandSchedule.put(bandName, timeTrack);
                         } else {
                             //Log.d("ScheduleLine 3", "Appending:" + RowData[0]);
-                            bandSchedule.get(RowData[0]).addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
+                            bandSchedule.get(bandName).addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
                         }
 
 

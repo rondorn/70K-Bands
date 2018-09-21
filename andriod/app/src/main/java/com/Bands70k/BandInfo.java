@@ -127,9 +127,18 @@ public class BandInfo {
     }
 
     public static String getImageUrl(String bandName){
-        if (getBandDetailsData(bandName, "imageUrl") != null) {
+
+
+        if (staticVariables.imageUrlMap.containsKey(bandName) == true) {
+            Log.d("ImageUrlIs2", bandName + staticVariables.imageUrlMap.get(bandName));
+            return staticVariables.imageUrlMap.get(bandName);
+
+        } else if (getBandDetailsData(bandName, "imageUrl") != null) {
+            Log.d("ImageUrlIs1", bandName + "  shttp://" + getBandDetailsData(bandName, "imageUrl"));
             return "http://" + getBandDetailsData(bandName, "imageUrl");
+
         } else {
+            Log.d("ImageUrlIs3", bandName + " Nothing so default");
             return " ";
         }
     }

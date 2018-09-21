@@ -441,7 +441,7 @@ public class showBands extends Activity {
                 String shareBody;
                 String subject;
 
-                if (staticVariables.showsIwillAttend > 0){
+                if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
                     showsAttendedReport reportHandler = new showsAttendedReport();
                     reportHandler.assembleReport();
                     shareBody = reportHandler.buildMessage();
