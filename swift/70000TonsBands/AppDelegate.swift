@@ -49,6 +49,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUbiquitousKeyValueStore.default().synchronize()
         readiCloudData()
         
+        setupCurrentYearUrls()
+        
         //register Application Defaults
         let defaults = ["artistUrl": artistUrlDefault,
             "scheduleUrl": scheduleUrlDefault,
@@ -106,6 +108,34 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         return true
     
+    }
+    
+    func setupCurrentYearUrls() {
+        
+        let filePath = defaultUrlConverFlagUrl.path
+        if(FileManager.default.fileExists(atPath: filePath)){
+            print ("Followup run of setupCurrentYearUrls routine")
+            artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? "Default"
+            scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? "Default"
+        } else {
+            print ("First run of setupCurrentYearUrls routine")
+           artistUrlDefault = "Default"
+           scheduleUrlDefault = "Default"
+           let flag = ""
+            do {
+                try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
+            }
+            catch {print ("First run of setupCurrentYearUrls routine Failed!")}
+        }
+        
+        if (artistUrlDefault == "Default"){
+            UserDefaults.standard.set("Default", forKey: "artistUrl")
+        }
+        
+        if (scheduleUrlDefault == "Default"){
+            UserDefaults.standard.set("Default", forKey: "scheduleUrl")
+        }
+        
     }
     
     func printFCMToken() {

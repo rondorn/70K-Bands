@@ -34,7 +34,6 @@ import java.io.IOException;
 public class RegistrationIntentService extends IntentService {
 
     private static final String TAG = "RegIntentService";
-    private static final String[] TOPICS = {"global","70Kbands","70KbandsFireBase"};
 
     public RegistrationIntentService() {
         super(TAG);
@@ -59,11 +58,19 @@ public class RegistrationIntentService extends IntentService {
             // Subscribe to topic channels
             //subscribeTopics(token);
 
-            FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.mainAlertChannel);
+            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.mainAlertChannel);
             FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
 
-            FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.testAlertChannel);
+            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.testAlertChannel);
             FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+
+            if (staticVariables.preferences.getAlertForUnofficalEvents() == true){
+                //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.unofficalAlertChannel);
+                FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+            } else {
+                //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.unofficalAlertChannel);
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            }
 
             // You should store a boolean that indicates whether the generated token has been
             // sent to your server. If the boolean is false, send the token to your server,

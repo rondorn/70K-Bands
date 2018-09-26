@@ -60,16 +60,16 @@ func saveFileToiCloudDrive(localFile : URL, fileName : String){
         
         if (iCloudDocumentsURL?.absoluteString.isEmpty == false){
             do {
+                if (iCloudDocumentsURL?.path != nil){
+                    if (FileManager.default.fileExists(atPath: (iCloudDocumentsURL?.path)!) == true){
+                        try FileManager.default.removeItem(atPath: iCloudDocumentsURL!.path)
+                    }
                 
-                if (FileManager.default.fileExists(atPath: (iCloudDocumentsURL?.path)!) == true){
-                    try FileManager.default.removeItem(atPath: iCloudDocumentsURL!.path)
+                    print("iCloud Drive saving file from \(localFile) and copying to \(iCloudDocumentsURL?.path)")
+                    try FileManager.default.copyItem(atPath:localFile.path, toPath: iCloudDocumentsURL!.path)
+                    print("iCloud Drive wrote file \(iCloudDocumentsURL?.path)")
+                    try FileManager.default.startDownloadingUbiquitousItem(at: iCloudDocumentsURL!)
                 }
-                
-                print("iCloud Drive saving file from \(localFile) and copying to \(iCloudDocumentsURL?.path)")
-                try FileManager.default.copyItem(atPath:localFile.path, toPath: iCloudDocumentsURL!.path)
-                print("iCloud Drive wrote file \(iCloudDocumentsURL?.path)")
-                try FileManager.default.startDownloadingUbiquitousItem(at: iCloudDocumentsURL!)
-                
             } catch {
                 print("iCloud Drive error on load of single file of \(localFile.path) could not be copied to \(iCloudDocumentsURL?.path) " + error.localizedDescription);
             }

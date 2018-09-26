@@ -18,6 +18,8 @@ let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 func gatherData () {
     
     let defaults = UserDefaults.standard
+    
+    print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
     var artistUrl = defaults.string(forKey: "artistUrl")
 
     if (artistUrl == "Default"){

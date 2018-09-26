@@ -42,6 +42,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -985,6 +986,7 @@ public class showBands extends Activity {
         Log.d(TAG, notificationTag + " calling showNotification");
         showNotification();
 
+        subscribeToAlerts();
     }
 
     @Override
@@ -1007,6 +1009,17 @@ public class showBands extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void subscribeToAlerts(){
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+        if (staticVariables.preferences.getAlertForUnofficalEvents() == true){
+            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.unofficalAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+        } else {
+            //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.unofficalAlertChannel);
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+        }
+    }
     public void setSortButton(){
 
         sortButton = (Button) findViewById(R.id.sort);

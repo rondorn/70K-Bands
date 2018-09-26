@@ -54,8 +54,10 @@ class localNoticationHandler {
         
         var alertStatus = false
         
+        let attendedStatus = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType);
+        
         if (onlyAlertForAttended == true){
-            if (attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType) != sawNoneStatus){
+            if (attendedStatus != sawNoneStatus){
                 alertStatus = true
             }
         } else {
@@ -63,20 +65,19 @@ class localNoticationHandler {
                 alertStatus = true
             }
             if (eventType == showType && alertForShows == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
             if (eventType == listeningPartyType && alertForListening == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
             if (eventType == meetAndGreetype && alertForMandG == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
             if (eventType == clinicType && alertForClinics == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            print ("For \(eventType) = \(unofficalEventType) alertUnoffice is set to \(alertForUnoffical)")
             if (eventType == unofficalEventType && alertForUnoffical == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert)
+                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
                 print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
         }
@@ -84,13 +85,18 @@ class localNoticationHandler {
         return alertStatus
     }
     
-    func checkBandPriority (_ bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool)->Bool{
+    func checkBandPriority (_ bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool, attendedStatus: String)->Bool{
         
         if (mustSeeAlert == true && getPriorityData(bandName) == 1){
             print("Ok")
             return true
         }
         if (mightSeeAlert == true && getPriorityData(bandName) == 2){
+            print("Ok")
+            return true
+        }
+        
+        if (mustSeeAlert == true && attendedStatus != sawNoneStatus){
             print("Ok")
             return true
         }

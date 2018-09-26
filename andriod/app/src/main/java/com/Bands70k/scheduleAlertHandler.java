@@ -232,9 +232,9 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         staticBandName = bandName;
         Calendar cal = Calendar.getInstance();
+        String attendStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName,scheduleDetails.getShowLocation(),scheduleDetails.getStartTimeString(),scheduleDetails.getShowType());
 
         if (staticVariables.preferences.getAlertOnlyForShowWillAttend() == true){
-            String attendStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName,scheduleDetails.getShowLocation(),scheduleDetails.getStartTimeString(),scheduleDetails.getShowType());
             if (attendStatus != staticVariables.sawNoneStatus){
                 if (scheduleDetails.getEpochStart() > cal.getTime().getTime()) {
                     Log.d("SchedNotications", "!ShowTiming " + bandName + " at " + scheduleDetails.getShowLocation() + " will get an alert " + attendStatus);
@@ -252,7 +252,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         }
 
         if (!scheduleDetails.getShowType().equals(staticVariables.specialEvent)){
-            if (checkRank(rank) == false) {
+            if (checkRank(rank, attendStatus) == false) {
                 //Log.d("SchedNotications", "!Timing " + bandName + " rejected based on rank  of " + rank);
                 return false;
             }
@@ -261,53 +261,58 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         return true;
     }
 
-    private static boolean checkRank (String rank){
+    private static boolean checkRank (String rank, String attendedStatus){
 
-        //Log.d("SchedNotications", "!Timing " + staticBandName + " " + rank + " should = " + staticVariables.mustSeeIcon);
-        if (rank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getMustSeeAlert() == false){
-            Log.d("SchedNotications", "!Timing " + staticBandName + " rejected " + staticVariables.preferences.getMustSeeAlert() + " and " + staticVariables.mustSeeIcon);
-            return false;
+        if (rank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getMustSeeAlert() == true){
+            Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMustSeeAlert() + " and " + staticVariables.mustSeeIcon);
+            return true;
 
-        } else if (rank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getMightSeeAlert() == false) {
-            Log.d("SchedNotications", "!Timing " + staticBandName + " rejected " + staticVariables.preferences.getMightSeeAlert() + " and " + staticVariables.mightSeeIcon);
+        } else if (rank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getMightSeeAlert() == true) {
+            Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMightSeeAlert() + " and " + staticVariables.mightSeeIcon);
 
-            return false;
+            return true;
 
-        } else if (!rank.equals(staticVariables.mustSeeIcon) && !rank.equals(staticVariables.mightSeeIcon)){
-            Log.d("SchedNotications", "!!Timing " + staticBandName + " rejected based on not being a Must or Might " + staticVariables.mightSeeIcon);
-            return false;
+        } else if (staticVariables.preferences.getMustSeeAlert() == true && attendedStatus != staticVariables.sawNoneStatus){
+            Log.d("SchedNotications", "!!Timing " + staticBandName + " alerting based on  " + attendedStatus);
+            return true;
         }
 
+        Log.d("SchedNotications", "!Timing " + staticBandName + " rejecting " + staticVariables.preferences.getMustSeeAlert() + " and " + staticVariables.mustSeeIcon);
 
-        return true;
+
+        return false;
     }
 
     private static boolean checkEventType (scheduleHandler scheduleDetails){
 
         Log.d ("SendLocalAlertCheck", "'" + staticVariables.meetAndGreet + "' Checking '" + scheduleDetails.getShowType() + "' should send is " +  staticVariables.preferences.getAlertForMeetAndGreet());
 
-        if (scheduleDetails.getShowType().equals(staticVariables.show) && staticVariables.preferences.getAlertForShows() == false){
-            return false;
+        Boolean sendAlert = false;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.meetAndGreet) && staticVariables.preferences.getAlertForMeetAndGreet() == false){
-            Log.d ("SendLocalAlertCheck", "Rejecting alert");
-            return false;
+        if (scheduleDetails.getShowType().equals(staticVariables.show) && staticVariables.preferences.getAlertForShows() == true){
+            sendAlert = true;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.clinic) && staticVariables.preferences.getAlertForClinics() == false){
-            return false;
+        } else if (scheduleDetails.getShowType().equals(staticVariables.meetAndGreet) && staticVariables.preferences.getAlertForMeetAndGreet() == true){
+            sendAlert = true;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.specialEvent) && staticVariables.preferences.getAlertForSpecialEvents() == false){
-            return false;
+        } else if (scheduleDetails.getShowType().equals(staticVariables.clinic) && staticVariables.preferences.getAlertForClinics() == true){
+            sendAlert = true;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.listeningEvent) && staticVariables.preferences.getAlertForListeningParties() == false){
-            return false;
+        } else if (scheduleDetails.getShowType().equals(staticVariables.specialEvent) && staticVariables.preferences.getAlertForSpecialEvents() == true){
+            sendAlert = true;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.unofficalEvent) && staticVariables.preferences.getAlertForUnofficalEvents() == false){
-            return false;
+        } else if (scheduleDetails.getShowType().equals(staticVariables.listeningEvent) && staticVariables.preferences.getAlertForListeningParties() == true){
+            sendAlert = true;
+
+        } else if (scheduleDetails.getShowType().equals(staticVariables.unofficalEvent) && staticVariables.preferences.getAlertForUnofficalEvents() == true){
+            sendAlert = true;
         }
 
-        Log.d ("SendLocalAlertCheck", "alerting");
-        return true;
+        if (sendAlert == true){
+            Log.d ("SendLocalAlertCheck", "alerting for " + scheduleDetails.getBandName() + "-" + scheduleDetails.getShowDay() + "-" + scheduleDetails.getShowType());
+        }
+
+        return sendAlert;
     }
 
     public void clearAlerts (){

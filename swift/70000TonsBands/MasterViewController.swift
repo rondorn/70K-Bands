@@ -607,7 +607,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let sawAllShow = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: attendedShowIcon , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let sawAllShow = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let currentCel = tableView.cellForRow(at: indexPath)
             
@@ -636,7 +636,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         })
  
-        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMustSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getMustSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
@@ -645,7 +645,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         })
 
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getMightSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getMightSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -655,7 +655,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getWillNotSeeIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getWillNotSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -665,7 +665,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: getUnknownIcon() , handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getUnknownIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -678,7 +678,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
         } else {
-            return [sawAllShow, setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+            return [sawAllShow, wontSeeAction, mightSeeAction, mustSeeAction]
         }
     }
     
