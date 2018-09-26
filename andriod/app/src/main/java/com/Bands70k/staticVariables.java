@@ -48,6 +48,7 @@ public class staticVariables {
     //firebase channels
     public final static String mainAlertChannel = "global";
     public final static String testAlertChannel = "testing20000";
+    public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
     public static String sawAllIcon = "\uD83C\uDFC3\u200D";

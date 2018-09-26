@@ -10,7 +10,7 @@
 			<key>AutocorrectionType</key>
 			<string>No</string>
 			<key>DefaultValue</key>
-			<string>https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1</string>
+			<string>Default</string>
 			<key>IsSecure</key>
 			<false/>
 			<key>Key</key>
@@ -24,7 +24,7 @@
 		</dict>
 		<dict>
 			<key>DefaultValue</key>
-			<string>https://www.dropbox.com/s/tg9qgt48ezp7udv/2015Schedule.csv?dl=1</string>
+			<string>Default</string>
 			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>

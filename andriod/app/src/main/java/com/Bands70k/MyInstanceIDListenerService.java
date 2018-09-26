@@ -30,7 +30,11 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
         Log.d(TAG, "Subscribing to topics");
         FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
         FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
-
+        if (staticVariables.preferences.getAlertForUnofficalEvents() == true){
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+        } else {
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+        }
     }
 
     private void sendRegistrationToServer(String token) {

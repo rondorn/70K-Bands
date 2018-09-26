@@ -21,11 +21,13 @@ var PRIORITY = "priority";
 var ATTENDED = "attended";
 var NOTE = "note";
 
+var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
 var directoryPath = URL(fileURLWithPath:dirs[0])
 var storageFile = directoryPath.appendingPathComponent( "data.txt")
 var dateFile = directoryPath.appendingPathComponent( "date.txt")
 var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
 var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
+var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 var iCloudCheck = false;
 
@@ -103,8 +105,8 @@ let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 //defaults preferences
-let artistUrlDefault = "Default"
-let scheduleUrlDefault = "Default"
+var artistUrlDefault = ""//UserDefaults.standard.string(forKey: "artistUrl")
+var scheduleUrlDefault = ""//UserDefaults.standard.string(forKey: "scheduleUrl")
 
 let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
@@ -183,6 +185,7 @@ func getPointerUrlData(keyValue: String) -> String {
         }
     }
     print ("Using default " + keyValue + " of " + url)
+
     return url
 }
 
