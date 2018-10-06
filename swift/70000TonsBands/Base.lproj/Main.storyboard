@@ -853,10 +853,10 @@
             </objects>
             <point key="canvasLocation" x="709" y="-630"/>
         </scene>
-        <!--Alert Preferences-->
+        <!--Preferences-->
         <scene sceneID="89O-T8-JUh">
             <objects>
-                <viewController title="Alert Preferences" id="wME-gs-GWB" customClass="AlertPreferenesController" customModule="_0K_Bands" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController title="Preferences" id="wME-gs-GWB" customClass="AlertPreferenesController" customModule="_0K_Bands" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="dgr-NV-Uhp"/>
                         <viewControllerLayoutGuide type="bottom" id="HiL-ed-ex9"/>

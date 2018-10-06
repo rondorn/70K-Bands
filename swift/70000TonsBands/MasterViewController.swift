@@ -310,8 +310,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.updateCountLable()
                     self.tableView.reloadData()
                     self.refreshAlerts()
-                    //self.refreshControl?.endRefreshing();
                     self.setShowOnlyAttenedFilterStatus()
+                    self.tableView.reloadData()
                 }
                 
                 
@@ -320,7 +320,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             setShowOnlyAttenedFilterStatus()
             updateCountLable()
             self.tableView.reloadData()
-            //self.refreshControl?.endRefreshing();
             
         }
     } 

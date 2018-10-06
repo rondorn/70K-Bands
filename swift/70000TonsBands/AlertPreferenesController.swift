@@ -119,7 +119,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setLocalizedLables()
         
         disableAlertButtonsIfNeeded()
-        self.navigationItem.title = "Alert Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
+        self.navigationItem.title = "Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
     }
     
     override func viewWillDisappear(_ animated : Bool) {
