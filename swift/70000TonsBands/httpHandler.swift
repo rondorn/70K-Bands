@@ -29,7 +29,8 @@ func HTTPsendRequest(_ request: URLRequest,
 }
 
 func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
-    if (url.isEmpty == false){
+    if (url.isEmpty == false && url != " "){
+        print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)
         request.timeoutInterval = 30;
         HTTPsendRequest(request as URLRequest, callback: callback)

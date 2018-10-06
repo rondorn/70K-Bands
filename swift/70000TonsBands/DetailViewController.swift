@@ -43,6 +43,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var Genre: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
     
+    var backgroundNotesText = "";
     var bandName :String!
     var schedule = scheduleHandler()
     var imagePosition = CGFloat(0);
@@ -62,7 +63,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         self.configureView()
         
         customNotesText.delegate = self as? UITextViewDelegate
-        
+
         bandPriorityStorage = readFile(dateWinnerPassed: "")
         
         if (bandName == nil || bands.isEmpty == true) {
@@ -397,7 +398,15 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 
                 if (scheduleDescriptionUrl.isEmpty == false){
                     print ("Loading customNotesTest from URL")
-                    customNotesText.text = bandNotes.getDescriptionFromUrl(bandName: bandName, descriptionUrl: scheduleDescriptionUrl)
+                    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                        self.backgroundNotesText = bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)
+                        
+                        DispatchQueue.main.async {
+                            self.customNotesText.text = self.backgroundNotesText;
+                        }
+                    }
+                    
+                    
                 }
                 
                 let rawStartTime = startTime
@@ -557,5 +566,5 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             toastLabel.removeFromSuperview()
         })
     }
-
+    
 }

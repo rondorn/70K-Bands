@@ -157,11 +157,12 @@ open class scheduleHandler {
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         if (fullTimeString.isEmpty == false){
-            print ("timeString '" + fullTimeString + "'");
             print(dateFormatter.date(from: fullTimeString) as Any)
             if (dateFormatter.date(from: fullTimeString) != nil){
                 startTimeIndex = dateFormatter.date(from: fullTimeString)!.timeIntervalSince1970
                 print(startTimeIndex)
+                
+                print ("timeString \(band) '" + fullTimeString + "' \(startTimeIndex)");
             } else {
                 print ("What the hell!!")
                 print(dateFormatter.date(from: fullTimeString) as Any)

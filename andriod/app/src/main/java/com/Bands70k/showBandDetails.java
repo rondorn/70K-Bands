@@ -257,7 +257,7 @@ public class showBandDetails extends Activity {
 
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == false) {
             Log.d("descriptionMapFileError", "setting comment Higher 80 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "60%";
+            commentHeight = "55%";
 
         } else if (scheduleText.contains("onclick") == false ){
             Log.d("descriptionMapFileError",  "setting comment Higher 46 " + BandInfo.getOfficalWebLink(bandName));
@@ -297,7 +297,7 @@ public class showBandDetails extends Activity {
                         if (bandNote != "") {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
                             htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
-                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:100%;height:" + commentHeight + ";overflow:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
+                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
                             htmlText += "</ul>";
                         }
                     } else {
@@ -404,7 +404,7 @@ public class showBandDetails extends Activity {
         }
 
         bandNote = bandNote.replaceAll("<br>", "\n");
-        html += "<form><textarea name='userNotes' id='userNotes' style='width:96%;height:70%;background-color:white;color:black;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
+        html += "<form><textarea name='userNotes' id='userNotes' style='width:85%;height:60%;background-color:white;color:black;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
         html += bandNote;
         html += "</textarea>";
         html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form><br>";

@@ -100,9 +100,9 @@ open class CustomBandDescription {
         if (FileManager.default.fileExists(atPath: commentFile.path) == false){
             if (bandDescriptionUrl[bandName] != nil){
                 
-                //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     let httpData = getUrlData(bandDescriptionUrl[bandName]!);
-                
+                    print ("Trying to download comment from url \(httpData)")
                     //do not write if we are getting 404 error
                     if (httpData.starts(with: "<!DOCTYPE") == false){
                         commentText = httpData;
@@ -115,7 +115,7 @@ open class CustomBandDescription {
                             print("commentFile " + error.localizedDescription)
                         }
                     }
-                //}
+                }
             }
         }
         

@@ -18,6 +18,7 @@ func displayImage ( urlString: String, bandName: String, logoImage: UIImageView)
     let bandName = bandName
     let urlString = urlString
     let logoImage = logoImage
+
     print ("urlString is " + urlString);
     
     let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")

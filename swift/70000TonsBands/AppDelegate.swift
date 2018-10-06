@@ -191,7 +191,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func tokenRefreshNotification(_ notification: Notification) {
         if let refreshedToken = InstanceID.instanceID().token() {
             print("InstanceID token: \(refreshedToken)")
-            UIPasteboard.general.string =  "InstanceID token: \(refreshedToken)";
         }
         
         // Connect to FCM since connection may have failed when attempted before having a token.
