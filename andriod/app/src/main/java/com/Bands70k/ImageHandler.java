@@ -102,7 +102,7 @@ public class ImageHandler {
         ArrayList<String> bandList = bandInfo.getBandNames();
 
         for (String bandName : bandList){
-            bandImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
+            bandImageFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".png");
             if (bandImageFile.exists() == false) {
                 Log.e("loadImageFile", "loading all images files in background " + bandImageFile.getAbsolutePath());
                 ImageHandler imageHandler = new ImageHandler(bandName);
