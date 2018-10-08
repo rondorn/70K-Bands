@@ -10,8 +10,6 @@ import Foundation
 
 
 func createiCloudDirectory(){
-    
-    return;
     do {
         if let iCloudDocumentsURL = FileManager.default.url(forUbiquityContainerIdentifier:nil)?.appendingPathComponent("Documents"){
             
@@ -29,7 +27,6 @@ func createiCloudDirectory(){
 }
 
 func copyDocumentsToiCloudDrive() {
-    return;
     do {
         
         print("iCloud Drive writing data")
@@ -55,14 +52,14 @@ func saveFileToiCloudDrive(localFile : URL, fileName : String){
 
     createiCloudDirectory()
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-
+        
         let iCloudDocumentsURL = FileManager.default.url(forUbiquityContainerIdentifier:nil)?.appendingPathComponent("Documents").appendingPathComponent(fileName, isDirectory: false)
         
         if (iCloudDocumentsURL?.absoluteString.isEmpty == false){
             do {
                 if (iCloudDocumentsURL?.path != nil){
                     if (FileManager.default.fileExists(atPath: (iCloudDocumentsURL?.path)!) == true){
-                        try FileManager.default.removeItem(atPath: iCloudDocumentsURL!.path)
+                        //try FileManager.default.removeItem(atPath: iCloudDocumentsURL!.path)
                     }
                 
                     print("iCloud Drive saving file from \(localFile) and copying to \(iCloudDocumentsURL?.path)")
@@ -88,6 +85,7 @@ func loadFileFromiCloudDrive(localFile : URL, fileName : String){
         print("iCloud Drive loaded file from \(iCloudDocumentsURL?.path) and copying to \(localFile)")
         
         do {
+            try FileManager.default.startDownloadingUbiquitousItem(at: iCloudDocumentsURL!)
             let localModify : Date = try FileManager.default.attributesOfItem(atPath: localFile.path)[FileAttributeKey.modificationDate] as! Date;
             
             let cloudModify :Date  = try FileManager.default.attributesOfItem(atPath: iCloudDocumentsURL!.path)[FileAttributeKey.modificationDate] as! Date;
@@ -109,6 +107,5 @@ func loadFileFromiCloudDrive(localFile : URL, fileName : String){
     } else {
         print("iCloud Drive file \(localFile.path) is not available in the cloud")
     }
-    
 }
 

@@ -11,6 +11,7 @@ import CoreData
 import CloudKit
 
 var bandPriorityStorage = [String:Int]()
+var readInWrite = false;
 
 func writeFiltersFile(){
     
@@ -144,7 +145,9 @@ func getPriorityData (_ bandname:String) -> Int {
 }
 
 func writeiCloudData (){
-
+    
+    //saveFileToiCloudDrive(localFile: storageFile, fileName: "data.txt")
+    
     var dataString: String = ""
     
     var counter = 0;
@@ -152,7 +155,7 @@ func writeiCloudData (){
     
     for (band, priority) in bandPriorityStorage {
         dataString = dataString + PRIORITY + "!" + band + "!" + String(priority) + ";"
-        print ("Adding icloud write PRIORITY \(band) - \(priority)")
+        print ("Adding icloud write PRIORITIES \(band) - \(priority)")
         counter += 1
     }
     
@@ -167,19 +170,21 @@ func writeiCloudData (){
     
     
     if (counter > 2){
-        //print ("iCloud writing priority data")
+        print ("iCloud writing priority data")
         NSUbiquitousKeyValueStore.default().set(dataString, forKey: "bandPriorities")
         NSUbiquitousKeyValueStore.default().set(Date(), forKey: "lastModifiedDate")
     
         NSUbiquitousKeyValueStore.default().synchronize()
+        readInWrite = true;
+        readiCloudData();
+        readInWrite = false;
     }
-    
 }
 
 func readiCloudData(){
     
     NSUbiquitousKeyValueStore.default().synchronize()
-    
+
     print ("iCloud getting priority data from the cloud")
     
     let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
@@ -217,12 +222,15 @@ func readiCloudData(){
         }
     }
     
-    writeFile();
-    attendedHandler.setShowsAttended(attendedData: showsAttendedData)
-    attendedHandler.saveShowsAttended()
+    print ("PRIORITIES Beach \(bandPriorityStorage["Beach Party"])");
+    if (readInWrite == false){
+        writeFile();
+        attendedHandler.setShowsAttended(attendedData: showsAttendedData)
+        attendedHandler.saveShowsAttended()
 
-    if (conversion == true){
-        writeiCloudData();
+        if (conversion == true){
+            writeiCloudData();
+        }
     }
 }
 
@@ -237,6 +245,7 @@ func writeFile(){
     let dateTimeModifiedString = dateFormatter.string(from: dateTimeModified)
     
     for (index, element) in bandPriorityStorage{
+        print ("writing PRIORITIES \(index) - \(element)")
         data = data + index + ":" + String(element) + "\n"
     }
     
@@ -327,7 +336,7 @@ func readFile(dateWinnerPassed : String) -> [String:Int]{
                     var element = record.components(separatedBy: ":")
                     if element.count == 2 {
                         var priorityString = element[1];
-                        
+                        print ("reading PRIORITIES \(element[0]) - \(priorityString)")
                          priorityString = priorityString.replacingOccurrences(of: "\n", with: "", options: NSString.CompareOptions.literal, range: nil)
                         
                         bandPriorityStorage[element[0]] = Int(priorityString)

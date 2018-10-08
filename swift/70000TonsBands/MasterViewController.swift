@@ -287,6 +287,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
+                readiCloudData()
                 gatherData();
                 
                 if (offline == false){
