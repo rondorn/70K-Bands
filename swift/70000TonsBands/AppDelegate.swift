@@ -27,28 +27,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     let gcmMessageIDKey = "gcm.message_id"
     
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
+        
+        [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         let splitViewController = self.window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
-        let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
-        let controller = masterNavigationController.topViewController as! MasterViewController
-        controller.managedObjectContext = self.managedObjectContext
-    
-        
         //icloud code
         // Register for notification of iCloud key-value changes
         NotificationCenter.default.addObserver(self,
-        selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
-        name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: nil)
+                                               selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
+                                               name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: nil)
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default().synchronize()
         readiCloudData()
         
+        let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
+        let controller = masterNavigationController.topViewController as! MasterViewController
+        controller.managedObjectContext = self.managedObjectContext
+    
         setupCurrentYearUrls()
         
         //register Application Defaults
@@ -294,9 +295,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     //end push functions
     
-    //iCloud functions
-    
-    
     func applicationDidEnterBackground(_ application: UIApplication) {
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
         writeFiltersFile()
@@ -322,7 +320,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         writeFiltersFile()
         writeFile()
         attendedHandler.saveShowsAttended()
-        saveFileToiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
+        writeiCloudData();
         
     }
 
@@ -330,7 +328,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
-        loadFileFromiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
+        readiCloudData();
         attendedHandler.loadShowsAttended()
     }
 
@@ -341,7 +339,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         writeFiltersFile()
         writeFile()
         attendedHandler.saveShowsAttended()
-        saveFileToiCloudDrive(localFile: showsAttended, fileName: showsAttendedFileName)
+        writeiCloudData();
         self.saveContext()
     }
 
