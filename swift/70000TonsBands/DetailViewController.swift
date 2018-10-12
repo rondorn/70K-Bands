@@ -48,6 +48,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var schedule = scheduleHandler()
     var imagePosition = CGFloat(0);
     
+    var eventCount = 0;
+    var displayedImaged:UIImage?
+    
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
     
     var detailItem: AnyObject? {
@@ -77,12 +80,15 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
         
             let imageURL = getBandImageUrl(bandName)
-            print("imageUrl: " + imageURL)
-            
-            //called twice to ensure image is loaded even if delayed
-            _ = displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
-            sleep(1)
-            _ = displayImage(urlString: imageURL, bandName: bandName, logoImage: bandLogo)
+
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                self.displayedImaged = displayImage(urlString: imageURL, bandName: self.bandName)
+                DispatchQueue.main.async {
+                    // Calculate the biggest size that fixes in the given CGSize
+                    self.bandLogo.image = self.displayedImaged
+                    self.imageSizeController(special: "")
+                }
+            }
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(getPriorityData(bandName))
@@ -128,6 +134,26 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         loadComments()
         super.viewDidAppear(animated)
         
+    }
+    
+    func imageSizeController(special: String){
+        
+        let imageURL = getBandImageUrl(bandName)
+        if (officialUrlButton.isHidden == false){
+            if (special == "top"){
+                self.bandLogo.contentMode = UIViewContentMode.top
+            } else if (special == "scale"){
+                self.bandLogo.contentMode = UIViewContentMode.scaleAspectFit
+            }
+            self.bandLogo.sizeToFit()
+        } else {
+             self.bandLogo.contentMode = UIViewContentMode.top
+             self.bandLogo.sizeToFit()
+        }
+        if (eventCount <= 1){
+            let screenSize = UIScreen.main.bounds
+            customNotesText.frame.size.height = screenSize.height * 0.37
+        }
     }
     
     func disableLinksWithEmptyData(){
@@ -226,8 +252,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             } else {
                 print ("saving commentFile");
                 
+                let commentString = self.customNotesText.text;
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    let commentString = self.customNotesText.text;
                     print ("Writting commentFile " + commentString!)
 
                     do {
@@ -284,8 +310,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 setNotesHeight()
             }
             
-            bandLogo.contentMode = UIViewContentMode.top
-            bandLogo.sizeToFit()
+            imageSizeController(special: "top")
             
             
         } else {
@@ -300,8 +325,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 loadComments()
             }
             
-            bandLogo.contentMode = UIViewContentMode.scaleAspectFit
-            bandLogo.sizeToFit()
+            imageSizeController(special: "scale")
         }
 
         showBandDetails();
@@ -382,7 +406,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             let keyValues = schedule.schedulingData[bandName]!.keys
             let sortedArray = keyValues.sorted();
             var count = 1
-            
+            eventCount = keyValues.count;
+            if (eventCount == 1){
+                count = 4;
+            }
             schedule.buildTimeSortedSchedulingData();
             
             for index in sortedArray {
@@ -396,7 +423,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 let notes = schedule.getData(bandName, index:index, variable: notesField)
                 let scheduleDescriptionUrl = schedule.getData(bandName, index:index, variable: descriptionUrlField)
                 
-                if (scheduleDescriptionUrl.isEmpty == false){
+                if (scheduleDescriptionUrl.isEmpty == false && scheduleDescriptionUrl.count > 3){
                     print ("Loading customNotesTest from URL")
                     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                         self.backgroundNotesText = bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)

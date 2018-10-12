@@ -338,8 +338,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
                 
             } else {
-                defaults.setValue(artistUrlDefault, forKey: "artistUrl")
-                defaults.setValue(scheduleUrlDefault, forKey: "scheduleUrl")
+                defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
+                defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
             }
 
             do {
