@@ -14,6 +14,8 @@ open class scheduleHandler {
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
     var scheduleReleased = false
     
+    var customDescrip = CustomBandDescription();
+    
     func populateSchedule(){
         
         schedulingData.removeAll();
@@ -85,14 +87,26 @@ open class scheduleHandler {
                     print ("adding descriptionUrlField \(lineData)")
 
                     if let descriptUrl = lineData[descriptionUrlField] {
-                        print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
+                        if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
+                            print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
+                            setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
+                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                                _ = self.customDescrip.getDescriptionFromUrl(bandName: lineData[bandField]!, descriptionUrl: lineData[descriptionUrlField]!);
+                            }
+                        }
                     } else {
                         print ("field descriptionUrlField not present for " + lineData[bandField]!);
                     }
                     
                     if let imageUrl = lineData[imageUrlField] {
-                        imageUrls[lineData[bandField]!] = imageUrl
+                        if (imageUrl.isEmpty == false && imageUrl.count >= 2){
+                            imageUrls[lineData[bandField]!] = imageUrl
+                            //save inmage in background
+                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                                _ = displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
+                            }
+                        }
+                        
                     }
                 } else {
                     print ("Unable to parse schedule file")
@@ -115,6 +129,10 @@ open class scheduleHandler {
             scheduleUrl = defaults.string(forKey: "scheduleUrl")!
         }
         
+        if (scheduleUrl.isEmpty == true){
+            scheduleUrl = "Default"
+        }
+    
         print ("Downloading Schedule URL " + scheduleUrl);
         if (scheduleUrl == "Default"){
             scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)

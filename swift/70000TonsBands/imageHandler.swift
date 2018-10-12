@@ -12,13 +12,14 @@ import CoreData
 
 var imageCache = [String: UIImage]()
 
-func displayImage ( urlString: String, bandName: String, logoImage: UIImageView) -> DarwinBoolean {
+func displayImage ( urlString: String, bandName: String) -> UIImage {
     
     
     let bandName = bandName
     let urlString = urlString
-    let logoImage = logoImage
 
+    var returnedImage:UIImage?;
+    
     print ("urlString is " + urlString);
     
     let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")
@@ -26,57 +27,78 @@ func displayImage ( urlString: String, bandName: String, logoImage: UIImageView)
     let imageStoreFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent( bandName + ".png")
     
     if let imageData: UIImage = UIImage(contentsOfFile: imageStore) {
-        print("Loading image from file cache for " + bandName)
-        logoImage.image = imageData
-        return true
-    }
+        print ("ImageCall using cached imaged from \(imageStoreFile)")
+        returnedImage = imageData
     
-    if (urlString == ""){
-        logoImage.image = UIImage(named: "70000TonsLogo")
-        return true
-    }
+    } else if (urlString == ""){
+        returnedImage = UIImage(named: "70000TonsLogo")!
     
-    if (urlString == "http://"){
-        logoImage.image = UIImage(named: "70000TonsLogo")
-        return true
-    }
+    } else if (urlString == "http://"){
+        returnedImage = UIImage(named: "70000TonsLogo")!
     
-    var image = UIImage()
-    
-    let session = URLSession.shared
-    let url = URL(string: urlString)
-    let request = URLRequest(url: url!)
-    
-    let dataTask = session.dataTask(with: request) { (data, response, error) -> Void in
-        if let httpResponse = response as? HTTPURLResponse {
-            let statusCode = httpResponse.statusCode
-            if statusCode == 200 {
+    } else {
+        
+        print ("ImageCall download imaged from \(urlString)")
+        let url = URL(string: urlString)
+        URLSession.shared.dataTask(with: url!) { data, response, error in
+            guard
+                let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
+                let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
+                let data = data, error == nil,
+                let image = UIImage(data: data)
+                else { return }
+            DispatchQueue.main.async() {
+                returnedImage = image
+                imageCache[urlString] = returnedImage
                 do {
-                    if (data != nil){
-                        image = UIImage(data: data!)!
-                        imageCache[urlString] = image
-                        logoImage.image =  image
-                    
-                        try? UIImageJPEGRepresentation(image,1.0)!.write(to: imageStoreFile, options: [.atomic])
-                    } else {
-                        logoImage.image = UIImage(named: "70000TonsLogo")
-                        print("Could not Download image encountered image download error")
-                    }
+                    try UIImageJPEGRepresentation((returnedImage!),1.0)?.write(to: imageStoreFile, options: [.atomic])
+                } catch {
+                    print ("ImageCall \(error)")
                 }
-                
-            } else {
-                logoImage.image = UIImage(named: "70000TonsLogo")
-                print("Could not Download image " + statusCode.description)
             }
-        } else {
-            logoImage.image = UIImage(named: "70000TonsLogo")
-            print("Could not Download image Not sure what is going on here " + response.debugDescription)
+            }.resume()
+        var count = 0;
+        while (returnedImage == nil){
+            if (count == 15){
+                break
+            }
+            sleep(1)
+            count = count + 1
         }
+        /*
+        let dataTask = session.dataTask(with: request) { (data, response, error) -> Void in
+            if let httpResponse = response as? HTTPURLResponse {
+                let statusCode = httpResponse.statusCode
+                if statusCode == 200 {
+                    do {
+                        if (data != nil){
+                            returnedImage = UIImage(data: data!)!
+                            imageCache[urlString] = returnedImage
+  
+                            try? UIImageJPEGRepresentation((returnedImage!),1.0)?.write(to: imageStoreFile, options: [.atomic])
+                        } else {
+                            returnedImage = UIImage(named: "70000TonsLogo")
+                            print("Could not Download image encountered image download error")
+                        }
+                    }
+                    
+                } else {
+                    returnedImage = UIImage(named: "70000TonsLogo")!
+                    print("Could not Download image " + statusCode.description)
+                }
+            } else {
+                returnedImage = UIImage(named: "70000TonsLogo")!
+                print("Could not Download image Not sure what is going on here " + response.debugDescription)
+            }
+        }
+        
+        dataTask.resume()
+        */
     }
-
-    dataTask.resume()
     
-    return true;
+    print ("ImageCall returned \(urlString) - " + returnedImage.debugDescription)
+    
+    return returnedImage ?? UIImage(named: "70000TonsLogo")!;
     
 }
 
@@ -93,7 +115,7 @@ func getAllImages(){
             
             let imageURL = getBandImageUrl(bandName)
             print ("Loading image in background so it will be cached by default " + imageURL);
-            displayImage(urlString: imageURL, bandName: bandName, logoImage: nullImage)
+            displayImage(urlString: imageURL, bandName: bandName)
         }
     }
 }
