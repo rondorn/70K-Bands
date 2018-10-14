@@ -116,9 +116,11 @@ public class CustomerDescriptionHandler {
         if (descriptionMapData.containsKey(bandName) == false){
             Log.d("descriptionMapFileError",  bandName + " does not have data in the descriptionMapData");
             if (staticVariables.showNotesMap.containsKey(bandName) == true) {
-                Log.d("descriptionMapFileError",  bandName + " loading from static " + staticVariables.showNotesMap.get(bandName));
-                loadNoteFromURL(bandName);
-                bandNote = bandNoteHandler.getBandNoteFromFile();
+                if (staticVariables.showNotesMap.get(bandName).length() > 5) {
+                    Log.d("descriptionMapFileError", bandName + " loading from static " + staticVariables.showNotesMap.get(bandName));
+                    loadNoteFromURL(bandName);
+                    bandNote = bandNoteHandler.getBandNoteFromFile();
+                }
             }
 
             Log.d("descriptionMapFileError",  "bandNote = " + bandNote);
@@ -164,7 +166,8 @@ public class CustomerDescriptionHandler {
 
             URL url;
             try {
-                if (staticVariables.showNotesMap.containsKey(bandName)){
+                if (staticVariables.showNotesMap.containsKey(bandName) &&
+                        staticVariables.showNotesMap.get(bandName).length() > 5){
                     url = new URL(staticVariables.showNotesMap.get(bandName));
                     Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
                 } else if (descriptionMapData.containsKey(bandName) == true) {

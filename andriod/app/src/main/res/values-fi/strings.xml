@@ -18,7 +18,7 @@
     <string name="MinutesBeforeEventtoAlert">Ilmoita, ennen tapahtumaa (minuuttia)</string>
     <string name="AlertForShows">Alert näytöksiin</string>
     <string name="AlertForSpecialEvents">Hälytys muihin tapahtumiin</string>
-    <string name="AlertForUnoffical">Hälytykset epävirallisille tapahtumilles</string>
+    <string name="AlertForUnoffical">Hälytys Cruiser järjestettyihin tapahtuman</string>
     <string name="AlertForMeetingandGreetEvents">Hälytys \'Meet and Greet\' eille</string>
     <string name="AlertForClinics">Hälytys klinikoille</string>
     <string name="AlertForAlbumListeningEvents">Hälytys levyjen ennakkokuunteluihin</string>
@@ -32,7 +32,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Klinikoille</string>
     <string name="AlbumListeningEvents">levyjen ennakkokuunteluihin</string>
-    <string name="unofficalEventLable">Epäviralliset tapahtumat</string>
+    <string name="unofficalEventLable">Cruiser järjestetty</string>
 
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
     <string name="LastYearsFeatureExplication">Aktivointi \'Käytä Viime vuoden tiedot\' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.</string>

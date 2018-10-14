@@ -39,13 +39,13 @@
 "Alert For Meeting and Greet Events"="Alerte pour Meeting and Greet Evénements";
 "Alert For Clinics"="Alerte pour les cliniques";
 "Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
-"Alert For Unofficial Events"="Alerte pour les événements non officiels";
+"Alert For Unofficial Events"="Alerte pour les événements organisés par Cruiser";
 
 "Special Event"="événements spéciaux";
 "Meet and Greet"="Meet and Greet Evénements";
 "Clinic"="Cliniques Evénements";
 "Listening Party"="l'album Listening Evénements";
-"Unofficial Events"="Événements non officiels";
+"Unofficial Events"="Croisière organisée";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 

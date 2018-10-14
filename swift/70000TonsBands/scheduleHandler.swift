@@ -74,7 +74,11 @@ open class scheduleHandler {
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
                     
                     print ("adding typeField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: lineData[typeField]!)
+                    var eventType = lineData[typeField]!;
+                    if (eventType == unofficalEventTypeOld){
+                        eventType = unofficalEventType;
+                    }
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: eventType)
                     
                     print ("adding notesField");
                     if let noteValue = lineData[notesField] {

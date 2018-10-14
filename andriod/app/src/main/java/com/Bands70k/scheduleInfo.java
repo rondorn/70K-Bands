@@ -100,7 +100,9 @@ public class scheduleInfo {
                         }
 
                         if (RowData.length > labelKeys.get(staticVariables.schedDescriptionURLRow)) {
-                            staticVariables.showNotesMap.put(bandName, RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)]);
+                            if (RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)].length() > 5) {
+                                staticVariables.showNotesMap.put(bandName, RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)]);
+                            }
                         }
 
                         if (RowData.length > labelKeys.get(staticVariables.schedNotesRow)) {
@@ -109,7 +111,9 @@ public class scheduleInfo {
                         }
 
                         if (RowData.length > labelKeys.get(staticVariables.schedImageURLRow)) {
-                            staticVariables.imageUrlMap.put(bandName, RowData[labelKeys.get(staticVariables.schedImageURLRow)]);
+                            if (RowData[labelKeys.get(staticVariables.schedImageURLRow)].length() > 5) {
+                                staticVariables.imageUrlMap.put(bandName, RowData[labelKeys.get(staticVariables.schedImageURLRow)]);
+                            }
                         }
 
                         Log.d("ScheduleLine 1", scheduleLine.toString());

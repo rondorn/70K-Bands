@@ -14,7 +14,7 @@
     <string name="MinutesBeforeEventtoAlert">Antal minutter før begivenhed for notifikation</string>
     <string name="AlertForShows">Notifikation for shows</string>
     <string name="AlertForSpecialEvents">Notifikation for specielle begivenheder</string>
-    <string name="AlertForUnoffical">Advarsel til uofficielle begivenheder</string>
+    <string name="AlertForUnoffical">Alert for Cruiser järjestettyihin tapahtumiin</string>
     <string name="AlertForMeetingandGreetEvents">Notifikation for meet and greet begivenheder</string>
     <string name="AlertForClinics">Notifikation for clinics</string>
     <string name="AlertForAlbumListeningEvents">Notifikation for prÊsentation af nyt album</string>
@@ -32,7 +32,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Clinics</string>
     <string name="AlbumListeningEvents">PrÊsentation af nyt Album</string>
-    <string name="unofficalEventLable">Uofficielle begivenheder</string>
+    <string name="unofficalEventLable">Cruiser Organiseret</string>
 
     <string name="UseLastYearsData">Brug sidste Ârs data</string>
     <string name="LastYearsFeatureExplication">Aktivering \'Brug Last Years oplysninger\' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.</string>

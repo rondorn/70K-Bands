@@ -190,7 +190,7 @@ import Foundation
                 if (eventTypeFiltering(eventType) == true){
                     if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
                         if (rankFiltering(bandName) == true){
-                            if (eventType == unofficalEventType){
+                            if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
                                 unofficalEventCount = unofficalEventCount + 1
                             }
                             include = true
@@ -374,7 +374,7 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
         } else if (eventType == listeningPartyType && showListeningValue == true){
             showEvent = true;
             
-        } else if (eventType == unofficalEventType && showUnofficalValue == true){
+        } else if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && showUnofficalValue == true){
             showEvent = true;
         
         } else if (eventType == showType){

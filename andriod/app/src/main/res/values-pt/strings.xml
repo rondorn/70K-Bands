@@ -19,7 +19,7 @@
     <string name="MinutesBeforeEventtoAlert">Alertar-me antes do evento (minutos)</string>
     <string name="AlertForShows">Alerta para shows</string>
     <string name="AlertForSpecialEvents">Alerta para eventos especiais</string>
-    <string name="AlertForUnoffical">Alerta para eventos não oficiais</string>
+    <string name="AlertForUnoffical">Alerta para cruzador järjestettyihin tapahtumiin</string>
     <string name="AlertForMeetingandGreetEvents">Alerta para Eventos com Artistas</string>
     <string name="AlertForClinics">Alerta para clínicas</string>
     <string name="AlertForAlbumListeningEvents">Alerta para Eventos de Audição de Álbuns</string>
@@ -33,7 +33,7 @@
     <string name="MeetAndGreet">Eventos com Artistas</string>
     <string name="ClinicEvents">Clínicas</string>
     <string name="AlbumListeningEvents">Eventos de Audição de Álbuns</string>
-    <string name="unofficalEventLable">Eventos não oficiais</string>
+    <string name="unofficalEventLable">Cruzador Organizado</string>
 
     <string name="UseLastYearsData">Use as informações do ano passado</string>
     <string name="LastYearsFeatureExplication">Ativando \'Use Informação dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>

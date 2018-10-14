@@ -41,13 +41,13 @@
 "Use Last Years Data"="Use as informações do ano passado";
 
 "Alert For Album Listening Events"="Alerta para Eventos de Audição de Álbuns";
-"Alert For Unofficial Events"="Alerta para eventos não oficiais";
+"Alert For Unofficial Events"="Alerta para cruzador järjestettyihin tapahtumiin";
 
 "Special Event"="Eventos Especiais";
 "Meet and Greet"="Eventos com Artistas";
 "Clinic"="Clínicas";
 "Listening Party"="Eventos de Audição de Álbuns";
-"Unofficial Events"="Eventos não oficiais";
+"Unofficial Events"="Cruzador Organizado";
 
 "LastYearsFeatureExplication"="Ativando 'Use Informação dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 

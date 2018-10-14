@@ -146,8 +146,6 @@ func getPriorityData (_ bandname:String) -> Int {
 
 func writeiCloudData (){
     
-    //saveFileToiCloudDrive(localFile: storageFile, fileName: "data.txt")
-    
     var dataString: String = ""
     
     var counter = 0;
@@ -159,6 +157,9 @@ func writeiCloudData (){
         counter += 1
     }
     
+    if (counter == 0){
+        return;
+    }
     attendedHandler.loadShowsAttended()
     
     let showsAttendedData = attendedHandler.getShowsAttended()
@@ -222,7 +223,7 @@ func readiCloudData(){
         }
     }
     
-    print ("PRIORITIES Beach \(bandPriorityStorage["Beach Party"])");
+    print ("PRIORITIES Beach \(String(describing: bandPriorityStorage["Beach Party"]))");
     if (readInWrite == false){
         writeFile();
         attendedHandler.setShowsAttended(attendedData: showsAttendedData)

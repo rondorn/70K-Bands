@@ -71,7 +71,9 @@ public class BandNotes {
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2) {
 
-            notesData.replaceAll("\\n", "<br>");
+            notesData = notesData.replaceAll("\\n", "<br>");
+            notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
+
             Log.d("descriptionMapFile", "writing data to " + bandNoteFile + " - " + notesData);
             FileHandler70k.saveData(notesData, bandNoteFile);
 

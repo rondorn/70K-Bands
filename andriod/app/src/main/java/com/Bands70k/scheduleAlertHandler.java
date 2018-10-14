@@ -304,7 +304,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         } else if (scheduleDetails.getShowType().equals(staticVariables.listeningEvent) && staticVariables.preferences.getAlertForListeningParties() == true){
             sendAlert = true;
 
-        } else if (scheduleDetails.getShowType().equals(staticVariables.unofficalEvent) && staticVariables.preferences.getAlertForUnofficalEvents() == true){
+        } else if ((scheduleDetails.getShowType().equals(staticVariables.unofficalEvent) || scheduleDetails.getShowType().equals(staticVariables.unofficalEventOld)) && staticVariables.preferences.getAlertForUnofficalEvents() == true){
             sendAlert = true;
         }
 

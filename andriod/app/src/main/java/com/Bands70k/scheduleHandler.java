@@ -66,9 +66,16 @@ public class scheduleHandler {
     }
 
     public void setShowType(String value){
+        Log.d("setShowType", "showType is  " + value);
+        if (value.equals(staticVariables.unofficalEventOld)){
+            Log.d("setShowType", "changing showType to  " + staticVariables.unofficalEvent);
+            value = staticVariables.unofficalEvent;
+        }
+
         showType = value;
     }
     public String getShowType() {
+
         return showType;
     }
 
