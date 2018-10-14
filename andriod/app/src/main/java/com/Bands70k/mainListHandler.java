@@ -65,7 +65,8 @@ public class mainListHandler {
                                 bandPresent.add(bandName);
                                 numberOfEvents++;
                                 Log.d("countInfo", "eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
-                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent)){
+                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent) ||
+                                        BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEventOld)){
                                     numberOfUnofficalEvents = numberOfUnofficalEvents + 1;
                                 }
                             }
@@ -78,7 +79,8 @@ public class mainListHandler {
                                 bandPresent.add(bandName);
                                 numberOfEvents++;
                                 Log.d("countInfo", "eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
-                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent)){
+                                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent) ||
+                                        BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEventOld)){
                                     numberOfUnofficalEvents = numberOfUnofficalEvents + 1;
                                 }
                             }
@@ -224,7 +226,7 @@ public class mainListHandler {
             Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
             showEvent = true;
 
-        } else if (eventType.equals(staticVariables.unofficalEvent) && staticVariables.preferences.getShowUnofficalEvents() == true){
+        } else if ((eventType.equals(staticVariables.unofficalEvent) || eventType.equals(staticVariables.unofficalEventOld))&& staticVariables.preferences.getShowUnofficalEvents() == true){
             Log.d("EventFilter", "preferences.getShowUnofficalEvents() is true");
             showEvent = true;
 

@@ -14,7 +14,7 @@
     <string name="MinutesBeforeEventtoAlert">Alarm X minuten vor Event</string>
     <string name="AlertForShows">Alarm für Shows</string>
     <string name="AlertForSpecialEvents">Alarm für \'Special Events\'</string>
-    <string name="AlertForUnoffical">Warnung für inoffizielle Ereignisse</string>
+    <string name="AlertForUnoffical">Alert für Cruiser organisierte Veranstaltungen</string>
     <string name="AlertForMeetingandGreetEvents">Alarm für \'Meet and Greet\'</string>
     <string name="AlertForClinics">Alarm für Kliniken</string>
     <string name="AlertForAlbumListeningEvents">Alarm für \'Album Listening Events\'</string>
@@ -31,7 +31,7 @@
     <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Kliniken</string>
     <string name="AlbumListeningEvents">Album Listening Events</string>
-    <string name="unofficalEventLable">Inoffizielle Ereignisse</string>
+    <string name="unofficalEventLable">Cruiser organisiert</string>
 
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication">Das Aktivieren von \'Daten des letzten Jahres verwenden\' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen.</string>

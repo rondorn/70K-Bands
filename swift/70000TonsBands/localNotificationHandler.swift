@@ -76,7 +76,7 @@ class localNoticationHandler {
             if (eventType == clinicType && alertForClinics == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == unofficalEventType && alertForUnoffical == true){
+            if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && alertForUnoffical == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
                 print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
