@@ -55,6 +55,9 @@ func getEventTypeIcon (_ eventType: String) -> String {
     
     case unofficalEventType:
         return unofficalEventTypeIcon
+
+    case unofficalEventTypeOld:
+        return unofficalEventTypeIcon
         
     default:
         return unknownVenue

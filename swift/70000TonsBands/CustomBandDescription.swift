@@ -80,7 +80,7 @@ open class CustomBandDescription {
             }
 
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-            if (data.characters.count > 2){
+            if (data.count > 2){
                 commentText = data
             }
         }
@@ -120,7 +120,7 @@ open class CustomBandDescription {
         }
         
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-            if (data.characters.count > 2){
+            if (data.count > 2){
                 commentText = data
             }
         }
@@ -136,8 +136,8 @@ open class CustomBandDescription {
         var newText = text;
         newText = text.replacingOccurrences(of: "\r", with: "\n")
         let okayChars : Set<Character> =
-            Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890+-*=(),.:!_\n".characters)
-        return String(newText.characters.filter {okayChars.contains($0) })
+            Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890+-*=(),.:!_\n")
+        return String(newText.filter {okayChars.contains($0) })
     }
     
     func getDescriptionMap(){

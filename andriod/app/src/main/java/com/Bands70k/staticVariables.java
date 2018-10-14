@@ -81,8 +81,8 @@ public class staticVariables {
     public final static String clinic = "Clinic";
     public final static String specialEvent = "Special Event";
     public final static String listeningEvent = "Listening Party";
-    public final static String unofficalEvent = "Unofficial Event";
-    public final static String imageUrl = "ImageURL";
+    public final static String unofficalEvent = "Cruiser Organized";
+    public final static String unofficalEventOld = "Unofficial Event";
 
     //schedule file header rows
     public final static String schedBandRow = "Band";
@@ -228,6 +228,9 @@ public class staticVariables {
             icon = listeningEventTypeIcon;
 
         } else if (eventType.equals(staticVariables.unofficalEvent)) {
+            icon = unofficalEventTypeIcon;
+
+        } else if (eventType.equals(staticVariables.unofficalEventOld)) {
             icon = unofficalEventTypeIcon;
 
         } else {

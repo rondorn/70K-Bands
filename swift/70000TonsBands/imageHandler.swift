@@ -109,13 +109,12 @@ func getAllImages(){
         
         let imageStoreName = bandName + ".png"
         let imageStoreFile = directoryPath.appendingPathComponent( imageStoreName)
-        let nullImage : UIImageView = UIImageView.init()
-        
+
         if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
             
             let imageURL = getBandImageUrl(bandName)
             print ("Loading image in background so it will be cached by default " + imageURL);
-            displayImage(urlString: imageURL, bandName: bandName)
+            _ = displayImage(urlString: imageURL, bandName: bandName)
         }
     }
 }

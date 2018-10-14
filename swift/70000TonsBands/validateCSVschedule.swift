@@ -51,7 +51,6 @@ class validateCSVSchedule {
             if let csvDataString = try? String(contentsOfFile: scheduleFileString, encoding: String.Encoding.utf8) {
                 
                 var csvData: CSV
-                var error: NSErrorPointer? = nil
                 csvData = try! CSV(csvStringToParse: csvDataString)
                 
                 verifyExpectedFieldsExists(csvData)
