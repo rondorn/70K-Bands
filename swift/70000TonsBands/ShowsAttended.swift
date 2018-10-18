@@ -44,7 +44,6 @@ open class ShowsAttended {
     func loadShowsAttended(){
         
         do {
-            //loadFileFromiCloudDrive(localFile: showsAttended)
             let data = try Data(contentsOf: showsAttended, options: [])
             showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
             
@@ -60,7 +59,12 @@ open class ShowsAttended {
             loadShowsAttended();
         }
         
-        let index = band + ":" + location + ":" + startTime + ":" + eventType
+        var eventTypeValue = eventType;
+        if (eventType == unofficalEventTypeOld){
+            eventTypeValue = unofficalEventType;
+        }
+        
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue
         
         print ("addAttended data index = \(index)")
         var value = ""
@@ -92,8 +96,14 @@ open class ShowsAttended {
         
         var icon = ""
         
-        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventType);
+        var eventTypeValue = eventType;
+        if (eventType == unofficalEventTypeOld){
+            eventTypeValue = unofficalEventType;
+        }
         
+        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue);
+        
+        print ("Check on show value = \(value) for band=\(band) - location=\(location) - startTime=\(startTime)  - eventType=\(eventType)")
         if (value == sawAllStatus){
             icon = sawAllIcon
         
@@ -109,9 +119,14 @@ open class ShowsAttended {
 
     func getShowAttendedColor  (band: String, location: String, startTime: String, eventType: String)->UIColor{
         
+        var eventTypeValue = eventType;
+        if (eventType == unofficalEventTypeOld){
+            eventTypeValue = unofficalEventType;
+        }
+        
         var color : UIColor = UIColor()
         
-        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventType);
+        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue);
         
         if (value == sawAllStatus){
             color = sawAllColor
@@ -128,10 +143,15 @@ open class ShowsAttended {
     
     func getShowAttendedStatus (band: String, location: String, startTime: String, eventType: String)->String{
         
-        let index = band + ":" + location + ":" + startTime + ":" + eventType
+        var eventTypeVariable = eventType;
+        if (eventType == unofficalEventTypeOld){
+            eventTypeVariable = unofficalEventType;
+        }
+        
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable
         
         var value = ""
-        
+
         if (showsAttendedArray[index] == sawAllStatus){
             value = sawAllStatus
             
@@ -142,9 +162,7 @@ open class ShowsAttended {
             value = sawNoneStatus;
             
         }
-        
-        print ("getShowAttendedStatus for index \(index) returned \(value)")
-        
+
         return value
     }
     
