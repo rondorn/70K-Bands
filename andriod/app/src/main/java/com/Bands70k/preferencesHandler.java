@@ -44,8 +44,8 @@ public class preferencesHandler {
     private Boolean showMight = true;
     private Boolean showWont = true;
     private Boolean showUnknown = true;
-
     private Boolean showWillAttend = false;
+
     private Boolean alertOnlyForShowWillAttend = false;
 
     private String artsistsUrl = "Default";
@@ -56,7 +56,7 @@ public class preferencesHandler {
 
     public void loadData() {
 
-        Log.d("settingFilters", "Loading prefereces, already loaded" + staticVariables.prefsLoaded);
+        Log.d("settingFilters", "Loading prefereces, already loaded" + loadCounter);
         if (loadCounter == 0) {
             loadCounter = loadCounter + 1;
             try {
@@ -166,6 +166,7 @@ public class preferencesHandler {
                             setshowMight(Boolean.valueOf(RowData[1]));
 
                         case "showWont":
+                            Log.d("settingFilters", "Loading prefereces, showWont=" + Boolean.valueOf(RowData[1]));
                             setshowWont(Boolean.valueOf(RowData[1]));
 
                         case "showUnknown":
@@ -222,6 +223,7 @@ public class preferencesHandler {
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
 
+        Log.d("Saving Data", "showWont," + showWont.toString());
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
