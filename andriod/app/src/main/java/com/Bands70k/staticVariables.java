@@ -152,18 +152,24 @@ public class staticVariables {
 
     public static void staticVariablesInitialize (){
 
+        if (staticVariables.preferences == null) {
+            staticVariables.preferences = new preferencesHandler();
+            staticVariables.preferences.loadData();
+        }
+
         if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null){
-            staticVariables.filterToogle.put(staticVariables.mustSeeIcon, true);
+            staticVariables.filterToogle.put(staticVariables.mustSeeIcon, staticVariables.preferences.getShowMust());
         }
         if (staticVariables.filterToogle.get(staticVariables.mightSeeIcon) == null){
-            staticVariables.filterToogle.put(staticVariables.mightSeeIcon, true);
+            staticVariables.filterToogle.put(staticVariables.mightSeeIcon, staticVariables.preferences.getShowMight());
         }
         if (staticVariables.filterToogle.get(staticVariables.wontSeeIcon) == null){
-            staticVariables.filterToogle.put(staticVariables.wontSeeIcon, true);
+            staticVariables.filterToogle.put(staticVariables.wontSeeIcon, staticVariables.preferences.getShowWont());
         }
         if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == null){
-            staticVariables.filterToogle.put(staticVariables.unknownIcon, true);
+            staticVariables.filterToogle.put(staticVariables.unknownIcon, staticVariables.preferences.getShowUnknown());
         }
+
 
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
             rinkVenueIcon = "\u26F8";
