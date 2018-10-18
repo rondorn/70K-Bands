@@ -108,6 +108,12 @@ public class showBands extends Activity {
 
         super.onCreate(savedInstanceState);
 
+        if (staticVariables.preferences == null) {
+            staticVariables.preferences = new preferencesHandler();
+            staticVariables.preferences.loadData();
+            Log.d("ShowWont", "Show Wont = " + staticVariables.preferences.getShowWont());
+        }
+
         setContentView(R.layout.activity_show_bands);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -142,9 +148,6 @@ public class showBands extends Activity {
                     }
                 });
 
-        if (staticVariables.preferences == null) {
-            staticVariables.preferences = new preferencesHandler();
-        }
         if (staticVariables.attendedHandler == null){
             staticVariables.attendedHandler = new showsAttended();
         }
@@ -152,7 +155,6 @@ public class showBands extends Activity {
         staticVariablesInitialize();
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
-        staticVariables.preferences.loadData();
 
         scheduleAlertHandler alertHandler = new scheduleAlertHandler();
         //alertHandler.sendLocalAlert("Testing after 10 seconds", 5);
@@ -625,7 +627,6 @@ public class showBands extends Activity {
             Intent refresh = new Intent(this, showBands.class);
             startActivity(refresh);
             finish();
-            refreshNewData();
         }
     }
 
@@ -910,9 +911,16 @@ public class showBands extends Activity {
     }
 
     @Override
+    protected void onDestroy(){
+        Log.d("Saving Data", "Saving state during Destroy");
+        onPause();
+        super.onDestroy();
+
+    }
+    @Override
     public void onPause() {
         listState = bandNamesList.onSaveInstanceState();
-        Log.d("State Status", "Saving state during Pause");
+        Log.d("Saving Data", "Saving state during Pause");
         super.onPause();
 
         scheduleAlertHandler alerts = new scheduleAlertHandler();
@@ -989,10 +997,6 @@ public class showBands extends Activity {
         subscribeToAlerts();
     }
 
-    @Override
-    protected void onDestroy(){
-        super.onDestroy();
-    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
