@@ -20,7 +20,7 @@ import Foundation
     var attendingCount = 0;
 
     var showOnlyWillAttened = false;
-    
+
     var sortedBy = String();
     var bandCount = Int();
     var eventCount = Int();
@@ -84,6 +84,13 @@ import Foundation
         return showOnlyWillAttened
     }
 
+    func setSortedBy(_ value: String){
+        sortedBy = value
+    }
+    func getSortedBy() -> String{
+        return sortedBy
+    }
+
     func determineBandOrScheduleList (_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
         
         var newAllBands = [String]()
@@ -94,7 +101,8 @@ import Foundation
         if (typeField.isEmpty == true){
             return allBands;
         }
-        
+    
+        print ("sortedBy = \(sortedBy)")
         schedule.buildTimeSortedSchedulingData();
         print (schedule.getTimeSortedSchedulingData());
         if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
@@ -207,7 +215,14 @@ import Foundation
         return include
     }
 
-    func getFilteredBands(_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String] {
+    func getFilteredBands(_ allBands:[String], schedule: scheduleHandler) -> [String] {
+        
+        var sortedBy = getSortedBy()
+        
+        //set default if empty
+        if (sortedBy.isEmpty == true){
+            sortedBy = "time"
+        }
         
         var filteredBands = [String]()
         

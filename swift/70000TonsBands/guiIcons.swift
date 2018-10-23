@@ -107,7 +107,14 @@ func getBandIconSort() -> String {
 }
 
 func getScheduleIcon() -> String {
-    return scheduleIcon
+    
+    if (getSortedBy() == "name"){
+        return scheduleIcon
+    
+    } else {
+      return bandIconSort
+        
+    }
 }
 
 func getPoolIcon() -> String {

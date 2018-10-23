@@ -46,12 +46,24 @@ open class CustomBandDescription {
                 print ("commentFile looping through bands")
                 for record in bandDescriptionUrl{
                     let bandName = record.key
-                    _ = self.getDescription(bandName: bandName)
+                    
+                    if (self.doesDescriptionFileExists(bandName: bandName) == false){
+                        _ = self.getDescription(bandName: bandName)
+                    }
                 }
                  isLoadingCommentData = false
             }
         }
     }
+    
+    func doesDescriptionFileExists(bandName: String) -> Bool {
+        
+        let commentFileName = bandName + "_comment.txt";
+        let commentFile = directoryPath.appendingPathComponent( commentFileName)
+        
+        return (FileManager.default.fileExists(atPath: commentFile.path))
+    }
+    
     
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
@@ -60,7 +72,7 @@ open class CustomBandDescription {
         let commentFileName = bandName + "_comment.txt";
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
-        if (FileManager.default.fileExists(atPath: commentFile.path) == false){
+        if (doesDescriptionFileExists(bandName: bandName) == false){
 
                 //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 let httpData = getUrlData(descriptionUrl);

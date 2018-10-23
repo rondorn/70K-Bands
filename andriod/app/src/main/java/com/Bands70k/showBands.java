@@ -149,6 +149,9 @@ public class showBands extends Activity {
             staticVariables.attendedHandler = new showsAttended();
         }
 
+        sortBySchedule = staticVariables.preferences.getSortByTime();
+        Log.d("sortBySchedule", "sortBySchedule  = " + sortBySchedule.toString());
+
         staticVariablesInitialize();
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
@@ -467,8 +470,10 @@ public class showBands extends Activity {
                 if (sortBySchedule == true) {
                     HelpMessageHandler.showMessage(getString(R.string.SortingAlphabetically));
                     sortBySchedule = false;
+                    staticVariables.preferences.setSortByTime(false);
                 } else {
                     sortBySchedule = true;
+                    staticVariables.preferences.setSortByTime(true);
                     HelpMessageHandler.showMessage(getString(R.string.SortingChronologically));
                 }
                 setSortButton();
@@ -949,7 +954,8 @@ public class showBands extends Activity {
         Log.d(TAG, notificationTag + " In onResume");
         super.onResume();
         inBackground = false;
-
+        sortBySchedule = staticVariables.preferences.getSortByTime();
+        Log.d("sortBySchedule", "sortBySchedule  = " + sortBySchedule.toString());
         refreshNewData();
 
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
