@@ -52,6 +52,8 @@ public class preferencesHandler {
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
 
+    private Boolean sortByTime = true;
+
     private Integer loadCounter = 0;
 
     public void loadData() {
@@ -176,6 +178,9 @@ public class preferencesHandler {
 
                         case "alertOnlyForShowWillAttend":
                             setAlertOnlyForShowWillAttend(Boolean.valueOf(RowData[1]));
+
+                        case "sortByTime":
+                            setSortByTime(Boolean.valueOf(RowData[1]));
                     }
                 }
             } catch (Exception error) {
@@ -221,7 +226,7 @@ public class preferencesHandler {
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
-
+        dataString += "sortByTime," + sortByTime.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
@@ -305,6 +310,12 @@ public class preferencesHandler {
         return showOtherShows;
     }
 
+    public void setSortByTime(Boolean value) {
+        sortByTime = value;
+    }
+    public Boolean getSortByTime() {
+        return sortByTime;
+    }
 
     public Boolean getShowMust() {
         return showMust;
