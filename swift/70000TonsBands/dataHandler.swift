@@ -25,11 +25,12 @@ func writeFiltersFile(){
         prefsString += "wontSeeOn:" + boolToString(getWontSeeOn()) + ";"
         prefsString += "unknownSeeOn:" + boolToString(getUnknownSeeOn()) + ";"
         prefsString += "showOnlyWillAttened:" + boolToString(getShowOnlyWillAttened()) + ";"
+        prefsString += "sortedBy:" + getSortedBy() + ";"
         prefsString += "currentTimeZone:" + localTimeZoneAbbreviation + ";"
         print ("Wrote prefs " + prefsString)
         do {
             try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
-            print ("Status of getWontSeeOn saved")
+            print ("saved sortedBy = " + getSortedBy())
         } catch {
             print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
         }
@@ -43,11 +44,12 @@ func readFiltersFile(){
     
     print ("Status of getWontSeeOn loading")
     if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
-        print ("Status of getWontSeeOn loading 1")
+        print ("Status of sortedBy loading 1 " + data)
         let dataArray = data.components(separatedBy: ";")
         for record in dataArray {
             print ("Status of getWontSeeOn loading loop")
             var valueArray = record.components(separatedBy: ":")
+            
             switch valueArray[0] {
                 
                 case "mustSeeOn":
@@ -66,13 +68,18 @@ func readFiltersFile(){
                 case "showOnlyWillAttened":
                     setShowOnlyWillAttened(stringToBool(valueArray[1]))
                 
-                case "currentTimeZone:":
+                case "currentTimeZone":
                     tempCurrentTimeZone = valueArray[1]
-
+                
+                case "sortedBy":
+                    print ("activly Loading sortedBy = " + valueArray[1])
+                    setSortedBy(valueArray[1])
+                
                 default:
                     print("Not sure why this would happen")
             }
         }
+        print ("Loading sortedBy = " + getSortedBy())
     }
     
     if (tempCurrentTimeZone != localTimeZoneAbbreviation){
@@ -165,7 +172,7 @@ func writeiCloudData (){
     let showsAttendedData = attendedHandler.getShowsAttended()
     for (index, attended) in showsAttendedData {
         dataString = dataString + ATTENDED + "!" + index + "!" + attended + ";"
-        print ("Adding icloud write ATTENDED \(index) - \(attended)")
+        print ("Adding icloud write ATTENDED \(index) - '\(attended)'")
         counter += 1
     }
     
@@ -208,7 +215,7 @@ func readiCloudData(){
                     print ("Adding icloud PRIORITIES \(split2[1]) - \(split2[2])")
                 } else if (split2[0] == ATTENDED){
                     showsAttendedData[split2[1]] = split2[2];
-                    print ("Adding icloud ATTENDED \(split2[1]) - \(split2[2])")
+                    print ("Adding icloud ATTENDED \(split2[1]) - '\(split2[2])'")
                 }
         
             } else if (split2.count == 1){

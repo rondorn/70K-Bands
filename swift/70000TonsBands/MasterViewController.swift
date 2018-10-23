@@ -49,7 +49,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        sortedBy = "time"
         
         //self.view.backgroundColor = UIColor.black;
         self.tableView.backgroundColor = backgroundColor;
@@ -89,7 +88,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
         if (eventCount != 0 && sortedBy == "name"){
-            sortedBy = "time";
+            //setSortedBy("time")
         }
         
         if (getShowOnlyWillAttened() == true){
@@ -177,15 +176,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
         }
+        
+        self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
     }
     
     func refreshDisplayAfterWake(){
         
-        if (sortedBy == "time"){
-            refreshFromCache()
-            self.tableView.reloadData()
-        } else {
-            refreshData()
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            self.refreshData()
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
     }
     
@@ -212,7 +214,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandsByName = [String]()
         readBandFile()
         schedule.populateSchedule()
-        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         bandsByName = bands
         setShowOnlyAttenedFilterStatus()
     }
@@ -224,7 +226,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.isHidden = true;
             willAttendButton.isHidden = true;
             setShowOnlyWillAttened(false);
-            sortedBy = "name"
             resetFilterIcons();
             self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
             
@@ -235,7 +236,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
             
         } else {
-            sortedBy = "time"
             print("Sort By is Time, Show")
             //self.sortBandsByTime()
             self.scheduleButton.isHidden = false;
@@ -244,7 +244,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
         bands =  [String]()
-        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
     }
     
     func quickRefresh(){
@@ -252,7 +252,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
-            self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+            self.bands = getFilteredBands(getBandNames(), schedule: schedule)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
@@ -303,7 +303,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.bands =  [String]()
                 
                 schedule.populateSchedule()
-                self.bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+                self.bands = getFilteredBands(getBandNames(), schedule: schedule)
                 self.bandsByName = self.bands
                 
                 DispatchQueue.main.async{
@@ -375,7 +375,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBAction func onlyShowAttendedFilter(_ sender: UIButton) {
-
+        
         if (getShowOnlyWillAttened() == false){
             setShowOnlyWillAttened(true)
             
@@ -408,7 +408,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         
         updateCountLable()
         tableView.reloadData()
@@ -460,7 +460,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         } else {
             bands =  [String]()
-            bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
+            bands = getFilteredBands(getBandNames(), schedule: schedule)
             updateCountLable()
             tableView.reloadData()
             return
@@ -470,7 +470,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("Sorted  by is " + sortedBy)
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(getBandNames(), schedule: schedule,sortedBy: sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         
         updateCountLable()
         tableView.reloadData()
@@ -740,10 +740,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             message = NSLocalizedString("Sorting Alphabetically", comment: "")
             sortedBy = "name"
         }
+        setSortedBy(sortedBy)
         ToastMessages(message).show(self, cellLocation: self.view.frame)
         ensureCorrectSorting()
+        writeFiltersFile()
         self.tableView.reloadData()
-    
+        
     }
     
     //iCloud data loading
