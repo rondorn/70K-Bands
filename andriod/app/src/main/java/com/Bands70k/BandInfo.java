@@ -49,6 +49,7 @@ public class BandInfo {
 
     public ArrayList<String> getBandNames(){
 
+
         ArrayList<String> bandNames = ParseBandCSV();
 
 
@@ -77,7 +78,7 @@ public class BandInfo {
             } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
                 filteredBandNames.add(bandName);
 
-            } else if ((bandRank.isEmpty() || bandRank.equals(""))  && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
+            } else if (bandRank.equals("")  && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
                 filteredBandNames.add(bandName);
             }
         }

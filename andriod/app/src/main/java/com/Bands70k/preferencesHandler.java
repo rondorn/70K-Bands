@@ -44,19 +44,21 @@ public class preferencesHandler {
     private Boolean showMight = true;
     private Boolean showWont = true;
     private Boolean showUnknown = true;
-    private Boolean showWillAttend = false;
 
+    private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
 
     private String artsistsUrl = "Default";
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
 
+    private Boolean sortByTime = true;
+
     private Integer loadCounter = 0;
 
     public void loadData() {
 
-        Log.d("settingFilters", "Loading prefereces, already loaded" + loadCounter);
+        Log.d("settingFilters", "Loading prefereces, already loaded" + staticVariables.prefsLoaded);
         if (loadCounter == 0) {
             loadCounter = loadCounter + 1;
             try {
@@ -166,7 +168,6 @@ public class preferencesHandler {
                             setshowMight(Boolean.valueOf(RowData[1]));
 
                         case "showWont":
-                            Log.d("settingFilters", "Loading prefereces, showWont=" + Boolean.valueOf(RowData[1]));
                             setshowWont(Boolean.valueOf(RowData[1]));
 
                         case "showUnknown":
@@ -177,6 +178,9 @@ public class preferencesHandler {
 
                         case "alertOnlyForShowWillAttend":
                             setAlertOnlyForShowWillAttend(Boolean.valueOf(RowData[1]));
+
+                        case "sortByTime":
+                            setSortByTime(Boolean.valueOf(RowData[1]));
                     }
                 }
             } catch (Exception error) {
@@ -222,8 +226,7 @@ public class preferencesHandler {
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
-
-        Log.d("Saving Data", "showWont," + showWont.toString());
+        dataString += "sortByTime," + sortByTime.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
@@ -307,6 +310,12 @@ public class preferencesHandler {
         return showOtherShows;
     }
 
+    public void setSortByTime(Boolean value) {
+        sortByTime = value;
+    }
+    public Boolean getSortByTime() {
+        return sortByTime;
+    }
 
     public Boolean getShowMust() {
         return showMust;
