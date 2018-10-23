@@ -120,10 +120,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     //used to disable keyboard input for event fields
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        print ("Started editing");
         return false
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
+        print ("Ended editing");
         notesSection.endEditing(true)
         super.touchesBegan(touches, with: event)
     }
@@ -230,6 +232,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.text = ""
             customNotesText.textColor = UIColor.black
         }
+        
     }
     
 
@@ -555,6 +558,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
         }
 
+    }
+    
+    @IBAction func noteButtonClick(_ sender: Any) {
+        print ("Clicked the notes button")
+        let screenSize = UIScreen.main.bounds
+        customNotesText.frame.size.height = screenSize.height
     }
     
     @IBAction func clickedOnEvent(_ sender: UITextField) {

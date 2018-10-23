@@ -75,7 +75,7 @@ class InterfaceController: WKInterfaceController {
     
     func refreshData() {
         
-        bands = getFilteredBands(getBandNames(), schedule: schedule, sortedBy: sortedBy)
+        bands = getFilteredBands(getBandNames(), schedule: schedule)
         sortBandsByTime()
         readiCloudData()
         print(schedule.schedulingData);
