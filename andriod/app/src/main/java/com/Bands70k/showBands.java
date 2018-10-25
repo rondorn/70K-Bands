@@ -108,6 +108,12 @@ public class showBands extends Activity {
 
         super.onCreate(savedInstanceState);
 
+        if (staticVariables.preferences == null) {
+            staticVariables.preferences = new preferencesHandler();
+            staticVariables.preferences.loadData();
+            Log.d("ShowWont", "Show Wont = " + staticVariables.preferences.getShowWont());
+        }
+
         setContentView(R.layout.activity_show_bands);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -142,20 +148,13 @@ public class showBands extends Activity {
                     }
                 });
 
-        if (staticVariables.preferences == null) {
-            staticVariables.preferences = new preferencesHandler();
-        }
         if (staticVariables.attendedHandler == null){
             staticVariables.attendedHandler = new showsAttended();
         }
 
-        sortBySchedule = staticVariables.preferences.getSortByTime();
-        Log.d("sortBySchedule", "sortBySchedule  = " + sortBySchedule.toString());
-
         staticVariablesInitialize();
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
-        staticVariables.preferences.loadData();
 
         scheduleAlertHandler alertHandler = new scheduleAlertHandler();
         //alertHandler.sendLocalAlert("Testing after 10 seconds", 5);
@@ -467,12 +466,11 @@ public class showBands extends Activity {
         sortButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
                 setContentView(R.layout.activity_show_bands);
-                if (sortBySchedule == true) {
+
+                if (staticVariables.preferences.getSortByTime() == true) {
                     HelpMessageHandler.showMessage(getString(R.string.SortingAlphabetically));
-                    sortBySchedule = false;
                     staticVariables.preferences.setSortByTime(false);
                 } else {
-                    sortBySchedule = true;
                     staticVariables.preferences.setSortByTime(true);
                     HelpMessageHandler.showMessage(getString(R.string.SortingChronologically));
                 }
@@ -630,7 +628,6 @@ public class showBands extends Activity {
             Intent refresh = new Intent(this, showBands.class);
             startActivity(refresh);
             finish();
-            refreshNewData();
         }
     }
 
@@ -915,9 +912,16 @@ public class showBands extends Activity {
     }
 
     @Override
+    protected void onDestroy(){
+        Log.d("Saving Data", "Saving state during Destroy");
+        onPause();
+        super.onDestroy();
+
+    }
+    @Override
     public void onPause() {
         listState = bandNamesList.onSaveInstanceState();
-        Log.d("State Status", "Saving state during Pause");
+        Log.d("Saving Data", "Saving state during Pause");
         super.onPause();
 
         scheduleAlertHandler alerts = new scheduleAlertHandler();
@@ -954,8 +958,7 @@ public class showBands extends Activity {
         Log.d(TAG, notificationTag + " In onResume");
         super.onResume();
         inBackground = false;
-        sortBySchedule = staticVariables.preferences.getSortByTime();
-        Log.d("sortBySchedule", "sortBySchedule  = " + sortBySchedule.toString());
+
         refreshNewData();
 
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -996,10 +999,6 @@ public class showBands extends Activity {
     }
 
     @Override
-    protected void onDestroy(){
-        super.onDestroy();
-    }
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -1034,10 +1033,12 @@ public class showBands extends Activity {
             sortButton.setEnabled(true);
             sortButton.setClickable(true);
             sortButton.setVisibility(View.VISIBLE);
-            if (sortBySchedule == true) {
+            if (staticVariables.preferences.getSortByTime() == true) {
                 sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_alphabetically));
+                staticVariables.preferences.setSortByTime(true);
             } else {
                 sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_by_size));
+                staticVariables.preferences.setSortByTime(false);
             }
         } else {
             sortButton.setEnabled(false);
