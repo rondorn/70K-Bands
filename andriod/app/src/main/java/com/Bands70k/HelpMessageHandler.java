@@ -11,9 +11,10 @@ public class HelpMessageHandler {
         if (mytoast != null) {
             mytoast.cancel();
         }
-
-        mytoast = Toast.makeText(staticVariables.context, message, Toast.LENGTH_LONG);
-        mytoast.setGravity(Gravity.CENTER|Gravity.CENTER_HORIZONTAL, 0, 0);
-        mytoast.show();
+        if (staticVariables.context != null) {
+            mytoast = Toast.makeText(staticVariables.context, message, Toast.LENGTH_LONG);
+            mytoast.setGravity(Gravity.CENTER | Gravity.CENTER_HORIZONTAL, 0, 0);
+            mytoast.show();
+        }
     }
 }
