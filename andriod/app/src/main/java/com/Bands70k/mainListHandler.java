@@ -57,7 +57,7 @@ public class mainListHandler {
         if (BandInfo.scheduleRecords != null) {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
-                    if (staticVariables.sortBySchedule == true) {
+                    if (staticVariables.preferences.getSortByTime() == true) {
                         if ((timeIndex + 3600000) > System.currentTimeMillis()) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {

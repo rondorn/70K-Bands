@@ -119,6 +119,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                     Log.d("SchedNotications", "!Timing1 " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
 
                                     sendLocalAlert(alertMessage, delayInseconds);
+
                                 }
 
                             }
@@ -318,7 +319,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     public void clearAlerts (){
 
         try {
-            Log.d("SendLocalAlert", "Looping through previosu alerts");
+            Log.d("clearLocalAlerts", "Looping through previosu alerts");
 
             Map<Integer, String> alarmStorageStringHash = loadAlarmStringStorage();
 
@@ -337,12 +338,14 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-                Log.d("SchedNotications", "Clearing alert " + id.toString());
+                Log.d("clearLocalAlerts", "Clearing alert " + id.toString());
                 clearAlarm.cancel(pendingIntent);
             }
 
             staticVariables.alertMessages.clear();
-            alarmStorageStringHash = new HashMap<Integer, String>();
+            staticVariables.alertTracker = 0;
+            alarmStorageStringHash.clear();
+
             saveAlarmStrings(alarmStorageStringHash);
         } catch (Exception error){
             Log.e("SchedNotications", "Something has gone wrong " + error.getLocalizedMessage() + "\n" + error.fillInStackTrace());
@@ -365,7 +368,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             out.close();
             file.close();
-
+            Log.e("alert tracing", "able to save alert tracking data");
         } catch (Exception error){
             Log.e("Error", "Unable to save alert tracking data " + error.getLocalizedMessage());
             Log.e("Error", "Unable to save alert tracking data " + error.fillInStackTrace());
@@ -387,7 +390,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             in.close();
             file.close();
-
+            Log.d("alertTracking", "able to load alert tracking data ");
         } catch (Exception error){
             Log.e("Error", "Unable to load alert tracking data " + error.getMessage());
         }
