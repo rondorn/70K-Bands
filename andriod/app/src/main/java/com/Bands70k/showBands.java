@@ -192,12 +192,13 @@ public class showBands extends Activity {
 
         );
 
+        Log.d(TAG, "2 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
         populateBandList();
         showNotification();
         setFilterDefaults();
 
         setupButtonFilters();
-
+        Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
     }
 
@@ -696,6 +697,8 @@ public class showBands extends Activity {
         } else {
             setUnknownFilterButton(unknownFilterButton, true);
         }
+
+        staticVariables.preferences.saveData();
     }
 
     private void setMustFilterButton(ToggleButton filterButton, Boolean setTo){

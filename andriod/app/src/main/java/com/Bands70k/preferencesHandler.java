@@ -186,9 +186,18 @@ public class preferencesHandler {
             } catch (Exception error) {
                 Log.e("Load Data Error", error.getMessage() + "\n" + error.fillInStackTrace());
             }
+            removeFiltersForShowWillAttend();
         }
     }
 
+    public void removeFiltersForShowWillAttend(){
+        if (getShowWillAttend() == true){
+            setshowMust(true);
+            setshowMight(true);
+            setshowWont(true);
+            setshowUnknown(true);
+        }
+    }
 
     public void saveData() {
 

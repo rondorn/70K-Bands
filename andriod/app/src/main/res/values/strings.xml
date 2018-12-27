@@ -38,7 +38,7 @@
     <string name="LastYearsFeatureExplication">Activating \'Use Last Years Data\' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
 
     <string name="restarTitle">Restart Required</string>
-    <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
+    <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
 
     <string name="showAttendedFilterTrueHelp">Only show events that you indicate you will attend. Other filters will not apply</string>
     <string name="showAttendedFilterFalseHelp">Show bands and shows according to filters</string>
