@@ -121,7 +121,7 @@ public class staticVariables {
 
     public static Boolean fileDownloaded = false;
 
-    public static Boolean sortBySchedule = true;
+    //public static Boolean sortBySchedule = true;
     public static Parcelable listState;
 
     public static String SENT_TOKEN_TO_SERVER = "sentTokenToServer";

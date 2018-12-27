@@ -87,10 +87,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
-        if (eventCount != 0 && sortedBy == "name"){
-            //setSortedBy("time")
-        }
-        
         if (getShowOnlyWillAttened() == true){
             willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
         } else {
@@ -102,6 +98,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func awakeFromNib() {
         super.awakeFromNib()
+        print ("The awakeFromNib was called");
         if UIDevice.current.userInterfaceIdiom == .pad {
             self.clearsSelectionOnViewWillAppear = false
             self.preferredContentSize = CGSize(width: 320.0, height: 600.0)
@@ -111,8 +108,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewWillAppear(_ animated: Bool) {
         print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
-        refreshData()
-        tableView.reloadData()
+        isLoadingBandData = false
+        refreshDisplayAfterWake();
+        //refreshData()
+        //tableView.reloadData()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
@@ -152,7 +151,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let dismissAction = UIAlertAction(title: "Dismiss", style: .destructive, handler: nil)
             alert.addAction(dismissAction)
             self.present(alert, animated: true, completion: nil)
-
+            isLoadingBandData = false
+            refreshData()
     }
     
     func setFilterButtons(){
@@ -258,8 +258,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             updateCountLable()
             
             setShowOnlyAttenedFilterStatus()
-            self.tableView.reloadData()
             isPerformingQuickLoad = false
+            self.tableView.reloadData()
         }
     }
     
@@ -287,16 +287,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
-                readiCloudData()
-                gatherData();
-                
                 if (offline == false){
+                    
+                    readiCloudData()
+                    gatherData();
+                    
                     schedule.DownloadCsv()
                     let validate = validateCSVSchedule()
                     validate.validateSchedule()
-                
-                    bandNotes.getAllDescriptions()
-                    getAllImages()
+                    
+                    DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                        bandNotes.getAllDescriptions()
+                        getAllImages()
+                    }
                     
                 }
                 self.bandsByName = [String]()
@@ -312,11 +315,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.tableView.reloadData()
                     self.refreshAlerts()
                     self.setShowOnlyAttenedFilterStatus()
+                    isLoadingBandData = false
                     self.tableView.reloadData()
                 }
-                
-                
-                isLoadingBandData = false
+            
             }
             setShowOnlyAttenedFilterStatus()
             updateCountLable()

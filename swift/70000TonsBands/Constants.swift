@@ -38,6 +38,9 @@ var isLoadingCommentData = false
 var isPerformingQuickLoad = false
 var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
 
+var loadingiCloud = false;
+var savingiCloud = false;
+
 //CSV field names
 var typeField = "Type"
 var showField = "Show"
@@ -114,8 +117,8 @@ let defaultPrefsValue = "Default";
 let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
 
-//let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1"
-let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1"
+//let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1"
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"
