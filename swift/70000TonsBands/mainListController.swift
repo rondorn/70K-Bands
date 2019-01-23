@@ -108,13 +108,15 @@ import Foundation
         if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
             print ("Sorting by name!!!");
             for bandName in schedule.getBandSortedSchedulingData().keys {
-                for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys{
-                    if (timeIndex > Date().timeIntervalSince1970 - 3600){
-                        totalUpcomingEvents += 1;
-                        if (schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField] != nil){
-                            if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
-                                newAllBands.append(bandName + ":" + String(timeIndex));
-                                presentCheck.append(bandName);
+                if (schedule.getBandSortedSchedulingData().isEmpty == false){
+                    for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
+                        if (timeIndex > Date().timeIntervalSince1970 - 3600){
+                            totalUpcomingEvents += 1;
+                            if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
+                                if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                                    newAllBands.append(bandName + ":" + String(timeIndex));
+                                    presentCheck.append(bandName);
+                                }
                             }
                         }
                     }
@@ -196,12 +198,14 @@ import Foundation
             } else {
                 let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
                 if (eventTypeFiltering(eventType) == true){
-                    if (venueFiltering(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!) == true){
-                        if (rankFiltering(bandName) == true){
-                            if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
-                                unofficalEventCount = unofficalEventCount + 1
+                    if (schedule.getBandSortedSchedulingData().isEmpty == false){
+                        if (venueFiltering((schedule.getBandSortedSchedulingData()[bandName]![timeIndex]?[locationField])!) == true){
+                            if (rankFiltering(bandName) == true){
+                                if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
+                                    unofficalEventCount = unofficalEventCount + 1
+                                }
+                                include = true
                             }
-                            include = true
                         }
                     }
                 }

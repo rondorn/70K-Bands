@@ -403,6 +403,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func showFullSchedule () {
         
+        var counter = 0;
+        while (isLoadingSchedule == true){
+            usleep(250000)
+            print ("Waiting for schedule to finish loading");
+            if (counter == 5){
+                isLoadingSchedule = false;
+            }
+            counter = counter + 1;
+        }
+        print ("Waiting for schedule to finish loading, Done");
         schedule.populateSchedule()
         
         if (schedule.schedulingData[bandName]?.isEmpty == false){

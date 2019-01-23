@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -281,10 +282,35 @@ public class showBands extends Activity {
                     item5.setTitleColor(Color.LTGRAY);
                     menu.addMenuItem(item5);
                 }
+
+
             }
         };
         //set MenuCreator
         bandNamesList.setMenuCreator(creator);
+
+        bandNamesList.setOnScrollListener(new AbsListView.OnScrollListener() {
+
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem,
+                                 int visibleItemCount, int totalItemCount) {
+
+                if (firstVisibleItem > 0) {
+                    Log.d("Setting position", "Setting position ito be  " + String.valueOf(firstVisibleItem));
+                    listPosition = firstVisibleItem;
+                    if (listPosition == 1){
+                        listPosition = 0;
+                    }
+                }
+
+            }
+        });
 
         // set SwipeListener
         bandNamesList.setOnSwipeListener(new SwipeMenuListView.OnSwipeListener() {
@@ -626,9 +652,9 @@ public class showBands extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode==RESULT_OK){
-            Intent refresh = new Intent(this, showBands.class);
-            startActivity(refresh);
-            finish();
+            ///Intent refresh = new Intent(this, showBands.class);
+            //startActivity(refresh);
+            //finish();
         }
     }
 
@@ -858,6 +884,9 @@ public class showBands extends Activity {
             bandNamesList.setAdapter(arrayAdapter);
             bandNamesList.requestLayout();
 
+            Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
+            bandNamesList.setSelection(listPosition);
+
             scheduleAlertHandler alerts = new scheduleAlertHandler();
             alerts.execute();
 
@@ -888,6 +917,9 @@ public class showBands extends Activity {
             ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
 
             bandNamesList.setAdapter(arrayAdapter);
+            Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
+            bandNamesList.setSelection(listPosition);
+
         } else {
             refreshActivated = false;
         }
@@ -999,6 +1031,9 @@ public class showBands extends Activity {
         showNotification();
 
         subscribeToAlerts();
+
+        Log.d("Setting position", "Setting position in onResume to " + String.valueOf(listPosition));
+        bandNamesList.setSelection(listPosition);
     }
 
     @Override
@@ -1074,6 +1109,7 @@ public class showBands extends Activity {
 
         ListAdapter arrayAdapter = listHandler.arrayAdapter;
 
+
         return arrayAdapter;
     }
 
@@ -1139,6 +1175,9 @@ public class showBands extends Activity {
                 bandNamesPullRefresh.setRefreshing(false);
 
                 fileDownloaded = true;
+
+                Log.d("Setting position", "Setting position in onPostExecute to " + String.valueOf(listPosition));
+                bandNamesList.setSelection(listPosition);
             }
 
 
