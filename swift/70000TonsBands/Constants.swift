@@ -34,8 +34,10 @@ var iCloudCheck = false;
 //prevent mutiple threads doing the same thing
 var isAlertGenerationRunning = false
 var isLoadingBandData = false
+var isLoadingSchedule = false
 var isLoadingCommentData = false
 var isPerformingQuickLoad = false
+var isReadingBandFile = false;
 var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
 
 var loadingiCloud = false;

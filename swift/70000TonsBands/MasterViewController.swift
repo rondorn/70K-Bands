@@ -67,10 +67,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                          name: UserDefaults.didChangeNotification ,
                                                          object: nil)
         
-        NotificationCenter.default.addObserver(self,
-                                                         selector: #selector(MasterViewController.showReceivedMessage(_:)),
-                                                         name: UserDefaults.didChangeNotification, object: nil)
-        
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControlEvents.valueChanged)
         self.refreshControl = refreshControl
@@ -94,6 +90,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         refreshDisplayAfterWake();
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(MasterViewController.showReceivedMessage(_:)),
+                                               name: UserDefaults.didChangeNotification, object: nil)
     }
     
     override func awakeFromNib() {
@@ -110,8 +110,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         super.viewWillAppear(animated)
         isLoadingBandData = false
         refreshDisplayAfterWake();
-        //refreshData()
-        //tableView.reloadData()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
@@ -181,18 +179,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshDisplayAfterWake(){
-        
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            self.refreshData()
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
+        self.refreshData()
     }
     
     func refreshAlerts(){
-        if (isAlertGenerationRunning == false){
+        if (isAlertGenerationRunning == true){
+            var counter = 0;
+            while (isAlertGenerationRunning == true){
+                usleep(250000)
+                if (counter == 5){
+                    isAlertGenerationRunning = false;
+                }
+                counter = counter + 1;
+            }
+        } else {
             
             isAlertGenerationRunning = true
             
@@ -203,8 +203,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 } else {
                     // Fallback on earlier versions
                 }
-                isAlertGenerationRunning = false
             }
+            isAlertGenerationRunning = false
         }
     }
     
@@ -264,25 +264,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshData(){
-        
-        //check if the timezonr has changes for whatever reason
-        localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
-        
-        internetAvailble = isInternetAvailable();
-        print ("Internetavailable is  \(internetAvailble)");
-        if (internetAvailble == false){
-            self.refreshControl?.endRefreshing();
-        
+
+        if (isLoadingBandData == true){
+            var counter = 0;
+            while (isLoadingBandData == true){
+                usleep(250000)
+                if (counter == 5){
+                    isLoadingBandData = false;
+                }
+                print ("Waiting for bandData \(counter)");
+                counter = counter + 1;
+            }
         } else {
-            //clear busy indicator after a 3 second delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
-                self.refreshControl?.endRefreshing();
-            })
-        }
-        
-        if (isLoadingBandData == false){
-            
+            print ("Waiting for bandData, Done")
             isLoadingBandData = true
+            //check if the timezonr has changes for whatever reason
+            localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
+            
+            internetAvailble = isInternetAvailable();
+            print ("Internetavailable is  \(internetAvailble)");
+            if (internetAvailble == false){
+                self.refreshControl?.endRefreshing();
+            
+            } else {
+                //clear busy indicator after a 3 second delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                    self.refreshControl?.endRefreshing();
+                })
+            }
+  
             refreshFromCache()
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
@@ -308,22 +318,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 schedule.populateSchedule()
                 self.bands = getFilteredBands(getBandNames(), schedule: schedule)
                 self.bandsByName = self.bands
+                isLoadingBandData = false
                 
                 DispatchQueue.main.async{
+                    isLoadingBandData = false
                     self.ensureCorrectSorting()
                     self.updateCountLable()
                     self.tableView.reloadData()
                     self.refreshAlerts()
                     self.setShowOnlyAttenedFilterStatus()
-                    isLoadingBandData = false
                     self.tableView.reloadData()
                 }
             
             }
-            setShowOnlyAttenedFilterStatus()
-            updateCountLable()
-            self.tableView.reloadData()
-            
         }
     } 
     
@@ -698,6 +705,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
         
+        if (isLoadingBandData == true){
+           
+            var counter = 0;
+            while (isLoadingBandData == true){
+                usleep(250000)
+                if (counter == 5){
+                    isLoadingBandData = false;
+                }
+                print ("Waiting for band data to load \(counter)")
+                counter = counter + 1;
+            }
+        }
+        print ("Waiting for band data to load, Done")
         self.splitViewController!.delegate = self;
         
         self.splitViewController!.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible

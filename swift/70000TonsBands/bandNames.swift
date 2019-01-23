@@ -41,6 +41,16 @@ func gatherData () {
         print ("Setting offline is true")
         offline = true;
     }
+    var counter = 0;
+    while (isReadingBandFile == true){
+        usleep(250000)
+        print ("Waiting for bandFile to finish loading");
+        counter = counter + 1;
+        if (counter == 5){
+            isReadingBandFile = false;
+        }
+    }
+    print ("Waiting for bandFile to finish loading, Done");
     readBandFile();
 }
 
@@ -60,74 +70,87 @@ func writeBandFile (_ httpData: String){
 
 
 func readBandFile (){
+
+    if (isReadingBandFile == true){
+        var counter = 0;
+        while (isReadingBandFile == true){
+            usleep(250000)
+            if (counter == 5){
+                isReadingBandFile = false;
+            }
+            counter = counter + 1;
+        }
+    } else {
     
-    bandNames = [String]()
-    
-    print ("Reading content of file " + bandFile);
-    
-    if (FileManager.default.fileExists(atPath: bandFile) == false){
-        gatherData();
-    }
-    if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
-        print("csvDataString has data", terminator: "");
+        isReadingBandFile = true;
+        bandNames = [String]()
         
-        //var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
-        var csvData: CSV
+        print ("Reading content of file " + bandFile);
         
-        //var error: NSErrorPointer = nil
-        csvData = try! CSV(csvStringToParse: csvDataString)
-        
-        for lineData in csvData.rows {
-            print("line data ");
-            print(lineData);
+        if (FileManager.default.fileExists(atPath: bandFile) == false){
+            gatherData();
+        }
+        if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
+            print("csvDataString has data", terminator: "");
             
-            if (lineData["bandName"]?.isEmpty == false){
-                
-                print ("Working on band " + lineData["bandName"]!)
-                
-                bandNames.append(lineData["bandName"]!);
-                
-                if (lineData["bandName"] == nil){
-                    continue
-                }
-                if (lineData.isEmpty == false){
-                    if (lineData["imageUrl"] != nil){
-                        bandImageUrl[lineData["bandName"]!] = "http://" + lineData["imageUrl"]!;
+            //var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
+            var csvData: CSV
+            
+            //var error: NSErrorPointer = nil
+            csvData = try! CSV(csvStringToParse: csvDataString)
+            
+            for lineData in csvData.rows {
+
+                if (lineData["bandName"]?.isEmpty == false){
+                    
+                    print ("Working on band " + lineData["bandName"]!)
+                    
+                    bandNames.append(lineData["bandName"]!);
+                    
+                    if (lineData["bandName"] == nil){
+                        continue
                     }
-                    if (lineData["officalSite"] != nil){
-                        if (lineData["bandName"] != nil){
-                            officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
+                    if (lineData.isEmpty == false){
+                        if (lineData["imageUrl"] != nil){
+                            bandImageUrl[lineData["bandName"]!] = "http://" + lineData["imageUrl"]!;
                         }
-                    }
-                    if (lineData["wikipedia"] != nil){
-                        wikipediaLink[lineData["bandName"]!] = lineData["wikipedia"]!;
-                    }
-                    if (lineData["youtube"] != nil){
-                        youtubeLinks[lineData["bandName"]!] = lineData["youtube"]!;
-                    }
-                    if (lineData["metalArchives"] != nil){
-                        metalArchiveLinks[lineData["bandName"]!] = lineData["metalArchives"]!;
-                    }
-                    if (lineData["country"] != nil){
-                        bandCountry[lineData["bandName"]!] = lineData["country"]!;
-                    }
-                    if (lineData["genre"] != nil){
-                        bandGenre[lineData["bandName"]!] = lineData["genre"]!;
-                    }
-                    if (lineData["noteworthy"] != nil){
-                        bandNoteWorthy[lineData["bandName"]!] = lineData["noteworthy"]!;
+                        if (lineData["officalSite"] != nil){
+                            if (lineData["bandName"] != nil){
+                                officalUrls[lineData["bandName"]!] = "http://" + lineData["officalSite"]!;
+                            }
+                        }
+                        if (lineData["wikipedia"] != nil){
+                            wikipediaLink[lineData["bandName"]!] = lineData["wikipedia"]!;
+                        }
+                        if (lineData["youtube"] != nil){
+                            youtubeLinks[lineData["bandName"]!] = lineData["youtube"]!;
+                        }
+                        if (lineData["metalArchives"] != nil){
+                            metalArchiveLinks[lineData["bandName"]!] = lineData["metalArchives"]!;
+                        }
+                        if (lineData["country"] != nil){
+                            bandCountry[lineData["bandName"]!] = lineData["country"]!;
+                        }
+                        if (lineData["genre"] != nil){
+                            bandGenre[lineData["bandName"]!] = lineData["genre"]!;
+                        }
+                        if (lineData["noteworthy"] != nil){
+                            bandNoteWorthy[lineData["bandName"]!] = lineData["noteworthy"]!;
+                        }
                     }
                 }
             }
+        } else {
+            print ("Could not read file for some reason");
+            do {
+                try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
+                
+            } catch let error as NSError {
+                print ("Encountered an error on reading file" + error.debugDescription)
+                isLoadingBandData = false
+            }
         }
-    } else {
-        print ("Could not read file for some reason");
-        do {
-            try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
-            
-        } catch let error as NSError {
-            print ("Encountered an error on reading file" + error.debugDescription)
-        }
+        isReadingBandFile = false
     }
 }
 

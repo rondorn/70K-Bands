@@ -134,6 +134,8 @@ public class staticVariables {
 
     public static Boolean prefsLoaded = false;
 
+    public static Integer listPosition = 0;
+
     public static preferencesHandler preferences;
     public static showsAttended attendedHandler;
 

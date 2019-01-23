@@ -37,9 +37,14 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
         returnedImage = UIImage(named: "70000TonsLogo")!
     
     } else {
-        
+
         print ("ImageCall download imaged from \(urlString)")
+
         let url = URL(string: urlString)
+        if (url == nil){
+            return UIImage(named: "70000TonsLogo")!
+        }
+        
         URLSession.shared.dataTask(with: url!) { data, response, error in
             guard
                 let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,

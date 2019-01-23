@@ -20,7 +20,16 @@ class localNoticationHandler {
     }
 
     func refreshAlerts(){
-        if (isAlertGenerationRunning == false){
+        if (isAlertGenerationRunning == true){
+            var counter = 0;
+            while (isAlertGenerationRunning == true){
+                usleep(250000)
+                if (counter == 5){
+                    isAlertGenerationRunning = false;
+                }
+                counter = counter + 1;
+            }
+        } else {
             
             isAlertGenerationRunning = true
             
@@ -31,8 +40,8 @@ class localNoticationHandler {
                 } else {
                     // Fallback on earlier versions
                 }
-                isAlertGenerationRunning = false
             }
+            isAlertGenerationRunning = false
         }
     }
     
