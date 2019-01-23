@@ -32,9 +32,18 @@ open class CustomBandDescription {
     }
     
     func getAllDescriptions(){
-        
-        if (isLoadingCommentData == false){
-            
+
+        if (isLoadingCommentData == true){
+            var counter = 0;
+            while (isLoadingCommentData == true){
+                usleep(250000)
+                if (counter == 5){
+                    isLoadingCommentData = false;
+                }
+                counter = counter + 1;
+            }
+        } else {
+
             isLoadingCommentData = true
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 print ("commentFile performaing getAll")
