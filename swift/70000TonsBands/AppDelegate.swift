@@ -65,8 +65,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
             "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
             "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
-            "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault ]
-        
+            "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
+            "hideExpireScheduleData": hideExpireScheduleDataDefault]
         
         UserDefaults.standard.register(defaults: defaults)
         

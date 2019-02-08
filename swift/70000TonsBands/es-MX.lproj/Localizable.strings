@@ -34,6 +34,9 @@
 "showAttendedFilterTrueHelp"="Solo muestre los eventos a los que indica que asistirá. Otros filtros no se aplicarán";
 "showAttendedFilterFalseHelp"="Mostrar bandas y shows de acuerdo a los filtros";
 
+"ShowHideEvents"="Mostrar/Ocultar caducado";
+"HideExpiredEvents"="Ocultar Eventos Caducados";
+
 "Sorting Chronologically"="Ordenando cronológicamente";
 "Sorting Alphabetically"="Ordenando alfabéticamente";
 

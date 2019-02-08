@@ -152,6 +152,7 @@ let showRinkShowsDefault = "YES"
 let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 let showUnofficalEventsDefault = "YES"
+var hideExpireScheduleDataDefault = "YES";
 
 var internetAvailble = isInternetAvailable();
 
