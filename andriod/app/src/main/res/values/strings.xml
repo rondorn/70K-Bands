@@ -34,6 +34,9 @@
     <string name="AlbumListeningEvents">Listening Party</string>
     <string name="unofficalEventLable">Cruiser Organized</string>
 
+    <string name="showHideExpiredLabel">Show/Hide Expired</string>
+    <string name="hideExpiredEvents">Hide Expired Events</string>
+
     <string name="UseLastYearsData">Use Last Years Data</string>
     <string name="LastYearsFeatureExplication">Activating \'Use Last Years Data\' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
 

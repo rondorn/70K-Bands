@@ -34,6 +34,9 @@
     <string name="AlbumListeningEvents">l\'album Listening Evénements</string>
     <string name="unofficalEventLable">Croisière organisée</string>
 
+    <string name="showHideExpiredLabel">Afficher/Masquer Expiré</string>
+    <string name="hideExpiredEvents">Masquer Les événements Expirés</string>
+
     <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
     <string name="LastYearsFeatureExplication">Activation \'utilisation dernières années information\' va charger le calendrier de spectacle à partir de l\'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.</string>
 

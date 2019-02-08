@@ -18,17 +18,32 @@ class showAttendenceReport {
         let attended = ShowsAttended()
         
         let showsAttendedArray = attended.getShowsAttended();
+        var unuiqueSpecial = [String]()
         
-        for index in showsAttendedArray {
+        schedule.buildTimeSortedSchedulingData();
+        if (schedule.getBandSortedSchedulingData().count > 0){
+            for index in showsAttendedArray {
+                
+                let indexArray = index.key.split(separator: ":")
+                
+                let bandName = String(indexArray[0])
+                let eventType = String(indexArray[4])
             
-            let indexArray = index.key.split(separator: ":")
-            
-            let bandName = String(indexArray[0])
-            let eventType = String(indexArray[4])
-            
-            getEventTypeCounts(eventType: eventType, sawStatus: index.value)
-            getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
-            
+                if (eventType == specialEventType){
+                    if (unuiqueSpecial.contains(bandName) == true){
+                        continue;
+                    } else {
+                        unuiqueSpecial.append(bandName)
+                    }
+                } else {
+                    if (schedule.getBandSortedSchedulingData().keys.contains(bandName) == false){
+                        continue
+                    }
+                }
+                getEventTypeCounts(eventType: eventType, sawStatus: index.value)
+                getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
+                
+            }
         }
     }
     
@@ -46,73 +61,98 @@ class showAttendenceReport {
     
     func buildMessage()->String{
         
-        var message = ""
+        var message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n"
         var eventCountExists : [String: Bool] = [String: Bool]();
         
-        for index in eventCounts {
+        if (eventCounts.isEmpty == true){
+            message = buildMustMightReport();
             
-            let eventType = index.key
+        } else {
+            for index in eventCounts {
+                
+                let eventType = index.key
 
-            let sawAllCount = index.value[sawAllStatus]
-            let sawSomeCount = index.value[sawSomeStatus]
+                let sawAllCount = index.value[sawAllStatus]
+                let sawSomeCount = index.value[sawSomeStatus]
 
-            if (sawAllCount != nil && sawAllCount! >= 1){
-                eventCountExists[eventType] = true
-                let sawAllCountString = String(sawAllCount!)
-                message += "Saw " + sawAllCountString + " " + eventType + addPlural(count: sawAllCount!)
+                if (sawAllCount != nil && sawAllCount! >= 1){
+                    eventCountExists[eventType] = true
+                    let sawAllCountString = String(sawAllCount!)
+                    message += "Saw " + sawAllCountString + " " + eventType + addPlural(count: sawAllCount!)
+                }
+                if (sawSomeCount != nil && sawSomeCount! >= 1){
+                    eventCountExists[eventType] = true
+                    let sawSomeCountString = String(sawSomeCount!)
+                    message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(count: sawSomeCount!)
+                }
             }
-            if (sawSomeCount != nil && sawSomeCount! >= 1){
-                eventCountExists[eventType] = true
-                let sawSomeCountString = String(sawSomeCount!)
-                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(count: sawSomeCount!)
-            }
-        }
-        
-        //bandCounts[eventType]![bandName]![sawStatus]!
-        message += "\n"
-        for index in bandCounts {
-            let eventType = index.key
-            var sawSomeCount = 0
             
-            let sortedBandNames = Array(index.value.keys).sorted()
-            
-            if (eventCountExists[eventType] == true){
-                message += "For " + eventType + "s\n"
+            message += "\n"
+            for index in bandCounts {
+                let eventType = index.key
+                var sawSomeCount = 0
+                
+                let sortedBandNames = Array(index.value.keys).sorted()
+                
+                if (eventCountExists[eventType] == true){
+                    message += "For " + eventType + "s\n"
 
-                for bandName in sortedBandNames {
+                    for bandName in sortedBandNames {
 
-                    var sawCount = 0
-                    if (bandCounts[index.key]![bandName]![sawAllStatus] != nil){
-                        sawCount = sawCount + bandCounts[index.key]![bandName]![sawAllStatus]!
+                        var sawCount = 0
+                        if (bandCounts[index.key]![bandName]![sawAllStatus] != nil){
+                            sawCount = sawCount + bandCounts[index.key]![bandName]![sawAllStatus]!
+                        }
+                        if (bandCounts[index.key]![bandName]![sawSomeStatus] != nil){
+                            sawCount = sawCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
+                            sawSomeCount = sawSomeCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
+                        }
+                        if (sawCount >= 1){
+                            let sawCountString = String(sawCount)
+                            if (eventType == showType){
+                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                            } else {
+                                message += "     " + bandName + "\n";
+                            }
+                        }
                     }
-                    if (bandCounts[index.key]![bandName]![sawSomeStatus] != nil){
-                        sawCount = sawCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
-                        sawSomeCount = sawSomeCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
-                    }
-                    if (sawCount >= 1){
-                        let sawCountString = String(sawCount)
-                        if (eventType == showType){
-                            message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                    if (sawSomeCount >= 1){
+                        let sawSomeCountString = String(sawSomeCount)
+                        if (sawSomeCount == 1){
+                                message += sawSomeCountString + " of those was a partial show\n"
                         } else {
-                            message += "     " + bandName + "\n";
+                            message += sawSomeCountString + " of those were partial shows\n"
                         }
                     }
                 }
-                if (sawSomeCount >= 1){
-                    let sawSomeCountString = String(sawSomeCount)
-                    if (sawSomeCount == 1){
-                            message += sawSomeCountString + " of those was a partial show\n"
-                    } else {
-                        message += sawSomeCountString + " of those were partial shows\n"
-                    }
-                }
             }
- 
         }
+        
+        message +=  "\nhttp://www.facebook.com/70kBands"
         
         print ("shows attended message = \(message)")
         
         return message
+    }
+    
+    func buildMustMightReport()->String {
+        
+        var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
+        let bands = getBandNames()
+        for band in bands {
+            if (getPriorityData(band) == 1){
+                print ("Adding band " + band)
+                intro += "\t\t" +  band + "\n"
+            }
+        }
+        intro += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
+        for band in bands {
+            if (getPriorityData(band) == 2){
+                print ("Adding band " + band)
+                intro += "\t\t" +  band + "\n"
+            }
+        }
+         return intro
     }
     
     func getEventTypeCounts (eventType:String, sawStatus: String){

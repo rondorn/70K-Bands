@@ -147,6 +147,7 @@ public class staticVariables {
     public static Boolean loadingSchedule = false;
     public static Boolean loadingNotes = false;
     public static Boolean schedulingAlert = false;
+
     public static Integer alertTracker = 0;
 
 

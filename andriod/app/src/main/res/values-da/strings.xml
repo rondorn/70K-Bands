@@ -34,6 +34,9 @@
     <string name="AlbumListeningEvents">PrÊsentation af nyt Album</string>
     <string name="unofficalEventLable">Cruiser Organiseret</string>
 
+    <string name="showHideExpiredLabel">Vis/Skjul Udløbet</string>
+    <string name="hideExpiredEvents">Skjul Udløbet Begivenheder</string>
+
     <string name="UseLastYearsData">Brug sidste Ârs data</string>
     <string name="LastYearsFeatureExplication">Aktivering \'Brug Last Years oplysninger\' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.</string>
 

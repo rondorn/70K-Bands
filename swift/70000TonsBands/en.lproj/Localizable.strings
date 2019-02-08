@@ -40,6 +40,9 @@
 "Alert For Unofficial Events"="Alert For Cruiser Organized Events";
 "Use Last Years Data"="Use Last Years Data";
 
+"ShowHideEvents"="Show/Hide Expired";
+"HideExpiredEvents"="Hide Expired Events";
+
 "Special Event"="Special Event";
 "Meet and Greet"="Meet and Greet";
 "Clinic"="Clinic";

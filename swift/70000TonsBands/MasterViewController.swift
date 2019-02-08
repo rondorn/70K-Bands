@@ -351,13 +351,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func showHideFilterMenu(){
         print ("totalUpcomingEvents is " + String(totalUpcomingEvents))
-        if (totalUpcomingEvents == 0 || showOnlyWillAttened == true){
-            menuButton.title = "";
-            menuButton.isEnabled = false;
-        } else {
+        //if (totalUpcomingEvents == 0 || showOnlyWillAttened == true){
+        //    menuButton.title = "";
+        //    menuButton.isEnabled = false;
+        //} else {
             menuButton.title = "Filters";
             menuButton.isEnabled = true;
-        }
+        //}
     }
     
     func resetFilterIcons(){
@@ -518,35 +518,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var intro:String = ""
         
-        if (attendingCount > 0 && eventCount != unofficalEventCount){
-            intro = "These are the events I attended on the 70,000 Tons Of Metal Cruise"
-            let reportHandler = showAttendenceReport()
-            reportHandler.assembleReport()
+        let reportHandler = showAttendenceReport()
+        reportHandler.assembleReport()
             
-            intro += reportHandler.buildMessage()
-            
-        } else {
-            
-            intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
-            
-            bands = getBandNames()
-            for band in bands {
-                if (getPriorityData(band) == 1){
-                    print ("Adding band " + band)
-                    intro += "\t\t" +  band + "\n"
-                }
-            }
-            intro += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
-            for band in bands {
-                if (getPriorityData(band) == 2){
-                    print ("Adding band " + band)
-                    intro += "\t\t" +  band + "\n"
-                }
-            }
-        }
-        
-        intro +=  "\nhttp://www.facebook.com/70kBands"
-        
+        intro += reportHandler.buildMessage()
+      
         let objectsToShare = [intro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
         

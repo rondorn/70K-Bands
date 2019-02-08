@@ -110,7 +110,7 @@ import Foundation
             for bandName in schedule.getBandSortedSchedulingData().keys {
                 if (schedule.getBandSortedSchedulingData().isEmpty == false){
                     for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
-                        if (timeIndex > Date().timeIntervalSince1970 - 3600){
+                        if (timeIndex > Date().timeIntervalSince1970 - 3600  || defaults.bool(forKey: "hideExpireScheduleData") == false){
                             totalUpcomingEvents += 1;
                             if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
                                 if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
@@ -130,7 +130,7 @@ import Foundation
             for timeIndex in schedule.getTimeSortedSchedulingData().keys {
                 if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
                     for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys)!{
-                        if (timeIndex > Date().timeIntervalSince1970 - 3600){
+                        if (timeIndex > Date().timeIntervalSince1970 - 3600 || defaults.bool(forKey: "hideExpireScheduleData") == false){
                             totalUpcomingEvents += 1;
                             if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
                                 if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){

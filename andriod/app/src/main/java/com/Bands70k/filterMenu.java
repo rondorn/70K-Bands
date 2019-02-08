@@ -34,6 +34,7 @@ public class filterMenu extends Activity {
     private CheckBox showLoungeShows;
     private CheckBox showOtherShows;
 
+    private CheckBox hideExpiredEvents;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -173,6 +174,16 @@ public class filterMenu extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setShowOtherShows(showOtherShows.isChecked());
+            }
+        });
+
+        hideExpiredEvents = (CheckBox)findViewById(R.id.hideExpiredEvents);
+        hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
+        hideExpiredEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setHideExpiredEvents(hideExpiredEvents.isChecked());
             }
         });
     }

@@ -25,6 +25,8 @@ class SortMenuController: UIViewController  {
     @IBOutlet weak var clinicLabel: UILabel!
     @IBOutlet weak var meetAndGreetLable: UILabel!
     @IBOutlet weak var unofficalEventsLabel: UILabel!
+    @IBOutlet weak var showHideEventLabel: UILabel!
+    @IBOutlet weak var hideExpiredEventLabel: UILabel!
     
     @IBOutlet weak var poolToggle: UISwitch!
     @IBOutlet weak var theaterToggle: UISwitch!
@@ -35,8 +37,8 @@ class SortMenuController: UIViewController  {
     @IBOutlet weak var meetAndGreetToggle: UISwitch!
     @IBOutlet weak var clinicToggle: UISwitch!
     @IBOutlet weak var listeningEventToggle: UISwitch!
-    
     @IBOutlet weak var unofficialEventsToggle: UISwitch!
+    @IBOutlet weak var hideExpired: UISwitch!
     
     var showSpecialValue = Bool()
     var showMandGValue = Bool()
@@ -49,6 +51,7 @@ class SortMenuController: UIViewController  {
     var showLoungeShows = Bool()
     var showOtherShows = Bool()
     var showUnofficalEvents = Bool()
+    var hideExpireScheduleData = Bool()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,6 +72,9 @@ class SortMenuController: UIViewController  {
         clinicLabel.text = NSLocalizedString(clinicType, comment: "") + " " + clinicEventTypeIcon
         listeningEventLabel.text = NSLocalizedString(listeningPartyType, comment: "") + " " + listeningEventTypeIcon
         unofficalEventsLabel.text =  NSLocalizedString(unofficalEventType, comment: "") + " " + unofficalEventTypeIcon
+    
+        showHideEventLabel.text = NSLocalizedString("ShowHideEvents", comment: "")
+        hideExpiredEventLabel.text = NSLocalizedString("HideExpiredEvents", comment: "")
     }
     
     
@@ -85,6 +91,7 @@ class SortMenuController: UIViewController  {
         showLoungeShows = defaults.bool(forKey: "showLoungeShows")
         showOtherShows = defaults.bool(forKey: "showOtherShows")
         showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
+        hideExpireScheduleData = defaults.bool(forKey: "hideExpireScheduleData")
         
         specialEventToggle.isOn = showSpecialValue;
         meetAndGreetToggle.isOn = showMandGValue;
@@ -97,6 +104,7 @@ class SortMenuController: UIViewController  {
         loungeToggle.isOn = showLoungeShows;
         otherToggle.isOn = showOtherShows;
         unofficialEventsToggle.isOn = showUnofficalEvents
+        hideExpired.isOn = hideExpireScheduleData
     }
     
  
@@ -150,5 +158,8 @@ class SortMenuController: UIViewController  {
 
     }
     
-
+    @IBAction func hideExpiredAction(_ sender: Any) {
+        defaults.set(hideExpired.isOn, forKey: "hideExpireScheduleData")
+    }
+    
 }

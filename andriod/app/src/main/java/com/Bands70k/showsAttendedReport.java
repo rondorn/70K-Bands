@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 public class showsAttendedReport {
 
@@ -18,6 +19,10 @@ public class showsAttendedReport {
 
         showsAttended attendedHandler = new showsAttended();
         Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+        Set<String> specialEventNames = new HashSet<String>();
+
+        BandInfo bandInfoNames = new BandInfo();
+        List<String> bandNames = bandInfoNames.getBandNames();
 
         for (String index : showsAttendedArray.keySet()) {
 
@@ -28,6 +33,18 @@ public class showsAttendedReport {
 
             Log.d("ShareMessag", "index is " + index);
             Log.d("ShareMessag", "eventType is " + eventType);
+
+            if (eventType == staticVariables.specialEvent){
+                if (((HashMap) specialEventNames).containsValue(bandName) == true){
+                    continue;
+                } else {
+                    specialEventNames.add(bandName);
+                }
+            } else {
+                if (bandNames.contains(bandName) == false){
+                    continue;
+                }
+            }
 
             getEventTypeCounts(eventType, showsAttendedArray.get(index));
             getBandCounts(eventType, bandName,  showsAttendedArray.get(index));
