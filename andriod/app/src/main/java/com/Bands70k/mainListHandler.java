@@ -58,7 +58,7 @@ public class mainListHandler {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.preferences.getSortByTime() == true) {
-                        if ((timeIndex + 3600000) > System.currentTimeMillis()) {
+                        if ((timeIndex + 3600000) > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
@@ -72,7 +72,7 @@ public class mainListHandler {
                             }
                         }
                     } else {
-                        if ((timeIndex + 3600000) > System.currentTimeMillis()) {
+                        if ((timeIndex + 3600000) > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));

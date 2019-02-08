@@ -45,6 +45,8 @@ public class preferencesHandler {
     private Boolean showWont = true;
     private Boolean showUnknown = true;
 
+    private Boolean hideExpiredEvents = true;
+
     private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
 
@@ -181,6 +183,9 @@ public class preferencesHandler {
 
                         case "sortByTime":
                             setSortByTime(Boolean.valueOf(RowData[1]));
+
+                        case "hideExpiredEvents":
+                            setHideExpiredEvents(Boolean.valueOf(RowData[1]));
                     }
                 }
             } catch (Exception error) {
@@ -236,6 +241,7 @@ public class preferencesHandler {
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
+        dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
@@ -339,6 +345,10 @@ public class preferencesHandler {
         return this.showUnknown;
     }
 
+    public Boolean getHideExpiredEvents() {
+        return this.hideExpiredEvents;
+    }
+
     public Boolean getShowWillAttend() { return this.showWillAttend;}
 
     public void setShowPoolShows(Boolean showPoolShows) {
@@ -382,6 +392,10 @@ public class preferencesHandler {
     }
     public void setshowUnknown(Boolean showUnknownValue) {
         this.showUnknown = showUnknownValue;
+    }
+
+    public void setHideExpiredEvents(Boolean value) {
+        this.hideExpiredEvents = value;
     }
 
     public void setShowWillAttend(Boolean showWillAttendValue) {

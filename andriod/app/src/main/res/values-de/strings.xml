@@ -33,6 +33,9 @@
     <string name="AlbumListeningEvents">Album Listening Events</string>
     <string name="unofficalEventLable">Cruiser organisiert</string>
 
+    <string name="showHideExpiredLabel">Show/Ausgelaufen Ausblenden</string>
+    <string name="hideExpiredEvents">Abgelaufene Ereignisse Ausblenden</string>
+
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication">Das Aktivieren von \'Daten des letzten Jahres verwenden\' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen.</string>
 

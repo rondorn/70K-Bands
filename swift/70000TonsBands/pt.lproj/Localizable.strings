@@ -33,6 +33,9 @@
 "Part Of Event"="Assistindo alguns deste evento";
 "None Of Event"="Eu não vou ver esse evento";
 
+"ShowHideEvents"="Mostrar/Ocultar Expirado";
+"HideExpiredEvents"="Ocultar Eventos Expirados";
+
 "Minutes Before Event to Alert"="Alertar-me antes do evento (minutos)";
 "Alert For Shows"="Alerta para shows";
 "Alert For Special Events"="Alerta para eventos especiais";

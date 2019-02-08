@@ -26,6 +26,9 @@
 "Alert For Album Listening Events"="Alerta para escuchas de álbums";
 "Alert For Unofficial Events"="Alerta para eventos organizados por cruceros";
 
+"ShowHideEvents"="Mostrar/Ocultar caducado";
+"HideExpiredEvents"="Ocultar Eventos Caducados";
+
 "Only alert for shows you will attend"="Solo alerta para espectáculos a los que asistirá";
 "Alert for shows according to your favorites selection"="Alerta para mostrar de acuerdo a su selección de favoritos, y las configuraciones indicadas en esta pantalla";
 

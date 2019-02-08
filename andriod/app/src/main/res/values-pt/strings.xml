@@ -35,6 +35,9 @@
     <string name="AlbumListeningEvents">Eventos de Audição de Álbuns</string>
     <string name="unofficalEventLable">Cruzador Organizado</string>
 
+    <string name="showHideExpiredLabel">Mostrar/Ocultar Expirado</string>
+    <string name="hideExpiredEvents">Ocultar Eventos Expirados</string>
+
     <string name="UseLastYearsData">Use as informações do ano passado</string>
     <string name="LastYearsFeatureExplication">Ativando \'Use Informação dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>
 

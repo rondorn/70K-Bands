@@ -32,6 +32,8 @@
 "Part Of Event"="Deltager nogle af denne begivenhed";
 "None Of Event"="Jeg vil ikke se denne begivenhed";
 
+"ShowHideEvents"="Vis/Skjul Udløbet";
+"HideExpiredEvents"="Skjul Udløbet Begivenheder";
 
 "Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
 "Alert For Shows"="Notifikation for shows";

@@ -26,6 +26,9 @@
 "showAttendedFilterTrueHelp"="Zeige nur Ereignisse an, an denen du teilnimmst. Andere Filter werden nicht angewendet";
 "showAttendedFilterFalseHelp"="Zeigen Sie Bands und Shows nach Filtern";
 
+"ShowHideEvents"="Show/Ausgelaufen Ausblenden";
+"HideExpiredEvents"="Abgelaufene Ereignisse Ausblenden";
+
 "Sorting Chronologically"="Chronologisch sortieren";
 "Sorting Alphabetically"="Alphabetisch sortieren";
 

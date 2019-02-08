@@ -34,6 +34,9 @@
     <string name="AlbumListeningEvents">levyjen ennakkokuunteluihin</string>
     <string name="unofficalEventLable">Cruiser järjestetty</string>
 
+    <string name="showHideExpiredLabel">Näytä/Piilota Vanhentunut</string>
+    <string name="hideExpiredEvents">Piilota Vanhentuneet Tapahtumat</string>
+
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
     <string name="LastYearsFeatureExplication">Aktivointi \'Käytä Viime vuoden tiedot\' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.</string>
 

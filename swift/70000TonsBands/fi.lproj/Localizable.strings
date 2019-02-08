@@ -32,6 +32,9 @@
 "Only alert for shows you will attend"="Vain hälytyksiä näytöille, joihin osallistut";
 "Alert for shows according to your favorites selection"="Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukset";
 
+"ShowHideEvents"="Näytä/Piilota Vanhentunut";
+"HideExpiredEvents"="Piilota Vanhentuneet Tapahtumat";
+
 "Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
 "Alert For Shows"="Hälytys keikoille";
 "Alert For Special Events"="Hälytys muihin tapahtumiin";

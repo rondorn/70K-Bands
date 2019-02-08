@@ -471,16 +471,16 @@ public class showBands extends Activity {
                 String shareBody;
                 String subject;
 
-                if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
+                //if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
                     showsAttendedReport reportHandler = new showsAttendedReport();
                     reportHandler.assembleReport();
                     shareBody = reportHandler.buildMessage();
                     subject = "These are the events I attended on the 70,000 Tons Cruise";
 
-                } else {
-                    shareBody = buildShareMessage();
-                    subject = "Bands I MUST see on 70,000 Tons";
-                }
+                //} else {
+                //    shareBody = buildShareMessage();
+                //    subject = "Bands I MUST see on 70,000 Tons";
+                //}
 
                 Log.d("ShareMessage", shareBody);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
@@ -827,13 +827,13 @@ public class showBands extends Activity {
 
         Button filterButton = (Button) findViewById(R.id.filterMenu);
 
-        if (listHandler.allUpcomingEvents == 0 || staticVariables.preferences.getShowWillAttend() == true) {
-            filterButton.setVisibility(View.INVISIBLE);
-        } else {
-            if (staticVariables.preferences.getShowWillAttend() == false) {
+        //if (listHandler.allUpcomingEvents == 0 || staticVariables.preferences.getShowWillAttend() == true) {
+        //    filterButton.setVisibility(View.INVISIBLE);
+        //} else {
+        //    if (staticVariables.preferences.getShowWillAttend() == false) {
                 filterButton.setVisibility(View.VISIBLE);
-            }
-        }
+        //    }
+        //}
     }
 
     private void refreshNewData(){
