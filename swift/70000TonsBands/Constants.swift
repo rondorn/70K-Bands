@@ -101,7 +101,7 @@ let sawNoneStatus = "sawNone";
 
 //alert topics
 let subscriptionTopic = "/topics/global"
-let subscriptionTopicTest = "/topics/Testing09162019"
+let subscriptionTopicTest = "/topics/Testing2019-02-26"
 let subscriptionUnofficalTopic = "/topics/unofficalEvents"
 
 //file names
@@ -111,8 +111,8 @@ let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 //defaults preferences
-var artistUrlDefault = ""//UserDefaults.standard.string(forKey: "artistUrl")
-var scheduleUrlDefault = ""//UserDefaults.standard.string(forKey: "scheduleUrl")
+var artistUrlDefault = ""
+var scheduleUrlDefault = ""
 
 let defaultPrefsValue = "Default";
 
