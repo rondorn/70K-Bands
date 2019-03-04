@@ -58,6 +58,10 @@
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortMenuController.swift */; };
+		11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
+		11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
+		11ABAA63222C86B000A04397 /* salesforceRestCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */; };
+		11ABAA64222C86B000A04397 /* salesforceRestCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */; };
 		11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
 		11AC1D671A6827FC00267A8F /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
 		11AC1D691A68280A00267A8F /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D681A68280A00267A8F /* CoreGraphics.framework */; };
@@ -155,6 +159,8 @@
 		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortMenuController.swift; sourceTree = "<group>"; };
+		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
+		11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = salesforceRestCalls.swift; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		11AC1D661A6827FC00267A8F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		11AC1D681A68280A00267A8F /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -300,6 +306,7 @@
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
+				11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
@@ -307,6 +314,7 @@
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
+				11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
 				11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
@@ -407,7 +415,6 @@
 				11F033381AB3A77F00AA29B8 /* Embed App Extensions */,
 				114CC0731C79211200CF5BF1 /* Resources */,
 				3450D696B415AA84A3A9E9F4 /* [CP] Embed Pods Frameworks */,
-				9F7E3AB1FA87BC2071D05365 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -427,7 +434,6 @@
 				1154F61D1A575893003F4764 /* Frameworks */,
 				1154F61E1A575893003F4764 /* Resources */,
 				44E038A798524A62E615708A /* [CP] Embed Pods Frameworks */,
-				0430B09C5FA780760143DF59 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -547,34 +553,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0430B09C5FA780760143DF59 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		3450D696B415AA84A3A9E9F4 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Protobuf.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		44E038A798524A62E615708A /* [CP] Embed Pods Frameworks */ = {
@@ -583,28 +583,22 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Protobuf.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		9F7E3AB1FA87BC2071D05365 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		AA4885B55D0647CFA0496A30 /* [CP] Check Pods Manifest.lock */ = {
@@ -613,13 +607,16 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-70K BandsTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		D7F07F8B67B499869A9DFBB8 /* [CP] Check Pods Manifest.lock */ = {
@@ -628,13 +625,16 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-70K Bands-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -648,6 +648,7 @@
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
+				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */,
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
@@ -671,6 +672,7 @@
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
+				11ABAA63222C86B000A04397 /* salesforceRestCalls.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -687,6 +689,7 @@
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
+				11ABAA64222C86B000A04397 /* salesforceRestCalls.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				1155E3A81A8B121000D51ED9 /* externalUrls.swift in Sources */,
@@ -696,6 +699,7 @@
 				1155E3AD1A8B121000D51ED9 /* urlStorage.swift in Sources */,
 				1155E3AE1A8B121000D51ED9 /* validateCSVschedule.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
+				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */,
 				1155E3AF1A8B121000D51ED9 /* webViewController.swift in Sources */,
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,

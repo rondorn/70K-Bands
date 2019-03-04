@@ -6,14 +6,17 @@ use_frameworks!
 
 pod 'Firebase/Core'
 pod 'Firebase/Messaging'
+pod 'Firebase/Database'
 
 target '70K Bands' do
 	pod 'Firebase/Core'
 	pod 'Firebase/Messaging'
+	pod 'Firebase/Database'
 end
 
 target '70K BandsTests' do
         pod 'Firebase/Core'
         pod 'Firebase/Messaging'
+	pod 'Firebase/Database'
 end
 
