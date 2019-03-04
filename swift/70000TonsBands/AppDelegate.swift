@@ -73,6 +73,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         bandPriorityStorage = readFile(dateWinnerPassed: "")
         attendedHandler.loadShowsAttended()
 
+        // [END register_for_notifications]
+        FirebaseApp.configure()
+        
+        // [START set_messaging_delegate]
+        Messaging.messaging().delegate = self as! MessagingDelegate
+        //Messaging.messaging().remoteMessageDelegate = self
+        // [END set_messaging_delegate]
+        
         // Register for remote notifications. This shows a permission dialog on first run, to
         // show the dialog at a more appropriate time move this registration accordingly.
         // [START register_for_notifications]
@@ -84,7 +92,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             UNUserNotificationCenter.current().requestAuthorization(
                 options: authOptions,
                 completionHandler: {_, _ in })
-                Messaging.messaging().remoteMessageDelegate = self
+                Messaging.messaging().delegate = self
             
         } else {
             let settings: UIUserNotificationSettings =
@@ -94,18 +102,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         application.registerForRemoteNotifications()
         
-        // [END register_for_notifications]
-        FirebaseApp.configure()
-        
-        // [START set_messaging_delegate]
-        Messaging.messaging().delegate = self as! MessagingDelegate
-        //Messaging.messaging().remoteMessageDelegate = self
-        // [END set_messaging_delegate]
-        
         NotificationCenter.default.addObserver(self, selector:
         #selector(tokenRefreshNotification), name:
         NSNotification.Name.InstanceIDTokenRefresh, object: nil)
         printFCMToken()
+        
+        //generate user data
+        let userDataHandle = userDataHandler()
+        
+        let sfHandler = salesforceRestCalls()
+        let clientID = sfHandler.getClientID()
+        let clinetSecret = sfHandler.getClientSecret()
+        let sfUserName = sfHandler.getUserName()
+        let sfPassword = sfHandler.getPassword()
+        
+        let getAuthToken = sfHandler.getAuthenticationToken(userName: sfUserName, password: sfPassword, clientID: clientID, clientSecret: clinetSecret)
         
         return true
     
@@ -240,7 +251,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("APNs token retrieved: \(token)")
 
-        InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
+        //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
     }
     
     // [START connect_on_active]
