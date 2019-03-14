@@ -317,6 +317,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let bandWrite = bandRankingWrite();
         bandWrite.writeBandData();
         
+        let showWrite = showsAttendedWrite()
+        showWrite.writShowAttended()
+        
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
