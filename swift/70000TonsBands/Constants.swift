@@ -104,6 +104,8 @@ let subscriptionTopic = "/topics/global"
 let subscriptionTopicTest = "/topics/Testing2019-02-26"
 let subscriptionUnofficalTopic = "/topics/unofficalEvents"
 
+let salesforceBaseUrl = "https://na85.salesforce.com"
+
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
 
@@ -170,6 +172,26 @@ var listOfVenues = [String]()
 var masterView: MasterViewController!
 
 var googleCloudID = "Nothing";
+
+func resolvePriorityNumber (priority: String)->String {
+
+    var result = ""
+    
+    if (priority == "1"){
+        result = "Must";
+    
+    } else if (priority == "2"){
+        result = "Might";
+
+    } else if (priority == "3"){
+        result = "Wont";
+        
+    } else {
+        result = "Unknown";
+    }
+    
+    return result;
+}
 
 func getDocumentsDirectory() -> NSString {
     let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)

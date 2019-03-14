@@ -112,12 +112,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         let sfHandler = salesforceRestCalls()
         let clientID = sfHandler.getClientID()
-        let clinetSecret = sfHandler.getClientSecret()
+        let clientSecret = sfHandler.getClientSecret()
         let sfUserName = sfHandler.getUserName()
         let sfPassword = sfHandler.getPassword()
         
-        let getAuthToken = sfHandler.getAuthenticationToken(userName: sfUserName, password: sfPassword, clientID: clientID, clientSecret: clinetSecret)
+        sfHandler.getAuthenticationToken(userName: sfUserName, password: sfPassword, clientID: clientID, clientSecret: clientSecret)
         
+        let userInfo = userDataHandle.getJsonString(isUpdate: true);
+        
+        sfHandler.upsert(recordID: (UIDevice.current.identifierForVendor?.uuidString)!,object: "userdata__c", data: userInfo)
         return true
     
     }
@@ -310,6 +313,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
         writeFiltersFile()
         writeFile()
+        
+        let bandWrite = bandRankingWrite();
+        bandWrite.writeBandData();
         
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
