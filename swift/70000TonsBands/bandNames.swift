@@ -183,6 +183,7 @@ func getBandNames () -> [String] {
     
     if (bandNames.isEmpty == false){
         if (bandNames.count >= 2){
+            //print ("Https response bandNames are \(bandNames)");
             bandNames.sort{$0 < $1}
         }
     }

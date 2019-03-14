@@ -10,44 +10,128 @@ import Foundation
 
 class salesforceRestCalls {
 
-    let salesforceURL = "https://na85.salesforce.com";
+    var authToken:String = ""
+    var apiData:[String: AnyObject] = [String: AnyObject]();
     
+    init(){
+        readApiPropertyList();
+    }
     func getClientID()->String{
-        return "3MVG9KsVczVNcM8wGlNuZtSOdQGx8FzKqb0zJjYKEhDxr.LptM8jiecVyMpgvTV2Dx5MKq6MijZIJUKgGbbRT";
+        
+        return apiData["apiClientID"] as! String
+
     }
     
     func getClientSecret()->String{
-        return "990ECB8D78A4A5518702B53DABE493890E0C0C4E3ECC42E84C54B223BF6A1663";
+         return apiData["apiClientSecret"] as! String
     }
     
     func getUserName()->String{
-        return "apiAccount@70kbands.com";
+        return apiData["apiAccount"] as! String
     }
 
     func getPassword()->String{
-        return "4lJ3vdLt6Q3l!";
+        return apiData["apiPassword"] as! String
     }
     
-    func getAuthenticationToken (userName:String, password:String, clientID: String, clientSecret: String)->String{
+    func readApiPropertyList(){
         
-        var authToken:String = ""
+        var propertyListForamt =  PropertyListSerialization.PropertyListFormat.xml //Format of the Property List.
+        var plistData: [String: AnyObject] = [:] //Our data
+        let plistPath: String? = Bundle.main.path(forResource: "ApiKeys", ofType: "plist")! //the path of the data
+        let plistXML = FileManager.default.contents(atPath: plistPath!)!
+        do {//convert the data to a dictionary and handle errors.
+            plistData = try PropertyListSerialization.propertyList(from: plistXML, options: .mutableContainersAndLeaves, format: &propertyListForamt) as! [String:AnyObject]
+            
+        } catch {
+            print("Error reading plist: \(error), format: \(propertyListForamt)")
+        }
         
-        let url = NSURL(string: salesforceURL)
-        let request = NSMutableURLRequest(url: url! as URL)
+        apiData = plistData
+    }
+    
+    func getAuthenticationToken (userName:String, password:String, clientID: String, clientSecret: String){
         
-        request.setValue("password", forHTTPHeaderField: "grant_type")
-        request.setValue(clientID, forHTTPHeaderField: "client_id")
-        request.setValue(clientSecret, forHTTPHeaderField: "client_secret")
-        request.setValue(userName, forHTTPHeaderField: "username")
-        request.setValue(password, forHTTPHeaderField: "password")
+        let url = "/services/oauth2/token"
+        var authReponse:[String:Any]
         
-        request.httpMethod = "GET"
+        var postString = "grant_type=password&"
+        postString += "&client_id=" + clientID.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)!
+        postString += "&client_secret=" + clientSecret.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)!
+        postString += "&username=" +  userName.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)!
+        postString += "&password=" + password.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)!
         
-        //let dataLoad = HTTPsendRequest(request as URLRequest)
-        //print("Https text is \(dataLoad)")
+        authReponse = makeWebCall(url: url,type: "POST", body: postString, contentType: "application/x-www-form-urlencoded", specialHeader: "")
         
+        self.authToken = authReponse["access_token"] as? String ?? "unknown"
+        
+        print ("Https response auth token is \(authToken)")
+        
+    }
+    
+    func upsert(recordID:String, object:String, data:String){
+        
+        var type:String;
+        var url = "/services/data/v38.0/sobjects/" + object + "/" + recordID
+        
+        if (self.authToken.isEmpty == true){
+            let clientID = self.getClientID()
+            let clientSecret = self.getClientSecret()
+            let sfUserName = self.getUserName()
+            let sfPassword = self.getPassword()
+            
+            self.getAuthenticationToken(userName: sfUserName, password: sfPassword, clientID: clientID, clientSecret: clientSecret)
+        }
+        
+        if (recordID.isEmpty == false){
+            type = "PATCH"
+            url = "/services/data/v38.0/sobjects/" + object + "/externalID__c/" + recordID + "/"
+        } else {
+            type = "POST"
+        }
+        
+        let results = self.makeWebCall (url: url, type: type, body: data, contentType: "application/json", specialHeader: "Authorized");
+    }
+    
+    func makeWebCall(url: String, type: String, body: String, contentType: String, specialHeader: String)->[String:Any]{
+        
+        let salesforceURL = salesforceBaseUrl + url;
+        var jasonResponse = [String:Any]();
+        
+        
+        let nsUrl = URL(string: salesforceURL)
+        
+        if (nsUrl == nil){
+            jasonResponse["Error"] = "Url is empty";
+            return jasonResponse
+        }
+        let request = NSMutableURLRequest(url: nsUrl!)
+
+        print("Https response url destination is  \(String(describing: nsUrl))")
+        print("Https response type is  \(String(describing: type))")
+        
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        
+        var sem = DispatchSemaphore(value: 0)
+        
+        if (specialHeader == "Authorized"){
+            print("Https response setting authToken to " + authToken);
+            request.setValue("Bearer " + authToken, forHTTPHeaderField: "Authorization")
+        
+        } else if (specialHeader == "SOAPAction"){
+            print("Https response setting SOAPAction to login");
+            request.setValue("login", forHTTPHeaderField: "SOAPAction")
+            
+        }
+        
+        request.httpMethod = type as String
+    
+        let body = body.data(using: String.Encoding.utf8)
+    
+        request.httpBody = body;
+    
         let session = URLSession.shared
-        
+    
 
         let response = session.dataTask(with: request as URLRequest) { (data, response, error) -> Void in
             if let antwort = response as? HTTPURLResponse {
@@ -56,68 +140,33 @@ class salesforceRestCalls {
                 
                 guard let data = data else { return }
                 
-                print("Https response code is \(data)")
-                do {
-                    guard let todo = try JSONSerialization.jsonObject(with: data, options: [])
-                        as? [String: Any] else {
-                            print("Https response code is JSON Failure Pre")
-                            return
+                print("Https response data is \(antwort)")
+                if (specialHeader != "SOAPAction"){
+                    do {
+                        jasonResponse = try (JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? ["NotJson":data])
+                        
+                        // now we have the todo
+                        // let's just print it to prove we can access it[
+                        print("Https response full authReponse is \(jasonResponse)")
+                        
+
+                        sem.signal()
+                        
+                    } catch {
+                        print("Https response code is JSON Failure post \(error)")
+                        jasonResponse = ["NotJson":data];
+                        sem.signal()
                     }
-                    // now we have the todo
-                    // let's just print it to prove we can access it
-                    print("Https response code is \(todo)")
-                } catch {
-                    print("Https response code is JSON Failure \(error)")
+                } else {
+                    jasonResponse = ["NotJson":data];
                 }
             }
         }
-        
+    
         response.resume()
+        sem.wait(timeout: DispatchTime.distantFuture)
         
-        return authToken;
+        return jasonResponse
+    
     }
 }
-/*
-sub getAuthenticationToken{
-    
-    my $properties = shift;
-    
-    if ($properties->{salesforce}->{proxy}){
-        $proxyString = '-x ' . $properties->{salesforce}->{proxy};
-    }
-    
-    my $password = $properties->{salesforce}->{password};
-    
-    
-    $authArguments->[0] = '-d "grant_type=password"';
-    $authArguments->[1] = '--data-urlencode "client_id=' . $properties->{salesforce}->{client_id} . '" ';
-    $authArguments->[2] = '--data-urlencode "client_secret=' . $properties->{salesforce}->{client_secret} . '" ';
-    $authArguments->[3] = '-d "username=' . $properties->{salesforce}->{user} . '" ';
-    $authArguments->[4] = '--data-urlencode "password=' .  $password . '" ';
-    $authArguments->[5] = '--connect-timeout 5';
-    $authArguments->[6] = '--max-time 15';
-    $authArguments->[7] = "--tlsv1.2";
-    
-    my $tokenData = makeWebCall("$properties->{salesforce}->{url}/services/oauth2/token", $properties);
-    
-    
-    if ($tokenData !~ /HASH/){
-        croak ("Authentication issue encountered for user $properties->{salesforce}->{user}!\n" . $tokenData);
-        
-    } elsif (!$tokenData->{access_token}){
-        croak ("Authentication issue encountered for user $properties->{salesforce}->{user}!\n" . Dumper($tokenData));
-    }
-    
-    $authArguments->[0] = '-H "Authorization: Bearer ' . $tokenData->{access_token} . '"';
-    $authArguments->[1] = "";
-    $authArguments->[2] = "";
-    $authArguments->[3] = "";
-    $authArguments->[4] = "";
-    $authArguments->[5] = "";
-    $authArguments->[6] = "";
-    $authArguments->[7] = "";
-    
-    return();
-}
-
- */
