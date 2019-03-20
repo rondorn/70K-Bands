@@ -112,6 +112,8 @@ let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.d
 let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
+let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
+
 var eventYear:Int = 0
 
 //defaults preferences
@@ -207,7 +209,7 @@ func getPointerUrlData(keyValue: String) -> String {
     let httpData = getUrlData(defaultStorageUrl)
     
     if (httpData.isEmpty == false){
-    let dataArray = httpData.components(separatedBy: "\n")
+        let dataArray = httpData.components(separatedBy: "\n")
         for record in dataArray {
             var valueArray = record.components(separatedBy: "::")
             if (valueArray.isEmpty == false && valueArray.count >= 2){
@@ -218,9 +220,24 @@ func getPointerUrlData(keyValue: String) -> String {
                 }
             }
         }
+    } else if (keyValue == "eventYear"){
+        do {
+            url = try! String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+        } catch let error as NSError {
+            print ("Encountered an error of reading file eventYearFile " + error.debugDescription)
+        }
     }
+    
     print ("Using default " + keyValue + " of " + url)
-
+    
+    if (keyValue == "eventYear"){
+        do {
+            try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
+            print ("Just created file " + eventYearFile);
+        } catch let error as NSError {
+            print ("Encountered an error of creating file eventYearFile " + error.debugDescription)
+        }
+    }
     return url
 }
 

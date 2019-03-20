@@ -185,7 +185,7 @@ open class ShowsAttended {
             eventTypeVariable = unofficalEventType;
         }
         
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + String(eventYear)
         
         var value = ""
 

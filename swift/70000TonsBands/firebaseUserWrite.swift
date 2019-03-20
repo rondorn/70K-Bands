@@ -20,23 +20,25 @@ class firebaseUserWrite {
     
     func writeData (){
         
-        let userDataHandle = userDataHandler()
-        
-        print ("Writing firebase data to userData start");
+        if (internetAvailble == true){
+            let userDataHandle = userDataHandler()
+            
+            print ("Writing firebase data to userData start");
 
-        self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
-                                                                       "country": userDataHandle.country,
-                                                                       "language": userDataHandle.language,
-                                                                       "platform": "iOS",
-                                                                       "lastLaunch": userDataHandle.getCurrentDateString()]) {
-                                                                        (error:Error?, ref:DatabaseReference) in
-                                                                        if let error = error {
-                                                                            print("Writing firebase data could not be saved: \(error).")
-                                                                        } else {
-                                                                            print("Writing firebase data saved successfully!")
-                                                                        }
-        }
+            self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
+                                                                           "country": userDataHandle.country,
+                                                                           "language": userDataHandle.language,
+                                                                           "platform": "iOS",
+                                                                           "lastLaunch": userDataHandle.getCurrentDateString()]) {
+                                                                            (error:Error?, ref:DatabaseReference) in
+                                                                            if let error = error {
+                                                                                print("Writing firebase data could not be saved: \(error).")
+                                                                            } else {
+                                                                                print("Writing firebase data saved successfully!")
+                                                                            }
+            }
         
-        print ("Writing firebase data to userData stop")
+            print ("Writing firebase data to userData stop")
+        }
     }
 }
