@@ -21,24 +21,26 @@ class filebaseBandDataWrite {
     
     func writeData (){
         
-        let allBands = getBandNames()
-        let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-        
-        for bandName in allBands {
-            let externalID = uid + "-" + bandName;
-            let rankingNumber = String(getPriorityData(bandName))
-            let rankingString = resolvePriorityNumber(priority: rankingNumber)
+        if (internetAvailble == true){
+            let allBands = getBandNames()
+            let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
-            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue(["bandName": bandName,
-                                                                    "ranking": rankingString,
-                                                                    "userID": uid,
-                                                                    "year": String(eventYear)]){
-                                                                            (error:Error?, ref:DatabaseReference) in
-                                                                            if let error = error {
-                                                                                print("Writing firebase data could not be saved: \(error).")
-                                                                            } else {
-                                                                                print("Writing firebase data saved successfully!")
-                                                                            }
+            for bandName in allBands {
+                let externalID = uid + "-" + bandName;
+                let rankingNumber = String(getPriorityData(bandName))
+                let rankingString = resolvePriorityNumber(priority: rankingNumber)
+                
+                self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue(["bandName": bandName,
+                                                                        "ranking": rankingString,
+                                                                        "userID": uid,
+                                                                        "year": String(eventYear)]){
+                                                                                (error:Error?, ref:DatabaseReference) in
+                                                                                if let error = error {
+                                                                                    print("Writing firebase data could not be saved: \(error).")
+                                                                                } else {
+                                                                                    print("Writing firebase data saved successfully!")
+                                                                                }
+                }
             }
         }
     }
