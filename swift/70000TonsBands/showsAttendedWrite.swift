@@ -31,23 +31,28 @@ class showsAttendedWrite {
                 let startTimeHour = String(indexArray[2])
                 let startTimeMin = String(indexArray[3])
                 let eventType = String(indexArray[4])
+                let year = String(indexArray[5])
                 let status = index.value
                 
-                if (allBands.contains(bandName) == true){
-                    print("showAttended data band \(bandName)")
-                    print("showAttended data location \(location)")
-                    print("showAttended data startTimeHour \(startTimeHour)")
-                    print("showAttended data startTimeMin \(startTimeMin)")
-                    print("showAttended data eventType \(eventType)")
-                    print("showAttended data status \(status)")
-                    
-                    let time = startTimeHour + ":" + startTimeMin
-                    let externalID = uid + "-" + bandName + "-" + time + "-" + location;
-                    let bandJson = getShowJSON(bandName: bandName, location: location, time: time, eventType:eventType, status:status);
-                    
-                    
-                    showPayload[externalID] = bandJson;
+                if (year != String(eventYear)){
+                    continue
                 }
+                
+
+                print("showAttended data band \(bandName)")
+                print("showAttended data location \(location)")
+                print("showAttended data startTimeHour \(startTimeHour)")
+                print("showAttended data startTimeMin \(startTimeMin)")
+                print("showAttended data eventType \(eventType)")
+                print("showAttended data status \(status)")
+                
+                let time = startTimeHour + ":" + startTimeMin
+                let externalID = uid + "-" + bandName + "-" + time + "-" + location;
+                let bandJson = getShowJSON(bandName: bandName, location: location, time: time, eventType:eventType, status:status);
+                
+                
+                showPayload[externalID] = bandJson;
+                
             }
             
             let bulkWrite = salesforceBulkCalls();
