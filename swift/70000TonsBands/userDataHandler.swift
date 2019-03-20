@@ -26,7 +26,7 @@ class userDataHandler: NSObject {
         print ("new userData - " + self.uid + " - " + self.country + " - " + self.language);
     }
     
-    func getJsonString(isUpdate:Bool)->String{
+    func getCurrentDateString()->String {
         
         let now = Date()
         let formatter = DateFormatter()
@@ -37,17 +37,8 @@ class userDataHandler: NSObject {
         dateString = dateString.replacingOccurrences(of: " ", with: "T")
         dateString += "-00:00";
         
-        var jsonString = "{\"Country__c\" : \"" + self.country + "\"";
-        jsonString += ",\"language__c\" :\"" + self.language + "\"";
-        jsonString += ",\"lanuchCount__c\" : \"" + String(self.lanuchCount) + "\"";
-        jsonString += ",\"lastLaunch__c\" : \"" + dateString + "\"";
+        return dateString
         
-        if (isUpdate == false){
-            jsonString += ",\"externalID__c\" :\"" + self.uid + "\"";
-        }
-        
-        jsonString += "}"
-        
-        return jsonString;
     }
+
 }

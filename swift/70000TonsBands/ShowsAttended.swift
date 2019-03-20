@@ -43,11 +43,48 @@ open class ShowsAttended {
 
     func loadShowsAttended(){
         
+        readBandFile()
+        let allBands = getBandNames()
+        let artistUrl = defaults.string(forKey: "artistUrl")
+        eventYear =  Int(getPointerUrlData(keyValue: "eventYear"))!
+        
+        
+        var unuiqueSpecial = [String]()
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
             showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
             
-             print ("loaded showData \(showsAttendedArray)")
+            if (showsAttendedArray.count > 0){
+                for index in showsAttendedArray {
+                    let indexArray = index.key.split(separator: ":")
+                    
+                    let bandName = String(indexArray[0])
+                    let eventType = String(indexArray[4])
+                    
+                    print ("cleanup event data old or new  \(indexArray.count)")
+                    if (indexArray.count == 5 && artistUrl == "Default"){
+                        var useEventYear = eventYear;
+                        if (allBands.contains(bandName) == false){
+                            print ("cleanup event data last years band \(bandName) and eventType is \(eventType) and \(unuiqueSpecial)")
+                            useEventYear = useEventYear - 1
+                            
+                            if ((eventType == specialEventType || eventType == unofficalEventType) && unuiqueSpecial.contains(bandName) == false){
+                                useEventYear = useEventYear + 1
+                                unuiqueSpecial.append(bandName)
+                            }
+                            
+                        }
+                        
+                        let newIndex = index.key + ":" + String(useEventYear)
+                        
+                        print ("cleanup event data chaning index from  \(index.key) to \(newIndex)")
+                        showsAttendedArray[newIndex] = index.value;
+                        showsAttendedArray.removeValue(forKey: index.key)
+                    }
+                }
+            }
+            print ("cleanup event data loaded showData \(showsAttendedArray)")
+
         } catch {
             print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")
         }
@@ -64,7 +101,7 @@ open class ShowsAttended {
             eventTypeValue = unofficalEventType;
         }
         
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + String(eventYear)
         
         print ("addAttended data index = \(index)")
         var value = ""

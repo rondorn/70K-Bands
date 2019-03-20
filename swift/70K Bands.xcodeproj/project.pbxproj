@@ -86,6 +86,12 @@
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
 		11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
 		11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
+		11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
+		11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
+		11D4844B2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
+		11D4844C2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
+		11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
+		11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
@@ -187,6 +193,9 @@
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
 		11C8BDC91A7D398400037F2B /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
 		11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		11D4844422418A9E00910878 /* firebaseUserWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseUserWrite.swift; sourceTree = "<group>"; };
+		11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = filebaseBandDataWrite.swift; sourceTree = "<group>"; };
+		11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseEventDataWrite.swift; sourceTree = "<group>"; };
 		11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = dataHandler.swift; sourceTree = "<group>"; };
 		11DCE9B31A856EE600A25FB8 /* mainListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mainListController.swift; sourceTree = "<group>"; };
 		11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = localNotificationHandler.swift; sourceTree = "<group>"; };
@@ -297,12 +306,16 @@
 				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
 				1154F6321A5758D3003F4764 /* bandNames.swift */,
+				112BAAD92238BCF700008A7B /* bandRankingWrite.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
 				11BE68F01A5992A600602EC7 /* externalUrls.swift */,
+				11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */,
+				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
+				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
 				110C7DE920DC600000525283 /* iCloudFileHandler.swift */,
@@ -315,10 +328,12 @@
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
+				112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */,
 				11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
+				112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */,
 				11942FD31D0CE33D0078A422 /* SortMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
@@ -327,9 +342,6 @@
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
 				11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
-				112BAAD92238BCF700008A7B /* bandRankingWrite.swift */,
-				112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */,
-				112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */,
 			);
 			path = 70000TonsBands;
 			sourceTree = "<group>";
@@ -661,10 +673,13 @@
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
 				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
+				11D4844B2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */,
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
+				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
+				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
 				11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */,
 				11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */,
@@ -703,6 +718,7 @@
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
 				112BAAE1223ADEB800008A7B /* showsAttendedWrite.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
+				11D4844C2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
 				11ABAA64222C86B000A04397 /* salesforceRestCalls.swift in Sources */,
@@ -727,8 +743,10 @@
 				112BAADB2238BCF700008A7B /* bandRankingWrite.swift in Sources */,
 				1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */,
 				1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */,
+				11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				112BAADE22398CB500008A7B /* salesforceBulkCalls.swift in Sources */,
 				110924371F748D19002237AB /* CustomBandDescription.swift in Sources */,
+				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
