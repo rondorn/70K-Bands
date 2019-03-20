@@ -28,18 +28,12 @@ class showAttendenceReport {
                 
                 let bandName = String(indexArray[0])
                 let eventType = String(indexArray[4])
-            
-                if (eventType == specialEventType){
-                    if (unuiqueSpecial.contains(bandName) == true){
-                        continue;
-                    } else {
-                        unuiqueSpecial.append(bandName)
-                    }
-                } else {
-                    if (schedule.getBandSortedSchedulingData().keys.contains(bandName) == false){
-                        continue
-                    }
+                let year = String(indexArray[5])
+                
+                if (year != String(eventYear)){
+                    continue
                 }
+                
                 getEventTypeCounts(eventType: eventType, sawStatus: index.value)
                 getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
                 

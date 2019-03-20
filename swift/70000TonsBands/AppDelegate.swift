@@ -108,19 +108,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         printFCMToken()
         
         //generate user data
-        let userDataHandle = userDataHandler()
-        
-        let sfHandler = salesforceRestCalls()
-        let clientID = sfHandler.getClientID()
-        let clientSecret = sfHandler.getClientSecret()
-        let sfUserName = sfHandler.getUserName()
-        let sfPassword = sfHandler.getPassword()
-        
-        sfHandler.getAuthenticationToken(userName: sfUserName, password: sfPassword, clientID: clientID, clientSecret: clientSecret)
-        
-        let userInfo = userDataHandle.getJsonString(isUpdate: true);
-        
-        sfHandler.upsert(recordID: (UIDevice.current.identifierForVendor?.uuidString)!,object: "userdata__c", data: userInfo)
+        let userDataHandle = firebaseUserWrite()
+        userDataHandle.writeData()
         return true
     
     }
@@ -292,7 +281,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("sendLocalAlert! APS: \(key) —> \(value)")
                 if (key == "alert"){
                     if (value is NSDictionary){
-                        displayNotification(message: value["body"] as! String);
+                        displayNotification(message: value as! String);
+                        //displayNotification(message: value["body"] as! String) ;
                     } else {
                         displayNotification(message: value as! String);
                     }
@@ -314,11 +304,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         writeFiltersFile()
         writeFile()
         
-        let bandWrite = bandRankingWrite();
-        bandWrite.writeBandData();
+        //        let userDataHandle = firebaseUserWrite()
+        //userDataHandle.writeData()
         
-        let showWrite = showsAttendedWrite()
-        showWrite.writShowAttended()
+        let bandWrite  = filebaseBandDataWrite();
+        bandWrite.writeData();
+        
+        let showWrite = firebaseEventDataWrite()
+        showWrite.writeData();
         
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
