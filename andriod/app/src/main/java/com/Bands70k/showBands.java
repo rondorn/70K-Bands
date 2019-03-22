@@ -201,6 +201,8 @@ public class showBands extends Activity {
         setupButtonFilters();
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
+        FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
+        userDataWrite.writeData();
     }
 
     private void setupSwipeList (){
@@ -966,6 +968,11 @@ public class showBands extends Activity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
         isReceiverRegistered = false;
 
+        FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
+        bandWrite.writeData();
+
+        FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
+        eventWrite.writeData();
     }
 
     @Override

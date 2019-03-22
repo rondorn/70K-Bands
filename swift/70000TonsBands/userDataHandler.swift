@@ -32,10 +32,7 @@ class userDataHandler: NSObject {
         let formatter = DateFormatter()
         formatter.timeZone = TimeZone.init(abbreviation: "UTC")
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        var dateString = formatter.string(from: now)
-        
-        dateString = dateString.replacingOccurrences(of: " ", with: "T")
-        dateString += "-00:00";
+        let dateString = formatter.string(from: now)
         
         return dateString
         

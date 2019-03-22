@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -62,11 +64,53 @@ public class showsAttended {
             in.close();
             file.close();
 
+            showsAttendedHash = convertToNewFormat(showsAttendedHash);
+
         } catch (Exception error) {
             Log.e("Error", "Unable to load alert tracking data " + error.getMessage());
         }
 
         return showsAttendedHash;
+    }
+
+    private Map<String,String> convertToNewFormat(Map<String,String> showsAttendedArray) {
+
+        List<String> unuiqueSpecial = new ArrayList<String>();
+
+        BandInfo bandInfoNames = new BandInfo();
+        List<String> bandNames = bandInfoNames.getBandNames();
+
+        if (showsAttendedArray.size() > 0) {
+
+            for (String index : showsAttendedArray.keySet()) {
+
+                String[] indexArray = index.split(":");
+
+                String bandName = indexArray[0];
+                String eventType = indexArray[4];
+
+                if (indexArray.length == 5 && staticVariables.preferences.getUseLastYearsData() == false) {
+                    Integer useEventYear = staticVariables.eventYear;
+
+                    if (bandNames.contains(bandName) == false) {
+                        useEventYear = useEventYear - 1;
+
+                        if ((eventType == staticVariables.specialEvent || eventType == staticVariables.unofficalEvent) && unuiqueSpecial.contains(bandName) == false) {
+                            useEventYear = useEventYear + 1;
+                            unuiqueSpecial.add(bandName);
+                        }
+
+                    }
+
+                    String newIndex = index + ":" + String.valueOf(useEventYear);
+
+                    showsAttendedArray.put(newIndex, showsAttendedArray.get(index));
+                    showsAttendedArray.remove(index);
+                }
+            }
+        }
+
+        return showsAttendedArray;
     }
 
     public String addShowsAttended (String index) {
@@ -82,15 +126,16 @@ public class showsAttended {
         if (showsAttendedHash.containsKey(index) == false || showsAttendedHash.get(index).equals(staticVariables.sawNoneStatus)){
 
             value = staticVariables.sawAllStatus;
-
+            Log.d("showAttended", "Setting value to all for index " + index);
         } else if (showsAttendedHash.get(index).equals(staticVariables.sawAllStatus) && eventType.equals(staticVariables.show)){
             value = staticVariables.sawSomeStatus;
-
+            Log.d("showAttended", "Setting value to some for index " + index);
         } else if (showsAttendedHash.get(index).equals(staticVariables.sawSomeStatus)){
             value = staticVariables.sawNoneStatus;
-
+            Log.d("showAttended", "Setting value to none 1 for index " + index);
         } else {
             value = staticVariables.sawNoneStatus;
+            Log.d("showAttended", "Setting value to none 2 for index " + index);
         }
 
         this.showsAttendedHash.put(index,value);
@@ -102,7 +147,9 @@ public class showsAttended {
 
     public String addShowsAttended (String band, String location, String startTime, String eventType) {
 
-        String index = band + ":" + location + ":" + startTime + ":" + eventType;
+        String eventYear = String.valueOf(staticVariables.eventYear);
+
+        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
         String value = addShowsAttended(index);
 
         return value;
@@ -110,14 +157,17 @@ public class showsAttended {
 
     public String getShowAttendedIcon(String index){
 
+        Log.d("showAttended", "getting icon for index " + index);
+
         String[] valueTypes = index.split(":");
 
         String bandName = valueTypes[0];
         String location = valueTypes[1];
         String startTime = valueTypes[2] + ":" + valueTypes[3];
         String eventType = valueTypes[4];
+        String eventyear = valueTypes[5];
 
-        return getShowAttendedIcon(bandName,location,startTime,eventType);
+        return getShowAttendedIcon(bandName,location,startTime,eventType, eventyear);
     }
 
     public String getShowAttendedColor(String index){
@@ -128,14 +178,15 @@ public class showsAttended {
         String location = valueTypes[1];
         String startTime = valueTypes[2] + ":" + valueTypes[3];
         String eventType = valueTypes[4];
+        String eventYear = valueTypes[5];
 
-        return getShowAttendedColor(bandName,location,startTime,eventType);
+        return getShowAttendedColor(bandName, location, startTime, eventType, eventYear);
     }
-    public String getShowAttendedColor(String band, String location, String startTime, String eventType) {
+    public String getShowAttendedColor(String band, String location, String startTime, String eventType, String eventYear) {
 
         String color = "";
 
-        String value = getShowAttendedStatus(band,location,startTime,eventType);
+        String value = getShowAttendedStatus(band, location, startTime, eventType, eventYear);
 
         if (value.equals(staticVariables.sawAllStatus)){
             color = staticVariables.sawAllColor;
@@ -147,17 +198,17 @@ public class showsAttended {
             color = staticVariables.sawNoneColor;
         }
 
-        Log.d("showAttended", "value is  " + value + " icon is " + color);
+        //Log.d("showAttended", "value is  " + band + " " + value + " icon is " + color);
 
         return color;
     }
 
 
-    public String getShowAttendedIcon(String band, String location, String startTime, String eventType) {
+    public String getShowAttendedIcon(String band, String location, String startTime, String eventType, String eventYear) {
 
         String icon = "";
 
-        String value = getShowAttendedStatus(band,location,startTime,eventType);
+        String value = getShowAttendedStatus(band,location,startTime,eventType, eventYear);
 
         if (value.equals(staticVariables.sawAllStatus)){
             icon = staticVariables.sawAllIcon;
@@ -169,7 +220,7 @@ public class showsAttended {
             icon = staticVariables.sawNoneIcon;
         }
 
-        Log.d("showAttended", "value is  " + value + " icon is " + icon);
+        //Log.d("showAttended", "value is  " + band + " " + value + " icon is " + icon);
 
         return icon;
     }
@@ -195,9 +246,9 @@ public class showsAttended {
         return value;
     }
 
-    public String getShowAttendedStatus(String band, String location, String startTime, String eventType) {
+    public String getShowAttendedStatus(String band, String location, String startTime, String eventType, String eventYear) {
 
-        String index = band + ":" + location + ":" + startTime + ":" + eventType;
+        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
 
         return getShowAttendedStatus(index);
 

@@ -19,10 +19,6 @@ public class showsAttendedReport {
 
         showsAttended attendedHandler = new showsAttended();
         Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
-        Set<String> specialEventNames = new HashSet<String>();
-
-        BandInfo bandInfoNames = new BandInfo();
-        List<String> bandNames = bandInfoNames.getBandNames();
 
         for (String index : showsAttendedArray.keySet()) {
 
@@ -30,20 +26,13 @@ public class showsAttendedReport {
 
             String bandName = indexArray[0];
             String eventType = indexArray[4];
+            Integer eventYear = Integer.valueOf(indexArray[5]);
 
             Log.d("ShareMessag", "index is " + index);
             Log.d("ShareMessag", "eventType is " + eventType);
 
-            if (eventType == staticVariables.specialEvent){
-                if (((HashMap) specialEventNames).containsValue(bandName) == true){
-                    continue;
-                } else {
-                    specialEventNames.add(bandName);
-                }
-            } else {
-                if (bandNames.contains(bandName) == false){
-                    continue;
-                }
+            if (eventYear != staticVariables.eventYear){
+                continue;
             }
 
             getEventTypeCounts(eventType, showsAttendedArray.get(index));

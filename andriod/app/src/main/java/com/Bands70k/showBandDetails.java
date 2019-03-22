@@ -341,7 +341,7 @@ public class showBandDetails extends Activity {
                 String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString();
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
 
-                String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType;
+                String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
                 String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
                 htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
