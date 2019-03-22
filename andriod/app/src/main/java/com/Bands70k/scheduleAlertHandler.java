@@ -233,7 +233,12 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
         staticBandName = bandName;
         Calendar cal = Calendar.getInstance();
-        String attendStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName,scheduleDetails.getShowLocation(),scheduleDetails.getStartTimeString(),scheduleDetails.getShowType());
+
+        String attendStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName,
+                scheduleDetails.getShowLocation(),
+                scheduleDetails.getStartTimeString(),
+                scheduleDetails.getShowType(),
+                String.valueOf(staticVariables.eventYear));
 
         if (staticVariables.preferences.getAlertOnlyForShowWillAttend() == true){
             if (attendStatus != staticVariables.sawNoneStatus){

@@ -5,11 +5,14 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import java.util.Set;
  */
 public class staticVariables {
 
+    private static File eventYearFile;
 
     public static Boolean initializedSortButtons = false;
     public final static String mustSeeIcon = "\uD83C\uDF7A";
@@ -44,7 +48,10 @@ public class staticVariables {
     public final static String  loungeVenueIcon = "🎤";
     public static String  rinkVenueIcon = "\uD83D\uDD03";
 
+    public static Integer eventYear = 0;
+    public static Integer eventYearRaw = 0;
 
+    public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
     public final static String testAlertChannel = "testing20000";
@@ -190,6 +197,15 @@ public class staticVariables {
         if (context == null){
             context = Bands70k.getAppContext();
         }
+
+        if (eventYear == 0){
+            getEventYear();
+        }
+
+        if (userID.isEmpty() == true) {
+            userID = Settings.Secure.getString(staticVariables.context.getContentResolver(),
+                    Settings.Secure.ANDROID_ID);
+        }
     }
 
     private static boolean canShowFlagEmoji(String emoji) {
@@ -287,6 +303,52 @@ public class staticVariables {
         return icon;
     }
 
+    public static void getEventYear(){
+
+        eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+
+        if (eventYearRaw == 0){
+            eventYear = readEventYearFile();
+
+        } else {
+            eventYear = eventYearRaw;
+
+            if (preferences.getUseLastYearsData() == true) {
+                eventYear = eventYear - 1;
+            }
+
+            writeEventYearFile();
+        }
+
+    }
+
+    private static Integer readEventYearFile(){
+
+        String eventYearString = "";
+        try {
+
+            BufferedReader br = new BufferedReader(new FileReader(eventYearFile));
+
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                eventYearString = line;
+            }
+
+        } catch (Exception error) {
+            Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
+
+        }
+
+        return Integer.valueOf(eventYearString);
+    }
+
+    private static void writeEventYearFile(){
+
+        FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
+
+    }
+
     private static void lookupUrls(){
 
         try {
@@ -321,6 +383,7 @@ public class staticVariables {
             scheduleURL = downloadUrls.get("scheduleUrl");
             descriptionMap = downloadUrls.get("descriptionMap");
             previousYearDescriptionMap = downloadUrls.get("descriptionMapLastYear");
+            eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
 
         } catch (Exception error){
             Log.d("Error", error.getMessage());
