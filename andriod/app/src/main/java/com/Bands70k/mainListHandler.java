@@ -159,13 +159,14 @@ public class mainListHandler {
 
         boolean status = true;
 
+        String eventYear = String.valueOf(staticVariables.eventYear);
         if (timeIndex == null){
             status = false;
         } else {
             String showType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
             String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
             String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
-            String attendedStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName, location, startTime, showType);
+            String attendedStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName, location, startTime, showType, eventYear);
 
             if (attendedStatus.equals(staticVariables.sawNoneStatus)) {
                 status = false;
@@ -339,6 +340,7 @@ public class mainListHandler {
 
         String line = null;
 
+        String eventYear = String.valueOf(staticVariables.eventYear);
         if (timeIndex > 0){
             String rankIcon = rankStore.getRankForBand(bandName);
             line = rankIcon;
@@ -351,7 +353,7 @@ public class mainListHandler {
                 String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                 String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
-                String attendedIcon = attendedHandler.getShowAttendedIcon(bandName,location,startTime,eventType);
+                String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
 
                 line = attendedIcon + " " + rankIcon;
                 if (!rankStore.getRankForBand(bandName).equals("")) {
