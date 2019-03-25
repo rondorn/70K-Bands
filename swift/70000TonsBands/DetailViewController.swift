@@ -473,7 +473,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
                     scheduleIndex[scheduleText]!["eventType"] = type;
                     
-                    let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type);
+                    let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
+                    
                     print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
                     switch count {
                     case 1:
@@ -586,7 +587,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let startTime = scheduleIndex[scheduleText]!["startTime"]
         let eventType = scheduleIndex[scheduleText]!["eventType"]
         
-        let status = attendedHandler.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!);
+        let status = attendedHandler.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!,eventYearString: String(eventYear));
         
         let message = attendedHandler.setShowsAttendedStatus(sender,status: status);
         
