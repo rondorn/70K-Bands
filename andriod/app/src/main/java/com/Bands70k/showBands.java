@@ -473,16 +473,16 @@ public class showBands extends Activity {
                 String shareBody;
                 String subject;
 
-                //if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
+                if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
                     showsAttendedReport reportHandler = new showsAttendedReport();
                     reportHandler.assembleReport();
                     shareBody = reportHandler.buildMessage();
                     subject = "These are the events I attended on the 70,000 Tons Cruise";
 
-                //} else {
-                //    shareBody = buildShareMessage();
-                //    subject = "Bands I MUST see on 70,000 Tons";
-                //}
+                } else {
+                    shareBody = buildShareMessage();
+                    subject = "Bands I MUST see on 70,000 Tons";
+                }
 
                 Log.d("ShareMessage", shareBody);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
@@ -868,6 +868,11 @@ public class showBands extends Activity {
         super.onStop();
         inBackground = true;
 
+        FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
+        bandWrite.writeData();
+
+        FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
+        eventWrite.writeData();
     }
 
     private void reloadData (){
@@ -968,11 +973,6 @@ public class showBands extends Activity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
         isReceiverRegistered = false;
 
-        FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
-        bandWrite.writeData();
-
-        FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
-        eventWrite.writeData();
     }
 
     @Override

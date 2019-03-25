@@ -63,7 +63,7 @@ class localNoticationHandler {
         
         var alertStatus = false
         
-        let attendedStatus = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType);
+        let attendedStatus = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
         
         if (onlyAlertForAttended == true){
             if (attendedStatus != sawNoneStatus){

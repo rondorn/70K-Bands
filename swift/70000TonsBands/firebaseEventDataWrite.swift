@@ -12,6 +12,7 @@ import Firebase
 class firebaseEventDataWrite {
     
     var ref: DatabaseReference!
+    var eventCompareFile = directoryPath.appendingPathComponent( "eventCompare.data")
     
     init(){
         ref = Database.database().reference()
@@ -22,15 +23,18 @@ class firebaseEventDataWrite {
         if (internetAvailble == true){
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             let attended = ShowsAttended()
+        
             let showsAttendedArray = attended.getShowsAttended();
-            let allBands = getBandNames()
-            //var showPayload:[String:String] = [String:String]()
             
             schedule.buildTimeSortedSchedulingData();
+            
+            if (checkIfDataHasChanged(showsAttnded:showsAttendedArray) == false){
+                return;
+            }
+            
             if (schedule.getBandSortedSchedulingData().count > 0){
                 for index in showsAttendedArray {
                     
-                    //band + ":" + location + ":" + startTime + ":" + eventTypeValue
                     let indexArray = index.key.split(separator: ":")
                     
                     let bandName = String(indexArray[0])
@@ -41,21 +45,56 @@ class firebaseEventDataWrite {
                     let year = String(indexArray[5])
                     let status = index.value
                     
-                    self.ref.child("showData/").child(uid).child(String(year)).child(index.key).setValue(["bandName": bandName,
-                                                                                     "location": location,
-                                                                                     "startTimeHour": startTimeHour,
-                                                                                     "startTimeMin": startTimeMin,
-                                                                                     "eventType": eventType,
-                                                                                     "status": status]){
-                                                                                        (error:Error?, ref:DatabaseReference) in
-                                                                                        if let error = error {
-                                                                                            print("Writing firebase data could not be saved: \(error).")
-                                                                                        } else {
-                                                                                            print("Writing firebase data saved successfully!")
-                                                                                        }
+                    self.ref.child("showData/").child(uid).child(String(year)).child(index.key).setValue([
+                                        "bandName": bandName,
+                                         "location": location,
+                                         "startTimeHour": startTimeHour,
+                                         "startTimeMin": startTimeMin,
+                                         "eventType": eventType,
+                                         "status": status]){
+                                            (error:Error?, ref:DatabaseReference) in
+                                            if let error = error {
+                                                print("Writing firebase data could not be saved: \(error).")
+                                            } else {
+                                                print("Writing firebase data saved successfully!")
+                                            }
                     }
                 }
             }
         }
+    }
+    
+    func checkIfDataHasChanged(showsAttnded:[String:String] )->Bool{
+        
+        var result = true
+        
+        var showsAttndedCache: [String : String] = [String : String]();
+        
+        do {
+            if (try eventCompareFile.checkResourceIsReachable() == true){
+                showsAttndedCache =  try (NSKeyedUnarchiver.unarchiveObject(withFile: eventCompareFile.path) as? [String:String])!
+                
+            }
+        } catch {
+            print ("checkIfDataHasChanged - unable to read \(error)");
+        }
+        
+        if (showsAttndedCache.count >= 1){
+            if (showsAttndedCache == showsAttnded){
+                result = false;
+            }
+        }
+        
+        do {
+            if #available(iOS 11.0, *) {
+                let data = try NSKeyedArchiver.archivedData(withRootObject: showsAttnded, requiringSecureCoding: false)
+                try data.write(to: eventCompareFile)
+                
+            }
+        } catch {
+            print ("checkIfDataHasChanged - unable to write \(error)");
+        }
+    
+        return result
     }
 }

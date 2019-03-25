@@ -361,7 +361,7 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
             showEvent = false
         
         } else {
-            let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType)
+            let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
     
             if (status == sawNoneStatus){
                 showEvent = false
@@ -473,7 +473,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String) -
             cellText += " " + location + " - " + day + " " + eventIcon;
             scheduleButton = false
             
-            let icon = attendedHandler.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event);
+            let icon = attendedHandler.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
             
             cellText = icon + cellText
             

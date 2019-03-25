@@ -19,7 +19,7 @@ func gatherData () {
     
     let defaults = UserDefaults.standard
     
-    print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
+    //print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
     var artistUrl = defaults.string(forKey: "artistUrl")
     
     eventYear =  Int(getPointerUrlData(keyValue: "eventYear"))!
@@ -31,9 +31,11 @@ func gatherData () {
         eventYear = eventYear - 1
         artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
     
+    } else {
+        artistUrl = "http://www.apple.com";
     }
     
-    print ("Getting band data from " + artistUrl!);
+    //print ("Getting band data from " + artistUrl!);
     let httpData = getUrlData(artistUrl!)
     
     print("This will be making HTTP Calls for bands")
@@ -188,7 +190,7 @@ func getBandNames () -> [String] {
         if (bandNames.count >= 2){
             
             print ("Https response bandNames are \(bandNames)");
-            bandNames.sort{$0 < $1}
+            bandNames.sort();
         }
     }
     return bandNames

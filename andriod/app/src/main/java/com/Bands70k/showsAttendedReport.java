@@ -18,22 +18,31 @@ public class showsAttendedReport {
     public void assembleReport() {
 
         showsAttended attendedHandler = new showsAttended();
+        attendedHandler.loadShowsAttended();
         Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
 
+        Log.d("ShareMessage", "showsAttendedArray is " + showsAttendedArray.size());
         for (String index : showsAttendedArray.keySet()) {
 
             String[] indexArray = index.split(":");
 
+            if (indexArray.length == 5){
+                continue;
+            }
+            Log.d("ShareMessage", "index is " + index);
             String bandName = indexArray[0];
             String eventType = indexArray[4];
             Integer eventYear = Integer.valueOf(indexArray[5]);
 
-            Log.d("ShareMessag", "index is " + index);
-            Log.d("ShareMessag", "eventType is " + eventType);
+            Log.d("ShareMessage", "index is " + eventYear + "=" + staticVariables.eventYear);
 
-            if (eventYear != staticVariables.eventYear){
+            if (eventYear.equals(staticVariables.eventYear) == false){
                 continue;
             }
+
+            Log.d("ShareMessage", "index is " + index);
+            Log.d("ShareMessage", "eventType is " + eventType);
+            Log.d("ShareMessage", "status is " + showsAttendedArray.get(index));
 
             getEventTypeCounts(eventType, showsAttendedArray.get(index));
             getBandCounts(eventType, bandName,  showsAttendedArray.get(index));
