@@ -233,9 +233,10 @@ func readiCloudData(){
     print ("PRIORITIES Beach \(String(describing: bandPriorityStorage["Beach Party"]))");
     if (readInWrite == false){
         writeFile();
-        attendedHandler.setShowsAttended(attendedData: showsAttendedData)
-        attendedHandler.saveShowsAttended()
-
+        if (showsAttendedData.count != 0){
+            attendedHandler.setShowsAttended(attendedData: showsAttendedData)
+            attendedHandler.saveShowsAttended()
+        }
         if (conversion == true){
             writeiCloudData();
         }

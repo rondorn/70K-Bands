@@ -69,7 +69,7 @@ public class showsAttended {
         } catch (Exception error) {
             Log.e("Error", "Unable to load alert tracking data " + error.getMessage());
         }
-
+        
         return showsAttendedHash;
     }
 
@@ -88,9 +88,10 @@ public class showsAttended {
 
                 String bandName = indexArray[0];
                 String eventType = indexArray[4];
-
+                Log.d("loadShowAttended", "index = " + index);
                 if (indexArray.length == 5 && staticVariables.preferences.getUseLastYearsData() == false) {
                     Integer useEventYear = staticVariables.eventYear;
+
 
                     if (bandNames.contains(bandName) == false) {
                         useEventYear = useEventYear - 1;
@@ -103,13 +104,14 @@ public class showsAttended {
                     }
 
                     String newIndex = index + ":" + String.valueOf(useEventYear);
-
+                    Log.d("loadShowAttended", "using new index of " + newIndex);
                     showsAttendedArray.put(newIndex, showsAttendedArray.get(index));
                     showsAttendedArray.remove(index);
                 }
             }
         }
 
+        saveShowsAttended(showsAttendedArray);
         return showsAttendedArray;
     }
 
