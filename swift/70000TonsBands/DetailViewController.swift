@@ -112,7 +112,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             self.Event4.delegate = self
             self.Event5.delegate = self
             
-            NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)
             
         }
         
@@ -132,7 +132,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     override func viewDidAppear(_ animated: Bool) {
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         loadComments()
         super.viewDidAppear(animated)
         
@@ -143,13 +143,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let imageURL = getBandImageUrl(bandName)
         if (officialUrlButton.isHidden == false){
             if (special == "top"){
-                self.bandLogo.contentMode = UIViewContentMode.top
+                self.bandLogo.contentMode = UIView.ContentMode.top
             } else if (special == "scale"){
-                self.bandLogo.contentMode = UIViewContentMode.scaleAspectFit
+                self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             }
             self.bandLogo.sizeToFit()
         } else {
-             self.bandLogo.contentMode = UIViewContentMode.top
+            self.bandLogo.contentMode = UIView.ContentMode.top
              self.bandLogo.sizeToFit()
         }
         if (eventCount <= 1){
@@ -171,9 +171,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
   
     func showBandDetails(){
- 
-        if (UIDeviceOrientationIsLandscape(UIDevice.current.orientation) == false || UIDevice.current.userInterfaceIdiom == .pad){
-            
+        
+        if (UIApplication.shared.statusBarOrientation  == .landscapeLeft ||
+            UIApplication.shared.statusBarOrientation  == .landscapeRight ||
+            UIDevice.current.userInterfaceIdiom == .pad){
+
             if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
                 Country.text = "";
                 Country.isHidden = true
@@ -291,10 +293,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         saveComments()
     }
     
-    func rotationChecking(){
+    @objc func rotationChecking(){
         
         //need to hide things to make room in the detail display
-        if(UIDeviceOrientationIsLandscape(UIDevice.current.orientation)){
+        if(UIApplication.shared.statusBarOrientation  == .landscapeLeft || UIApplication.shared.statusBarOrientation  == .landscapeRight){
             //if schdule exists, hide the web links that probably dont work anyway
             //only needed on iPhones. iPads have enought room for both
             if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
@@ -384,7 +386,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             
             if (sender.isEnabled == true){
-                splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
+                splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
                 setUrl(sendToUrl)
             }
         }

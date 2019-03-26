@@ -29,7 +29,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
-        [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         let splitViewController = self.window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
@@ -43,7 +43,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                                                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: nil)
         
         // Start iCloud key-value updates
-        NSUbiquitousKeyValueStore.default().synchronize()
+        NSUbiquitousKeyValueStore.default.synchronize()
         readiCloudData()
         
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
@@ -192,7 +192,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         completionHandler(UIBackgroundFetchResult.newData)
     }
     
-    func tokenRefreshNotification(_ notification: Notification) {
+    @objc func tokenRefreshNotification(_ notification: Notification) {
         if let refreshedToken = InstanceID.instanceID().token() {
             print("InstanceID token: \(refreshedToken)")
         }
@@ -256,8 +256,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func displayNotification (message: String){
         
         //if (notificationDisplayed == false){
-            let alertCtrl = UIAlertController(title: "70K Bands", message: message, preferredStyle: UIAlertControllerStyle.alert)
-            alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: nil))
+        let alertCtrl = UIAlertController(title: "70K Bands", message: message, preferredStyle: UIAlertController.Style.alert)
+        alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
             // Find the presented VC...
             var presentedVC = self.window?.rootViewController
@@ -321,7 +321,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
     }
 
-    func iCloudKeysChanged(_ notification: Notification) {
+    @objc func iCloudKeysChanged(_ notification: Notification) {
         readiCloudData()
     }
 

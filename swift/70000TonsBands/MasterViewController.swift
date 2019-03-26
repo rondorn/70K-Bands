@@ -57,7 +57,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         masterView = self;
         
         // Do any additional setup after loading the view, typically from a nib.
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         
         blankScreenActivityIndicator.hidesWhenStopped = true
         
@@ -68,10 +68,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                          object: nil)
         
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControlEvents.valueChanged)
+        refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
         self.refreshControl = refreshControl
 
-        scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
+        scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
         readFiltersFile()
         setFilterButtons()
         refreshData()
@@ -84,9 +84,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
         if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
         } else {
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
         }
         
         refreshDisplayAfterWake();
@@ -132,7 +132,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     
-    func showReceivedMessage(_ notification: Notification) {
+    @objc func showReceivedMessage(_ notification: Notification) {
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
                 showAlert("Message received", message: aps["alert"]!)
@@ -157,32 +157,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("Status of getWontSeeOn = \(getWontSeeOn())")
         if (getMustSeeOn() == false || getShowOnlyWillAttened() == true){
-            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
         }
         if (getMightSeeOn() == false || getShowOnlyWillAttened() == true){
-            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
         }
         if (getWontSeeOn() == false || getShowOnlyWillAttened() == true){
-            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
         }
         if (getUnknownSeeOn() == false || getShowOnlyWillAttened() == true){
-            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
         }
         
         if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
         } else {
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
         }
         
-        self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
+        self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
     }
     
-    func refreshDisplayAfterWake(){
+    @objc func refreshDisplayAfterWake(){
         self.refreshData()
     }
     
-    func refreshAlerts(){
+    @objc func refreshAlerts(){
         if (isAlertGenerationRunning == true){
             var counter = 0;
             while (isAlertGenerationRunning == true){
@@ -227,20 +227,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.isHidden = true;
             setShowOnlyWillAttened(false);
             resetFilterIcons();
-            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
+            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
             
         } else if (sortedBy == "name"){
             print("Sort By is Name, Show")
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
-            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControlState())
+            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
             
         } else {
             print("Sort By is Time, Show")
             //self.sortBandsByTime()
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
-            self.scheduleButton.setTitle(getBandIconSort(), for: UIControlState())
+            self.scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
             
         }
         bands =  [String]()
@@ -263,7 +263,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    func refreshData(){
+    @objc func refreshData(){
 
         if (isLoadingBandData == true){
             var counter = 0;
@@ -363,22 +363,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func resetFilterIcons(){
 
         if (getMustSeeOn() == true){
-            mustSeeButton.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
+            mustSeeButton.setImage(UIImage(named: "willSeeIcon"), for: UIControl.State())
         }
         mustSeeButton.isEnabled = true
         
         if (getMightSeeOn() == true){
-            mightSeeButton.setImage(UIImage(named: "mightSeeIcon"), for: UIControlState())
+            mightSeeButton.setImage(UIImage(named: "mightSeeIcon"), for: UIControl.State())
         }
         mightSeeButton.isEnabled = true
         
         if (getWontSeeOn() == true){
-            wontSeeButton.setImage(UIImage(named: "willNotSee"), for: UIControlState())
+            wontSeeButton.setImage(UIImage(named: "willNotSee"), for: UIControl.State())
         }
         wontSeeButton.isEnabled = true
         
         if (getUnknownSeeOn() == true){
-            unknownButton.setImage(UIImage(named: "unknown"), for: UIControlState())
+            unknownButton.setImage(UIImage(named: "unknown"), for: UIControl.State())
         }
         unknownButton.isEnabled = true
     }
@@ -388,18 +388,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (getShowOnlyWillAttened() == false){
             setShowOnlyWillAttened(true)
             
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
             
-            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
             mustSeeButton.isEnabled = false
             
-            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
             mightSeeButton.isEnabled = false
             
-            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
             wontSeeButton.isEnabled = false
             
-            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
             unknownButton.isEnabled = false
             let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
             ToastMessages(message).show(self, cellLocation: self.view.frame)
@@ -409,7 +409,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             ToastMessages(message).show(self, cellLocation: self.view.frame)
             
             setShowOnlyWillAttened(false)
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControlState())
+            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
             resetFilterIcons();
         }
         
@@ -429,42 +429,42 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
-                sender.setTitle(mustSeeIcon, for: UIControlState())
-                sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControlState())
+                sender.setTitle(mustSeeIcon, for: UIControl.State())
+                sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
             
             } else {
                 setMustSeeOn(true)
-                sender.setTitle(mustSeeIcon, for: UIControlState())
-                sender.setImage(UIImage(named: "willSeeIcon"), for: UIControlState())
+                sender.setTitle(mustSeeIcon, for: UIControl.State())
+                sender.setImage(UIImage(named: "willSeeIcon"), for: UIControl.State())
 
             }
 
         } else if (sender.titleLabel?.text == getMightSeeIcon()){
             if (getMightSeeOn() == true){
                 setMightSeeOn(false)
-                sender.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControlState())
+                sender.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
             } else {
                 setMightSeeOn(true)
-                sender.setImage(UIImage(named: "mightSeeIcon"), for: UIControlState())
+                sender.setImage(UIImage(named: "mightSeeIcon"), for: UIControl.State())
             }
             
         } else if (sender.titleLabel?.text == getWillNotSeeIcon()){
             if (getWontSeeOn() == true){
                 setWontSeeOn(false)
-                sender.setImage(UIImage(named: "willNotSeeAlt"), for: UIControlState())
+                sender.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
             } else {
                 setWontSeeOn(true)
                 sender.backgroundColor = UIColor.clear
-                sender.setImage(UIImage(named: "willNotSee"), for: UIControlState())
+                sender.setImage(UIImage(named: "willNotSee"), for: UIControl.State())
             }
             
         } else if (sender.titleLabel?.text == getUnknownIcon()){
             if (getUnknownSeeOn() == true){
                 setUnknownSeeOn(false)
-                sender.setImage(UIImage(named: "unknownAlt"), for: UIControlState())
+                sender.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
             } else {
                 setUnknownSeeOn(true)
-                sender.setImage(UIImage(named: "unknown"), for: UIControlState())
+                sender.setImage(UIImage(named: "unknown"), for: UIControl.State())
             }
             
         } else {
@@ -573,7 +573,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return true
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
     }
     
     //swip code start
@@ -592,7 +592,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let sawAllShow = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let currentCel = tableView.cellForRow(at: indexPath)
             
@@ -621,7 +621,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         })
  
-        let mustSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getMustSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getMustSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
@@ -630,7 +630,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         })
 
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getMightSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getMightSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -640,7 +640,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getWillNotSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getWillNotSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -650,7 +650,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowActionStyle.normal, title:getUnknownIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getUnknownIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -696,7 +696,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Waiting for band data to load, Done")
         self.splitViewController!.delegate = self;
         
-        self.splitViewController!.preferredDisplayMode = UISplitViewControllerDisplayMode.allVisible
+        self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         
         self.extendedLayoutIncludesOpaqueBars = true
         
@@ -747,7 +747,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     //iCloud data loading
-    func onSettingsChanged(_ notification: Notification) {
+    @objc func onSettingsChanged(_ notification: Notification) {
         writeiCloudData()
     }
 

@@ -29,7 +29,7 @@ class InterfaceController: WKInterfaceController {
         super.awake(withContext: context)
         
         // Start iCloud key-value updates
-        NSUbiquitousKeyValueStore.default().synchronize()
+        NSUbiquitousKeyValueStore.default.synchronize()
         updateBandFromICloud()
         
        
@@ -121,7 +121,7 @@ class InterfaceController: WKInterfaceController {
 
     
     fileprivate func updateBandFromICloud() {
-        let bandInfo = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
+        let bandInfo = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
         if (bandInfo.count >= 1) {
             readiCloudData()
         }

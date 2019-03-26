@@ -56,7 +56,8 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
                 returnedImage = image
                 imageCache[urlString] = returnedImage
                 do {
-                    try UIImageJPEGRepresentation((returnedImage!),1.0)?.write(to: imageStoreFile, options: [.atomic])
+                    let imageData = returnedImage?.jpegData(compressionQuality: 0.75)
+                    try imageData?.write(to: imageStoreFile, options: [.atomic])
                 } catch {
                     print ("ImageCall \(error)")
                 }
