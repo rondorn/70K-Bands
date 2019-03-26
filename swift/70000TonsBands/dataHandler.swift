@@ -179,10 +179,10 @@ func writeiCloudData (){
     
     if (counter > 2){
         print ("iCloud writing priority data")
-        NSUbiquitousKeyValueStore.default().set(dataString, forKey: "bandPriorities")
-        NSUbiquitousKeyValueStore.default().set(Date(), forKey: "lastModifiedDate")
+        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
+        NSUbiquitousKeyValueStore.default.set(Date(), forKey: "lastModifiedDate")
     
-        NSUbiquitousKeyValueStore.default().synchronize()
+        NSUbiquitousKeyValueStore.default.synchronize()
         readInWrite = true;
         readiCloudData();
         readInWrite = false;
@@ -191,11 +191,11 @@ func writeiCloudData (){
 
 func readiCloudData(){
     
-    NSUbiquitousKeyValueStore.default().synchronize()
+    NSUbiquitousKeyValueStore.default.synchronize()
 
     print ("iCloud getting priority data from the cloud")
     
-    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
+    let values = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
     
     var showsAttendedData : [String : String] = [String : String]();
     
@@ -203,10 +203,10 @@ func readiCloudData(){
     
     print ("iCloud - " + String(describing: values))
     if values["bandPriorities"] != nil {
-        let dataString = String(NSUbiquitousKeyValueStore.default().string(forKey: "bandPriorities")!)
-        let split1 = dataString?.components(separatedBy: ";")
+        let dataString = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities")!)
+        let split1 = dataString.components(separatedBy: ";")
         
-        for record in split1! {
+        for record in split1 {
             var split2 = record.components(separatedBy: "!")
             print ("Number of variable is \(split2.count)")
             if (split2.count == 3){
@@ -292,10 +292,10 @@ func compareLastModifiedDate () -> String {
     }
     
     
-    let values = NSUbiquitousKeyValueStore.default().dictionaryRepresentation
+    let values = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
     
     if values["lastModifiedDate"] != nil {
-        iCloudDate = NSUbiquitousKeyValueStore.default().object(forKey: "lastModifiedDate") as! Date
+        iCloudDate = NSUbiquitousKeyValueStore.default.object(forKey: "lastModifiedDate") as! Date
     } else {
         return "file"
     }

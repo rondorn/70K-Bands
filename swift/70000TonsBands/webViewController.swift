@@ -26,7 +26,7 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         
         let url = getUrl()
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.primaryHidden
+        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
         
         self.webDisplay.allowsInlineMediaPlayback = true
         self.webDisplay.mediaPlaybackAllowsAirPlay = true

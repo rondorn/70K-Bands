@@ -253,7 +253,7 @@ class localNoticationHandler {
                 
                 let content = UNMutableNotificationContent()
                 content.body = message
-                content.sound = UNNotificationSound.init(named: "OnMyWayToDeath.wav")
+                content.sound = UNNotificationSound.init(named: UNNotificationSoundName(rawValue: "OnMyWayToDeath.wav"))
                 
                 let request = UNNotificationRequest(identifier: message, content: content, trigger: trigger)
                 
