@@ -230,7 +230,7 @@ func readiCloudData(){
         }
     }
     
-    print ("PRIORITIES Beach \(String(describing: bandPriorityStorage["Beach Party"]))");
+    //print ("PRIORITIES Beach \(String(describing: bandPriorityStorage["Beach Party"]))");
     if (readInWrite == false){
         writeFile();
         if (showsAttendedData.count != 0){

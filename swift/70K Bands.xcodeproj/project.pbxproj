@@ -16,12 +16,6 @@
 		11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
-		112BAADA2238BCF700008A7B /* bandRankingWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAAD92238BCF700008A7B /* bandRankingWrite.swift */; };
-		112BAADB2238BCF700008A7B /* bandRankingWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAAD92238BCF700008A7B /* bandRankingWrite.swift */; };
-		112BAADD22398CB500008A7B /* salesforceBulkCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */; };
-		112BAADE22398CB500008A7B /* salesforceBulkCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */; };
-		112BAAE0223ADEB800008A7B /* showsAttendedWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */; };
-		112BAAE1223ADEB800008A7B /* showsAttendedWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */; };
 		114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0741C79212600CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0751C79212D00CF5BF1 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* LaunchScreen.xib */; };
@@ -66,8 +60,6 @@
 		11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortMenuController.swift */; };
 		11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
-		11ABAA63222C86B000A04397 /* salesforceRestCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */; };
-		11ABAA64222C86B000A04397 /* salesforceRestCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */; };
 		11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
 		11AC1D671A6827FC00267A8F /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
 		11AC1D691A68280A00267A8F /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D681A68280A00267A8F /* CoreGraphics.framework */; };
@@ -135,9 +127,6 @@
 		110C7DE920DC600000525283 /* iCloudFileHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudFileHandler.swift; sourceTree = "<group>"; };
 		11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowAttendedReport.swift; sourceTree = "<group>"; };
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
-		112BAAD92238BCF700008A7B /* bandRankingWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bandRankingWrite.swift; sourceTree = "<group>"; };
-		112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = salesforceBulkCalls.swift; sourceTree = "<group>"; };
-		112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = showsAttendedWrite.swift; sourceTree = "<group>"; };
 		1139BEB11AF52C2C0011EF60 /* 70K Bands WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "70K Bands WatchKit Extension.entitlements"; sourceTree = "<group>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
@@ -175,7 +164,6 @@
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortMenuController.swift; sourceTree = "<group>"; };
 		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
-		11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = salesforceRestCalls.swift; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		11AC1D661A6827FC00267A8F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		11AC1D681A68280A00267A8F /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -306,7 +294,6 @@
 				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
 				1154F6321A5758D3003F4764 /* bandNames.swift */,
-				112BAAD92238BCF700008A7B /* bandRankingWrite.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
@@ -328,12 +315,9 @@
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
-				112BAADC22398CB500008A7B /* salesforceBulkCalls.swift */,
-				11ABAA62222C86B000A04397 /* salesforceRestCalls.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
-				112BAADF223ADEB700008A7B /* showsAttendedWrite.swift */,
 				11942FD31D0CE33D0078A422 /* SortMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
@@ -696,14 +680,10 @@
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				11DCE9BA1A86D84D00A25FB8 /* validateCSVschedule.swift in Sources */,
 				11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */,
-				112BAADD22398CB500008A7B /* salesforceBulkCalls.swift in Sources */,
 				11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
-				112BAADA2238BCF700008A7B /* bandRankingWrite.swift in Sources */,
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
-				112BAAE0223ADEB800008A7B /* showsAttendedWrite.swift in Sources */,
-				11ABAA63222C86B000A04397 /* salesforceRestCalls.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -717,12 +697,10 @@
 				1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
-				112BAAE1223ADEB800008A7B /* showsAttendedWrite.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
 				11D4844C2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
-				11ABAA64222C86B000A04397 /* salesforceRestCalls.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				1155E3A81A8B121000D51ED9 /* externalUrls.swift in Sources */,
@@ -741,11 +719,9 @@
 				11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
 				11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
-				112BAADB2238BCF700008A7B /* bandRankingWrite.swift in Sources */,
 				1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */,
 				1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */,
 				11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */,
-				112BAADE22398CB500008A7B /* salesforceBulkCalls.swift in Sources */,
 				110924371F748D19002237AB /* CustomBandDescription.swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,

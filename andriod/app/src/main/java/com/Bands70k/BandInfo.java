@@ -58,6 +58,11 @@ public class BandInfo {
         ArrayList<String> filteredBandNames = new ArrayList<String>();
 
         for (String bandName: bandNames){
+            //prevent wrong year from manifesting itself for 2020
+            if (staticVariables.eventYear == 2020 && bandName.equals("Mors Principium Est")){
+                staticVariables.eventYear = 2019;
+            }
+
             String bandRank = rankStore.getRankForBand(bandName);
 
             if (bandName.isEmpty()){
