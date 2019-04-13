@@ -100,11 +100,9 @@ let sawSomeStatus = "sawSome";
 let sawNoneStatus = "sawNone";
 
 //alert topics
-let subscriptionTopic = "/topics/global"
-let subscriptionTopicTest = "/topics/Testing2019-02-26"
-let subscriptionUnofficalTopic = "/topics/unofficalEvents"
-
-let salesforceBaseUrl = "https://na85.salesforce.com"
+let subscriptionTopic = "global"
+let subscriptionTopicTest = "Testing2020"
+let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
@@ -125,8 +123,8 @@ let defaultPrefsValue = "Default";
 let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
 
-let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1"
-//let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
+//let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"

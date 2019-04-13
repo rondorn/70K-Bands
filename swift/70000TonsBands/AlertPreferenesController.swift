@@ -317,59 +317,72 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func UseLastYearsDataAction() {
         
-        let alert: UIAlertView = UIAlertView()
-        alert.title = restartAlertTitle
-        alert.message = restartAlertText
+        print ("Files were in UseLastYearsDataAction")
         
-        alert.addButton(withTitle: cancelPrompt)
-        alert.addButton(withTitle: okPrompt)
-        alert.delegate = self  // set the delegate here
-        alert.show()
+        let alertController = UIAlertController(title: restartAlertTitle, message: restartAlertText, preferredStyle: .alert)
         
+        // Create the actions
+        let okAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default) {
+            UIAlertAction in
+            self.lastYearWarningAccepted()
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel) {
+            UIAlertAction in
+            self.lastYearWarningRejected()
+        }
+        
+        // Add the actions
+        alertController.addAction(okAction)
+        alertController.addAction(cancelAction)
+        
+        // Present the controller
+        self.present(alertController, animated: true, completion: nil)
     }
     
-    func alertView(_ alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
-        let buttonTitle = alertView.buttonTitle(at: buttonIndex)
-        print("\(buttonTitle) pressed")
-        if buttonTitle == okPrompt {
-            
-            if (UseLastYearsData.isOn == true){
-                defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
-                defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
-                
-            } else {
-                defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
-                defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
-            }
-
-            do {
-                try  FileManager.default.removeItem(atPath: scheduleFile)
-                try  FileManager.default.removeItem(atPath: bandFile)
-            } catch {
-                //guess there was no file to delete
-            }
-            
-            setMustSeeOn(true);
-            setMightSeeOn(true);
-            setWontSeeOn(true);
-            setUnknownSeeOn(true);
-            
-            writeFiltersFile();
- 
-            //clear all existing notifications
-            let localNotification = localNoticationHandler()
-            localNotification.clearNotifications();
-            
-            exit(0)
+    func lastYearWarningAccepted(){
+        
+        print ("Files were Ok, Pressed")
+        if (UseLastYearsData.isOn == true){
+            print ("Files were Seeing last years data")
+            defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
+            defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
             
         } else {
-            if (UseLastYearsData.isOn == true){
-                UseLastYearsData.isOn = false
-                
-            } else {
-                UseLastYearsData.isOn = true
-            }
+            print ("Files were Seeing this years data")
+            defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
+            defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
         }
+        print ("Files were Done setting")
+        do {
+            try  FileManager.default.removeItem(atPath: scheduleFile)
+            try  FileManager.default.removeItem(atPath: bandFile)
+            print ("Files were removed")
+        } catch {
+            print ("Files were not removed..why?");
+            //guess there was no file to delete
+        }
+        
+        setMustSeeOn(true);
+        setMightSeeOn(true);
+        setWontSeeOn(true);
+        setUnknownSeeOn(true);
+        
+        writeFiltersFile();
+        
+        //clear all existing notifications
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications();
+        
+        exit(0)
     }
     
+    func lastYearWarningRejected(){
+
+        if (UseLastYearsData.isOn == true){
+            UseLastYearsData.isOn = false
+            
+        } else {
+            UseLastYearsData.isOn = true
+        }
+    }
 }
