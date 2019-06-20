@@ -183,43 +183,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func refreshAlerts(){
-        if (isAlertGenerationRunning == true){
-            var counter = 0;
-            while (isAlertGenerationRunning == true){
-                usleep(250000)
-                if (counter == 5){
-                    isAlertGenerationRunning = false;
-                }
-                counter = counter + 1;
+
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+            if #available(iOS 10.0, *) {
+                let localNotication = localNoticationHandler()
+                localNotication.addNotifications()
+                
+            } else {
+                // Fallback on earlier versions
             }
-        } else {
-            
-            isAlertGenerationRunning = true
-            
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                if #available(iOS 10.0, *) {
-                    let localNotication = localNoticationHandler()
-                    localNotication.addNotifications()
-                } else {
-                    // Fallback on earlier versions
-                }
-            }
-            isAlertGenerationRunning = false
         }
+    
     }
     
     func refreshFromCache (){
         
+        let bandNameHandle = bandNamesHandler()
+        let schedule = scheduleHandler()
+        
         bands =  [String]()
         bandsByName = [String]()
-        readBandFile()
-        schedule.populateSchedule()
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bandNameHandle.readBandFile()
+        schedule.getCachedData()
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
         bandsByName = bands
         setShowOnlyAttenedFilterStatus()
     }
     
     func ensureCorrectSorting(){
+        
+        let bandNameHandle = bandNamesHandler()
+        let schedule = scheduleHandler()
         
         if (eventCount == 0){
             print("Schedule is empty, stay hidden")
@@ -244,7 +238,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
         bands =  [String]()
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
     }
     
     func quickRefresh(){
@@ -252,7 +246,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
-            self.bands = getFilteredBands(getBandNames(), schedule: schedule)
+            let bandNameHandle = bandNamesHandler()
+            let schedule = scheduleHandler()
+            
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
@@ -265,72 +262,68 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshData(){
 
-        if (isLoadingBandData == true){
-            var counter = 0;
-            while (isLoadingBandData == true){
-                usleep(250000)
-                if (counter == 5){
-                    isLoadingBandData = false;
-                }
-                print ("Waiting for bandData \(counter)");
-                counter = counter + 1;
-            }
+        print ("Waiting for bandData, Done")
+
+        //check if the timezonr has changes for whatever reason
+        localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
+        
+        internetAvailble = isInternetAvailable();
+        print ("Internetavailable is  \(internetAvailble)");
+        if (internetAvailble == false){
+            self.refreshControl?.endRefreshing();
+        
         } else {
-            print ("Waiting for bandData, Done")
-            isLoadingBandData = true
-            //check if the timezonr has changes for whatever reason
-            localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
-            
-            internetAvailble = isInternetAvailable();
-            print ("Internetavailable is  \(internetAvailble)");
-            if (internetAvailble == false){
+            //clear busy indicator after a 3 second delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
                 self.refreshControl?.endRefreshing();
+            })
+        }
+
+        refreshFromCache()
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
-            } else {
-                //clear busy indicator after a 3 second delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
-                    self.refreshControl?.endRefreshing();
-                })
+            var offline = true
+            
+            if Reachability.isConnectedToNetwork(){
+                offline = false;
             }
-  
-            refreshFromCache()
             
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+            let bandNameHandle = bandNamesHandler()
+            let schedule = scheduleHandler()
+            if (offline == false){
                 
-                if (offline == false){
-                    
-                    readiCloudData()
-                    gatherData();
-                    
-                    schedule.DownloadCsv()
-                    let validate = validateCSVSchedule()
-                    validate.validateSchedule()
-                    
-                    DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                        bandNotes.getAllDescriptions()
-                        getAllImages()
-                    }
-                    
+                
+                
+                readiCloudData()
+                bandNameHandle.gatherData();
+                
+                schedule.DownloadCsv()
+                let validate = validateCSVSchedule()
+                validate.validateSchedule()
+                
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                    bandNotes.getAllDescriptions()
+                    getAllImages()
                 }
-                self.bandsByName = [String]()
-                self.bands =  [String]()
                 
-                schedule.populateSchedule()
-                self.bands = getFilteredBands(getBandNames(), schedule: schedule)
-                self.bandsByName = self.bands
-                isLoadingBandData = false
-                
-                DispatchQueue.main.async{
-                    isLoadingBandData = false
-                    self.ensureCorrectSorting()
-                    self.updateCountLable()
-                    self.tableView.reloadData()
-                    self.refreshAlerts()
-                    self.setShowOnlyAttenedFilterStatus()
-                    self.tableView.reloadData()
-                }
-            
             }
+            self.bandsByName = [String]()
+            self.bands =  [String]()
+            
+            schedule.populateSchedule()
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+            self.bandsByName = self.bands
+
+            DispatchQueue.main.async{
+                self.ensureCorrectSorting()
+                self.updateCountLable()
+                self.tableView.reloadData()
+                self.refreshAlerts()
+                self.setShowOnlyAttenedFilterStatus()
+                self.tableView.reloadData()
+            }
+        
         }
     } 
     
@@ -347,17 +340,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.isHidden = false;
             willAttendButton.isEnabled = true;
         }
-    }
-    
-    func showHideFilterMenu(){
-        print ("totalUpcomingEvents is " + String(totalUpcomingEvents))
-        //if (totalUpcomingEvents == 0 || showOnlyWillAttened == true){
-        //    menuButton.title = "";
-        //    menuButton.isEnabled = false;
-        //} else {
-            menuButton.title = "Filters";
-            menuButton.isEnabled = true;
-        //}
     }
     
     func resetFilterIcons(){
@@ -415,9 +397,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         writeFiltersFile();
         
+        let bandNameHandle = bandNamesHandler()
+        let schedule = scheduleHandler()
+        
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
         
         updateCountLable()
         tableView.reloadData()
@@ -469,7 +454,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         } else {
             bands =  [String]()
-            bands = getFilteredBands(getBandNames(), schedule: schedule)
+            
+            let bandNameHandle = bandNamesHandler()
+            let schedule = scheduleHandler()
+            
+            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
             updateCountLable()
             tableView.reloadData()
             return
@@ -479,7 +468,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("Sorted  by is " + sortedBy)
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        
+        let bandNameHandle = bandNamesHandler()
+        let schedule = scheduleHandler()
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
         
         updateCountLable()
         tableView.reloadData()
@@ -509,9 +501,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("titleButtonTitle:" + String(describing: titleButton.title))
         titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString        
         //titleButton.setTitleColor(UIColor.black, for: UIControlState())
-        
-        showHideFilterMenu()
-        
+            
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
@@ -592,6 +582,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
+        let attendedHandler = ShowsAttended()
+        
         let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let currentCel = tableView.cellForRow(at: indexPath)
@@ -671,6 +663,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func configureCell(_ cell: UITableViewCell, atIndexPath indexPath: IndexPath) {
         
+        let schedule = scheduleHandler()
+        
         setBands(bands)
         setScheduleButton(scheduleButton.isHidden)
         
@@ -681,18 +675,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
         
-        if (isLoadingBandData == true){
-           
-            var counter = 0;
-            while (isLoadingBandData == true){
-                usleep(250000)
-                if (counter == 5){
-                    isLoadingBandData = false;
-                }
-                print ("Waiting for band data to load \(counter)")
-                counter = counter + 1;
-            }
-        }
         print ("Waiting for band data to load, Done")
         self.splitViewController!.delegate = self;
         
@@ -724,7 +706,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func resortBandsByTime(){
-        schedule.populateSchedule()
+        let schedule = scheduleHandler()
+        schedule.getCachedData()
     }
     
     @IBAction func resortBands(_ sender: UIButton) {

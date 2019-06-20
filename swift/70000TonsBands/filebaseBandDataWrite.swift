@@ -54,7 +54,9 @@ class filebaseBandDataWrite {
     
     func buildBandRankArray(){
         
-        let allBands = getBandNames()
+        let bandNameHandle = bandNamesHandler()
+        
+        let allBands = bandNameHandle.getBandNames()
         for bandName in allBands {
             
             let rankingNumber = String(getPriorityData(bandName))

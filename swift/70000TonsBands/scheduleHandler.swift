@@ -16,124 +16,159 @@ open class scheduleHandler {
     
     var customDescrip = CustomBandDescription();
     
+    init() {
+        getCachedData()
+    }
+    
+    func getCachedData(){
+        
+        var staticCacheUsed = false
+        
+        staticSchedule.sync() {
+            if (scheduleStaticCache.isEmpty == false && scheduleTimeStaticCache.isEmpty == false ){
+                staticCacheUsed = true
+                schedulingData = scheduleStaticCache
+                schedulingDataByTime = scheduleTimeStaticCache
+            }
+        }
+        
+        if (staticCacheUsed == false){
+            if ((FileManager.default.fileExists(atPath: schedulingDataCacheFile.path)) == true){
+                schedulingData = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataCacheFile.path)
+                    as! [String : [TimeInterval : [String : String]]]
+            } else {
+                print ("Cache did not load, loading schedule data")
+                populateSchedule()
+            }
+            
+            if ((FileManager.default.fileExists(atPath: schedulingDataByTimeCacheFile.path)) == true){
+                schedulingDataByTime = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
+            } else {
+                print ("Cache did not load, loading schedule data")
+                populateSchedule()
+            }
+            
+            staticSchedule.async(flags: .barrier) {
+                scheduleStaticCache = self.schedulingData
+                scheduleTimeStaticCache = self.schedulingDataByTime
+            }
+            
+        }
+    }
+    
     func populateSchedule(){
-
-        if (isLoadingSchedule == true){
-            var counter = 0;
-            while (isLoadingSchedule == true){
-                usleep(250000)
-                if (counter == 5){
-                    isLoadingSchedule = false;
-                }
-                counter = counter + 1;
-            }
-        } else {
-
-            isLoadingSchedule = true;
+        
+        isLoadingSchedule = true;
+        
+        self.schedulingData.removeAll();
+        self.schedulingDataByTime.removeAll();
+    
+        
+        if (FileManager.default.fileExists(atPath: scheduleFile) == false){
+            DownloadCsv();
+        }
+        
+        if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
             
-            schedulingData.removeAll();
-            schedulingDataByTime.removeAll();
+            var unuiqueIndex = Dictionary<TimeInterval, Int>()
+            var csvData: CSV
             
-            if (FileManager.default.fileExists(atPath: scheduleFile) == false){
-                DownloadCsv();
-            }
+            csvData = try! CSV(csvStringToParse: csvDataString)
             
-            if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
-                
-                var unuiqueIndex = Dictionary<TimeInterval, Int>()
-                var csvData: CSV
-                
-                csvData = try! CSV(csvStringToParse: csvDataString)
-                
-                for lineData in csvData.rows {
-                    if (lineData[dateField]?.isEmpty == false && lineData[startTimeField]?.isEmpty == false){
-                        
-                        var dateIndex = getDateIndex(lineData[dateField]!, timeString: lineData[startTimeField]!, band: lineData["Band"]!)
-                        
-                        //ensures all dateIndex's are unuique
-                        while (unuiqueIndex[dateIndex] == 1){
-                            dateIndex = dateIndex + 1;
-                        }
-                        
-                        unuiqueIndex[dateIndex] = 1
-                        
-                        let dateFormatter = DateFormatter();
-                        dateFormatter.dateFormat = "YYYY-M-d HH:mm"
-                        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-                        
-                        print("Adding index for band " + lineData[bandField]! + " ")
-                        print (dateIndex)
-                        
-                        if (schedulingData[lineData[bandField]!] == nil){
-                            scheduleReleased = true
-                            schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
-                        }
-                        if (schedulingData[lineData[bandField]!]?[dateIndex] == nil){
-                            schedulingData[lineData[bandField]!]?[dateIndex] = [String : String]()
-                        }
+            for lineData in csvData.rows {
+                if (lineData[dateField]?.isEmpty == false && lineData[startTimeField]?.isEmpty == false){
                     
-                        print ("Adding location of " + lineData[locationField]!)
+                    var dateIndex = getDateIndex(lineData[dateField]!, timeString: lineData[startTimeField]!, band: lineData["Band"]!)
+                    
+                    //ensures all dateIndex's are unuique
+                    while (unuiqueIndex[dateIndex] == 1){
+                        dateIndex = dateIndex + 1;
+                    }
+                    
+                    unuiqueIndex[dateIndex] = 1
+                    
+                    let dateFormatter = DateFormatter();
+                    dateFormatter.dateFormat = "YYYY-M-d HH:mm"
+                    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+                    
+                    print("Adding index for band " + lineData[bandField]! + " ")
+                    print (dateIndex)
+                    
+                    if (schedulingData[lineData[bandField]!] == nil){
+                        scheduleReleased = true
+                        self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
+        
+                    }
+                    if (schedulingData[lineData[bandField]!]?[dateIndex] == nil){
+                        self.schedulingData[lineData[bandField]!]?[dateIndex] = [String : String]()
                         
-                        //doing this double for unknown reason, it wont work if the first entry is single
-                        print ("adding dayField");
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
-                        
-                        print ("adding startTimeField");
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
-                        
-                        print ("adding dateField");
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
-                        
-                        print ("adding typeField");
-                        var eventType = lineData[typeField]!;
-                        if (eventType == unofficalEventTypeOld){
-                            eventType = unofficalEventType;
-                        }
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: eventType)
-                        
-                        print ("adding notesField");
-                        if let noteValue = lineData[notesField] {
-                            setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: noteValue)
-                        }
-                        
-                        print ("adding locationField");
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
-                        
-                        print ("adding descriptionUrlField \(lineData)")
+                    }
 
-                        if let descriptUrl = lineData[descriptionUrlField] {
-                            if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
-                                print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
-                                setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
-                                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                                    _ = self.customDescrip.getDescriptionFromUrl(bandName: lineData[bandField]!, descriptionUrl: lineData[descriptionUrlField]!);
-                                }
+                    print ("Adding location of " + lineData[locationField]!)
+                    
+                    //doing this double for unknown reason, it wont work if the first entry is single
+                    print ("adding dayField");
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                    
+                    print ("adding startTimeField");
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
+                    
+                    print ("adding dateField");
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
+                    
+                    print ("adding typeField");
+                    var eventType = lineData[typeField]!;
+                    if (eventType == unofficalEventTypeOld){
+                        eventType = unofficalEventType;
+                    }
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: eventType)
+                    
+                    print ("adding notesField");
+                    if let noteValue = lineData[notesField] {
+                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: noteValue)
+                    }
+                    
+                    print ("adding locationField");
+                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
+                    
+                    print ("adding descriptionUrlField \(lineData)")
+
+                    if let descriptUrl = lineData[descriptionUrlField] {
+                        if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
+                            print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
+                            setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
+                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                                _ = self.customDescrip.getDescriptionFromUrl(bandName: lineData[bandField]!, descriptionUrl: lineData[descriptionUrlField]!);
                             }
-                        } else {
-                            print ("field descriptionUrlField not present for " + lineData[bandField]!);
-                        }
-                        
-                        if let imageUrl = lineData[imageUrlField] {
-                            if (imageUrl.isEmpty == false && imageUrl.count >= 2){
-                                imageUrls[lineData[bandField]!] = imageUrl
-                                //save inmage in background
-                                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                                    _ = displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
-                                }
-                            }
-                            
                         }
                     } else {
-                        print ("Unable to parse schedule file")
+                        print ("field descriptionUrlField not present for " + lineData[bandField]!);
                     }
+                    
+                    if let imageUrl = lineData[imageUrlField] {
+                        if (imageUrl.isEmpty == false && imageUrl.count >= 2){
+                            imageUrls[lineData[bandField]!] = imageUrl
+                            //save inmage in background
+                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                                _ = displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
+                            }
+                        }
+                        
+                    }
+                } else {
+                    print ("Unable to parse schedule file")
                 }
-            } else {
-                print ("Encountered an error could not open schedule file ")
             }
-            isLoadingSchedule = false;
+        } else {
+            print ("Encountered an error could not open schedule file ")
         }
+        
+        //saveCacheFile
+        NSKeyedArchiver.archiveRootObject(schedulingData, toFile: schedulingDataCacheFile.path)
+        NSKeyedArchiver.archiveRootObject(schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
+
     }
     
     
@@ -239,36 +274,46 @@ open class scheduleHandler {
     }
     
     func setData (bandName:String, index:TimeInterval, variable:String, value:String){
-    
-        if (variable.isEmpty == false && value.isEmpty == false && schedulingData.isEmpty == false){
-            if (bandName.isEmpty == false && index.isZero == false && (schedulingData[bandName]?.isEmpty)! == false){
-                if (schedulingData[bandName]?.isEmpty == false){
-                    //schedulingData[bandName]![index]?[variable] = ""
-                    if (value.isEmpty == false){
-                        schedulingData[bandName]?[index]?[variable] = value as String;
-                    }
-                }
+        if (variable.isEmpty == false && value.isEmpty == false && bandName.isEmpty == false && index.isZero == false){
+            if (isSchedulingDataPresent(schedulingData: schedulingData,bandName: bandName) == true){
+                self.schedulingData[bandName]?[index]?[variable] = value as String;
             }
         }
     }
     
+    func isSchedulingDataPresent(schedulingData: [String : [TimeInterval : [String : String]]], bandName: String)->Bool{
+        var results = true
+        if (schedulingData.isEmpty == true){
+            results = false
+        } else if (schedulingData[bandName]?.isEmpty == true){
+            results = false
+        }
+        
+        
+        return results
+    }
+    
     func getData(_ bandName:String, index:TimeInterval, variable:String) -> String{
         
+        var returnValue = ""
+
         print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
-        print (schedulingData[bandName] as Any)
+        //print (schedulingData[bandName] as Any)
         if (schedulingData[bandName] != nil && variable.isEmpty == false){
             print ("schedule value lookup. loop 1")
             if (schedulingData[bandName]![index]?.isEmpty == false){
                 print ("schedule value lookup. loop 2")
+
                 if (schedulingData[bandName]![index]![variable]?.isEmpty == false){
                     print ("schedule value lookup. loop 3")
                     print ("schedule value lookup. Returning " + schedulingData[bandName]![index]![variable]!)
-                    return schedulingData[bandName]![index]![variable]!
+                    returnValue = schedulingData[bandName]![index]![variable]!
                 }
             }
         }
         print ("schedule value lookup. Returning nothing for " + variable + " - " + bandName)
-        return String()
+        
+        return returnValue
     }
 
     func buildTimeSortedSchedulingData () {
@@ -277,23 +322,22 @@ open class scheduleHandler {
             if (schedulingData[bandName]?.isEmpty == false){
                 for timeIndex in (schedulingData[bandName]?.keys)!{
                     print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
-                    schedulingDataByTime[timeIndex] = [bandName:bandName]
-                    
+                    self.schedulingDataByTime[timeIndex] = [bandName:bandName]
                 }
             }
         }
-        
+    
         print ("schedulingDataByTime is")
         print (schedulingDataByTime);
-        
-    }
+
+          }
     
     func getTimeSortedSchedulingData () -> [TimeInterval : [String : String]] {
         return schedulingDataByTime
     }
     
     func getBandSortedSchedulingData () -> [String : [TimeInterval : [String : String]]] {
-    
+        
         return schedulingData;
     
     }

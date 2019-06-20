@@ -13,6 +13,31 @@ import CloudKit
 var bandPriorityStorage = [String:Int]()
 var readInWrite = false;
 
+func getUrlData(_ urlString: String) -> String{
+    
+    var httpData = String()
+    
+    let semaphore = DispatchSemaphore(value: 0)
+    
+    HTTPGet(urlString) {
+        (data: String, error: String?) -> Void in
+        if error != nil {
+            print("Error, well now what, \(urlString) failed")
+            print(error)
+            semaphore.signal()
+        } else {
+            httpData = data
+            semaphore.signal()
+        }
+        
+    }
+    
+    semaphore.wait(timeout: DispatchTime.distantFuture)
+    
+    return httpData
+    
+}
+
 func writeFiltersFile(){
     
     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
@@ -120,6 +145,7 @@ func stringToBool(_ value: String) -> Bool{
 func addPriorityData (_ bandname:String, priority: Int){
     
     bandPriorityStorage[bandname] = priority
+    
     writeFile()
 }
 
@@ -136,33 +162,37 @@ func getDateFormatter() -> DateFormatter {
 
 func getPriorityData (_ bandname:String) -> Int {
     
+    var priority = 0
+
     print ("Retrieving data for " + bandname + ":", terminator: "")
-    var priority: Int
     
-    if (bandPriorityStorage[bandname] == nil){
-        print("Returned null for " + bandname)
-        priority =  0
-        
-    } else {
+    if (bandPriorityStorage[bandname] != nil){
         priority = bandPriorityStorage[bandname]!
         print("Returning data " + bandname + ":" + String(priority))
     }
     
+
     return priority
 }
 
 func writeiCloudData (){
     
+    return;
+    
+    let attendedHandler = ShowsAttended()
     var dataString: String = ""
     
     var counter = 0;
+    
     bandPriorityStorage = readFile(dateWinnerPassed: "file")
     
+
     for (band, priority) in bandPriorityStorage {
         dataString = dataString + PRIORITY + "!" + band + "!" + String(priority) + ";"
         print ("Adding icloud write PRIORITIES \(band) - \(priority)")
         counter += 1
     }
+
     
     if (counter == 0){
         return;
@@ -183,14 +213,17 @@ func writeiCloudData (){
         NSUbiquitousKeyValueStore.default.set(Date(), forKey: "lastModifiedDate")
     
         NSUbiquitousKeyValueStore.default.synchronize()
-        readInWrite = true;
+
         readiCloudData();
-        readInWrite = false;
+
     }
 }
 
 func readiCloudData(){
     
+    return;
+    
+    let attendedHandler = ShowsAttended()
     NSUbiquitousKeyValueStore.default.synchronize()
 
     print ("iCloud getting priority data from the cloud")
@@ -205,7 +238,7 @@ func readiCloudData(){
     if values["bandPriorities"] != nil {
         let dataString = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities")!)
         let split1 = dataString.components(separatedBy: ";")
-        
+       
         for record in split1 {
             var split2 = record.components(separatedBy: "!")
             print ("Number of variable is \(split2.count)")
@@ -228,9 +261,9 @@ func readiCloudData(){
                 }
             }
         }
+        
     }
-    
-    //print ("PRIORITIES Beach \(String(describing: bandPriorityStorage["Beach Party"]))");
+
     if (readInWrite == false){
         writeFile();
         if (showsAttendedData.count != 0){
@@ -241,6 +274,7 @@ func readiCloudData(){
             writeiCloudData();
         }
     }
+
 }
 
 func writeFile(){
@@ -257,7 +291,7 @@ func writeFile(){
         print ("writing PRIORITIES \(index) - \(element)")
         data = data + index + ":" + String(element) + "\n"
     }
-    
+
     do {
         try data.write(to: storageFile, atomically: false, encoding: String.Encoding.utf8)
     } catch _ {
@@ -317,6 +351,7 @@ func compareLastModifiedDate () -> String {
 
 func readFile(dateWinnerPassed : String) -> [String:Int]{
     
+    let attendedHandler = ShowsAttended()
     if (iCloudCheck == false){
         iCloudCheck = true;
         var dateWinner :String
@@ -330,7 +365,9 @@ func readFile(dateWinnerPassed : String) -> [String:Int]{
         if (dateWinner == "iCloud"){
             print ("iCloud, founder newer data in cloud")
             readiCloudData();
+            
             bandPriorityStorage = readFile(dateWinnerPassed: "file")
+            
             attendedHandler.loadShowsAttended()
             return bandPriorityStorage;
             
@@ -354,14 +391,16 @@ func readFile(dateWinnerPassed : String) -> [String:Int]{
                 }
             }
         }
-        
+
         if (bandPriorityStorage.count == 0){
             print ("iCloud, nothing locally, using the cloud")
             readiCloudData();
             bandPriorityStorage = readFile(dateWinnerPassed: "file")
         }
-        iCloudCheck = false;
+        
     }
+    iCloudCheck = false;
+    
     return bandPriorityStorage
 }
 

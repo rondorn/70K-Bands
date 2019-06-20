@@ -29,6 +29,26 @@ var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
 var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
 var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
+let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
+
+var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
+var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
+
+let staticSchedule = DispatchQueue(label: "staticSchedule", attributes: .concurrent)
+let staticBandNames = DispatchQueue(label: "staticBandNames", attributes: .concurrent)
+let staticAttended = DispatchQueue(label: "staticAttended", attributes: .concurrent)
+let staticBandName = DispatchQueue(label: "staticBandName", attributes: .concurrent)
+
+var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
+var bandNamedStaticCache = [String :[String : String]]()
+var attendedStaticCache = [String : String]()
+var bandNamesStaticCache =  [String :[String : String]]()
+var bandNamesArrayStaticCache = [String]()
+
+var schedulingAttendedCacheFile = directoryPath.appendingPathComponent( "schedulingAttendedCacheFile")
+var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
+
 var iCloudCheck = false;
 
 //prevent mutiple threads doing the same thing
@@ -38,6 +58,12 @@ var isLoadingSchedule = false
 var isLoadingCommentData = false
 var isPerformingQuickLoad = false
 var isReadingBandFile = false;
+
+let scheduleQueue = DispatchQueue(label: "scheduleQueue")
+let bandNameQueue = DispatchQueue(label: "bandNameQueue")
+let bandPriorityQueue = DispatchQueue(label: "bandPriorityQueue")
+let showsAttendedQueue = DispatchQueue(label: "showsAttendedQueue")
+
 var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
 
 var loadingiCloud = false;
@@ -91,7 +117,6 @@ var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
-let attendedHandler = ShowsAttended()
 let sawAllColor = UIColor.blue
 let sawSomeColor = UIColor.brown
 let sawNoneColor = UIColor.black
@@ -161,7 +186,7 @@ var hideExpireScheduleDataDefault = "YES";
 var internetAvailble = isInternetAvailable();
 
 var hasScheduleData = false;
-var schedule = scheduleHandler()
+
 var bandNotes = CustomBandDescription();
 
 var bandDescriptionUrl = [String:String]()
