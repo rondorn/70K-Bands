@@ -14,6 +14,8 @@ class firebaseEventDataWrite {
     var ref: DatabaseReference!
     var eventCompareFile = directoryPath.appendingPathComponent( "eventCompare.data")
     
+    var schedule = scheduleHandler()
+    
     init(){
         ref = Database.database().reference()
     }

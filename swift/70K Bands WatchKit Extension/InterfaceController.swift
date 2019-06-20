@@ -25,6 +25,8 @@ class InterfaceController: WKInterfaceController {
     var LocationText = String();
     var index = 0;
     
+    var bandNameHandle = bandNamesHandler()
+    
     override func awake(withContext context: Any?) {
         super.awake(withContext: context)
         
@@ -48,7 +50,7 @@ class InterfaceController: WKInterfaceController {
         
         //var scheduleUrl = defaults.stringForKey("scheduleUrl")
 
-        gatherData()
+        bandNameHandle.gatherData()
         schedule.DownloadCsv()
         schedule.populateSchedule()
         refreshData()
@@ -75,7 +77,7 @@ class InterfaceController: WKInterfaceController {
     
     func refreshData() {
         
-        bands = getFilteredBands(getBandNames(), schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
         sortBandsByTime()
         readiCloudData()
         print(schedule.schedulingData);

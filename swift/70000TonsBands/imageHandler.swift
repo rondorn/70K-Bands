@@ -110,7 +110,9 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
 
 func getAllImages(){
     
-    bands = getBandNames()
+    let bandNameHandle = bandNamesHandler()
+    
+    bands = bandNameHandle.getBandNames()
     for bandName in bands {
         
         let imageStoreName = bandName + ".png"
@@ -118,7 +120,7 @@ func getAllImages(){
 
         if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
             
-            let imageURL = getBandImageUrl(bandName)
+            let imageURL = bandNameHandle.getBandImageUrl(bandName)
             print ("Loading image in background so it will be cached by default " + imageURL);
             _ = displayImage(urlString: imageURL, bandName: bandName)
         }

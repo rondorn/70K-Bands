@@ -8,12 +8,39 @@ import Foundation
 import UIKit
 import CoreData
 
-var showsAttendedArray: [String : String] = [String : String]();
-
 open class ShowsAttended {
+
+    var showsAttendedArray: [String : String] = [String : String]();
     
     init(){
-        loadShowsAttended()
+        getCachedData()
+    }
+    
+    
+    func getCachedData(){
+        
+        var staticCacheUsed = false
+        
+        staticAttended.sync() {
+            if (attendedStaticCache.isEmpty == false){
+                staticCacheUsed = true
+                showsAttendedArray = attendedStaticCache
+            }
+        }
+        
+        if (staticCacheUsed == false){
+            if ((FileManager.default.fileExists(atPath: schedulingAttendedCacheFile.path)) == true){
+                showsAttendedArray = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingAttendedCacheFile.path)
+                    as! [String : String]
+            } else {
+                print ("Cache did not load, loading schedule data")
+                loadShowsAttended()
+            }
+            
+            staticAttended.async(flags: .barrier) {
+                attendedStaticCache = self.showsAttendedArray
+            }
+        }
     }
     
     func setShowsAttended(attendedData: [String : String]){
@@ -43,8 +70,9 @@ open class ShowsAttended {
 
     func loadShowsAttended(){
         
-        readBandFile()
-        let allBands = getBandNames()
+        let bandNameHandle = bandNamesHandler()
+        
+        let allBands = bandNameHandle.getBandNames()
         let artistUrl = defaults.string(forKey: "artistUrl")
         eventYear =  Int(getPointerUrlData(keyValue: "eventYear"))!
         
@@ -92,6 +120,9 @@ open class ShowsAttended {
         } catch {
             print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")
         }
+        
+        //saveCacheFile
+        NSKeyedArchiver.archiveRootObject(showsAttendedArray, toFile: schedulingAttendedCacheFile.path)
     }
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
@@ -129,7 +160,7 @@ open class ShowsAttended {
         showsAttendedArray[index] = value
         
         saveShowsAttended();
-        usleep(2000)
+
         return value
     }
     

@@ -33,35 +33,22 @@ open class CustomBandDescription {
     
     func getAllDescriptions(){
 
-        if (isLoadingCommentData == true){
-            var counter = 0;
-            while (isLoadingCommentData == true){
-                usleep(250000)
-                if (counter == 5){
-                    isLoadingCommentData = false;
-                }
-                counter = counter + 1;
-            }
-        } else {
-
-            isLoadingCommentData = true
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                print ("commentFile performaing getAll")
-                print ("commentFile getDescriptionMapFile")
-                self.getDescriptionMapFile();
-                print ("commentFile getDescriptionMap")
-                self.getDescriptionMap();
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            print ("commentFile performaing getAll")
+            print ("commentFile getDescriptionMapFile")
+            self.getDescriptionMapFile();
+            print ("commentFile getDescriptionMap")
+            self.getDescriptionMap();
+            
+            print ("commentFile looping through bands")
+            for record in bandDescriptionUrl{
+                let bandName = record.key
                 
-                print ("commentFile looping through bands")
-                for record in bandDescriptionUrl{
-                    let bandName = record.key
-                    
-                    if (self.doesDescriptionFileExists(bandName: bandName) == false){
-                        _ = self.getDescription(bandName: bandName)
-                    }
+                if (self.doesDescriptionFileExists(bandName: bandName) == false){
+                    _ = self.getDescription(bandName: bandName)
                 }
-                 isLoadingCommentData = false
             }
+             isLoadingCommentData = false
         }
     }
     

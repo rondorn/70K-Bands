@@ -13,6 +13,10 @@ class showAttendenceReport {
     var eventCounts :[String:[String:Int]] = [String:[String:Int]]()
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
     
+    var schedule = scheduleHandler()
+    
+    var bandNamesHandle = bandNamesHandler()
+    
     func assembleReport (){
         
         let attended = ShowsAttended()
@@ -90,7 +94,7 @@ class showAttendenceReport {
                 
                 if (eventCountExists[eventType] == true){
                     message += "For " + eventType + "s\n"
-
+                    
                     for bandName in sortedBandNames {
 
                         var sawCount = 0
@@ -132,7 +136,7 @@ class showAttendenceReport {
     func buildMustMightReport()->String {
         
         var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
-        let bands = getBandNames()
+        let bands = bandNamesHandle.getBandNames()
         for band in bands {
             if (getPriorityData(band) == 1){
                 print ("Adding band " + band)
