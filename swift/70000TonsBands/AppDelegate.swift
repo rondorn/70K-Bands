@@ -26,6 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     let messageKey = "onMessageReceived"
     
     let gcmMessageIDKey = "gcm.message_id"
+    let attendedHandler = ShowsAttended()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
@@ -71,6 +72,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         UserDefaults.standard.register(defaults: defaults)
         
         bandPriorityStorage = readFile(dateWinnerPassed: "")
+        
         attendedHandler.loadShowsAttended()
 
         // [END register_for_notifications]

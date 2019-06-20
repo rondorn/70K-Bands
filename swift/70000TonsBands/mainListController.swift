@@ -91,9 +91,12 @@ import Foundation
         return sortedBy
     }
 
-    func determineBandOrScheduleList (_ allBands:[String], schedule: scheduleHandler, sortedBy: String) -> [String]{
+    func determineBandOrScheduleList (_ allBands:[String], sortedBy: String) -> [String]{
+        
+        let schedule = scheduleHandler()
         
         var newAllBands = [String]()
+        
         var presentCheck = [String]();
         listOfVenues = ["All"]
         attendingCount = 0
@@ -101,7 +104,9 @@ import Foundation
         if (typeField.isEmpty == true){
             return allBands;
         }
-    
+        
+        print ("Locking object with newAllBands")
+        
         print ("sortedBy = \(sortedBy)")
         schedule.buildTimeSortedSchedulingData();
         print (schedule.getTimeSortedSchedulingData());
@@ -114,7 +119,9 @@ import Foundation
                             totalUpcomingEvents += 1;
                             if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
                                 if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                                    //syncOn(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                     newAllBands.append(bandName + ":" + String(timeIndex));
+                                    //syncOff(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                     presentCheck.append(bandName);
                                 }
                             }
@@ -134,14 +141,16 @@ import Foundation
                             totalUpcomingEvents += 1;
                             if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
                                 if (applyFilters(bandName: bandName,timeIndex: timeIndex) == true){
+                                    //syncOn(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                     newAllBands.append(String(timeIndex) + ":" + bandName);
+                                    //syncOff(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                     presentCheck.append(bandName);
                                 }
                             }
                         }
                     }
                 } else {
-                    newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy)
+                    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy)
                 }
             }
             bandCount = 0;
@@ -154,7 +163,7 @@ import Foundation
             newAllBands.sort();
             bandCount = newAllBands.count;
             eventCount = 0;
-            
+
             return newAllBands
         }
  
@@ -162,7 +171,7 @@ import Foundation
         
         if (newAllBands.count == 0 && getShowOnlyWillAttened() == true){
             setShowOnlyWillAttened(false);
-            newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy)
+            newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy)
         }
         
         if (schedule.getTimeSortedSchedulingData().count > 2){
@@ -183,6 +192,8 @@ import Foundation
 
     func applyFilters(bandName:String, timeIndex:TimeInterval)-> Bool{
         
+        var schedule = scheduleHandler()
+
         var include = false;
         
         if (timeIndex.isZero == false){
@@ -196,6 +207,12 @@ import Foundation
                 include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex);
             
             } else {
+                if (schedule.getBandSortedSchedulingData()[bandName]!.isEmpty == true ||
+                schedule.getBandSortedSchedulingData()[bandName]![timeIndex]!.isEmpty == true ||
+                    schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!.isEmpty == true){
+                    return false;
+                }
+                
                 let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
                 if (eventTypeFiltering(eventType) == true){
                     if (schedule.getBandSortedSchedulingData().isEmpty == false){
@@ -219,8 +236,10 @@ import Foundation
         return include
     }
 
-    func getFilteredBands(_ allBands:[String], schedule: scheduleHandler) -> [String] {
-        
+func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler) -> [String] {
+    
+        let allBands = bandNameHandle.getBandNames()
+    
         var sortedBy = getSortedBy()
         
         //set default if empty
@@ -232,7 +251,7 @@ import Foundation
         
         var newAllBands = [String]()
         
-        newAllBands = determineBandOrScheduleList(allBands, schedule: schedule, sortedBy: sortedBy);
+        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy);
         
         if (getShowOnlyWillAttened() == true){
             filteredBands = newAllBands;
@@ -351,6 +370,9 @@ import Foundation
 
 func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
     
+        let attendedHandler = ShowsAttended()
+        let schedule = scheduleHandler()
+
         var showEvent = true;
 
         let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
@@ -435,7 +457,8 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval) -> Bool{
     }
 
 func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String) -> String{
-        
+    
+        let attendedHandler = ShowsAttended()
         //index is out of bounds. Don't allow this
         if (bands.count < indexRow || bands.count == 0){
             return ""
@@ -462,7 +485,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String) -
             let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
             let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
             let eventIcon = getEventTypeIcon(event)
-        
+            let locationIcons =  getVenuIcon(location)
+
             if (listOfVenues.contains(location) == false){
                 print ("Adding location " + location)
                 listOfVenues.append(location)
@@ -470,7 +494,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String) -
             
             print(bandName + " displaying timeIndex of \(timeIndex) ")
             cellText += " - " + formatTimeValue(timeValue: startTime)
-            cellText += " " + location + " - " + day + " " + eventIcon;
+            cellText += " " + location + locationIcons + " - " + day + " " + eventIcon;
             scheduleButton = false
             
             let icon = attendedHandler.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));

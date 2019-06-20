@@ -11,6 +11,9 @@ import CoreData
 
 class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate{
     
+    
+    
+    
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
 
@@ -48,10 +51,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var schedule = scheduleHandler()
     var imagePosition = CGFloat(0);
     
+    var bandNameHandle = bandNamesHandler()
+    
     var eventCount = 0;
     var displayedImaged:UIImage?
     
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
+    
+    let attendedHandler = ShowsAttended()
     
     var detailItem: AnyObject? {
         didSet {
@@ -66,11 +73,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         self.configureView()
         
         customNotesText.delegate = self as? UITextViewDelegate
-
+        
         bandPriorityStorage = readFile(dateWinnerPassed: "")
         
         if (bandName == nil || bands.isEmpty == true) {
-            var bands = getBandNames()
+            var bands = bandNameHandle.getBandNames()
             bandName = bands[bandListIndexCache]
             print("Providing default band of " + bandName)
         }
@@ -78,8 +85,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         print ("bandName is " + bandName)
         
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
-        
-            let imageURL = getBandImageUrl(bandName)
+            
+            let imageURL = bandNameHandle.getBandImageUrl(bandName)
 
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 self.displayedImaged = displayImage(urlString: imageURL, bandName: self.bandName)
@@ -140,7 +147,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func imageSizeController(special: String){
         
-        let imageURL = getBandImageUrl(bandName)
+        let imageURL = bandNameHandle.getBandImageUrl(bandName)
         if (officialUrlButton.isHidden == false){
             if (special == "top"){
                 self.bandLogo.contentMode = UIView.ContentMode.top
@@ -160,45 +167,46 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func disableLinksWithEmptyData(){
         
-        print ("getofficalPage(bandName) is " + getofficalPage(bandName) )
-        if (getofficalPage(bandName).isEmpty == true || getofficalPage(bandName) == "Unavailable"){
+        if (bandNameHandle.getofficalPage(bandName).isEmpty == true || bandNameHandle.getofficalPage(bandName) == "Unavailable"){
             officialUrlButton.isHidden = true;
             wikipediaUrlButton.isHidden = true;
             youtubeUrlButton.isHidden = true;
             metalArchivesButton.isHidden = true;
-            
         }
     }
   
     func showBandDetails(){
         
-        if (UIApplication.shared.statusBarOrientation  == .landscapeLeft ||
-            UIApplication.shared.statusBarOrientation  == .landscapeRight ||
+        if (UIApplication.shared.statusBarOrientation  == .portrait ||
             UIDevice.current.userInterfaceIdiom == .pad){
-
-            if (bandCountry[bandName] == nil || bandCountry[bandName]!.isEmpty){
+            
+            let bandCountry = bandNameHandle.getBandCountry(bandName)
+            print ("Band County is \(bandCountry)")
+            if (bandCountry.isEmpty == true){
                 Country.text = "";
                 Country.isHidden = true
             } else {
-                Country.text = "Country:\t" + bandCountry[bandName]!
+                Country.text = "Country:\t" + bandCountry
                 Country.isHidden = false
             }
-
-            if (bandGenre[bandName] == nil || bandGenre[bandName]!.isEmpty){
+            
+            let bandGenre = bandNameHandle.getBandGenre(bandName)
+            if (bandGenre.isEmpty == true){
                 Genre.text = ""
                 Genre.isHidden = true
             
             } else {
-                Genre.text = "Genre:\t" + bandGenre[bandName]!
+                Genre.text = "Genre:\t" + bandGenre
                 Genre.isHidden = false
             
             }
-    
-            if (bandNoteWorthy[bandName] == nil || bandNoteWorthy[bandName]!.isEmpty){
+            
+            let bandNoteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
+            if (bandNoteWorthy.isEmpty == true){
                 NoteWorthy.text = ""
                 NoteWorthy.isHidden = true
             } else {
-                NoteWorthy.text = "Note:\t" + bandNoteWorthy[bandName]!
+                NoteWorthy.text = "Note:\t" + bandNoteWorthy
                 NoteWorthy.isHidden = false
             }
             
@@ -299,12 +307,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if(UIApplication.shared.statusBarOrientation  == .landscapeLeft || UIApplication.shared.statusBarOrientation  == .landscapeRight){
             //if schdule exists, hide the web links that probably dont work anyway
             //only needed on iPhones. iPads have enought room for both
+            
             if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
                 
                 Links.isHidden = true
                 Links.sizeToFit()
             
             }
+            
             
             if (UIDevice.current.userInterfaceIdiom == .phone){
                 extraData.isHidden = true
@@ -367,25 +377,26 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @IBAction func openLink(_ sender: UIButton) {
         
-        print ("This should open up the link to " + (sender.titleLabel?.text)!);
+        
         var sendToUrl = String()
         
         if (bandName != nil){
             if (sender.titleLabel?.text == officalSiteButtonName){
-               sendToUrl = getofficalPage(bandName)
+               sendToUrl = bandNameHandle.getofficalPage(bandName)
             
             } else if (sender.titleLabel?.text == wikipediaButtonName){
-                sendToUrl = getWikipediaPage(bandName)
+                sendToUrl = bandNameHandle.getWikipediaPage(bandName)
             
             } else if (sender.titleLabel?.text == youTubeButtonName){
-                sendToUrl = getYouTubePage(bandName)
+                sendToUrl = bandNameHandle.getYouTubePage(bandName)
                 
             } else if (sender.titleLabel?.text == metalArchivesButtonName){
-                sendToUrl = getMetalArchives(bandName)
+                sendToUrl = bandNameHandle.getMetalArchives(bandName)
                 
             }
             
-            if (sender.isEnabled == true){
+            print ("This should open up the link to \(sendToUrl)")
+            if (sender.isEnabled == true && sendToUrl.isEmpty == false){
                 splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
                 setUrl(sendToUrl)
             }
@@ -405,110 +416,101 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func showFullSchedule () {
         
-        var counter = 0;
-        while (isLoadingSchedule == true){
-            usleep(250000)
-            print ("Waiting for schedule to finish loading");
-            if (counter == 5){
-                isLoadingSchedule = false;
-            }
-            counter = counter + 1;
-        }
-        print ("Waiting for schedule to finish loading, Done");
-        schedule.populateSchedule()
-        
-        if (schedule.schedulingData[bandName]?.isEmpty == false){
-            let keyValues = schedule.schedulingData[bandName]!.keys
-            let sortedArray = keyValues.sorted();
-            var count = 1
-            eventCount = keyValues.count;
-            if (eventCount == 1){
-                count = 4;
-            }
-            schedule.buildTimeSortedSchedulingData();
-            
-            for index in sortedArray {
+        schedule.getCachedData()
+        scheduleQueue.sync {
+            if (schedule.schedulingData[bandName]?.isEmpty == false){
+                let keyValues = schedule.schedulingData[bandName]!.keys
+                let sortedArray = keyValues.sorted();
+                var count = 1
+                eventCount = keyValues.count;
+                if (eventCount == 1){
+                    count = 4;
+                }
+                schedule.buildTimeSortedSchedulingData();
                 
-                let location = schedule.getData(bandName, index:index, variable: locationField)
-                let day = schedule.getData(bandName, index: index, variable: dayField)
-                var startTime = schedule.getData(bandName, index: index, variable: startTimeField)
-                var endTime = schedule.getData(bandName, index: index, variable: endTimeField)
-                let date = schedule.getData(bandName, index:index, variable: dateField)
-                let type = schedule.getData(bandName, index:index, variable: typeField)
-                let notes = schedule.getData(bandName, index:index, variable: notesField)
-                let scheduleDescriptionUrl = schedule.getData(bandName, index:index, variable: descriptionUrlField)
-                
-                if (scheduleDescriptionUrl.isEmpty == false && scheduleDescriptionUrl.count > 3){
-                    print ("Loading customNotesTest from URL")
-                    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                        self.backgroundNotesText = bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)
-                        
-                        DispatchQueue.main.async {
-                            self.customNotesText.text = self.backgroundNotesText;
+                for index in sortedArray {
+                    
+                    let location = schedule.getData(bandName, index:index, variable: locationField)
+                    let day = schedule.getData(bandName, index: index, variable: dayField)
+                    var startTime = schedule.getData(bandName, index: index, variable: startTimeField)
+                    var endTime = schedule.getData(bandName, index: index, variable: endTimeField)
+                    let date = schedule.getData(bandName, index:index, variable: dateField)
+                    let type = schedule.getData(bandName, index:index, variable: typeField)
+                    let notes = schedule.getData(bandName, index:index, variable: notesField)
+                    let scheduleDescriptionUrl = schedule.getData(bandName, index:index, variable: descriptionUrlField)
+                    
+                    if (scheduleDescriptionUrl.isEmpty == false && scheduleDescriptionUrl.count > 3){
+                        print ("Loading customNotesTest from URL")
+                        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                            self.backgroundNotesText = bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)
+                            
+                            DispatchQueue.main.async {
+                                self.customNotesText.text = self.backgroundNotesText;
+                            }
                         }
+                        
+                        
                     }
                     
+                    let rawStartTime = startTime
                     
-                }
-                
-                let rawStartTime = startTime
-                
-                startTime = formatTimeValue(timeValue: startTime)
-                endTime = formatTimeValue(timeValue: endTime)
-                
-                var scheduleText = String()
-                if (!date.isEmpty){
-                    scheduleText = day
-                    scheduleText += " - " + startTime
-                    scheduleText += " - " + endTime
-                    scheduleText += " - " + location + getVenuIcon(location)
-                    scheduleText += " - " + type  + " " + getEventTypeIcon(type);
+                    startTime = formatTimeValue(timeValue: startTime)
+                    endTime = formatTimeValue(timeValue: endTime)
                     
-                    if (notes.isEmpty == false && notes != " "){
-                        scheduleText += " - " + notes
-                    }
-                    
-                    scheduleIndex[scheduleText] = [String:String]()
-                
-                    scheduleIndex[scheduleText]!["bandName"] = bandName;
-                    scheduleIndex[scheduleText]!["location"] = location;
-                    scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
-                    scheduleIndex[scheduleText]!["eventType"] = type;
-                    
-                    let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
-                    
-                    print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
-                    switch count {
-                    case 1:
-                        Event1.text = scheduleText
-                        _ = attendedHandler.setShowsAttendedStatus(Event1,status: status);
+                    var scheduleText = String()
+                    if (!date.isEmpty){
+                        scheduleText = day
+                        scheduleText += " - " + startTime
+                        scheduleText += " - " + endTime
+                        scheduleText += " - " + location + getVenuIcon(location)
+                        scheduleText += " - " + type  + " " + getEventTypeIcon(type);
                         
-                    case 2:
-                        Event2.text = scheduleText
-                        _ = attendedHandler.setShowsAttendedStatus(Event2,status: status);
+                        if (notes.isEmpty == false && notes != " "){
+                            scheduleText += " - " + notes
+                        }
                         
-                    case 3:
-                        Event3.text = scheduleText
-                        _ = attendedHandler.setShowsAttendedStatus(Event3,status: status);
+                        scheduleIndex[scheduleText] = [String:String]()
+                    
+                        scheduleIndex[scheduleText]!["bandName"] = bandName;
+                        scheduleIndex[scheduleText]!["location"] = location;
+                        scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
+                        scheduleIndex[scheduleText]!["eventType"] = type;
                         
-                    case 4:
-                        Event4.text = scheduleText
-                        _ = attendedHandler.setShowsAttendedStatus(Event4,status: status);
+                        let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
+                        
+                        print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
+                        switch count {
+                        case 1:
+                            Event1.text = scheduleText
+                            _ = attendedHandler.setShowsAttendedStatus(Event1,status: status);
+                            
+                        case 2:
+                            Event2.text = scheduleText
+                            _ = attendedHandler.setShowsAttendedStatus(Event2,status: status);
+                            
+                        case 3:
+                            Event3.text = scheduleText
+                            _ = attendedHandler.setShowsAttendedStatus(Event3,status: status);
+                            
+                        case 4:
+                            Event4.text = scheduleText
+                            _ = attendedHandler.setShowsAttendedStatus(Event4,status: status);
 
-                    case 5:
-                        Event5.text = scheduleText
-                        _ = attendedHandler.setShowsAttendedStatus(Event5,status: status);
+                        case 5:
+                            Event5.text = scheduleText
+                            _ = attendedHandler.setShowsAttendedStatus(Event5,status: status);
+                            
+                        default:
+                            print("To many events")
+                        }
+                       
+                        count += 1
                         
-                    default:
-                        print("To many events")
                     }
-                   
-                    count += 1
-                    
                 }
             }
+            hideEmptyData();
         }
-        hideEmptyData();
     }
     
     func hideEmptyData() {
@@ -546,10 +548,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func disableButtonsIfNeeded(){
         
+        var offline = true
+        
         if Reachability.isConnectedToNetwork(){
             offline = false;
-        } else {
-            offline = true;
         }
         
         print ("Checking button status " + bandName)

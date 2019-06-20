@@ -45,7 +45,7 @@ fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 
 
 class AlertPreferenesController: UIViewController, UITextFieldDelegate {
-    
+
     var mustSeeAlertValue = Bool()
     var mightSeeAlertValue = Bool()
     var onlyAlertForAttendedValue = Bool()
@@ -65,6 +65,45 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var restartAlertText = String();
     var okPrompt = String();
     var cancelPrompt = String();
+    
+    var showSpecialValue = Bool()
+    var showMandGValue = Bool()
+    var showClinicsValue = Bool()
+    var showListeningValue = Bool()
+    
+    var showPoolShows = Bool()
+    var showTheaterShows = Bool()
+    var showRinkShows = Bool()
+    var showLoungeShows = Bool()
+    var showOtherShows = Bool()
+    var showUnofficalEvents = Bool()
+    var hideExpireScheduleData = Bool()
+    
+    @IBOutlet weak var VenuePoolLabel: UILabel!
+    @IBOutlet weak var VenueTheaterLabel: UILabel!
+    @IBOutlet weak var VenueRinkLabel: UILabel!
+    @IBOutlet weak var VenueLoungeLabel: UILabel!
+    
+    @IBOutlet weak var VenuePoolSwitch: UISwitch!
+    @IBOutlet weak var VenueTheaterSwitch: UISwitch!
+    @IBOutlet weak var VenueRinkSwitch: UISwitch!
+    @IBOutlet weak var VenueLoungeSwitch: UISwitch!
+    
+    @IBOutlet weak var EventSpecialLabel: UILabel!
+    @IBOutlet weak var EventMeetAndGreetLabel: UILabel!
+    @IBOutlet weak var EventClinicLabel: UILabel!
+    @IBOutlet weak var EventListeningPartyLabel: UILabel!
+    @IBOutlet weak var EventCruiseOrganizedLabel: UILabel!
+    
+    @IBOutlet weak var EventSpecialSwitch: UISwitch!
+    @IBOutlet weak var EventMeetAndGreetSwitch: UISwitch!
+    @IBOutlet weak var EventClinicSwitch: UISwitch!
+    @IBOutlet weak var EventListeningPartySwitch: UISwitch!
+    @IBOutlet weak var EventCruiserOrganizedSwitch: UISwitch!
+    
+    @IBOutlet weak var HideExpiredLabel: UILabel!
+    @IBOutlet weak var HideExpiredSwitch: UISwitch!
+    
     
     @IBOutlet weak var AlertOnMustSee: UISwitch!
     @IBOutlet weak var AlertOnMightSee: UISwitch!
@@ -130,6 +169,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
         localNotification.addNotifications()
+        
+        masterView.quickRefresh()
     }
     
     func setLocalizedLables (){
@@ -154,6 +195,20 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         okPrompt = NSLocalizedString("Ok", comment: "")
         cancelPrompt = NSLocalizedString("Cancel", comment: "")
+        
+        VenuePoolLabel.text = poolVenueText + " " + poolVenue
+        VenueTheaterLabel.text = theaterVenueText + " " + theaterVenue
+        VenueRinkLabel.text = rinkVenueText + " " + rinkVenue
+        VenueLoungeLabel.text = loungeVenueText + " " + loungeVenue
+        
+        EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "") + " " + specialEventTypeIcon
+        EventMeetAndGreetLabel.text = NSLocalizedString(meetAndGreetype, comment: "") + " " + mAndmEventTypeIcon
+        EventClinicLabel.text = NSLocalizedString(clinicType, comment: "") + " " + clinicEventTypeIcon
+        EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "") + " " + listeningEventTypeIcon
+        EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "") + " " + unofficalEventTypeIcon
+        
+        //HideExpiredLabel.text = NSLocalizedString("ShowHideEvents", comment: "")
+        HideExpiredLabel.text = NSLocalizedString("HideExpiredEvents", comment: "")
     }
     
     func setExistingValues (){
@@ -191,6 +246,32 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         } else {
             UseLastYearsData.isOn = false
         }
+        
+        showSpecialValue = defaults.bool(forKey: "showSpecial")
+        showMandGValue = defaults.bool(forKey: "showMandG")
+        showClinicsValue = defaults.bool(forKey: "showClinics")
+        showListeningValue = defaults.bool(forKey: "showListening")
+        
+        showPoolShows = defaults.bool(forKey: "showPoolShows")
+        showTheaterShows = defaults.bool(forKey: "showTheaterShows")
+        showRinkShows = defaults.bool(forKey: "showRinkShows")
+        showLoungeShows = defaults.bool(forKey: "showLoungeShows")
+        showOtherShows = defaults.bool(forKey: "showOtherShows")
+        showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
+        hideExpireScheduleData = defaults.bool(forKey: "hideExpireScheduleData")
+        
+        EventSpecialSwitch.isOn = showSpecialValue;
+        EventMeetAndGreetSwitch.isOn = showMandGValue;
+        EventClinicSwitch.isOn = showClinicsValue;
+        EventListeningPartySwitch.isOn = showListeningValue;
+        
+        VenuePoolSwitch.isOn = showPoolShows;
+        VenueTheaterSwitch.isOn = showTheaterShows;
+        VenueRinkSwitch.isOn = showRinkShows;
+        VenueLoungeSwitch.isOn = showLoungeShows;
+        //otherToggle.isOn = showOtherShows;
+        EventCruiserOrganizedSwitch.isOn = showUnofficalEvents
+        HideExpiredSwitch.isOn = hideExpireScheduleData
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -313,6 +394,46 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func alertForUnofficalEventChange(_ sender: Any) {
         defaults.set(alertForUnofficalEvents.isOn, forKey: "alertForUnofficalEvents")
+    }
+    
+    @IBAction func venuePool(_ sender: Any) {
+        defaults.set(VenuePoolSwitch.isOn, forKey: "showPoolShows")
+    }
+    
+    @IBAction func venueTheater(_ sender: Any) {
+        defaults.set(VenueTheaterSwitch.isOn, forKey: "showTheaterShows")
+    }
+    
+    @IBAction func venueRink(_ sender: Any) {
+        defaults.set(VenueRinkSwitch.isOn, forKey: "showRinkShows")
+    }
+    
+    @IBAction func venueLounge(_ sender: Any) {
+       defaults.set(VenueLoungeSwitch.isOn, forKey: "showLoungeShows")
+    }
+    
+    @IBAction func eventSpecial(_ sender: Any) {
+        defaults.set(EventSpecialSwitch.isOn, forKey: "showSpecial")
+    }
+    
+    @IBAction func eventMeetAndGreet(_ sender: Any) {
+        defaults.set(EventMeetAndGreetSwitch.isOn, forKey: "showMandG")
+    }
+    
+    @IBAction func eventClinic(_ sender: Any) {
+        defaults.set(EventClinicSwitch.isOn, forKey: "showClinics")
+    }
+    
+    @IBAction func eventListeningParty(_ sender: Any) {
+        defaults.set(EventListeningPartySwitch.isOn, forKey: "showListening")
+    }
+    
+    @IBAction func eventCruiseOrganized(_ sender: Any) {
+        defaults.set(EventCruiserOrganizedSwitch.isOn, forKey: "showUnofficalEvents")
+    }
+    
+    @IBAction func hideExpired(_ sender: Any) {
+        defaults.set(HideExpiredSwitch.isOn, forKey: "hideExpireScheduleData")
     }
     
     @IBAction func UseLastYearsDataAction() {

@@ -14,34 +14,20 @@ class localNoticationHandler {
     
     var schedule = scheduleHandler()
     var alertTextMessage = String()
+    let attendedHandler = ShowsAttended()
     
     init(){
-        schedule.populateSchedule()
+
     }
 
     func refreshAlerts(){
-        if (isAlertGenerationRunning == true){
-            var counter = 0;
-            while (isAlertGenerationRunning == true){
-                usleep(250000)
-                if (counter == 5){
-                    isAlertGenerationRunning = false;
-                }
-                counter = counter + 1;
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+            if #available(iOS 10.0, *) {
+                let localNotication = localNoticationHandler()
+                localNotication.addNotifications()
+            } else {
+                // Fallback on earlier versions
             }
-        } else {
-            
-            isAlertGenerationRunning = true
-            
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                if #available(iOS 10.0, *) {
-                    let localNotication = localNoticationHandler()
-                    localNotication.addNotifications()
-                } else {
-                    // Fallback on earlier versions
-                }
-            }
-            isAlertGenerationRunning = false
         }
     }
     
@@ -194,29 +180,34 @@ class localNoticationHandler {
     
     func addNotifications(){
         
-        if (schedule.schedulingData.isEmpty == false){
-            for bandName in schedule.schedulingData{
-                for startTime in schedule.schedulingData[bandName.0]!{
-                    let alertTime = NSDate(timeIntervalSince1970: startTime.0)
-                    print ("Date provided is \(alertTime)")
-                    if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
-                        
-                        if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
-                            let eventTypeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!
-                            let startTimeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[startTimeField])!
-                            let locationValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[locationField])!
+        print ("Locking object with schedule.schedulingData")
+        
+        scheduleQueue.sync {
+
+            if (schedule.schedulingData.isEmpty == false){
+                for bandName in schedule.schedulingData{
+                    for startTime in schedule.schedulingData[bandName.0]!{
+                        let alertTime = NSDate(timeIntervalSince1970: startTime.0)
+                        print ("Date provided is \(alertTime)")
+                        if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                             
-                            let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
-                            
-                            if (addToNoticication == true){
-                                let compareResult = alertTime.compare(NSDate() as Date)
-                                if compareResult == ComparisonResult.orderedDescending {
-                                    
-                                    getAlertMessage(bandName.0, indexValue: alertTime as Date)
-                                    if #available(iOS 10.0, *) {
-                                        addNotification(message: alertTextMessage, showTime: alertTime)
-                                    } else {
-                                        // Fallback on earlier versions
+                            if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
+                                let eventTypeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!
+                                let startTimeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[startTimeField])!
+                                let locationValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[locationField])!
+                                
+                                let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
+                                
+                                if (addToNoticication == true){
+                                    let compareResult = alertTime.compare(NSDate() as Date)
+                                    if compareResult == ComparisonResult.orderedDescending {
+                                        
+                                        getAlertMessage(bandName.0, indexValue: alertTime as Date)
+                                        if #available(iOS 10.0, *) {
+                                            addNotification(message: alertTextMessage, showTime: alertTime)
+                                        } else {
+                                            // Fallback on earlier versions
+                                        }
                                     }
                                 }
                             }

@@ -27,12 +27,11 @@
 		1154F6131A575893003F4764 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6121A575893003F4764 /* DetailViewController.swift */; };
 		1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */; };
 		1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6301A5758BF003F4764 /* imageHandler.swift */; };
-		1154F6331A5758D3003F4764 /* bandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNames.swift */; };
+		1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNamesHandler.swift */; };
 		1155E3A41A8B0A0700D51ED9 /* bandNamesTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1155E3A21A8B0A0400D51ED9 /* bandNamesTest.swift */; };
-		1155E3A51A8B121000D51ED9 /* bandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNames.swift */; };
+		1155E3A51A8B121000D51ED9 /* bandNamesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNamesHandler.swift */; };
 		1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
 		1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
-		1155E3A81A8B121000D51ED9 /* externalUrls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F01A5992A600602EC7 /* externalUrls.swift */; };
 		1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
 		1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
@@ -71,7 +70,6 @@
 		11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
-		11BE68F11A5992A600602EC7 /* externalUrls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F01A5992A600602EC7 /* externalUrls.swift */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
 		11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
@@ -145,7 +143,7 @@
 		1154F6251A575893003F4764 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = _0000TonsBandsTests.swift; sourceTree = "<group>"; };
 		1154F6301A5758BF003F4764 /* imageHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = imageHandler.swift; sourceTree = "<group>"; };
-		1154F6321A5758D3003F4764 /* bandNames.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bandNames.swift; sourceTree = "<group>"; };
+		1154F6321A5758D3003F4764 /* bandNamesHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bandNamesHandler.swift; sourceTree = "<group>"; };
 		1155E3A21A8B0A0400D51ED9 /* bandNamesTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = bandNamesTest.swift; sourceTree = "<group>"; };
 		1155E3B91A8B20BF00D51ED9 /* scheduleHandlerTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandlerTest.swift; sourceTree = "<group>"; };
 		1156251C1B6E65F200C658C6 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -175,7 +173,6 @@
 		11AC1D7C1A682AF100267A8F /* ApiKeys.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ApiKeys.plist; sourceTree = "<group>"; };
 		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
-		11BE68F01A5992A600602EC7 /* externalUrls.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = externalUrls.swift; sourceTree = "<group>"; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
 		11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandler.swift; sourceTree = "<group>"; };
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
@@ -293,13 +290,12 @@
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
-				1154F6321A5758D3003F4764 /* bandNames.swift */,
+				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
-				11BE68F01A5992A600602EC7 /* externalUrls.swift */,
 				11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
@@ -672,11 +668,10 @@
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
-				1154F6331A5758D3003F4764 /* bandNames.swift in Sources */,
+				1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */,
 				11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */,
 				11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */,
 				1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */,
-				11BE68F11A5992A600602EC7 /* externalUrls.swift in Sources */,
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				11DCE9BA1A86D84D00A25FB8 /* validateCSVschedule.swift in Sources */,
 				11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */,
@@ -693,7 +688,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				110C7DEB20DC600000525283 /* iCloudFileHandler.swift in Sources */,
-				1155E3A51A8B121000D51ED9 /* bandNames.swift in Sources */,
+				1155E3A51A8B121000D51ED9 /* bandNamesHandler.swift in Sources */,
 				1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
@@ -703,7 +698,6 @@
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
-				1155E3A81A8B121000D51ED9 /* externalUrls.swift in Sources */,
 				1155E3B21A8B126500D51ED9 /* DetailViewController.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1155E3A41A8B0A0700D51ED9 /* bandNamesTest.swift in Sources */,
