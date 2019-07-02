@@ -57,7 +57,7 @@ open class ShowsAttended {
         
         if (showsAttendedArray.count > 0){
             do {
-                
+                try FileManager.default.removeItem(at: showsAttended)
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
             
@@ -161,11 +161,7 @@ open class ShowsAttended {
         showsAttendedArray[index] = value
         
         attendedStaticCache = [String : String]()
-        do {
-            try FileManager.default.removeItem(at: showsAttended)
-        } catch let error as NSError {
-            print("Error: \(error.domain)")
-        }
+       
         saveShowsAttended();
         loadShowsAttended()
         return value
