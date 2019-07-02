@@ -111,15 +111,17 @@ var rinkVenueText = "Rink"
 var loungeVenueText = "Lounge"
 var theaterVenueText = "Theater"
 
+var venueLocation = [String:String]()
+
 //links to external site
 var officalSiteButtonName = "Offical Web Site"
 var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
-let sawAllColor = UIColor.blue
-let sawSomeColor = UIColor.brown
-let sawNoneColor = UIColor.black
+let sawAllColor = UIColor.green
+let sawSomeColor = UIColor.yellow
+let sawNoneColor = UIColor.white
 let sawAllStatus = "sawAll";
 let sawSomeStatus = "sawSome";
 let sawNoneStatus = "sawNone";
@@ -187,9 +189,7 @@ var internetAvailble = isInternetAvailable();
 
 var hasScheduleData = false;
 
-var bandNotes = CustomBandDescription();
-
-var bandDescriptionUrl = [String:String]()
+//var bandDescriptionUrl = [String:String]()
 var imageUrls = [String:String]()
 
 let defaults = UserDefaults.standard
@@ -226,15 +226,16 @@ func getDocumentsDirectory() -> NSString {
     return documentsDirectory as NSString
 }
 
-func getPointerUrlData(keyValue: String) -> String {
+func getPointerUrlData(keyValue: String, dataHandle: dataHandler) -> String {
     
     var url = String()
-    let httpData = getUrlData(defaultStorageUrl)
+    let httpData = dataHandle.getUrlData(defaultStorageUrl)
     
     if (httpData.isEmpty == false){
         let dataArray = httpData.components(separatedBy: "\n")
         for record in dataArray {
             var valueArray = record.components(separatedBy: "::")
+
             if (valueArray.isEmpty == false && valueArray.count >= 2){
                 print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
                 if (valueArray[0] == keyValue){
@@ -244,6 +245,7 @@ func getPointerUrlData(keyValue: String) -> String {
             }
         }
     } else if (keyValue == "eventYear"){
+        print ("eventYear = unknown \(eventYear)")
         do {
             url = try! String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
         } catch let error as NSError {
@@ -264,6 +266,49 @@ func getPointerUrlData(keyValue: String) -> String {
     return url
 }
 
+func setupDefaults() {
+    
+    //register Application Defaults
+    var defaults = ["artistUrl": artistUrlDefault,
+                    "scheduleUrl": scheduleUrlDefault,
+                    "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
+                    "onlyAlertForAttended": onlyAlertForAttendedDefault,
+                    "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
+                    "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
+                    "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
+                    "validateScheduleFile": validateScheduleFileDefault, "showSpecial": showSpecialDefault,
+                    "showMandG": showMandGDefault, "showClinics": showClinicsDefault,
+                    "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
+                    "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
+                    "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
+                    "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
+                    "hideExpireScheduleData": hideExpireScheduleDataDefault]
+    
+    UserDefaults.standard.register(defaults: defaults)
+    
+    setupVenueLocations()
+    
+    print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl"))")
+    eventYear = Int(getPointerUrlData(keyValue: "eventYear", dataHandle: dataHandler()))!;
+
+    if (UserDefaults.standard.string(forKey: "scheduleUrl") == "lastYear"){
+        eventYear = eventYear - 1
+    }
+    
+    print ("eventYear = \(eventYear)")
+}
+
+func setupVenueLocations(){
+    
+    venueLocation[poolVenueText] = "Deck 11"
+    venueLocation[rinkVenueText] = "Deck 3"
+    venueLocation[loungeVenueText] = "Deck 4"
+    venueLocation[theaterVenueText] = "Deck 3/4"
+    venueLocation["Sports Bar"] = "Deck 4"
+    venueLocation["Viking Crown"] = "Deck 14"
+    venueLocation["Boleros Lounge"] = "Deck 4"
+    
+}
 func isInternetAvailable() -> Bool {
     
     var zeroAddress = sockaddr_in()

@@ -11,8 +11,10 @@ import CoreData
 open class ShowsAttended {
 
     var showsAttendedArray: [String : String] = [String : String]();
+    var dataHandle = dataHandler()
     
     init(){
+        print ("Loading shows attended data")
         getCachedData()
     }
     
@@ -59,7 +61,7 @@ open class ShowsAttended {
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
             
-                writeiCloudData();
+                dataHandle.writeiCloudData();
             
                 print ("saved showData \(showsAttendedArray)")
             } catch {
@@ -70,13 +72,12 @@ open class ShowsAttended {
 
     func loadShowsAttended(){
         
+        print ("Loading shows attended data 1")
         let bandNameHandle = bandNamesHandler()
         
         let allBands = bandNameHandle.getBandNames()
         let artistUrl = defaults.string(forKey: "artistUrl")
-        eventYear =  Int(getPointerUrlData(keyValue: "eventYear"))!
-        
-        
+
         var unuiqueSpecial = [String]()
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
@@ -156,11 +157,17 @@ open class ShowsAttended {
             value = sawNoneStatus;
         }
         
-        print ("addShowsAttended 2 Settings equals showsAttendedArray '\(index)' - \(value)")
+        print ("addShowsAttended 2 Settings equals index = '\(index)' - \(value)")
         showsAttendedArray[index] = value
         
+        attendedStaticCache = [String : String]()
+        do {
+            try FileManager.default.removeItem(at: showsAttended)
+        } catch let error as NSError {
+            print("Error: \(error.domain)")
+        }
         saveShowsAttended();
-
+        loadShowsAttended()
         return value
     }
     
@@ -177,8 +184,7 @@ open class ShowsAttended {
         
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         
-        print ("getShowAttendedIcon Check on show value = \(value) for index='\(index)'")
-        
+        print ("getShowAttendedIcon 2 Settings equals showsAttendedArray '\(index)' - \(value)")
         if (value == sawAllStatus){
             icon = sawAllIcon
         

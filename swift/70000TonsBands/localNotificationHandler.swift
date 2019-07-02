@@ -15,6 +15,7 @@ class localNoticationHandler {
     var schedule = scheduleHandler()
     var alertTextMessage = String()
     let attendedHandler = ShowsAttended()
+    var dataHandle = dataHandler()
     
     init(){
 
@@ -82,11 +83,11 @@ class localNoticationHandler {
     
     func checkBandPriority (_ bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool, attendedStatus: String)->Bool{
         
-        if (mustSeeAlert == true && getPriorityData(bandName) == 1){
+        if (mustSeeAlert == true && dataHandle.getPriorityData(bandName) == 1){
             print("Ok")
             return true
         }
-        if (mightSeeAlert == true && getPriorityData(bandName) == 2){
+        if (mightSeeAlert == true && dataHandle.getPriorityData(bandName) == 2){
             print("Ok")
             return true
         }

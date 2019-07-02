@@ -15,6 +15,7 @@ class filebaseBandDataWrite {
     var bandCompareFile = directoryPath.appendingPathComponent( "bandCompare.data")
     
     var bandRank: [String : String] = [String : String]();
+    var dataHandle = dataHandler()
     
     init(){
         
@@ -59,7 +60,7 @@ class filebaseBandDataWrite {
         let allBands = bandNameHandle.getBandNames()
         for bandName in allBands {
             
-            let rankingNumber = String(getPriorityData(bandName))
+            let rankingNumber = String(dataHandle.getPriorityData(bandName))
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
             bandRank[bandName] = rankingString;
