@@ -14,14 +14,18 @@ class showAttendenceReport {
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
     
     var schedule = scheduleHandler()
+    var attendedHandler = ShowsAttended()
     
     var bandNamesHandle = bandNamesHandler()
+    var dataHandle = dataHandler()
+    
+    init(){
+
+    }
     
     func assembleReport (){
         
-        let attended = ShowsAttended()
-        
-        let showsAttendedArray = attended.getShowsAttended();
+        let showsAttendedArray = attendedHandler.getShowsAttended();
         var unuiqueSpecial = [String]()
         
         schedule.buildTimeSortedSchedulingData();
@@ -138,14 +142,14 @@ class showAttendenceReport {
         var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
         let bands = bandNamesHandle.getBandNames()
         for band in bands {
-            if (getPriorityData(band) == 1){
+            if (dataHandle.getPriorityData(band) == 1){
                 print ("Adding band " + band)
                 intro += "\t\t" +  band + "\n"
             }
         }
         intro += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
         for band in bands {
-            if (getPriorityData(band) == 2){
+            if (dataHandle.getPriorityData(band) == 2){
                 print ("Adding band " + band)
                 intro += "\t\t" +  band + "\n"
             }

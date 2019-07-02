@@ -77,12 +77,12 @@ class InterfaceController: WKInterfaceController {
     
     func refreshData() {
         
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        //bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
         sortBandsByTime()
-        readiCloudData()
+        //readiCloudData()
         print(schedule.schedulingData);
-        
-        let bandText = getPriorityIcon(getPriorityData(bandsByTime[index])) + bandsByTime[index]
+        /*
+        //let bandText = getPriorityIcon(getPriorityData(bandsByTime[index])) + bandsByTime[index]
         nextBand.setText(bandText)
         getScheduleData(bandsByTime[index])
         if (DayTimeText.isEmpty == true){
@@ -92,6 +92,7 @@ class InterfaceController: WKInterfaceController {
             DayTime.setText(DayTimeText)
             location.setText(LocationText)
         }
+        */
     }
     
     func getScheduleData (_ bandName: String) {
@@ -125,7 +126,7 @@ class InterfaceController: WKInterfaceController {
     fileprivate func updateBandFromICloud() {
         let bandInfo = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
         if (bandInfo.count >= 1) {
-            readiCloudData()
+            //readiCloudData()
         }
     }
     
