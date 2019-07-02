@@ -257,12 +257,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
+            dataHandle.refreshData()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
-            let test = attendedHandler.getShowAttendedIcon(band: "TYR",location: "Rink",startTime: "18:45",eventType: "Show",eventYearString: "2019");
-            print ("Tyr show status is " + test)
             setShowOnlyAttenedFilterStatus()
             isPerformingQuickLoad = false
             self.tableView.reloadData()
