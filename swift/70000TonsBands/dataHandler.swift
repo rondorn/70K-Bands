@@ -157,7 +157,10 @@ class dataHandler {
         
         bandPriorityStorage[bandname] = priority
         
+        
         writeFile()
+        bandPriorityStorage = [String:Int]()
+        bandPriorityStorage = readFile(dateWinnerPassed: "")
     }
 
     func getDateFormatter() -> DateFormatter {
@@ -299,6 +302,7 @@ class dataHandler {
         }
 
         do {
+            try FileManager.default.removeItem(at: storageFile)
             try data.write(to: storageFile, atomically: false, encoding: String.Encoding.utf8)
         } catch _ {
         }
