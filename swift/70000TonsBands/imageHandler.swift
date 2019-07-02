@@ -71,38 +71,22 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
             sleep(1)
             count = count + 1
         }
-        /*
-        let dataTask = session.dataTask(with: request) { (data, response, error) -> Void in
-            if let httpResponse = response as? HTTPURLResponse {
-                let statusCode = httpResponse.statusCode
-                if statusCode == 200 {
-                    do {
-                        if (data != nil){
-                            returnedImage = UIImage(data: data!)!
-                            imageCache[urlString] = returnedImage
-  
-                            try? UIImageJPEGRepresentation((returnedImage!),1.0)?.write(to: imageStoreFile, options: [.atomic])
-                        } else {
-                            returnedImage = UIImage(named: "70000TonsLogo")
-                            print("Could not Download image encountered image download error")
-                        }
-                    }
-                    
-                } else {
-                    returnedImage = UIImage(named: "70000TonsLogo")!
-                    print("Could not Download image " + statusCode.description)
-                }
-            } else {
-                returnedImage = UIImage(named: "70000TonsLogo")!
-                print("Could not Download image Not sure what is going on here " + response.debugDescription)
-            }
-        }
-        
-        dataTask.resume()
-        */
     }
     
     print ("ImageCall returned \(urlString) - " + returnedImage.debugDescription)
+    
+    print ("Image URL string is " + urlString + " for band " + bandName);
+    
+    //TODO: replace this wich much more sane code
+    if (bandName.hasSuffix("Party") == false &&
+        bandName.hasSuffix("Pre") == false &&
+        bandName.hasSuffix("Photo") == false){
+        
+        print ("Image URL string is Inverted");
+        returnedImage = invertImage(imageValue: returnedImage ?? UIImage(named: "70000TonsLogo")!)
+    } else {
+        print ("Image URL string is NOT Inverted");
+    }
     
     return returnedImage ?? UIImage(named: "70000TonsLogo")!;
     
@@ -125,5 +109,17 @@ func getAllImages(){
             _ = displayImage(urlString: imageURL, bandName: bandName)
         }
     }
+}
+
+func invertImage(imageValue: UIImage) -> UIImage {
+    
+    var newImage = UIImage()
+    let beginImage = CIImage(image: imageValue)
+    
+    let filter = CIFilter(name: "CIColorInvert")
+    filter!.setValue(beginImage, forKey: kCIInputImageKey)
+    newImage = UIImage(ciImage: (filter?.outputImage!)!)
+    
+    return newImage
 }
 

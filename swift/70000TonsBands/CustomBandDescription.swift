@@ -10,10 +10,14 @@ import Foundation
 
 open class CustomBandDescription {
     
+    //let attendedHandler = ShowsAttended()
+    var dataHandle = dataHandler();
+    var bandDescriptionUrl = [String:String]()
+    
     func getDescriptionMapFile(){
         
         let mapUrl = getDefaultDescriptionMapUrl()
-        let httpData = getUrlData(mapUrl)
+        let httpData = dataHandle.getUrlData(mapUrl)
         
         if (httpData.isEmpty == false){
             do {
@@ -41,7 +45,7 @@ open class CustomBandDescription {
             self.getDescriptionMap();
             
             print ("commentFile looping through bands")
-            for record in bandDescriptionUrl{
+            for record in self.bandDescriptionUrl{
                 let bandName = record.key
                 
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
@@ -71,7 +75,7 @@ open class CustomBandDescription {
         if (doesDescriptionFileExists(bandName: bandName) == false){
 
                 //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                let httpData = getUrlData(descriptionUrl);
+                let httpData = dataHandle.getUrlData(descriptionUrl);
                 
                 //do not write if we are getting 404 error
                 if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -109,7 +113,10 @@ open class CustomBandDescription {
             if (bandDescriptionUrl[bandName] != nil){
                 
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    let httpData = getUrlData(bandDescriptionUrl[bandName]!);
+                    
+                    let dataHandle = dataHandler()
+                    
+                    let httpData = dataHandle.getUrlData(self.bandDescriptionUrl[bandName]!);
                     print ("Trying to download comment from url \(httpData)")
                     //do not write if we are getting 404 error
                     if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -176,7 +183,7 @@ open class CustomBandDescription {
     func getDefaultDescriptionMapUrl() -> String{
         
         var url = String()
-        let httpData = getUrlData(defaultStorageUrl)
+        let httpData = dataHandle.getUrlData(defaultStorageUrl)
         
         var descriptionPointer = "descriptionMap";
         

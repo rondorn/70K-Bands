@@ -12,13 +12,18 @@ open class bandNamesHandler {
 
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
+    var bandPriorityStorage = [String:Int]()
+    
+    let dataHandle = dataHandler()
     
     init(){
+        print ("Loading bandName Data")
         getCachedData()
     }
     
     func getCachedData(){
-
+        
+        print ("Loading bandName Data cache")
         var staticCacheUsed = false
         
         staticBandName.sync() {
@@ -26,6 +31,9 @@ open class bandNamesHandler {
                 staticCacheUsed = true
                 bandNames = bandNamesStaticCache
                 bandNamesArray = bandNamesArrayStaticCache
+            } else {
+                print ("Cache did not load, loading from file")
+                gatherData()
             }
         }
         
@@ -34,7 +42,7 @@ open class bandNamesHandler {
                 bandNames = NSKeyedUnarchiver.unarchiveObject(withFile: bandNamesCacheFile.path)
                     as! [String :[String : String]]
             } else {
-                print ("Cache did not load, loading schedule data")
+                print ("Cache did not load, loading from file")
                 gatherData()
             }
             
@@ -43,33 +51,36 @@ open class bandNamesHandler {
                 bandNamesArrayStaticCache = self.bandNamesArray
             }
         }
-            
         
     }
     
     func gatherData() {
         
+        print ("Loading bandName Data gatherData")
         let defaults = UserDefaults.standard
         
-        //print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
+        if (defaults.string(forKey: "artistUrl") == nil){
+            setupDefaults()
+        }
+        
+        print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
         var artistUrl = defaults.string(forKey: "artistUrl")
         
-        eventYear =  Int(getPointerUrlData(keyValue: "eventYear"))!
-        
         if (artistUrl == "Default"){
-            artistUrl = getPointerUrlData(keyValue: artistUrlpointer)
+            artistUrl = getPointerUrlData(keyValue: artistUrlpointer, dataHandle: dataHandle)
         
         } else if (artistUrl == "lastYear"){
-            eventYear = eventYear - 1
-            artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
+
+            artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer, dataHandle: dataHandle)
         
         } else {
             artistUrl = "http://www.apple.com";
         }
         
-        //print ("Getting band data from " + artistUrl!);
+        print ("Getting band data from " + artistUrl!);
         let httpData = getUrlData(artistUrl!)
-        
+        print ("Getting band data of " + httpData);
+        writeBandFile(httpData);
         readBandFile();
 
     }
@@ -81,7 +92,7 @@ open class bandNamesHandler {
 
         do {
            try httpData.write(toFile: bandFile, atomically: true,encoding: String.Encoding.utf8)
-            print ("Just created file " + bandFile);
+            print ("Just created file bandFile " + bandFile);
         } catch let error as NSError {
             print ("Encountered an error of creating file " + error.debugDescription)
         }
@@ -91,11 +102,9 @@ open class bandNamesHandler {
 
     func readBandFile (){
         
+        print ("Loading bandName Data readBandFile")
         print ("Reading content of file " + bandFile);
         
-        if (FileManager.default.fileExists(atPath: bandFile) == false){
-            gatherData();
-        }
         if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
             print("csvDataString has data", terminator: "");
             
@@ -108,7 +117,7 @@ open class bandNamesHandler {
             for lineData in csvData.rows {
 
                 if (lineData["bandName"]?.isEmpty == false){
-                    
+                
                     print ("Working on band " + lineData["bandName"]!)
             
                     let bandNameValue = lineData["bandName"]!
@@ -193,16 +202,24 @@ open class bandNamesHandler {
     func getBandNames () -> [String] {
         
         bandNamesArray = [String]()
-
+        
+        print ("bandNames data is \(bandNames)")
+        if (bandNames.isEmpty == true){
+            gatherData()
+        }
+        
         if (bandNames.isEmpty == false){
-            if (bandNames.count >= 2){
+            if (bandNames.count >= 1){
                 for bandNameValue in bandNames.keys {
                     bandNamesArray.append(bandNameValue)
                 }
                 bandNamesArray.sort();
             }
+        } else {
+            print ("can not load data\n");
+            bandNamesArray.append("Unable to load band data, unknown error")
         }
-        
+        print ("bandNamesArray data is \(bandNamesArray)")
         return bandNamesArray
     }
 
@@ -276,4 +293,5 @@ open class bandNamesHandler {
         
         return bandNames[band]?["bandNoteWorthy"] ?? ""
     }
+    
 }

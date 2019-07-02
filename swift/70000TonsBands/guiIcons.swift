@@ -7,7 +7,7 @@
 //
 
 import Foundation
-
+import UIKit
 
 let mustSeeIcon = "🍺"
 let willSeeIcon = "✅"
@@ -64,6 +64,45 @@ func getEventTypeIcon (_ eventType: String) -> String {
     }
 }
 
+func getRankGuiIcons (rank: String)->UIImage {
+   
+    var graphicName = String()
+    var graphicImage = UIImage()
+    
+    switch rank {
+    case "must":
+        graphicName = "MustSeeIcon"
+
+    case "might":
+        graphicName = "MightSeeIcon-1"
+
+    case "wont":
+        graphicName = "WontSeeIcon"
+        
+    case "mustAlt":
+        graphicName = "MustSeeIcon"
+        
+    case "mightAlt":
+        graphicName = "MightSeeIcon-1"
+        
+    case "wontAlt":
+        graphicName = "WontSeeIcon"
+        
+    default:
+        graphicName = ""
+    }
+    
+    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    
+    if (rank == "mustAlt" || rank == "mightAlt" || rank == "wontAlt"){
+        graphicImage = invertImage(imageValue: graphicImage)
+    }
+    
+    return graphicImage
+    
+    
+}
+
 func getVenuIcon(_ venue: String)->String {
     
     switch venue {
@@ -96,6 +135,23 @@ func getPriorityIcon(_ index: Int) -> String {
         
     case 3:
         return willNotSeeIcon
+        
+    default:
+        return ""
+    }
+}
+
+func getPriorityGraphic(_ index: Int) -> String {
+
+    switch index {
+    case 1:
+        return "MustSeeIcon"
+        
+    case 2:
+        return "MightSeeIcon-1"
+        
+    case 3:
+        return "WontSeeIcon"
         
     default:
         return ""

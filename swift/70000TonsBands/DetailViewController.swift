@@ -49,17 +49,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var backgroundNotesText = "";
     var bandName :String!
     var schedule = scheduleHandler()
-    var imagePosition = CGFloat(0);
-    
     var bandNameHandle = bandNamesHandler()
+    let attendedHandler = ShowsAttended()
+    let dataHandle = dataHandler()
+    let bandNotes = CustomBandDescription();
+    
+    var bandPriorityStorage = [String:Int]()
+    
+    var imagePosition = CGFloat(0);
     
     var eventCount = 0;
     var displayedImaged:UIImage?
     
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
-    
-    let attendedHandler = ShowsAttended()
-    
+
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
@@ -72,12 +75,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         self.configureView()
         
-        customNotesText.delegate = self as? UITextViewDelegate
+        self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
+        self.navigationController?.navigationBar.tintColor = UIColor.white
+        self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
-        bandPriorityStorage = readFile(dateWinnerPassed: "")
+        customNotesText.delegate = self as? UITextViewDelegate
+        customNotesText.textColor = UIColor.white
+        
+        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
         if (bandName == nil || bands.isEmpty == true) {
             var bands = bandNameHandle.getBandNames()
+            print ("bands discovered are \(bands)")
             bandName = bands[bandListIndexCache]
             print("Providing default band of " + bandName)
         }
@@ -98,7 +107,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
-            print(getPriorityData(bandName))
+            print(dataHandle.getPriorityData(bandName))
             
             print ("showFullSchedule");
             showFullSchedule()
@@ -123,6 +132,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
         }
         
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
     }
     
     //used to disable keyboard input for event fields
@@ -240,7 +253,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         print ("Editing of commentFile has begun")
         if (customNotesText.text == "Add your custom notes here"){
             customNotesText.text = ""
-            customNotesText.textColor = UIColor.black
+            customNotesText.textColor = UIColor.white
         }
         
     }
@@ -248,7 +261,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
     func loadComments(){
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
-        customNotesText.textColor = UIColor.black
+        customNotesText.textColor = UIColor.white
         setNotesHeight()
     }
     
@@ -371,7 +384,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @IBAction func setBandPriority() {
         if (bandName != nil){
-            addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
+            dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex, attendedHandler: attendedHandler)
         }
     }
     
@@ -419,6 +432,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         schedule.getCachedData()
         scheduleQueue.sync {
             if (schedule.schedulingData[bandName]?.isEmpty == false){
+                
+                let bandNotes = CustomBandDescription();
+                
                 let keyValues = schedule.schedulingData[bandName]!.keys
                 let sortedArray = keyValues.sorted();
                 var count = 1
@@ -483,22 +499,27 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         case 1:
                             Event1.text = scheduleText
                             _ = attendedHandler.setShowsAttendedStatus(Event1,status: status);
+                            Event1.textColor = UIColor.white
                             
                         case 2:
                             Event2.text = scheduleText
                             _ = attendedHandler.setShowsAttendedStatus(Event2,status: status);
+                            Event2.textColor = UIColor.white
                             
                         case 3:
                             Event3.text = scheduleText
                             _ = attendedHandler.setShowsAttendedStatus(Event3,status: status);
+                            Event3.textColor = UIColor.white
                             
                         case 4:
                             Event4.text = scheduleText
                             _ = attendedHandler.setShowsAttendedStatus(Event4,status: status);
-
+                            Event4.textColor = UIColor.white
+                            
                         case 5:
                             Event5.text = scheduleText
                             _ = attendedHandler.setShowsAttendedStatus(Event5,status: status);
+                            Event5.textColor = UIColor.white
                             
                         default:
                             print("To many events")
@@ -594,7 +615,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let status = attendedHandler.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!,eventYearString: String(eventYear));
         
         let message = attendedHandler.setShowsAttendedStatus(sender,status: status);
-        
+
         ToastMessages(message).show(self, cellLocation: self.view.frame)
     }
     

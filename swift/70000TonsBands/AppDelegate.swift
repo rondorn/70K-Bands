@@ -27,6 +27,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     let gcmMessageIDKey = "gcm.message_id"
     let attendedHandler = ShowsAttended()
+    var dataHandle = dataHandler()
+    
+    var bandPriorityStorage = [String:Int]()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
@@ -45,7 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default.synchronize()
-        readiCloudData()
+        dataHandle.readiCloudData()
         
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
         let controller = masterNavigationController.topViewController as! MasterViewController
@@ -53,25 +56,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
         setupCurrentYearUrls()
         
-        //register Application Defaults
-        let defaults = ["artistUrl": artistUrlDefault,
-            "scheduleUrl": scheduleUrlDefault,
-            "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
-            "onlyAlertForAttended": onlyAlertForAttendedDefault,
-            "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
-            "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
-            "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
-            "validateScheduleFile": validateScheduleFileDefault, "showSpecial": showSpecialDefault,
-            "showMandG": showMandGDefault, "showClinics": showClinicsDefault,
-            "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
-            "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
-            "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
-            "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
-            "hideExpireScheduleData": hideExpireScheduleDataDefault]
+        setupDefaults()
         
-        UserDefaults.standard.register(defaults: defaults)
-        
-        bandPriorityStorage = readFile(dateWinnerPassed: "")
+        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
         attendedHandler.loadShowsAttended()
 
@@ -303,8 +290,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func applicationDidEnterBackground(_ application: UIApplication) {
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        writeFiltersFile()
-        writeFile()
+        dataHandle.writeFiltersFile()
+        dataHandle.writeFile()
         
         //        let userDataHandle = firebaseUserWrite()
         //userDataHandle.writeData()
@@ -324,7 +311,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
-        readiCloudData()
+        dataHandle.readiCloudData()
     }
 
 
@@ -332,10 +319,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-        writeFiltersFile()
-        writeFile()
+        dataHandle.writeFiltersFile()
+        dataHandle.writeFile()
         attendedHandler.saveShowsAttended()
-        writeiCloudData();
+        dataHandle.writeiCloudData();
         
     }
 
@@ -343,7 +330,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
-        readiCloudData();
+        dataHandle.readiCloudData();
         attendedHandler.loadShowsAttended()
     }
 
@@ -351,10 +338,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // Saves changes in the application's managed object context before the application terminates.
-        writeFiltersFile()
-        writeFile()
+        dataHandle.writeFiltersFile()
+        dataHandle.writeFile()
         attendedHandler.saveShowsAttended()
-        writeiCloudData();
+        dataHandle.writeiCloudData();
         self.saveContext()
     }
 

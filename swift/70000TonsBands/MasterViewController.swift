@@ -34,6 +34,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
+    let schedule = scheduleHandler()
+    let bandNameHandle = bandNamesHandler()
+    let attendedHandler = ShowsAttended()
+
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
     var detailViewController: DetailViewController? = nil
@@ -47,11 +51,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var titleLabel: UINavigationItem!
     
+    var dataHandle = dataHandler()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //self.view.backgroundColor = UIColor.black;
-        self.tableView.backgroundColor = backgroundColor;
+        self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
+        self.navigationController?.navigationBar.tintColor = UIColor.white
+        self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
         //have a reference to this controller for external refreshes
         masterView = self;
@@ -72,8 +79,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.refreshControl = refreshControl
 
         scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
-        readFiltersFile()
+        dataHandle.readFiltersFile()
         setFilterButtons()
+
         refreshData()
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
@@ -94,6 +102,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(MasterViewController.showReceivedMessage(_:)),
                                                name: UserDefaults.didChangeNotification, object: nil)
+        
+        setNeedsStatusBarAppearanceUpdate() 
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
     }
     
     override func awakeFromNib() {
@@ -157,16 +171,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("Status of getWontSeeOn = \(getWontSeeOn())")
         if (getMustSeeOn() == false || getShowOnlyWillAttened() == true){
-            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
+            mustSeeButton.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
         }
         if (getMightSeeOn() == false || getShowOnlyWillAttened() == true){
-            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
+            mightSeeButton.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
         }
         if (getWontSeeOn() == false || getShowOnlyWillAttened() == true){
-            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
+            wontSeeButton.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
         }
         if (getUnknownSeeOn() == false || getShowOnlyWillAttened() == true){
-            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
+            unknownButton.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
         }
         
         if (getShowOnlyWillAttened() == true){
@@ -198,22 +212,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func refreshFromCache (){
         
-        let bandNameHandle = bandNamesHandler()
-        let schedule = scheduleHandler()
         
+
+        print ("RefreshFromCache called")
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
         schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
         bandsByName = bands
         setShowOnlyAttenedFilterStatus()
     }
     
     func ensureCorrectSorting(){
-        
-        let bandNameHandle = bandNamesHandler()
-        let schedule = scheduleHandler()
         
         if (eventCount == 0){
             print("Schedule is empty, stay hidden")
@@ -238,7 +249,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
         bands =  [String]()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
     }
     
     func quickRefresh(){
@@ -246,14 +257,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
-            let bandNameHandle = bandNamesHandler()
-            let schedule = scheduleHandler()
-            
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
-            
+            let test = attendedHandler.getShowAttendedIcon(band: "TYR",location: "Rink",startTime: "18:45",eventType: "Show",eventYearString: "2019");
+            print ("Tyr show status is " + test)
             setShowOnlyAttenedFilterStatus()
             isPerformingQuickLoad = false
             self.tableView.reloadData()
@@ -261,9 +270,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func refreshData(){
-
+        
         print ("Waiting for bandData, Done")
-
+        
         //check if the timezonr has changes for whatever reason
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
         
@@ -283,7 +292,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
+            let dataHandle = dataHandler()
             var offline = true
+            let attendedHandler = ShowsAttended()
             
             if Reachability.isConnectedToNetwork(){
                 offline = false;
@@ -293,9 +304,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let schedule = scheduleHandler()
             if (offline == false){
                 
-                
-                
-                readiCloudData()
+                dataHandle.refreshData()
                 bandNameHandle.gatherData();
                 
                 schedule.DownloadCsv()
@@ -303,6 +312,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 validate.validateSchedule()
                 
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                    let bandNotes = CustomBandDescription();
+                    
                     bandNotes.getAllDescriptions()
                     getAllImages()
                 }
@@ -312,10 +323,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands =  [String]()
             
             schedule.populateSchedule()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
             self.bandsByName = self.bands
-
+            
+            
             DispatchQueue.main.async{
+                self.dataHandle.refreshData()
                 self.ensureCorrectSorting()
                 self.updateCountLable()
                 self.tableView.reloadData()
@@ -345,22 +358,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func resetFilterIcons(){
 
         if (getMustSeeOn() == true){
-            mustSeeButton.setImage(UIImage(named: "willSeeIcon"), for: UIControl.State())
+            mustSeeButton.setImage(getRankGuiIcons(rank: "must"), for: UIControl.State())
         }
         mustSeeButton.isEnabled = true
         
         if (getMightSeeOn() == true){
-            mightSeeButton.setImage(UIImage(named: "mightSeeIcon"), for: UIControl.State())
+            mightSeeButton.setImage(getRankGuiIcons(rank: "might"), for: UIControl.State())
         }
         mightSeeButton.isEnabled = true
         
         if (getWontSeeOn() == true){
-            wontSeeButton.setImage(UIImage(named: "willNotSee"), for: UIControl.State())
+            wontSeeButton.setImage(getRankGuiIcons(rank: "wont"), for: UIControl.State())
         }
         wontSeeButton.isEnabled = true
         
         if (getUnknownSeeOn() == true){
-            unknownButton.setImage(UIImage(named: "unknown"), for: UIControl.State())
+            unknownButton.setImage(getRankGuiIcons(rank: "unknown"), for: UIControl.State())
         }
         unknownButton.isEnabled = true
     }
@@ -372,17 +385,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
             
-            mustSeeButton.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
+            mustSeeButton.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
+            mustSeeButton.setTitleShadowColor(UIColor.white, for: .focused)
             mustSeeButton.isEnabled = false
             
-            mightSeeButton.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
+            mightSeeButton.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
             mightSeeButton.isEnabled = false
             
-            wontSeeButton.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
+            wontSeeButton.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
             wontSeeButton.isEnabled = false
             
-            unknownButton.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
+            unknownButton.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
             unknownButton.isEnabled = false
+            
             let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
             ToastMessages(message).show(self, cellLocation: self.view.frame)
             
@@ -395,14 +410,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             resetFilterIcons();
         }
         
-        writeFiltersFile();
-        
-        let bandNameHandle = bandNamesHandler()
-        let schedule = scheduleHandler()
+        dataHandle.writeFiltersFile();
         
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
         
         updateCountLable()
         tableView.reloadData()
@@ -415,63 +427,57 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
                 sender.setTitle(mustSeeIcon, for: UIControl.State())
-                sender.setImage(UIImage(named: "willSeeIconAlt"), for: UIControl.State())
-            
+                sender.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
             } else {
                 setMustSeeOn(true)
                 sender.setTitle(mustSeeIcon, for: UIControl.State())
-                sender.setImage(UIImage(named: "willSeeIcon"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "must"), for: UIControl.State())
 
             }
 
         } else if (sender.titleLabel?.text == getMightSeeIcon()){
             if (getMightSeeOn() == true){
                 setMightSeeOn(false)
-                sender.setImage(UIImage(named: "mightSeeIconAlt"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
             } else {
                 setMightSeeOn(true)
-                sender.setImage(UIImage(named: "mightSeeIcon"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "might"), for: UIControl.State())
             }
             
         } else if (sender.titleLabel?.text == getWillNotSeeIcon()){
             if (getWontSeeOn() == true){
                 setWontSeeOn(false)
-                sender.setImage(UIImage(named: "willNotSeeAlt"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
             } else {
                 setWontSeeOn(true)
                 sender.backgroundColor = UIColor.clear
-                sender.setImage(UIImage(named: "willNotSee"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "wont"), for: UIControl.State())
             }
             
         } else if (sender.titleLabel?.text == getUnknownIcon()){
             if (getUnknownSeeOn() == true){
                 setUnknownSeeOn(false)
-                sender.setImage(UIImage(named: "unknownAlt"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
             } else {
                 setUnknownSeeOn(true)
-                sender.setImage(UIImage(named: "unknown"), for: UIControl.State())
+                sender.setImage(getRankGuiIcons(rank: "unknown"), for: UIControl.State())
             }
             
         } else {
             bands =  [String]()
-            
-            let bandNameHandle = bandNamesHandler()
-            let schedule = scheduleHandler()
-            
-            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        
+            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
             updateCountLable()
             tableView.reloadData()
             return
         }
         
-        writeFiltersFile()
+        dataHandle.writeFiltersFile()
         print("Sorted  by is " + sortedBy)
         bands =  [String]()
         quickRefresh()
         
-        let bandNameHandle = bandNamesHandler()
-        let schedule = scheduleHandler()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
         
         updateCountLable()
         tableView.reloadData()
@@ -500,8 +506,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("titleButtonTitle:" + String(describing: titleButton.title))
         titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString        
-        //titleButton.setTitleColor(UIColor.black, for: UIControlState())
-            
+        
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
@@ -552,8 +557,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.backgroundColor = UIColor.clear;
-        cell.textLabel?.textColor = textColor;
+
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
@@ -582,6 +586,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
+        let dataHandle = dataHandler()
         let attendedHandler = ShowsAttended()
         
         let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
@@ -589,21 +594,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let currentCel = tableView.cellForRow(at: indexPath)
             
             let cellText = currentCel?.textLabel?.text;
-
+            let cellStatus = currentCel!.viewWithTag(2) as! UILabel
+            print ("Cell text for parsing is \(cellText)")
             let placementOfCell = currentCel?.frame
             
-            if (cellText?.contains("Day") == true || cellText?.contains(unofficalEventTypeIcon) == true){
-                let cellData = getScheduleIndexByCall();
+            if (cellStatus.isHidden == false){
+                let cellData = cellText?.split(separator: ";")
                 
-                let cellBandName = cellData[cellText!]!["bandName"]
-                let cellStartTime = cellData[cellText!]!["startTime"]
-                let cellEventType = cellData[cellText!]!["event"]
-                let cellLocation = cellData[cellText!]!["location"]
-                
-                let status = attendedHandler.addShowsAttended(band: cellBandName!, location: cellLocation!, startTime: cellStartTime!, eventType: cellEventType!,eventYearString: String(eventYear));
+                let cellBandName = cellData![0]
+                let cellLocation = cellData![1]
+                let cellEventType  = cellData![2]
+                let cellStartTime = cellData![3]
+
+                let status = attendedHandler.addShowsAttended(band: String(cellBandName), location: String(cellLocation), startTime: String(cellStartTime), eventType: String(cellEventType),eventYearString: String(eventYear));
                 
                 let empty : UITextField = UITextField();
                 let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
+                
+                attendedHandler.loadShowsAttended()
+                
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
                 isLoadingBandData = false
                 self.quickRefresh()
@@ -615,7 +624,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
  
         let mustSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getMustSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            addPriorityData(bandName, priority: 1);
+            dataHandle.addPriorityData(bandName, priority: 1, attendedHandler: attendedHandler);
             print ("Offline is offline");
             isLoadingBandData = false
             self.quickRefresh()
@@ -626,7 +635,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            addPriorityData(bandName, priority: 2);
+            dataHandle.addPriorityData(bandName, priority: 2, attendedHandler: attendedHandler);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -636,7 +645,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            addPriorityData(bandName, priority: 3);
+            dataHandle.addPriorityData(bandName, priority: 3, attendedHandler: attendedHandler);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -646,7 +655,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            addPriorityData(bandName, priority: 0);
+            dataHandle.addPriorityData(bandName, priority: 0, attendedHandler: attendedHandler);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -663,13 +672,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func configureCell(_ cell: UITableViewCell, atIndexPath indexPath: IndexPath) {
         
-        let schedule = scheduleHandler()
-        
         setBands(bands)
         setScheduleButton(scheduleButton.isHidden)
         
-        cell.textLabel!.text = getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy)
-
+        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle)
+    
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -706,7 +713,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func resortBandsByTime(){
-        let schedule = scheduleHandler()
+
         schedule.getCachedData()
     }
     
@@ -724,14 +731,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setSortedBy(sortedBy)
         ToastMessages(message).show(self, cellLocation: self.view.frame)
         ensureCorrectSorting()
-        writeFiltersFile()
+        dataHandle.writeFiltersFile()
         self.tableView.reloadData()
         
     }
     
     //iCloud data loading
     @objc func onSettingsChanged(_ notification: Notification) {
-        writeiCloudData()
+        dataHandle.writeiCloudData()
     }
 
 }

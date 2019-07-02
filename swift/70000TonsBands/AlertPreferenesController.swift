@@ -45,7 +45,7 @@ fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 
 
 class AlertPreferenesController: UIViewController, UITextFieldDelegate {
-
+    
     var mustSeeAlertValue = Bool()
     var mightSeeAlertValue = Bool()
     var onlyAlertForAttendedValue = Bool()
@@ -140,8 +140,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet var scrollView: UIScrollView!
     @IBOutlet var controlView: UIControl!
     
+    let dataHandle = dataHandler()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+
         let screenSize: CGRect = UIScreen.main.bounds
         var screenHeight = screenSize.height
         let screenWidth = screenSize.width
@@ -159,6 +162,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         disableAlertButtonsIfNeeded()
         self.navigationItem.title = "Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
     }
     
     override func viewWillDisappear(_ animated : Bool) {
@@ -437,7 +444,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func UseLastYearsDataAction() {
-        
+    
         print ("Files were in UseLastYearsDataAction")
         
         let alertController = UIAlertController(title: restartAlertTitle, message: restartAlertText, preferredStyle: .alert)
@@ -488,7 +495,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setWontSeeOn(true);
         setUnknownSeeOn(true);
         
-        writeFiltersFile();
+        dataHandle.writeFiltersFile();
         
         //clear all existing notifications
         let localNotification = localNoticationHandler()
