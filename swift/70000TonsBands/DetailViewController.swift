@@ -13,6 +13,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     
     
+    @IBOutlet weak var linkGroup: UIStackView!
     
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
@@ -185,6 +186,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             wikipediaUrlButton.isHidden = true;
             youtubeUrlButton.isHidden = true;
             metalArchivesButton.isHidden = true;
+            linkGroup.isHidden = true
         }
     }
   
@@ -397,30 +399,33 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         
         var sendToUrl = String()
-        
+
         if (bandName != nil){
-            if (sender.titleLabel?.text == officalSiteButtonName){
+            if (sender.accessibilityIdentifier == officalSiteButtonName){
+               webMessageHelp = "Taking you to the Offical Web Site"
                sendToUrl = bandNameHandle.getofficalPage(bandName)
             
-            } else if (sender.titleLabel?.text == wikipediaButtonName){
+            } else if (sender.accessibilityIdentifier == wikipediaButtonName){
+                webMessageHelp = "Searching Wikipedia for the band page"
                 sendToUrl = bandNameHandle.getWikipediaPage(bandName)
             
-            } else if (sender.titleLabel?.text == youTubeButtonName){
+            } else if (sender.accessibilityIdentifier == youTubeButtonName){
+                webMessageHelp = "Searching YouTube for offical videos"
                 sendToUrl = bandNameHandle.getYouTubePage(bandName)
                 
-            } else if (sender.titleLabel?.text == metalArchivesButtonName){
+            } else if (sender.accessibilityIdentifier == metalArchivesButtonName){
+                webMessageHelp = "Searching Metal Archives for this band"
                 sendToUrl = bandNameHandle.getMetalArchives(bandName)
                 
             }
             
-            print ("This should open up the link to \(sendToUrl)")
             if (sender.isEnabled == true && sendToUrl.isEmpty == false){
                 splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
                 setUrl(sendToUrl)
             }
         }
     }
-
+    
     func configureView() {
         
         // Update the user interface for the detail item.

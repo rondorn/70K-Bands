@@ -31,6 +31,8 @@ var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlCon
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 
+var webMessageHelp = String();
+
 var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
 var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
 

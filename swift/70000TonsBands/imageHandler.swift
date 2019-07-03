@@ -94,6 +94,7 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
 
 func getAllImages(){
     
+    return();
     let bandNameHandle = bandNamesHandler()
     
     bands = bandNameHandle.getBandNames()

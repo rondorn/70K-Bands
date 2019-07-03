@@ -115,10 +115,6 @@ func getRankGuiIcons (rank: String)->UIImage {
     
     graphicImage = UIImage(named: graphicName) ?? UIImage()
     
-    if (rank == "mustAlt" || rank == "mightAlt" || rank == "wontAlt"){
-        graphicImage = invertImage(imageValue: graphicImage)
-    }
-    
     return graphicImage
     
     

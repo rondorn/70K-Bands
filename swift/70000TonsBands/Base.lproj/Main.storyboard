@@ -45,72 +45,70 @@
                             <view contentMode="top" translatesAutoresizingMaskIntoConstraints="NO" id="uaF-dJ-7Dc">
                                 <rect key="frame" x="0.0" y="122" width="320" height="81"/>
                                 <subviews>
-                                    <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gni-Y6-ugV">
-                                        <rect key="frame" x="0.0" y="18" width="320" height="33"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <state key="normal" title="Wikipedia">
-                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="c9E-VE-8en"/>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchUpInside" id="hdS-Tw-yiB"/>
-                                            <segue destination="ewv-Oo-aEW" kind="show" id="9Ls-98-3Fy"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KER-Ol-1XT">
-                                        <rect key="frame" x="0.0" y="46" width="320" height="16"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="16" id="0dA-ef-JAa"/>
-                                        </constraints>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <state key="normal" title="YouTube">
-                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchUpInside" id="Aej-s6-eBZ"/>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="xxi-iI-vi6"/>
-                                            <segue destination="ewv-Oo-aEW" kind="show" id="0xe-if-0D0"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6Zv-yV-wLQ">
-                                        <rect key="frame" x="0.0" y="61" width="320" height="21"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <state key="normal" title="Metal Archives">
-                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="6eN-0n-mcA"/>
-                                            <segue destination="ewv-Oo-aEW" kind="show" id="TIK-9n-mrX"/>
-                                        </connections>
-                                    </button>
-                                    <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pII-w4-ri7">
-                                        <rect key="frame" x="0.0" y="5" width="320" height="22"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <state key="normal" title="Offical Web Site">
-                                            <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="vSW-pr-X4c"/>
-                                            <segue destination="ewv-Oo-aEW" kind="show" id="w7I-KM-Dbd"/>
-                                        </connections>
-                                    </button>
+                                    <stackView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" spacing="32" translatesAutoresizingMaskIntoConstraints="NO" id="cNj-Lf-NzH">
+                                        <rect key="frame" x="8" y="26" width="296" height="16"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Vist On" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7eU-qa-VIQ">
+                                                <rect key="frame" x="0.0" y="0.0" width="56" height="16"/>
+                                                <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pII-w4-ri7" userLabel="Officall Web Site">
+                                                <rect key="frame" x="88" y="0.0" width="26.5" height="16"/>
+                                                <accessibility key="accessibilityConfiguration" identifier="Offical Web Site"/>
+                                                <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="11"/>
+                                                <state key="normal" image="icon-www">
+                                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="vSW-pr-X4c"/>
+                                                    <segue destination="ewv-Oo-aEW" kind="show" id="w7I-KM-Dbd"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageSizeForAccessibilityContentSizeCategory="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6Zv-yV-wLQ">
+                                                <rect key="frame" x="146.5" y="0.0" width="29.5" height="16"/>
+                                                <accessibility key="accessibilityConfiguration" identifier="Metal Archives"/>
+                                                <state key="normal" image="icon-ma">
+                                                    <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="6eN-0n-mcA"/>
+                                                    <segue destination="ewv-Oo-aEW" kind="show" id="TIK-9n-mrX"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageSizeForAccessibilityContentSizeCategory="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gni-Y6-ugV">
+                                                <rect key="frame" x="208" y="0.0" width="30.5" height="16"/>
+                                                <accessibility key="accessibilityConfiguration" identifier="Wikipedia"/>
+                                                <state key="normal" image="icon-wiki">
+                                                    <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="c9E-VE-8en"/>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchUpInside" id="hdS-Tw-yiB"/>
+                                                    <segue destination="ewv-Oo-aEW" kind="show" id="9Ls-98-3Fy"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageSizeForAccessibilityContentSizeCategory="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KER-Ol-1XT">
+                                                <rect key="frame" x="270.5" y="0.0" width="25.5" height="16"/>
+                                                <accessibility key="accessibilityConfiguration" identifier="YouTube"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="16" id="0dA-ef-JAa"/>
+                                                </constraints>
+                                                <state key="normal" image="icon-youtube">
+                                                    <color key="titleShadowColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchUpInside" id="Aej-s6-eBZ"/>
+                                                    <action selector="openLink:" destination="JEX-9P-axG" eventType="touchDown" id="xxi-iI-vi6"/>
+                                                    <segue destination="ewv-Oo-aEW" kind="show" id="0xe-if-0D0"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                    </stackView>
                                 </subviews>
-                                <constraints>
-                                    <constraint firstItem="6Zv-yV-wLQ" firstAttribute="top" secondItem="gni-Y6-ugV" secondAttribute="bottom" constant="10" id="BSh-5h-g7q"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" id="CF3-gj-QMR"/>
-                                    <constraint firstItem="6Zv-yV-wLQ" firstAttribute="top" secondItem="KER-Ol-1XT" secondAttribute="bottom" constant="-1" id="Dbs-XC-rla"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="trailing" secondItem="pII-w4-ri7" secondAttribute="trailing" id="L2o-Rr-tZq"/>
-                                    <constraint firstItem="pII-w4-ri7" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="top" constant="5" id="MAP-5P-ncS"/>
-                                    <constraint firstAttribute="bottom" secondItem="KER-Ol-1XT" secondAttribute="bottom" constant="19" id="SVv-Fn-A1E"/>
-                                    <constraint firstAttribute="trailing" secondItem="pII-w4-ri7" secondAttribute="trailing" id="eXB-9L-hpO"/>
-                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="top" secondItem="pII-w4-ri7" secondAttribute="bottom" constant="19" id="fUm-gY-M7a"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="trailing" secondItem="KER-Ol-1XT" secondAttribute="trailing" id="gAT-S4-J1c"/>
-                                    <constraint firstAttribute="bottom" secondItem="6Zv-yV-wLQ" secondAttribute="bottom" constant="-1" id="gqF-RL-DV5"/>
-                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="trailing" secondItem="6Zv-yV-wLQ" secondAttribute="trailing" id="lPB-wI-BWl"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="leading" secondItem="KER-Ol-1XT" secondAttribute="leading" id="uq2-aF-dUj"/>
-                                    <constraint firstItem="KER-Ol-1XT" firstAttribute="leading" secondItem="6Zv-yV-wLQ" secondAttribute="leading" id="xRF-Gl-8Fb"/>
-                                    <constraint firstItem="gni-Y6-ugV" firstAttribute="leading" secondItem="pII-w4-ri7" secondAttribute="leading" id="yuG-dX-ySf"/>
-                                </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="klk-SA-oTX">
                                 <rect key="frame" x="0.0" y="213" width="320" height="68"/>
@@ -356,6 +354,7 @@
                         <outlet property="customNotesText" destination="EXR-5H-hTd" id="VLi-it-yKG"/>
                         <outlet property="eventView" destination="lTJ-bG-l3q" id="ml1-BP-knP"/>
                         <outlet property="extraData" destination="klk-SA-oTX" id="PJL-jI-waj"/>
+                        <outlet property="linkGroup" destination="cNj-Lf-NzH" id="Fxi-e5-NNs"/>
                         <outlet property="metalArchivesButton" destination="6Zv-yV-wLQ" id="7Gp-MG-Dkb"/>
                         <outlet property="notesSection" destination="i1L-g3-deM" id="Iip-Yu-e8d"/>
                         <outlet property="officialUrlButton" destination="pII-w4-ri7" id="VrX-Rl-EM1"/>
@@ -1321,12 +1320,16 @@
         <image name="icon-going-no" width="26.666666030883789" height="28"/>
         <image name="icon-going-unknown" width="26.666666030883789" height="28"/>
         <image name="icon-going-yes" width="26.666666030883789" height="28"/>
+        <image name="icon-ma" width="29.333333969116211" height="25.333333969116211"/>
         <image name="icon-share" width="30.666666030883789" height="30"/>
         <image name="icon-sort-az-decending" width="24.666666030883789" height="28"/>
+        <image name="icon-wiki" width="30.666666030883789" height="18.666666030883789"/>
+        <image name="icon-www" width="26.666666030883789" height="26.666666030883789"/>
+        <image name="icon-youtube" width="25.333333969116211" height="18.666666030883789"/>
         <image name="ticket_icon_alt" width="28" height="28"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="w7I-KM-Dbd"/>
+        <segue reference="0xe-if-0D0"/>
         <segue reference="6S0-TO-JiA"/>
     </inferredMetricsTieBreakers>
 </document>

@@ -40,6 +40,7 @@ class ToastMessages : UILabel {
         show(parent,cellLocation: ToastMessages.cellLocationStore)
     }
     
+    
     public func show(_ parent: UIViewController, cellLocation: CGRect) {
         
         //width: UIScreen.main.bounds.width - 2
