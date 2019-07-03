@@ -77,8 +77,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
         self.refreshControl = refreshControl
-
-        scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
+        
+        //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State.normal)
+        scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+        //scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
         dataHandle.readFiltersFile()
         setFilterButtons()
 
@@ -189,7 +191,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
         }
         
-        self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+        //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State())
+        scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+        //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
     }
     
     @objc func refreshDisplayAfterWake(){
@@ -232,20 +236,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.isHidden = true;
             setShowOnlyWillAttened(false);
             resetFilterIcons();
-            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State())
+            //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
             
         } else if (sortedBy == "name"){
             print("Sort By is Name, Show")
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
-            self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+            //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State())
+            //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
             
         } else {
             print("Sort By is Time, Show")
             //self.sortBandsByTime()
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
-            self.scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
+            //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State.normal)
+            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+            //self.scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
             
         }
         bands =  [String]()

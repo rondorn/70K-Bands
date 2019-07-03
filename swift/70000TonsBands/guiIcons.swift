@@ -64,6 +64,21 @@ func getEventTypeIcon (_ eventType: String) -> String {
     }
 }
 
+func getSortButtonImage()->UIImage{
+    
+    var sortImage:UIImage
+    
+    print ("scheduleIcon = \(getSortedBy())")
+    if (getSortedBy() == "name"){
+        sortImage = UIImage(named: "icon-sort-time-decending") ?? UIImage()
+        
+    } else {
+        sortImage = UIImage(named: "icon-sort-az-decending") ?? UIImage()
+    }
+    
+    return sortImage
+}
+
 func getRankGuiIcons (rank: String)->UIImage {
    
     var graphicName = String()
@@ -71,22 +86,28 @@ func getRankGuiIcons (rank: String)->UIImage {
     
     switch rank {
     case "must":
-        graphicName = "MustSeeIcon"
+        graphicName = "icon-going-yes"
 
     case "might":
-        graphicName = "MightSeeIcon-1"
+        graphicName = "icon-going-maybe"
 
     case "wont":
-        graphicName = "WontSeeIcon"
+        graphicName = "icon-going-no"
+
+    case "unknown":
+        graphicName = "icon-going-unknown"
         
     case "mustAlt":
-        graphicName = "MustSeeIcon"
+        graphicName = "icon-going-yes-alt"
         
     case "mightAlt":
-        graphicName = "MightSeeIcon-1"
+        graphicName = "icon-going-maybe-alt"
         
     case "wontAlt":
-        graphicName = "WontSeeIcon"
+        graphicName = "icon-going-no-alt"
+
+    case "unknownAlt":
+        graphicName = "icon-going-unknown-alt"
         
     default:
         graphicName = ""
@@ -145,13 +166,13 @@ func getPriorityGraphic(_ index: Int) -> String {
 
     switch index {
     case 1:
-        return "MustSeeIcon"
+        return "icon-going-yes"
         
     case 2:
-        return "MightSeeIcon-1"
+        return "icon-going-maybe"
         
     case 3:
-        return "WontSeeIcon"
+        return "icon-going-no"
         
     default:
         return ""
@@ -168,6 +189,7 @@ func getScheduleIcon() -> String {
         return scheduleIcon
     
     } else {
+        
       return bandIconSort
         
     }
