@@ -371,11 +371,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
         let WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
         
-        priorityButtons.setTitle(mustSeeIcon + " " + MustSee, forSegmentAt: 1)
-        priorityButtons.setTitle(willSeeIcon + " " + MightSee, forSegmentAt: 2)
-        priorityButtons.setTitle(willNotSeeIcon + " " + WontSee, forSegmentAt: 3)
+        //priorityButtons.setImage(getRankGuiIcons(rank: "unknown"), forSegmentAt: 0)
+        //priorityButtons.setImage(getRankGuiIcons(rank: "must"), forSegmentAt: 1)
+        //priorityButtons.setImage(getRankGuiIcons(rank: "might"), forSegmentAt: 2)
+        //priorityButtons.setImage(getRankGuiIcons(rank: "wont"), forSegmentAt: 3)
+        
+        priorityButtons.setTitle(MustSee, forSegmentAt: 1)
+        priorityButtons.setTitle(MightSee, forSegmentAt: 2)
+        priorityButtons.setTitle(WontSee, forSegmentAt: 3)
 
-        priorityButtons.setTitle(unknownIcon, forSegmentAt: 0)
+        priorityButtons.setTitle("Unknown", forSegmentAt: 0)
         
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!

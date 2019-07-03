@@ -293,14 +293,16 @@
                                     <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="topMargin" constant="-16" id="qim-j8-yFp"/>
                                 </constraints>
                             </view>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
                                 <rect key="frame" x="16" y="532" width="288" height="29"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <segments>
-                                    <segment title="Must See"/>
+                                    <segment title="Unknown"/>
                                     <segment title="Might See"/>
                                     <segment title="Wont See"/>
                                     <segment title="Unknown"/>
                                 </segments>
+                                <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
                                 <connections>
                                     <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
                                 </connections>
@@ -402,7 +404,7 @@
                                         <rect key="frame" x="16" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
-                                        <state key="normal" title="🍺" image="MustSeeIcon">
+                                        <state key="normal" title="🍺" image="icon-going-yes">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
                                         <connections>
@@ -413,10 +415,10 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="jiI-qV-mcD"/>
                                 <barButtonItem style="plain" id="U7v-VF-EaZ">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
-                                        <rect key="frame" x="60" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="59" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
-                                        <state key="normal" title="✅" image="MightSeeIcon-1">
+                                        <state key="normal" title="✅" image="icon-going-maybe">
                                             <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </state>
                                         <connections>
@@ -427,10 +429,10 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
                                 <barButtonItem style="plain" id="WGm-Pk-oWK">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
-                                        <rect key="frame" x="103.5" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="101.5" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
-                                        <state key="normal" title="🚫" image="WontSeeIcon">
+                                        <state key="normal" title="🚫" image="icon-going-no">
                                             <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </state>
                                         <connections>
@@ -440,11 +442,11 @@
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
                                 <barButtonItem style="plain" id="VdB-M1-Pt3">
-                                    <button key="customView" hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
-                                        <rect key="frame" x="147.5" y="8" width="29" height="28"/>
+                                    <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
+                                        <rect key="frame" x="144.5" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
-                                        <state key="normal" title="❓" image="unknown">
+                                        <state key="normal" title="❓" image="icon-going-unknown">
                                             <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </state>
                                         <connections>
@@ -455,7 +457,7 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
                                 <barButtonItem style="plain" id="3Y8-mq-vik">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="owc-3D-aHq">
-                                        <rect key="frame" x="191.5" y="8" width="29" height="28"/>
+                                        <rect key="frame" x="187" y="8" width="29" height="28"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                         <state key="normal" title="🎟" image="ticket_icon_alt">
@@ -470,10 +472,10 @@
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="mbA-H1-3pm"/>
                                 <barButtonItem style="plain" id="5on-Su-FWN">
                                     <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
-                                        <rect key="frame" x="235" y="1" width="30" height="42"/>
+                                        <rect key="frame" x="230" y="7" width="25" height="30"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                                        <state key="normal" title="⌚️">
+                                        <state key="normal" image="icon-sort-az-decending">
                                             <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </state>
                                         <connections>
@@ -482,7 +484,8 @@
                                     </button>
                                 </barButtonItem>
                                 <barButtonItem style="plain" systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
-                                <barButtonItem style="plain" systemItem="action" id="N41-zI-gGY">
+                                <barButtonItem image="icon-share" style="plain" id="N41-zI-gGY">
+                                    <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <connections>
                                         <action selector="shareButtonClicked:" destination="7bK-jq-Zjz" id="0Rl-4s-tNb"/>
                                     </connections>
@@ -643,7 +646,8 @@
                     </tableView>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="70,000 Tons" id="Zdf-7t-Un8">
-                        <barButtonItem key="rightBarButtonItem" title="⚙️" style="plain" id="R14-lg-DDg" userLabel="Setting Item">
+                        <barButtonItem key="rightBarButtonItem" image="icon-gear" style="plain" id="R14-lg-DDg" userLabel="Setting Item">
+                            <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
                                 <segue destination="wME-gs-GWB" kind="show" id="Inr-4y-5qN"/>
                             </connections>
@@ -1312,11 +1316,14 @@
         </scene>
     </scenes>
     <resources>
-        <image name="MightSeeIcon-1" width="22" height="22"/>
-        <image name="MustSeeIcon" width="22" height="22"/>
-        <image name="WontSeeIcon" width="22" height="22"/>
+        <image name="icon-gear" width="29.333333969116211" height="30.666666030883789"/>
+        <image name="icon-going-maybe" width="26.666666030883789" height="28"/>
+        <image name="icon-going-no" width="26.666666030883789" height="28"/>
+        <image name="icon-going-unknown" width="26.666666030883789" height="28"/>
+        <image name="icon-going-yes" width="26.666666030883789" height="28"/>
+        <image name="icon-share" width="30.666666030883789" height="30"/>
+        <image name="icon-sort-az-decending" width="24.666666030883789" height="28"/>
         <image name="ticket_icon_alt" width="28" height="28"/>
-        <image name="unknown" width="28" height="28"/>
     </resources>
     <inferredMetricsTieBreakers>
         <segue reference="w7I-KM-Dbd"/>
