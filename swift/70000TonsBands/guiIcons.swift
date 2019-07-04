@@ -9,59 +9,74 @@
 import Foundation
 import UIKit
 
-let mustSeeIcon = "🍺"
-let willSeeIcon = "✅"
-let willNotSeeIcon = "🚫"
-let unknownIcon = "❓"
-let refreshIcon = "🔄"
-let scheduleIcon = "⏰"
+let mustSeeIcon = "icon-going-yes"
+let mightSeeIcon = "icon-going-maybe"
+let wontSeeIcon = "icon-going-no"
+let unknownIcon = "icon-going-unknown"
+
+let mustSeeIconAlt = "icon-going-yes-alt"
+let mightSeeIconAlt = "icon-going-maybe-alt"
+let wontSeeIconAlt = "icon-going-no-alt"
+let unknownIconAlt = "icon-going-unknown-alt"
+
+let scheduleIconSort = "icon-sort-time-decending"
+let bandIconSort = "icon-sort-az-decending"
+
+let showTypeIcon = "";
+let specialEventTypeIcon = "specialEvent";
+let mAndmEventTypeIcon = "specialEvent";
+let listeningEventTypeIcon = "specialEvent";
+let clinicEventTypeIcon = "specialEvent";
+let unofficalEventTypeIcon = "specialEvent";
+
+//shows attended
+let sawAllIcon = "icon-seen"
+let sawSomeIcon = "icon-seen-partial"
+let sawNoneIcon = ""
+let attendedShowIcon = "icon-seen"
+let attendedShowIconAlt = "icon-seen-alt"
+
 let poolVenue = "🏊"
 let theaterVenue = "🎭"
 let loungeVenue = "🎤"
 let rinkVenue = "⛸"
 let unknownVenue = "❓"
-let bandIconSort = "🔠"
 
-let showTypeIcon = "";
-let specialEventTypeIcon = "🌟";
-let mAndmEventTypeIcon = "📸";
-let listeningEventTypeIcon = "💽";
-let clinicEventTypeIcon = "🎸";
-let unofficalEventTypeIcon = "👹";
-
-//shows attended
-let sawAllIcon = "🤘"
-let sawSomeIcon = "👍"
-let sawNoneIcon = ""
-let attendedShowIcon = "🎟"
-
-func getEventTypeIcon (_ eventType: String) -> String {
-
+func getEventTypeIcon (_ eventType: String)->UIImage {
+    
+    var graphicName = String()
+    var graphicImage = UIImage()
+    
     switch eventType {
     case showType:
-        return showTypeIcon
+        graphicName = showTypeIcon
         
     case meetAndGreetype:
-        return mAndmEventTypeIcon
+        graphicName = mAndmEventTypeIcon
         
     case specialEventType:
-        return specialEventTypeIcon
+        graphicName = specialEventTypeIcon
         
     case clinicType:
-        return clinicEventTypeIcon
+        graphicName = clinicEventTypeIcon
 
     case listeningPartyType:
-        return listeningEventTypeIcon
+        graphicName = listeningEventTypeIcon
     
     case unofficalEventType:
-        return unofficalEventTypeIcon
+        graphicName = unofficalEventTypeIcon
 
     case unofficalEventTypeOld:
-        return unofficalEventTypeIcon
+        graphicName = unofficalEventTypeIcon
         
     default:
-        return unknownVenue
+        graphicName = unknownVenue
     }
+    
+    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    
+    return graphicImage
+    
 }
 
 func getSortButtonImage()->UIImage{
@@ -70,10 +85,10 @@ func getSortButtonImage()->UIImage{
     
     print ("scheduleIcon = \(getSortedBy())")
     if (getSortedBy() == "name"){
-        sortImage = UIImage(named: "icon-sort-time-decending") ?? UIImage()
+        sortImage = UIImage(named: scheduleIconSort) ?? UIImage()
         
     } else {
-        sortImage = UIImage(named: "icon-sort-az-decending") ?? UIImage()
+        sortImage = UIImage(named: bandIconSort) ?? UIImage()
     }
     
     return sortImage
@@ -86,28 +101,28 @@ func getRankGuiIcons (rank: String)->UIImage {
     
     switch rank {
     case "must":
-        graphicName = "icon-going-yes"
+        graphicName = mustSeeIcon
 
     case "might":
-        graphicName = "icon-going-maybe"
+        graphicName = mightSeeIcon
 
     case "wont":
-        graphicName = "icon-going-no"
+        graphicName = wontSeeIcon
 
     case "unknown":
-        graphicName = "icon-going-unknown"
+        graphicName = unknownIcon
         
     case "mustAlt":
-        graphicName = "icon-going-yes-alt"
+        graphicName = mustSeeIconAlt
         
     case "mightAlt":
-        graphicName = "icon-going-maybe-alt"
+        graphicName = mightSeeIconAlt
         
     case "wontAlt":
-        graphicName = "icon-going-no-alt"
+        graphicName = wontSeeIconAlt
 
     case "unknownAlt":
-        graphicName = "icon-going-unknown-alt"
+        graphicName = unknownIconAlt
         
     default:
         graphicName = ""
@@ -116,7 +131,6 @@ func getRankGuiIcons (rank: String)->UIImage {
     graphicImage = UIImage(named: graphicName) ?? UIImage()
     
     return graphicImage
-    
     
 }
 
@@ -148,10 +162,10 @@ func getPriorityIcon(_ index: Int) -> String {
         return mustSeeIcon
         
     case 2:
-        return willSeeIcon
+        return mightSeeIcon
         
     case 3:
-        return willNotSeeIcon
+        return wontSeeIcon
         
     default:
         return ""
@@ -182,7 +196,7 @@ func getBandIconSort() -> String {
 func getScheduleIcon() -> String {
     
     if (getSortedBy() == "name"){
-        return scheduleIcon
+        return scheduleIconSort
     
     } else {
         
@@ -216,19 +230,15 @@ func getMustSeeIcon () -> String {
 }
 
 func getMightSeeIcon  () -> String {
-    return willSeeIcon
+    return mightSeeIcon
 }
 
 func getWillNotSeeIcon  () -> String {
-    return willNotSeeIcon
+    return wontSeeIcon
 }
 
 func getUnknownIcon() -> String {
     return unknownIcon
-}
-
-func getRefreshIcon() -> String {
-    return refreshIcon
 }
 
 func getPoolVenueIcon() -> String {
