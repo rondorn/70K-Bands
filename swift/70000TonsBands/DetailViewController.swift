@@ -489,7 +489,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         scheduleText += " - " + startTime
                         scheduleText += " - " + endTime
                         scheduleText += " - " + location + getVenuIcon(location)
-                        scheduleText += " - " + type  + " " + getEventTypeIcon(type);
+                        //scheduleText += " - " + type  + " " + getEventTypeIcon(type);
                         
                         if (notes.isEmpty == false && notes != " "){
                             scheduleText += " - " + notes
