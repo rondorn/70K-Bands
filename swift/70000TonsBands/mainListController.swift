@@ -486,7 +486,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let eventIconView = cell.viewWithTag(8) as! UILabel
     let spacerView = cell.viewWithTag(9) as! UILabel
     let rankImageViewNoSchedule = cell.viewWithTag(10) as! UIImageView
-    let attendedView = cell.viewWithTag(11) as! UILabel
+    let attendedView = cell.viewWithTag(11) as! UIImageView
     
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
@@ -539,12 +539,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     
         print("scheduleText  = \(scheduleText)")
         let icon = attendedHandler.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
-        
-        if (icon.isEmpty == false){
-            attendedView.text = icon
-        } else {
-            attendedView.isHidden = true
-        }
+    
+        attendedView.image = icon
         
         print ("Icon for event \(indexText) is \(icon) " + String(eventYear))
         

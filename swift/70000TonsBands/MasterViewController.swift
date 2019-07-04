@@ -94,9 +94,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
         if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
         } else {
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
         }
         
         refreshDisplayAfterWake();
@@ -186,9 +186,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
         } else {
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
         }
         
         //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State())
@@ -392,7 +392,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (getShowOnlyWillAttened() == false){
             setShowOnlyWillAttened(true)
             
-            willAttendButton.setImage(UIImage(named: "ticket_icon"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
             
             mustSeeButton.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
             mustSeeButton.setTitleShadowColor(UIColor.white, for: .focused)
@@ -415,7 +415,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             ToastMessages(message).show(self, cellLocation: self.view.frame)
             
             setShowOnlyWillAttened(false)
-            willAttendButton.setImage(UIImage(named: "ticket_icon_alt"), for: UIControl.State())
+            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
             resetFilterIcons();
         }
         
@@ -593,12 +593,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return bandName
     }
 
+    class TableViewRowAction: UITableViewRowAction
+    {
+        var image: UIImage?
+        
+        func _setButton(button: UIButton)
+        {
+            if let image = image, let titleLabel = button.titleLabel
+            {
+                let labelString = NSString(string: titleLabel.text!)
+                let titleSize = labelString.size(withAttributes: [NSAttributedString.Key.font: titleLabel.font])
+                
+                button.tintColor = UIColor.white
+                button.setImage(image.withRenderingMode(.alwaysTemplate), for: [])
+                button.imageEdgeInsets.right = -titleSize.width
+            }
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
         let dataHandle = dataHandler()
         let attendedHandler = ShowsAttended()
         
-        let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: attendedShowIcon, handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let currentCel = tableView.cellForRow(at: indexPath)
             
@@ -630,8 +648,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
             }
         })
+        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
  
-        let mustSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getMustSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+            
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             dataHandle.addPriorityData(bandName, priority: 1, attendedHandler: attendedHandler);
             print ("Offline is offline");
@@ -639,8 +659,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
 
         })
-
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getMightSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        
+        
+        mustSeeAction.setIcon(iconImage: UIImage(named: "icon-going-yes")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -650,7 +673,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getWillNotSeeIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        mightSeeAction.setIcon(iconImage: UIImage(named: "icon-going-maybe")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -660,7 +685,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:getUnknownIcon(), handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        wontSeeAction.setIcon(iconImage: UIImage(named: "icon-going-no")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -669,6 +696,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
+        
+        setUnknownAction.setIcon(iconImage: UIImage(named: "icon-going-unknown")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
         
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
@@ -752,3 +781,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
 }
 
+extension UITableViewRowAction {
+    
+    func setIcon(iconImage: UIImage, backColor: UIColor, cellHeight: CGFloat, cellWidth:CGFloat) ///, iconSizePercentage: CGFloat)
+    {
+        let cellFrame = CGRect(origin: .zero, size: CGSize(width: cellWidth*0.5, height: cellHeight))
+        let imageFrame = CGRect(x:0, y:0,width:iconImage.size.width, height: iconImage.size.height)
+        let insetFrame = cellFrame.insetBy(dx: ((cellFrame.size.width - imageFrame.size.width) / 2), dy: ((cellFrame.size.height - imageFrame.size.height) / 2))
+        let targetFrame = insetFrame.offsetBy(dx: -(insetFrame.width / 2.0), dy: 0.0)
+        let imageView = UIImageView(frame: imageFrame)
+        imageView.image = iconImage
+        imageView.contentMode = .left
+        guard let resizedImage = imageView.image else { return }
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: cellWidth, height: cellHeight), false, 0)
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        backColor.setFill()
+        context.fill(CGRect(x:0, y:0, width:cellWidth, height:cellHeight))
+        resizedImage.draw(in: CGRect(x:(targetFrame.origin.x / 2), y: targetFrame.origin.y, width:targetFrame.width, height:targetFrame.height))
+        guard let actionImage = UIGraphicsGetImageFromCurrentImageContext() else { return }
+        UIGraphicsEndImageContext()
+        self.backgroundColor = UIColor.init(patternImage: actionImage)
+    }
+}

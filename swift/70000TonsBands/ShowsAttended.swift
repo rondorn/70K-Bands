@@ -167,9 +167,10 @@ open class ShowsAttended {
         return value
     }
     
-    func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
+    func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{
         
-        var icon = ""
+        var iconName = String()
+        var icon = UIImage()
         
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
@@ -182,13 +183,15 @@ open class ShowsAttended {
         
         print ("getShowAttendedIcon 2 Settings equals showsAttendedArray '\(index)' - \(value)")
         if (value == sawAllStatus){
-            icon = sawAllIcon
+            iconName = "icon-seen"
         
         } else if (value == sawSomeStatus){
-            icon = sawSomeIcon
+            iconName = "icon-seen-partial"
 
-        } else if (value == sawNoneStatus){
-            icon = sawNoneIcon
+        }
+        
+        if (iconName.isEmpty == false){
+            icon = UIImage(named: iconName) ?? UIImage()
         }
         
         return icon
