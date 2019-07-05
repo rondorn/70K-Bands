@@ -85,10 +85,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
+        if (bandName == nil && bandSelected.isEmpty == false){
+            bandName = bandSelected
+        }
+        
         if (bandName == nil || bands.isEmpty == true) {
             var bands = bandNameHandle.getBandNames()
             print ("bands discovered are \(bands)")
-            bandName = bands[bandListIndexCache]
+            bandName = bands[0]
             print("Providing default band of " + bandName)
         }
         
@@ -428,9 +432,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func configureView() {
         
+        bandName = self.detailItem?.description
+        
         // Update the user interface for the detail item.
         if let detail: AnyObject = self.detailItem {
             if let label = self.titleLable {
+                print ("determining detail bandName \(detail) - \(label) - \(detail.description)")
                 bandName = detail.description
                 label.title = bandName
             }

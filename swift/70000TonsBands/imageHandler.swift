@@ -72,30 +72,20 @@ func displayImage ( urlString: String, bandName: String) -> UIImage {
             count = count + 1
         }
     }
-    
-    print ("ImageCall returned \(urlString) - " + returnedImage.debugDescription)
-    
-    print ("Image URL string is " + urlString + " for band " + bandName);
-    
-    //TODO: replace this wich much more sane code
-    if (bandName.hasSuffix("Party") == false &&
-        bandName.hasSuffix("Pre") == false &&
-        bandName.hasSuffix("Photo") == false){
-        
-        print ("Image URL string is Inverted");
-        returnedImage = invertImage(imageValue: returnedImage ?? UIImage(named: "70000TonsLogo")!)
+
+    if (urlString.contains("www.dropbox.com") == true || urlString.isEmpty == true){
+        print ("Image URL string is not Inverted for " + urlString);
+        //returnedImage = invertImage(imageValue: returnedImage ?? UIImage(named: "70000TonsLogo")!)
     } else {
-        print ("Image URL string is NOT Inverted");
+        print ("Image URL string is Inverted for " + urlString);
+        returnedImage = invertImage(imageValue: returnedImage ?? UIImage(named: "70000TonsLogo")!)
     }
     
     return returnedImage ?? UIImage(named: "70000TonsLogo")!;
     
 }
 
-func getAllImages(){
-    
-    return();
-    let bandNameHandle = bandNamesHandler()
+func getAllImages(bandNameHandle: bandNamesHandler){
     
     bands = bandNameHandle.getBandNames()
     for bandName in bands {

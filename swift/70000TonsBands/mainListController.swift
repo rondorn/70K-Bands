@@ -484,10 +484,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let attendedView = cell.viewWithTag(6) as! UIImageView
     let rankImageViewNoSchedule = cell.viewWithTag(7) as! UIImageView
     let timeView = cell.viewWithTag(8) as! UILabel
-    let dayLabelView = cell.viewWithTag(8) as! UILabel
+    let dayLabelView = cell.viewWithTag(9) as! UILabel
     let dayView = cell.viewWithTag(10) as! UILabel
     let spacerView = cell.viewWithTag(11) as! UILabel
-    
+    let locationColor = cell.viewWithTag(12) as! UILabel
 
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
@@ -512,12 +512,16 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         dayView.isHidden = false
         dayLabelView.isHidden = false
         attendedView.isHidden = false
+        locationColor.isHidden = false
+        eventTypeImageView.isHidden = false
 
         let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
         let day = schedule.getData(bandName, index: timeIndex, variable: dayField)
         let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(event)
+        
+        locationColor.backgroundColor = getVenueColor(venue: location);
         
         indexText += ";" + location + ";" + event + ";" + startTime
         
@@ -585,7 +589,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         dayView.isHidden = true
         dayLabelView.isHidden = true
         attendedView.isHidden = true
-        
+        locationColor.isHidden = true
+        eventTypeImageView.isHidden = true
     }
     
     indexForCell.text = indexText;

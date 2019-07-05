@@ -31,15 +31,18 @@ var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlCon
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 
+var bandSelected = String();
+
 var webMessageHelp = String();
 
 var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
 var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
+var priorityDataCacheFile = directoryPath.appendingPathComponent( "priorityDataCacheFile")
 
 let staticSchedule = DispatchQueue(label: "staticSchedule", attributes: .concurrent)
-let staticBandNames = DispatchQueue(label: "staticBandNames", attributes: .concurrent)
 let staticAttended = DispatchQueue(label: "staticAttended", attributes: .concurrent)
 let staticBandName = DispatchQueue(label: "staticBandName", attributes: .concurrent)
+let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
 
 var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
 var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
@@ -47,6 +50,7 @@ var bandNamedStaticCache = [String :[String : String]]()
 var attendedStaticCache = [String : String]()
 var bandNamesStaticCache =  [String :[String : String]]()
 var bandNamesArrayStaticCache = [String]()
+var bandPriorityStorageCache = [String:Int]()
 
 var schedulingAttendedCacheFile = directoryPath.appendingPathComponent( "schedulingAttendedCacheFile")
 var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")

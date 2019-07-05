@@ -14,6 +14,11 @@ let mightSeeIcon = "icon-going-maybe"
 let wontSeeIcon = "icon-going-no"
 let unknownIcon = "icon-going-unknown"
 
+let mustSeeIconFilterTag = 20
+let mightSeeIconFilterTag = 21
+let wontSeeIconFilterTag = 22
+let unknownIconFilterTag = 23
+
 let mustSeeIconAlt = "icon-going-yes-alt"
 let mightSeeIconAlt = "icon-going-maybe-alt"
 let wontSeeIconAlt = "icon-going-no-alt"
@@ -41,6 +46,12 @@ let theaterVenue = "🎭"
 let loungeVenue = "🎤"
 let rinkVenue = "⛸"
 let unknownVenue = "❓"
+
+let poolVenueColor = hexStringToUIColor(hex: "#3478C7")
+let theaterVenueColor = hexStringToUIColor(hex: "#F2BS2D")
+let loungeVenueColor = hexStringToUIColor(hex: "#5BA50A")
+let rinkVenueColor = hexStringToUIColor(hex: "#8A0011")
+let unknownVenueColor = UIColor.black
 
 func getEventTypeIcon (_ eventType: String)->UIImage {
     
@@ -134,6 +145,31 @@ func getRankGuiIcons (rank: String)->UIImage {
     
 }
 
+func getVenueColor (venue: String)->UIColor{
+    
+    var venuColor = UIColor();
+    
+    switch venue {
+        
+    case "Pool":
+        venuColor = poolVenueColor
+        
+    case "Theater":
+        venuColor = theaterVenueColor
+        
+    case "Lounge":
+        venuColor = loungeVenueColor
+        
+    case "Rink":
+        venuColor = rinkVenueColor
+        
+    default:
+       venuColor = unknownVenueColor
+    }
+    
+    return venuColor
+}
+
 func getVenuIcon(_ venue: String)->String {
     
     switch venue {
@@ -150,7 +186,6 @@ func getVenuIcon(_ venue: String)->String {
             return rinkVenue
 
         default:
-            //exit(1);
             return ""
     }
 }
@@ -259,4 +294,26 @@ func getrinkVenueIcon() -> String {
 
 func getunknownVenueIcon() -> String {
     return unknownVenue
+}
+
+func hexStringToUIColor (hex:String) -> UIColor {
+    var cString:String = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    
+    if (cString.hasPrefix("#")) {
+        cString.remove(at: cString.startIndex)
+    }
+    
+    if ((cString.count) != 6) {
+        return UIColor.gray
+    }
+    
+    var rgbValue:UInt32 = 0
+    Scanner(string: cString).scanHexInt32(&rgbValue)
+    
+    return UIColor(
+        red: CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0,
+        green: CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0,
+        blue: CGFloat(rgbValue & 0x0000FF) / 255.0,
+        alpha: CGFloat(1.0)
+    )
 }
