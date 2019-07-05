@@ -125,6 +125,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
         isLoadingBandData = false
+        quickRefresh()
         refreshDisplayAfterWake();
     }
 
@@ -267,7 +268,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
-            dataHandle.refreshData()
+            self.dataHandle.getCachedData()
+            self.attendedHandler.getCachedData()
+            
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
@@ -313,7 +316,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let schedule = scheduleHandler()
             if (offline == false){
                 
-                dataHandle.refreshData()
+                dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 
                 schedule.DownloadCsv()
@@ -324,7 +327,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     let bandNotes = CustomBandDescription();
                     
                     bandNotes.getAllDescriptions()
-                    getAllImages()
+                    getAllImages(bandNameHandle: bandNameHandle)
                 }
                 
             }
@@ -337,7 +340,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             
             DispatchQueue.main.async{
-                self.dataHandle.refreshData()
+                self.bandNameHandle.readBandFile()
+                self.dataHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.updateCountLable()
                 self.tableView.reloadData()
@@ -431,7 +435,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBAction func filterContent(_ sender: UIButton) {
         
-        if (sender.titleLabel?.text == getMustSeeIcon()){
+        print ("sender.titleLabel is \(sender.tag) = \(getMustSeeIcon())")
+        if (sender.tag == mustSeeIconFilterTag){
             
             if (getMustSeeOn() == true){
                 setMustSeeOn(false)
@@ -444,7 +449,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             }
 
-        } else if (sender.titleLabel?.text == getMightSeeIcon()){
+        } else if (sender.tag == mightSeeIconFilterTag){
             if (getMightSeeOn() == true){
                 setMightSeeOn(false)
                 sender.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
@@ -453,7 +458,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 sender.setImage(getRankGuiIcons(rank: "might"), for: UIControl.State())
             }
             
-        } else if (sender.titleLabel?.text == getWillNotSeeIcon()){
+        } else if (sender.tag == wontSeeIconFilterTag){
             if (getWontSeeOn() == true){
                 setWontSeeOn(false)
                 sender.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
@@ -463,7 +468,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 sender.setImage(getRankGuiIcons(rank: "wont"), for: UIControl.State())
             }
             
-        } else if (sender.titleLabel?.text == getUnknownIcon()){
+        } else if (sender.tag == unknownIconFilterTag){
             if (getUnknownSeeOn() == true){
                 setUnknownSeeOn(false)
                 sender.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
@@ -638,8 +643,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let empty : UITextField = UITextField();
                 let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
                 
-                attendedHandler.loadShowsAttended()
-                
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
                 isLoadingBandData = false
                 self.quickRefresh()
@@ -720,6 +723,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
         
+        
+        
         print ("Waiting for band data to load, Done")
         self.splitViewController!.delegate = self;
         
@@ -730,8 +735,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
                 
-                let bandName = getNameFromSortable(currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy);
+                let cell = self.tableView.cellForRow(at: indexPath)
+                let bandNameView = cell!.viewWithTag(2) as! UILabel
+
+                let bandName = bandNameView.text ?? "";
+                
                  if (bandName.isEmpty == false){
+                    bandSelected = bandName;
                     print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
                     bandListIndexCache = indexPath.row
                     let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController

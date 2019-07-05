@@ -58,7 +58,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         setupDefaults()
         
-        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
+        bandPriorityStorage = dataHandle.getPriorityData()
         
         attendedHandler.loadShowsAttended()
 
