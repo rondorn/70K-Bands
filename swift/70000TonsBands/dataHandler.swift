@@ -16,7 +16,37 @@ class dataHandler {
     var readInWrite = false;
     
     init(){
-        refreshData()
+        getCachedData()
+    }
+    
+    func getCachedData(){
+    
+        print ("Loading priority Data cache")
+        var staticCacheUsed = false
+        
+        staticData.sync() {
+            if (bandPriorityStorageCache.isEmpty == false){
+                staticCacheUsed = true
+                bandPriorityStorage = bandPriorityStorageCache
+            } else {
+                print ("Cache did not load, loading from file")
+                refreshData()
+            }
+        }
+        
+        print ("Done Loading bandName Data cache")
+        
+        if (staticCacheUsed == false){
+            if ((FileManager.default.fileExists(atPath: priorityDataCacheFile.path)) == true){
+                bandPriorityStorage = NSKeyedUnarchiver.unarchiveObject(withFile: priorityDataCacheFile.path)
+                    as! [String:Int]
+            }
+            
+            staticData.async(flags: .barrier) {
+                bandPriorityStorageCache = self.bandPriorityStorage
+            }
+        }
+        
     }
     
     func refreshData(){
@@ -157,10 +187,14 @@ class dataHandler {
         
         bandPriorityStorage[bandname] = priority
         
+        staticData.async(flags: .barrier) {
+            bandPriorityStorageCache[bandname] = priority
+        }
         
         writeFile()
         bandPriorityStorage = [String:Int]()
         bandPriorityStorage = readFile(dateWinnerPassed: "")
+        
     }
 
     func getDateFormatter() -> DateFormatter {
@@ -283,7 +317,9 @@ class dataHandler {
                 writeiCloudData();
             }
         }
-
+        
+        //saveCacheFile
+        NSKeyedArchiver.archiveRootObject(bandPriorityStorage, toFile: priorityDataCacheFile.path)
     }
 
     func writeFile(){
@@ -357,7 +393,10 @@ class dataHandler {
         return winner
         
     }
-
+    
+    func getPriorityData() -> [String:Int]{
+        return bandPriorityStorage;
+    }
 
     func readFile(dateWinnerPassed : String) -> [String:Int]{
         

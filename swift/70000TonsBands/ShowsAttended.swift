@@ -160,8 +160,9 @@ open class ShowsAttended {
         print ("addShowsAttended 2 Settings equals index = '\(index)' - \(value)")
         showsAttendedArray[index] = value
         
-        attendedStaticCache = [String : String]()
-       
+        staticAttended.async(flags: .barrier) {
+            attendedStaticCache = [String : String]()
+        }
         saveShowsAttended();
         loadShowsAttended()
         return value

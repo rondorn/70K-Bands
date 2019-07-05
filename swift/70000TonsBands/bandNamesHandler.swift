@@ -37,6 +37,8 @@ open class bandNamesHandler {
             }
         }
         
+        print ("Done Loading bandName Data cache")
+        
         if (staticCacheUsed == false){
             if ((FileManager.default.fileExists(atPath: schedulingDataCacheFile.path)) == true){
                 bandNames = NSKeyedUnarchiver.unarchiveObject(withFile: bandNamesCacheFile.path)
@@ -56,31 +58,33 @@ open class bandNamesHandler {
     
     func gatherData() {
         
-        print ("Loading bandName Data gatherData")
-        let defaults = UserDefaults.standard
-        
-        if (defaults.string(forKey: "artistUrl") == nil){
-            setupDefaults()
-        }
-        
-        print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
-        var artistUrl = defaults.string(forKey: "artistUrl")
-        
-        if (artistUrl == "Default"){
-            artistUrl = getPointerUrlData(keyValue: artistUrlpointer, dataHandle: dataHandle)
-        
-        } else if (artistUrl == "lastYear"){
+        if isInternetAvailable() == true {
+            print ("Loading bandName Data gatherData")
+            let defaults = UserDefaults.standard
+            
+            if (defaults.string(forKey: "artistUrl") == nil){
+                setupDefaults()
+            }
+            
+            print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
+            var artistUrl = defaults.string(forKey: "artistUrl")
+            
+            if (artistUrl == "Default"){
+                artistUrl = getPointerUrlData(keyValue: artistUrlpointer, dataHandle: dataHandle)
+            
+            } else if (artistUrl == "lastYear"){
 
-            artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer, dataHandle: dataHandle)
-        
-        } else {
-            artistUrl = "http://www.apple.com";
+                artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer, dataHandle: dataHandle)
+            
+            } else {
+                artistUrl = "http://www.apple.com";
+            }
+            
+            print ("Getting band data from " + artistUrl!);
+            let httpData = getUrlData(artistUrl!)
+            print ("Getting band data of " + httpData);
+            writeBandFile(httpData);
         }
-        
-        print ("Getting band data from " + artistUrl!);
-        let httpData = getUrlData(artistUrl!)
-        print ("Getting band data of " + httpData);
-        writeBandFile(httpData);
         readBandFile();
 
     }
