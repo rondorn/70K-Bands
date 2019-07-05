@@ -48,10 +48,10 @@ let rinkVenue = "⛸"
 let unknownVenue = "❓"
 
 let poolVenueColor = hexStringToUIColor(hex: "#3478C7")
-let theaterVenueColor = hexStringToUIColor(hex: "#F2BS2D")
+let theaterVenueColor = hexStringToUIColor(hex: "#C4AC00")
 let loungeVenueColor = hexStringToUIColor(hex: "#5BA50A")
 let rinkVenueColor = hexStringToUIColor(hex: "#8A0011")
-let unknownVenueColor = UIColor.black
+let unknownVenueColor = UIColor.darkGray
 
 func getEventTypeIcon (_ eventType: String)->UIImage {
     
@@ -167,6 +167,7 @@ func getVenueColor (venue: String)->UIColor{
        venuColor = unknownVenueColor
     }
     
+    print ("Returning \(venuColor) for venu of \(venue)")
     return venuColor
 }
 
