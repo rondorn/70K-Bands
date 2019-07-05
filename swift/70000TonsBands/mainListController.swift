@@ -603,10 +603,12 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             rankImageView.isHidden = false
             rankImageViewNoSchedule.isHidden = true
             rankImageView.image = rankGraphic.image
+            spacerView.isHidden = false
         } else {
             rankImageView.isHidden = true
             rankImageViewNoSchedule.isHidden = false
             rankImageViewNoSchedule.image = rankGraphic.image
+            spacerView.isHidden = true
         }
     } else {
         rankImageView.isHidden = true
