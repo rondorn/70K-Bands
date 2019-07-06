@@ -118,9 +118,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle) == true){
-                                //syncOn(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                 newAllBands.append(bandName + ":" + String(timeIndex));
-                                //syncOff(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                 presentCheck.append(bandName);
                             }
                         }
@@ -140,9 +138,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle) == true){
-                                //syncOn(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
-                                //syncOff(lock:newAllBands as NSObject, description: "newAllBands determineBandOrScheduleList")
                                 presentCheck.append(bandName);
                             }
                         }
@@ -463,8 +459,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     }
     
     print ("bands[indexRow] = \(bands[indexRow])")
-    //let indexString = bands[indexRow].components(separatedBy: ":")
-    
+
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
     let timeIndex = getTimeFromSortable(bands[indexRow], sortBy: sortBy);
     
@@ -491,8 +486,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
-    locationView.textColor = UIColor.white
-    timeView.textColor = UIColor.white
+    locationView.textColor = UIColor.lightGray
+    timeView.textColor = UIColor.lightGray
     dayView.textColor = UIColor.white
     
     bandNameView.text = bandName
@@ -608,7 +603,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             rankImageView.isHidden = true
             rankImageViewNoSchedule.isHidden = false
             rankImageViewNoSchedule.image = rankGraphic.image
-            spacerView.isHidden = true
+            spacerView.isHidden = false
+            bandNameView.adjustsFontSizeToFitWidth = true
+
         }
     } else {
         rankImageView.isHidden = true
