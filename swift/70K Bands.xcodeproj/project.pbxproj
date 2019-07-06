@@ -11,8 +11,6 @@
 		110924371F748D19002237AB /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
 		110C07B11C98E50300F4C1D0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		110C07B21C99FB7A00F4C1D0 /* ApiKeys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 11AC1D7C1A682AF100267A8F /* ApiKeys.plist */; };
-		110C7DEA20DC600000525283 /* iCloudFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110C7DE920DC600000525283 /* iCloudFileHandler.swift */; };
-		110C7DEB20DC600000525283 /* iCloudFileHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110C7DE920DC600000525283 /* iCloudFileHandler.swift */; };
 		11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
@@ -57,6 +55,8 @@
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortMenuController.swift */; };
+		119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
+		119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
@@ -122,7 +122,6 @@
 
 /* Begin PBXFileReference section */
 		110924351F748601002237AB /* CustomBandDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBandDescription.swift; sourceTree = "<group>"; };
-		110C7DE920DC600000525283 /* iCloudFileHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudFileHandler.swift; sourceTree = "<group>"; };
 		11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowAttendedReport.swift; sourceTree = "<group>"; };
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
 		1139BEB11AF52C2C0011EF60 /* 70K Bands WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "70K Bands WatchKit Extension.entitlements"; sourceTree = "<group>"; };
@@ -161,6 +160,7 @@
 		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortMenuController.swift; sourceTree = "<group>"; };
+		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
 		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		11AC1D661A6827FC00267A8F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -298,14 +298,14 @@
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
 				11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
-				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
-				110C7DE920DC600000525283 /* iCloudFileHandler.swift */,
+				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
 				1154F6191A575893003F4764 /* LaunchScreen.xib */,
+				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
@@ -649,7 +649,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				110C7DEA20DC600000525283 /* iCloudFileHandler.swift in Sources */,
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
@@ -659,6 +658,7 @@
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
+				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
@@ -687,8 +687,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				110C7DEB20DC600000525283 /* iCloudFileHandler.swift in Sources */,
 				1155E3A51A8B121000D51ED9 /* bandNamesHandler.swift in Sources */,
+				119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,

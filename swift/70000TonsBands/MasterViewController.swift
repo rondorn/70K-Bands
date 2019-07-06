@@ -37,7 +37,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let schedule = scheduleHandler()
     let bandNameHandle = bandNamesHandler()
     let attendedHandler = ShowsAttended()
-
+    let iCloudDataHandle = iCloudDataHandler();
+    
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
     var detailViewController: DetailViewController? = nil
@@ -78,9 +79,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
         self.refreshControl = refreshControl
         
-        //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State.normal)
         scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-        //scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
+
         dataHandle.readFiltersFile()
         setFilterButtons()
 
@@ -192,9 +192,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
         }
         
-        //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State())
         scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-        //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+
     }
     
     @objc func refreshDisplayAfterWake(){
@@ -208,16 +207,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let localNotication = localNoticationHandler()
                 localNotication.addNotifications()
                 
-            } else {
-                // Fallback on earlier versions
             }
         }
     
     }
     
     func refreshFromCache (){
-        
-        
 
         print ("RefreshFromCache called")
         bands =  [String]()
@@ -254,9 +249,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             //self.sortBandsByTime()
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
-            //scheduleButton.setBackgroundImage(getSortButtonImage(), for: UIControl.State.normal)
             scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-            //self.scheduleButton.setTitle(getBandIconSort(), for: UIControl.State())
             
         }
         bands =  [String]()
@@ -267,6 +260,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
+            
+            iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandler)
             
             self.dataHandle.getCachedData()
             self.attendedHandler.getCachedData()
@@ -302,12 +297,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         refreshFromCache()
         
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             
             let dataHandle = dataHandler()
             var offline = true
-            let attendedHandler = ShowsAttended()
-            
+
             if Reachability.isConnectedToNetwork(){
                 offline = false;
             }
@@ -316,18 +310,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let schedule = scheduleHandler()
             if (offline == false){
                 
+                self.iCloudDataHandle.readiCloudData()
+                
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 
                 schedule.DownloadCsv()
-                let validate = validateCSVSchedule()
-                validate.validateSchedule()
-                
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.utility).async {
                     let bandNotes = CustomBandDescription();
+                    let imageHandle = imageHandler()
                     
                     bandNotes.getAllDescriptions()
-                    getAllImages(bandNameHandle: bandNameHandle)
+                    imageHandle.getAllImages(bandNameHandle: bandNameHandle)
                 }
                 
             }
@@ -627,7 +622,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             let cellText = currentCel?.textLabel?.text;
             let cellStatus = currentCel!.viewWithTag(2) as! UILabel
-            print ("Cell text for parsing is \(cellText)")
+            print ("Cell text for parsing is \(cellText ?? "")")
             let placementOfCell = currentCel?.frame
             
             if (cellStatus.isHidden == false){
@@ -656,7 +651,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 1, attendedHandler: attendedHandler);
+            dataHandle.addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
             isLoadingBandData = false
             self.quickRefresh()
@@ -670,7 +665,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 2, attendedHandler: attendedHandler);
+            dataHandle.addPriorityData(bandName, priority: 2);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -682,7 +677,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 3, attendedHandler: attendedHandler);
+            dataHandle.addPriorityData(bandName, priority: 3);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -694,7 +689,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 0, attendedHandler: attendedHandler);
+            dataHandle.addPriorityData(bandName, priority: 0);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -786,7 +781,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     //iCloud data loading
     @objc func onSettingsChanged(_ notification: Notification) {
-        dataHandle.writeiCloudData()
+        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandler)
     }
 
 }

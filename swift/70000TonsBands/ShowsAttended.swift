@@ -10,9 +10,9 @@ import CoreData
 
 open class ShowsAttended {
 
-    var showsAttendedArray: [String : String] = [String : String]();
-    var dataHandle = dataHandler()
-    
+    var showsAttendedArray = [String : String]();
+    //var dataHandle = dataHandler()
+
     init(){
         print ("Loading shows attended data")
         getCachedData()
@@ -24,9 +24,9 @@ open class ShowsAttended {
         var staticCacheUsed = false
         
         staticAttended.sync() {
-            if (attendedStaticCache.isEmpty == false){
+            if (cacheVariables.attendedStaticCache.isEmpty == false){
                 staticCacheUsed = true
-                showsAttendedArray = attendedStaticCache
+                showsAttendedArray = cacheVariables.attendedStaticCache
             }
         }
         
@@ -40,7 +40,7 @@ open class ShowsAttended {
             }
             
             staticAttended.async(flags: .barrier) {
-                attendedStaticCache = self.showsAttendedArray
+                cacheVariables.attendedStaticCache = self.showsAttendedArray
             }
         }
     }
@@ -60,8 +60,6 @@ open class ShowsAttended {
                 try FileManager.default.removeItem(at: showsAttended)
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
-            
-                dataHandle.writeiCloudData();
             
                 print ("saved showData \(showsAttendedArray)")
             } catch {
@@ -161,7 +159,7 @@ open class ShowsAttended {
         showsAttendedArray[index] = value
         
         staticAttended.async(flags: .barrier) {
-            attendedStaticCache = [String : String]()
+            cacheVariables.attendedStaticCache = [String : String]()
         }
         saveShowsAttended();
         loadShowsAttended()
@@ -233,7 +231,7 @@ open class ShowsAttended {
         
         var value = ""
         
-        print ("getShowAttendedStatusCheck on show index = '\(index)' for status=\(showsAttendedArray[index])")
+        print ("getShowAttendedStatusCheck on show index = '\(index)' for status=\(showsAttendedArray[index] ?? "")")
         
         if (showsAttendedArray[index] == sawAllStatus){
             value = sawAllStatus
@@ -254,7 +252,7 @@ open class ShowsAttended {
         var message : String
         var fieldText = sender.text;
     
-        print ("getShowAttendedStatus (inset) = \(status) =\(fieldText)")
+        print ("getShowAttendedStatus (inset) = \(status) =\(fieldText ?? "")")
         if (status == sawAllStatus){
             sender.textColor = sawAllColor
             fieldText = sawAllIcon + fieldText!
