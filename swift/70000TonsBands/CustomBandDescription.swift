@@ -10,14 +10,37 @@ import Foundation
 
 open class CustomBandDescription {
     
-    //let attendedHandler = ShowsAttended()
-    var dataHandle = dataHandler();
     var bandDescriptionUrl = [String:String]()
+    
+    init(){
+        refreshCache()
+    }
+    
+    func refreshCache(){
+        
+        bandDescriptionLock.sync() {
+            if (cacheVariables.bandDescriptionUrlCache.isEmpty == false){
+                bandDescriptionUrl = cacheVariables.bandDescriptionUrlCache
+            } else {
+                print ("Cache did not load, loading from file desceriptionUrls")
+                refreshData()
+            }
+        }
+    }
+    
+    func refreshData(){
+        
+        print ("commentFile performaing getAll")
+        print ("commentFile getDescriptionMapFile")
+        self.getDescriptionMapFile();
+        print ("commentFile getDescriptionMap")
+        self.getDescriptionMap();
+    }
     
     func getDescriptionMapFile(){
         
         let mapUrl = getDefaultDescriptionMapUrl()
-        let httpData = dataHandle.getUrlData(mapUrl)
+        let httpData = getUrlData(urlString: mapUrl)
         
         if (httpData.isEmpty == false){
             do {
@@ -36,24 +59,19 @@ open class CustomBandDescription {
     }
     
     func getAllDescriptions(){
-
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            print ("commentFile performaing getAll")
-            print ("commentFile getDescriptionMapFile")
-            self.getDescriptionMapFile();
-            print ("commentFile getDescriptionMap")
-            self.getDescriptionMap();
-            
+        
+        if (downloadingAllComments == false){
+            downloadingAllComments = true
             print ("commentFile looping through bands")
             for record in self.bandDescriptionUrl{
                 let bandName = record.key
-                
+                print ("commentFile working on bandName")
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
                     _ = self.getDescription(bandName: bandName)
                 }
             }
-             isLoadingCommentData = false
         }
+        downloadingAllComments = false
     }
     
     func doesDescriptionFileExists(bandName: String) -> Bool {
@@ -74,8 +92,7 @@ open class CustomBandDescription {
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
 
-                //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                let httpData = dataHandle.getUrlData(descriptionUrl);
+            let httpData = getUrlData(urlString: descriptionUrl);
                 
                 //do not write if we are getting 404 error
                 if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -114,9 +131,7 @@ open class CustomBandDescription {
                 
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    let dataHandle = dataHandler()
-                    
-                    let httpData = dataHandle.getUrlData(self.bandDescriptionUrl[bandName]!);
+                    let httpData = getUrlData(urlString: self.bandDescriptionUrl[bandName]!);
                     print ("Trying to download comment from url \(httpData)")
                     //do not write if we are getting 404 error
                     if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -171,6 +186,11 @@ open class CustomBandDescription {
                 if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
                     print ("descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
                     bandDescriptionUrl[(lineData[bandField])!] = lineData[urlField]
+                    
+                    bandDescriptionLock.async(flags: .barrier) {
+                        cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
+                    }
+                    
                 } else {
                     print ("Unable to parse descriptionMap line")
                 }
@@ -183,24 +203,15 @@ open class CustomBandDescription {
     func getDefaultDescriptionMapUrl() -> String{
         
         var url = String()
-        let httpData = dataHandle.getUrlData(defaultStorageUrl)
-        
+
         var descriptionPointer = "descriptionMap";
         
         if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
             descriptionPointer = "descriptionMapLastYear"
         }
         
-        print ("Using description pointer of \(descriptionPointer)")
-        let dataArray = httpData.components(separatedBy: "\n")
-        for record in dataArray {
-            var valueArray = record.components(separatedBy: "::")
-            if (valueArray[0] == descriptionPointer){
-                url = valueArray[1]
-            }
-        }
+        url = getPointerUrlData(keyValue: descriptionPointer)
         
-        print ("Using default DescriptionMapUrl of " + url)
         return url
     }
 }

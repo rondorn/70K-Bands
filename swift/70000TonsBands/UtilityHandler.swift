@@ -56,3 +56,14 @@ func formatTimeValue(timeValue: String) -> String {
     
     return newDate
 }
+
+func getDateFormatter() -> DateFormatter {
+    
+    let dateFormatter = DateFormatter()
+    
+    dateFormatter.dateFormat = "MM-dd-yy"
+    dateFormatter.timeStyle = DateFormatter.Style.short
+    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+    
+    return dateFormatter
+}

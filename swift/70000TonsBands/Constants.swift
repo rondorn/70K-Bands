@@ -31,6 +31,8 @@ var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlCon
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 
+var downloadingAllComments = false
+var downloadingAllImages = false
 var bandSelected = String();
 
 var webMessageHelp = String();
@@ -43,14 +45,9 @@ let staticSchedule = DispatchQueue(label: "staticSchedule", attributes: .concurr
 let staticAttended = DispatchQueue(label: "staticAttended", attributes: .concurrent)
 let staticBandName = DispatchQueue(label: "staticBandName", attributes: .concurrent)
 let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
+let storePointerLock = DispatchQueue(label: "storePointerLock", attributes: .concurrent)
+let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock", attributes: .concurrent)
 
-var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
-var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
-var bandNamedStaticCache = [String :[String : String]]()
-var attendedStaticCache = [String : String]()
-var bandNamesStaticCache =  [String :[String : String]]()
-var bandNamesArrayStaticCache = [String]()
-var bandPriorityStorageCache = [String:Int]()
 
 var schedulingAttendedCacheFile = directoryPath.appendingPathComponent( "schedulingAttendedCacheFile")
 var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
@@ -195,9 +192,6 @@ var internetAvailble = isInternetAvailable();
 
 var hasScheduleData = false;
 
-//var bandDescriptionUrl = [String:String]()
-var imageUrls = [String:String]()
-
 let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
 var listOfVenues = [String]()
@@ -232,42 +226,59 @@ func getDocumentsDirectory() -> NSString {
     return documentsDirectory as NSString
 }
 
-func getPointerUrlData(keyValue: String, dataHandle: dataHandler) -> String {
+func getPointerUrlData(keyValue: String) -> String {
     
     var url = String()
-    let httpData = dataHandle.getUrlData(defaultStorageUrl)
     
-    if (httpData.isEmpty == false){
-        let dataArray = httpData.components(separatedBy: "\n")
-        for record in dataArray {
-            var valueArray = record.components(separatedBy: "::")
-
-            if (valueArray.isEmpty == false && valueArray.count >= 2){
-                print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
-                if (valueArray[0] == keyValue){
-                    url = valueArray[1]
-                    break
-                }
-            }
-        }
-    } else if (keyValue == "eventYear"){
-        print ("eventYear = unknown \(eventYear)")
-        do {
-            url = try! String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-        } catch let error as NSError {
-            print ("Encountered an error of reading file eventYearFile " + error.debugDescription)
+    //returned cached data when needed. Will only look up pointer data on launch as this
+    //does not change very often during the year
+    storePointerLock.sync() {
+        if (cacheVariables.storePointerData.isEmpty == false){
+            url = cacheVariables.storePointerData[keyValue]!
         }
     }
-    
-    print ("Using default " + keyValue + " of " + url)
-    
-    if (keyValue == "eventYear"){
-        do {
-            try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
-            print ("Just created file " + eventYearFile);
-        } catch let error as NSError {
-            print ("Encountered an error of creating file eventYearFile " + error.debugDescription)
+
+    if (url.isEmpty == true){
+        print ("getting URL data of")
+        let httpData = getUrlData(urlString: defaultStorageUrl)
+        print ("httpData = \(httpData)")
+        if (httpData.isEmpty == false){
+
+            let dataArray = httpData.components(separatedBy: "\n")
+            for record in dataArray {
+                var valueArray = record.components(separatedBy: "::")
+
+                if (valueArray.isEmpty == false && valueArray.count >= 2){
+                    print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
+                    if (valueArray[0] == keyValue){
+                        url = valueArray[1]
+                    }
+                    
+                    storePointerLock.async(flags: .barrier) {
+                        cacheVariables.storePointerData[valueArray[0]] = valueArray[1];
+                    }
+                }
+            }
+        } else if (keyValue == "eventYear"){
+            print ("eventYear = unknown \(eventYear)")
+            do {
+                url = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+            } catch let error as NSError {
+                print ("Encountered an error of reading file eventYearFile " + error.debugDescription)
+            }
         }
+        
+        print ("Using default " + keyValue + " of " + url)
+        
+        if (keyValue == "eventYear"){
+            do {
+                try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
+                print ("Just created file " + eventYearFile);
+            } catch let error as NSError {
+                print ("Encountered an error of creating file eventYearFile " + error.debugDescription)
+            }
+        }
+
     }
     return url
 }
@@ -275,7 +286,7 @@ func getPointerUrlData(keyValue: String, dataHandle: dataHandler) -> String {
 func setupDefaults() {
     
     //register Application Defaults
-    var defaults = ["artistUrl": artistUrlDefault,
+    let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,
                     "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
                     "onlyAlertForAttended": onlyAlertForAttendedDefault,
@@ -294,8 +305,8 @@ func setupDefaults() {
     
     setupVenueLocations()
     
-    print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl"))")
-    eventYear = Int(getPointerUrlData(keyValue: "eventYear", dataHandle: dataHandler()))!;
+    print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
+    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!;
 
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == "lastYear"){
         eventYear = eventYear - 1
@@ -334,4 +345,18 @@ func isInternetAvailable() -> Bool {
     let isReachable = flags.contains(.reachable)
     let needsConnection = flags.contains(.connectionRequired)
     return (isReachable && !needsConnection)
+}
+
+
+struct cacheVariables {
+    
+    static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+    static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
+    static var bandNamedStaticCache = [String :[String : String]]()
+    static var attendedStaticCache = [String : String]()
+    static var bandNamesStaticCache =  [String :[String : String]]()
+    static var bandNamesArrayStaticCache = [String]()
+    static var bandPriorityStorageCache = [String:Int]()
+    static var storePointerData = [String:String]()
+    static var bandDescriptionUrlCache = [String:String]()
 }

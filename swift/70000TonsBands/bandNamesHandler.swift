@@ -27,10 +27,10 @@ open class bandNamesHandler {
         var staticCacheUsed = false
         
         staticBandName.sync() {
-            if (bandNamesStaticCache.isEmpty == false && bandNamesArrayStaticCache.isEmpty == false ){
+            if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
                 staticCacheUsed = true
-                bandNames = bandNamesStaticCache
-                bandNamesArray = bandNamesArrayStaticCache
+                bandNames = cacheVariables.bandNamesStaticCache
+                bandNamesArray = cacheVariables.bandNamesArrayStaticCache
             } else {
                 print ("Cache did not load, loading from file")
                 gatherData()
@@ -47,11 +47,7 @@ open class bandNamesHandler {
                 print ("Cache did not load, loading from file")
                 gatherData()
             }
-            
-            staticSchedule.async(flags: .barrier) {
-                bandNamesStaticCache = self.bandNames
-                bandNamesArrayStaticCache = self.bandNamesArray
-            }
+
         }
         
     }
@@ -66,27 +62,28 @@ open class bandNamesHandler {
                 setupDefaults()
             }
             
-            print ("artistUrl = " + defaults.string(forKey: "artistUrl")!)
+            print ("artistUrl!! = " + defaults.string(forKey: "artistUrl")!)
             var artistUrl = defaults.string(forKey: "artistUrl")
             
             if (artistUrl == "Default"){
-                artistUrl = getPointerUrlData(keyValue: artistUrlpointer, dataHandle: dataHandle)
+                artistUrl = getPointerUrlData(keyValue: artistUrlpointer)
             
             } else if (artistUrl == "lastYear"){
-
-                artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer, dataHandle: dataHandle)
+                print ("Calling getPointerUrlData")
+                artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
+                print ("done")
             
             } else {
                 artistUrl = "http://www.apple.com";
             }
             
             print ("Getting band data from " + artistUrl!);
-            let httpData = getUrlData(artistUrl!)
+            let httpData = getUrlData(urlString: artistUrl!)
             print ("Getting band data of " + httpData);
             writeBandFile(httpData);
         }
         readBandFile();
-
+        
     }
 
     func writeBandFile (_ httpData: String){
@@ -129,9 +126,7 @@ open class bandNamesHandler {
                     bandNames[bandNameValue] = [String : String]()
                     
                     bandNames[bandNameValue]!["bandName"] = bandNameValue
-                    
-                    
-
+                
                     if (lineData.isEmpty == false){
                         if (lineData["imageUrl"] != nil){
                             bandNames[bandNameValue]!["bandImageUrl"] = "http://" + lineData["imageUrl"]!;
@@ -175,32 +170,14 @@ open class bandNamesHandler {
         
         //saveCacheFile
         NSKeyedArchiver.archiveRootObject(bandNames, toFile: bandNamesCacheFile.path)
-
-    }
-
-    func getUrlData(_ urlString: String) -> String{
-
-        var httpData = String()
         
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        HTTPGet(urlString) {
-            (data: String, error: String?) -> Void in
-            if error != nil {
-                print("Error, well now what, \(urlString) failed")
-                print(error)
-                semaphore.signal()
-            } else {
-                httpData = data
-                semaphore.signal()
+        staticBandName.async(flags: .barrier) {
+            for bandName in self.bandNamesArray {
+                cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
+                cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
+                cacheVariables.bandNamesArrayStaticCache.append(bandName)
             }
-            
         }
-        
-        semaphore.wait(timeout: DispatchTime.distantFuture)
-        
-        return httpData
-        
     }
 
     func getBandNames () -> [String] {
@@ -209,7 +186,7 @@ open class bandNamesHandler {
         
         print ("bandNames data is \(bandNames)")
         if (bandNames.isEmpty == true){
-            gatherData()
+            getCachedData()
         }
         
         if (bandNames.isEmpty == false){
@@ -229,13 +206,13 @@ open class bandNamesHandler {
 
     func getBandImageUrl(_ band: String) -> String {
         
-        print ("Getting image for band \(band) will return \(bandNames[band])")
+        print ("Getting image for band \(band) will return \(String(describing: bandNames[band]))")
         return bandNames[band]?["bandImageUrl"] ?? ""
     }
 
     func getofficalPage (_ band: String) -> String {
         
-        print ("Getting officalSite for band \(band) will return \(bandNames[band]?["officalUrls"])")
+        print ("Getting officalSite for band \(band) will return \(String(describing: bandNames[band]?["officalUrls"]))")
         
         return bandNames[band]?["officalUrls"] ?? ""
         

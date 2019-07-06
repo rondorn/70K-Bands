@@ -26,8 +26,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     let messageKey = "onMessageReceived"
     
     let gcmMessageIDKey = "gcm.message_id"
-    let attendedHandler = ShowsAttended()
-    var dataHandle = dataHandler()
+    //let attendedHandler = ShowsAttended()
+    //var dataHandle = dataHandler()
     
     var bandPriorityStorage = [String:Int]()
     
@@ -48,7 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default.synchronize()
-        dataHandle.readiCloudData()
+        //dataHandle.readiCloudData()
         
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
         let controller = masterNavigationController.topViewController as! MasterViewController
@@ -58,9 +58,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         setupDefaults()
         
-        bandPriorityStorage = dataHandle.getPriorityData()
+        //bandPriorityStorage = dataHandle.getPriorityData()
         
-        attendedHandler.loadShowsAttended()
+        //attendedHandler.loadShowsAttended()
 
         // [END register_for_notifications]
         FirebaseApp.configure()
@@ -290,9 +290,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func applicationDidEnterBackground(_ application: UIApplication) {
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        dataHandle.writeFiltersFile()
-        dataHandle.writeFile()
-        
+
         //        let userDataHandle = firebaseUserWrite()
         //userDataHandle.writeData()
         
@@ -310,38 +308,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
     }
 
-    @objc func iCloudKeysChanged(_ notification: Notification) {
-        dataHandle.readiCloudData()
-    }
-
-
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-        dataHandle.writeFiltersFile()
-        dataHandle.writeFile()
-        attendedHandler.saveShowsAttended()
-        dataHandle.writeiCloudData();
         
     }
 
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-        
-        dataHandle.readiCloudData();
-        attendedHandler.loadShowsAttended()
     }
 
-
+    @objc func iCloudKeysChanged(_ notification: Notification) {
+        //readiCloudData()
+    }
+    
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // Saves changes in the application's managed object context before the application terminates.
-        dataHandle.writeFiltersFile()
-        dataHandle.writeFile()
-        attendedHandler.saveShowsAttended()
-        dataHandle.writeiCloudData();
+
         self.saveContext()
     }
 

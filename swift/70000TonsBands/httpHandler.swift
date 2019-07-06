@@ -19,7 +19,6 @@ func HTTPsendRequest(_ request: URLRequest,
                 } else {
                   
                     let stringVariable = String(data: data!, encoding: String.Encoding(rawValue: String.Encoding.ascii.rawValue))! as String
-                    //let stringVariable = String(data: data!, encoding: String.Encoding(rawValue: String.Encoding.utf8.rawValue))! as String
                     callback(stringVariable, nil)
 
                 }
@@ -33,11 +32,35 @@ func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
         print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)
         request.timeoutInterval = 15;
+
+        HTTPsendRequest(request as URLRequest, callback: callback)
+        print ("Finished making http call")
+    }
+}
+
+
+func getUrlData(urlString: String) -> String{
+    
+    let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
+    
+    if (isInternetAvailable() == false){
+        return ""
+    }
+    var results = String()
+    
+    if (urlString.isEmpty == false){
+        print ("\(currentQueueLabel ?? "") !!Looking up url \(urlString)")
+        
+        //create the url with NSURL
+        let url = URL(string: urlString)! //change the url
+        
         do {
-            try? HTTPsendRequest(request as URLRequest, callback: callback)
+            let contents = try String(contentsOf: url)
+            print(contents)
+            results = contents
         } catch {
-            print ("loading URL \(url) failed, trying again.")
-            HTTPsendRequest(request as URLRequest, callback: callback)
+            
         }
     }
+    return results
 }

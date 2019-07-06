@@ -13,10 +13,7 @@ open class scheduleHandler {
     var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
     var scheduleReleased = false
-    var dataHandle = dataHandler()
-    
-    //var customDescrip = CustomBandDescription();
-    
+
     init() {
         print ("Loading schedule Data")
         getCachedData()
@@ -27,10 +24,10 @@ open class scheduleHandler {
         var staticCacheUsed = false
         
         staticSchedule.sync() {
-            if (scheduleStaticCache.isEmpty == false && scheduleTimeStaticCache.isEmpty == false ){
+            if (cacheVariables.scheduleStaticCache.isEmpty == false && cacheVariables.scheduleTimeStaticCache.isEmpty == false ){
                 staticCacheUsed = true
-                schedulingData = scheduleStaticCache
-                schedulingDataByTime = scheduleTimeStaticCache
+                schedulingData = cacheVariables.scheduleStaticCache
+                schedulingDataByTime = cacheVariables.scheduleTimeStaticCache
             }
         }
         
@@ -51,8 +48,8 @@ open class scheduleHandler {
             }
             
             staticSchedule.async(flags: .barrier) {
-                scheduleStaticCache = self.schedulingData
-                scheduleTimeStaticCache = self.schedulingDataByTime
+                cacheVariables.scheduleStaticCache = self.schedulingData
+                cacheVariables.scheduleTimeStaticCache = self.schedulingDataByTime
             }
             
         }
@@ -138,25 +135,24 @@ open class scheduleHandler {
                     
                     print ("adding descriptionUrlField \(lineData)")
                     
-                    /*
                     if let descriptUrl = lineData[descriptionUrlField] {
                         if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
-                            print ("adding descriptionUrlField for \(descriptionUrlField) \(lineData[bandField]!) - \(lineData[descriptionUrlField])");
-                            setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptUrl)
-                            //DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                            //    _ = self.customDescrip.getDescriptionFromUrl(bandName: lineData[bandField]!, descriptionUrl: lineData[descriptionUrlField]!);
-                            //}
+                            
+                            bandDescriptionLock.async(flags: .barrier) {
+                                cacheVariables.bandDescriptionUrlCache[lineData[bandField]!] = descriptUrl
+                            }
                         }
                     } else {
                         print ("field descriptionUrlField not present for " + lineData[bandField]!);
                     }
-                    */
+                    
                     if let imageUrl = lineData[imageUrlField] {
                         if (imageUrl.isEmpty == false && imageUrl.count >= 2){
-                            imageUrls[lineData[bandField]!] = imageUrl
                             //save inmage in background
                             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                                _ = displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
+                                
+                                let imageHandle = imageHandler()
+                                _ = imageHandle.displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
                             }
                         }
                         
@@ -185,7 +181,7 @@ open class scheduleHandler {
         if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
             scheduleUrl = lastYearsScheduleUrlDefault;
         } else {
-            scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl", dataHandle: dataHandle);//defaults.string(forKey: "scheduleUrl")!
+            scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
         }
         
         if (scheduleUrl.isEmpty == true){
@@ -194,16 +190,16 @@ open class scheduleHandler {
     
         print ("Downloading Schedule URL " + scheduleUrl);
         if (scheduleUrl == "Default"){
-            scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer, dataHandle: dataHandle)
+            scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
             
         } else if (scheduleUrl == "lastYear"){
-            scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer, dataHandle: dataHandle)
+            scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
         
         }
         
         print("scheduleUrl = " + scheduleUrl)
         
-        let httpData = dataHandle.getUrlData(scheduleUrl)
+        let httpData = getUrlData(urlString: scheduleUrl)
         
         print("This will be making HTTP Calls for schedule " + httpData);
         

@@ -100,10 +100,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
-            let imageURL = bandNameHandle.getBandImageUrl(bandName)
-
+            let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
+            print ("urlString is - Sending imageURL of \(imageURL) for band \(bandName)")
+            
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                self.displayedImaged = displayImage(urlString: imageURL, bandName: self.bandName)
+                
+                let imageHandle = imageHandler()
+                
+                self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: self.bandName)
                 DispatchQueue.main.async {
                     // Calculate the biggest size that fixes in the given CGSize
                     self.bandLogo.image = self.displayedImaged
@@ -377,11 +381,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
         let WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
         
-        //priorityButtons.setImage(getRankGuiIcons(rank: "unknown"), forSegmentAt: 0)
-        //priorityButtons.setImage(getRankGuiIcons(rank: "must"), forSegmentAt: 1)
-        //priorityButtons.setImage(getRankGuiIcons(rank: "might"), forSegmentAt: 2)
-        //priorityButtons.setImage(getRankGuiIcons(rank: "wont"), forSegmentAt: 3)
-        
         priorityButtons.setTitle(MustSee, forSegmentAt: 1)
         priorityButtons.setTitle(MightSee, forSegmentAt: 2)
         priorityButtons.setTitle(WontSee, forSegmentAt: 3)
@@ -395,7 +394,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @IBAction func setBandPriority() {
         if (bandName != nil){
-            dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex, attendedHandler: attendedHandler)
+            dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
         }
     }
     
@@ -450,8 +449,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         scheduleQueue.sync {
             if (schedule.schedulingData[bandName]?.isEmpty == false){
                 
-                let bandNotes = CustomBandDescription();
-                
                 let keyValues = schedule.schedulingData[bandName]!.keys
                 let sortedArray = keyValues.sorted();
                 var count = 1
@@ -475,7 +472,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     if (scheduleDescriptionUrl.isEmpty == false && scheduleDescriptionUrl.count > 3){
                         print ("Loading customNotesTest from URL")
                         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                            self.backgroundNotesText = bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)
+                            self.backgroundNotesText = self.bandNotes.getDescriptionFromUrl(bandName: self.bandName, descriptionUrl: scheduleDescriptionUrl)
                             
                             DispatchQueue.main.async {
                                 self.customNotesText.text = self.backgroundNotesText;

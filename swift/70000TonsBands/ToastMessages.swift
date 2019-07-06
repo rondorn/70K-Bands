@@ -15,7 +15,7 @@ class ToastMessages : UILabel {
     private let SIDE_MARGIN: CGFloat = 16
     private let HEIGHT: CGFloat = 35
     private let SHOW_TIME_SECONDS = TimeInterval(3)
-    private let BACKGROUND_COLOR = UIColor.darkGray.withAlphaComponent(0.7).cgColor
+    private let BACKGROUND_COLOR = UIColor.darkGray.withAlphaComponent(0.8).cgColor
     private let TEXT_COLOR = UIColor.white
     private let ANIMATION_DURATION_SEC = 0.33
     
