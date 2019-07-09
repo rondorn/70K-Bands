@@ -36,7 +36,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     let schedule = scheduleHandler()
     let bandNameHandle = bandNamesHandler()
-    let attendedHandler = ShowsAttended()
+    let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
     var backgroundColor = UIColor.white;
@@ -213,15 +213,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshFromCache (){
-
+        
         print ("RefreshFromCache called")
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
         schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
         bandsByName = bands
+        attendedHandle.getCachedData()
         setShowOnlyAttenedFilterStatus()
+        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
+ 
     }
     
     func ensureCorrectSorting(){
@@ -253,7 +256,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
         bands =  [String]()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
     func quickRefresh(){
@@ -261,12 +264,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
             
-            iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandler)
+            iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
             
             self.dataHandle.getCachedData()
-            self.attendedHandler.getCachedData()
+            self.attendedHandle.getCachedData()
             
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             updateCountLable()
@@ -294,7 +297,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshControl?.endRefreshing();
             })
         }
-
+        
         refreshFromCache()
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
@@ -314,10 +317,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
+                self.attendedHandle.loadShowsAttended()
                 
                 schedule.DownloadCsv()
 
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.utility).async {
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                     let bandNotes = CustomBandDescription();
                     let imageHandle = imageHandler()
                     
@@ -330,7 +334,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands =  [String]()
             
             schedule.populateSchedule()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
             self.bandsByName = self.bands
             
             
@@ -422,7 +426,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         bands =  [String]()
         quickRefresh()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
         
         updateCountLable()
         tableView.reloadData()
@@ -475,7 +479,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             bands =  [String]()
         
-            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             updateCountLable()
             tableView.reloadData()
             return
@@ -486,7 +490,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands =  [String]()
         quickRefresh()
         
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
         
         updateCountLable()
         tableView.reloadData()
@@ -614,7 +618,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
         let dataHandle = dataHandler()
-        let attendedHandler = ShowsAttended()
+        let attendedHandle = ShowsAttended()
         
         let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -633,10 +637,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let cellEventType  = cellData![2]
                 let cellStartTime = cellData![3]
 
-                let status = attendedHandler.addShowsAttended(band: String(cellBandName), location: String(cellLocation), startTime: String(cellStartTime), eventType: String(cellEventType),eventYearString: String(eventYear));
+                let status = attendedHandle.addShowsAttended(band: String(cellBandName), location: String(cellLocation), startTime: String(cellStartTime), eventType: String(cellEventType),eventYearString: String(eventYear));
                 
                 let empty : UITextField = UITextField();
-                let message = attendedHandler.setShowsAttendedStatus(empty, status: status)
+                let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
                 
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
                 isLoadingBandData = false
@@ -711,7 +715,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         setScheduleButton(scheduleButton.isHidden)
         
-        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle)
+        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
     
     }
     
@@ -781,7 +785,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     //iCloud data loading
     @objc func onSettingsChanged(_ notification: Notification) {
-        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandler)
+        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
 
 }
