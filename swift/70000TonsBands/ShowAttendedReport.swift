@@ -14,7 +14,7 @@ class showAttendenceReport {
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
     
     var schedule = scheduleHandler()
-    var attendedHandler = ShowsAttended()
+    var attendedHandle = ShowsAttended()
     
     var bandNamesHandle = bandNamesHandler()
     var dataHandle = dataHandler()
@@ -25,7 +25,7 @@ class showAttendenceReport {
     
     func assembleReport (){
         
-        let showsAttendedArray = attendedHandler.getShowsAttended();
+        let showsAttendedArray = attendedHandle.getShowsAttended();
         var unuiqueSpecial = [String]()
         
         schedule.buildTimeSortedSchedulingData();

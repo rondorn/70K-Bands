@@ -11,45 +11,44 @@ import Foundation
 
 class iCloudDataHandler {
     
-    let dataHandle = dataHandler()
-    let attendedHandle = ShowsAttended()
-        
     init(){
         
     }
     
     func writeiCloudData (dataHandle: dataHandler, attendedHandle: ShowsAttended){
-
-        var dataString: String = ""
         
-        var counter = 0;
-        
-        let bandPriorityStorage = dataHandle.getPriorityData()
-        
-        for (band, priority) in bandPriorityStorage {
-            dataString = dataString + PRIORITY + "!" + band + "!" + String(priority) + ";"
-            print ("Adding icloud write PRIORITIES \(band) - \(priority)")
-            counter += 1
-        }
-    
-        if (counter == 0){
-            return;
-        }
-        
-        let showsAttendedData = attendedHandle.getShowsAttended()
-         for (index, attended) in showsAttendedData {
-            dataString = dataString + ATTENDED + "!" + index + "!" + attended + ";"
-            print ("Adding icloud write ATTENDED \(index) - '\(attended)'")
-            counter += 1
-         }
-
-        
-        if (counter > 2){
-            print ("iCloud writing priority data")
-            NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
-            NSUbiquitousKeyValueStore.default.set(Date(), forKey: "lastModifiedDate")
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            var dataString: String = ""
             
-            NSUbiquitousKeyValueStore.default.synchronize()
+            var counter = 0;
+            
+            let bandPriorityStorage = dataHandle.getPriorityData()
+            
+            for (band, priority) in bandPriorityStorage {
+                dataString = dataString + PRIORITY + "!" + band + "!" + String(priority) + ";"
+                print ("Adding icloud write PRIORITIES \(band) - \(priority)")
+                counter += 1
+            }
+        
+            if (counter == 0){
+                return;
+            }
+            
+            let showsAttendedData = attendedHandle.getShowsAttended()
+             for (index, attended) in showsAttendedData {
+                dataString = dataString + ATTENDED + "!" + index + "!" + attended + ";"
+                print ("Adding icloud write ATTENDED \(index) - '\(attended)'")
+                counter += 1
+             }
+
+            
+            if (counter > 2){
+                print ("iCloud writing priority data")
+                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
+                NSUbiquitousKeyValueStore.default.set(Date(), forKey: "lastModifiedDate")
+                
+                NSUbiquitousKeyValueStore.default.synchronize()
+            }
         }
     }
     
@@ -136,10 +135,16 @@ class iCloudDataHandler {
             return "file"
         }
         
+        print ("Comparing icloud Date of \(iCloudDate.timeIntervalSince1970) to \(fileDate.timeIntervalSince1970)")
+            
         if (iCloudDate.timeIntervalSince1970 >= fileDate.timeIntervalSince1970){
             winner = "iCloud"
         } else {
             winner = "file"
+        }
+        //if we don't have any bandPriority, override
+        if (cacheVariables.bandPriorityStorageCache.isEmpty == true){
+            winner = "iCloud"
         }
         
         print ("Winner is " + winner)

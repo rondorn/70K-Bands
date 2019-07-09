@@ -26,8 +26,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     let messageKey = "onMessageReceived"
     
     let gcmMessageIDKey = "gcm.message_id"
-    //let attendedHandler = ShowsAttended()
-    //var dataHandle = dataHandler()
     
     var bandPriorityStorage = [String:Int]()
     
@@ -48,8 +46,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default.synchronize()
-        //dataHandle.readiCloudData()
-        
+
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
         let controller = masterNavigationController.topViewController as! MasterViewController
         controller.managedObjectContext = self.managedObjectContext
@@ -58,9 +55,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         setupDefaults()
         
-        //bandPriorityStorage = dataHandle.getPriorityData()
-        
-        //attendedHandler.loadShowsAttended()
 
         // [END register_for_notifications]
         FirebaseApp.configure()
@@ -176,7 +170,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Print full message.
         print(userInfo)
-        print ("Test2")
+
         extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
         completionHandler(UIBackgroundFetchResult.newData)
     }

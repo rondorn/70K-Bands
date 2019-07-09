@@ -12,8 +12,7 @@ open class bandNamesHandler {
 
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
-    var bandPriorityStorage = [String:Int]()
-    
+
     let dataHandle = dataHandler()
     
     init(){
@@ -24,31 +23,28 @@ open class bandNamesHandler {
     func getCachedData(){
         
         print ("Loading bandName Data cache")
-        var staticCacheUsed = false
+        
+        let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
         
         staticBandName.sync() {
             if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
-                staticCacheUsed = true
+                
+                print ("Loading bandName Data cache, from cache")
                 bandNames = cacheVariables.bandNamesStaticCache
                 bandNamesArray = cacheVariables.bandNamesArrayStaticCache
+            
+            } else if (currentQueueLabel == "com.apple.main-thread"){
+                print ("Loading bandName Data cache, from disk")
+                readBandFile()
+                populateCache()
+                
             } else {
-                print ("Cache did not load, loading from file")
+                print ("Loading bandName Data cache, from dropbox")
                 gatherData()
             }
         }
         
         print ("Done Loading bandName Data cache")
-        
-        if (staticCacheUsed == false){
-            if ((FileManager.default.fileExists(atPath: schedulingDataCacheFile.path)) == true){
-                bandNames = NSKeyedUnarchiver.unarchiveObject(withFile: bandNamesCacheFile.path)
-                    as! [String :[String : String]]
-            } else {
-                print ("Cache did not load, loading from file")
-                gatherData()
-            }
-
-        }
         
     }
     
@@ -82,10 +78,24 @@ open class bandNamesHandler {
             print ("Getting band data of " + httpData);
             writeBandFile(httpData);
         }
-        readBandFile();
-        
+        readBandFile()
+        populateCache()
     }
 
+    func populateCache(){
+        print ("Starting population of acheVariables.bandNamesStaticCache")
+        staticBandName.async(flags: .barrier) {
+            print ("Populating using \(self.bandNames.keys) acheVariables.bandNamesStaticCache")
+            for bandName in self.bandNames.keys {
+                cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
+                cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
+                
+                print ("Adding Data to cacheVariables.bandNamesStaticCache = \(String(describing: cacheVariables.bandNamesStaticCache[bandName]))")
+                cacheVariables.bandNamesArrayStaticCache.append(bandName)
+            }
+        }
+    }
+    
     func writeBandFile (_ httpData: String){
         
         print("write file " + bandFile);
@@ -165,17 +175,6 @@ open class bandNamesHandler {
                 
             } catch let error as NSError {
                 print ("Encountered an error on reading file" + error.debugDescription)
-            }
-        }
-        
-        //saveCacheFile
-        NSKeyedArchiver.archiveRootObject(bandNames, toFile: bandNamesCacheFile.path)
-        
-        staticBandName.async(flags: .barrier) {
-            for bandName in self.bandNamesArray {
-                cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
-                cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
-                cacheVariables.bandNamesArrayStaticCache.append(bandName)
             }
         }
     }
