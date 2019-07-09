@@ -18,6 +18,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
 
+    @IBOutlet weak var LinksSection: UIView!
+    @IBOutlet weak var vistLinksLable: UILabel!
     @IBOutlet weak var officialUrlButton: UIButton!
     @IBOutlet weak var wikipediaUrlButton: UIButton!
     @IBOutlet weak var youtubeUrlButton: UIButton!
@@ -34,12 +36,26 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @IBOutlet weak var returnToMaster: UINavigationItem!
     
+    
+    @IBOutlet weak var Event1AttendedIcon: UIImageView!
+    @IBOutlet weak var Event2AttendedIcon: UIImageView!
+    @IBOutlet weak var Event3AttendedIcon: UIImageView!
+    @IBOutlet weak var Event4AttendedIcon: UIImageView!
+    @IBOutlet weak var Event5AttendedIcon: UIImageView!
+    
+    @IBOutlet weak var Event1TypeIcon: UIImageView!
+    @IBOutlet weak var Event2TypeIcon: UIImageView!
+    @IBOutlet weak var Event3TypeIcon: UIImageView!
+    @IBOutlet weak var Event4TypeIcon: UIImageView!
+    @IBOutlet weak var Event5TypeIcon: UIImageView!
+    
     @IBOutlet weak var Event1: UITextField!
     @IBOutlet weak var Event2: UITextField!
     @IBOutlet weak var Event3: UITextField!
     @IBOutlet weak var Event4: UITextField!
     @IBOutlet weak var Event5: UITextField!
     
+    @IBOutlet weak var PriorityIcon: UIImageView!
     @IBOutlet weak var priorityButtons: UISegmentedControl!
     @IBOutlet weak var priorityView: UITextField!
     
@@ -51,11 +67,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var bandName :String!
     var schedule = scheduleHandler()
     var bandNameHandle = bandNamesHandler()
-    let attendedHandler = ShowsAttended()
+    let attendedHandle = ShowsAttended()
     let dataHandle = dataHandler()
-    let bandNotes = CustomBandDescription();
-    
     var bandPriorityStorage = [String:Int]()
+    let bandNotes = CustomBandDescription();
     
     var imagePosition = CGFloat(0);
     
@@ -80,7 +95,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
-        customNotesText.delegate = self as? UITextViewDelegate
         customNotesText.textColor = UIColor.white
         
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
@@ -101,7 +115,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
             let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
-            print ("urlString is - Sending imageURL of \(imageURL) for band \(bandName)")
+            print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 
@@ -169,18 +183,21 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func imageSizeController(special: String){
         
-        let imageURL = bandNameHandle.getBandImageUrl(bandName)
         if (officialUrlButton.isHidden == false){
             if (special == "top"){
                 self.bandLogo.contentMode = UIView.ContentMode.top
-            } else if (special == "scale"){
                 self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
+            } else if (special == "scale"){
+                 self.bandLogo.contentMode = UIView.ContentMode.top
+                 self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             }
             self.bandLogo.sizeToFit()
         } else {
+            self.customNotesText.textContainerInset = UIEdgeInsets(top: 50, left: 0, bottom: 5, right: 0)
             self.bandLogo.contentMode = UIView.ContentMode.top
-             self.bandLogo.sizeToFit()
+            self.bandLogo.sizeToFit()
         }
+        
         if (eventCount <= 1){
             let screenSize = UIScreen.main.bounds
             customNotesText.frame.size.height = screenSize.height * 0.37
@@ -195,6 +212,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             youtubeUrlButton.isHidden = true;
             metalArchivesButton.isHidden = true;
             linkGroup.isHidden = true
+            vistLinksLable.isHidden = true;
+            LinksSection.isHidden = true;
         }
     }
   
@@ -208,6 +227,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             if (bandCountry.isEmpty == true){
                 Country.text = "";
                 Country.isHidden = true
+                extraData.isHidden = true
             } else {
                 Country.text = "Country:\t" + bandCountry
                 Country.isHidden = false
@@ -251,6 +271,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             metalArchivesButton.isHidden = true;
             customNotesText.isHidden = true;
             customNotesButton.isHidden = true;
+            vistLinksLable.isHidden = true;
+            LinksSection.isHidden = true;
             
             officialUrlButton.isEnabled = false;
             wikipediaUrlButton.isEnabled = false;
@@ -389,6 +411,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
+            let priorityImageName = getPriorityGraphic(bandPriorityStorage[bandName!]!)
+            PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
         }
     }
     
@@ -436,7 +460,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         // Update the user interface for the detail item.
         if let detail: AnyObject = self.detailItem {
             if let label = self.titleLable {
-                print ("determining detail bandName \(detail) - \(label) - \(detail.description)")
+                print ("determining detail bandName \(detail) - \(label) - \(String(describing: detail.description))")
                 bandName = detail.description
                 label.title = bandName
             }
@@ -493,7 +517,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         scheduleText += " - " + startTime
                         scheduleText += " - " + endTime
                         scheduleText += " - " + location + getVenuIcon(location)
-                        //scheduleText += " - " + type  + " " + getEventTypeIcon(type);
                         
                         if (notes.isEmpty == false && notes != " "){
                             scheduleText += " - " + notes
@@ -506,34 +529,39 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
                         scheduleIndex[scheduleText]!["eventType"] = type;
                         
-                        let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
+                        let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
                         
                         print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
                         switch count {
                         case 1:
                             Event1.text = scheduleText
-                            _ = attendedHandler.setShowsAttendedStatus(Event1,status: status);
-                            Event1.textColor = UIColor.white
+                            _ = attendedHandle.setShowsAttendedStatus(Event1,status: status);
+                            Event1AttendedIcon.image = getAttendedIcons(attendedStatus: status)
+                            Event1TypeIcon.image = getEventTypeIcon(type)
                             
                         case 2:
                             Event2.text = scheduleText
-                            _ = attendedHandler.setShowsAttendedStatus(Event2,status: status);
-                            Event2.textColor = UIColor.white
+                            _ = attendedHandle.setShowsAttendedStatus(Event2,status: status);
+                            Event2AttendedIcon.image = getAttendedIcons(attendedStatus: status)
+                            Event2TypeIcon.image = getEventTypeIcon(type)
                             
                         case 3:
                             Event3.text = scheduleText
-                            _ = attendedHandler.setShowsAttendedStatus(Event3,status: status);
-                            Event3.textColor = UIColor.white
+                            _ = attendedHandle.setShowsAttendedStatus(Event3,status: status);
+                            Event3AttendedIcon.image = getAttendedIcons(attendedStatus: status)
+                            Event3TypeIcon.image = getEventTypeIcon(type)
                             
                         case 4:
                             Event4.text = scheduleText
-                            _ = attendedHandler.setShowsAttendedStatus(Event4,status: status);
-                            Event4.textColor = UIColor.white
+                            _ = attendedHandle.setShowsAttendedStatus(Event4,status: status);
+                            Event4AttendedIcon.image = getAttendedIcons(attendedStatus: status)
+                            Event4TypeIcon.image = getEventTypeIcon(type)
                             
                         case 5:
                             Event5.text = scheduleText
-                            _ = attendedHandler.setShowsAttendedStatus(Event5,status: status);
-                            Event5.textColor = UIColor.white
+                            _ = attendedHandle.setShowsAttendedStatus(Event5,status: status);
+                            Event5AttendedIcon.image = getAttendedIcons(attendedStatus: status)
+                            Event5TypeIcon.image = getEventTypeIcon(type)
                             
                         default:
                             print("To many events")
@@ -619,18 +647,52 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBAction func clickedOnEvent(_ sender: UITextField) {
         
         sender.resignFirstResponder()
-        let scheduleText = attendedHandler.removeIcons(text: sender.text!);
+        let scheduleText = attendedHandle.removeIcons(text: sender.text!);
         
         print ("scheduleIndex = \(scheduleText)")
         let location = scheduleIndex[scheduleText]!["location"]
         let startTime = scheduleIndex[scheduleText]!["startTime"]
         let eventType = scheduleIndex[scheduleText]!["eventType"]
         
-        let status = attendedHandler.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!,eventYearString: String(eventYear));
+        let status = attendedHandle.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!,eventYearString: String(eventYear));
         
-        let message = attendedHandler.setShowsAttendedStatus(sender,status: status);
-
+        let message = attendedHandle.setShowsAttendedStatus(sender,status: status);
+        
+        let eventImage = getAttendedIcons(attendedStatus: status)
+        
+        updateEventImage(sender: sender, eventImage: eventImage)
+        
         ToastMessages(message).show(self, cellLocation: self.view.frame)
+    }
+    
+    func updateEventImage(sender: UITextField, eventImage: UIImage) {
+        
+        var attendGraphicField = UIImageView()
+        var skip = false
+        
+        switch sender.tag {
+        case 11:
+            attendGraphicField = Event1AttendedIcon
+            
+        case 12:
+            attendGraphicField = Event2AttendedIcon
+            
+        case 13:
+            attendGraphicField = Event3AttendedIcon
+ 
+        case 14:
+            attendGraphicField = Event4AttendedIcon
+            
+        case 15:
+            attendGraphicField = Event5AttendedIcon
+            
+        default:
+            skip = true
+        }
+        
+        if skip == false {
+            attendGraphicField.image = eventImage
+        }
     }
     
     func showToast(message : String) {

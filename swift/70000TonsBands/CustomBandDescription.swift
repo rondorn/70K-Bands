@@ -18,9 +18,15 @@ open class CustomBandDescription {
     
     func refreshCache(){
         
+        let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
+        
         bandDescriptionLock.sync() {
             if (cacheVariables.bandDescriptionUrlCache.isEmpty == false){
                 bandDescriptionUrl = cacheVariables.bandDescriptionUrlCache
+            
+            } else if (currentQueueLabel == "com.apple.main-thread"){
+                self.getDescriptionMap();
+                
             } else {
                 print ("Cache did not load, loading from file desceriptionUrls")
                 refreshData()

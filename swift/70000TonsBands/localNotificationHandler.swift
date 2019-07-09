@@ -14,7 +14,7 @@ class localNoticationHandler {
     
     var schedule = scheduleHandler()
     var alertTextMessage = String()
-    let attendedHandler = ShowsAttended()
+    let attendedHandle = ShowsAttended()
     var dataHandle = dataHandler()
     
     init(){
@@ -50,7 +50,7 @@ class localNoticationHandler {
         
         var alertStatus = false
         
-        let attendedStatus = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
+        let attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
         
         if (onlyAlertForAttended == true){
             if (attendedStatus != sawNoneStatus){

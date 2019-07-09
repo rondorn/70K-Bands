@@ -11,7 +11,6 @@ import CoreData
 open class ShowsAttended {
 
     var showsAttendedArray = [String : String]();
-    //var dataHandle = dataHandler()
 
     init(){
         print ("Loading shows attended data")
@@ -31,17 +30,7 @@ open class ShowsAttended {
         }
         
         if (staticCacheUsed == false){
-            if ((FileManager.default.fileExists(atPath: schedulingAttendedCacheFile.path)) == true){
-                showsAttendedArray = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingAttendedCacheFile.path)
-                    as! [String : String]
-            } else {
-                print ("Cache did not load, loading schedule data")
-                loadShowsAttended()
-            }
-            
-            staticAttended.async(flags: .barrier) {
-                cacheVariables.attendedStaticCache = self.showsAttendedArray
-            }
+            loadShowsAttended()
         }
     }
     
@@ -57,7 +46,6 @@ open class ShowsAttended {
         
         if (showsAttendedArray.count > 0){
             do {
-                try FileManager.default.removeItem(at: showsAttended)
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
             
@@ -70,7 +58,7 @@ open class ShowsAttended {
 
     func loadShowsAttended(){
         
-        print ("Loading shows attended data 1")
+        //print ("Loading shows attended data 1")
         let bandNameHandle = bandNamesHandler()
         
         let allBands = bandNameHandle.getBandNames()
@@ -109,19 +97,25 @@ open class ShowsAttended {
                         
                         print ("cleanup event data chaning index from  \(index.key) to \(newIndex)")
                         showsAttendedArray[newIndex] = index.value;
+                        
                         showsAttendedArray.removeValue(forKey: index.key)
                     }
  
                 }
             }
             print ("cleanup event data loaded showData \(showsAttendedArray)")
- 
+            
+            staticAttended.async(flags: .barrier) {
+                for index in self.showsAttendedArray.keys {
+                    print ("Adding attended data \(index) and \(self.showsAttendedArray[index]!)")
+                    cacheVariables.attendedStaticCache[index] = self.showsAttendedArray[index]
+                }
+            }
+            
         } catch {
             print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")
         }
-        
-        //saveCacheFile
-        NSKeyedArchiver.archiveRootObject(showsAttendedArray, toFile: schedulingAttendedCacheFile.path)
+    
     }
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
@@ -161,8 +155,8 @@ open class ShowsAttended {
         staticAttended.async(flags: .barrier) {
             cacheVariables.attendedStaticCache = [String : String]()
         }
-        saveShowsAttended();
-        loadShowsAttended()
+        saveShowsAttended()
+
         return value
     }
     
@@ -255,7 +249,6 @@ open class ShowsAttended {
         print ("getShowAttendedStatus (inset) = \(status) =\(fieldText ?? "")")
         if (status == sawAllStatus){
             sender.textColor = sawAllColor
-            fieldText = sawAllIcon + fieldText!
             sender.text = fieldText
             message = NSLocalizedString("All Of Event", comment: "")
             
@@ -263,20 +256,18 @@ open class ShowsAttended {
             sender.textColor = sawSomeColor
             
             fieldText = removeIcons(text: fieldText!)
-            fieldText = sawSomeIcon + fieldText!
             sender.text = fieldText
             message = NSLocalizedString("Part Of Event", comment: "")
             
         } else {
             sender.textColor = sawNoneColor
-            fieldText = removeIcons(text: fieldText!)
             sender.text = fieldText
             message = NSLocalizedString("None Of Event", comment: "")
         }
         
         return message;
     }
-    
+
     func removeIcons(text : String)->String {
         
         var textValue = text

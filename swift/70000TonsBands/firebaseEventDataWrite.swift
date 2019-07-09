@@ -15,6 +15,7 @@ class firebaseEventDataWrite {
     var eventCompareFile = directoryPath.appendingPathComponent( "eventCompare.data")
     
     var schedule = scheduleHandler()
+    let attended = ShowsAttended()
     
     init(){
         ref = Database.database().reference()
@@ -24,8 +25,7 @@ class firebaseEventDataWrite {
         
         if (internetAvailble == true){
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-            let attended = ShowsAttended()
-        
+            
             let showsAttendedArray = attended.getShowsAttended();
             
             schedule.buildTimeSortedSchedulingData();

@@ -105,6 +105,32 @@ func getSortButtonImage()->UIImage{
     return sortImage
 }
 
+func getAttendedIcons (attendedStatus: String)->UIImage {
+    
+    var graphicName = String()
+    var graphicImage = UIImage()
+    
+    switch attendedStatus {
+    case sawAllStatus:
+        graphicName = "icon-seen"
+        
+    case sawSomeStatus:
+        graphicName = "icon-seen-partial"
+        
+    case sawNoneStatus:
+        graphicName = ""
+        
+    default:
+        graphicName = ""
+    }
+
+    print ("Recieved attendedStatus of \(attendedStatus) returned \(graphicName)");
+    
+    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    
+    return graphicImage
+}
+
 func getRankGuiIcons (rank: String)->UIImage {
    
     var graphicName = String()

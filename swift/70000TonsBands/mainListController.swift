@@ -92,7 +92,7 @@ func getSortedBy() -> String{
     return sortedBy
 }
 
-func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedule: scheduleHandler, dataHandle: dataHandler) -> [String]{
+func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String]{
     
     var newAllBands = [String]()
     
@@ -117,7 +117,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     if (timeIndex > Date().timeIntervalSince1970 - 3600  || defaults.bool(forKey: "hideExpireScheduleData") == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
-                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle) == true){
+                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(bandName + ":" + String(timeIndex));
                                 presentCheck.append(bandName);
                             }
@@ -137,7 +137,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     if (timeIndex > Date().timeIntervalSince1970 - 3600 || defaults.bool(forKey: "hideExpireScheduleData") == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
-                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle) == true){
+                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
                             }
@@ -145,7 +145,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     }
                 }
             } else {
-                newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle)
+                newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             }
         }
         bandCount = 0;
@@ -166,14 +166,14 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     
     if (newAllBands.count == 0 && getShowOnlyWillAttened() == true){
         setShowOnlyWillAttened(false);
-        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle)
+        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
     if (schedule.getTimeSortedSchedulingData().count > 2){
         //add any bands without shows to the bottom of the list
         for bandName in allBands {
             if (presentCheck.contains(bandName) == false){
-                if (applyFilters(bandName: bandName,timeIndex: 0, schedule: schedule, dataHandle: dataHandle) == true){
+                if (applyFilters(bandName: bandName,timeIndex: 0, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                     print("Adding!! bandName  " + bandName)
                     newAllBands.append(bandName);
                     presentCheck.append(bandName);
@@ -185,19 +185,19 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     return newAllBands
 }
 
-func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler)-> Bool{
+func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended)-> Bool{
     
     var include = false;
     
     if (timeIndex.isZero == false){
         
-        if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule) == true){
+        if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle) == true){
             attendingCount = attendingCount + 1;
             print ("attendingCount is \(attendingCount) after adding 1")
         }
         
         if (getShowOnlyWillAttened() == true){
-            include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule);
+            include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle);
         
         } else {
             if (schedule.getBandSortedSchedulingData()[bandName]!.isEmpty == true ||
@@ -229,7 +229,7 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
     return include
 }
 
-func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler) -> [String] {
+func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String] {
 
     let allBands = bandNameHandle.getBandNames()
 
@@ -244,7 +244,7 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     
     var newAllBands = [String]()
     
-    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle);
+    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
     
     if (getShowOnlyWillAttened() == true){
         filteredBands = newAllBands;
@@ -361,9 +361,7 @@ func rankFiltering(_ bandName: String, dataHandle: dataHandler) -> Bool {
 
 }
 
-func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: scheduleHandler) -> Bool{
-
-    let attendedHandler = ShowsAttended()
+func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: scheduleHandler, attendedHandle: ShowsAttended) -> Bool{
 
     var showEvent = true;
 
@@ -375,7 +373,7 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
         showEvent = false
     
     } else {
-        let status = attendedHandler.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
+        let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
 
         if (status == sawNoneStatus){
             showEvent = false
@@ -448,9 +446,8 @@ func venueFiltering(_ venue: String) -> Bool {
     return showVenue
 }
 
-func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler){
+func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, attendedHandle: ShowsAttended){
     
-    let attendedHandler = ShowsAttended()
     var rankLocationSchedule = false
     
     //index is out of bounds. Don't allow this
@@ -537,7 +534,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleButton = false
     
         print("scheduleText  = \(scheduleText)")
-        let icon = attendedHandler.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
+        let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
     
         attendedView.image = icon
         eventTypeImageView.image = eventIcon

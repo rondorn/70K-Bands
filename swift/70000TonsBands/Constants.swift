@@ -39,18 +39,14 @@ var webMessageHelp = String();
 
 var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
 var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
-var priorityDataCacheFile = directoryPath.appendingPathComponent( "priorityDataCacheFile")
-
-let staticSchedule = DispatchQueue(label: "staticSchedule", attributes: .concurrent)
-let staticAttended = DispatchQueue(label: "staticAttended", attributes: .concurrent)
-let staticBandName = DispatchQueue(label: "staticBandName", attributes: .concurrent)
-let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
-let storePointerLock = DispatchQueue(label: "storePointerLock", attributes: .concurrent)
-let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock", attributes: .concurrent)
-
-
-var schedulingAttendedCacheFile = directoryPath.appendingPathComponent( "schedulingAttendedCacheFile")
 var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
+
+let staticSchedule = DispatchQueue(label: "staticSchedule")
+let staticAttended = DispatchQueue(label: "staticAttended")
+let staticBandName = DispatchQueue(label: "staticBandName")
+let staticData = DispatchQueue(label: "staticData")
+let storePointerLock = DispatchQueue(label: "storePointerLock")
+let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 
 var iCloudCheck = false;
 
@@ -349,14 +345,29 @@ func isInternetAvailable() -> Bool {
 
 
 struct cacheVariables {
-    
+ 
+    static var bandPriorityStorageCache = [String:Int]()
     static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
     static var bandNamedStaticCache = [String :[String : String]]()
     static var attendedStaticCache = [String : String]()
     static var bandNamesStaticCache =  [String :[String : String]]()
     static var bandNamesArrayStaticCache = [String]()
-    static var bandPriorityStorageCache = [String:Int]()
     static var storePointerData = [String:String]()
     static var bandDescriptionUrlCache = [String:String]()
 }
+
+  /*
+func getBandPriorityStorageCache()->[String:Int]{
+    let x = threadSafeVariables<[String:Int]>()
+    
+    return x.value
+}
+
+func setBandPriorityStorageCache(newValue: [String:Int]){
+    let x = threadSafeVariables<[String:Int]>(threadSafeVariables)
+    
+    x.mutate {$0 = newValue}
+}
+ 
+*/

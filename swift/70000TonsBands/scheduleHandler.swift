@@ -23,7 +23,7 @@ open class scheduleHandler {
         
         var staticCacheUsed = false
         
-        staticSchedule.sync() {
+        staticSchedule.sync {
             if (cacheVariables.scheduleStaticCache.isEmpty == false && cacheVariables.scheduleTimeStaticCache.isEmpty == false ){
                 staticCacheUsed = true
                 schedulingData = cacheVariables.scheduleStaticCache
@@ -47,7 +47,7 @@ open class scheduleHandler {
                 populateSchedule()
             }
             
-            staticSchedule.async(flags: .barrier) {
+            staticSchedule.sync {
                 cacheVariables.scheduleStaticCache = self.schedulingData
                 cacheVariables.scheduleTimeStaticCache = self.schedulingDataByTime
             }
@@ -138,7 +138,7 @@ open class scheduleHandler {
                     if let descriptUrl = lineData[descriptionUrlField] {
                         if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
                             
-                            bandDescriptionLock.async(flags: .barrier) {
+                            bandDescriptionLock.sync {
                                 cacheVariables.bandDescriptionUrlCache[lineData[bandField]!] = descriptUrl
                             }
                         }
