@@ -419,6 +419,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBAction func setBandPriority() {
         if (bandName != nil){
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
+            
+            let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
+            PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
         }
     }
     

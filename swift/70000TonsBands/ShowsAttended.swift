@@ -149,15 +149,26 @@ open class ShowsAttended {
             value = sawNoneStatus;
         }
         
-        print ("addShowsAttended 2 Settings equals index = '\(index)' - \(value)")
-        showsAttendedArray[index] = value
+        changeShowAttendedStatus(index: index, status: value)
+        
+        staticLastModifiedDate.async(flags: .barrier) {
+            cacheVariables.lastModifiedDate = Date()
+        }
+        
+        return value
+    }
+    
+    func changeShowAttendedStatus(index: String, status:String){
+
+        print ("addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
+        showsAttendedArray[index] = status
         
         staticAttended.async(flags: .barrier) {
-            cacheVariables.attendedStaticCache = [String : String]()
+            cacheVariables.attendedStaticCache[index] = status
         }
+        
         saveShowsAttended()
 
-        return value
     }
     
     func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{

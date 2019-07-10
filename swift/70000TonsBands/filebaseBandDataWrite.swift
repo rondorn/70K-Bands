@@ -25,7 +25,13 @@ class filebaseBandDataWrite {
     
     func writeData (){
         
-        if (internetAvailble == true){
+        var usingSimulator = false;
+        #if targetEnvironment(simulator)
+            usingSimulator = true;
+        #endif
+        
+        
+        if (internetAvailble == true && usingSimulator == false){
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
@@ -49,6 +55,11 @@ class filebaseBandDataWrite {
                                         }
                     }
                 }
+            }
+        } else {
+            if (usingSimulator == true){
+                //this is being done soley to prevent capturing garbage stats data within my app!
+                print ("Bypassed firebase band data writes due to being in simulator!!!")
             }
         }
     }
