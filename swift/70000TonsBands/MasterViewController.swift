@@ -215,6 +215,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func refreshFromCache (){
         
         print ("RefreshFromCache called")
+        
+        iCloudDataHandle.readiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
+        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
+        
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
@@ -223,8 +227,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandsByName = bands
         attendedHandle.getCachedData()
         setShowOnlyAttenedFilterStatus()
-        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
- 
     }
     
     func ensureCorrectSorting(){
@@ -263,9 +265,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
-            
+
+            iCloudDataHandle.readiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
             iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
-            
+
             self.dataHandle.getCachedData()
             self.attendedHandle.getCachedData()
             
@@ -312,9 +315,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandNameHandle = bandNamesHandler()
             let schedule = scheduleHandler()
             if (offline == false){
-                
-                self.iCloudDataHandle.readiCloudData()
-                
+            
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 self.attendedHandle.loadShowsAttended()

@@ -41,6 +41,7 @@ var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingD
 var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
 var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
 
+let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
 let staticBandName = DispatchQueue(label: "staticBandName")
@@ -343,7 +344,6 @@ func isInternetAvailable() -> Bool {
     return (isReachable && !needsConnection)
 }
 
-
 struct cacheVariables {
  
     static var bandPriorityStorageCache = [String:Int]()
@@ -355,19 +355,6 @@ struct cacheVariables {
     static var bandNamesArrayStaticCache = [String]()
     static var storePointerData = [String:String]()
     static var bandDescriptionUrlCache = [String:String]()
+    static var lastModifiedDate:Date? = nil;
 }
 
-  /*
-func getBandPriorityStorageCache()->[String:Int]{
-    let x = threadSafeVariables<[String:Int]>()
-    
-    return x.value
-}
-
-func setBandPriorityStorageCache(newValue: [String:Int]){
-    let x = threadSafeVariables<[String:Int]>(threadSafeVariables)
-    
-    x.mutate {$0 = newValue}
-}
- 
-*/
