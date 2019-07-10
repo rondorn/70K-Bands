@@ -153,6 +153,10 @@ class dataHandler {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
         
+        staticLastModifiedDate.async(flags: .barrier) {
+            cacheVariables.lastModifiedDate = Date()
+        }
+        
         writeFile()
     }
 
@@ -178,14 +182,8 @@ class dataHandler {
             return
         }
         
-        let dateFormatter = getDateFormatter()
-        dateFormatter.dateFormat = "MM-dd-yy"
-        
         var data: String = ""
-        let dateTimeModified = Date();
-        
-        let dateTimeModifiedString = dateFormatter.string(from: dateTimeModified)
-        
+
         for (index, element) in bandPriorityStorage{
             print ("writing PRIORITIES \(index) - \(element)")
             data = data + index + ":" + String(element) + "\n"
@@ -198,15 +196,12 @@ class dataHandler {
         } catch _ {
             print ("writing PRIORITIES - file was NOT writte")
         }
-        do {
-            try dateTimeModifiedString.write(to: dateFile, atomically: false, encoding: String.Encoding.utf8)
-        } catch _ {
-            
-        }
-    
     }
     
     func getPriorityData() -> [String:Int]{
+        
+        getCachedData()
+        
         return bandPriorityStorage;
     }
 

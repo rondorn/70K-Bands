@@ -23,7 +23,12 @@ class firebaseEventDataWrite {
 
     func writeData (){
         
-        if (internetAvailble == true){
+        var usingSimulator = false;
+        #if targetEnvironment(simulator)
+            usingSimulator = true;
+        #endif
+        
+        if (internetAvailble == true && usingSimulator == false){
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
             let showsAttendedArray = attended.getShowsAttended();
@@ -62,6 +67,11 @@ class firebaseEventDataWrite {
                                             }
                     }
                 }
+            }
+        } else {
+            if (usingSimulator == true){
+                //this is being done soley to prevent capturing garbage stats data within my app!
+                print ("Bypassed firebase event data writes due to being in simulator!!!")
             }
         }
     }

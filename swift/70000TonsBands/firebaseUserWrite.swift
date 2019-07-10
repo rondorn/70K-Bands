@@ -20,8 +20,16 @@ class firebaseUserWrite {
     
     func writeData (){
         
-        if (internetAvailble == true){
+        var usingSimulator = false;
+        
+        #if targetEnvironment(simulator)
+            usingSimulator = true;
+        #endif
+        
+        if (internetAvailble == true && usingSimulator == false){
+            
             let userDataHandle = userDataHandler()
+            print ("Firebase UserID is \(userDataHandle.uid)");
             
             print ("Writing firebase data to userData start");
 
@@ -39,6 +47,12 @@ class firebaseUserWrite {
             }
         
             print ("Writing firebase data to userData stop")
+            
+        } else {
+            if (usingSimulator == true){
+                //this is being done soley to prevent capturing garbage stats data within my app!
+                print ("Bypassed firebase band data writes due to being in simulator!!!")
+            }
         }
     }
 }

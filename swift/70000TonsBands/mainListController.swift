@@ -480,15 +480,16 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let dayView = cell.viewWithTag(10) as! UILabel
     let spacerView = cell.viewWithTag(11) as! UILabel
     let locationColor = cell.viewWithTag(12) as! UILabel
-
+    let bandNameNoSchedule = cell.viewWithTag(13) as! UILabel
+    
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
     locationView.textColor = UIColor.lightGray
     timeView.textColor = UIColor.lightGray
     dayView.textColor = UIColor.white
+    bandNameNoSchedule.textColor = UIColor.white
     
     bandNameView.text = bandName
-    
     indexText = bandName
     
     cell.backgroundColor = UIColor.black;
@@ -571,6 +572,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         rankLocationSchedule = true
 
+        spacerView.isHidden = false
+        bandNameView.isHidden = false
+        bandNameNoSchedule.isHidden = true
+        
     } else {
         rankLocationSchedule = false
         print ("Not display schedule for band " + bandName)
@@ -583,6 +588,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         attendedView.isHidden = true
         locationColor.isHidden = true
         eventTypeImageView.isHidden = true
+        bandNameNoSchedule.text = bandName
+        bandNameNoSchedule.isHidden = false
+        bandNameView.isHidden = true
     }
     
     indexForCell.text = indexText;
@@ -595,14 +603,11 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             rankImageView.isHidden = false
             rankImageViewNoSchedule.isHidden = true
             rankImageView.image = rankGraphic.image
-            spacerView.isHidden = false
+            
         } else {
             rankImageView.isHidden = true
             rankImageViewNoSchedule.isHidden = false
             rankImageViewNoSchedule.image = rankGraphic.image
-            spacerView.isHidden = false
-            bandNameView.adjustsFontSizeToFitWidth = true
-
         }
     } else {
         rankImageView.isHidden = true
