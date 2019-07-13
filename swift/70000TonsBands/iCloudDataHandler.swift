@@ -15,160 +15,144 @@ class iCloudDataHandler {
         
     }
     
-    func writeiCloudData (dataHandle: dataHandler, attendedHandle: ShowsAttended){
-        
+    
+    func readCloudData (){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            var templastModifiedDate = Date()
+            let dataHandle = dataHandler();
+            let attendedHandle = ShowsAttended()
+            
+            self.readCloudAPriorityData(dataHandle: dataHandle)
+            self.readCloudAttendedData(attendedHandle: attendedHandle)
+        }
+        
+    }
+    
+    func writeiCloudAttendedData (attendedHandle: ShowsAttended){
+        
+        if (internetAvailble == true){
+            let showsAttendedData = attendedHandle.getShowsAttended()
             var dataString: String = ""
             
             var counter = 0;
             
-            sleep(1)
-
-            let bandPriorityStorage = dataHandle.getPriorityData()
-            
-            for (band, priority) in bandPriorityStorage {
-                dataString = dataString + PRIORITY + "!" + band + "!" + String(priority) + ";"
-                print ("Adding icloud PRIORITIES write \(band) - \(priority)")
+            for (index, attended) in showsAttendedData {
+                dataString = dataString + index + "!" + attended + ";"
+                print ("Adding icloud \(index) ATTENDED write '\(attended)'")
                 counter += 1
             }
         
-            if (counter == 0){
-                return;
-            }
-            
-            let showsAttendedData = attendedHandle.getShowsAttended()
-            
-             for (index, attended) in showsAttendedData {
-                dataString = dataString + ATTENDED + "!" + index + "!" + attended + ";"
-                print ("Adding icloud ATTENDED write \(index) - '\(attended)'")
-                counter += 1
-             }
-            
-            
-            if (cacheVariables.lastModifiedDate != nil){
-            
-                staticLastModifiedDate.sync() {
-                    templastModifiedDate = cacheVariables.lastModifiedDate!
-                }
-                
-                if (counter > 2){
-                    print ("iCloud writing priority data")
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
-                    NSUbiquitousKeyValueStore.default.set(templastModifiedDate, forKey: "lastModifiedDate")
-                    
-                    NSUbiquitousKeyValueStore.default.synchronize()
-                }
+            if (counter >= 1){
+                print ("iCloud writing attended data \(dataString)")
+                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "attendedData")
+                NSUbiquitousKeyValueStore.default.synchronize()
             }
         }
     }
     
-    func readiCloudData(dataHandle: dataHandler, attendedHandle: ShowsAttended){
+    func readCloudAttendedData (attendedHandle: ShowsAttended){
         
-        let winner = compareLastModifiedDate()
-        print ("Winner is " + winner)
-        
-        if (winner == "iCloud"){
-            NSUbiquitousKeyValueStore.default.synchronize()
+        if (internetAvailble == true){
             
-            print ("iCloud getting priority data from the cloud")
-            
-            let values = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
-            
-            print ("iCloud - " + String(describing: values))
-            let bandPriorityStorage = dataHandle.getPriorityData()
+            print ("reading iCloudAttended Data")
             let showsAttendedData = attendedHandle.getShowsAttended()
+            NSUbiquitousKeyValueStore.default.synchronize()
+            var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
             
-            if values["bandPriorities"] != nil {
-                let dataString = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities")!)
-                let split1 = dataString.components(separatedBy: ";")
-                
-                for record in split1 {
-                    var split2 = record.components(separatedBy: "!")
-                    print ("Number of variable is \(split2.count)")
-                    if (split2.count == 3){
-                        if (split2[0] == PRIORITY){
-                            let bandname = split2[1]
-                            let priority = Int(split2[2])
-                            
-                            print("Cloud compare \(bandname) does \(bandPriorityStorage[bandname]) = \(priority)")
-                            
-                            if (bandPriorityStorage[bandname] != priority){
-                                print ("iCloud changing value for \(bandname) to \(String(describing: priority))")
-                                dataHandle.addPriorityData(bandname, priority: priority!)
-                            }
-
-                            print ("reading icloud PRIORITIES \(split2[1]) - \(split2[2])")
-                        
-                            
-                        } else if (split2[0] == ATTENDED){
-                            
-                            let index = split2[1]
-                            let status = split2[2]
-                            print("Cloud compare \(index) does \(showsAttendedData[index]) = \(status)")
-                            if (showsAttendedData[index] != status){
-                                print ("iCloud changing value for \(index) to \(status)")
-                                attendedHandle.changeShowAttendedStatus(index: index, status: status)
-                            }
-                        }
-                        
-                    } else if (split2.count == 1){
-                        split2 = record.components(separatedBy: ":")
-                        if (split2.count == 2){
-                            let bandname = split2[1]
-                            let priority = Int(split2[2])
-                            
-                            if (bandPriorityStorage[bandname] != priority){
-                                print ("iCloud changing value for \(bandname) to \(String(describing: priority))")
-                                dataHandle.addPriorityData(bandname, priority: priority!)
-                            }
-                            
-                            print ("Adding icloud PRIORITIES \(split2[1]) - \(split2[2])")
-                        
-                            print ("Adding icloud PRIORITIES compatMode \(split2[0]) - \(split2[1])")
-                        }
+            if valueTemp.isEmpty == true {
+                writeiCloudAttendedData(attendedHandle: attendedHandle)
+                valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
+            }
+            
+            //if we have no data, lets bail
+            if valueTemp.isEmpty == true {
+                return
+            }
+            
+            print ("Value pairs are \(valueTemp)")
+            let splitOutput = valueTemp.components(separatedBy: ";")
+            for record in splitOutput {
+                if (record.isEmpty == false){
+                    print ("Reading from iCloud \(record)")
+                    var varValue = record.components(separatedBy: "!");
+                    var index = varValue[0];
+                    var status = varValue[1];
+                    if (index == "attended"){
+                        index = varValue[1]
+                        status = varValue[2]
+                    }
+                    
+                    print ("Exiting is for \(index) is \(showsAttendedData[index]) new is \(status)")
+                    
+                    if showsAttendedData[index] != status {
+                        attendedHandle.changeShowAttendedStatus(index: index, status: status)
                     }
                 }
             }
         }
     }
-    
-    func compareLastModifiedDate () -> String {
-        
-        var winner: String = ""
-        var templastModifiedDate:Date? = nil
-        var iCloudDate: Date = Date()
-        
-        staticLastModifiedDate.sync() {
-            templastModifiedDate = cacheVariables.lastModifiedDate
-        }
 
-        if (templastModifiedDate == nil){
-            staticLastModifiedDate.async(flags: .barrier) {
-                cacheVariables.lastModifiedDate = Date()
-            }
-            return "iCloud"
-        }
+    func writeiCloudPriorityData (dataHandle: dataHandler){
         
-        let values = NSUbiquitousKeyValueStore.default.dictionaryRepresentation
-        
-        if values["lastModifiedDate"] != nil {
-            iCloudDate = NSUbiquitousKeyValueStore.default.object(forKey: "lastModifiedDate") as! Date
-        } else {
-            return "file"
-        }
-        
-        print ("Comparing icloud Date of \(iCloudDate) to \(templastModifiedDate!)")
+        if (internetAvailble == true){
+            let priorityData = dataHandle.getPriorityData()
+            var dataString: String = ""
             
-        if (iCloudDate > templastModifiedDate!){
-            winner = "iCloud"
-        } else {
-            winner = "file"
+            var counter = 0;
+            
+            for (band, priority) in priorityData {
+                dataString = dataString + band + "!" + String(priority) + ";"
+                print ("Adding icloud \(band) write '\(priority)'")
+                counter += 1
+            }
+            
+            print ("iCloud priority write counter is \(counter)")
+            if (counter >= 1){
+                print ("iCloud writing attended data \(dataString)")
+                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
+                NSUbiquitousKeyValueStore.default.synchronize()
+            }
         }
-
-        return winner
-        
     }
     
+    func readCloudAPriorityData (dataHandle: dataHandler){
+        
+        if (internetAvailble == true){
+            
+            print ("reading iCloudPriority Data")
+            let priorityData = dataHandle.getPriorityData()
+            
+            NSUbiquitousKeyValueStore.default.synchronize()
+            var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities") ?? "")
+            
+            if valueTemp.isEmpty == true {
+                writeiCloudPriorityData(dataHandle: dataHandle)
+                valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities") ?? "")
+            }
+            
+            //if we have no data, lets bail
+            if valueTemp.isEmpty == true {
+                return
+            }
+            
+            print ("Value pairs are \(valueTemp)")
+            let splitOutput = valueTemp.components(separatedBy: ";")
+            for record in splitOutput {
+                if (record.isEmpty == false){
+                    print ("Reading from iCloud \(record)")
+                    var varValue = record.components(separatedBy: "!");
+                    var index = varValue[0];
+                    var status = varValue[1];
+                    if (index == "attended"){
+                        index = varValue[1]
+                        status = varValue[2]
+                    }
+                    print ("Exiting is for \(index) is \(priorityData[index]) new is \(status)")
+                    if priorityData[index] != Int(status) {
+                        dataHandle.addPriorityData(index,priority: Int(status) ?? 0)
+                    }
+                }
+            }
+        }
+    }
 }

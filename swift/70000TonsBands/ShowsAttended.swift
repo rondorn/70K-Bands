@@ -10,6 +10,7 @@ import CoreData
 
 open class ShowsAttended {
 
+    let iCloudHandle = iCloudDataHandler()
     var showsAttendedArray = [String : String]();
 
     init(){
@@ -32,6 +33,8 @@ open class ShowsAttended {
         if (staticCacheUsed == false){
             loadShowsAttended()
         }
+        
+        iCloudHandle.readCloudAttendedData(attendedHandle: self);
     }
     
     func setShowsAttended(attendedData: [String : String]){
@@ -53,6 +56,8 @@ open class ShowsAttended {
             } catch {
                 print ("Error, unable to save showsAtteneded Data \(error.localizedDescription)")
             }
+            
+            iCloudHandle.writeiCloudAttendedData(attendedHandle: self)
         }
     }
 
@@ -107,10 +112,12 @@ open class ShowsAttended {
             
             staticAttended.async(flags: .barrier) {
                 for index in self.showsAttendedArray.keys {
-                    print ("Adding attended data \(index) and \(self.showsAttendedArray[index]!)")
-                    cacheVariables.attendedStaticCache[index] = self.showsAttendedArray[index]
+                    print ("Adding attended data \(index) and \(self.showsAttendedArray[index] ?? "")")
+                    cacheVariables.attendedStaticCache[index] = self.showsAttendedArray[index] ?? ""
                 }
             }
+            
+            iCloudHandle.readCloudAttendedData(attendedHandle: self)
             
         } catch {
             print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")
@@ -159,7 +166,7 @@ open class ShowsAttended {
     }
     
     func changeShowAttendedStatus(index: String, status:String){
-
+        
         print ("addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
         showsAttendedArray[index] = status
         
@@ -168,7 +175,6 @@ open class ShowsAttended {
         }
         
         saveShowsAttended()
-
     }
     
     func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{

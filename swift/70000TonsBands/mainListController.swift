@@ -589,7 +589,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         locationColor.isHidden = true
         eventTypeImageView.isHidden = true
         bandNameNoSchedule.text = bandName
-        bandNameNoSchedule.isHidden = false
+        bandNameNoSchedule.isHidden = false  
         bandNameView.isHidden = true
     }
     

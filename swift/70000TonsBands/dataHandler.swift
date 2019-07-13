@@ -14,6 +14,7 @@ class dataHandler {
     
     var bandPriorityStorage = [String:Int]()
     var readInWrite = false;
+    let iCloudHandle = iCloudDataHandler()
     
     init(){
         getCachedData()
@@ -34,6 +35,7 @@ class dataHandler {
             }
         }
         
+        iCloudHandle.readCloudAPriorityData(dataHandle: self)
         print ("Done Loading bandName Data cache")
     }
     
@@ -158,6 +160,7 @@ class dataHandler {
         }
         
         writeFile()
+        iCloudHandle.writeiCloudPriorityData(dataHandle: self)
     }
 
     func getPriorityData (_ bandname:String) -> Int {
@@ -199,8 +202,6 @@ class dataHandler {
     }
     
     func getPriorityData() -> [String:Int]{
-        
-        getCachedData()
         
         return bandPriorityStorage;
     }
