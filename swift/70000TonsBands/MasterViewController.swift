@@ -216,9 +216,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("RefreshFromCache called")
         
-        iCloudDataHandle.readiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
-        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
-        
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
@@ -265,9 +262,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
-
-            iCloudDataHandle.readiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
-            iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
 
             self.dataHandle.getCachedData()
             self.attendedHandle.getCachedData()
@@ -786,7 +780,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     //iCloud data loading
     @objc func onSettingsChanged(_ notification: Notification) {
-        iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
+        //iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
 
 }
