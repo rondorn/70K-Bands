@@ -42,7 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Register for notification of iCloud key-value changes
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
-                                               name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: nil)
+                                               name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default.synchronize()
@@ -315,7 +315,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
-        //readiCloudData()
+        
+        let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.readCloudData()
     }
     
     func applicationWillTerminate(_ application: UIApplication) {
