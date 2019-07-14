@@ -85,7 +85,10 @@ open class bandNamesHandler {
     func populateCache(){
         print ("Starting population of acheVariables.bandNamesStaticCache")
         staticBandName.async(flags: .barrier) {
-            print ("Populating using \(self.bandNames.keys) acheVariables.bandNamesStaticCache")
+            //print ("Populating using \(self.bandNames.keys) acheVariables.bandNamesStaticCache")
+            
+            cacheVariables.bandNamesStaticCache =  [String :[String : String]]()
+            cacheVariables.bandNamesArrayStaticCache = [String]()
             for bandName in self.bandNames.keys {
                 cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
                 cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
@@ -119,6 +122,9 @@ open class bandNamesHandler {
         if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
             print("csvDataString has data", terminator: "");
             
+            bandNames =  [String :[String : String]]()
+            bandNamesArray = [String]()
+            
             //var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
             var csvData: CSV
             
@@ -134,7 +140,6 @@ open class bandNamesHandler {
                     let bandNameValue = lineData["bandName"]!
                     
                     bandNames[bandNameValue] = [String : String]()
-                    
                     bandNames[bandNameValue]!["bandName"] = bandNameValue
                 
                     if (lineData.isEmpty == false){

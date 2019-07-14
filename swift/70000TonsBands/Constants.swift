@@ -150,8 +150,8 @@ let defaultPrefsValue = "Default";
 let lastYearsartistUrlDefault = "lastYear"
 let lastYearsScheduleUrlDefault = "lastYear"
 
-let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
-//let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+//let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
+let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"

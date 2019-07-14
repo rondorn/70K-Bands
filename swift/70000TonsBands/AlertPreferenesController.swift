@@ -208,13 +208,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         VenueRinkLabel.text = rinkVenueText + " " + rinkVenue
         VenueLoungeLabel.text = loungeVenueText + " " + loungeVenue
         
-        EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "") + " " + specialEventTypeIcon
-        EventMeetAndGreetLabel.text = NSLocalizedString(meetAndGreetype, comment: "") + " " + mAndmEventTypeIcon
-        EventClinicLabel.text = NSLocalizedString(clinicType, comment: "") + " " + clinicEventTypeIcon
-        EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "") + " " + listeningEventTypeIcon
-        EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "") + " " + unofficalEventTypeIcon
+        EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "")
+        EventMeetAndGreetLabel.text = NSLocalizedString(meetAndGreetype, comment: "")
+        EventClinicLabel.text = NSLocalizedString(clinicType, comment: "")
+        EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "")
+        EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "")
         
-        //HideExpiredLabel.text = NSLocalizedString("ShowHideEvents", comment: "")
         HideExpiredLabel.text = NSLocalizedString("HideExpiredEvents", comment: "")
     }
     
@@ -474,16 +473,19 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             print ("Files were Seeing last years data")
             defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
             defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
+            defaults.setValue(true, forKey: "hideExpireScheduleData")
             
         } else {
             print ("Files were Seeing this years data")
             defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
             defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
+            defaults.setValue(true, forKey: "hideExpireScheduleData")
         }
         print ("Files were Done setting")
         do {
             try  FileManager.default.removeItem(atPath: scheduleFile)
             try  FileManager.default.removeItem(atPath: bandFile)
+
             print ("Files were removed")
         } catch {
             print ("Files were not removed..why?");
