@@ -12,7 +12,7 @@ import UIKit
 let mustSeeIcon = "icon-going-yes"
 let mightSeeIcon = "icon-going-maybe"
 let wontSeeIcon = "icon-going-no"
-let unknownIcon = "icon-going-unknown"
+let unknownIcon = "icon-unknown-v1"
 
 let mustSeeIconFilterTag = 20
 let mightSeeIconFilterTag = 21
@@ -22,13 +22,13 @@ let unknownIconFilterTag = 23
 let mustSeeIconAlt = "icon-going-yes-alt"
 let mightSeeIconAlt = "icon-going-maybe-alt"
 let wontSeeIconAlt = "icon-going-no-alt"
-let unknownIconAlt = "icon-going-unknown-alt"
+let unknownIconAlt = "icon-unknown-v1-alt"
 
 let scheduleIconSort = "icon-sort-time-decending"
 let bandIconSort = "icon-sort-az-decending"
 
 let showTypeIcon = "";
-let specialEventTypeIcon = "specialEvent";
+let specialEventTypeIcon = "icon-all-star-jam";
 let mAndmEventTypeIcon = "specialEvent";
 let listeningEventTypeIcon = "specialEvent";
 let clinicEventTypeIcon = "specialEvent";
@@ -36,7 +36,7 @@ let unofficalEventTypeIcon = "specialEvent";
 
 //shows attended
 let sawAllIcon = "icon-seen"
-let sawSomeIcon = "icon-seen-partial"
+let sawSomeIcon = "icon-partially-sson"
 let sawNoneIcon = ""
 let attendedShowIcon = "icon-seen"
 let attendedShowIconAlt = "icon-seen-alt"
