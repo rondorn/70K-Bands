@@ -395,7 +395,10 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
     
     if (eventType == specialEventType && showSpecialValue == true){
         showEvent = true;
-    
+ 
+    } else if (eventType == karaokeEventType && showSpecialValue == true){
+            showEvent = true;
+            
     } else if (eventType == meetAndGreetype && showMandGValue == true){
         showEvent = true;
     

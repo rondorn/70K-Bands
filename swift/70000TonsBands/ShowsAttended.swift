@@ -84,7 +84,7 @@ open class ShowsAttended {
                     
                     print ("cleanup event data old or new  \(indexArray.count)")
              
-                    if (indexArray.count == 5 && artistUrl == "Default"){
+                    if (indexArray.count == 5 && artistUrl == defaultPrefsValue){
                         print ("converting data for index \(index.key)")
                         var useEventYear = eventYear;
                         if (allBands.contains(bandName) == false){

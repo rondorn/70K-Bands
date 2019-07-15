@@ -212,7 +212,7 @@ open class CustomBandDescription {
 
         var descriptionPointer = "descriptionMap";
         
-        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
+        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
             descriptionPointer = "descriptionMapLastYear"
         }
         

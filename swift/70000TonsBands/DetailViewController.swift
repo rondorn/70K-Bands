@@ -432,19 +432,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
         if (bandName != nil){
             if (sender.accessibilityIdentifier == officalSiteButtonName){
-               webMessageHelp = "Taking you to the Offical Web Site"
+               webMessageHelp = NSLocalizedString("officialWebSiteLinkHelp", comment: "officialWebSiteLinkHelp")
                sendToUrl = bandNameHandle.getofficalPage(bandName)
             
             } else if (sender.accessibilityIdentifier == wikipediaButtonName){
-                webMessageHelp = "Searching Wikipedia for the band page"
+                webMessageHelp = NSLocalizedString("WikipediaLinkHelp", comment: "WikipediaLinkHelp")
                 sendToUrl = bandNameHandle.getWikipediaPage(bandName)
             
             } else if (sender.accessibilityIdentifier == youTubeButtonName){
-                webMessageHelp = "Searching YouTube for offical videos"
+                webMessageHelp = NSLocalizedString("YouTubeLinkHelp", comment: "YouTubeLinkHelp")
                 sendToUrl = bandNameHandle.getYouTubePage(bandName)
                 
             } else if (sender.accessibilityIdentifier == metalArchivesButtonName){
-                webMessageHelp = "Searching Metal Archives for this band"
+                webMessageHelp = NSLocalizedString("MetalArchiveLinkHelp", comment: "MetalArchiveLinkHelp")
                 sendToUrl = bandNameHandle.getMetalArchives(bandName)
                 
             }
@@ -520,6 +520,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         scheduleText += " - " + startTime
                         scheduleText += " - " + endTime
                         scheduleText += " - " + location + getVenuIcon(location)
+                        scheduleText += " - " + type
                         
                         if (notes.isEmpty == false && notes != " "){
                             scheduleText += " - " + notes
