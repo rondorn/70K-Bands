@@ -29,14 +29,15 @@ let bandIconSort = "icon-sort-az-decending"
 
 let showTypeIcon = "";
 let specialEventTypeIcon = "icon-all-star-jam";
-let mAndmEventTypeIcon = "specialEvent";
-let listeningEventTypeIcon = "specialEvent";
-let clinicEventTypeIcon = "specialEvent";
-let unofficalEventTypeIcon = "specialEvent";
+let mAndmEventTypeIcon = "icon-meet-and-greet";
+let listeningEventTypeIcon = "icon-all-star-jam";
+let clinicEventTypeIcon = "icon-clinc-v1";
+let unofficalEventTypeIcon = "icon-cruiser-oganized-event";
+let karaokeEventTypeIcon = "icon-karaoke"
 
 //shows attended
 let sawAllIcon = "icon-seen"
-let sawSomeIcon = "icon-partially-sson"
+let sawSomeIcon = "icon-partially-seen"
 let sawNoneIcon = ""
 let attendedShowIcon = "icon-seen"
 let attendedShowIconAlt = "icon-seen-alt"
@@ -79,6 +80,9 @@ func getEventTypeIcon (_ eventType: String)->UIImage {
 
     case unofficalEventTypeOld:
         graphicName = unofficalEventTypeIcon
+        
+    case karaokeEventType:
+        graphicName = karaokeEventTypeIcon
         
     default:
         graphicName = unknownVenue

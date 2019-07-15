@@ -178,21 +178,21 @@ open class scheduleHandler {
         
         print ("working with scheduleFile " + scheduleFile)
         print ("defaults is \(defaults)")
-        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
-            scheduleUrl = lastYearsScheduleUrlDefault;
+        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
+            scheduleUrl = lastYearSetting;
         } else {
             scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
         }
         
         if (scheduleUrl.isEmpty == true){
-            scheduleUrl = "Default"
+            scheduleUrl = defaultPrefsValue
         }
     
         print ("Downloading Schedule URL " + scheduleUrl);
-        if (scheduleUrl == "Default"){
+        if (scheduleUrl == defaultPrefsValue){
             scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
             
-        } else if (scheduleUrl == "lastYear"){
+        } else if (scheduleUrl == lastYearSetting){
             scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
         
         }

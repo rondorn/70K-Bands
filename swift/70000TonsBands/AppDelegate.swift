@@ -102,12 +102,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let filePath = defaultUrlConverFlagUrl.path
         if(FileManager.default.fileExists(atPath: filePath)){
             print ("Followup run of setupCurrentYearUrls routine")
-            artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? "Default"
-            scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? "Default"
+            artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? defaultPrefsValue
+            scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? defaultPrefsValue
         } else {
             print ("First run of setupCurrentYearUrls routine")
-           artistUrlDefault = "Default"
-           scheduleUrlDefault = "Default"
+           artistUrlDefault = defaultPrefsValue
+           scheduleUrlDefault = defaultPrefsValue
            let flag = ""
             do {
                 try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
@@ -115,12 +115,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             catch {print ("First run of setupCurrentYearUrls routine Failed!")}
         }
         
-        if (artistUrlDefault == "Default"){
-            UserDefaults.standard.set("Default", forKey: "artistUrl")
+        if (artistUrlDefault == defaultPrefsValue){
+            UserDefaults.standard.set(defaultPrefsValue, forKey: "artistUrl")
         }
         
-        if (scheduleUrlDefault == "Default"){
-            UserDefaults.standard.set("Default", forKey: "scheduleUrl")
+        if (scheduleUrlDefault == defaultPrefsValue){
+            UserDefaults.standard.set(defaultPrefsValue, forKey: "scheduleUrl")
         }
         
     }

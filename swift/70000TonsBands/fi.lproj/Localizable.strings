@@ -55,11 +55,14 @@
 
 "LastYearsFeatureExplication"="'Käytä viime vuoden tietoja'-valinta näyttää viime vuoden aikataulut, mutta sovittaa aikataulun kuluvan viikon torstaista sunnuntaihin. Tämä on tarkoitettu esittelyä ja aikataulun ominaisuuksien testaamista varten.";
 
-//"restarTitle" = "Restart Required";
-//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
-
 "restarTitle" = "Vaatii uudelleenkäynnistyksen";
 "restartMessage" = "ÄLÄ TEE NÄIN LAIVALLA. VAATII INTERNET-YHTEYDEN. Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä. 70K Bändit suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot";
+
+
+"officialWebSiteLinkHelp" = "Otat sinut viralliselle sivustolle";
+"WikipediaLinkHelp" = "Etsitään Wikipediaa";
+"YouTubeLinkHelp" = "Hae YouTubesta virallisia videoita varten";
+"MetalArchiveLinkHelp" = "Metal-arkistojen etsiminen";
 
 
 

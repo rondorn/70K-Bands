@@ -57,9 +57,10 @@
 
 "LastYearsFeatureExplication"="Das Aktivieren von 'Daten des letzten Jahres verwenden' lädt die Daten des letzten Jahres und wird dann anhand der aktuellen Woche eine simulierte Running Order der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen. ";
 
-//"restarTitle" = "Restart Required";
-//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
-
-
 "restarTitle" = "Neustart erforderlich";
 "restartMessage"  = "NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.";
+
+"officialWebSiteLinkHelp" = "Weiterleitung zur offiziellen Website";
+"WikipediaLinkHelp" = "Wikipedia durchsuchen";
+"YouTubeLinkHelp" = "YouTube nach offiziellen Videos durchsuchen";
+"MetalArchiveLinkHelp" = "Durchsuchen von Metal-Archiven";

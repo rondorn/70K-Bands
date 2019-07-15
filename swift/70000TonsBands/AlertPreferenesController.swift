@@ -247,7 +247,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
         self.MinBeforeAlert.delegate = self
         
-        if (defaults.string(forKey: "scheduleUrl") == lastYearsScheduleUrlDefault){
+        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
             UseLastYearsData.isOn = true
         } else {
             UseLastYearsData.isOn = false
@@ -471,8 +471,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         print ("Files were Ok, Pressed")
         if (UseLastYearsData.isOn == true){
             print ("Files were Seeing last years data")
-            defaults.setValue(lastYearsartistUrlDefault, forKey: "artistUrl")
-            defaults.setValue(lastYearsScheduleUrlDefault, forKey: "scheduleUrl")
+            defaults.setValue(lastYearSetting, forKey: "artistUrl")
+            defaults.setValue(lastYearSetting, forKey: "scheduleUrl")
             defaults.setValue(true, forKey: "hideExpireScheduleData")
             
         } else {
