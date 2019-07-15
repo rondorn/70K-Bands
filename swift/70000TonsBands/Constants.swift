@@ -105,6 +105,7 @@ var listeningPartyType = "Listening Party"
 var specialEventType = "Special Event"
 var unofficalEventTypeOld = "Unofficial Event"
 var unofficalEventType = "Cruiser Organized"
+var karaokeEventType = "Karaoke";
 
 var poolVenueText = "Pool"
 var rinkVenueText = "Rink"
@@ -146,12 +147,11 @@ var artistUrlDefault = ""
 var scheduleUrlDefault = ""
 
 let defaultPrefsValue = "Default";
+let lastYearSetting = "lastYear"
+let testingSetting = "Testing"
 
-let lastYearsartistUrlDefault = "lastYear"
-let lastYearsScheduleUrlDefault = "lastYear"
-
-//let defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
-let defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"
@@ -226,6 +226,10 @@ func getDocumentsDirectory() -> NSString {
 func getPointerUrlData(keyValue: String) -> String {
     
     var url = String()
+    
+    if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
+        defaultStorageUrl = defaultStorageUrlTest
+    }
     
     //returned cached data when needed. Will only look up pointer data on launch as this
     //does not change very often during the year
@@ -305,7 +309,7 @@ func setupDefaults() {
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
     eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!;
 
-    if (UserDefaults.standard.string(forKey: "scheduleUrl") == "lastYear"){
+    if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1
     }
     
