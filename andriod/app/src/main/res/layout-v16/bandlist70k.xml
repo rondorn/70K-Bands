@@ -14,5 +14,6 @@
     app:autoSizeMinTextSize="3sp"
     app:autoSizeMaxTextSize="15sp"
     app:autoSizeStepGranularity="1sp"
+    android:background="#ffffffff"
     android:maxLines="1"
     xmlns:tools="http://schemas.android.com/tools" />

@@ -2,6 +2,7 @@ package com.Bands70k;
 
 import android.content.Context;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
@@ -155,8 +156,21 @@ public class staticVariables {
     public static Boolean loadingNotes = false;
     public static Boolean schedulingAlert = false;
 
-    public static Integer alertTracker = 0;
+    public static Integer graphicMustSeeAlt = R.drawable.icon_going_yes_alt;
+    public static Integer graphicMustSee = R.drawable.icon_going_yes;
+    public static Integer graphicMightSeeAlt = R.drawable.icon_going_maybe_alt;
+    public static Integer graphicMightSee = R.drawable.icon_going_maybe;
+    public static Integer graphicWontSeeAlt = R.drawable.icon_going_no_alt;
+    public static Integer graphicWontSee = R.drawable.icon_going_no;
+    public static Integer graphicUnknownSeeAlt = R.drawable.icon_unknown_alt;
+    public static Integer graphicUnknownSee = R.drawable.icon_unknown;
+    public static Integer graphicAttended = R.drawable.icon_seen;
+    public static Integer graphicAttendedAlt = R.drawable.icon_seen_alt;
+    public static Integer graphicPartiallyAttended = R.drawable.icon_partially_seen;
+    public static Integer graphicAlphaSort = R.drawable.icon_sort_az;
+    public static Integer graphicTimeSort = R.drawable.icon_sort_time;
 
+    public static Integer alertTracker = 0;
 
     public static Set<String> alertMessages = new HashSet<String>();
 
