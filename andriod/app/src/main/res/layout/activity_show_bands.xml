@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffff"
+    android:background="#FF000000"
     android:id="@+id/showBandsView"
     android:gravity="top">
 
@@ -10,7 +10,7 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="40dp"
-        android:background="#ffffffff"
+        android:background="#FF000000"
         android:layout_gravity="center_horizontal|left">
 
         <Button
@@ -20,10 +20,10 @@
             android:textOff="Filters"
             android:textOn="Filters"
             android:id="@+id/filterMenu"
-            android:background="@android:color/white"
+            android:background="@android:color/black"
             android:width="100dp"
             android:textStyle="normal"
-            android:textColor="@android:color/holo_blue_dark"
+            android:textColor="@android:color/black"
             android:enabled="true"
             android:textSize="14dp" />
 
@@ -42,8 +42,8 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="30dp"
-        android:background="#ffffffff">
+        android:layout_marginTop="10dp"
+        android:background="#FF000000">
 
         <View
             android:layout_width="0dp"
@@ -51,14 +51,14 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:id="@+id/mustSeeFilter"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/icon_going_yes"
             android:text="MustSeeFilter"
             android:textOff=""
-            android:textOn=""
-            android:id="@+id/mustSeeFilter"
-            android:background="@drawable/beer_mug"
-            android:layout_marginLeft="5dp" />
+            android:textOn="" />
 
         <View
             android:layout_width="0dp"
@@ -66,13 +66,13 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:text="50dp"
             android:textOff=""
             android:textOn=""
             android:id="@+id/mightSeeFilter"
-            android:background="@drawable/heavy_checkmark" />
+            android:background="@drawable/icon_going_maybe" />
 
         <View
             android:layout_width="0dp"
@@ -80,14 +80,14 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:text="Wont"
             android:id="@+id/wontSeeFilter"
             android:textOff=""
             android:textOn=""
             android:textSize="30dp"
-            android:background="@drawable/no_entrysign"
+            android:background="@drawable/icon_going_no"
             android:layout_marginTop="10dp" />
 
         <View
@@ -96,14 +96,14 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="24dp"
+            android:layout_height="36dp"
             android:text="Unknown"
             android:id="@+id/unknownFilter"
             android:textOff=""
             android:textOn=""
             android:textSize="30dp"
-            android:background="@drawable/black_questionmark"
+            android:background="@drawable/icon_unknown"
             android:layout_marginTop="10dp" />
 
         <View
@@ -112,14 +112,14 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="56dp"
+            android:layout_height="36dp"
             android:text="willAttend"
             android:id="@+id/willAttendFilter"
             android:textOff=""
             android:textOn=""
             android:textSize="30dp"
-            android:background="@drawable/ticket_icon_alt"
+            android:background="@drawable/icon_seen_alt"
             android:layout_marginTop="10dp" />
 
         <View
@@ -128,10 +128,9 @@
             android:layout_weight="1" />
 
         <Button
-            android:layout_width="35dp"
-            android:layout_height="35dp"
             android:id="@+id/sort"
-            android:backgroundTint="@color/background_floating_material_dark" />
+            android:layout_width="35dp"
+            android:layout_height="32dp" />
 
         <View
             android:layout_width="0dp"
@@ -140,11 +139,11 @@
 
 
         <Button
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:text=""
             android:id="@+id/shareButton"
-            android:background="@android:drawable/ic_menu_share" />
+            android:background="@drawable/icon_share" />
 
         <View
             android:layout_width="0dp"
@@ -152,11 +151,11 @@
             android:layout_weight="1" />
 
         <Button
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:text=""
             android:id="@+id/preferences"
-            android:background="@android:drawable/ic_menu_preferences" />
+            android:background="@drawable/icon_gear" />
 
         <View
             android:layout_width="0dp"
@@ -169,7 +168,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_marginTop="70dp"
-            android:background="#ffffffff"
+            android:background="#FF000000"
             android:layout_gravity="bottom"
             android:id="@+id/listViewLayout"
             android:orientation="horizontal">
@@ -185,7 +184,7 @@
                     android:id="@+id/bandNames"
                     android:stackFromBottom="false"
                     android:layout_gravity="top"
-                    android:background="#ffffffff"
+                    android:background="#FF000000"
                     android:clickable="true"
                     android:cacheColorHint="@android:color/transparent"
                     android:listSelector="@android:color/transparent"

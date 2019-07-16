@@ -224,7 +224,6 @@ public class showBands extends Activity {
         final Integer menuWidth = screenWidth/8;
 
         adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, sortedList);
-
         bandNamesList.setAdapter(adapter);
         //TextView textProperties = (TextView)bandNamesList.findViewById(R.id.text1);
         //textProperties.setMaxLines(1);
@@ -237,7 +236,7 @@ public class showBands extends Activity {
                 //create an action that will be showed on swiping an item in the list
                 SwipeMenuItem item1 = new SwipeMenuItem(
                         getApplicationContext());
-                item1.setBackground(new ColorDrawable(Color.WHITE));
+                item1.setBackground(new ColorDrawable(Color.BLACK));
                 item1.setWidth(menuWidth);
                 item1.setTitle(mustSeeIcon);
                 item1.setTitleSize(25);
@@ -246,7 +245,7 @@ public class showBands extends Activity {
 
                 SwipeMenuItem item2 = new SwipeMenuItem(
                         getApplicationContext());
-                item2.setBackground(new ColorDrawable(Color.WHITE));
+                item2.setBackground(new ColorDrawable(Color.BLACK));
                 item2.setWidth(menuWidth);
                 item2.setTitle(mightSeeIcon);
                 item2.setTitleSize(25);
@@ -255,7 +254,7 @@ public class showBands extends Activity {
 
                 SwipeMenuItem item3 = new SwipeMenuItem(
                         getApplicationContext());
-                item3.setBackground(new ColorDrawable(Color.WHITE));
+                item3.setBackground(new ColorDrawable(Color.BLACK));
                 item3.setWidth(menuWidth);
                 item3.setTitle(wontSeeIcon);
                 item3.setTitleSize(25);
@@ -264,7 +263,7 @@ public class showBands extends Activity {
 
                 SwipeMenuItem item4 = new SwipeMenuItem(
                         getApplicationContext());
-                item4.setBackground(new ColorDrawable(Color.WHITE));
+                item4.setBackground(new ColorDrawable(Color.BLACK));
                 item4.setWidth(menuWidth);
                 item4.setTitle(unknownIcon);
                 item4.setTitleSize(25);
@@ -277,7 +276,7 @@ public class showBands extends Activity {
                 if (listHandler.allUpcomingEvents >= 1) {
                     SwipeMenuItem item5 = new SwipeMenuItem(
                             getApplicationContext());
-                    item5.setBackground(new ColorDrawable(Color.WHITE));
+                    item5.setBackground(new ColorDrawable(Color.BLACK));
                     item5.setWidth(menuWidth);
                     item5.setTitle(attendedShowIcon);
                     item5.setTitleSize(25);
@@ -530,7 +529,7 @@ public class showBands extends Activity {
             HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterTrueHelp));
 
             filterButton.setVisibility(View.INVISIBLE);
-            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon));
+            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttended));
             showAttendedFilterButton.setChecked(true);
             staticVariables.preferences.setShowWillAttend(true);
             turnOffMustMightWont();
@@ -539,7 +538,7 @@ public class showBands extends Activity {
             HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterFalseHelp));
 
             filterButton.setVisibility(View.VISIBLE);
-            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon_alt));
+            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttendedAlt));
             showAttendedFilterButton.setChecked(false);
             staticVariables.preferences.setShowWillAttend(false);
             setFilterDefaults();
@@ -549,19 +548,19 @@ public class showBands extends Activity {
 
     private void turnOffMustMightWont(){
         ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
-        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
         mustFilterButton.setEnabled(false);
 
         ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
-        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
         mightFilterButton.setEnabled(false);
 
         ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
-        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
         wontFilterButton.setEnabled(false);
 
         ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
-        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
         unknownFilterButton.setEnabled(false);
     }
 
@@ -575,44 +574,44 @@ public class showBands extends Activity {
 
             ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
             if (staticVariables.preferences.getShowMust() == true) {
-                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
                 mustFilterButton.setChecked(false);
                 filterToogle.put(mustSeeIcon, true);
             } else {
-                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
                 mustFilterButton.setChecked(true);
                 filterToogle.put(mustSeeIcon, false);
             }
 
             ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
             if (staticVariables.preferences.getShowMight() == true) {
-                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
                 mightFilterButton.setChecked(false);
                 filterToogle.put(mightSeeIcon, true);
             } else {
-                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
                 mightFilterButton.setChecked(true);
                 filterToogle.put(mightSeeIcon, false);
             }
 
             ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
             if (staticVariables.preferences.getShowWont() == true) {
-                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
                 wontFilterButton.setChecked(false);
                 filterToogle.put(wontSeeIcon, true);
             } else {
-                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
                 wontFilterButton.setChecked(true);
                 filterToogle.put(wontSeeIcon, false);
             }
 
             ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
             if (staticVariables.preferences.getShowUnknown() == true) {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
                 unknownFilterButton.setChecked(false);
                 filterToogle.put(unknownIcon, true);
             } else {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
                 unknownFilterButton.setChecked(true);
                 filterToogle.put(unknownIcon, false);
             }
@@ -631,13 +630,13 @@ public class showBands extends Activity {
             showAttendedFilterButton.setVisibility(View.VISIBLE);
 
             if (staticVariables.preferences.getShowWillAttend() == true) {
-                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon));
+                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttended));
                 showAttendedFilterButton.setChecked(true);
 
                 turnOffMustMightWont();
 
             } else {
-                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.ticket_icon_alt));
+                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttendedAlt));
                 showAttendedFilterButton.setChecked(false);
                 staticVariables.preferences.setShowWillAttend(false);
             }
@@ -688,7 +687,7 @@ public class showBands extends Activity {
     public void setupButtonFilters(){
 
         ToggleButton mustFilterButton = (ToggleButton)findViewById(R.id.mustSeeFilter);
-        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
 
         if (filterToogle.get(mustSeeIcon) == true) {
             setMustFilterButton(mustFilterButton, false);
@@ -698,7 +697,7 @@ public class showBands extends Activity {
         }
 
         ToggleButton mightFilterButton = (ToggleButton)findViewById(R.id.mightSeeFilter);
-        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
 
         if (filterToogle.get(mightSeeIcon) == true) {
             setMightFilterButton(mightFilterButton, false);
@@ -707,7 +706,7 @@ public class showBands extends Activity {
         }
 
         ToggleButton wontFilterButton = (ToggleButton)findViewById(R.id.wontSeeFilter);
-        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
 
         if (filterToogle.get(wontSeeIcon) == true) {
             setWontFilterButton(wontFilterButton, false);
@@ -717,7 +716,7 @@ public class showBands extends Activity {
         }
 
         ToggleButton unknownFilterButton = (ToggleButton)findViewById(R.id.unknownFilter);
-        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
+        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
 
         if (filterToogle.get(unknownIcon) == true) {
             setUnknownFilterButton(unknownFilterButton, false);
@@ -731,10 +730,10 @@ public class showBands extends Activity {
 
     private void setMustFilterButton(ToggleButton filterButton, Boolean setTo){
         if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
             staticVariables.preferences.setshowMust(true);
         } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.beer_mug_alt));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
             staticVariables.preferences.setshowMust(false);
         }
 
@@ -752,10 +751,10 @@ public class showBands extends Activity {
     }
     private void setMightFilterButton(ToggleButton filterButton, Boolean setTo){
         if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
             staticVariables.preferences.setshowMight(true);
         } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.heavy_checkmark_alt));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
             staticVariables.preferences.setshowMight(false);
         }
         filterButton.setChecked(setTo);
@@ -769,10 +768,10 @@ public class showBands extends Activity {
     }
     private void setWontFilterButton(ToggleButton filterButton, Boolean setTo){
         if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
             staticVariables.preferences.setshowWont(true);
         } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.no_entrysign_alt));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
             staticVariables.preferences.setshowWont(false);
         }
         filterButton.setChecked(setTo);
@@ -786,10 +785,10 @@ public class showBands extends Activity {
     }
     private void setUnknownFilterButton(ToggleButton filterButton, Boolean setTo){
         if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
             staticVariables.preferences.setshowUnknown(true);
         } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.black_questionmark_alt));
+            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
             staticVariables.preferences.setshowUnknown(false);
         }
         filterButton.setChecked(setTo);
@@ -1079,10 +1078,10 @@ public class showBands extends Activity {
             sortButton.setClickable(true);
             sortButton.setVisibility(View.VISIBLE);
             if (staticVariables.preferences.getSortByTime() == true) {
-                sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_alphabetically));
+                sortButton.setBackground(getResources().getDrawable(staticVariables.graphicAlphaSort));
                 staticVariables.preferences.setSortByTime(true);
             } else {
-                sortButton.setBackground(getResources().getDrawable(android.R.drawable.ic_menu_sort_by_size));
+                sortButton.setBackground(getResources().getDrawable(staticVariables.graphicTimeSort));
                 staticVariables.preferences.setSortByTime(false);
             }
         } else {
