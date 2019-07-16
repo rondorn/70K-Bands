@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_marginBottom="0dp"
+    android:layout_marginTop="0dp"
+    android:focusableInTouchMode="true">
+
+    <ImageView
+        android:id="@drawable/icon_seen_alt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:paddingRight="10dp"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/fruitName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@drawable/icon_seen_alt"
+        android:layout_centerVertical="true"
+        android:paddingTop="10dp"
+        android:text="Cherry"/>
+
+    <TextView
+        android:id="@+id/calories"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingTop="10dp"
+        android:paddingRight="10dp"/>
+</RelativeLayout>
