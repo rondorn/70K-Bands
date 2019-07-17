@@ -1,18 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView
+<android.support.percent.PercentRelativeLayout
+
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@android:id/text1"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
-    android:gravity="center_vertical"
-    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
-    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
-    android:textAppearance="?android:attr/textAppearanceListItemSmall"
-    android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    android:autoSizeTextType="uniform"
-    android:autoSizeMinTextSize="3sp"
-    android:autoSizeMaxTextSize="15sp"
-    android:autoSizeStepGranularity="1sp"
-    android:background="#ffffffff"
-    android:maxLines="1"
-    xmlns:tools="http://schemas.android.com/tools" />
+    android:layout_height="70dp"
+    android:background="#FF000000"
+    android:id="@+id/Cell">
+
+    <TextView
+        android:id="@+id/bandNameInCell"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:height="35dp"
+        android:text="Band Name"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="8sp"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeStepGranularity="2sp"
+        android:textSize="14pt"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:layout_widthPercent="80%" />
+
+    <TextView
+        android:id="@+id/locationInCell"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="34dp"
+        android:height="35dp"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="5sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:text="Location"
+        android:textColor="#D3D3D3"
+        app:layout_widthPercent="40%" />
+
+    <TextView
+        android:id="@+id/locationColorInCell"
+        android:layout_width="5dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="35dp"
+        android:height="35dp"
+        android:background="#FFC4AC00"
+        android:text="" />
+
+    <ImageView
+        android:id="@+id/eventTypeInCell"
+        android:layout_width="29dp"
+        android:layout_height="32dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="170dp"
+        android:layout_marginTop="37dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="The Event Type Icon"
+        android:src="@drawable/icon_all_star_jam" />
+
+    <ImageView
+        android:id="@+id/rankingInCell"
+        android:layout_width="29dp"
+        android:layout_height="32dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="206dp"
+        android:layout_marginTop="37dp"
+        android:background="#FF000000"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_going_yes" />
+
+    <ImageView
+        android:id="@+id/attendedInCell"
+        android:layout_width="45dp"
+        android:layout_height="32dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="240dp"
+        android:layout_marginTop="38dp"
+        android:background="#FF000000"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_seen" />
+
+    <TextView
+        android:id="@+id/timeInCell"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="291dp"
+        android:layout_marginTop="40dp"
+        android:height="30dp"
+        android:textSize="10pt"
+        android:gravity="right"
+        android:text="Time"
+        android:textAlignment="gravity"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="1sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:inputType="none"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#D3D3D3"
+        app:layout_widthPercent="16%" />
+
+    <TextView
+        android:id="@+id/dayLabelInCell"
+        android:layout_width="40dp"
+        android:layout_height="25dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="355dp"
+        android:layout_marginTop="0dp"
+        android:height="35dp"
+        android:gravity="center_horizontal"
+        android:textAlignment="gravity"
+        android:text="Day"
+        android:textColor="#f8f8ff"
+        android:background="#FFB8B8B8"
+        android:textSize="6pt" />
+
+    <TextView
+        android:id="@+id/dayInCell"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="355dp"
+        android:layout_marginTop="25dp"
+        android:height="45dp"
+        android:width="40dp"
+        android:gravity="center_horizontal"
+        android:textAlignment="gravity"
+        android:text="2/28"
+        android:textColor="#f8f8ff"
+        android:background="#FFB8B8B8"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="1sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:inputType="none"
+        android:maxLines="1"
+        android:ellipsize="end"
+        />
+</android.support.percent.PercentRelativeLayout>

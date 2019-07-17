@@ -223,7 +223,7 @@ public class showBands extends Activity {
         Integer screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         final Integer menuWidth = screenWidth/8;
 
-        adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, sortedList);
+        adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, sortedList);
         bandNamesList.setAdapter(adapter);
         //TextView textProperties = (TextView)bandNamesList.findViewById(R.id.text1);
         //textProperties.setMaxLines(1);
@@ -885,9 +885,12 @@ public class showBands extends Activity {
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
 
-            ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
+            //ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
+            //bandNamesList.setAdapter(arrayAdapter);
 
-            bandNamesList.setAdapter(arrayAdapter);
+            adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, bandNames);
+            bandNamesList.setAdapter(adapter);
+
             bandNamesList.requestLayout();
 
             Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
@@ -920,9 +923,13 @@ public class showBands extends Activity {
 
                 bandNames.add("Waiting for data to load, please standby....");
             }
-            ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
 
-            bandNamesList.setAdapter(arrayAdapter);
+            //ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
+            //bandNamesList.setAdapter(arrayAdapter);
+
+            adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, bandNames);
+            bandNamesList.setAdapter(adapter);
+
             Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
             bandNamesList.setSelection(listPosition);
 
@@ -1092,7 +1099,9 @@ public class showBands extends Activity {
 
     public ListAdapter updateList(BandInfo bandInfo, ArrayList<String> bandList){
 
+
         listHandler = new mainListHandler(showBands.this);
+
         try {
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
         } catch (Exception error){
@@ -1114,7 +1123,6 @@ public class showBands extends Activity {
         setShowAttendedFilterButton();
 
         ListAdapter arrayAdapter = listHandler.arrayAdapter;
-
 
         return arrayAdapter;
     }
@@ -1171,9 +1179,12 @@ public class showBands extends Activity {
                 BandInfo bandInfo = new BandInfo();
                 ArrayList<String> bandList = bandInfo.getBandNames();
 
-                ListAdapter arrayAdapter = updateList(bandInfo, bandList);
+                //ListAdapter arrayAdapter = updateList(bandInfo, bandList);
+                //showBands.this.bandNamesList.setAdapter(arrayAdapter);
 
-                showBands.this.bandNamesList.setAdapter(arrayAdapter);
+                //adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, bandList);
+                //bandNamesList.setAdapter(adapter);
+
                 showBands.this.bandNamesList.setVisibility(View.VISIBLE);
                 showBands.this.bandNamesList.requestLayout();
 
