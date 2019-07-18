@@ -36,6 +36,30 @@ public class rankStore {
         return icon;
     }
 
+    public static Integer getRankImageForBand (String bandName){
+
+        Integer imageId = 0;
+
+        if (bandRankings.get(bandName) == null){
+            imageId = 0;
+        } else {
+            String ranking = bandRankings.get(bandName);
+
+            if (ranking.equals(staticVariables.mustSeeKey)) {
+                imageId = staticVariables.graphicMustSee;
+
+            } else if (ranking.equals(staticVariables.mightSeeKey)){
+                imageId = staticVariables.graphicMightSee;
+
+            } else if (ranking.equals(staticVariables.wontSeeKey)){
+                imageId = staticVariables.graphicWontSee;
+
+            }
+        }
+
+        return imageId;
+    }
+
     public static Map<String, String> getBandRankings (){
 
         if (bandRankings.isEmpty() == true){
