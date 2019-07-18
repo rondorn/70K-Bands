@@ -33,7 +33,14 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
     static class bandListHolder{
         ImageView rankImage;
+        ImageView eventTypeImage;
+        ImageView attendedImage;
         TextView bandName;
+        TextView location;
+        TextView locationColor;
+        TextView day;
+        TextView time;
+
     }
 
     public void setBandInfoList(List<bandListItem> bandInfoList){
@@ -55,16 +62,6 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         super.add(object);
     }
 
-    /*
-    public bandListView(Activity activity, int resourceId, List<String> objects){
-        super(activity, resourceId, objects);
-        layout = resourceId;
-        inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-
-    }
-    */
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
@@ -75,7 +72,13 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             row = inflater.inflate(R.layout.bandlist70k, parent, false);
             viewHolder = new bandListHolder();
             viewHolder.rankImage = (ImageView) row.findViewById(R.id.rankingInCell);
+            viewHolder.eventTypeImage = (ImageView) row.findViewById(R.id.eventTypeInCell);
+            viewHolder.attendedImage = (ImageView) row.findViewById(R.id.attendedInCell);
             viewHolder.bandName = (TextView) row.findViewById(R.id.bandNameInCell);
+            viewHolder.location = (TextView) row.findViewById(R.id.locationInCell);
+            viewHolder.locationColor = (TextView) row.findViewById(R.id.locationColorInCell);
+            viewHolder.day = (TextView) row.findViewById(R.id.dayInCell);
+            viewHolder.time = (TextView) row.findViewById(R.id.timeInCell);
             row.setTag(viewHolder);
         } else {
             viewHolder = (bandListHolder)row.getTag();
@@ -83,10 +86,26 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
         bandListItem bandData = getItem(position);
 
-        Log.d("displayingList", "working on bandName " + bandData.getBandName() + " position " + String.valueOf(position));
+        //Log.d("displayingList", "working on bandName " + bandData.getBandName() + " position " + String.valueOf(position));
+        Log.d("displayingList", "working on bandName " + bandData.getBandName() + " color " + bandData.getLocationColor());
 
         viewHolder.rankImage.setImageResource(bandData.getRankImg());
+        viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
+        viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
         viewHolder.bandName.setText(bandData.getBandName());
+        viewHolder.location.setText(bandData.getLocation());
+
+        String locationColorChoice = bandData.getLocationColor();
+
+        if (locationColorChoice != null){
+            viewHolder.locationColor.setBackgroundColor(Color.parseColor(locationColorChoice));
+
+        } else {
+            viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
+        }
+
+        viewHolder.day.setText(bandData.getDay());
+        viewHolder.time.setText(bandData.getStartTime());
 
         return row;
 

@@ -40,20 +40,25 @@ public class rankStore {
 
         Integer imageId = 0;
 
-        if (bandRankings.get(bandName) == null){
+        String ranking = bandRankings.get(bandName);
+
+        Log.d("ReturningRankOf ", "Returning Rank Of " + ranking + " for " + bandName);
+
+        if (ranking == null){
             imageId = 0;
         } else {
-            String ranking = bandRankings.get(bandName);
 
-            if (ranking.equals(staticVariables.mustSeeKey)) {
+            if (ranking.equals(staticVariables.mustSeeIcon)) {
                 imageId = staticVariables.graphicMustSee;
 
-            } else if (ranking.equals(staticVariables.mightSeeKey)){
+            } else if (ranking.equals(staticVariables.mightSeeIcon)){
                 imageId = staticVariables.graphicMightSee;
 
-            } else if (ranking.equals(staticVariables.wontSeeKey)){
+            } else if (ranking.equals(staticVariables.wontSeeIcon)){
                 imageId = staticVariables.graphicWontSee;
 
+            } else {
+                imageId = 0;
             }
         }
 

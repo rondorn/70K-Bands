@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.app.PendingIntent;
+import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
@@ -16,6 +17,8 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.Bands70k.staticVariables.context;
 
 /**
  * Created by rdorn on 6/5/16.
@@ -43,6 +46,8 @@ public class FileHandler70k {
     public static final File descriptionMapFile = new File(showBands.newRootDir + directoryName + "70kbandDescriptionMap.csv");
     public static final File showsAttendedFile = new File(showBands.newRootDir + directoryName + "showsAtteded.data");
 
+
+    public static final File bandListCache = new File(showBands.newRootDir + directoryName + "bandListCache.data");
 
     public static final File oldBandRankings = new File(oldRootDir + oldDirectoryName + "bandRankings.txt");
 
@@ -156,5 +161,36 @@ public class FileHandler70k {
             Log.e("Save Data Error", error.getMessage());
         }
 
+    }
+
+    public static void writeObject (Object object, File fileHandle){
+
+        try {
+            FileOutputStream fos = context.openFileOutput(bandListCache.getAbsolutePath(), Context.MODE_PRIVATE);
+             ObjectOutputStream os = new ObjectOutputStream(fos);
+            os.writeObject(object);
+            os.close();
+            fos.close();
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+    }
+
+    public static mainListHandler readmainListHandlerCache (File fileHandle){
+
+        Log.d("loadingpopulateBandInfo", "From cached data");
+        mainListHandler mainListHandle = new mainListHandler();
+
+        try {
+            FileInputStream fis = context.openFileInput(fileHandle.getAbsolutePath());
+            ObjectInputStream is = new ObjectInputStream(fis);
+            mainListHandle = (mainListHandler) is.readObject();
+            is.close();
+            fis.close();
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+
+        return mainListHandle;
     }
 }
