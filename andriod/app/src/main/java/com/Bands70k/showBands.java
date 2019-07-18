@@ -28,9 +28,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -59,7 +61,7 @@ public class showBands extends Activity {
     public static String newRootDir =  Environment.getExternalStorageDirectory().toString();
 
     private ArrayList<String> bandNames;
-    public List<String> scheduleSortedBandNames;
+    public List<String> scheduleSortedBandNames = new ArrayList<String>();
 
     private SwipeMenuListView bandNamesList;
     private SwipeRefreshLayout bandNamesPullRefresh;
@@ -80,7 +82,8 @@ public class showBands extends Activity {
     private boolean isReceiverRegistered;
 
     private mainListHandler listHandler;
-    private CustomArrayAdapter adapter;
+    private bandListView adapter;
+    private ListView listView;
 
     // inside my class
     private static final String[] INITIAL_PERMS = {
@@ -223,8 +226,10 @@ public class showBands extends Activity {
         Integer screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         final Integer menuWidth = screenWidth/8;
 
-        adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, sortedList);
-        bandNamesList.setAdapter(adapter);
+        //adapter = new bandListView(this, R.layout.bandlist70k);
+        displayBandData(bandNames);
+
+
         //TextView textProperties = (TextView)bandNamesList.findViewById(R.id.text1);
         //textProperties.setMaxLines(1);
 
@@ -340,6 +345,7 @@ public class showBands extends Activity {
 
     private void setupOnSwipeListener(){
 
+        /*
         bandNamesList.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
 
             @Override
@@ -394,6 +400,7 @@ public class showBands extends Activity {
                 return false;
             }
         });
+        */
     }
 
     private void showNotification(){
@@ -885,13 +892,10 @@ public class showBands extends Activity {
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
 
-            //ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
-            //bandNamesList.setAdapter(arrayAdapter);
+            adapter = new bandListView(this, R.layout.bandlist70k);
+            //bandNamesList.setAdapter(adapter);
 
-            adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, bandNames);
-            bandNamesList.setAdapter(adapter);
-
-            bandNamesList.requestLayout();
+            displayBandData(rankedBandNames);
 
             Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
             bandNamesList.setSelection(listPosition);
@@ -900,6 +904,80 @@ public class showBands extends Activity {
             alerts.execute();
 
         }
+    }
+
+    private void displayBandData(List<String> bandNames){
+
+
+        adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+        bandNamesList.setAdapter(adapter);
+
+        displayBandDataWithSchedule(adapter);
+        /*
+        for(String bandName : bandNames ) {
+
+            bandListItem bandItem = new bandListItem(bandName);
+            bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
+
+            adapter.add(bandItem);
+        }
+        */
+    }
+
+    private void displayBandDataOnly(List<String> bandNames){
+
+
+    }
+
+    private void displayBandDataWithSchedule(bandListView adapter){
+
+        BandInfo bandInfoNames = new BandInfo();
+        bandInfoNames.DownloadBandFile();
+
+        bandNames = bandInfoNames.getBandNames();
+
+        listHandler = new mainListHandler(showBands.this);
+
+        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+
+        Integer counter = 0;
+        for (String bandIndex: scheduleSortedBandNames){
+
+            Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex " + bandIndex);
+
+            String[] indexSplit = bandIndex.split(":");
+            String bandName = indexSplit[1];
+            Long timeIndex;
+
+            try {
+                timeIndex = Long.valueOf(indexSplit[0]);
+
+            } catch(NumberFormatException e){
+                timeIndex = Long.valueOf(0);
+            }
+
+            String eventYear = String.valueOf(staticVariables.eventYear);
+            if (timeIndex > 0) {
+
+                if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
+
+                    String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
+                    String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
+                    String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+                    String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
+                }
+            }
+
+            bandListItem bandItem = new bandListItem(bandName);
+            bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
+
+            adapter.add(bandItem);
+
+        }
+
+        //setTextAppearance(context, android.R.attr.textAppearanceMedium)
+        //arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, displayableBandList);
+
     }
 
 
@@ -927,8 +1005,10 @@ public class showBands extends Activity {
             //ListAdapter arrayAdapter = updateList(bandInfo, bandNames);
             //bandNamesList.setAdapter(arrayAdapter);
 
-            adapter = new CustomArrayAdapter(this, R.layout.bandlist70k, bandNames);
-            bandNamesList.setAdapter(adapter);
+            //adapter = new bandListView(this, R.layout.bandlist70k);
+            //bandNamesList.setAdapter(adapter);
+
+            displayBandData(bandNames);
 
             Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
             bandNamesList.setSelection(listPosition);
@@ -1101,6 +1181,12 @@ public class showBands extends Activity {
 
 
         listHandler = new mainListHandler(showBands.this);
+
+        //bandListItem
+
+        for (String bandName : bandList){
+
+        }
 
         try {
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
