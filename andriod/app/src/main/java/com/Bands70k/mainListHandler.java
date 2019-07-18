@@ -39,6 +39,8 @@ public class mainListHandler {
 
     public Integer allUpcomingEvents = 0;
 
+    public mainListHandler(){ }
+
     public mainListHandler(showBands showBandsValue){
         showBands = showBandsValue;
     }
@@ -47,8 +49,14 @@ public class mainListHandler {
 
     private Map<Integer,String> attendedListMap = new HashMap<Integer,String>();
 
+    public List<String> getSortableBandNames(){
+        return sortableBandNames;
+    }
+
+    
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
+        Log.d("loadingpopulateBandInfo", "From live data");
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, bandList);
 
         List<String> bandPresent = new ArrayList<String>();
@@ -119,6 +127,8 @@ public class mainListHandler {
         bandCount.setText(this.getSizeDisplay());
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
+
+        FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         return sortableBandNames;
     }
 

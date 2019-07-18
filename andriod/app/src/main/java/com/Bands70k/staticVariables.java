@@ -91,6 +91,13 @@ public class staticVariables {
     public final static String listeningEvent = "Listening Party";
     public final static String unofficalEvent = "Cruiser Organized";
     public final static String unofficalEventOld = "Unofficial Event";
+    public final static String karaoekeEvent = "Karaoeke";
+
+    public final static String poolVenueColor = "#3478C7";
+    public final static String theaterVenueColor = "#C4AC00";
+    public final static String loungeVenueColor = "#5BA50A";
+    public final static String rinkVenueColor = "#8A0011";
+    public final static String unknownVenueColor = "#A9A9A9";
 
     //schedule file header rows
     public final static String schedBandRow = "Band";
@@ -169,6 +176,11 @@ public class staticVariables {
     public static Integer graphicPartiallyAttended = R.drawable.icon_partially_seen;
     public static Integer graphicAlphaSort = R.drawable.icon_sort_az;
     public static Integer graphicTimeSort = R.drawable.icon_sort_time;
+    public static Integer graphicSpecialEvent = R.drawable.icon_all_star_jam;
+    public static Integer graphicClinicEvent = R.drawable.icon_clinc;
+    public static Integer graphicMeetAndGreetEvent = R.drawable.icon_meet_and_greet;
+    public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
+    public static Integer graphicUnofficalEvent = R.drawable.icon_group_stage;
 
     public static Integer alertTracker = 0;
 
