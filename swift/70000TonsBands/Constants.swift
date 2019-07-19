@@ -120,8 +120,8 @@ var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
-let sawAllColor = UIColor.green
-let sawSomeColor = UIColor.yellow
+let sawAllColor = hexStringToUIColor(hex: "#67C10C")
+let sawSomeColor = hexStringToUIColor(hex: "#F0D905")
 let sawNoneColor = UIColor.white
 let sawAllStatus = "sawAll";
 let sawSomeStatus = "sawSome";

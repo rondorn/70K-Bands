@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.util.ArrayMap;
 import android.util.Log;
 
 
@@ -180,7 +181,9 @@ public class staticVariables {
     public static Integer graphicClinicEvent = R.drawable.icon_clinc;
     public static Integer graphicMeetAndGreetEvent = R.drawable.icon_meet_and_greet;
     public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
-    public static Integer graphicUnofficalEvent = R.drawable.icon_group_stage;
+    public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
+
+    public static Map<String,String> venueLocation =  new HashMap<String, String>();
 
     public static Integer alertTracker = 0;
 
@@ -232,6 +235,8 @@ public class staticVariables {
             userID = Settings.Secure.getString(staticVariables.context.getContentResolver(),
                     Settings.Secure.ANDROID_ID);
         }
+
+        setupVenueLocations();
     }
 
     private static boolean canShowFlagEmoji(String emoji) {
@@ -253,6 +258,17 @@ public class staticVariables {
             // This assumes that a valid glyph for the flag emoji must be less than 1.25 times
             // the width of the penguin.
         }
+    }
+
+    public static void setupVenueLocations(){
+
+        venueLocation.put(poolVenueText, "Deck 11");
+        venueLocation.put(rinkVenueText, "Deck 3");
+        venueLocation.put(loungeVenueText, "Deck 4");
+        venueLocation.put(theaterVenueText, "Deck 3/4");
+        venueLocation.put("Sports Bar", "Deck 4");
+        venueLocation.put("Viking Crown", "Deck 14");
+        venueLocation.put("Boleros Lounge", "Deck 4");
     }
 
     public static String getEventTypeIcon (String eventType){

@@ -18,8 +18,8 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Alert Preferences"
-            android:id="@+id/headerText"
+            android:text="Show Venues"
+            android:id="@+id/headerTextVenues"
             android:layout_gravity="center_horizontal"
             android:gravity="center_horizontal"
             android:textStyle="bold" />
@@ -28,11 +28,257 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="30dp"
-        android:id="@+id/linearLayout">
+        android:id="@+id/linearLayoutVenue">
         <TableLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentTop="true">
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/PoolVenue"
+                    android:id="@+id/poolVenueLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp"
+                    android:width="100dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showPool"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/TheaterVenue"
+                    android:id="@+id/theaterVenueLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showTheater"
+                    android:enabled="true"
+                    android:layout_column="27"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/RinkVenue"
+                    android:id="@+id/rinkVenueLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showRink"
+                    android:enabled="true"
+                    android:layout_column="27"
+                    android:layout_marginLeft="40dp" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/LoungeVenue"
+                    android:id="@+id/loungeVenueLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showLounge"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Other"
+                    android:id="@+id/otherVenueLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showOther"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+        </TableLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="200dp">
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Show Event Type"
+            android:id="@+id/headerTextEventType"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="230dp"
+        android:id="@+id/linearLayoutEvents">
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true">
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/SpecialEvents"
+                    android:id="@+id/specialEventLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp"
+                    android:width="100dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showSpecialEvent"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/MeetAndGreet"
+                    android:id="@+id/meetAndGreetEventLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showMeetAndGreet"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/ClinicEvents"
+                    android:id="@+id/clinicEventLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showClinic"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="@string/AlbumListeningEvents"
+                    android:id="@+id/albumListeningEventLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/showListeningEvent"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="unofficalEventLable"
+                    android:id="@+id/unofficalEventLable"
+                    android:layout_column="9"
+                    android:layout_marginLeft="40dp" />
+
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/unofficalEvent"
+                    android:layout_column="27"
+                    android:enabled="true"
+                    android:layout_marginLeft="40dp" />
+            </TableRow>
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -283,23 +529,37 @@
 
         </TableLayout>
     </LinearLayout>
+
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="470dp"></LinearLayout>
+        android:layout_marginTop="750dp">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Alert Preferences"
+            android:id="@+id/headerText"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="480dp">
+        android:layout_marginTop="800dp">
 
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="----------\nAdvanced Preference.\nDo not modify unless you know what your doing!"
+            android:text="\nAdvanced Preference.\nDo not modify unless you know what your doing!"
             android:id="@+id/headerBandCount"
             android:textAlignment="center"
             android:autoSizeTextType="uniform"
@@ -313,7 +573,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="510dp">
+        android:layout_marginTop="5100dp">
 
     <TableLayout
         android:layout_width="match_parent"
@@ -378,6 +638,7 @@
         android:autoSizeMinTextSize="3sp"
         android:autoSizeMaxTextSize="15sp"
         android:autoSizeStepGranularity="1sp"
+        android:layout_marginTop="6100dp"
         android:maxLines="4"
         android:layout_below="@+id/linearLayout"
         android:layout_centerHorizontal="true"

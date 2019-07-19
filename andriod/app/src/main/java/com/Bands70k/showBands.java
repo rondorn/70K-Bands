@@ -980,13 +980,23 @@ public class showBands extends Activity {
                         String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
                         String day = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowDay();
 
+                        if (day.contains("Day")) {
+                            day = " " + day.replaceAll("Day", "");
+                        }
+
+                        Log.d("PopulatingDayValue", "Day = " + day);
                         startTime = dateTimeFormatter.formatScheduleTime(startTime);
+
+                        bandItem.setLocationColor(iconResolve.getLocationColor(location));
+
+                        if (venueLocation.containsKey(location)) {
+                            location += " " + venueLocation.get(location);
+                        }
 
                         bandItem.setLocation(location);
                         bandItem.setStartTime(startTime);
                         bandItem.setDay(day);
                         bandItem.setEventTypeImage(iconResolve.getEventIcon(eventType));
-                        bandItem.setLocationColor(iconResolve.getLocationColor(location));
                         bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
                     }
                 }
@@ -1011,13 +1021,13 @@ public class showBands extends Activity {
             }
             */
 
-            setFilterButton();
+            //setFilterButton();
 
             //swip stuff
             //setupSwipeList();
 
-            setSortButton();
-            setShowAttendedFilterButton();
+            //setSortButton();
+            //setShowAttendedFilterButton();
         }
     }
 
