@@ -18,6 +18,7 @@ public class dateTimeFormatter {
             try {
 
                 SimpleDateFormat _24HourSDF = new SimpleDateFormat("HH:mm");
+
                 SimpleDateFormat _12HourSDF = new SimpleDateFormat("hh:mm a");
                 Date _24HourDt = _24HourSDF.parse(timeValue);
 
@@ -26,6 +27,8 @@ public class dateTimeFormatter {
                 Log.e("error", "unable to parse time value  " + error.getMessage());
             }
         }
+
+        timeValue = timeValue.replace(" AM", "am").replace(" PM","pm");
 
         return timeValue;
     }

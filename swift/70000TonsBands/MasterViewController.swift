@@ -645,7 +645,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 ToastMessages(message).show(self, cellLocation: placementOfCell!)
             }
         })
-        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
  
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -658,7 +658,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         })
         
         
-        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIcon)!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -670,7 +670,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIcon)!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -682,7 +682,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIcon)!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -694,7 +694,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIcon)!, backColor: UIColor.gray, cellHeight: 44, cellWidth: 105)
+        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]

@@ -44,10 +44,13 @@ func formatTimeValue(timeValue: String) -> String {
     if (timeValue.isEmpty == false){
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "HH:mm"
+        dateFormatter.amSymbol = "am"
+        dateFormatter.pmSymbol = "pm"
+        
         let date = dateFormatter.date(from: timeValue)
         
         if (displayTimeIn24() == false){
-            dateFormatter.dateFormat = "h:mm a"
+            dateFormatter.dateFormat = "h:mma"
         }
         if (date != nil){
             newDate = dateFormatter.string(from: date!)

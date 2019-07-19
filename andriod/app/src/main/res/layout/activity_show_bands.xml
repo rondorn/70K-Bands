@@ -52,8 +52,8 @@
 
         <ToggleButton
             android:id="@+id/mustSeeFilter"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginLeft="5dp"
             android:background="@drawable/icon_going_yes"
             android:text="MustSeeFilter"
@@ -66,8 +66,8 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:text="50dp"
             android:textOff=""
             android:textOn=""
@@ -80,8 +80,8 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:text="Wont"
             android:id="@+id/wontSeeFilter"
             android:textOff=""
@@ -96,8 +96,8 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="24dp"
-            android:layout_height="36dp"
+            android:layout_width="20dp"
+            android:layout_height="32dp"
             android:text="Unknown"
             android:id="@+id/unknownFilter"
             android:textOff=""
@@ -112,8 +112,8 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="56dp"
-            android:layout_height="36dp"
+            android:layout_width="45dp"
+            android:layout_height="25dp"
             android:text="willAttend"
             android:id="@+id/willAttendFilter"
             android:textOff=""
@@ -129,8 +129,9 @@
 
         <Button
             android:id="@+id/sort"
-            android:layout_width="35dp"
-            android:layout_height="32dp" />
+            android:layout_width="32dp"
+            android:layout_height="30dp"
+            android:background="@drawable/icon_sort_az"/>
 
         <View
             android:layout_width="0dp"
@@ -139,8 +140,8 @@
 
 
         <Button
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:text=""
             android:id="@+id/shareButton"
             android:background="@drawable/icon_share" />
@@ -151,8 +152,8 @@
             android:layout_weight="1" />
 
         <Button
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:text=""
             android:id="@+id/preferences"
             android:background="@drawable/icon_gear" />
