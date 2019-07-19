@@ -12,7 +12,7 @@ import UIKit
 let mustSeeIcon = "icon-going-yes"
 let mightSeeIcon = "icon-going-maybe"
 let wontSeeIcon = "icon-going-no"
-let unknownIcon = "icon-unknown-v1"
+let unknownIcon = "icon-unknown"
 
 let mustSeeIconFilterTag = 20
 let mightSeeIconFilterTag = 21
@@ -32,7 +32,7 @@ let specialEventTypeIcon = "icon-all-star-jam";
 let mAndmEventTypeIcon = "icon-meet-and-greet";
 let listeningEventTypeIcon = "icon-all-star-jam";
 let clinicEventTypeIcon = "icon-clinc-v1";
-let unofficalEventTypeIcon = "icon-cruiser-oganized-event";
+let unofficalEventTypeIcon = "icon-unspecified-event";
 let karaokeEventTypeIcon = "icon-karaoke"
 
 //shows attended
@@ -48,10 +48,10 @@ let loungeVenue = "🎤"
 let rinkVenue = "⛸"
 let unknownVenue = "❓"
 
-let poolVenueColor = hexStringToUIColor(hex: "#3478C7")
-let theaterVenueColor = hexStringToUIColor(hex: "#C4AC00")
-let loungeVenueColor = hexStringToUIColor(hex: "#5BA50A")
-let rinkVenueColor = hexStringToUIColor(hex: "#8A0011")
+let poolVenueColor = hexStringToUIColor(hex: "#3885DC")
+let theaterVenueColor = hexStringToUIColor(hex: "#F0D905")
+let loungeVenueColor = hexStringToUIColor(hex: "#67C10C")
+let rinkVenueColor = hexStringToUIColor(hex: "#C10114")
 let unknownVenueColor = UIColor.darkGray
 
 func getEventTypeIcon (_ eventType: String)->UIImage {
