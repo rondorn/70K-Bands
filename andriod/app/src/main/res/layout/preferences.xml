@@ -7,32 +7,67 @@
 <RelativeLayout
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/common_google_signin_btn_text_dark_focused"
     android:nestedScrollingEnabled="true">
 
+    <!-- main header -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true">
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="false"
+        android:orientation="horizontal">
+
         <TextView
+            android:id="@+id/preferenceHeader"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Show Venues"
-            android:id="@+id/headerTextVenues"
             android:layout_gravity="center_horizontal"
+            android:background="@color/common_google_signin_btn_text_dark_focused"
             android:gravity="center_horizontal"
+            android:text="70K Band Preferences 2019072301"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <!-- venue header -->
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="false"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/locationFilterHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginLeft="10dp"
+            android:background="@color/common_google_signin_btn_text_dark_focused"
+            android:gravity="center_horizontal"
+            android:text="Show/Hide Venues"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <!-- venue preferences -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="40dp"
         android:id="@+id/linearLayoutVenue">
         <TableLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true">
+            android:layout_alignParentTop="true"
+            android:background="@color/common_google_signin_btn_text_dark_focused"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            >
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -44,7 +79,8 @@
                     android:text="@string/PoolVenue"
                     android:id="@+id/poolVenueLable"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp"
+                    android:layout_marginLeft="20dp"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="100dp" />
 
                 <CheckBox
@@ -53,7 +89,8 @@
                     android:id="@+id/showPool"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
+                    android:layout_marginLeft="110dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -65,16 +102,18 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/TheaterVenue"
                     android:id="@+id/theaterVenueLable"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/showTheater"
                     android:enabled="true"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="110dp" />
             </TableRow>
 
             <TableRow
@@ -87,16 +126,18 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/RinkVenue"
                     android:id="@+id/rinkVenueLable"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/showRink"
                     android:enabled="true"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="110dp" />
 
             </TableRow>
 
@@ -110,16 +151,18 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/LoungeVenue"
                     android:id="@+id/loungeVenueLable"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/showLounge"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="110dp" />
             </TableRow>
 
             <TableRow
@@ -132,36 +175,44 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="Other"
                     android:id="@+id/otherVenueLable"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/showOther"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="110dp" />
             </TableRow>
         </TableLayout>
     </LinearLayout>
+
+    <!-- event type header -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="200dp">
+        android:layout_marginTop="200dp"
+        android:layout_alignParentLeft="false">
         <TextView
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="left"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Show Event Type"
+            android:layout_marginLeft="10dp"
             android:id="@+id/headerTextEventType"
-            android:layout_gravity="center_horizontal"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:gravity="center_horizontal"
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- event type preferences -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -180,18 +231,20 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/SpecialEvents"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/specialEventLable"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp"
+                    android:layout_marginLeft="20dp"
                     android:width="100dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_height="wrap_content"
                     android:id="@+id/showSpecialEvent"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="85dp" />
             </TableRow>
 
             <TableRow
@@ -203,17 +256,19 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/MeetAndGreet"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/meetAndGreetEventLable"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/showMeetAndGreet"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="85dp" />
             </TableRow>
 
             <TableRow
@@ -226,16 +281,18 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/ClinicEvents"
                     android:id="@+id/clinicEventLable"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/showClinic"
                     android:layout_column="27"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="85dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -246,39 +303,141 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlbumListeningEvents"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/albumListeningEventLable"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="20dp" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/showListeningEvent"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="85dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
                 <TextView
+                    android:id="@+id/unofficalEventLable"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="unofficalEventLable"
-                    android:id="@+id/unofficalEventLable"
                     android:layout_column="9"
-                    android:layout_marginLeft="40dp" />
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
+                    android:layout_marginLeft="20dp"
+                    android:text="unofficalEventLable"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/unofficalEvent"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="40dp" />
+                    android:layout_marginLeft="85dp" />
             </TableRow>
+        </TableLayout>
+    </LinearLayout>
+
+    <!-- expired events header -->
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="400dp"
+        android:layout_alignParentLeft="false">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Show/Hide Expired Events"
+            android:layout_marginLeft="10dp"
+            android:id="@+id/headerTextExpiredEvents"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <!-- expired events preferences -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="420dp"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true">
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Hide Expired Events"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:layout_column="9"
+            android:layout_marginLeft="20dp" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/hideExpiredEvents"
+            android:buttonTint="@color/common_google_signin_btn_text_dark_default"
+            android:layout_column="27"
+            android:enabled="true"
+            android:layout_marginLeft="85dp" />
+    </TableRow>
+    </TableLayout>
+    </LinearLayout>
+
+    <!-- alert preferences header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="450dp"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Alert Preferences"
+            android:id="@+id/headerText"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- alert preferences -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="480dp"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false">
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true">
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -288,6 +447,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertOnMustSeeBands"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
                     android:layout_marginLeft="10dp" />
 
@@ -295,9 +455,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/mustSeecheckBox"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -308,6 +469,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertOnMightSeeBands"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
                     android:layout_marginLeft="10dp" />
 
@@ -316,8 +478,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/mightSeecheckBox"
                     android:enabled="true"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -330,6 +493,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/alertOnlyForShowWillAttend"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -337,8 +501,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertOnlyForShowWillAttendCheckBox"
                     android:enabled="true"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -351,6 +516,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/MinutesBeforeEventtoAlert"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <EditText
@@ -358,8 +524,9 @@
                     android:layout_height="wrap_content"
                     android:inputType="number"
                     android:ems="10"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:id="@+id/minBeforeEvent"
-                    android:layout_marginLeft="10dp"
+                    android:layout_marginLeft="7dp"
                     android:layout_column="27"
                     android:enabled="true"
                     />
@@ -376,6 +543,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForShows"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -383,8 +551,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForShows"
                     android:layout_column="27"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -397,6 +566,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForSpecialEvents"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -404,8 +574,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForSpecialEvents"
                     android:layout_column="27"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -418,6 +589,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForUnoffical"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -425,8 +597,9 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForUnofficalEvents"
                     android:layout_column="27"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -436,6 +609,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForMeetingandGreetEvents"
                     android:layout_column="9"
@@ -445,9 +619,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/alertForMeetAndGreet"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -460,6 +635,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForClinics"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -468,7 +644,8 @@
                     android:id="@+id/alertForClinics"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
+                    android:layout_marginLeft="7dp" />
             </TableRow>
 
             <TableRow
@@ -481,6 +658,7 @@
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/AlertForAlbumListeningEvents"
                     android:layout_column="9"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_marginLeft="10dp" />
 
                 <CheckBox
@@ -489,7 +667,8 @@
                     android:id="@+id/alertForAlbumListen"
                     android:layout_column="27"
                     android:enabled="true"
-                    android:layout_marginLeft="10dp" />
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
+                    android:layout_marginLeft="7dp" />
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -516,6 +695,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:text="@string/UseLastYearsData"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
                     android:layout_marginLeft="10dp" />
 
@@ -523,6 +703,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/useLastYearsData"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="27"
                     android:layout_marginLeft="10dp" />
             </TableRow>
@@ -530,30 +711,14 @@
         </TableLayout>
     </LinearLayout>
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="750dp">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Alert Preferences"
-            android:id="@+id/headerText"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center_horizontal"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="800dp">
+        android:layout_marginTop="850dp"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false">
 
         <TextView
             android:layout_width="fill_parent"
@@ -561,6 +726,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="\nAdvanced Preference.\nDo not modify unless you know what your doing!"
             android:id="@+id/headerBandCount"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:textAlignment="center"
             android:autoSizeTextType="uniform"
             android:autoSizeMinTextSize="10sp"
@@ -568,12 +734,6 @@
             android:autoSizeStepGranularity="1sp"
             android:maxLines="2"
             android:gravity="center|bottom"/>
-        </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="5100dp">
 
     <TableLayout
         android:layout_width="match_parent"
@@ -589,6 +749,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Bands URL"
             android:layout_column="9"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:layout_marginLeft="10dp" />
 
         <EditText
@@ -597,6 +758,7 @@
             android:ems="10"
             android:id="@+id/bandsUrl"
             android:layout_marginLeft="10dp"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:layout_column="27"
             android:editable="true"
             android:inputType="textNoSuggestions" />
@@ -612,6 +774,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="Schedule URL"
             android:layout_column="9"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:layout_marginLeft="10dp" />
 
         <EditText
@@ -619,6 +782,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:id="@+id/scheduleUrl"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:layout_marginLeft="10dp"
             android:layout_column="27"
             android:editable="true"
@@ -634,11 +798,12 @@
         android:text="@string/LastYearsFeatureExplication"
         android:gravity="center_horizontal"
         android:textStyle="bold"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
         android:autoSizeTextType="uniform"
         android:autoSizeMinTextSize="3sp"
         android:autoSizeMaxTextSize="15sp"
         android:autoSizeStepGranularity="1sp"
-        android:layout_marginTop="6100dp"
+        android:layout_marginTop="980dp"
         android:maxLines="4"
         android:layout_below="@+id/linearLayout"
         android:layout_centerHorizontal="true"

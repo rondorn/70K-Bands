@@ -2,13 +2,10 @@ package com.Bands70k;
 
 import android.content.Context;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.util.ArrayMap;
 import android.util.Log;
 
 
@@ -17,10 +14,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,9 +63,9 @@ public class staticVariables {
     public static Map<String,String> showNotesMap = new HashMap<String, String>();
     public static Map<String,String> imageUrlMap = new HashMap<String, String>();
 
-    public final static String sawAllColor = "blue";
-    public final static String sawSomeColor = "brown";
-    public final static String sawNoneColor = "black";
+    public final static String sawAllColor = "#67C10C";
+    public final static String sawSomeColor = "#F0D905";
+    public final static String sawNoneColor = "white";
     public final static String sawAllStatus = "sawAll";
     public final static String sawSomeStatus = "sawSome";
     public final static String sawNoneStatus = "sawNone";
@@ -178,7 +173,7 @@ public class staticVariables {
     public static Integer graphicAlphaSort = R.drawable.icon_sort_az;
     public static Integer graphicTimeSort = R.drawable.icon_sort_time;
     public static Integer graphicSpecialEvent = R.drawable.icon_all_star_jam;
-    public static Integer graphicClinicEvent = R.drawable.icon_clinc;
+    public static Integer graphicClinicEvent = R.drawable.icon_clinic;
     public static Integer graphicMeetAndGreetEvent = R.drawable.icon_meet_and_greet;
     public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
     public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
