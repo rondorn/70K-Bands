@@ -9,23 +9,25 @@ public class iconResolve {
 
         Integer imageId = 0;
 
+        Log.d("getEventIcon", eventType + " does it match " + staticVariables.graphicClinicEvent);
+
         if (eventType == null) {
             imageId = 0;
         } else {
 
-            if (eventType == staticVariables.unofficalEvent) {
+            if (eventType.equals(staticVariables.unofficalEvent)) {
                 imageId = staticVariables.graphicUnofficalEvent;
 
-            } else if (eventType == staticVariables.specialEvent) {
+            } else if (eventType.equals(staticVariables.specialEvent)) {
                 imageId = staticVariables.graphicSpecialEvent;
 
-            } else if (eventType == staticVariables.clinic) {
+            } else if (eventType.equals(staticVariables.clinic)) {
                 imageId = staticVariables.graphicClinicEvent;
 
-            } else if (eventType == staticVariables.meetAndGreet) {
+            } else if (eventType.equals(staticVariables.meetAndGreet)) {
                 imageId = staticVariables.graphicMeetAndGreetEvent;
 
-            } else if (eventType == staticVariables.karaoekeEvent) {
+            } else if (eventType.equals(staticVariables.karaoekeEvent)) {
                 imageId = staticVariables.graphicKaraokeEvent;
             }
         }

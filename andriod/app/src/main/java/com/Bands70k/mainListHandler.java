@@ -53,7 +53,7 @@ public class mainListHandler {
         return sortableBandNames;
     }
 
-    
+
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
         Log.d("loadingpopulateBandInfo", "From live data");

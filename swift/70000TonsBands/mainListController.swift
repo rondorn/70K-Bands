@@ -574,7 +574,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         
         rankLocationSchedule = true
-
+        spacerView.text = "spacer";
         spacerView.isHidden = false
         bandNameView.isHidden = false
         bandNameNoSchedule.isHidden = true

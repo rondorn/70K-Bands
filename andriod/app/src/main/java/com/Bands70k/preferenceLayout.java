@@ -28,6 +28,21 @@ import static android.app.PendingIntent.getActivity;
  */
 public class preferenceLayout  extends Activity {
 
+
+    private CheckBox showSpecialEvents;
+    private CheckBox showMeetAndGreet;
+    private CheckBox showClinicEvents;
+    private CheckBox showAlbumListen;
+    private CheckBox showUnoffical;
+
+    private CheckBox showPoolShows;
+    private CheckBox showTheaterShows;
+    private CheckBox showRinkShows;
+    private CheckBox showLoungeShows;
+    private CheckBox showOtherShows;
+
+    private CheckBox hideExpiredEvents;
+
     private CheckBox mustSee;
     private CheckBox mightSee;
     private CheckBox alertForShows;
@@ -52,6 +67,7 @@ public class preferenceLayout  extends Activity {
 
         //staticVariables.preferences.loadData();
         setValues();
+        setLabels();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         try {
@@ -64,6 +80,35 @@ public class preferenceLayout  extends Activity {
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.headerText);
         headerText.setText("Alert Preferences - Build:" + versionString);
+    }
+
+    private void setLabels(){
+        TextView poolVenueLable = (TextView)findViewById(R.id.poolVenueLable);
+        poolVenueLable.setText(getResources().getString(R.string.PoolVenue) + " " + staticVariables.poolVenueIcon);
+
+        TextView theaterVenueLable = (TextView)findViewById(R.id.theaterVenueLable);
+        theaterVenueLable.setText(getResources().getString(R.string.TheaterVenue) + " " + staticVariables.theaterVenueIcon);
+
+        TextView rinkVenueLable = (TextView)findViewById(R.id.rinkVenueLable);
+        rinkVenueLable.setText(getResources().getString(R.string.RinkVenue) + " " + staticVariables.rinkVenueIcon);
+
+        TextView loungeVenueLable = (TextView)findViewById(R.id.loungeVenueLable);
+        loungeVenueLable.setText(getResources().getString(R.string.LoungeVenue) + " " + staticVariables.loungeVenueIcon);
+
+        TextView specialEventLable = (TextView)findViewById(R.id.specialEventLable);
+        specialEventLable.setText(getResources().getString(R.string.SpecialEvents));
+
+        TextView meetAndGreetEventLable = (TextView)findViewById(R.id.meetAndGreetEventLable);
+        meetAndGreetEventLable.setText(getResources().getString(R.string.MeetAndGreet));
+
+        TextView clinicEventLable = (TextView)findViewById(R.id.clinicEventLable);
+        clinicEventLable.setText(getResources().getString(R.string.ClinicEvents));
+
+        TextView albumListeningEventLable = (TextView)findViewById(R.id.albumListeningEventLable);
+        albumListeningEventLable.setText(getResources().getString(R.string.AlbumListeningEvents));
+
+        TextView unofficalEventLable = (TextView)findViewById(R.id.unofficalEventLable);
+        unofficalEventLable.setText(getResources().getString(R.string.unofficalEventLable));
     }
 
     private void buildRebootDialog(){
@@ -273,6 +318,117 @@ public class preferenceLayout  extends Activity {
 
         scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
         scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
+
+
+        showSpecialEvents = (CheckBox)findViewById(R.id.showSpecialEvent);
+        showSpecialEvents.setChecked(staticVariables.preferences.getShowSpecialEvents());
+        showSpecialEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowSpecialEvents(showSpecialEvents.isChecked());
+            }
+        });
+
+        showMeetAndGreet = (CheckBox)findViewById(R.id.showMeetAndGreet);
+        showMeetAndGreet.setChecked(staticVariables.preferences.getShowMeetAndGreet());
+        showMeetAndGreet.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowMeetAndGreet(showMeetAndGreet.isChecked());
+            }
+        });
+
+        showClinicEvents = (CheckBox)findViewById(R.id.showClinic);
+        showClinicEvents.setChecked(staticVariables.preferences.getShowClinicEvents());
+        showClinicEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowClinicEvents(showClinicEvents.isChecked());
+            }
+        });
+
+        showAlbumListen = (CheckBox)findViewById(R.id.showListeningEvent);
+        showAlbumListen.setChecked(staticVariables.preferences.getShowAlbumListen());
+        showAlbumListen.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowAlbumListen(showAlbumListen.isChecked());
+            }
+        });
+
+        showUnoffical = (CheckBox)findViewById(R.id.unofficalEvent);
+        showUnoffical.setChecked(staticVariables.preferences.getShowUnofficalEvents());
+        showUnoffical.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowUnofficalEvents(showUnoffical.isChecked());
+            }
+        });
+
+        showPoolShows = (CheckBox)findViewById(R.id.showPool);
+        showPoolShows.setChecked(staticVariables.preferences.getShowPoolShows());
+        showPoolShows.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowPoolShows(showPoolShows.isChecked());
+            }
+        });
+
+        showTheaterShows = (CheckBox)findViewById(R.id.showTheater);
+        showTheaterShows.setChecked(staticVariables.preferences.getShowTheaterShows());
+        showTheaterShows.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowTheaterShows(showTheaterShows.isChecked());
+            }
+        });
+
+        showRinkShows = (CheckBox)findViewById(R.id.showRink);
+        showRinkShows.setChecked(staticVariables.preferences.getShowRinkShows());
+        showRinkShows.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowRinkShows(showRinkShows.isChecked());
+            }
+        });
+
+        showLoungeShows = (CheckBox)findViewById(R.id.showLounge);
+        showLoungeShows.setChecked(staticVariables.preferences.getShowLoungeShows());
+        showLoungeShows.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowLoungeShows(showLoungeShows.isChecked());
+            }
+        });
+
+        showOtherShows = (CheckBox)findViewById(R.id.showOther);
+        showOtherShows.setChecked(staticVariables.preferences.getShowOtherShows());
+        showOtherShows.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setShowOtherShows(showOtherShows.isChecked());
+            }
+        });
+
+        hideExpiredEvents = (CheckBox)findViewById(R.id.hideExpiredEvents);
+        hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
+        hideExpiredEvents.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setHideExpiredEvents(hideExpiredEvents.isChecked());
+            }
+        });
     }
 
     @Override

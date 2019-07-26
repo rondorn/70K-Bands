@@ -10,6 +10,46 @@
     android:id="@+id/Cell">
 
     <TextView
+        android:id="@+id/bandNameInCellNoSchedule"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="11dp"
+        android:height="50dp"
+        android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="10sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:ellipsize="end"
+        android:gravity="left"
+        android:inputType="none"
+        android:maxLines="1"
+        android:text="Band Name"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_widthPercent="80%" />
+
+    <ImageView
+        android:id="@+id/rankingInCellnoSchedule"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="339dp"
+        android:layout_marginLeft="339dp"
+        android:layout_marginTop="8dp"
+        android:background="#FF000000"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_going_yes"
+        android:visibility="invisible" />
+
+    <TextView
         android:id="@+id/bandNameInCell"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

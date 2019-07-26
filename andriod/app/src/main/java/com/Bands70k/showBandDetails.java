@@ -44,6 +44,8 @@ public class showBandDetails extends Activity {
     private BandNotes bandHandler;
     private Boolean clickedOnEvent = false;
 
+    private String rankIconLocation = "";
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
@@ -83,6 +85,14 @@ public class showBandDetails extends Activity {
         }
     }
 
+    private void invertImageJavaScript(){
+        /*
+        function invert(){
+            document.getElementById("theImage").style.filter="invert(100%)";
+        }
+
+         */
+    }
     private void initializeWebContent (){
 
         webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
@@ -152,6 +162,7 @@ public class showBandDetails extends Activity {
 
         createDetailHTML();
         webProgressBar.setVisibility(View.GONE);
+
     }
 
     @Override
@@ -197,24 +208,28 @@ public class showBandDetails extends Activity {
             mightButtonColor = "WhiteSmoke";
             wontButtonColor = "WhiteSmoke";
             unknownButtonColor = "WhiteSmoke";
+            rankIconLocation = "file:///android_res/drawable/icon_going_yes.png";
 
         } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.mightSeeIcon)){
             mustButtonColor = "WhiteSmoke";
             mightButtonColor = "Silver";
             wontButtonColor = "WhiteSmoke";
             unknownButtonColor = "WhiteSmoke";
+            rankIconLocation = "file:///android_res/drawable/icon_going_maybe.png";
 
         } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.wontSeeIcon)){
             mustButtonColor = "WhiteSmoke";
             mightButtonColor = "WhiteSmoke";
             wontButtonColor = "Silver";
             unknownButtonColor = "WhiteSmoke";
+            rankIconLocation = "file:///android_res/drawable/icon_going_no.png";
 
         } else {
             mustButtonColor = "WhiteSmoke";
             mightButtonColor = "WhiteSmoke";
             wontButtonColor = "WhiteSmoke";
             unknownButtonColor = "Silver";
+            rankIconLocation = "";
         }
     }
 
@@ -257,19 +272,21 @@ public class showBandDetails extends Activity {
 
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == false) {
             Log.d("descriptionMapFileError", "setting comment Higher 80 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "55%";
+            commentHeight = "62%";
 
         } else if (scheduleText.contains("onclick") == false ){
             Log.d("descriptionMapFileError",  "setting comment Higher 46 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "46%";
+            commentHeight = "53%";
         } else {
             Log.d("descriptionMapFileError",  "setting comment Higher 20 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "20%";
+            commentHeight = "45%";
         }
             htmlText =
-                    "<html><div style='height:82%;font-size:130%;'>" +
+                    "<html><head><script>function invert(){\n" +
+                            "document.getElementById(\"bandLogo\").style.filter=\"invert(100%)\";\n" +
+                            "}</script><body bgcolor=\"black\" style=\"color:white\"> <div style='height:82%;font-size:130%;'>" +
                             "<center>" + bandName + "</center><br>" +
-                            "<center><img style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
+                            "<center><img id=\"bandLogo\" style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
 
                 if (staticVariables.writeNoteHtml.isEmpty() == false) {
                     Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
@@ -280,7 +297,7 @@ public class showBandDetails extends Activity {
                         htmlText += displayLinks(bandName);
 
                         if (BandInfo.getCountry(bandName) != "") {
-                            htmlText += "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-20px;color:darkred'>";
+                            htmlText += "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-20px;color:white'>";
 
                             htmlText += "<li style='float:left;display:inline;width:20%'>Country:</li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
@@ -296,8 +313,8 @@ public class showBandDetails extends Activity {
                         }
                         if (bandNote != "") {
                             htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
-                            htmlText += "<li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li>";
-                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw'>" + bandNote + "</div></li>";
+                            htmlText += "<!--li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li -->";
+                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></li>";
                             htmlText += "</ul>";
                         }
                     } else {
@@ -308,12 +325,13 @@ public class showBandDetails extends Activity {
                     htmlText += scheduleText;
 
                     htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
-                            "<td><button style='background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mustSeeIcon + " " + getString(R.string.must) + "</button></td>" +
-                            "<td><button style='background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.mightSeeIcon + " " + getString(R.string.might) + "</button></td>" +
-                            "<td><button style='background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + staticVariables.wontSeeIcon + " " + getString(R.string.wont) + "</button></td>" +
-                            "<td><button style='background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + staticVariables.unknownIcon + " " + getString(R.string.unknown) + "</button></td>" +
+                            "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>" +
+                            "<td width=22%><button style='width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +
+                            "<td width=22%><button style='width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
+                            "<td width=22%><button style='width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
+                            "<td width=22%><button style='width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
                             "</tr></table></div>" +
-                            "</html>";
+                            "</body></html>";
                 }
 
             mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
@@ -324,9 +342,9 @@ public class showBandDetails extends Activity {
 
         String htmlData;
         if (orientation == "portrait") {
-            htmlData = "<ul style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-30px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData = "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         } else {
-            htmlData = "<ul style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-30px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData = "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         }
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
@@ -345,14 +363,14 @@ public class showBandDetails extends Activity {
                 String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
                 htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                htmlData += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
+                htmlData += "<img src=" + getEventTypeImage(eventType) + " height=18 width=18>&nbsp;";
                 htmlData += "<font color='" + color + "' >";
-                htmlData += staticVariables.attendedHandler.getShowAttendedIcon(attendIndex) + " ";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
                 htmlData += location + locationIcon + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
-                htmlData += staticVariables.getEventTypeIcon(eventType);
+                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
                 htmlData += "</font></li>";
 
@@ -363,6 +381,43 @@ public class showBandDetails extends Activity {
         }
 
         return htmlData;
+    }
+
+    private String getAttendedImage(String attendIndex){
+
+        String icon = staticVariables.attendedHandler.getShowAttendedIcon(attendIndex);
+        String image = "";
+
+        Log.d("setAttendedImage", "Link is " + icon + " compare to " + staticVariables.sawAllIcon);
+        if (icon.equals(staticVariables.sawAllIcon)){
+            image = "file:///android_res/drawable/icon_seen.png";
+
+        } else if (icon.equals(staticVariables.sawSomeIcon)) {
+            image = "file:///android_res/drawable/icon_partially_seen.png";
+
+        }
+
+        return image;
+    }
+
+    private String getEventTypeImage(String eventType){
+
+        String image = "";
+
+        if (eventType.equals(staticVariables.clinic)){
+            image = "file:///android_res/drawable/icon_clinic.png";
+
+        } else if (eventType.equals(staticVariables.meetAndGreet)){
+            image = "file:///android_res/drawable/icon_meet_and_greet.png";
+
+        } else if (eventType.equals(staticVariables.specialEvent)){
+            image = "file:///android_res/drawable/icon_all_star_jam.png";
+
+        } else if (eventType.equals(staticVariables.unofficalEvent)){
+            image = "file:///android_res/drawable/icon_unspecified_event.png";
+        }
+
+        return image;
     }
 
     private String displayLinks(String bandName){
@@ -382,12 +437,13 @@ public class showBandDetails extends Activity {
 
 
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
-            html = "<center><ul style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
-                    "<li><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'>Offical Link</a></li>" +
-                    "<li><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'>Wikipedia</a></li>" +
-                    "<li><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'>YouTube</a></li>" +
-                    "<li><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'>Metal Archives</a></li>" +
-                    "</ul></center>";
+            html = "<center><table width=100%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
+                    "<td width=40%>Visit Band On: </td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=32 width=32></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=32 width=32></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=32 width=32></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_ma.png height=32 width=32></a></td>" +
+                    "</tr></table></center>";
 
         }
 
@@ -404,7 +460,7 @@ public class showBandDetails extends Activity {
         }
 
         bandNote = bandNote.replaceAll("<br>", "\n");
-        html += "<form><textarea name='userNotes' id='userNotes' style='width:85%;height:60%;background-color:white;color:black;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
+        html += "<form><textarea name='userNotes' id='userNotes' style='width:90%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
         html += bandNote;
         html += "</textarea>";
         html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form><br>";
