@@ -35,11 +35,15 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         ImageView rankImage;
         ImageView eventTypeImage;
         ImageView attendedImage;
+        ImageView rankImageNoSchedule;
+
         TextView bandName;
         TextView location;
         TextView locationColor;
         TextView day;
         TextView time;
+        TextView dayLable;
+        TextView bandNameNoSchedule;
 
     }
 
@@ -79,6 +83,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.locationColor = (TextView) row.findViewById(R.id.locationColorInCell);
             viewHolder.day = (TextView) row.findViewById(R.id.dayInCell);
             viewHolder.time = (TextView) row.findViewById(R.id.timeInCell);
+            viewHolder.dayLable = (TextView) row.findViewById(R.id.dayLabelInCell);
+
+            viewHolder.rankImageNoSchedule = (ImageView) row.findViewById(R.id.rankingInCellnoSchedule);
+            viewHolder.bandNameNoSchedule = (TextView) row.findViewById(R.id.bandNameInCellNoSchedule);
+
             row.setTag(viewHolder);
         } else {
             viewHolder = (bandListHolder)row.getTag();
@@ -89,23 +98,50 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         //Log.d("displayingList", "working on bandName " + bandData.getBandName() + " position " + String.valueOf(position));
         Log.d("displayingList", "working on bandName " + bandData.getBandName() + " color " + bandData.getLocationColor());
 
-        viewHolder.rankImage.setImageResource(bandData.getRankImg());
-        viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
-        viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
-        viewHolder.bandName.setText(bandData.getBandName());
-        viewHolder.location.setText(bandData.getLocation());
+        if (bandData.getLocation() == null){
 
-        String locationColorChoice = bandData.getLocationColor();
+            viewHolder.eventTypeImage.setVisibility(View.INVISIBLE);
+            viewHolder.attendedImage.setVisibility(View.INVISIBLE);
+            viewHolder.location.setVisibility(View.INVISIBLE);
+            viewHolder.location.setVisibility(View.INVISIBLE);
+            viewHolder.locationColor.setVisibility(View.INVISIBLE);
+            viewHolder.day.setVisibility(View.INVISIBLE);
+            viewHolder.time.setVisibility(View.INVISIBLE);
+            viewHolder.dayLable.setVisibility(View.INVISIBLE);
 
-        if (locationColorChoice != null){
-            viewHolder.locationColor.setBackgroundColor(Color.parseColor(locationColorChoice));
+            viewHolder.rankImage.setVisibility(View.INVISIBLE);
+            viewHolder.bandName.setVisibility(View.INVISIBLE);
+
+            viewHolder.rankImageNoSchedule.setVisibility(View.VISIBLE);
+            viewHolder.bandNameNoSchedule.setVisibility(View.VISIBLE);
+
+
+            viewHolder.rankImageNoSchedule.setImageResource(bandData.getRankImg());
+            viewHolder.bandNameNoSchedule.setText(bandData.getBandName());
 
         } else {
-            viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
+            viewHolder.rankImage.setImageResource(bandData.getRankImg());
+            viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
+            viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
+            viewHolder.location.setText(bandData.getLocation());
+
+            String locationColorChoice = bandData.getLocationColor();
+
+            if (locationColorChoice != null){
+                viewHolder.locationColor.setBackgroundColor(Color.parseColor(locationColorChoice));
+
+            } else {
+                viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
+            }
+
+            viewHolder.day.setText(bandData.getDay());
+            viewHolder.time.setText(bandData.getStartTime());
+
+
+            viewHolder.rankImage.setImageResource(bandData.getRankImg());
+            viewHolder.bandName.setText(bandData.getBandName());
         }
 
-        viewHolder.day.setText(bandData.getDay());
-        viewHolder.time.setText(bandData.getStartTime());
 
         return row;
 

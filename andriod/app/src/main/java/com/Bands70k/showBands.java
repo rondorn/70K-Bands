@@ -31,6 +31,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -448,7 +449,7 @@ public class showBands extends Activity {
 
     public void setupNoneFilterButtons() {
 
-        Button preferencesButton = (Button) findViewById(R.id.preferences);
+        ImageButton preferencesButton = (ImageButton) findViewById(R.id.preferences);
 
         preferencesButton.setOnClickListener(new Button.OnClickListener() {
             // argument position gives the index of item which is clicked
@@ -458,17 +459,6 @@ public class showBands extends Activity {
             }
         });
 
-        Button filterMenuButton = (Button) findViewById(R.id.filterMenu);
-
-        filterMenuButton.setOnClickListener(new Button.OnClickListener() {
-            // argument position gives the index of item which is clicked
-            public void onClick(View v) {
-                setupButtonFilters();
-                Intent showFilterMenu = new Intent(showBands.this, filterMenu.class);
-                startActivityForResult(showFilterMenu, 1);
-                //startActivity(showFilterMenu);
-            }
-        });
 
         Button shareButton = (Button) findViewById(R.id.shareButton);
         shareButton.setOnClickListener(new Button.OnClickListener() {
@@ -530,12 +520,10 @@ public class showBands extends Activity {
     private void setShowAttendedFilter(){
 
         ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
-        Button filterButton = (Button) findViewById(R.id.filterMenu);
 
         if (staticVariables.preferences.getShowWillAttend() == false) {
             HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterTrueHelp));
 
-            filterButton.setVisibility(View.INVISIBLE);
             showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttended));
             showAttendedFilterButton.setChecked(true);
             staticVariables.preferences.setShowWillAttend(true);
@@ -544,7 +532,6 @@ public class showBands extends Activity {
         } else {
             HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterFalseHelp));
 
-            filterButton.setVisibility(View.VISIBLE);
             showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttendedAlt));
             showAttendedFilterButton.setChecked(false);
             staticVariables.preferences.setShowWillAttend(false);
@@ -833,13 +820,11 @@ public class showBands extends Activity {
 
     private void setFilterButton() {
 
-        Button filterButton = (Button) findViewById(R.id.filterMenu);
-
         //if (listHandler.allUpcomingEvents == 0 || staticVariables.preferences.getShowWillAttend() == true) {
         //    filterButton.setVisibility(View.INVISIBLE);
         //} else {
         //    if (staticVariables.preferences.getShowWillAttend() == false) {
-                filterButton.setVisibility(View.VISIBLE);
+        //        filterButton.setVisibility(View.VISIBLE);
         //    }
         //}
     }
@@ -918,15 +903,20 @@ public class showBands extends Activity {
 
     private void displayBandDataWithSchedule(){
 
+        Log.d("DisplayListData", "starting display ");
+
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
         bandNamesList.setAdapter(adapter);
 
         BandInfo bandInfoNames = new BandInfo();
-        bandInfoNames.DownloadBandFile();
+
+        //Log.d("DisplayListData", "starting file download ");
+        //bandInfoNames.DownloadBandFile();
+        //Log.d("DisplayListData", "starting file download, done ");
 
         bandNames = bandInfoNames.getBandNames();
 
-        if (bandNames == null){
+        if (bandNames.size() == 0){
 
             bandNamesPullRefresh.setRefreshing(true);
 
@@ -936,17 +926,20 @@ public class showBands extends Activity {
         rankedBandNames = bandInfo.getRankedBandNames(bandNames);
         rankStore.getBandRankings();
 
-        scheduleAlertHandler alerts = new scheduleAlertHandler();
-        alerts.execute();
+        //scheduleAlertHandler alerts = new scheduleAlertHandler();
+        //alerts.execute();
 
         listHandler = new mainListHandler(showBands.this);
 
-        if (FileHandler70k.bandListCache.exists() == true){
-            listHandler = FileHandler70k.readmainListHandlerCache(FileHandler70k.bandListCache);
-            scheduleSortedBandNames = listHandler.getSortableBandNames();
+        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
 
-        } else {
-            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+        Log.d("DisplayListData", "size of schedule " + String.valueOf(scheduleSortedBandNames.size()));
+
+        if (scheduleSortedBandNames.get(0).contains(":") == false){
+            Log.d("DisplayListData", "starting file download ");
+            bandInfoNames.DownloadBandFile();
+            bandNames = bandInfoNames.getBandNames();
+            Log.d("DisplayListData", "starting file download, done ");
         }
 
         Integer counter = 0;
@@ -1005,6 +998,11 @@ public class showBands extends Activity {
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
 
                 adapter.add(bandItem);
+            } else {
+                bandIndex = bandIndex.replaceAll(":", "");
+                bandListItem bandItem = new bandListItem(bandIndex);
+                bandItem.setRankImg(rankStore.getRankImageForBand(bandIndex));
+                adapter.add(bandItem);
             }
 
             /*
@@ -1029,6 +1027,7 @@ public class showBands extends Activity {
             //setSortButton();
             //setShowAttendedFilterButton();
         }
+        Log.d("DisplayListData", "finished display ");
     }
 
 
@@ -1333,7 +1332,7 @@ public class showBands extends Activity {
 
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
-            displayBandDataWithSchedule();
+            //displayBandDataWithSchedule();
 
             return result;
         }
