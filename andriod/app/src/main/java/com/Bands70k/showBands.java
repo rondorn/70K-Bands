@@ -225,7 +225,7 @@ public class showBands extends Activity {
         }
 
         Integer screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        final Integer menuWidth = screenWidth/8;
+        final Integer menuWidth = screenWidth/6;
 
         //adapter = new bandListView(this, R.layout.bandlist70k);
         //displayBandData();
@@ -244,7 +244,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 item1.setBackground(new ColorDrawable(Color.BLACK));
                 item1.setWidth(menuWidth);
-                item1.setTitle(mustSeeIcon);
+                item1.setIcon(staticVariables.graphicMustSeeSmall);
                 item1.setTitleSize(25);
                 item1.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item1);
@@ -253,7 +253,7 @@ public class showBands extends Activity {
                         getApplicationContext());
                 item2.setBackground(new ColorDrawable(Color.BLACK));
                 item2.setWidth(menuWidth);
-                item2.setTitle(mightSeeIcon);
+                item2.setIcon(staticVariables.graphicMightSeeSmall);
                 item2.setTitleSize(25);
                 item2.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item2);
@@ -262,32 +262,41 @@ public class showBands extends Activity {
                         getApplicationContext());
                 item3.setBackground(new ColorDrawable(Color.BLACK));
                 item3.setWidth(menuWidth);
-                item3.setTitle(wontSeeIcon);
+                item3.setIcon(staticVariables.graphicWontSeeSmall);
                 item3.setTitleSize(25);
                 item3.setTitleColor(Color.LTGRAY);
                 menu.addMenuItem(item3);
 
-                SwipeMenuItem item4 = new SwipeMenuItem(
-                        getApplicationContext());
-                item4.setBackground(new ColorDrawable(Color.BLACK));
-                item4.setWidth(menuWidth);
-                item4.setTitle(unknownIcon);
-                item4.setTitleSize(25);
-                item4.setTitleColor(Color.LTGRAY);
-                menu.addMenuItem(item4);
 
                 if (listHandler == null){
                     listHandler = new mainListHandler(showBands.this);
                 }
                 if (listHandler.allUpcomingEvents >= 1) {
+
+                    SwipeMenuItem item4 = new SwipeMenuItem(
+                            getApplicationContext());
+                    item4.setWidth(0);
+                    item4.setTitleColor(Color.LTGRAY);
+                    menu.addMenuItem(item4);
+
                     SwipeMenuItem item5 = new SwipeMenuItem(
                             getApplicationContext());
                     item5.setBackground(new ColorDrawable(Color.BLACK));
                     item5.setWidth(menuWidth);
-                    item5.setTitle(attendedShowIcon);
+                    item5.setIcon(staticVariables.graphicAttendedSmall);
                     item5.setTitleSize(25);
                     item5.setTitleColor(Color.LTGRAY);
                     menu.addMenuItem(item5);
+
+                } else {
+                    SwipeMenuItem item4 = new SwipeMenuItem(
+                            getApplicationContext());
+                    item4.setBackground(new ColorDrawable(Color.BLACK));
+                    item4.setWidth(menuWidth);
+                    item4.setIcon(staticVariables.graphicUnknownSeeSmall);
+                    item4.setTitleSize(25);
+                    item4.setTitleColor(Color.LTGRAY);
+                    menu.addMenuItem(item4);
                 }
 
 
@@ -346,29 +355,34 @@ public class showBands extends Activity {
 
     private void setupOnSwipeListener(){
 
-        /*
         bandNamesList.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
 
             @Override
             public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
-                String value = listHandler.getBandNameFromIndex(adapter.getItem(position));
+
+                String bandIndex = scheduleSortedBandNames.get(position);
+
+                String bandName = getBandNameFromIndex(bandIndex);
+                Long timeIndex = getTimeIndexFromIndex(bandIndex);
+
                 listState = bandNamesList.onSaveInstanceState();
 
+                Log.d ("setupOnSwipeListener", "Index of " + index + " working on band = " + bandName + " and timeindex of " + String.valueOf(timeIndex));
                 switch (index) {
                     case 0:
-                        rankStore.saveBandRanking(value, mustSeeIcon);
+                        rankStore.saveBandRanking(bandName, mustSeeIcon);
                         break;
 
                     case 1:
-                        rankStore.saveBandRanking(value, mightSeeIcon);
+                        rankStore.saveBandRanking(bandName, mightSeeIcon);
                         break;
 
                     case 2:
-                        rankStore.saveBandRanking(value, wontSeeIcon);
+                        rankStore.saveBandRanking(bandName, wontSeeIcon);
                         break;
 
                     case 3:
-                        rankStore.saveBandRanking(value, unknownIcon);
+                        rankStore.saveBandRanking(bandName, unknownIcon);
                         break;
 
                     case 4:
@@ -376,10 +390,6 @@ public class showBands extends Activity {
                         String message = "";
                         String attendedValue = listHandler.getAttendedListMap(position);
                         Log.d ("attendedValue", "attendedValue = " + attendedValue);
-                        String[] bandAndTimeIndex = attendedValue.split(":");
-
-                        String bandName = bandAndTimeIndex[0];
-                        Long timeIndex = Long.parseLong(bandAndTimeIndex[1]);
 
                         if (timeIndex != 0) {
                             String location = listHandler.getLocation(bandName, timeIndex);
@@ -401,7 +411,6 @@ public class showBands extends Activity {
                 return false;
             }
         });
-        */
     }
 
     private void showNotification(){
@@ -901,6 +910,50 @@ public class showBands extends Activity {
     }
 
 
+    private String getBandNameFromIndex(String index){
+
+        String bandName = "";
+        Long timeIndex = Long.valueOf(0);
+
+        String[] indexSplit = index.split(":");
+
+        if (indexSplit.length == 2) {
+
+            try {
+                timeIndex = Long.valueOf(indexSplit[0]);
+                bandName = indexSplit[1];
+
+            } catch (NumberFormatException e) {
+                bandName = indexSplit[0];
+            }
+        }
+
+        if (bandName.isEmpty() == true){
+            bandName = indexSplit[0];
+        }
+
+        return bandName;
+    }
+
+    private Long getTimeIndexFromIndex(String index){
+
+        Long timeIndex = Long.valueOf(0);
+
+        String[] indexSplit = index.split(":");
+
+        if (indexSplit.length == 2) {
+
+            try {
+                timeIndex = Long.valueOf(indexSplit[0]);
+
+            } catch (NumberFormatException e) {
+                timeIndex = Long.valueOf(indexSplit[1]);
+            }
+        }
+
+        return timeIndex;
+    }
+
     private void displayBandDataWithSchedule(){
 
         Log.d("DisplayListData", "starting display ");
@@ -950,15 +1003,9 @@ public class showBands extends Activity {
             String[] indexSplit = bandIndex.split(":");
 
             if (indexSplit.length == 2) {
-                String bandName = indexSplit[1];
-                Long timeIndex;
 
-                try {
-                    timeIndex = Long.valueOf(indexSplit[0]);
-
-                } catch (NumberFormatException e) {
-                    timeIndex = Long.valueOf(0);
-                }
+                String bandName = getBandNameFromIndex(bandIndex);
+                Long timeIndex = getTimeIndexFromIndex(bandIndex);
 
                 String eventYear = String.valueOf(staticVariables.eventYear);
 
@@ -1019,13 +1066,13 @@ public class showBands extends Activity {
             }
             */
 
-            //setFilterButton();
+            setFilterButton();
 
             //swip stuff
-            //setupSwipeList();
+            setupSwipeList();
 
             //setSortButton();
-            //setShowAttendedFilterButton();
+            setShowAttendedFilterButton();
         }
         Log.d("DisplayListData", "finished display ");
     }

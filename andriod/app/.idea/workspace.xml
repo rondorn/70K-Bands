@@ -6,7 +6,7 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="getEventIcon: C" />
+    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="setupOnSwipeListener" />
     <option name="TOOL_WINDOW_LOG_LEVEL" value="verbose" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
     <option name="TOOL_WINDOW_REGEXP_FILTER" value="false" />
@@ -42,8 +42,8 @@
       <file leaf-file-name="showBandDetails.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="223">
-              <caret line="278" column="31" selection-start-line="278" selection-start-column="31" selection-end-line="278" selection-end-column="31" />
+            <state relative-caret-position="274">
+              <caret line="489" column="30" selection-start-line="489" selection-start-column="30" selection-end-line="489" selection-end-column="30" />
               <folding>
                 <element signature="e#3069#5154#0" expanded="true" />
                 <element signature="e#5153#5154#0" expanded="true" />
@@ -58,25 +58,84 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="customWebViewClient.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/customWebViewClient.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="18" column="28" selection-start-line="18" selection-start-column="28" selection-end-line="18" selection-end-column="28" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="bandlist70k.xml" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="317">
+              <caret line="44" column="40" selection-start-line="44" selection-start-column="40" selection-end-line="44" selection-end-column="40" />
+            </state>
+          </provider>
+          <provider editor-type-id="android-designer2">
+            <state />
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="showBands.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="148">
-              <caret line="991" column="75" selection-start-line="991" selection-start-column="63" selection-end-line="991" selection-end-column="75" />
+            <state relative-caret-position="121">
+              <caret line="279" column="44" selection-start-line="279" selection-start-column="44" selection-end-line="279" selection-end-column="44" />
               <folding>
                 <element signature="e#2213#2221#0" expanded="true" />
-                <element signature="e#17097#17420#0" expanded="true" />
-                <element signature="e#17419#17420#0" expanded="true" />
+                <element signature="e#4647#5040#0" expanded="true" />
+                <element signature="e#5039#5040#0" expanded="true" />
+                <element signature="e#5245#5823#0" expanded="true" />
+                <element signature="e#5822#5823#0" expanded="true" />
+                <element signature="e#6440#6597#0" expanded="true" />
+                <element signature="e#6596#6597#0" expanded="true" />
+                <element signature="e#6753#7451#0" expanded="true" />
+                <element signature="e#6925#7130#0" expanded="true" />
+                <element signature="e#7129#7130#0" expanded="true" />
+                <element signature="e#7450#7451#0" expanded="true" />
+                <element signature="e#8687#11296#0" expanded="true" />
+                <element signature="e#11295#11296#0" expanded="true" />
+                <element signature="e#12920#15192#0" expanded="true" />
+                <element signature="e#15191#15192#0" expanded="true" />
+                <element signature="e#16638#16874#0" expanded="true" />
+                <element signature="e#16873#16874#0" expanded="true" />
+                <element signature="e#17239#17562#0" expanded="true" />
+                <element signature="e#17561#17562#0" expanded="true" />
+                <element signature="e#17676#18863#0" expanded="true" />
+                <element signature="e#18862#18863#0" expanded="true" />
+                <element signature="e#18960#19754#0" expanded="true" />
+                <element signature="e#19222#19263#0" expanded="true" />
+                <element signature="e#19481#19523#0" expanded="true" />
+                <element signature="e#19753#19754#0" expanded="true" />
+                <element signature="e#19887#20178#0" expanded="true" />
+                <element signature="e#20177#20178#0" expanded="true" />
+                <element signature="e#20448#20494#0" expanded="true" />
+                <element signature="e#20836#20883#0" expanded="true" />
+                <element signature="e#30002#30211#0" expanded="true" />
+                <element signature="e#30210#30211#0" expanded="true" />
+                <element signature="e#30839#31049#0" expanded="true" />
+                <element signature="e#31048#31049#0" expanded="true" />
+                <element signature="e#31670#31879#0" expanded="true" />
+                <element signature="e#31878#31879#0" expanded="true" />
+                <element signature="e#32515#32724#0" expanded="true" />
+                <element signature="e#32723#32724#0" expanded="true" />
+                <element signature="e#41864#41865#0" expanded="true" />
+                <element signature="e#41900#41901#0" expanded="true" />
+                <element signature="e#43676#44587#0" expanded="true" />
+                <element signature="e#44586#44587#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="iconResolve.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="iconResolve.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/iconResolve.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="79">
-              <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
+            <state relative-caret-position="156">
+              <caret line="65" column="51" selection-start-line="65" selection-start-column="44" selection-end-line="65" selection-end-column="51" />
             </state>
           </provider>
         </entry>
@@ -105,8 +164,8 @@
       <file leaf-file-name="staticVariables.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
-              <caret line="175" column="44" selection-start-line="175" selection-start-column="26" selection-end-line="175" selection-end-column="44" />
+            <state relative-caret-position="284">
+              <caret line="173" column="41" selection-start-line="173" selection-start-column="26" selection-end-line="173" selection-end-column="41" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#2291#2307#0" expanded="true" />
@@ -127,20 +186,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>bandInfoNames</find>
-      <find>Expired</find>
-      <find>rankingInCell</find>
-      <find>day</find>
-      <find>gravity</find>
-      <find>layout_widthPercent</find>
-      <find>percent</find>
-      <find>preferences</find>
-      <find>setupNoneFilterButtons</find>
-      <find>preferencesButton</find>
-      <find>javascript</find>
-      <find>&lt;html</find>
-      <find>blue</find>
-      <find>sawAllColor</find>
       <find>color</find>
       <find>Must</find>
       <find>file</find>
@@ -151,12 +196,26 @@
       <find>img</find>
       <find>em</find>
       <find>font</find>
-      <find>%</find>
       <find>clinic</find>
       <find>eventType</find>
       <find>iconResolve</find>
-      <find>getEventIcon</find>
       <find>graphicClinicEvent</find>
+      <find>getEventIcon</find>
+      <find>%</find>
+      <find>setupSwipeList</find>
+      <find>getItem</find>
+      <find>MenuItem</find>
+      <find>adapter</find>
+      <find>scheduleSortedBandNames</find>
+      <find>graphicAttended</find>
+      <find>graphicMustSee</find>
+      <find>n</find>
+      <find>unknown</find>
+      <find>getBandNameFromIndex</find>
+      <find>menuWidth</find>
+      <find>.0vw</find>
+      <find>location</find>
+      <find>loadUrl</find>
     </findStrings>
   </component>
   <component name="GenerateSignedApkSettings">
@@ -2253,18 +2312,19 @@
         <option value="$PROJECT_DIR$/src/main/res/layout/preferences.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java" />
-        <option value="$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
         <option value="$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/iconResolve.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/customWebViewClient.java" />
+        <option value="$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="y" value="23" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="y" value="203" />
     <option name="width" value="1440" />
     <option name="height" value="877" />
   </component>
@@ -2302,6 +2362,17 @@
             </path>
             <path>
               <item name="app" type="1abcf292:AndroidViewProjectNode" />
+              <item name="app" type="feadf853:AndroidModuleNode" />
+              <item name="res" type="d4f16f75:AndroidResFolderNode" />
+            </path>
+            <path>
+              <item name="app" type="1abcf292:AndroidViewProjectNode" />
+              <item name="app" type="feadf853:AndroidModuleNode" />
+              <item name="res" type="d4f16f75:AndroidResFolderNode" />
+              <item name="layout" type="ddeffd01:AndroidResFolderTypeNode" />
+            </path>
+            <path>
+              <item name="app" type="1abcf292:AndroidViewProjectNode" />
               <item name="Gradle Scripts" type="ae0cef3a:AndroidBuildScriptsGroupNode" />
             </path>
           </expand>
@@ -2326,7 +2397,7 @@
     <property name="android.project.structure.last.selected" value="Project" />
     <property name="android.project.structure.proportion" value="0.15" />
     <property name="android.sdk.path" value="$USER_HOME$/Library/Android/sdk" />
-    <property name="device.picker.selection" value="Pixel_2_API_28" />
+    <property name="device.picker.selection" value="9887bc303553454c33" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/src/main/res/drawable-mdpi-v11" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="android.sdk-updates" />
@@ -2516,15 +2587,17 @@
       <window_info id="Build Variants" order="2" side_tool="true" />
       <window_info anchor="right" id="Capture Analysis" order="4" />
       <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
+      <window_info anchor="right" id="Preview" order="8" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32760897" />
       <window_info anchor="bottom" id="Version Control" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Terminal" order="11" weight="0.32760897" />
-      <window_info active="true" anchor="bottom" id="Logcat" order="8" visible="true" weight="0.27741084" />
+      <window_info anchor="bottom" id="Logcat" order="8" visible="true" weight="0.27741084" />
       <window_info id="Captures" order="5" weight="0.25" />
       <window_info id="Capture Tool" order="3" />
       <window_info id="Designer" order="4" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24749643" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24749643" />
       <window_info anchor="bottom" id="Build" order="10" weight="0.22985469" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32893" />
       <window_info anchor="right" id="Gradle" order="5" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
@@ -2532,13 +2605,11 @@
       <window_info anchor="right" id="Theme Preview" order="6" />
       <window_info id="Favorites" order="6" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Preview" order="8" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32893" />
     </layout>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -2563,20 +2634,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/preferencesHandler.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3818">
-          <caret line="347" column="39" selection-start-line="347" selection-start-column="19" selection-end-line="347" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/BandNotes.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="579">
-          <caret line="83" column="5" selection-start-line="44" selection-start-column="4" selection-end-line="83" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleTimeTracker.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
@@ -2824,16 +2881,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" selection-start-line="1" selection-end-line="1" selection-end-column="46" />
-        </state>
-      </provider>
-      <provider editor-type-id="android-designer2">
-        <state />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="133">
@@ -2856,10 +2903,100 @@
         <state />
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-505">
+          <caret line="26" column="13" selection-start-line="26" selection-start-column="13" selection-end-line="26" selection-end-column="13" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="38" column="42" selection-start-line="38" selection-start-column="42" selection-end-line="38" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/drawable-mdpi-v11/icon_seen_small.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="284">
+          <caret line="173" column="41" selection-start-line="173" selection-start-column="26" selection-end-line="173" selection-end-column="41" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#2291#2307#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/iconResolve.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="156">
+          <caret line="65" column="51" selection-start-line="65" selection-start-column="44" selection-end-line="65" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="121">
+          <caret line="279" column="44" selection-start-line="279" selection-start-column="44" selection-end-line="279" selection-end-column="44" />
+          <folding>
+            <element signature="e#2213#2221#0" expanded="true" />
+            <element signature="e#4647#5040#0" expanded="true" />
+            <element signature="e#5039#5040#0" expanded="true" />
+            <element signature="e#5245#5823#0" expanded="true" />
+            <element signature="e#5822#5823#0" expanded="true" />
+            <element signature="e#6440#6597#0" expanded="true" />
+            <element signature="e#6596#6597#0" expanded="true" />
+            <element signature="e#6753#7451#0" expanded="true" />
+            <element signature="e#6925#7130#0" expanded="true" />
+            <element signature="e#7129#7130#0" expanded="true" />
+            <element signature="e#7450#7451#0" expanded="true" />
+            <element signature="e#8687#11296#0" expanded="true" />
+            <element signature="e#11295#11296#0" expanded="true" />
+            <element signature="e#12920#15192#0" expanded="true" />
+            <element signature="e#15191#15192#0" expanded="true" />
+            <element signature="e#16638#16874#0" expanded="true" />
+            <element signature="e#16873#16874#0" expanded="true" />
+            <element signature="e#17239#17562#0" expanded="true" />
+            <element signature="e#17561#17562#0" expanded="true" />
+            <element signature="e#17676#18863#0" expanded="true" />
+            <element signature="e#18862#18863#0" expanded="true" />
+            <element signature="e#18960#19754#0" expanded="true" />
+            <element signature="e#19222#19263#0" expanded="true" />
+            <element signature="e#19481#19523#0" expanded="true" />
+            <element signature="e#19753#19754#0" expanded="true" />
+            <element signature="e#19887#20178#0" expanded="true" />
+            <element signature="e#20177#20178#0" expanded="true" />
+            <element signature="e#20448#20494#0" expanded="true" />
+            <element signature="e#20836#20883#0" expanded="true" />
+            <element signature="e#30002#30211#0" expanded="true" />
+            <element signature="e#30210#30211#0" expanded="true" />
+            <element signature="e#30839#31049#0" expanded="true" />
+            <element signature="e#31048#31049#0" expanded="true" />
+            <element signature="e#31670#31879#0" expanded="true" />
+            <element signature="e#31878#31879#0" expanded="true" />
+            <element signature="e#32515#32724#0" expanded="true" />
+            <element signature="e#32723#32724#0" expanded="true" />
+            <element signature="e#41864#41865#0" expanded="true" />
+            <element signature="e#41900#41901#0" expanded="true" />
+            <element signature="e#43676#44587#0" expanded="true" />
+            <element signature="e#44586#44587#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="223">
-          <caret line="278" column="31" selection-start-line="278" selection-start-column="31" selection-end-line="278" selection-end-column="31" />
+        <state relative-caret-position="274">
+          <caret line="489" column="30" selection-start-line="489" selection-start-column="30" selection-end-line="489" selection-end-column="30" />
           <folding>
             <element signature="e#3069#5154#0" expanded="true" />
             <element signature="e#5153#5154#0" expanded="true" />
@@ -2873,51 +3010,21 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/customWebViewClient.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-505">
-          <caret line="26" column="13" selection-start-line="26" selection-start-column="13" selection-end-line="26" selection-end-column="13" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state relative-caret-position="255">
+          <caret line="18" column="28" selection-start-line="18" selection-start-column="28" selection-end-line="18" selection-end-column="28" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="991" column="75" selection-start-line="991" selection-start-column="63" selection-end-line="991" selection-end-column="75" />
-          <folding>
-            <element signature="e#2213#2221#0" expanded="true" />
-            <element signature="e#17097#17420#0" expanded="true" />
-            <element signature="e#17419#17420#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="317">
+          <caret line="44" column="40" selection-start-line="44" selection-start-column="40" selection-end-line="44" selection-end-column="40" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListItem.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="38" column="42" selection-start-line="38" selection-start-column="42" selection-end-line="38" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="175" column="44" selection-start-line="175" selection-start-column="26" selection-end-line="175" selection-end-column="44" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#2291#2307#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/iconResolve.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="79">
-          <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
-        </state>
+      <provider editor-type-id="android-designer2">
+        <state />
       </provider>
     </entry>
   </component>

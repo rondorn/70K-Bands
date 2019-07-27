@@ -39,20 +39,24 @@ public class iconResolve {
 
         Integer imageId = 0;
 
+        Log.d("getAttendedIcon", attendedStatus + " does it match " + staticVariables.sawSomeStatus);
+
         if (attendedStatus == null) {
             imageId = 0;
         } else {
 
-            if (attendedStatus == staticVariables.sawAllIcon) {
+            if (attendedStatus.equals(staticVariables.sawAllIcon)) {
                 imageId = staticVariables.graphicAttended;
 
-            } else if (attendedStatus == staticVariables.sawSomeStatus) {
+            } else if (attendedStatus.equals(staticVariables.sawSomeIcon)) {
                 imageId = staticVariables.graphicPartiallyAttended;
 
             } else {
                 imageId = 0;
             }
         }
+
+        Log.d("getAttendedIcon", attendedStatus + " returned " + imageId);
 
         return imageId;
     }

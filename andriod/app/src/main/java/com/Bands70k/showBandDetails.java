@@ -438,7 +438,7 @@ public class showBandDetails extends Activity {
 
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
             html = "<center><table width=100%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
-                    "<td width=40%>Visit Band On: </td>" +
+                    "<td  style='color:#5B5DFF' width=40%>Visit Band On: </td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=32 width=32></a></td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=32 width=32></a></td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=32 width=32></a></td>" +

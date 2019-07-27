@@ -161,13 +161,18 @@ public class staticVariables {
 
     public static Integer graphicMustSeeAlt = R.drawable.icon_going_yes_alt;
     public static Integer graphicMustSee = R.drawable.icon_going_yes;
+    public static Integer graphicMustSeeSmall = R.drawable.icon_going_yes_small;
     public static Integer graphicMightSeeAlt = R.drawable.icon_going_maybe_alt;
     public static Integer graphicMightSee = R.drawable.icon_going_maybe;
+    public static Integer graphicMightSeeSmall = R.drawable.icon_going_maybe_small;
     public static Integer graphicWontSeeAlt = R.drawable.icon_going_no_alt;
     public static Integer graphicWontSee = R.drawable.icon_going_no;
+    public static Integer graphicWontSeeSmall = R.drawable.icon_going_no_small;
     public static Integer graphicUnknownSeeAlt = R.drawable.icon_unknown_alt;
     public static Integer graphicUnknownSee = R.drawable.icon_unknown;
+    public static Integer graphicUnknownSeeSmall = R.drawable.icon_unknown_small;
     public static Integer graphicAttended = R.drawable.icon_seen;
+    public static Integer graphicAttendedSmall = R.drawable.icon_seen_small;
     public static Integer graphicAttendedAlt = R.drawable.icon_seen_alt;
     public static Integer graphicPartiallyAttended = R.drawable.icon_partially_seen;
     public static Integer graphicAlphaSort = R.drawable.icon_sort_az;

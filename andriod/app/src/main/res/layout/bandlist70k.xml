@@ -19,7 +19,7 @@
         android:layout_marginStart="0dp"
         android:layout_marginLeft="0dp"
         android:layout_marginTop="11dp"
-        android:height="50dp"
+        android:height="40dp"
         android:autoSizeMaxTextSize="100sp"
         android:autoSizeMinTextSize="10sp"
         android:autoSizeStepGranularity="2sp"
