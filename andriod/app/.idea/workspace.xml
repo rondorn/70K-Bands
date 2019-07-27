@@ -70,8 +70,20 @@
       <file leaf-file-name="bandlist70k.xml" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="317">
-              <caret line="44" column="40" selection-start-line="44" selection-start-column="40" selection-end-line="44" selection-end-column="40" />
+            <state relative-caret-position="76">
+              <caret line="71" column="34" lean-forward="true" selection-start-line="71" selection-start-column="34" selection-end-line="71" selection-end-column="34" />
+            </state>
+          </provider>
+          <provider editor-type-id="android-designer2">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="activity_show_bands.xml" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="88">
+              <caret line="159" column="39" selection-start-line="159" selection-start-column="39" selection-end-line="159" selection-end-column="39" />
             </state>
           </provider>
           <provider editor-type-id="android-designer2">
@@ -186,7 +198,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>color</find>
       <find>Must</find>
       <find>file</find>
       <find>file:</find>
@@ -216,6 +227,7 @@
       <find>.0vw</find>
       <find>location</find>
       <find>loadUrl</find>
+      <find>ImageView</find>
     </findStrings>
   </component>
   <component name="GenerateSignedApkSettings">
@@ -2312,13 +2324,13 @@
         <option value="$PROJECT_DIR$/src/main/res/layout/preferences.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java" />
-        <option value="$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/iconResolve.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/customWebViewClient.java" />
+        <option value="$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml" />
         <option value="$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml" />
       </list>
     </option>
@@ -2881,16 +2893,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="72" column="40" selection-start-line="72" selection-start-column="40" selection-end-line="72" selection-end-column="40" />
-        </state>
-      </provider>
-      <provider editor-type-id="android-designer2">
-        <state />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="260">
@@ -3017,10 +3019,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="88">
+          <caret line="159" column="39" selection-start-line="159" selection-start-column="39" selection-end-line="159" selection-end-column="39" />
+        </state>
+      </provider>
+      <provider editor-type-id="android-designer2">
+        <state />
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="317">
-          <caret line="44" column="40" selection-start-line="44" selection-start-column="40" selection-end-line="44" selection-end-column="40" />
+        <state relative-caret-position="76">
+          <caret line="71" column="34" lean-forward="true" selection-start-line="71" selection-start-column="34" selection-end-line="71" selection-end-column="34" />
         </state>
       </provider>
       <provider editor-type-id="android-designer2">
