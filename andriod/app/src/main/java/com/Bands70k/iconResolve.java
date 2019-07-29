@@ -5,7 +5,7 @@ import android.util.Log;
 public class iconResolve {
 
 
-    public static int getEventIcon(String eventType) {
+    public static int getEventIcon(String eventType, String eventName) {
 
         Integer imageId = 0;
 
@@ -19,7 +19,15 @@ public class iconResolve {
                 imageId = staticVariables.graphicUnofficalEvent;
 
             } else if (eventType.equals(staticVariables.specialEvent)) {
-                imageId = staticVariables.graphicSpecialEvent;
+                if (eventName.equals("All Star Jam")){
+                    imageId = staticVariables.graphicSpecialEvent;
+
+                } else if (eventName.contains("Karaoke")){
+                    imageId = staticVariables.graphicKaraokeEvent;
+
+                } else {
+                    imageId = staticVariables.graphicGeneralEvent;
+                }
 
             } else if (eventType.equals(staticVariables.clinic)) {
                 imageId = staticVariables.graphicClinicEvent;
