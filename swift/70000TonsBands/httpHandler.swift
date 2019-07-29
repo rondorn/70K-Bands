@@ -59,7 +59,7 @@ func getUrlData(urlString: String) -> String{
             print(contents)
             results = contents
         } catch {
-            
+            print ("Failed to find data !!Looking up url \(urlString)")
         }
     }
     return results

@@ -50,7 +50,8 @@ public class mainListHandler {
     private Map<Integer,String> attendedListMap = new HashMap<Integer,String>();
 
     public List<String> getSortableBandNames(){
-        return sortableBandNames;
+
+        return this.sortableBandNames;
     }
 
 
@@ -221,7 +222,7 @@ public class mainListHandler {
         Boolean showEvent = false;
         Log.d("EventFilter", "EventType is " + eventType);
 
-        if (eventType.equals(staticVariables.specialEvent) && staticVariables.preferences.getShowSpecialEvents() == true){
+        if ((eventType.equals(staticVariables.specialEvent) || eventType.equals(staticVariables.karaoekeEvent)) && staticVariables.preferences.getShowSpecialEvents() == true){
             Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
             showEvent = true;
 

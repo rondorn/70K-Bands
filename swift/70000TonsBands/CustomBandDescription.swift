@@ -48,6 +48,8 @@ open class CustomBandDescription {
         let mapUrl = getDefaultDescriptionMapUrl()
         let httpData = getUrlData(urlString: mapUrl)
         
+        print ("Map url is \(mapUrl)")
+        print ("Map url Data is \(httpData)")
         if (httpData.isEmpty == false){
             do {
                 try FileManager.default.removeItem(atPath: descriptionMapFile)
@@ -71,7 +73,7 @@ open class CustomBandDescription {
             print ("commentFile looping through bands")
             for record in self.bandDescriptionUrl{
                 let bandName = record.key
-                print ("commentFile working on bandName")
+                print ("commentFile working on bandName " + bandName)
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
                     _ = self.getDescription(bandName: bandName)
                 }
