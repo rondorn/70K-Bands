@@ -541,31 +541,31 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                             Event1.text = scheduleText
                             _ = attendedHandle.setShowsAttendedStatus(Event1,status: status);
                             Event1AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event1TypeIcon.image = getEventTypeIcon(type)
+                            Event1TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
                         case 2:
                             Event2.text = scheduleText
                             _ = attendedHandle.setShowsAttendedStatus(Event2,status: status);
                             Event2AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event2TypeIcon.image = getEventTypeIcon(type)
+                            Event2TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
                         case 3:
                             Event3.text = scheduleText
                             _ = attendedHandle.setShowsAttendedStatus(Event3,status: status);
                             Event3AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event3TypeIcon.image = getEventTypeIcon(type)
+                            Event3TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
                         case 4:
                             Event4.text = scheduleText
                             _ = attendedHandle.setShowsAttendedStatus(Event4,status: status);
                             Event4AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event4TypeIcon.image = getEventTypeIcon(type)
+                            Event4TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
                         case 5:
                             Event5.text = scheduleText
                             _ = attendedHandle.setShowsAttendedStatus(Event5,status: status);
                             Event5AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event5TypeIcon.image = getEventTypeIcon(type)
+                            Event5TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
                         default:
                             print("To many events")

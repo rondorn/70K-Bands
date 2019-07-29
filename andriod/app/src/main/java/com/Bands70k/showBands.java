@@ -1037,7 +1037,7 @@ public class showBands extends Activity {
                         bandItem.setLocation(location);
                         bandItem.setStartTime(startTime);
                         bandItem.setDay(day);
-                        bandItem.setEventTypeImage(iconResolve.getEventIcon(eventType));
+                        bandItem.setEventTypeImage(iconResolve.getEventIcon(eventType, bandName));
                         bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
                     }
                 }

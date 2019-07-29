@@ -34,6 +34,7 @@ let listeningEventTypeIcon = "icon-all-star-jam";
 let clinicEventTypeIcon = "icon-clinc-v1";
 let unofficalEventTypeIcon = "icon-unspecified-event";
 let karaokeEventTypeIcon = "icon-karaoke"
+let shipBoadEventTypeIcon = "icon-ship-event";
 
 //shows attended
 let sawAllIcon = "icon-seen"
@@ -54,7 +55,7 @@ let loungeVenueColor = hexStringToUIColor(hex: "#67C10C")
 let rinkVenueColor = hexStringToUIColor(hex: "#C10114")
 let unknownVenueColor = UIColor.darkGray
 
-func getEventTypeIcon (_ eventType: String)->UIImage {
+func getEventTypeIcon (eventType: String, eventName: String)->UIImage {
     
     var graphicName = String()
     var graphicImage = UIImage()
@@ -67,7 +68,16 @@ func getEventTypeIcon (_ eventType: String)->UIImage {
         graphicName = mAndmEventTypeIcon
         
     case specialEventType:
-        graphicName = specialEventTypeIcon
+        
+        if (eventName == "All Star Jam"){
+            graphicName = specialEventTypeIcon
+            
+        } else if (eventName.contains("Karaoke")){
+            graphicName = karaokeEventTypeIcon
+        
+        } else {
+            graphicName = shipBoadEventTypeIcon;
+        }
         
     case clinicType:
         graphicName = clinicEventTypeIcon

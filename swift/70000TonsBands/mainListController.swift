@@ -515,7 +515,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         let day = schedule.getData(bandName, index: timeIndex, variable: dayField)
         let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
-        let eventIcon = getEventTypeIcon(event)
+        let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
         
         locationColor.backgroundColor = getVenueColor(venue: location);
         

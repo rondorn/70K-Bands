@@ -187,6 +187,7 @@ public class staticVariables {
     public static Integer graphicMeetAndGreetEvent = R.drawable.icon_meet_and_greet;
     public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
     public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
+    public static Integer graphicGeneralEvent = R.drawable.icon_ship_event;
 
     public static Map<String,String> venueLocation =  new HashMap<String, String>();
 

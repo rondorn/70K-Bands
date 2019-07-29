@@ -364,7 +364,7 @@ public class showBandDetails extends Activity {
 
                 htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
                 htmlData += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
-                htmlData += "<img src=" + getEventTypeImage(eventType) + " height=18 width=18>&nbsp;";
+                htmlData += "<img src=" + getEventTypeImage(eventType, bandName) + " height=18 width=18>&nbsp;";
                 htmlData += "<font color='" + color + "' >";
                 htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
                 htmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
@@ -400,7 +400,7 @@ public class showBandDetails extends Activity {
         return image;
     }
 
-    private String getEventTypeImage(String eventType){
+    private String getEventTypeImage(String eventType, String eventName){
 
         String image = "";
 
@@ -411,7 +411,15 @@ public class showBandDetails extends Activity {
             image = "file:///android_res/drawable/icon_meet_and_greet.png";
 
         } else if (eventType.equals(staticVariables.specialEvent)){
-            image = "file:///android_res/drawable/icon_all_star_jam.png";
+            if (eventName.equals("All Star Jam")){
+                image = "file:///android_res/drawable/icon_all_star_jam.png";
+
+            } else if (eventName.contains("Karaoke")){
+                image = "file:///android_res/drawable/icon_karaoke.png";
+
+            } else {
+                image = "file:///android_res/drawable/icon_ship_event.png";
+            }
 
         } else if (eventType.equals(staticVariables.unofficalEvent)){
             image = "file:///android_res/drawable/icon_unspecified_event.png";
