@@ -963,10 +963,6 @@ public class showBands extends Activity {
 
         BandInfo bandInfoNames = new BandInfo();
 
-        //Log.d("DisplayListData", "starting file download ");
-        //bandInfoNames.DownloadBandFile();
-        //Log.d("DisplayListData", "starting file download, done ");
-
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
@@ -979,13 +975,18 @@ public class showBands extends Activity {
         rankedBandNames = bandInfo.getRankedBandNames(bandNames);
         rankStore.getBandRankings();
 
-        //scheduleAlertHandler alerts = new scheduleAlertHandler();
-        //alerts.execute();
+        if (FileHandler70k.bandListCache.exists() == true) {
+            listHandler = FileHandler70k.readmainListHandlerCache(FileHandler70k.bandListCache);
+        } else {
+            listHandler = new mainListHandler(showBands.this);
+        }
 
-        listHandler = new mainListHandler(showBands.this);
+        scheduleSortedBandNames = listHandler.getSortableBandNames();
 
-        scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+        if (scheduleSortedBandNames.isEmpty() == true){
 
+            scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+        }
         Log.d("DisplayListData", "size of schedule " + String.valueOf(scheduleSortedBandNames.size()));
 
         if (scheduleSortedBandNames.get(0).contains(":") == false){
@@ -1052,26 +1053,12 @@ public class showBands extends Activity {
                 adapter.add(bandItem);
             }
 
-            /*
-            try {
-                scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
-            } catch (Exception error){
-                try {
-                    sleep(4000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandList);
-            }
-            */
-
             setFilterButton();
 
             //swip stuff
             setupSwipeList();
 
-            //setSortButton();
+            setSortButton();
             setShowAttendedFilterButton();
         }
         Log.d("DisplayListData", "finished display ");
@@ -1341,11 +1328,7 @@ public class showBands extends Activity {
                 BandInfo bandInfo = new BandInfo();
                 ArrayList<String> bandList = bandInfo.getBandNames();
 
-                //ListAdapter arrayAdapter = updateList(bandInfo, bandList);
-                //showBands.this.bandNamesList.setAdapter(arrayAdapter);
-
-                //adapter = new CustomArrayAdapter(this, R.layout.activity_show_bands, bandList);
-                //bandNamesList.setAdapter(adapter);
+                displayBandDataWithSchedule();
 
                 showBands.this.bandNamesList.setVisibility(View.VISIBLE);
                 showBands.this.bandNamesList.requestLayout();
@@ -1357,10 +1340,9 @@ public class showBands extends Activity {
 
                 Log.d("Setting position", "Setting position in onPostExecute to " + String.valueOf(listPosition));
                 bandNamesList.setSelection(listPosition);
+
+
             }
-
-
-
         }
     }
 

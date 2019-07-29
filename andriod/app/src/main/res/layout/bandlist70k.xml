@@ -18,7 +18,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="0dp"
         android:layout_marginLeft="0dp"
-        android:layout_marginTop="11dp"
+        android:layout_marginTop="15dp"
         android:height="40dp"
         android:autoSizeMaxTextSize="100sp"
         android:autoSizeMinTextSize="10sp"
@@ -36,16 +36,13 @@
 
     <ImageView
         android:id="@+id/rankingInCellnoSchedule"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="339dp"
-        android:layout_marginLeft="339dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:width="35dp"
+        android:height="35dp"
+        android:layout_marginLeft="300dp"
         android:layout_marginTop="8dp"
         android:background="#FF000000"
-        android:scaleType="fitCenter"
         android:src="@drawable/icon_going_yes"
         android:visibility="invisible" />
 
@@ -55,7 +52,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="1dp"
         android:layout_marginTop="2dp"
         android:height="30dp"
         android:text="Band Name"
@@ -69,7 +65,9 @@
         android:maxLines="1"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        app:layout_widthPercent="80%" />
+        app:layout_widthPercent="80%"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="1dp" />
 
     <TextView
         android:id="@+id/locationInCell"
@@ -77,7 +75,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="6dp"
         android:layout_marginTop="42dp"
         android:height="28dp"
         android:autoSizeMaxTextSize="100sp"
@@ -86,7 +83,9 @@
         android:autoSizeTextType="uniform"
         android:text="Location"
         android:textColor="#D3D3D3"
-        app:layout_widthPercent="42%" />
+        android:width="157dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="6dp" />
 
     <TextView
         android:id="@+id/locationColorInCell"
@@ -98,43 +97,47 @@
         android:layout_marginTop="42dp"
         android:height="28dp"
         android:background="#FFC4AC00"
-        android:text="" />
+        android:text=""
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp" />
 
     <ImageView
         android:id="@+id/eventTypeInCell"
-        android:layout_width="23dp"
-        android:layout_height="26dp"
+        android:layout_width="18dp"
+        android:layout_height="21dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="173dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="44dp"
         android:contentDescription="The Event Type Icon"
         android:scaleType="fitCenter"
-        android:src="@drawable/icon_all_star_jam" />
+        android:src="@drawable/icon_all_star_jam"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="160dp" />
 
     <ImageView
         android:id="@+id/rankingInCell"
-        android:layout_width="23dp"
-        android:layout_height="26dp"
+        android:layout_width="18dp"
+        android:layout_height="21dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="206dp"
-        android:layout_marginTop="39dp"
+        android:layout_marginTop="44dp"
         android:background="#FF000000"
         android:scaleType="fitCenter"
-        android:src="@drawable/icon_going_yes" />
+        android:src="@drawable/icon_going_yes"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="185dp" />
 
     <ImageView
         android:id="@+id/attendedInCell"
-        android:layout_width="23dp"
-        android:layout_height="23dp"
-        android:layout_alignTop="@+id/timeInCell"
+        android:layout_width="21dp"
+        android:layout_height="21dp"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="241dp"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="44dp"
         android:background="#FF000000"
         android:scaleType="fitCenter"
-        android:src="@drawable/icon_seen" />
+        android:src="@drawable/icon_seen"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="211dp" />
 
     <TextView
         android:id="@+id/timeInCell"
@@ -142,8 +145,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="273dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="40dp"
         android:height="40dp"
         android:autoSizeMaxTextSize="100sp"
         android:autoSizeMinTextSize="10sp"
@@ -158,23 +160,26 @@
         android:textColor="#D3D3D3"
         android:textSize="10pt"
         android:textStyle="bold"
-        app:layout_widthPercent="21%" />
+        app:layout_widthPercent="22%"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="237dp" />
 
     <TextView
         android:id="@+id/dayLabelInCell"
         android:layout_width="43dp"
-        android:layout_height="25dp"
+        android:layout_height="22dp"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="355dp"
         android:layout_marginTop="0dp"
-        android:height="35dp"
+        android:height="22dp"
         android:width="43dp"
         android:gravity="center_horizontal"
         android:textAlignment="gravity"
         android:text="Day"
         android:textColor="#ffffff"
         android:background="#838383"
-        android:textSize="6pt" />
+        android:textSize="6pt"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="319dp" />
 
     <TextView
         android:id="@+id/dayInCell"
@@ -182,12 +187,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="355dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="22dp"
         android:height="48dp"
         android:width="43dp"
         android:gravity="bottom"
-        android:textAlignment="gravity"
+        android:textAlignment="center"
         android:text="2/28"
         android:textColor="#ffffff"
         android:background="#838383"
@@ -198,7 +202,8 @@
         android:inputType="none"
         android:maxLines="1"
         android:ellipsize="end"
-        />
+        android:layout_marginLeft="319dp"
+        android:layout_alignParentRight="true" />
 
 
     <TextView
