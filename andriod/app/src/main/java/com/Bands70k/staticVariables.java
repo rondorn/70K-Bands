@@ -14,8 +14,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,7 +53,7 @@ public class staticVariables {
     public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "testing20000";
+    public final static String testAlertChannel = "testing07282019";
     public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
@@ -87,7 +89,7 @@ public class staticVariables {
     public final static String listeningEvent = "Listening Party";
     public final static String unofficalEvent = "Cruiser Organized";
     public final static String unofficalEventOld = "Unofficial Event";
-    public final static String karaoekeEvent = "Karaoeke";
+    public final static String karaoekeEvent = "Karaoke";
 
     public final static String poolVenueColor = "#3478C7";
     public final static String theaterVenueColor = "#C4AC00";
@@ -114,7 +116,7 @@ public class staticVariables {
     public final static String unknownKey = "unknown";
 
     public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1";
-    //public final static String defaultUrls = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?dl=1";
+    public final static String defaultUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
 
@@ -124,6 +126,9 @@ public class staticVariables {
     public static String previousYearSchedule;
     public static String descriptionMap;
     public static String previousYearDescriptionMap;
+
+    public static List<String> sortableBandNamesCache = new ArrayList<String>();
+    public static Boolean sortableBandNamesLock = false;
 
     public static Boolean schedulePresent = false;
     public static Boolean notesLoaded = false;
@@ -393,8 +398,15 @@ public class staticVariables {
 
     private static void lookupUrls(){
 
+        String pointerUrl = staticVariables.defaultUrls;
+        if (preferences.getPointerUrl().equals("Testing")){
+            pointerUrl = staticVariables.defaultUrlTest;
+        }
+
+        Log.d("pointerUrl", "pointerUrl equals " + pointerUrl);
+
         try {
-            URL url = new URL(staticVariables.defaultUrls);
+            URL url = new URL(pointerUrl);
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
             String data = "";
             String line;

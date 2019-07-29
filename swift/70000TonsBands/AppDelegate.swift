@@ -29,6 +29,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     var bandPriorityStorage = [String:Int]()
     
+    var bandDescriptions = CustomBandDescription()
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -93,6 +95,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //generate user data
         let userDataHandle = firebaseUserWrite()
         userDataHandle.writeData()
+        
+        bandDescriptions.getDescriptionMapFile();
         return true
     
     }

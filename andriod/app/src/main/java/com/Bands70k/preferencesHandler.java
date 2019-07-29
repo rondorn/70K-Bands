@@ -54,6 +54,8 @@ public class preferencesHandler {
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
 
+    private String pointerUrl = "Default";
+
     private Boolean sortByTime = true;
 
     private Integer loadCounter = 0;
@@ -163,6 +165,10 @@ public class preferencesHandler {
                             setScheduleUrl(RowData[1]);
                             break;
 
+                        case "pointerUrl":
+                            setPointerUrl(RowData[1]);
+                            break;
+
                         case "showMust":
                             setshowMust(Boolean.valueOf(RowData[1]));
 
@@ -240,6 +246,7 @@ public class preferencesHandler {
         dataString += "minBeforeToAlert," + minBeforeToAlert.toString() + "\n";
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
+        dataString += "pointerUrl," + pointerUrl + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
 
@@ -449,9 +456,16 @@ public class preferencesHandler {
     public String getArtsistsUrl() {
         return artsistsUrl;
     }
-
     public void setArtsistsUrl(String artsistsUrl) {
         this.artsistsUrl = artsistsUrl;
+    }
+
+    public String getPointerUrl() {
+        return pointerUrl;
+    }
+
+    public void setPointerUrl(String pointerUrl) {
+        this.pointerUrl = pointerUrl;
     }
 
     public String getScheduleUrl() {

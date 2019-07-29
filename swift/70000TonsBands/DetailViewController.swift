@@ -200,7 +200,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if (eventCount <= 1){
             let screenSize = UIScreen.main.bounds
-            customNotesText.frame.size.height = screenSize.height * 0.37
+            customNotesText.frame.size.height = screenSize.height * 0.57
         }
     }
     
@@ -327,7 +327,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func removeBadNote(commentFile: URL){
         do {
-            print ("commentFile being deleted")
+            print ("commentFile being deleted \(commentFile)")
             try FileManager.default.removeItem(atPath: commentFile.path)
             
         } catch let error as NSError {

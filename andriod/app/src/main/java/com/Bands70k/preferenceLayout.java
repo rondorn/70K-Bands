@@ -58,6 +58,7 @@ public class preferenceLayout  extends Activity {
 
     private EditText bandsUrl;
     private EditText scheduleUrl;
+    private EditText pointerUrl;
     private String versionString = "";
 
     @Override
@@ -319,6 +320,8 @@ public class preferenceLayout  extends Activity {
         scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
         scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
 
+        pointerUrl = (EditText)findViewById(R.id.pointerUrl);
+        pointerUrl.setText(staticVariables.preferences.getPointerUrl().toString());
 
         showSpecialEvents = (CheckBox)findViewById(R.id.showSpecialEvent);
         showSpecialEvents.setChecked(staticVariables.preferences.getShowSpecialEvents());
@@ -437,7 +440,7 @@ public class preferenceLayout  extends Activity {
         staticVariables.preferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
         staticVariables.preferences.setArtsistsUrl(bandsUrl.getText().toString());
         staticVariables.preferences.setScheduleUrl(scheduleUrl.getText().toString());
-
+        staticVariables.preferences.setPointerUrl(pointerUrl.getText().toString());
         staticVariables.preferences.saveData();
         setResult(RESULT_OK, null);
         finish();

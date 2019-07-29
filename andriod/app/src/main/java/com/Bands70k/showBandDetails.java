@@ -205,29 +205,29 @@ public class showBandDetails extends Activity {
 
         if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.mustSeeIcon)){
             mustButtonColor = "Silver";
-            mightButtonColor = "WhiteSmoke";
-            wontButtonColor = "WhiteSmoke";
-            unknownButtonColor = "WhiteSmoke";
+            mightButtonColor = "Black";
+            wontButtonColor = "Black";
+            unknownButtonColor = "Black";
             rankIconLocation = "file:///android_res/drawable/icon_going_yes.png";
 
         } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.mightSeeIcon)){
-            mustButtonColor = "WhiteSmoke";
+            mustButtonColor = "Black";
             mightButtonColor = "Silver";
-            wontButtonColor = "WhiteSmoke";
-            unknownButtonColor = "WhiteSmoke";
+            wontButtonColor = "Black";
+            unknownButtonColor = "Black";
             rankIconLocation = "file:///android_res/drawable/icon_going_maybe.png";
 
         } else if (rankStore.getRankForBand(BandInfo.getSelectedBand()).equals(staticVariables.wontSeeIcon)){
-            mustButtonColor = "WhiteSmoke";
-            mightButtonColor = "WhiteSmoke";
+            mustButtonColor = "Black";
+            mightButtonColor = "Black";
             wontButtonColor = "Silver";
-            unknownButtonColor = "WhiteSmoke";
+            unknownButtonColor = "Black";
             rankIconLocation = "file:///android_res/drawable/icon_going_no.png";
 
         } else {
-            mustButtonColor = "WhiteSmoke";
-            mightButtonColor = "WhiteSmoke";
-            wontButtonColor = "WhiteSmoke";
+            mustButtonColor = "Black";
+            mightButtonColor = "Black";
+            wontButtonColor = "Black";
             unknownButtonColor = "Silver";
             rankIconLocation = "";
         }
@@ -297,7 +297,7 @@ public class showBandDetails extends Activity {
                         htmlText += displayLinks(bandName);
 
                         if (BandInfo.getCountry(bandName) != "") {
-                            htmlText += "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-20px;color:white'>";
+                            htmlText += "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
 
                             htmlText += "<li style='float:left;display:inline;width:20%'>Country:</li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
@@ -324,13 +324,13 @@ public class showBandDetails extends Activity {
 
                     htmlText += scheduleText;
 
-                    htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><table width=100%><tr width=100%>" +
+                    htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>" +
                             "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>" +
-                            "<td width=22%><button style='width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +
-                            "<td width=22%><button style='width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
-                            "<td width=22%><button style='width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
-                            "<td width=22%><button style='width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
-                            "</tr></table></div>" +
+                            "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
+                            "<td width=22%><button style='color:white;width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +
+                            "<td width=22%><button style='color:white;width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
+                            "<td width=22%><button style='color:white;width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
+                            "</tr></table></center></div>" +
                             "</body></html>";
                 }
 
@@ -437,7 +437,7 @@ public class showBandDetails extends Activity {
 
 
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
-            html = "<center><table width=100%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
+            html = "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
                     "<td  style='color:#5B5DFF' width=40%>Visit Band On: </td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=32 width=32></a></td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=32 width=32></a></td>" +

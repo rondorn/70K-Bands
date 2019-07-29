@@ -709,6 +709,23 @@
             </TableRow>
 
         </TableLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/LastYearsFeatureExplication"
+            android:gravity="center_horizontal"
+            android:textStyle="bold"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="3sp"
+            android:autoSizeMaxTextSize="15sp"
+            android:autoSizeStepGranularity="1sp"
+            android:maxLines="4"
+            android:layout_below="@+id/linearLayout"
+            android:layout_centerHorizontal="true"
+            android:width="300dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -716,7 +733,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="850dp"
+        android:layout_marginTop="940dp"
         android:orientation="vertical"
         android:layout_alignParentLeft="false">
 
@@ -724,7 +741,7 @@
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="\nAdvanced Preference.\nDo not modify unless you know what your doing!"
+            android:text="Advanced Preference.\nDo not modify unless you know what your doing!"
             android:id="@+id/headerBandCount"
             android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:textAlignment="center"
@@ -777,36 +794,43 @@
             android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:layout_marginLeft="10dp" />
 
-        <EditText
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:id="@+id/scheduleUrl"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:layout_marginLeft="10dp"
-            android:layout_column="27"
-            android:editable="true"
-            android:inputType="textNoSuggestions" />
+            <EditText
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:id="@+id/scheduleUrl"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                android:layout_marginLeft="10dp"
+                android:layout_column="27"
+                android:editable="true"
+                android:inputType="textNoSuggestions" />
+        </TableRow>
 
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="Pointer URL"
+                android:layout_column="9"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                android:layout_marginLeft="10dp" />
+
+            <EditText
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:id="@+id/pointerUrl"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                android:layout_marginLeft="10dp"
+                android:layout_column="27"
+                android:editable="true"
+                android:inputType="textNoSuggestions" />
         </TableRow>
     </TableLayout>
   </LinearLayout>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="@string/LastYearsFeatureExplication"
-        android:gravity="center_horizontal"
-        android:textStyle="bold"
-        android:textColor="@color/common_google_signin_btn_text_dark_default"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="3sp"
-        android:autoSizeMaxTextSize="15sp"
-        android:autoSizeStepGranularity="1sp"
-        android:layout_marginTop="980dp"
-        android:maxLines="4"
-        android:layout_below="@+id/linearLayout"
-        android:layout_centerHorizontal="true"
-        android:width="300dp" />
 </RelativeLayout>
 </ScrollView>
