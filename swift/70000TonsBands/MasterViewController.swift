@@ -116,6 +116,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
+        
         //mainToolBar.heightAnchor.constraint(equalToConstant: 150)
         //mainToolBar.topAnchor.constraint(equalTo: view.topAnchor);
     }
