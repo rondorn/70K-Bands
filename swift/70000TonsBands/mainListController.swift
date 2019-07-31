@@ -481,7 +481,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let timeView = cell.viewWithTag(8) as! UILabel
     let dayLabelView = cell.viewWithTag(9) as! UILabel
     let dayView = cell.viewWithTag(10) as! UILabel
-    let spacerView = cell.viewWithTag(11) as! UILabel
     let locationColor = cell.viewWithTag(12) as! UILabel
     let bandNameNoSchedule = cell.viewWithTag(13) as! UILabel
     
@@ -504,7 +503,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         locationView.isHidden = false
         timeView.isHidden = false
-        spacerView.isHidden = false
         dayView.isHidden = false
         dayLabelView.isHidden = false
         attendedView.isHidden = false
@@ -574,8 +572,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         
         rankLocationSchedule = true
-        spacerView.text = "spacer";
-        spacerView.isHidden = false
         bandNameView.isHidden = false
         bandNameNoSchedule.isHidden = true
         
@@ -585,7 +581,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleButton = true
         locationView.isHidden = true
         timeView.isHidden = true
-        spacerView.isHidden = true
         dayView.isHidden = true
         dayLabelView.isHidden = true
         attendedView.isHidden = true
