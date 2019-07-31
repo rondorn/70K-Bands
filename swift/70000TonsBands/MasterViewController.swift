@@ -12,6 +12,9 @@ import CoreData
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
+    @IBOutlet var mainTableView: UITableView!
+    @IBOutlet weak var mainToolBar: UIToolbar!
+    
     @IBOutlet weak var titleButton: UINavigationItem!
 
     @IBOutlet weak var preferenceButton: UIBarButtonItem!
@@ -105,7 +108,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                selector: #selector(MasterViewController.showReceivedMessage(_:)),
                                                name: UserDefaults.didChangeNotification, object: nil)
         
-        setNeedsStatusBarAppearanceUpdate() 
+        setNeedsStatusBarAppearanceUpdate()
+        
+        setToolbar();
+    }
+    
+    
+    func setToolbar(){
+        navigationController?.navigationBar.barTintColor = UIColor.black
+        //mainToolBar.heightAnchor.constraint(equalToConstant: 150)
+        //mainToolBar.topAnchor.constraint(equalTo: view.topAnchor);
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -232,6 +244,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Schedule is empty, stay hidden")
             self.scheduleButton.isHidden = true;
             willAttendButton.isHidden = true;
+            mainTableView.separatorColor = UIColor.black
             setShowOnlyWillAttened(false);
             resetFilterIcons();
             scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
@@ -243,8 +256,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
             scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-            //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State())
-            //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+            mainTableView.separatorColor = UIColor.lightGray
             
         } else {
             print("Sort By is Time, Show")
@@ -252,6 +264,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.scheduleButton.isHidden = false;
             willAttendButton.isHidden = false;
             scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+            mainTableView.separatorColor = UIColor.lightGray
             
         }
         bands =  [String]()
@@ -353,12 +366,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (attendingCount == 0){
             willAttendButton.isHidden = true;
             willAttendButton.isEnabled = false;
+            mainTableView.separatorColor = UIColor.black
             showOnlyWillAttened = false;
             setShowOnlyWillAttened(false)
             resetFilterIcons();
         } else {
             willAttendButton.isHidden = false;
             willAttendButton.isEnabled = true;
+            mainTableView.separatorColor = UIColor.lightGray
         }
     }
     
@@ -709,6 +724,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         setBands(bands)
         setScheduleButton(scheduleButton.isHidden)
+        
         
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
     
