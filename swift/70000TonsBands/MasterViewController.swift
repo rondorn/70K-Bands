@@ -83,7 +83,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.refreshControl = refreshControl
         
         scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-
+        mainTableView.separatorColor = UIColor.lightGray
+        
         dataHandle.readFiltersFile()
         setFilterButtons()
 
@@ -116,6 +117,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
+        
+        //navigationController?.setToolbarHidden(false, animated: true)
+        //mainToolBar.translatesAutoresizingMaskIntoConstraints = false
+    
         
         //mainToolBar.heightAnchor.constraint(equalToConstant: 150)
         //mainToolBar.topAnchor.constraint(equalTo: view.topAnchor);
@@ -206,6 +211,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+        mainTableView.separatorColor = UIColor.lightGray
 
     }
     
@@ -367,14 +373,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (attendingCount == 0){
             willAttendButton.isHidden = true;
             willAttendButton.isEnabled = false;
-            mainTableView.separatorColor = UIColor.black
             showOnlyWillAttened = false;
             setShowOnlyWillAttened(false)
             resetFilterIcons();
         } else {
             willAttendButton.isHidden = false;
             willAttendButton.isEnabled = true;
-            mainTableView.separatorColor = UIColor.lightGray
         }
     }
     

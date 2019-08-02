@@ -23,10 +23,11 @@
     <string name="AlertForClinics">Alerte pour les cliniques</string>
     <string name="AlertForAlbumListeningEvents">Alerte pour l\'album Listening Evénements</string>
 
-    <string name="PoolVenue">Pool</string>
-    <string name="TheaterVenue">Theater</string>
-    <string name="LoungeVenue">Lounge</string>
-    <string name="RinkVenue">Rink</string>
+    <string name="PoolVenue">Piscine</string>
+    <string name="TheaterVenue">Théâtre</string>
+    <string name="LoungeVenue">Salon</string>
+    <string name="RinkVenue">Patinoire</string>
+    <string name="OtherVenue">Autre</string>
 
     <string name="SpecialEvents">événements spéciaux</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -34,11 +35,9 @@
     <string name="AlbumListeningEvents">l\'album Listening Evénements</string>
     <string name="unofficalEventLable">Croisière organisée</string>
 
-    <string name="showHideExpiredLabel">Afficher/Masquer Expiré</string>
-    <string name="hideExpiredEvents">Masquer Les événements Expirés</string>
-
     <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
     <string name="LastYearsFeatureExplication">Activation \'utilisation dernières années information\' va charger le calendrier de spectacle à partir de l\'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.</string>
+    <string name="AdvancedPreferences">Préférence avancée.\nNe modifiez pas à moins de savoir ce que vous faites!</string>
 
     <string name="restarTitle">Redémarrage Nécessaire</string>
     <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
@@ -55,4 +54,10 @@
     <string name="PartOfEvent">Assister à certains de cet événement</string>
     <string name="NoneOfEvent">Je ne verrai pas cet événement</string>
 
+    <string name="venueFilterHeader">Afficher/Masquer le Lieu</string>
+    <string name="showTypeFilterHeader">Afficher/Masquer Type d'événement</string>
+    <string name="showHideExpiredLabel">Afficher/Masquer Événements Expirés</string>
+    <string name="hideExpiredEvents">Masquer Événements Expirés</string>
+
+    <string name="AlertPreferences">Préférences d'alerte</string>
 </resources>

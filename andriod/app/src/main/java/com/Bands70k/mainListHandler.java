@@ -129,7 +129,7 @@ public class mainListHandler {
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
 
-        FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
+        //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         return sortableBandNames;
     }
 
