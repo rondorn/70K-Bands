@@ -58,7 +58,10 @@ public class showBandDetails extends Activity {
             orientation = "portrait";
         }
 
+        Log.d("detailsForBand",  "determining bandName");
         bandName = BandInfo.getSelectedBand();
+
+        Log.d("detailsForBand",  "bandName is " + bandName);
 
         if (bandName == null) {
             onBackPressed();
@@ -279,7 +282,7 @@ public class showBandDetails extends Activity {
             commentHeight = "53%";
         } else {
             Log.d("descriptionMapFileError",  "setting comment Higher 20 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "45%";
+            commentHeight = "40%";
         }
             htmlText =
                     "<html><head><script>function invert(){\n" +
@@ -312,10 +315,7 @@ public class showBandDetails extends Activity {
                             htmlText += "</ul>";
                         }
                         if (bandNote != "") {
-                            htmlText += "<ul style='overflow:hidden;font-size:10px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:balck'>";
-                            htmlText += "<!--li style='float:left;display:inline;width:20%'><button style='overflow:hidden;font-size:10px;font-size:4.0vw' type=button value=Notes onclick='ok.performClick(this.value);'>Notes:</button></li -->";
-                            htmlText += "<li style='float:left;display:inline;width:80%'><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></li>";
-                            htmlText += "</ul>";
+                            htmlText += "<center><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
                         }
                     } else {
                         htmlText += "<br><br>";

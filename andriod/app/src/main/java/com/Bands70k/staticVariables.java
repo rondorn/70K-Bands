@@ -195,6 +195,27 @@ public class staticVariables {
 
     public static Set<String> alertMessages = new HashSet<String>();
 
+
+    public static bandListView adapterCache;
+    public static synchronized void updateAdapterCache(bandListView adapter) {
+        Log.d("adapterCache", "updating cache");
+        staticVariables.adapterCache = adapter;
+        Log.d("adapterCache", "done updating cache");
+    }
+    public static synchronized bandListView getAdapterCache() {
+        return staticVariables.adapterCache;
+    }
+
+    public static mainListHandler listHandlerCache;
+    public static synchronized void updatelistHandlerCache(mainListHandler listHandler) {
+        Log.d("listHandlerCache", "updating cache");
+        staticVariables.listHandlerCache = listHandler;
+        Log.d("listHandlerCache", "done updating cache");
+    }
+    public static synchronized mainListHandler getlistHandlerCache() {
+        return staticVariables.listHandlerCache;
+    }
+
     public static void staticVariablesInitialize (){
 
         preferences.loadData();

@@ -193,4 +193,23 @@ public class FileHandler70k {
 
         return mainListHandle;
     }
+
+    public static bandListView readBandListHandlerCache (File fileHandle, Context context, int textViewResourceId){
+
+        Log.d("loadingBandInfo", "From cached data");
+        bandListView adapter = new bandListView(context, textViewResourceId);
+
+        try {
+            FileInputStream fis = context.openFileInput(fileHandle.getAbsolutePath());
+            ObjectInputStream is = new ObjectInputStream(fis);
+            adapter = (bandListView) is.readObject();
+            is.close();
+            fis.close();
+        } catch (Exception error) {
+            error.printStackTrace();
+        }
+
+        return adapter;
+    }
+
 }

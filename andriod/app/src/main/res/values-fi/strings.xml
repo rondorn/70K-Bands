@@ -24,9 +24,10 @@
     <string name="AlertForAlbumListeningEvents">Hälytys levyjen ennakkokuunteluihin</string>
 
     <string name="PoolVenue">Pool</string>
-    <string name="TheaterVenue">Theater</string>
-    <string name="LoungeVenue">Lounge</string>
-    <string name="RinkVenue">Rink</string>
+    <string name="TheaterVenue">Teatteri</string>
+    <string name="LoungeVenue">Aula</string>
+    <string name="RinkVenue">Jäähalli</string>
+    <string name="OtherVenue">Muut</string>
 
     <string name="SpecialEvents">muihin tapahtumiin</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -34,11 +35,9 @@
     <string name="AlbumListeningEvents">levyjen ennakkokuunteluihin</string>
     <string name="unofficalEventLable">Cruiser järjestetty</string>
 
-    <string name="showHideExpiredLabel">Näytä/Piilota Vanhentunut</string>
-    <string name="hideExpiredEvents">Piilota Vanhentuneet Tapahtumat</string>
-
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
     <string name="LastYearsFeatureExplication">Aktivointi \'Käytä Viime vuoden tiedot\' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.</string>
+    <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
 
     <string name="restarTitle">uudelleenkäynnistykseen</string>
     <string name="restartMessage">ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot</string>
@@ -54,5 +53,12 @@
     <string name="AllOfEvent">Osallistuu kaikkiin tähän tapahtumaan</string>
     <string name="PartOfEvent">Osallistuu osaan tästä tapahtumasta</string>
     <string name="NoneOfEvent">En näe tätä tapahtumaa</string>
+
+    <string name="venueFilterHeader">Näytä/Piilota Paikka</string>
+    <string name="showTypeFilterHeader">Näytä/Piilota Tapahtumatyyppi</string>
+    <string name="showHideExpiredLabel">Näytä/Piilota Vanhentunut Tapahtumat</string>
+    <string name="hideExpiredEvents">Piilota Vanhentuneet Tapahtumat</string>
+
+    <string name="AlertPreferences">Hälytysasetukset</string>
 
 </resources>
