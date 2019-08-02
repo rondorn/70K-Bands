@@ -22,10 +22,11 @@
     <string name="OnlyAlertForShowsYouWillAttend">Nur Benachrichtigungen für Shows, an denen Sie teilnehmen werden</string>
     <string name="AlertForShowsAccordingToSelection">Alarm für Sendungen entsprechend Ihrer Favoritenauswahl und den auf diesem Bildschirm angezeigten Einstellungen</string>
 
-    <string name="PoolVenue">Pool</string>
+    <string name="PoolVenue">Schwimmbad</string>
     <string name="TheaterVenue">Theater</string>
-    <string name="LoungeVenue">Lounge</string>
-    <string name="RinkVenue">Rink</string>
+    <string name="LoungeVenue">Salon</string>
+    <string name="RinkVenue">Eisbahn</string>
+    <string name="OtherVenue">Andere</string>
 
     <string name="SpecialEvents">Special Events</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -33,11 +34,9 @@
     <string name="AlbumListeningEvents">Album Listening Events</string>
     <string name="unofficalEventLable">Cruiser organisiert</string>
 
-    <string name="showHideExpiredLabel">Show/Ausgelaufen Ausblenden</string>
-    <string name="hideExpiredEvents">Abgelaufene Ereignisse Ausblenden</string>
-
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication">Das Aktivieren von \'Daten des letzten Jahres verwenden\' läd den Ablaufplan des letzten Jahres und wird dann anhand der aktuellen Woche einen simulierten Ablaufplan der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen.</string>
+    <string name="AdvancedPreferences">Erweiterte Einstellungen.\nÄndern Sie nicht, wenn Sie nicht wissen, was Sie tun!</string>
 
     <string name="restarTitle">Neustart erforderlich</string>
     <string name="restartMessage">NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
@@ -53,4 +52,13 @@
     <string name="AllOfEvent">An diesem Event teilnehmen</string>
     <string name="PartOfEvent">Teilnehmen an dieser Veranstaltung</string>
     <string name="NoneOfEvent">Ich werde dieses Ereignis nicht sehen</string>
+
+
+    <string name="venueFilterHeader">Anzeigen/Ausblenden Tagungsort</string>
+    <string name="showTypeFilterHeader">Anzeigen/Ausblenden Ereignistyp</string>
+    <string name="showHideExpiredLabel">Anzeigen/Ausblenden Abgelaufene Ereignisse</string>
+    <string name="hideExpiredEvents">Ausblenden Abgelaufene Ereignissen</string>
+
+    <string name="AlertPreferences">Benachrichtigungseinstellungen</string>
+
 </resources>
