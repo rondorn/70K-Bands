@@ -28,24 +28,29 @@ public class FireBaseBandDataWrite {
 
     public void writeData(){
 
-        buildBandRankArray();
+        Log.d("FireBaseBandDataWrite", "In write routine");
 
-        if (checkIfDataHasChanged() == true) {
-            for (String bandName : bandRanks.keySet()) {
+        if (staticVariables.isTestingEnv == false) {
+            buildBandRankArray();
+            Log.d("FireBaseBandDataWrite", "has data changed");
 
-                HashMap<String, Object> bandData = new HashMap<>();
+            if (checkIfDataHasChanged() == true) {
+                for (String bandName : bandRanks.keySet()) {
 
-                String eventYear = String.valueOf(staticVariables.eventYear);
-                String ranking = bandRanks.get(bandName);
+                    HashMap<String, Object> bandData = new HashMap<>();
 
-                bandData.put("bandName", bandName);
-                bandData.put("ranking", ranking);
-                bandData.put("year", eventYear);
+                    String eventYear = String.valueOf(staticVariables.eventYear);
+                    String ranking = bandRanks.get(bandName);
 
-                Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString());
+                    bandData.put("bandName", bandName);
+                    bandData.put("ranking", ranking);
+                    bandData.put("year", eventYear);
 
-                mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
+                    Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString());
 
+                    mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
+
+                }
             }
         }
     }

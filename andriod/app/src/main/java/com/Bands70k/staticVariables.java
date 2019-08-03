@@ -195,6 +195,7 @@ public class staticVariables {
 
     public static Set<String> alertMessages = new HashSet<String>();
 
+    public static Boolean isTestingEnv = false;
 
     public static bandListView adapterCache;
     public static synchronized void updateAdapterCache(bandListView adapter) {
@@ -219,6 +220,10 @@ public class staticVariables {
     public static void staticVariablesInitialize (){
 
         preferences.loadData();
+
+        if (Build.HARDWARE.contains("golfdish") || preferences.getPointerUrl() == "Testing"){
+            isTestingEnv = true;
+        }
 
         if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null){
             staticVariables.filterToogle.put(staticVariables.mustSeeIcon, staticVariables.preferences.getShowMust());
