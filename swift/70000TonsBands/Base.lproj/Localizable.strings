@@ -10,6 +10,7 @@
 "Must"="Must";
 "Might"="Might";
 "Wont"="Wont";
+"Unknown" = "Unknown";
 
 "Ok"="Ok";
 "Cancel"="Cancel";
@@ -59,3 +60,17 @@
 "WikipediaLinkHelp" = "Searching Wikipedia";
 "YouTubeLinkHelp" = "Searching YouTube for offical videos";
 "MetalArchiveLinkHelp" = "Searching Metal Archives";
+
+"PoolVenue" = "Pool";
+"TheaterVenue" = "Theater";
+"LoungeVenue" = "Lounge";
+"RinkVenue" = "Rink";
+"OtherVenue" = "Other";
+
+"venueFilterHeader" = "Show/Hide Venue";
+"showTypeFilterHeader" = "Show/Hide Event Type";
+
+"showHideExpiredLabel" = "Show/Hide Expired";
+"hideExpiredEvents" = "Hide Expired Events";
+
+"AlertPreferences" = "Alert Preferences";

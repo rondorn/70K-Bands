@@ -207,7 +207,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="left"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Show Event Type"
+            android:text="@string/showTypeFilterHeader"
             android:layout_marginLeft="10dp"
             android:id="@+id/headerTextEventType"
             android:textColor="@color/common_google_signin_btn_text_dark_default"

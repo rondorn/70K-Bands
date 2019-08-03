@@ -12,6 +12,7 @@
 "Must" = "Oui";
 "Might" = "Peut Être";
 "Wont" = "Non";
+"Unknown" = "Inconnu";
 
 "Ok" = "Oui";
 "Cancel" = "Non";
@@ -66,8 +67,19 @@
 "YouTubeLinkHelp" = "Recherche de vidéos officielles sur YouTube";
 "MetalArchiveLinkHelp" = "Rechercher dans les archives métalliques";
 
+"PoolVenue" = "Piscine";
+"TheaterVenue" = "Théâtre";
+"LoungeVenue" = "Salon";
+"RinkVenue" = "Patinoire";
+"OtherVenue" = "Autre";
 
+"venueFilterHeader" = "Afficher/Masquer le Lieu";
+"showTypeFilterHeader" = "Afficher/Masquer Type d'événement";
 
+"showHideExpiredLabel" = "Afficher/Masquer Événements Expirés";
+"hideExpiredEvents" = "Masquer Événements Expirés";
+
+"AlertPreferences" = "Préférences d'alerte";
 
 
 
