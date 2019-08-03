@@ -35,6 +35,8 @@ var downloadingAllComments = false
 var downloadingAllImages = false
 var bandSelected = String();
 
+var inTestEnvironment = false;
+
 var webMessageHelp = String();
 
 var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
@@ -229,6 +231,7 @@ func getPointerUrlData(keyValue: String) -> String {
     
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
         defaultStorageUrl = defaultStorageUrlTest
+        inTestEnvironment = true;
     }
     
     //returned cached data when needed. Will only look up pointer data on launch as this

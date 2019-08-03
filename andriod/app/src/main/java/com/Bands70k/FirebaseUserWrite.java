@@ -22,21 +22,23 @@ public class FirebaseUserWrite {
 
     public void writeData(){
 
+        if (staticVariables.isTestingEnv == false) {
 
-        HashMap<String, Object> userData = new HashMap<>();
+            HashMap<String, Object> userData = new HashMap<>();
 
-        String country = Locale.getDefault().getCountry();
-        String language = Locale.getDefault().getLanguage();
+            String country = Locale.getDefault().getCountry();
+            String language = Locale.getDefault().getLanguage();
 
-        userData.put("userID", staticVariables.userID);
-        userData.put("country", country);
-        userData.put("language", language);
-        userData.put("platform", "Android");
-        userData.put("lastLaunch", getCurrentDateString());
+            userData.put("userID", staticVariables.userID);
+            userData.put("country", country);
+            userData.put("language", language);
+            userData.put("platform", "Android");
+            userData.put("lastLaunch", getCurrentDateString());
 
-        Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
+            Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
 
-        mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+            mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+        }
     }
 
     private String getCurrentDateString(){

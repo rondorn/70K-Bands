@@ -27,6 +27,9 @@ class firebaseEventDataWrite {
         #if targetEnvironment(simulator)
             usingSimulator = true;
         #endif
+        if (inTestEnvironment == true){
+            usingSimulator = true;
+        }
         
         if (internetAvailble == true && usingSimulator == false){
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
