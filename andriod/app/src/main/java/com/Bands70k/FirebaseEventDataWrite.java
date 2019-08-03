@@ -28,41 +28,43 @@ public class FirebaseEventDataWrite {
 
     public void writeData(){
 
-        showsAttended attendedHandler = new showsAttended();
-        Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+        if (staticVariables.isTestingEnv == false) {
+            showsAttended attendedHandler = new showsAttended();
+            Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
 
-        if (checkIfDataHasChanged(showsAttendedArray)) {
-            for (String index : showsAttendedArray.keySet()) {
+            if (checkIfDataHasChanged(showsAttendedArray)) {
+                for (String index : showsAttendedArray.keySet()) {
 
-                HashMap<String, Object> eventData = new HashMap<>();
+                    HashMap<String, Object> eventData = new HashMap<>();
 
-                String[] indexArray = index.split(":");
+                    String[] indexArray = index.split(":");
 
-                String bandName = indexArray[0];
-                String location = indexArray[1];
-                String startTimeHour = indexArray[2];
-                String startTimeMin = indexArray[3];
-                String eventType = indexArray[4];
-                String eventYear = "";
+                    String bandName = indexArray[0];
+                    String location = indexArray[1];
+                    String startTimeHour = indexArray[2];
+                    String startTimeMin = indexArray[3];
+                    String eventType = indexArray[4];
+                    String eventYear = "";
 
-                if (indexArray.length == 6) {
-                    eventYear = indexArray[5];
-                } else {
-                    continue;
+                    if (indexArray.length == 6) {
+                        eventYear = indexArray[5];
+                    } else {
+                        continue;
+                    }
+
+                    String attendedStatus = showsAttendedArray.get(index);
+
+                    eventData.put("bandName", bandName);
+                    eventData.put("location", location);
+                    eventData.put("startTimeHour", startTimeHour);
+                    eventData.put("startTimeMin", startTimeMin);
+                    eventData.put("eventType", eventType);
+                    eventData.put("status", attendedStatus);
+
+                    Log.d("FireBaseBandDataWrite", "Writing band data " + eventData.toString());
+
+                    mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(index).setValue(eventData);
                 }
-
-                String attendedStatus = showsAttendedArray.get(index);
-
-                eventData.put("bandName", bandName);
-                eventData.put("location", location);
-                eventData.put("startTimeHour", startTimeHour);
-                eventData.put("startTimeMin", startTimeMin);
-                eventData.put("eventType", eventType);
-                eventData.put("status", attendedStatus);
-
-                Log.d("FireBaseBandDataWrite", "Writing band data " + eventData.toString());
-
-                mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(index).setValue(eventData);
             }
         }
     }
