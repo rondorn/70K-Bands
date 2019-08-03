@@ -12,6 +12,7 @@
 "Must"="Ja";
 "Might"="Vielleicht";
 "Wont"="Nein";
+"Unknown" = "Unbekannte";
 
 "Ok"="Ja";
 "Cancel"="Nein";
@@ -64,3 +65,17 @@
 "WikipediaLinkHelp" = "Wikipedia durchsuchen";
 "YouTubeLinkHelp" = "YouTube nach offiziellen Videos durchsuchen";
 "MetalArchiveLinkHelp" = "Durchsuchen von Metal-Archiven";
+
+"PoolVenue" = "Schwimmbad";
+"TheaterVenue" = "Theater";
+"LoungeVenue" = "Salon";
+"RinkVenue" = "Eisbahn";
+"OtherVenue" = "Andere";
+
+"venueFilterHeader" = "Anzeigen/Ausblenden Tagungsort";
+"showTypeFilterHeader" = "Anzeigen/Ausblenden Ereignistyp";
+
+"showHideExpiredLabel" = "Anzeigen/Ausblenden Abgelaufene Ereignisse";
+"hideExpiredEvents" = "Ausblenden Abgelaufene Ereignissen";
+
+"AlertPreferences" = "Benachrichtigungseinstellungen";

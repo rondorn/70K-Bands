@@ -84,11 +84,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var VenueRinkLabel: UILabel!
     @IBOutlet weak var VenueLoungeLabel: UILabel!
     
+    @IBOutlet weak var showHideVenues: UILabel!
     @IBOutlet weak var VenuePoolSwitch: UISwitch!
     @IBOutlet weak var VenueTheaterSwitch: UISwitch!
     @IBOutlet weak var VenueRinkSwitch: UISwitch!
     @IBOutlet weak var VenueLoungeSwitch: UISwitch!
     
+    @IBOutlet weak var showHideEventType: UILabel!
     @IBOutlet weak var EventSpecialLabel: UILabel!
     @IBOutlet weak var EventMeetAndGreetLabel: UILabel!
     @IBOutlet weak var EventClinicLabel: UILabel!
@@ -102,9 +104,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var EventCruiserOrganizedSwitch: UISwitch!
     
     @IBOutlet weak var HideExpiredLabel: UILabel!
+    @IBOutlet weak var HideExpiredSwitchLabel: UILabel!
     @IBOutlet weak var HideExpiredSwitch: UISwitch!
     
     
+    @IBOutlet weak var alertPreferenceHeader: UILabel!
     @IBOutlet weak var AlertOnMustSee: UISwitch!
     @IBOutlet weak var AlertOnMightSee: UISwitch!
     
@@ -181,7 +185,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     func setLocalizedLables (){
-    
+        
+        alertPreferenceHeader.text = NSLocalizedString("AlertPreferences", comment: "")
         mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
         mightSeeAlertLable.text = NSLocalizedString("Alert On Might See Bands", comment: "")
         onlyAlertForAttendedLable.text = NSLocalizedString("Alert Only for Will Attend Events", comment: "")
@@ -203,18 +208,21 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         okPrompt = NSLocalizedString("Ok", comment: "")
         cancelPrompt = NSLocalizedString("Cancel", comment: "")
         
-        VenuePoolLabel.text = poolVenueText + " " + poolVenue
-        VenueTheaterLabel.text = theaterVenueText + " " + theaterVenue
-        VenueRinkLabel.text = rinkVenueText + " " + rinkVenue
-        VenueLoungeLabel.text = loungeVenueText + " " + loungeVenue
+        showHideVenues.text =  NSLocalizedString("venueFilterHeader", comment: "")
+        VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "") + " " + poolVenue
+        VenueTheaterLabel.text = NSLocalizedString("TheaterVenue", comment: "") + " " + theaterVenue
+        VenueRinkLabel.text = NSLocalizedString("RinkVenue", comment: "") + " " + rinkVenue
+        VenueLoungeLabel.text = NSLocalizedString("LoungeVenue", comment: "") + " " + loungeVenue
         
+        showHideEventType.text = NSLocalizedString("showTypeFilterHeader", comment: "")
         EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "")
         EventMeetAndGreetLabel.text = NSLocalizedString(meetAndGreetype, comment: "")
         EventClinicLabel.text = NSLocalizedString(clinicType, comment: "")
         EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "")
         EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "")
         
-        HideExpiredLabel.text = NSLocalizedString("HideExpiredEvents", comment: "")
+        HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
+        HideExpiredSwitchLabel.text = NSLocalizedString("hideExpiredEvents", comment: "")
     }
     
     func setExistingValues (){

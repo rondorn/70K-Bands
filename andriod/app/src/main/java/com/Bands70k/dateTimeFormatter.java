@@ -29,7 +29,7 @@ public class dateTimeFormatter {
         }
 
         timeValue = timeValue.replace(" AM", "am").replace(" PM","pm");
-
+        timeValue = timeValue.replace(" a. m.", "am").replace(" p. m.","pm");
         return timeValue;
     }
 }

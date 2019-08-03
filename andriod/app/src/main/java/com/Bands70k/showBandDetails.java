@@ -324,7 +324,7 @@ public class showBandDetails extends Activity {
 
                     htmlText += scheduleText;
 
-                    htmlText += "</div><div style='height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>" +
+                    htmlText += "</div><div style='font-size:3vw;height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>" +
                             "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +

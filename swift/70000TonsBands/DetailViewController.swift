@@ -200,7 +200,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if (eventCount <= 1){
             let screenSize = UIScreen.main.bounds
-            customNotesText.frame.size.height = screenSize.height * 0.57
+            customNotesText.frame.size.height = screenSize.height * 0.47
         }
     }
     
@@ -402,12 +402,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let MustSee = NSLocalizedString("Must", comment: "A Must See Band")
         let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
         let WontSee: String = NSLocalizedString("Wont", comment: "A Wont See Band")
+        let UnknonwSee: String = NSLocalizedString("Unknown", comment: "A Wont See Band")
         
         priorityButtons.setTitle(MustSee, forSegmentAt: 1)
         priorityButtons.setTitle(MightSee, forSegmentAt: 2)
         priorityButtons.setTitle(WontSee, forSegmentAt: 3)
 
-        priorityButtons.setTitle("Unknown", forSegmentAt: 0)
+        priorityButtons.setTitle(UnknonwSee, forSegmentAt: 0)
+        
+        let font = UIFont.boldSystemFont(ofSize: 11)
+        priorityButtons.setTitleTextAttributes([NSAttributedString.Key.font: font], for: .normal)
         
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
