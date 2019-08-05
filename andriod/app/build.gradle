@@ -4,14 +4,14 @@ android {
 
 
     compileSdkVersion 28
-    buildToolsVersion '27.0.3'
+    //buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.Bands70k"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 301908021
-        versionName "301908021"
+        versionCode 301908034
+        versionName "301908034"
         android.compileOptions.incremental = false
         multiDexEnabled true
     }
@@ -52,6 +52,16 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 
 }
+
+buildscript {
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.4.2'
+    }
+    repositories {
+        google()
+    }
+}
+
 
 apply plugin: 'com.google.gms.google-services'
 

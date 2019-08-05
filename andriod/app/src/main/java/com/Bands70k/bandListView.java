@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,6 +45,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         TextView time;
         TextView dayLable;
         TextView bandNameNoSchedule;
+
+        TextView bottomSpacer;
 
     }
 
@@ -85,6 +88,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.time = (TextView) row.findViewById(R.id.timeInCell);
             viewHolder.dayLable = (TextView) row.findViewById(R.id.dayLabelInCell);
 
+            viewHolder.bottomSpacer = (TextView) row.findViewById(R.id.bottomSpacer);
             viewHolder.rankImageNoSchedule = (ImageView) row.findViewById(R.id.rankingInCellnoSchedule);
             viewHolder.bandNameNoSchedule = (TextView) row.findViewById(R.id.bandNameInCellNoSchedule);
 
@@ -119,7 +123,14 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.rankImageNoSchedule.setImageResource(bandData.getRankImg());
             viewHolder.bandNameNoSchedule.setText(bandData.getBandName());
 
+            viewHolder.bottomSpacer.setVisibility(View.INVISIBLE);
+
+            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
+                viewHolder.bandNameNoSchedule.setTextSize(26);
+            }
+
         } else {
+
             viewHolder.rankImage.setImageResource(bandData.getRankImg());
             viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
             viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
@@ -140,6 +151,10 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
             viewHolder.rankImage.setImageResource(bandData.getRankImg());
             viewHolder.bandName.setText(bandData.getBandName());
+
+            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
+                viewHolder.bandName.setTextSize(23);
+            }
         }
 
 
