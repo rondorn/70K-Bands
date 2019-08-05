@@ -55,9 +55,9 @@
     <string name="NoneOfEvent">Je ne verrai pas cet événement</string>
 
     <string name="venueFilterHeader">Afficher/Masquer le Lieu</string>
-    <string name="showTypeFilterHeader">Afficher/Masquer Type d'événement</string>
+    <string name="showTypeFilterHeader">Afficher/Masquer Type d\'événement</string>
     <string name="showHideExpiredLabel">Afficher/Masquer Événements Expirés</string>
     <string name="hideExpiredEvents">Masquer Événements Expirés</string>
 
-    <string name="AlertPreferences">Préférences d'alerte</string>
+    <string name="AlertPreferences">Préférences d\'alerte</string>
 </resources>
