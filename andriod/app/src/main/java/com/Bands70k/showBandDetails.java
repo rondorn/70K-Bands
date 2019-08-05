@@ -279,10 +279,10 @@ public class showBandDetails extends Activity {
 
         } else if (scheduleText.contains("onclick") == false ){
             Log.d("descriptionMapFileError",  "setting comment Higher 46 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "53%";
+            commentHeight = "65%";
         } else {
             Log.d("descriptionMapFileError",  "setting comment Higher 20 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "40%";
+            commentHeight = "50%";
         }
             htmlText =
                     "<html><head><script>function invert(){\n" +
@@ -340,11 +340,11 @@ public class showBandDetails extends Activity {
 
     private String buildScheduleView(){
 
-        String htmlData;
+        String htmlData = "<div style='position:fixed;bottom:58'>";
         if (orientation == "portrait") {
-            htmlData = "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         } else {
-            htmlData = "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         }
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
@@ -377,7 +377,7 @@ public class showBandDetails extends Activity {
                 Log.d("htmlData is", "Adding HTML text of " + htmlData);
             }
 
-            htmlData += "</ul>";
+            htmlData += "</ul></div>";
         }
 
         return htmlData;
@@ -430,7 +430,7 @@ public class showBandDetails extends Activity {
 
     private String displayLinks(String bandName){
 
-        String html = "<br><br><br>";
+        String html = "<div style='position:fixed;top:10px;height:20px'><br><br><br>";
 
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == true) {
             html = "<br><br><br><br><br><br><br><br><br><br><br>";
@@ -451,7 +451,7 @@ public class showBandDetails extends Activity {
                     "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=32 width=32></a></td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=32 width=32></a></td>" +
                     "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_ma.png height=32 width=32></a></td>" +
-                    "</tr></table></center>";
+                    "</tr></table></center></div>";
 
         }
 
