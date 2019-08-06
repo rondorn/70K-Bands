@@ -71,6 +71,7 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginLeft="1dp"
+            android:layout_marginTop="2dp"
             android:background="@drawable/icon_going_yes"
             android:text="MustSeeFilter"
             android:textOff=""
@@ -82,29 +83,14 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:text="50dp"
-            android:textOff=""
-            android:textOn=""
             android:id="@+id/mightSeeFilter"
-            android:background="@drawable/icon_going_maybe" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <ToggleButton
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:text="Wont"
-            android:id="@+id/wontSeeFilter"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/icon_going_maybe"
+            android:text="Might"
             android:textOff=""
-            android:textOn=""
-            android:textSize="30dp"
-            android:background="@drawable/icon_going_no"
-            android:layout_marginTop="10dp" />
+            android:textOn="" />
 
         <View
             android:layout_width="0dp"
@@ -112,15 +98,30 @@
             android:layout_weight="1" />
 
         <ToggleButton
+            android:id="@+id/wontSeeFilter"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/icon_going_no"
+            android:text="Wont"
+            android:textOff=""
+            android:textOn=""
+            />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
+
+        <ToggleButton
+            android:id="@+id/unknownFilter"
             android:layout_width="16dp"
             android:layout_height="28dp"
-            android:text="Unknown"
-            android:id="@+id/unknownFilter"
-            android:textOff=""
-            android:textOn=""
-            android:textSize="30dp"
+            android:layout_marginTop="2dp"
             android:background="@drawable/icon_unknown"
-            android:layout_marginTop="10dp" />
+            android:text="Unknown"
+            android:textOff=""
+            android:textOn="" />
 
         <View
             android:layout_width="0dp"
@@ -134,9 +135,8 @@
             android:id="@+id/willAttendFilter"
             android:textOff=""
             android:textOn=""
-            android:textSize="30dp"
             android:background="@drawable/icon_seen_alt"
-            android:layout_marginTop="10dp" />
+            android:layout_marginTop="2dp" />
 
         <View
             android:layout_width="0dp"
@@ -146,8 +146,9 @@
         <Button
             android:id="@+id/sort"
             android:layout_width="28dp"
-            android:layout_height="26dp"
-            android:background="@drawable/icon_sort_az"/>
+            android:layout_height="28dp"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/icon_sort_az" />
 
         <View
             android:layout_width="0dp"
@@ -156,11 +157,12 @@
 
 
         <Button
+            android:id="@+id/shareButton"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:text=""
-            android:id="@+id/shareButton"
-            android:background="@drawable/icon_share" />
+            android:layout_marginTop="2dp"
+            android:background="@drawable/icon_share"
+            android:text="" />
 
         <View
             android:layout_width="0dp"
