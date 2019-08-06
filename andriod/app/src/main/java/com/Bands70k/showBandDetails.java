@@ -46,6 +46,15 @@ public class showBandDetails extends Activity {
 
     private String rankIconLocation = "";
 
+    private Integer startLocationTitle = 0;
+    private Integer startLocationLogo = 20;
+    private Integer startLocationLinks= 100;
+    private Integer startLocationExtraInfo= 100;
+    private Integer startLocationNotes= 235;
+
+    private Integer startLocationEvents= 65;
+
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
@@ -287,20 +296,28 @@ public class showBandDetails extends Activity {
             htmlText =
                     "<html><head><script>function invert(){\n" +
                             "document.getElementById(\"bandLogo\").style.filter=\"invert(100%)\";\n" +
-                            "}</script><body bgcolor=\"black\" style=\"color:white\"> <div style='height:82%;font-size:130%;'>" +
-                            "<center>" + bandName + "</center><br>" +
-                            "<center><img id=\"bandLogo\" style='max-height:15%;max-height:15vh' src='" + imageHandler.getImage() + "'</img>";
+                            "}</script><body bgcolor=\"black\" style=\"color:white\"> <div style='position: fixed;height:20px;top:" + startLocationTitle + ";font-size:130%;left:0;right:0;'>" +
+                            "<center>" + bandName + "</center>" + "</div><br><br>" +
+                            "<div style='position: fixed;height:25px;top:" + startLocationLogo + ";width=100%;left:0;right:0;'>" +
+                            "<center><img id=\"bandLogo\" style='height:100px' src='" + imageHandler.getImage() + "'</img></div><br><br><br>";
+
+                htmlText += displayLinks(bandName);
 
                 if (staticVariables.writeNoteHtml.isEmpty() == false) {
                     Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
                     htmlText += staticVariables.writeNoteHtml;
 
                 } else {
+
+                    startLocationExtraInfo = startLocationLinks;
+
                     if (orientation == "portrait") {
-                        htmlText += displayLinks(bandName);
 
                         if (BandInfo.getCountry(bandName) != "") {
-                            htmlText += "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
+                            startLocationExtraInfo = startLocationExtraInfo + 25;
+
+                            htmlText += "<div style='position: fixed;height:35px;top:" + startLocationExtraInfo + ";width=100%; left:0;right:0;width=100%;'>" +
+                                    "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
 
                             htmlText += "<li style='float:left;display:inline;width:20%'>Country:</li>";
                             htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
@@ -309,47 +326,60 @@ public class showBandDetails extends Activity {
                             htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
 
                             if (BandInfo.getNote(bandName) != "") {
+                                startLocationExtraInfo = startLocationExtraInfo + 25;
                                 htmlText += "<li style='float:left;display:inline;width:20%'>Misc:</li>";
                                 htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
                             }
-                            htmlText += "</ul>";
+                            htmlText += "</ul></div>";
+
+                            startLocationExtraInfo = startLocationExtraInfo + 70;
                         }
-                        if (bandNote != "") {
-                            htmlText += "<center><div style='width:98%;height:" + commentHeight + ";overflow:hidden;overflow-y:scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
-                        }
+
                     } else {
                         htmlText += "<br><br>";
                     }
 
 
+                    startLocationNotes = startLocationExtraInfo;
+                    if (bandNote != "") {
+                        htmlText += "</div><br><br><center><br><br>";
+                        htmlText += "<div style='top:" + startLocationNotes + ";bottom:" + startLocationEvents + ";position: fixed;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+                    }
+
                     htmlText += scheduleText;
 
-                    htmlText += "</div><div style='font-size:3vw;height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>" +
-                            "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>" +
-                            "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
+                    htmlText += "</div><div style='font-size:3vw;height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>";
+
+                    if (rankIconLocation.isEmpty() == false) {
+                        htmlText += "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>";
+                    }
+
+                    htmlText += "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
                             "</tr></table></center></div>" +
-                            "</body></html>";
+                            "</body!--></html>";
                 }
 
+                Log.d("exportedHtml", htmlText);
             mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
 
     }
 
     private String buildScheduleView(){
 
-        String htmlData = "<div style='position:fixed;bottom:58'>";
-        if (orientation == "portrait") {
-            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
-        } else {
-            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
-        }
+        String scheduleHtml = "";
+
+
+
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
 
             while (entries.hasNext()) {
+
+                startLocationEvents = startLocationEvents + 12;
+
                 Map.Entry thisEntry = (Map.Entry) entries.next();
                 Object key = thisEntry.getKey();
 
@@ -362,23 +392,32 @@ public class showBandDetails extends Activity {
                 String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
                 String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
-                htmlData += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
-                htmlData += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
-                htmlData += "<img src=" + getEventTypeImage(eventType, bandName) + " height=18 width=18>&nbsp;";
-                htmlData += "<font color='" + color + "' >";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
-                htmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
-                htmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
-                htmlData += location + locationIcon + " - ";
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
-                htmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
-                htmlData += "</font></li>";
+                scheduleHtml += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                scheduleHtml += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
+                scheduleHtml += "<img src=" + getEventTypeImage(eventType, bandName) + " height=18 width=18>&nbsp;";
+                scheduleHtml += "<font color='" + color + "' >";
+                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
+                scheduleHtml += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
+                scheduleHtml += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
+                scheduleHtml += location + locationIcon + " - ";
+                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
+                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
+                scheduleHtml += "</font></li>";
 
-                Log.d("htmlData is", "Adding HTML text of " + htmlData);
+                Log.d("htmlData is", "Adding HTML text of " + scheduleHtml);
             }
-
-            htmlData += "</ul></div>";
         }
+
+        Log.d("startLocationEvents", "startLocationEvents =" + String.valueOf(startLocationEvents));
+        String htmlData = "<div style='position:fixed;bottom:" + 53 + "'>";
+        if (orientation == "portrait") {
+            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+        } else {
+            htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+        }
+
+        htmlData += scheduleHtml + "</ul></div>";
+
 
         return htmlData;
     }
@@ -430,10 +469,11 @@ public class showBandDetails extends Activity {
 
     private String displayLinks(String bandName){
 
-        String html = "<div style='position:fixed;top:10px;height:20px'><br><br><br>";
+        String html = "";
+
+        startLocationLinks = startLocationLogo + 100;
 
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == true) {
-            html = "<br><br><br><br><br><br><br><br><br><br><br>";
 
             String disable;
             if (OnlineStatus.isOnline() == true) {
@@ -445,13 +485,16 @@ public class showBandDetails extends Activity {
 
 
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
-            html = "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
+            html = "<br><div style='position: fixed;height:30px;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>" +
+                    "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
                     "<td  style='color:#5B5DFF' width=40%>Visit Band On: </td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=32 width=32></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=32 width=32></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=32 width=32></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_ma.png height=32 width=32></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_ma.png height=23 width=27></a></td>" +
                     "</tr></table></center></div>";
+
+            startLocationLinks = startLocationLinks;
 
         }
 

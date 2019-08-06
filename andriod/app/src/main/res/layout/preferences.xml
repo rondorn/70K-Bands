@@ -179,7 +179,7 @@
                     android:layout_column="9"
                     android:layout_gravity="left"
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="250dp" />
+                    android:width="255dp" />
                 <CheckBox
                     android:id="@+id/showOther"
                     android:layout_width="wrap_content"
@@ -338,7 +338,7 @@
                     android:layout_column="9"
                     android:layout_gravity="left"
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="250dp" />
+                    android:width="255dp" />
 
                 <CheckBox
                     android:id="@+id/unofficalEvent"
@@ -401,7 +401,7 @@
             android:layout_column="9"
             android:layout_gravity="left"
             android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:width="250dp" />
+            android:width="255dp" />
 
 
         <CheckBox
