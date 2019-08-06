@@ -131,9 +131,27 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
         } else {
 
-            viewHolder.rankImage.setImageResource(bandData.getRankImg());
-            viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
-            viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
+            if (bandData.getRankImg() == 0){
+                viewHolder.rankImage.setVisibility(View.INVISIBLE);
+            } else {
+                viewHolder.rankImage.setImageResource(bandData.getRankImg());
+                viewHolder.rankImage.setVisibility(View.VISIBLE);
+            }
+
+            if (bandData.getEventTypeImage() == 0){
+                viewHolder.eventTypeImage.setVisibility(View.INVISIBLE);
+            } else {
+                viewHolder.eventTypeImage.setImageResource(bandData.getEventTypeImage());
+                viewHolder.eventTypeImage.setVisibility(View.VISIBLE);
+            }
+
+            if (bandData.getAttendedImage() == 0){
+                viewHolder.attendedImage.setVisibility(View.INVISIBLE);
+            } else {
+                viewHolder.attendedImage.setImageResource(bandData.getAttendedImage());
+                viewHolder.attendedImage.setVisibility(View.VISIBLE);
+            }
+
             viewHolder.location.setText(bandData.getLocation());
 
             String locationColorChoice = bandData.getLocationColor();

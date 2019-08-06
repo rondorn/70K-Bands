@@ -1018,11 +1018,19 @@ public class showBands extends Activity {
                             location += " " + venueLocation.get(location);
                         }
 
+                        Integer eventImage = iconResolve.getEventIcon(eventType, bandName);
+
                         bandItem.setLocation(location);
                         bandItem.setStartTime(startTime);
                         bandItem.setDay(day);
-                        bandItem.setEventTypeImage(iconResolve.getEventIcon(eventType, bandName));
+
+                        if (eventImage != 0) {
+                            bandItem.setEventTypeImage(eventImage);
+                        }
+
                         bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
+
+                        Log.d("settingEvent", " for " + bandName + " eventType of " + eventType + "returned image " + eventImage);
                     }
                 }
 
