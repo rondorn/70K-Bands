@@ -93,6 +93,7 @@ open class CustomBandDescription {
     
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
+        print ("commentFile lookup for \(bandName) via \(descriptionUrl)")
         var commentText = "Comment text is not available yet."
         
         let commentFileName = bandName + "_comment.txt";

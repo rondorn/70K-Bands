@@ -140,7 +140,7 @@ public class BandInfo {
 
         } else if (getBandDetailsData(bandName, "imageUrl") != null) {
             Log.d("ImageUrlIs1", bandName + "  shttp://" + getBandDetailsData(bandName, "imageUrl"));
-            return "http://" + getBandDetailsData(bandName, "imageUrl");
+            return "https://" + getBandDetailsData(bandName, "imageUrl");
 
         } else {
             Log.d("ImageUrlIs3", bandName + " Nothing so default");
