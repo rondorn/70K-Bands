@@ -53,7 +53,7 @@ public class showBandDetails extends Activity {
     private Integer startLocationNotes= 235;
 
     private Integer startLocationEvents= 65;
-
+    private Integer startBelowEvents = 65;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,14 +97,6 @@ public class showBandDetails extends Activity {
         }
     }
 
-    private void invertImageJavaScript(){
-        /*
-        function invert(){
-            document.getElementById("theImage").style.filter="invert(100%)";
-        }
-
-         */
-    }
     private void initializeWebContent (){
 
         webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
@@ -351,7 +343,7 @@ public class showBandDetails extends Activity {
                     htmlText += "</div><div style='font-size:3vw;height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>";
 
                     if (rankIconLocation.isEmpty() == false) {
-                        htmlText += "<td width=12%><img src=" + rankIconLocation + " height=32 width=32></td>";
+                        htmlText += "<td width=12%><img src=" + rankIconLocation + " height=28 width=28></td>";
                     }
 
                     htmlText += "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
@@ -378,7 +370,7 @@ public class showBandDetails extends Activity {
 
             while (entries.hasNext()) {
 
-                startLocationEvents = startLocationEvents + 12;
+                startLocationEvents = startLocationEvents + 13;
 
                 Map.Entry thisEntry = (Map.Entry) entries.next();
                 Object key = thisEntry.getKey();
@@ -409,7 +401,7 @@ public class showBandDetails extends Activity {
         }
 
         Log.d("startLocationEvents", "startLocationEvents =" + String.valueOf(startLocationEvents));
-        String htmlData = "<div style='position:fixed;bottom:" + 53 + "'>";
+        String htmlData = "<div style='position:fixed;bottom:" + startBelowEvents + "'>";
         if (orientation == "portrait") {
             htmlData += "<ul width=100% style='font-size:12px;font-size:3vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         } else {
@@ -504,17 +496,18 @@ public class showBandDetails extends Activity {
 
     private String createEditNoteInterface(String bandName){
 
-        String html = "<br><br><br>";
+        String html = "<br>";
 
         if (bandHandler.getNoteIsBlank() == true){
             bandNote = "";
         }
 
         bandNote = bandNote.replaceAll("<br>", "\n");
-        html += "<form><textarea name='userNotes' id='userNotes' style='width:90%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
+        html += "<br><div style='width:100%;height:90%;position: fixed;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>";
+        html += "<center><form><textarea name='userNotes' id='userNotes' style='width:95%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
         html += bandNote;
         html += "</textarea>";
-        html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form><br>";
+        html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form></center><br></div>";
 
         return html;
     }
