@@ -1009,6 +1009,10 @@ public class showBands extends Activity {
                             day = " " + day.replaceAll("Day", "");
                         }
 
+                        if (day.contains("/") == false){
+                            day = day + "  ";
+                        }
+
                         Log.d("PopulatingDayValue", "Day = " + day);
                         startTime = dateTimeFormatter.formatScheduleTime(startTime);
 

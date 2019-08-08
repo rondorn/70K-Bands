@@ -158,7 +158,7 @@
         android:text="Time"
         android:textAlignment="gravity"
         android:textColor="#D3D3D3"
-        android:textSize="10pt"
+        android:textSize="8pt"
         android:textStyle="bold"
         app:layout_widthPercent="22%"
         android:layout_alignParentLeft="true"
@@ -166,12 +166,12 @@
 
     <TextView
         android:id="@+id/dayLabelInCell"
-        android:layout_width="43dp"
+        android:layout_width="50dp"
         android:layout_height="22dp"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="0dp"
         android:height="25dp"
-        android:width="43dp"
+        android:width="50dp"
         android:gravity="center"
         android:textAlignment="gravity"
         android:text="Day"
@@ -179,7 +179,7 @@
         android:background="#838383"
         android:textSize="5pt"
         android:layout_alignParentRight="true"
-        android:layout_marginLeft="319dp" />
+        android:layout_marginLeft="315dp" />
 
     <TextView
         android:id="@+id/dayInCell"
@@ -189,21 +189,23 @@
         android:layout_alignParentTop="true"
         android:layout_marginTop="21dp"
         android:height="47dp"
-        android:width="43dp"
+        android:width="50dp"
         android:gravity="center"
+        android:layout_gravity="center_vertical|end"
         android:textAlignment="gravity"
         android:text="2/28"
         android:textColor="#ffffff"
         android:textStyle="bold"
         android:background="#838383"
-        android:autoSizeMaxTextSize="50sp"
+        android:autoSizeMaxTextSize="25sp"
         android:autoSizeMinTextSize="1sp"
         android:autoSizeStepGranularity="1sp"
         android:autoSizeTextType="uniform"
+        android:textSize="8pt"
         android:inputType="none"
         android:maxLines="1"
         android:ellipsize="end"
-        android:layout_marginLeft="319dp"
+        android:layout_marginLeft="315dp"
         android:layout_alignParentRight="true" />
 
 
