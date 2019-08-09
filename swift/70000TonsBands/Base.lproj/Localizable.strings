@@ -54,7 +54,7 @@
 
 
 "restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
 
 "officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
