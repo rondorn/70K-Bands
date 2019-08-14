@@ -65,4 +65,16 @@
 
 
 
+"PoolVenue" = "Piscina";
+"TheaterVenue" = "Teatro";
+"LoungeVenue" = "Salão";
+"RinkVenue" = "Pista de Gelo";
+"OtherVenue" = "De Outros";
 
+"venueFilterHeader" = "Exposição/Ocultar Local";
+"showTypeFilterHeader" = "Exposição/Ocultar Tipo de Evento";
+
+"showHideExpiredLabel" = "Exposição/Ocultar Eventos Expirado";
+"hideExpiredEvents" = "Ocultar Eventos Expirados";
+
+"AlertPreferences" = "Preferências de Alerta";

@@ -52,8 +52,10 @@ public class showBandDetails extends Activity {
     private Integer startLocationExtraInfo= 100;
     private Integer startLocationNotes= 235;
 
-    private Integer startLocationEvents= 65;
+    private Integer startLocationEvents= 70;
     private Integer startBelowEvents = 65;
+
+    private String linkMessage = "";
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,7 +136,7 @@ public class showBandDetails extends Activity {
                         finish();
                     }
 
-                }else if (value.startsWith("UserNoteSubmit:")){
+                }else if (value.startsWith("UserNoteSubmit:")) {
 
                     staticVariables.writeNoteHtml = "";
                     //code to write note for band
@@ -143,6 +145,11 @@ public class showBandDetails extends Activity {
                     Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                     startActivity(showDetails);
                     finish();
+
+                } else if (value.equals("webLink")){
+                    linkMessage = "It appeas that the " + value + " link was clicked on";
+                    WebView htmlWebView = (WebView)findViewById(R.id.detailWebView);
+                    htmlWebView.loadUrl(BandInfo.getOfficalWebLink(bandName));
 
                 } else {
                     rankStore.saveBandRanking(BandInfo.getSelectedBand(), resolveValue(value));
@@ -158,7 +165,9 @@ public class showBandDetails extends Activity {
         mWebView.addJavascriptInterface(new Object() {
 
             @JavascriptInterface
-            public void webLinkClick() {
+            public void webLinkClick(String value) {
+                staticVariables.webHelpMessage = setWebHelpMessage(value);
+                Log.d("webHelpMessage", staticVariables.webHelpMessage );
                 inLink = true;
             }
 
@@ -167,6 +176,26 @@ public class showBandDetails extends Activity {
         createDetailHTML();
         webProgressBar.setVisibility(View.GONE);
 
+    }
+
+    private String setWebHelpMessage(String linkType){
+
+        String webHelpMessage = "";
+
+        if (linkType.equals("webPage")) {
+            webHelpMessage = getResources().getString(R.string.officialWebSiteLinkHelp);
+
+        } else if (linkType.equals("wikipedia")) {
+            webHelpMessage = getResources().getString(R.string.WikipediaLinkHelp);
+
+        } else if (linkType.equals("youTube")) {
+            webHelpMessage = getResources().getString(R.string.YouTubeLinkHelp);
+
+        } else if (linkType.equals("metalArchives")) {
+            webHelpMessage = getResources().getString(R.string.MetalArchiveLinkHelp);
+        }
+
+        return webHelpMessage;
     }
 
     @Override
@@ -288,7 +317,7 @@ public class showBandDetails extends Activity {
             htmlText =
                     "<html><head><script>function invert(){\n" +
                             "document.getElementById(\"bandLogo\").style.filter=\"invert(100%)\";\n" +
-                            "}</script><body bgcolor=\"black\" style=\"color:white\"> <div style='position: fixed;height:20px;top:" + startLocationTitle + ";font-size:130%;left:0;right:0;'>" +
+                            "}</script><body bgcolor=\"black\" style='color:white;height:100%'> <div style='position: fixed;height:20px;top:" + startLocationTitle + ";font-size:130%;left:0;right:0;'>" +
                             "<center>" + bandName + "</center>" + "</div><br><br>" +
                             "<div style='position: fixed;height:25px;top:" + startLocationLogo + ";width=100%;left:0;right:0;'>" +
                             "<center><img id=\"bandLogo\" style='height:100px' src='" + imageHandler.getImage() + "'</img></div><br><br><br>";
@@ -311,16 +340,16 @@ public class showBandDetails extends Activity {
                             htmlText += "<div style='position: fixed;height:35px;top:" + startLocationExtraInfo + ";width=100%; left:0;right:0;width=100%;'>" +
                                     "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
 
-                            htmlText += "<li style='float:left;display:inline;width:20%'>Country:</li>";
-                            htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
+                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Country:</li>";
+                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
 
-                            htmlText += "<li style='float:left;display:inline;width:20%'>Genre:</li>";
-                            htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
+                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Genre:</li>";
+                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
 
                             if (BandInfo.getNote(bandName) != "") {
                                 startLocationExtraInfo = startLocationExtraInfo + 25;
-                                htmlText += "<li style='float:left;display:inline;width:20%'>Misc:</li>";
-                                htmlText += "<li style='float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
+                                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Misc:</li>";
+                                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
                             }
                             htmlText += "</ul></div>";
 
@@ -335,12 +364,12 @@ public class showBandDetails extends Activity {
                     startLocationNotes = startLocationExtraInfo;
                     if (bandNote != "") {
                         htmlText += "</div><br><br><center><br><br>";
-                        htmlText += "<div style='top:" + startLocationNotes + ";bottom:" + startLocationEvents + ";position: fixed;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+                        htmlText += "<div style='text-align:left;padding-bottom:20px;top:" + startLocationNotes + ";bottom:" + startLocationEvents + ";position: fixed;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
                     }
 
                     htmlText += scheduleText;
 
-                    htmlText += "</div><div style='font-size:3vw;height:10vh;position:fixed;bottom:0;width:100vw;'><center><table width=95%><tr width=100%>";
+                    htmlText += "</div><div style='font-size:3vw;height:20px;position:fixed;bottom:0;width:100%'><center><table style='font-size:3vw;height:20px;position:fixed;bottom:0;width:95%'><tr width=100%>";
 
                     if (rankIconLocation.isEmpty() == false) {
                         htmlText += "<td width=12%><img src=" + rankIconLocation + " height=28 width=28></td>";
@@ -351,7 +380,7 @@ public class showBandDetails extends Activity {
                             "<td width=22%><button style='color:white;width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
                             "<td width=22%><button style='color:white;width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
                             "</tr></table></center></div>" +
-                            "</body!--></html>";
+                            "</body></html>";
                 }
 
                 Log.d("exportedHtml", htmlText);
@@ -362,8 +391,6 @@ public class showBandDetails extends Activity {
     private String buildScheduleView(){
 
         String scheduleHtml = "";
-
-
 
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
@@ -479,12 +506,12 @@ public class showBandDetails extends Activity {
             Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
             html = "<br><div style='position: fixed;height:30px;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>" +
                     "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
-                    "<td  style='color:#5B5DFF' width=40%>Visit Band On: </td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_www.png height=23 width=27></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_wiki.png height=23 width=27></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_youtube.png height=23 width=27></a></td>" +
-                    "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick()'><img src=file:///android_res/drawable/icon_ma.png height=23 width=27></a></td>" +
-                    "</tr></table></center></div>";
+                    "<td  style='color:" + staticVariables.blueColor + "' + staticVariables.blueColor + \"' width=40%>Visit Band On: </td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick(\"webPage\")'><img src=file:///android_res/drawable/icon_www.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick(\"metalArchives\")'><img src=file:///android_res/drawable/icon_ma.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick(\"wikipedia\")'><img src=file:///android_res/drawable/icon_wiki.png height=23 width=27></a></td>" +
+                    "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick(\"youTube\")'><img src=file:///android_res/drawable/icon_youtube.png height=23 width=27></a></td>" +
+                                        "</tr></table></center></div>";
 
             startLocationLinks = startLocationLinks;
 
@@ -504,7 +531,7 @@ public class showBandDetails extends Activity {
 
         bandNote = bandNote.replaceAll("<br>", "\n");
         html += "<br><div style='width:100%;height:90%;position: fixed;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>";
-        html += "<center><form><textarea name='userNotes' id='userNotes' style='width:95%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
+        html += "<center><form><textarea name='userNotes' id='userNotes' style='text-align:left;width:95%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
         html += bandNote;
         html += "</textarea>";
         html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form></center><br></div>";
@@ -518,15 +545,19 @@ public class showBandDetails extends Activity {
         public void onPageFinished(WebView view, String url) {
             // TODO Auto-generated method stub
             super.onPageFinished(view, url);
-
             webProgressBar.setVisibility(View.GONE);
         }
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             // TODO Auto-generated method stub
-            super.onPageStarted(view, url, favicon);
+
             webProgressBar.setVisibility(View.VISIBLE);
+            if (staticVariables.webHelpMessage .isEmpty() == false) {
+                HelpMessageHandler.showMessage(staticVariables.webHelpMessage);
+                staticVariables.webHelpMessage = "";
+            }
+            super.onPageStarted(view, url, favicon);
         }
 
         public boolean shouldOverrideUrlLoading(WebView view, String url){

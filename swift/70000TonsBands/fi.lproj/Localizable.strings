@@ -65,10 +65,19 @@
 "MetalArchiveLinkHelp" = "Metal-arkistojen etsiminen";
 
 
+"PoolVenue" = "Pool";
+"TheaterVenue" = "Teatteri";
+"LoungeVenue" = "Aula";
+"RinkVenue" = "Jäähalli";
+"OtherVenue" = "Muut";
 
+"venueFilterHeader" = "Näytä/Piilota Paikka";
+"showTypeFilterHeader" = "Näytä/Piilota Tapahtumatyyppi";
 
+"showHideExpiredLabel" = "Näytä/Piilota Vanhentunut Tapahtumat";
+"hideExpiredEvents" = "Piilota Vanhentuneet Tapahtumat";
 
-
+"AlertPreferences" = "Hälytysasetukset";
 
 
 

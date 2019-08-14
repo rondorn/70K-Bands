@@ -124,7 +124,7 @@ var metalArchivesButtonName = "Metal Archives"
 
 let sawAllColor = hexStringToUIColor(hex: "#67C10C")
 let sawSomeColor = hexStringToUIColor(hex: "#F0D905")
-let sawNoneColor = UIColor.white
+let sawNoneColor = hexStringToUIColor(hex: "#5DADE2")
 let sawAllStatus = "sawAll";
 let sawSomeStatus = "sawSome";
 let sawNoneStatus = "sawNone";

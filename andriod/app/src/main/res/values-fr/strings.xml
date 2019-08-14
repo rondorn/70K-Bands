@@ -60,4 +60,11 @@
     <string name="hideExpiredEvents">Masquer Événements Expirés</string>
 
     <string name="AlertPreferences">Préférences d\'alerte</string>
+
+    <string name="officialWebSiteLinkHelp">Vous emmenant sur le site officiel</string>
+    <string name="WikipediaLinkHelp">Recherche sur Wikipedia</string>
+    <string name="YouTubeLinkHelp">Recherche de vidéos officielles sur YouTube</string>
+    <string name="MetalArchiveLinkHelp">Rechercher dans les archives métalliques</string>
+
+
 </resources>

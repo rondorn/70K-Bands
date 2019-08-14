@@ -62,4 +62,10 @@
 
     <string name="AlertPreferences">Preferencias de Alerta</string>
 
+
+    <string name="officialWebSiteLinkHelp">Llevándote al sitio web oficial</string>
+    <string name="WikipediaLinkHelp">Buscando Wikipedia</string>
+    <string name="YouTubeLinkHelp">Buscando videos oficiales en YouTube</string>
+    <string name="MetalArchiveLinkHelp">Buscando archivos de metal</string>
+
 </resources>
