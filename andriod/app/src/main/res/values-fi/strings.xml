@@ -61,4 +61,9 @@
 
     <string name="AlertPreferences">Hälytysasetukset</string>
 
+    <string name="officialWebSiteLinkHelp">Otat sinut viralliselle sivustolle</string>
+    <string name="WikipediaLinkHelp">Etsitään Wikipediaa</string>
+    <string name="YouTubeLinkHelp">Hae YouTubesta virallisia videoita varten</string>
+    <string name="MetalArchiveLinkHelp">Metal-arkistojen etsiminen</string>
+
 </resources>
