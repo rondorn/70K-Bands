@@ -62,3 +62,18 @@
 "WikipediaLinkHelp" = "Søgning på Wikipedia";
 "YouTubeLinkHelp" = "Søgning på YouTube til officielle videoer";
 "MetalArchiveLinkHelp" = "Søgning på metalarkiver";
+
+"PoolVenue" = "Pool";
+"TheaterVenue" = "Teater";
+"LoungeVenue" = "Lounge";
+"RinkVenue" = "Rink";
+"OtherVenue" = "Andet";
+
+"venueFilterHeader" = "Vis/Skjul Lokalitet";
+"showTypeFilterHeader" = "Vis/Skjul Begivenhedstype";
+
+"showHideExpiredLabel" = "Vis/Skjul Udløbet Begivenheder";
+"hideExpiredEvents" = "Skjul Udløbet Begivenheder";
+
+"AlertPreferences" = "Indstillinger for Alarm";
+

@@ -61,4 +61,9 @@
 
     <string name="AlertPreferences">Benachrichtigungseinstellungen</string>
 
+    <string name="officialWebSiteLinkHelp">Weiterleitung zur offiziellen Website</string>
+    <string name="WikipediaLinkHelp">Wikipedia durchsuchen</string>
+    <string name="YouTubeLinkHelp">YouTube nach offiziellen Videos durchsuchen</string>
+    <string name="MetalArchiveLinkHelp">Durchsuchen von Metal-Archiven</string>
+
 </resources>

@@ -62,4 +62,9 @@
 
     <string name="AlertPreferences">Indstillinger for Alarm</string>
 
+    <string name="officialWebSiteLinkHelp">Tager dig til den officielle hjemmeside</string>
+    <string name="WikipediaLinkHelp">Søgning på Wikipedia</string>
+    <string name="YouTubeLinkHelp">Søgning på YouTube til officielle videoer</string>
+    <string name="MetalArchiveLinkHelp">Søgning på metalarkivers</string>
+
 </resources>

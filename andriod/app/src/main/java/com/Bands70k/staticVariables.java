@@ -67,7 +67,7 @@ public class staticVariables {
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
-    public final static String sawNoneColor = "white";
+    public final static String sawNoneColor = "#5DADE2";
     public final static String sawAllStatus = "sawAll";
     public final static String sawSomeStatus = "sawSome";
     public final static String sawNoneStatus = "sawNone";
@@ -127,11 +127,16 @@ public class staticVariables {
     public static String descriptionMap;
     public static String previousYearDescriptionMap;
 
+
+    public static String webHelpMessage = "";
+
     public static List<String> sortableBandNamesCache = new ArrayList<String>();
     public static Boolean sortableBandNamesLock = false;
 
     public static Boolean schedulePresent = false;
     public static Boolean notesLoaded = false;
+
+    public static final String blueColor = "#5DADE2";
 
     public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
 

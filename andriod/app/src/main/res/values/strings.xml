@@ -61,6 +61,11 @@
 
     <string name="AlertPreferences">Alert Preferences</string>
 
+    <string name="officialWebSiteLinkHelp">Taking you to the Offical Web Site</string>
+    <string name="WikipediaLinkHelp">Searching Wikipedia</string>
+    <string name="YouTubeLinkHelp">Searching YouTube for offical videos</string>
+    <string name="MetalArchiveLinkHelp">Searching Metal Archives</string>
+
 </resources>
 
 

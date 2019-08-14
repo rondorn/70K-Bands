@@ -52,7 +52,7 @@
                                             <constraint firstAttribute="width" constant="110" id="9yz-wb-tOp"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="17"/>
-                                        <color key="textColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <stackView opaque="NO" contentMode="right" distribution="fillEqually" spacing="28" translatesAutoresizingMaskIntoConstraints="NO" id="cNj-Lf-NzH">
@@ -282,19 +282,19 @@
                                 <subviews>
                                     <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Country:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Atp-OR-BA6">
                                         <rect key="frame" x="10" y="0.0" width="300" height="22"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
                                         <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Genre:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="NIR-Ul-YFm">
                                         <rect key="frame" x="10" y="21" width="300" height="22"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
                                         <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
                                     <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Note Worthy:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="auh-JV-Kjw">
                                         <rect key="frame" x="10" y="44" width="300" height="22"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
                                         <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
                                         <textInputTraits key="textInputTraits"/>
                                     </textField>
@@ -453,8 +453,8 @@
                         <color key="sectionIndexColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="sectionIndexBackgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="sectionIndexTrackingBackgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                        <toolbar key="tableHeaderView" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="center" translucent="NO" id="gG3-x8-MXE">
-                            <rect key="frame" x="0.0" y="49" width="320" height="44"/>
+                        <toolbar key="tableHeaderView" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="center" misplaced="YES" translucent="NO" id="gG3-x8-MXE">
+                            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                             <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <items>
@@ -1377,7 +1377,7 @@
     <resources>
         <image name="icon-gear-alt-Raw" width="26.666666030883789" height="28.333333969116211"/>
         <image name="icon-going-maybe" width="26.666666030883789" height="28.666666030883789"/>
-        <image name="icon-going-no" width="26.666666030883789" height="28.666666030883789"/>
+        <image name="icon-going-no" width="26.666666030883789" height="28.333333969116211"/>
         <image name="icon-going-yes" width="26.666666030883789" height="28.666666030883789"/>
         <image name="icon-ma" width="26.666666030883789" height="23"/>
         <image name="icon-seen" width="30.666666030883789" height="20"/>

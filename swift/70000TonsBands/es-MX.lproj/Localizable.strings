@@ -73,3 +73,17 @@
 "WikipediaLinkHelp" = "Buscando Wikipedia";
 "YouTubeLinkHelp" = "Buscando videos oficiales en YouTube";
 "MetalArchiveLinkHelp" = "Buscando archivos de metal";
+
+"PoolVenue" = "Piscina";
+"TheaterVenue" = "Teatro";
+"LoungeVenue" = "Salón";
+"RinkVenue" = "Pista";
+"OtherVenue" = "Otra";
+
+"venueFilterHeader" = "Mostrar/Ocultar Lugar";
+"showTypeFilterHeader" = "Mostrar/Ocultar Tipo de Evento";
+
+"showHideExpiredLabel" = "Mostrar/Ocultar Eventos Vencidos";
+"hideExpiredEvents" = "Ocultar Eventos Vencidos";
+
+"AlertPreferences" = "Preferencias de Alerta";
