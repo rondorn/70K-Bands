@@ -118,12 +118,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
         
-        //navigationController?.setToolbarHidden(false, animated: true)
-        //mainToolBar.translatesAutoresizingMaskIntoConstraints = false
-    
-        
-        //mainToolBar.heightAnchor.constraint(equalToConstant: 150)
-        //mainToolBar.topAnchor.constraint(equalTo: view.topAnchor);
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
