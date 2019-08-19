@@ -83,12 +83,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var VenueTheaterLabel: UILabel!
     @IBOutlet weak var VenueRinkLabel: UILabel!
     @IBOutlet weak var VenueLoungeLabel: UILabel!
+    @IBOutlet weak var VenueOtherLabel: UILabel!
     
     @IBOutlet weak var showHideVenues: UILabel!
     @IBOutlet weak var VenuePoolSwitch: UISwitch!
     @IBOutlet weak var VenueTheaterSwitch: UISwitch!
     @IBOutlet weak var VenueRinkSwitch: UISwitch!
     @IBOutlet weak var VenueLoungeSwitch: UISwitch!
+    @IBOutlet weak var VenueOtherSwitch: UISwitch!
     
     @IBOutlet weak var showHideEventType: UILabel!
     @IBOutlet weak var EventSpecialLabel: UILabel!
@@ -209,10 +211,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         cancelPrompt = NSLocalizedString("Cancel", comment: "")
         
         showHideVenues.text =  NSLocalizedString("venueFilterHeader", comment: "")
-        VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "") + " " + poolVenue
-        VenueTheaterLabel.text = NSLocalizedString("TheaterVenue", comment: "") + " " + theaterVenue
-        VenueRinkLabel.text = NSLocalizedString("RinkVenue", comment: "") + " " + rinkVenue
-        VenueLoungeLabel.text = NSLocalizedString("LoungeVenue", comment: "") + " " + loungeVenue
+        VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "")
+        VenueTheaterLabel.text = NSLocalizedString("TheaterVenue", comment: "")
+        VenueRinkLabel.text = NSLocalizedString("RinkVenue", comment: "")
+        VenueLoungeLabel.text = NSLocalizedString("LoungeVenue", comment: "")
+        VenueOtherLabel.text = NSLocalizedString("OtherVenue", comment: "")
+        
+        VenuePoolLabel.textColor = getVenueColor(venue: venuePoolKey)
+        VenueTheaterLabel.textColor = getVenueColor(venue: venueTheaterKey)
+        VenueRinkLabel.textColor = getVenueColor(venue: venueRinkKey)
+        VenueLoungeLabel.textColor = getVenueColor(venue: venueLoungeKey)
+        VenueOtherLabel.textColor = getVenueColor(venue: "other")
         
         showHideEventType.text = NSLocalizedString("showTypeFilterHeader", comment: "")
         EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "")
@@ -283,7 +292,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         VenueTheaterSwitch.isOn = showTheaterShows;
         VenueRinkSwitch.isOn = showRinkShows;
         VenueLoungeSwitch.isOn = showLoungeShows;
-        //otherToggle.isOn = showOtherShows;
+        VenueOtherSwitch.isOn = showOtherShows;
         EventCruiserOrganizedSwitch.isOn = showUnofficalEvents
         HideExpiredSwitch.isOn = hideExpireScheduleData
     }
@@ -424,6 +433,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func venueLounge(_ sender: Any) {
        defaults.set(VenueLoungeSwitch.isOn, forKey: "showLoungeShows")
+    }
+    
+    @IBAction func venueOther(_ sender: Any) {
+        defaults.set(VenueOtherSwitch.isOn, forKey: "showOtherShows")
     }
     
     @IBAction func eventSpecial(_ sender: Any) {

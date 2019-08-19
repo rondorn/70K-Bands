@@ -91,10 +91,10 @@ public class staticVariables {
     public final static String unofficalEventOld = "Unofficial Event";
     public final static String karaoekeEvent = "Karaoke";
 
-    public final static String poolVenueColor = "#3478C7";
+    public final static String poolVenueColor = "#5888db";
     public final static String theaterVenueColor = "#C4AC00";
     public final static String loungeVenueColor = "#5BA50A";
-    public final static String rinkVenueColor = "#8A0011";
+    public final static String rinkVenueColor = "#bd222c";
     public final static String unknownVenueColor = "#A9A9A9";
 
     //schedule file header rows

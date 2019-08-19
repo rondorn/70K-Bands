@@ -523,7 +523,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         scheduleText = day
                         scheduleText += " - " + startTime
                         scheduleText += " - " + endTime
-                        scheduleText += " - " + location + getVenuIcon(location)
+                        scheduleText += " - " + location
                         scheduleText += " - " + type
                         
                         if (notes.isEmpty == false && notes != " "){
@@ -542,34 +542,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
                         switch count {
                         case 1:
-                            Event1.text = scheduleText
-                            _ = attendedHandle.setShowsAttendedStatus(Event1,status: status);
-                            Event1AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event1TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
                             
+                            setLocationInfo(eventField: Event1, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event1AttendedIcon, EventTypeIcon: Event1TypeIcon)
+
                         case 2:
-                            Event2.text = scheduleText
-                            _ = attendedHandle.setShowsAttendedStatus(Event2,status: status);
-                            Event2AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event2TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+                            setLocationInfo(eventField: Event2, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event2AttendedIcon, EventTypeIcon: Event2TypeIcon)
                             
                         case 3:
-                            Event3.text = scheduleText
-                            _ = attendedHandle.setShowsAttendedStatus(Event3,status: status);
-                            Event3AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event3TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+                            setLocationInfo(eventField: Event3, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event3AttendedIcon, EventTypeIcon: Event3TypeIcon)
                             
                         case 4:
-                            Event4.text = scheduleText
-                            _ = attendedHandle.setShowsAttendedStatus(Event4,status: status);
-                            Event4AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event4TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+                            setLocationInfo(eventField: Event4, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event4AttendedIcon, EventTypeIcon: Event4TypeIcon)
                             
                         case 5:
-                            Event5.text = scheduleText
-                            _ = attendedHandle.setShowsAttendedStatus(Event5,status: status);
-                            Event5AttendedIcon.image = getAttendedIcons(attendedStatus: status)
-                            Event5TypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+                            setLocationInfo(eventField: Event5, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event5AttendedIcon, EventTypeIcon: Event5TypeIcon)
                             
                         default:
                             print("To many events")
@@ -582,6 +568,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             hideEmptyData();
         }
+    }
+    
+    func setLocationInfo(eventField: UITextField, scheduleText: String, bandName: String, locationName: String, status: String, type: String, EventAttendedIcon: UIImageView, EventTypeIcon: UIImageView){
+        
+        eventField.text = scheduleText
+        _ = attendedHandle.setShowsAttendedStatus(eventField,status: status);
+        EventAttendedIcon.image = getAttendedIcons(attendedStatus: status)
+        EventTypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+        
+        eventField.halfTextColorChange(fullText: eventField.text!, changeText: locationName, locationColor: getVenueColor(venue: locationName))
     }
     
     func hideEmptyData() {
@@ -722,5 +718,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             toastLabel.removeFromSuperview()
         })
     }
-    
+
+}
+
+
+extension UITextField {
+    func halfTextColorChange (fullText : String , changeText : String, locationColor: UIColor ) {
+        let strNumber: NSString = fullText as NSString
+        let range = (strNumber).range(of: changeText)
+        let attribute = NSMutableAttributedString.init(string: fullText)
+        attribute.addAttribute(NSAttributedString.Key.foregroundColor, value: locationColor , range: range)
+        self.attributedText = attribute
+    }
 }

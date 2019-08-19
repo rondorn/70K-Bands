@@ -122,6 +122,11 @@ var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
+let venuePoolKey:String = "Pool";
+let venueTheaterKey:String = "Theater";
+let venueLoungeKey:String = "Lounge";
+let venueRinkKey:String = "Rink";
+
 let sawAllColor = hexStringToUIColor(hex: "#67C10C")
 let sawSomeColor = hexStringToUIColor(hex: "#F0D905")
 let sawNoneColor = hexStringToUIColor(hex: "#5DADE2")

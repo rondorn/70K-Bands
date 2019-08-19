@@ -53,7 +53,7 @@ let poolVenueColor = hexStringToUIColor(hex: "#3885DC")
 let theaterVenueColor = hexStringToUIColor(hex: "#F0D905")
 let loungeVenueColor = hexStringToUIColor(hex: "#67C10C")
 let rinkVenueColor = hexStringToUIColor(hex: "#C10114")
-let unknownVenueColor = UIColor.darkGray
+let unknownVenueColor = UIColor.lightGray
 
 func getEventTypeIcon (eventType: String, eventName: String)->UIImage {
     
@@ -191,16 +191,16 @@ func getVenueColor (venue: String)->UIColor{
     
     switch venue {
         
-    case "Pool":
+    case venuePoolKey:
         venuColor = poolVenueColor
         
-    case "Theater":
+    case venueTheaterKey:
         venuColor = theaterVenueColor
         
-    case "Lounge":
+    case venueLoungeKey:
         venuColor = loungeVenueColor
         
-    case "Rink":
+    case venueRinkKey:
         venuColor = rinkVenueColor
         
     default:
