@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.util.Log;
@@ -85,16 +86,24 @@ public class preferenceLayout  extends Activity {
 
     private void setLabels(){
         TextView poolVenueLable = (TextView)findViewById(R.id.poolVenueLable);
-        poolVenueLable.setText(getResources().getString(R.string.PoolVenue) + " " + staticVariables.poolVenueIcon);
+        poolVenueLable.setText(getResources().getString(R.string.PoolVenue));
+        poolVenueLable.setTextColor(Color.parseColor(staticVariables.poolVenueColor));
 
         TextView theaterVenueLable = (TextView)findViewById(R.id.theaterVenueLable);
-        theaterVenueLable.setText(getResources().getString(R.string.TheaterVenue) + " " + staticVariables.theaterVenueIcon);
+        theaterVenueLable.setText(getResources().getString(R.string.TheaterVenue));
+        theaterVenueLable.setTextColor(Color.parseColor(staticVariables.theaterVenueColor));
 
         TextView rinkVenueLable = (TextView)findViewById(R.id.rinkVenueLable);
-        rinkVenueLable.setText(getResources().getString(R.string.RinkVenue) + " " + staticVariables.rinkVenueIcon);
+        rinkVenueLable.setText(getResources().getString(R.string.RinkVenue));
+        rinkVenueLable.setTextColor(Color.parseColor(staticVariables.rinkVenueColor));
 
         TextView loungeVenueLable = (TextView)findViewById(R.id.loungeVenueLable);
-        loungeVenueLable.setText(getResources().getString(R.string.LoungeVenue) + " " + staticVariables.loungeVenueIcon);
+        loungeVenueLable.setText(getResources().getString(R.string.LoungeVenue));
+        loungeVenueLable.setTextColor(Color.parseColor(staticVariables.loungeVenueColor));
+
+        TextView otherVenueLable = (TextView)findViewById(R.id.otherVenueLable);
+        otherVenueLable.setText(getResources().getString(R.string.OtherVenue));
+        otherVenueLable.setTextColor(Color.parseColor(staticVariables.unknownVenueColor));
 
         TextView specialEventLable = (TextView)findViewById(R.id.specialEventLable);
         specialEventLable.setText(getResources().getString(R.string.SpecialEvents));
