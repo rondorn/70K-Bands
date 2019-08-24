@@ -43,7 +43,7 @@
                                 </constraints>
                             </imageView>
                             <view contentMode="center" translatesAutoresizingMaskIntoConstraints="NO" id="uaF-dJ-7Dc">
-                                <rect key="frame" x="0.0" y="155" width="320" height="26.5"/>
+                                <rect key="frame" x="0.0" y="155" width="320" height="23"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Vist Band On:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7eU-qa-VIQ">
                                         <rect key="frame" x="10" y="0.0" width="110" height="24"/>
@@ -120,27 +120,105 @@
                                 <constraints>
                                     <constraint firstItem="7eU-qa-VIQ" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="top" id="1li-DJ-SPV"/>
                                     <constraint firstItem="7eU-qa-VIQ" firstAttribute="leading" secondItem="uaF-dJ-7Dc" secondAttribute="leading" constant="10" id="LeY-bj-LOr"/>
-                                    <constraint firstAttribute="bottom" secondItem="7eU-qa-VIQ" secondAttribute="bottom" constant="6" id="MXf-gt-K3R"/>
+                                    <constraint firstAttribute="bottom" secondItem="7eU-qa-VIQ" secondAttribute="bottom" constant="2.5" id="MXf-gt-K3R"/>
                                 </constraints>
                                 <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                             </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="klk-SA-oTX">
+                                <rect key="frame" x="0.0" y="183" width="320" height="66"/>
+                                <subviews>
+                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Country:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Atp-OR-BA6">
+                                        <rect key="frame" x="10" y="0.0" width="300" height="22"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
+                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
+                                        <textInputTraits key="textInputTraits"/>
+                                    </textField>
+                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Genre:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="NIR-Ul-YFm">
+                                        <rect key="frame" x="10" y="21" width="300" height="22"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
+                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
+                                        <textInputTraits key="textInputTraits"/>
+                                    </textField>
+                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Note Worthy:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="auh-JV-Kjw">
+                                        <rect key="frame" x="10" y="44" width="300" height="22"/>
+                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
+                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
+                                        <textInputTraits key="textInputTraits"/>
+                                    </textField>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="NIR-Ul-YFm" firstAttribute="trailing" secondItem="auh-JV-Kjw" secondAttribute="trailing" id="D2o-mz-Qqp"/>
+                                    <constraint firstItem="auh-JV-Kjw" firstAttribute="top" secondItem="NIR-Ul-YFm" secondAttribute="bottom" constant="1" id="Pzz-Uj-2xW"/>
+                                    <constraint firstItem="auh-JV-Kjw" firstAttribute="top" secondItem="Atp-OR-BA6" secondAttribute="bottom" constant="22" id="UjG-Vd-Nke"/>
+                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="centerX" secondItem="klk-SA-oTX" secondAttribute="centerX" id="XM1-6Y-IqN"/>
+                                    <constraint firstItem="NIR-Ul-YFm" firstAttribute="leading" secondItem="auh-JV-Kjw" secondAttribute="leading" id="Xyx-94-Ohg"/>
+                                    <constraint firstAttribute="bottom" secondItem="auh-JV-Kjw" secondAttribute="bottom" id="ZGN-NE-RnB"/>
+                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="trailing" secondItem="NIR-Ul-YFm" secondAttribute="trailing" id="flT-cj-811"/>
+                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="top" id="gn1-QF-ng2"/>
+                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="leading" secondItem="NIR-Ul-YFm" secondAttribute="leading" id="pAd-nt-9D5"/>
+                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="leading" secondItem="klk-SA-oTX" secondAttribute="leading" constant="10" id="uNT-E3-hHN"/>
+                                </constraints>
+                            </view>
+                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1L-g3-deM">
+                                <rect key="frame" x="9" y="249" width="300" height="141"/>
+                                <subviews>
+                                    <textView clipsSubviews="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" bounces="NO" showsVerticalScrollIndicator="NO" contentInsetAdjustmentBehavior="scrollableAxes" bouncesZoom="NO" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
+                                        <rect key="frame" x="0.0" y="0.0" width="300" height="141"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" keyboardKey="YES"/>
+                                        </accessibility>
+                                        <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                </subviews>
+                                <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <constraints>
+                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" id="3Sp-aK-qSO"/>
+                                    <constraint firstAttribute="trailing" secondItem="EXR-5H-hTd" secondAttribute="trailing" id="57A-X9-B7b"/>
+                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="top" id="8tO-uj-I5e"/>
+                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" id="C9X-QP-Pav"/>
+                                </constraints>
+                                <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
+                            </view>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Ryr-rp-o9R" userLabel="PriorityIcon">
+                                <rect key="frame" x="16" y="532" width="24" height="24"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="24" id="c3R-5n-bG9"/>
+                                </constraints>
+                            </imageView>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
+                                <rect key="frame" x="45" y="532" width="250" height="29"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <segments>
+                                    <segment title="Unknown"/>
+                                    <segment title="Might See"/>
+                                    <segment title="Wont See"/>
+                                    <segment title="Unknown"/>
+                                </segments>
+                                <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                <connections>
+                                    <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
+                                </connections>
+                            </segmentedControl>
                             <view contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="lTJ-bG-l3q">
-                                <rect key="frame" x="0.0" y="390" width="309" height="132"/>
+                                <rect key="frame" x="0.0" y="398" width="309" height="132"/>
                                 <subviews>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="4Kl-mQ-PgM" userLabel="EventAttended1">
-                                        <rect key="frame" x="5" y="1" width="24" height="24"/>
+                                        <rect key="frame" x="5" y="5" width="24" height="24"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="24" id="vdA-7c-BYm"/>
                                         </constraints>
                                     </imageView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="JhT-Kg-9AY" userLabel="EventType1">
-                                        <rect key="frame" x="29" y="1" width="24" height="24"/>
+                                        <rect key="frame" x="29" y="5" width="24" height="24"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="24" id="iIw-ZI-Qss"/>
                                         </constraints>
                                     </imageView>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" tag="11" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="4wQ-EF-ggP">
-                                        <rect key="frame" x="55" y="1" width="254" height="24"/>
+                                        <rect key="frame" x="55" y="5" width="254" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES" link="YES" staticText="YES"/>
                                         </accessibility>
@@ -152,13 +230,13 @@
                                         </connections>
                                     </textField>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="IVr-pN-ah1" userLabel="EventAttended2">
-                                        <rect key="frame" x="5" y="25" width="24" height="24"/>
+                                        <rect key="frame" x="5" y="29" width="24" height="24"/>
                                     </imageView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="0xB-7o-tt3" userLabel="EventType2">
-                                        <rect key="frame" x="29" y="25" width="24" height="24"/>
+                                        <rect key="frame" x="29" y="29" width="24" height="24"/>
                                     </imageView>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" tag="12" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="7sY-QX-Q0I">
-                                        <rect key="frame" x="55" y="25" width="254" height="24"/>
+                                        <rect key="frame" x="55" y="29" width="254" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES"/>
                                         </accessibility>
@@ -170,13 +248,13 @@
                                         </connections>
                                     </textField>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Z5g-Sl-A8M" userLabel="EventAttended3">
-                                        <rect key="frame" x="5" y="50" width="24" height="24"/>
+                                        <rect key="frame" x="5" y="54" width="24" height="24"/>
                                     </imageView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UMN-Xr-W5H" userLabel="EventType3">
-                                        <rect key="frame" x="29" y="50" width="24" height="24"/>
+                                        <rect key="frame" x="29" y="54" width="24" height="24"/>
                                     </imageView>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" tag="13" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="a3P-fX-csG">
-                                        <rect key="frame" x="55" y="50" width="254" height="24"/>
+                                        <rect key="frame" x="55" y="54" width="254" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES"/>
                                         </accessibility>
@@ -188,13 +266,13 @@
                                         </connections>
                                     </textField>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="IpS-0a-Vpm" userLabel="EventAttended4">
-                                        <rect key="frame" x="5" y="75" width="24" height="24"/>
+                                        <rect key="frame" x="5" y="79" width="24" height="24"/>
                                     </imageView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="2eo-nb-ar4" userLabel="EventType4">
-                                        <rect key="frame" x="29" y="75" width="24" height="24"/>
+                                        <rect key="frame" x="29" y="79" width="24" height="24"/>
                                     </imageView>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" tag="14" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="U4K-TS-T4N">
-                                        <rect key="frame" x="55" y="75" width="254" height="24"/>
+                                        <rect key="frame" x="55" y="79" width="254" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES"/>
                                         </accessibility>
@@ -206,13 +284,13 @@
                                         </connections>
                                     </textField>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Kdy-fV-JDY" userLabel="EventAttended5">
-                                        <rect key="frame" x="5" y="100" width="24" height="24"/>
+                                        <rect key="frame" x="5" y="104" width="24" height="24"/>
                                     </imageView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TS3-CT-ndi" userLabel="EventType5">
-                                        <rect key="frame" x="29" y="100" width="24" height="24"/>
+                                        <rect key="frame" x="29" y="104" width="24" height="24"/>
                                     </imageView>
                                     <textField autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" tag="15" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Fj0-mm-xh7">
-                                        <rect key="frame" x="55" y="100" width="254" height="24"/>
+                                        <rect key="frame" x="55" y="104" width="254" height="24"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES"/>
                                         </accessibility>
@@ -237,12 +315,12 @@
                                     <constraint firstItem="IpS-0a-Vpm" firstAttribute="top" secondItem="Z5g-Sl-A8M" secondAttribute="bottom" constant="1" id="9i7-xj-7e1"/>
                                     <constraint firstItem="0xB-7o-tt3" firstAttribute="leading" secondItem="UMN-Xr-W5H" secondAttribute="leading" id="AJ6-TG-vPf"/>
                                     <constraint firstItem="7sY-QX-Q0I" firstAttribute="trailing" secondItem="a3P-fX-csG" secondAttribute="trailing" id="Cwy-9P-fe6"/>
-                                    <constraint firstItem="Kdy-fV-JDY" firstAttribute="bottom" secondItem="lTJ-bG-l3q" secondAttribute="bottomMargin" id="DrA-8o-odO"/>
+                                    <constraint firstItem="Kdy-fV-JDY" firstAttribute="bottom" secondItem="lTJ-bG-l3q" secondAttribute="bottomMargin" constant="4" id="DrA-8o-odO"/>
                                     <constraint firstItem="TS3-CT-ndi" firstAttribute="top" secondItem="Fj0-mm-xh7" secondAttribute="top" id="GR1-4E-oBW"/>
                                     <constraint firstItem="IpS-0a-Vpm" firstAttribute="leading" secondItem="Kdy-fV-JDY" secondAttribute="leading" id="JCK-oa-NQ0"/>
                                     <constraint firstItem="IVr-pN-ah1" firstAttribute="trailing" secondItem="Z5g-Sl-A8M" secondAttribute="trailing" id="MJS-y4-kN3"/>
                                     <constraint firstItem="0xB-7o-tt3" firstAttribute="top" secondItem="7sY-QX-Q0I" secondAttribute="top" id="MYg-hI-XJI"/>
-                                    <constraint firstItem="4Kl-mQ-PgM" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="top" constant="1" id="MnJ-D9-T8d"/>
+                                    <constraint firstItem="4Kl-mQ-PgM" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="top" constant="5" id="MnJ-D9-T8d"/>
                                     <constraint firstItem="Kdy-fV-JDY" firstAttribute="bottom" secondItem="TS3-CT-ndi" secondAttribute="bottom" id="Nmd-Ub-uv1"/>
                                     <constraint firstItem="7sY-QX-Q0I" firstAttribute="leading" secondItem="a3P-fX-csG" secondAttribute="leading" id="NwQ-sX-Hrm"/>
                                     <constraint firstAttribute="trailing" secondItem="4wQ-EF-ggP" secondAttribute="trailing" id="PZ3-Dz-scq"/>
@@ -282,84 +360,6 @@
                                     <constraint firstItem="IpS-0a-Vpm" firstAttribute="trailing" secondItem="Kdy-fV-JDY" secondAttribute="trailing" id="z20-ux-TMw"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="klk-SA-oTX">
-                                <rect key="frame" x="0.0" y="186.5" width="320" height="66"/>
-                                <subviews>
-                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Country:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Atp-OR-BA6">
-                                        <rect key="frame" x="10" y="0.0" width="300" height="22"/>
-                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
-                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
-                                        <textInputTraits key="textInputTraits"/>
-                                    </textField>
-                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="redraw" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Genre:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="NIR-Ul-YFm">
-                                        <rect key="frame" x="10" y="21" width="300" height="22"/>
-                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
-                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
-                                        <textInputTraits key="textInputTraits"/>
-                                    </textField>
-                                    <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Note Worthy:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="auh-JV-Kjw">
-                                        <rect key="frame" x="10" y="44" width="300" height="22"/>
-                                        <color key="textColor" red="0.36470588235294116" green="0.67843137254901964" blue="0.88627450980392153" alpha="1" colorSpace="calibratedRGB"/>
-                                        <fontDescription key="fontDescription" name="AvenirNextCondensed-Regular" family="Avenir Next Condensed" pointSize="16"/>
-                                        <textInputTraits key="textInputTraits"/>
-                                    </textField>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstItem="NIR-Ul-YFm" firstAttribute="trailing" secondItem="auh-JV-Kjw" secondAttribute="trailing" id="D2o-mz-Qqp"/>
-                                    <constraint firstItem="auh-JV-Kjw" firstAttribute="top" secondItem="NIR-Ul-YFm" secondAttribute="bottom" constant="1" id="Pzz-Uj-2xW"/>
-                                    <constraint firstItem="auh-JV-Kjw" firstAttribute="top" secondItem="Atp-OR-BA6" secondAttribute="bottom" constant="22" id="UjG-Vd-Nke"/>
-                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="centerX" secondItem="klk-SA-oTX" secondAttribute="centerX" id="XM1-6Y-IqN"/>
-                                    <constraint firstItem="NIR-Ul-YFm" firstAttribute="leading" secondItem="auh-JV-Kjw" secondAttribute="leading" id="Xyx-94-Ohg"/>
-                                    <constraint firstAttribute="bottom" secondItem="auh-JV-Kjw" secondAttribute="bottom" id="ZGN-NE-RnB"/>
-                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="trailing" secondItem="NIR-Ul-YFm" secondAttribute="trailing" id="flT-cj-811"/>
-                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="top" id="gn1-QF-ng2"/>
-                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="leading" secondItem="NIR-Ul-YFm" secondAttribute="leading" id="pAd-nt-9D5"/>
-                                    <constraint firstItem="Atp-OR-BA6" firstAttribute="leading" secondItem="klk-SA-oTX" secondAttribute="leading" constant="10" id="uNT-E3-hHN"/>
-                                </constraints>
-                            </view>
-                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1L-g3-deM">
-                                <rect key="frame" x="9" y="252.5" width="300" height="137.5"/>
-                                <subviews>
-                                    <textView clipsSubviews="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" bounces="NO" showsVerticalScrollIndicator="NO" contentInsetAdjustmentBehavior="scrollableAxes" bouncesZoom="NO" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
-                                        <rect key="frame" x="0.0" y="0.0" width="300" height="137.5"/>
-                                        <accessibility key="accessibilityConfiguration">
-                                            <accessibilityTraits key="traits" keyboardKey="YES"/>
-                                        </accessibility>
-                                        <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="13"/>
-                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                                    </textView>
-                                </subviews>
-                                <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>
-                                <constraints>
-                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" id="3Sp-aK-qSO"/>
-                                    <constraint firstAttribute="trailing" secondItem="EXR-5H-hTd" secondAttribute="trailing" id="57A-X9-B7b"/>
-                                    <constraint firstItem="EXR-5H-hTd" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="top" id="8tO-uj-I5e"/>
-                                    <constraint firstAttribute="bottom" secondItem="EXR-5H-hTd" secondAttribute="bottom" id="C9X-QP-Pav"/>
-                                </constraints>
-                                <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
-                            </view>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Ryr-rp-o9R" userLabel="PriorityIcon">
-                                <rect key="frame" x="16" y="532" width="24" height="24"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="24" id="c3R-5n-bG9"/>
-                                </constraints>
-                            </imageView>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
-                                <rect key="frame" x="45" y="532" width="250" height="29"/>
-                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <segments>
-                                    <segment title="Unknown"/>
-                                    <segment title="Might See"/>
-                                    <segment title="Wont See"/>
-                                    <segment title="Unknown"/>
-                                </segments>
-                                <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
-                                <connections>
-                                    <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
-                                </connections>
-                            </segmentedControl>
                         </subviews>
                         <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>
                         <constraints>
@@ -371,7 +371,7 @@
                             <constraint firstAttribute="trailingMargin" secondItem="lEP-z4-PfZ" secondAttribute="trailing" constant="9" id="Tm5-UX-vr5"/>
                             <constraint firstAttribute="trailing" secondItem="uaF-dJ-7Dc" secondAttribute="trailing" id="VqX-Ue-x75"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="bottom" id="Xpx-KN-84O"/>
-                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="bottom" id="beP-Tu-nkh"/>
+                            <constraint firstItem="lTJ-bG-l3q" firstAttribute="top" secondItem="i1L-g3-deM" secondAttribute="bottom" constant="8" id="beP-Tu-nkh"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="top" secondItem="SYR-Wa-9uf" secondAttribute="bottom" id="cCN-Os-0cg"/>
                             <constraint firstItem="GAO-Cl-Wes" firstAttribute="top" secondItem="lEP-z4-PfZ" secondAttribute="bottom" constant="8" symbolic="YES" id="cQz-Js-7Ty"/>
                             <constraint firstItem="lEP-z4-PfZ" firstAttribute="leading" secondItem="Ryr-rp-o9R" secondAttribute="trailing" constant="5" id="dz9-6g-g06"/>
@@ -380,7 +380,7 @@
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="trailing" secondItem="i1L-g3-deM" secondAttribute="trailing" id="huq-tj-Bre"/>
                             <constraint firstItem="Ryr-rp-o9R" firstAttribute="top" secondItem="lEP-z4-PfZ" secondAttribute="top" id="lBb-u1-4zr"/>
                             <constraint firstItem="klk-SA-oTX" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="bottom" constant="5" id="lbu-ht-zU2"/>
-                            <constraint firstItem="Ryr-rp-o9R" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="bottom" constant="10" id="qUm-gr-s8K"/>
+                            <constraint firstItem="Ryr-rp-o9R" firstAttribute="top" secondItem="lTJ-bG-l3q" secondAttribute="bottom" constant="2" id="qUm-gr-s8K"/>
                             <constraint firstItem="i1L-g3-deM" firstAttribute="trailing" secondItem="lTJ-bG-l3q" secondAttribute="trailing" id="u7I-1N-TUz"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="i1L-g3-deM" secondAttribute="leading" id="wNc-kp-xfV"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leadingMargin" constant="-7" id="xaD-r6-6fg"/>

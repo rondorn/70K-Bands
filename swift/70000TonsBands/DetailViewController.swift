@@ -183,6 +183,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func imageSizeController(special: String){
         
+        let screenSize = UIScreen.main.bounds
+        
         if (officialUrlButton.isHidden == false){
             if (special == "top"){
                 self.bandLogo.contentMode = UIView.ContentMode.top
@@ -193,15 +195,21 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             self.bandLogo.sizeToFit()
         } else {
+            
             self.customNotesText.textContainerInset = UIEdgeInsets(top: 50, left: 0, bottom: 5, right: 0)
             self.bandLogo.contentMode = UIView.ContentMode.top
+            self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             self.bandLogo.sizeToFit()
         }
         
         if (eventCount <= 1){
-            let screenSize = UIScreen.main.bounds
             customNotesText.frame.size.height = screenSize.height * 0.47
         }
+        
+        self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
+        self.bandLogo.clipsToBounds = true
+        
+
     }
     
     func disableLinksWithEmptyData(){
@@ -278,7 +286,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             wikipediaUrlButton.isEnabled = false;
             youtubeUrlButton.isEnabled = false;
             metalArchivesButton.isEnabled = false;
+        
+        } else {
+            officialUrlButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 1, bottom: 0, right: 1)
+            wikipediaUrlButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+            youtubeUrlButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+            metalArchivesButton.imageEdgeInsets = UIEdgeInsets(top: -1, left: 0, bottom: -1, right: 0)
         }
+        
     }
     
     func textViewDidBeginEditing(_ textView: UITextView) {
@@ -662,6 +677,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         let message = attendedHandle.setShowsAttendedStatus(sender,status: status);
         
+        sender.halfTextColorChange(fullText: sender.text!, changeText: location!, locationColor: getVenueColor(venue: location!))
+        
         let eventImage = getAttendedIcons(attendedStatus: status)
         
         updateEventImage(sender: sender, eventImage: eventImage)
@@ -730,4 +747,36 @@ extension UITextField {
         attribute.addAttribute(NSAttributedString.Key.foregroundColor, value: locationColor , range: range)
         self.attributedText = attribute
     }
+}
+
+
+extension UIImage {
+    
+    func resize(maxWidthHeight : Double)-> UIImage? {
+        
+        let actualHeight = Double(size.height)
+        let actualWidth = Double(size.width)
+        var maxWidth = 0.0
+        var maxHeight = 0.0
+        
+        if actualWidth > actualHeight {
+            maxWidth = maxWidthHeight
+            let per = (100.0 * maxWidthHeight / actualWidth)
+            maxHeight = (actualHeight * per) / 100.0
+        }else{
+            maxHeight = maxWidthHeight
+            let per = (100.0 * maxWidthHeight / actualHeight)
+            maxWidth = (actualWidth * per) / 100.0
+        }
+        
+        let hasAlpha = true
+        let scale: CGFloat = 0.0
+        
+        UIGraphicsBeginImageContextWithOptions(CGSize(width: maxWidth, height: maxHeight), !hasAlpha, scale)
+        self.draw(in: CGRect(origin: .zero, size: CGSize(width: maxWidth, height: maxHeight)))
+        
+        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
+        return scaledImage
+    }
+    
 }
