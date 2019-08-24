@@ -265,19 +265,19 @@ open class ShowsAttended {
     
         print ("getShowAttendedStatus (inset) = \(status) =\(fieldText ?? "")")
         if (status == sawAllStatus){
-            sender.textColor = sawAllColor
+            sender.textColor = UIColor.lightGray
             sender.text = fieldText
             message = NSLocalizedString("All Of Event", comment: "")
             
         } else if (status == sawSomeStatus){
-            sender.textColor = sawSomeColor
+            sender.textColor = UIColor.lightGray
             
             fieldText = removeIcons(text: fieldText!)
             sender.text = fieldText
             message = NSLocalizedString("Part Of Event", comment: "")
             
         } else {
-            sender.textColor = sawNoneColor
+            sender.textColor = UIColor.lightGray
             sender.text = fieldText
             message = NSLocalizedString("None Of Event", comment: "")
         }

@@ -191,10 +191,10 @@ public class showsAttended {
         String value = getShowAttendedStatus(band, location, startTime, eventType, eventYear);
 
         if (value.equals(staticVariables.sawAllStatus)){
-            color = staticVariables.sawAllColor;
+            color = staticVariables.sawNoneColor;
 
         } else if (value.equals(staticVariables.sawSomeStatus)){
-            color = staticVariables.sawSomeColor;
+            color = staticVariables.sawNoneColor;
 
         } else if (value.equals(staticVariables.sawNoneStatus)){
             color = staticVariables.sawNoneColor;

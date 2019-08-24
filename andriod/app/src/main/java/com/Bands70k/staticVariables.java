@@ -67,7 +67,7 @@ public class staticVariables {
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
-    public final static String sawNoneColor = "#5DADE2";
+    public final static String sawNoneColor = "#C0C0C0";
     public final static String sawAllStatus = "sawAll";
     public final static String sawSomeStatus = "sawSome";
     public final static String sawNoneStatus = "sawNone";
@@ -94,7 +94,7 @@ public class staticVariables {
     public final static String poolVenueColor = "#5888db";
     public final static String theaterVenueColor = "#C4AC00";
     public final static String loungeVenueColor = "#5BA50A";
-    public final static String rinkVenueColor = "#bd222c";
+    public final static String rinkVenueColor = "#FF0000";
     public final static String unknownVenueColor = "#A9A9A9";
 
     //schedule file header rows
