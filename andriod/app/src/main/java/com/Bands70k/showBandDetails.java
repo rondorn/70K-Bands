@@ -52,8 +52,8 @@ public class showBandDetails extends Activity {
     private Integer startLocationExtraInfo= 100;
     private Integer startLocationNotes= 235;
 
-    private Integer startLocationEvents= 70;
-    private Integer startBelowEvents = 65;
+    private Integer startLocationEvents = 40;
+    private Integer startBelowEvents = 25;
 
     private String linkMessage = "";
 
@@ -390,7 +390,9 @@ public class showBandDetails extends Activity {
 
     private String buildScheduleView(){
 
-        String scheduleHtml = "";
+        String scheduleHtml = "<br>";
+
+        String scheduleHtmlData = "";
 
         if (BandInfo.scheduleRecords.get(bandName) != null) {
             Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
@@ -411,17 +413,23 @@ public class showBandDetails extends Activity {
                 String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
                 String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
-                scheduleHtml += "<li style='margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+
+                scheduleHtmlData = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
+                scheduleHtmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
+                scheduleHtmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
+                scheduleHtmlData += "</font><font color='" + iconResolve.getLocationColor(location) + "'>" + location + "</font><font color='" + color + "'>- ";
+                scheduleHtmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
+                scheduleHtmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
+                scheduleHtmlData += "</font></li>";
+
+                String fontSize = setEventFontSize(scheduleHtmlData);
+
+                scheduleHtml += "<li style='font-size:" + fontSize + ";margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
                 scheduleHtml += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
                 scheduleHtml += "<img src=" + getEventTypeImage(eventType, bandName) + " height=18 width=18>&nbsp;";
                 scheduleHtml += "<font color='" + color + "' >";
-                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
-                scheduleHtml += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
-                scheduleHtml += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
-                scheduleHtml += "</font><font color='" + iconResolve.getLocationColor(location) + "'>" + location + "</font><font color='" + color + "'>- ";
-                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
-                scheduleHtml += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
-                scheduleHtml += "</font></li>";
+                scheduleHtml += scheduleHtmlData;
+
 
                 Log.d("htmlData is", "Adding HTML text of " + scheduleHtml);
             }
@@ -430,9 +438,9 @@ public class showBandDetails extends Activity {
         Log.d("startLocationEvents", "startLocationEvents =" + String.valueOf(startLocationEvents));
         String htmlData = "<div style='position:fixed;bottom:" + startBelowEvents + "'>";
         if (orientation == "portrait") {
-            htmlData += "<ul width=100% style='white-space:nowrap;font-size:12px;font-size:3.2vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData += "<ul width=100% style='white-space:nowrap;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         } else {
-            htmlData += "<ul width=100% style='white-space:nowrap;font-size:12px;font-size:3.2vw;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
+            htmlData += "<ul width=100% style='white-space:nowrap;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
         }
 
         htmlData += scheduleHtml + "</ul></div>";
@@ -440,6 +448,37 @@ public class showBandDetails extends Activity {
 
         return htmlData;
     }
+
+    private String setEventFontSize(String eventText){
+
+        Integer textSize = eventText.length();
+        String fontSize = "";
+
+        if (textSize < 105){
+            fontSize = "5vw";
+
+        } else  if (textSize < 110) {
+            fontSize = "4.7vw";
+
+        } else  if (textSize < 115) {
+            fontSize = "4.3vw";
+
+        } else  if (textSize < 120) {
+            fontSize = "3.8vw";
+
+        } else  if (textSize < 130) {
+            fontSize = "3.2vw";
+
+        } else  {
+            fontSize = "3.0vw";
+
+        }
+
+        Log.d("fontSize", "event text is " + eventText + " size of " + fontSize + " length " + String.valueOf(textSize));
+
+        return fontSize;
+    }
+
 
     private String getAttendedImage(String attendIndex){
 
