@@ -41,7 +41,7 @@
         android:width="35dp"
         android:height="35dp"
         android:layout_marginLeft="300dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="19dp"
         android:background="#FF000000"
         android:src="@drawable/icon_going_yes"
         android:visibility="invisible" />

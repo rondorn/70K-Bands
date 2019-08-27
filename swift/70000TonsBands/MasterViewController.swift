@@ -112,8 +112,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setNeedsStatusBarAppearanceUpdate()
         
         setToolbar();
+    
+        mainTableView.estimatedSectionHeaderHeight = 44.0
     }
     
+ 
+    override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
+        
+        // Reload Data here
+       self.tableView.reloadData()
+    }
     
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
@@ -574,6 +582,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
         return bands.count
     }
     
@@ -590,6 +599,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let v = UIView()
+        
+        let toolBarView : UIView = UIView(frame: CGRect(x: 0, y: 0, width: mainTableView.frame.width, height: 44))
+        mainToolBar.frame = CGRect(x: 0, y: 0, width: mainTableView.frame.width, height: 44)
+        toolBarView.addSubview(mainToolBar)
+        
+        v.addSubview(toolBarView)
+        return v
     }
     
     //swip code start
