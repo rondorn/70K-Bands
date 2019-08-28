@@ -552,7 +552,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
         
         activityVC.modalPresentationStyle = .popover
-        activityVC.preferredContentSize = CGSize(width: 50, height: 100)
         activityVC.popoverPresentationController?.barButtonItem = shareButton
         
         let popoverMenuViewController = activityVC.popoverPresentationController
