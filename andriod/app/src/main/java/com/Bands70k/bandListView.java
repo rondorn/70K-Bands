@@ -7,10 +7,13 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Layout;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
@@ -23,6 +26,7 @@ import com.google.firebase.database.collection.LLRBNode;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.Bands70k.staticVariables.context;
 import static java.lang.Thread.sleep;
 
 public class bandListView extends ArrayAdapter<bandListItem> {
@@ -173,10 +177,28 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
                 viewHolder.bandName.setTextSize(23);
             }
+
         }
 
 
+        if (getScreenWidth(context) <= 480){
+            viewHolder.day.setWidth(35);
+            viewHolder.dayLable.setWidth(35);
+
+        }
         return row;
 
+    }
+
+    private static Integer getScreenWidth(Context context)
+    {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+        int width = metrics.widthPixels;
+
+        Log.d("screenWidth", "Screen Width is " + String.valueOf(width));
+        return width;
     }
 }

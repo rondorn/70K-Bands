@@ -19,7 +19,7 @@
         android:layout_marginStart="0dp"
         android:layout_marginLeft="0dp"
         android:layout_marginTop="15dp"
-        android:height="40dp"
+        android:height="42dp"
         android:autoSizeMaxTextSize="100sp"
         android:autoSizeMinTextSize="10sp"
         android:autoSizeStepGranularity="2sp"
@@ -32,7 +32,8 @@
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         android:visibility="invisible"
-        app:layout_widthPercent="80%" />
+        android:width="295dp"
+        />
 
     <ImageView
         android:id="@+id/rankingInCellnoSchedule"
@@ -166,8 +167,8 @@
 
     <TextView
         android:id="@+id/dayLabelInCell"
-        android:layout_width="50dp"
-        android:layout_height="22dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="0dp"
         android:height="25dp"
