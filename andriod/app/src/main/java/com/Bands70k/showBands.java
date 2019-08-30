@@ -22,10 +22,13 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -98,6 +101,7 @@ public class showBands extends Activity {
             android.Manifest.permission.VIBRATE
     };
     private static final int REQUEST = 1337;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -209,7 +213,11 @@ public class showBands extends Activity {
 
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
+
     }
+
+
+
 
     private void setupSwipeList (){
 
