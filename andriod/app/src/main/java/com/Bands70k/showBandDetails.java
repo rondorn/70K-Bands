@@ -424,10 +424,10 @@ public class showBandDetails extends Activity {
 
                 String fontSize = setEventFontSize(scheduleHtmlData);
 
-                scheduleHtml += "<li style='font-size:" + fontSize + ";margin-top:5px;margin-top:5px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                scheduleHtml += "<li style='font-size:" + fontSize + ";margin-top:8px;margin-top:8px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
                 scheduleHtml += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
-                scheduleHtml += "<img src=" + getEventTypeImage(eventType, bandName) + " height=18 width=18>&nbsp;";
-                scheduleHtml += "<font color='" + color + "' >";
+                scheduleHtml += "<img src=" + getEventTypeImage(eventType, bandName) + " height=16 width=16>&nbsp;";
+                scheduleHtml += "<font style='vertical-align:top' color='" + color + "' >";
                 scheduleHtml += scheduleHtmlData;
 
 
