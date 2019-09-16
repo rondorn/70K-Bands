@@ -21,6 +21,8 @@ var PRIORITY = "priority";
 var ATTENDED = "attended";
 var NOTE = "note";
 
+var FCMnumber = "";
+
 var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
 var directoryPath = URL(fileURLWithPath:dirs[0])
 var storageFile = directoryPath.appendingPathComponent( "data.txt")
@@ -136,7 +138,7 @@ let sawNoneStatus = "sawNone";
 
 //alert topics
 let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing2020"
+let subscriptionTopicTest = "Testing20190913"
 let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
