@@ -8,7 +8,7 @@
 
 import UIKit
 import CoreData
-
+import Firebase
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
@@ -77,7 +77,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                          selector: #selector(MasterViewController.onSettingsChanged(_:)),
                                                          name: UserDefaults.didChangeNotification ,
                                                          object: nil)
-        
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
         self.refreshControl = refreshControl
@@ -114,15 +113,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setToolbar();
     
         mainTableView.estimatedSectionHeaderHeight = 44.0
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
+                                               name: Notification.Name("FCMToken"), object: nil)
     }
     
- 
+    @objc func displayFCMToken(notification: NSNotification){
+      guard let userInfo = notification.userInfo else {return}
+      if let fcmToken = userInfo["token"] as? String {
+        let message = fcmToken
+        //ToastMessages(message).show(self, cellLocation: self.view.frame)
+
+      }
+    }
+    
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         
         // Reload Data here
        self.tableView.reloadData()
     }
-    
+        
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
         
@@ -224,11 +234,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func refreshAlerts(){
 
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-            if #available(iOS 10.0, *) {
+            //if #available(iOS 10.0, *) {
+            print ("FCM alert")
                 let localNotication = localNoticationHandler()
                 localNotication.addNotifications()
                 
-            }
+            //}
         }
     
     }
@@ -546,7 +557,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let reportHandler = showAttendenceReport()
         reportHandler.assembleReport()
             
-        intro += reportHandler.buildMessage()
+        intro += FCMnumber + " " + reportHandler.buildMessage()
       
         let objectsToShare = [intro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
