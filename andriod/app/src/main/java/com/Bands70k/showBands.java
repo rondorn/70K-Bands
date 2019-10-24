@@ -308,7 +308,6 @@ public class showBands extends Activity {
         bandNamesList.setMenuCreator(creator);
 
         bandNamesList.setOnScrollListener(new AbsListView.OnScrollListener() {
-
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 // TODO Auto-generated method stub

@@ -167,12 +167,25 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
             }
 
+            viewHolder.bandName.setText(bandData.getBandName());
             viewHolder.day.setText(bandData.getDay());
             viewHolder.time.setText(bandData.getStartTime());
 
 
-            viewHolder.rankImage.setImageResource(bandData.getRankImg());
-            viewHolder.bandName.setText(bandData.getBandName());
+            viewHolder.eventTypeImage.setVisibility(View.VISIBLE);
+            viewHolder.attendedImage.setVisibility(View.VISIBLE);
+            viewHolder.location.setVisibility(View.VISIBLE);
+            viewHolder.location.setVisibility(View.VISIBLE);
+            viewHolder.locationColor.setVisibility(View.VISIBLE);
+            viewHolder.day.setVisibility(View.VISIBLE);
+            viewHolder.time.setVisibility(View.VISIBLE);
+            viewHolder.dayLable.setVisibility(View.VISIBLE);
+            viewHolder.bottomSpacer.setVisibility(View.VISIBLE);
+            viewHolder.rankImage.setVisibility(View.VISIBLE);
+            viewHolder.bandName.setVisibility(View.VISIBLE);
+
+            viewHolder.rankImageNoSchedule.setVisibility(View.INVISIBLE);
+            viewHolder.bandNameNoSchedule.setVisibility(View.INVISIBLE);
 
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
                 viewHolder.bandName.setTextSize(23);

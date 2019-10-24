@@ -426,7 +426,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         priorityButtons.setTitle(UnknonwSee, forSegmentAt: 0)
         
         let font = UIFont.boldSystemFont(ofSize: 11)
-        priorityButtons.setTitleTextAttributes([NSAttributedString.Key.font: font], for: .normal)
+        let fontColor = [NSAttributedString.Key.foregroundColor: UIColor.white, NSAttributedString.Key.font: font]
+        priorityButtons.setTitleTextAttributes(fontColor, for: .normal)
+        
+        let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
+        priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
         
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
