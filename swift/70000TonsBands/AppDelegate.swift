@@ -128,7 +128,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 let message = "okay"
         print("FCM \(message)");
         
-        displayNotification(message: remoteMessage.appData["message"] as! String)
+        if (remoteMessage != nil){
+            if (remoteMessage.appData != nil){
+                displayNotification(message: remoteMessage.appData["message"] as! String)
+            }
+        }
 
     }
     
@@ -328,8 +332,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("fcm sendLocalAlert! APS: \(key) —> \(value)")
                 if (key == "alert"){
                     if (value is NSDictionary){
-                        displayNotification(message: value as! String);
-                        //displayNotification(message: value["body"] as! String) ;
+                        //displayNotification(message: value as! String);
+                        displayNotification(message: value["body"] as! String) ;
                     } else {
                         displayNotification(message: value as! String);
                     }
@@ -506,6 +510,7 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
+        
         let userInfo = response.notification.request.content.userInfo
         // Print message ID.
         if let messageID = userInfo[gcmMessageIDKey] {
