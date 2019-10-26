@@ -45,22 +45,26 @@ open class CustomBandDescription {
     
     func getDescriptionMapFile(){
         
+        if (isInternetAvailable() == false){
+            return;
+        }
+        
         let mapUrl = getDefaultDescriptionMapUrl()
         let httpData = getUrlData(urlString: mapUrl)
         
-        print ("Map url is \(mapUrl)")
-        print ("Map url Data is \(httpData)")
+        print ("commentFile Map url is \(mapUrl)")
+        print ("commentFile Map url Data is \(httpData)")
         if (httpData.isEmpty == false){
             do {
                 try FileManager.default.removeItem(atPath: descriptionMapFile)
                 
             } catch let error as NSError {
-                print ("Encountered an error removing old descriptionMap file " + error.debugDescription)
+                print ("commentFile Encountered an error removing old descriptionMap file " + error.debugDescription)
             }
             do {
                 try httpData.write(toFile: descriptionMapFile, atomically: false, encoding: String.Encoding.utf8)
             } catch let error as NSError {
-                print ("Encountered an error writing descriptionMap file " + error.debugDescription)
+                print ("commentFile Encountered an error writing descriptionMap file " + error.debugDescription)
             }
             
         }
@@ -87,20 +91,21 @@ open class CustomBandDescription {
         let commentFileName = bandName + "_comment.txt";
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
+        print ("commentFile lookup for \(commentFile)");
         return (FileManager.default.fileExists(atPath: commentFile.path))
     }
     
     
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
-        print ("commentFile lookup for \(bandName) via \(descriptionUrl)")
+        print ("commentFile lookup for \(bandName) via \(descriptionUrl) hmmm")
         var commentText = "Comment text is not available yet."
         
         let commentFileName = bandName + "_comment.txt";
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
-
+            print ("commentFile lookup for \(bandName) via \(descriptionUrl) fiel does not yes exist")
             let httpData = getUrlData(urlString: descriptionUrl);
                 
                 //do not write if we are getting 404 error
@@ -135,9 +140,20 @@ open class CustomBandDescription {
         let commentFileName = bandName + "_comment.txt";
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
-        if (FileManager.default.fileExists(atPath: commentFile.path) == false){
+        if (doesDescriptionFileExists(bandName: bandName) == false){
+            
+            if (downloadingAllComments == false){
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    self.getDescriptionMapFile();
+                    self.getDescriptionMap();
+                }
+            }
+            
+            print ("commentFile does not exist \(bandDescriptionUrl)")
+            print ("commentFile does not exist \(bandName) - \(bandDescriptionUrl[bandName])")
             if (bandDescriptionUrl[bandName] != nil){
                 
+                print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
                     let httpData = getUrlData(urlString: self.bandDescriptionUrl[bandName]!);
@@ -181,10 +197,13 @@ open class CustomBandDescription {
     
     func getDescriptionMap(){
         
+        print ("commentFile looking for descriptionMapFile")
+        
         if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
             getDescriptionMapFile();
         }
         
+        print ("commentFile looking for descriptionMapFile of \(descriptionMapFile)")
         if let csvDataString = try? String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8) {
             
             var csvData: CSV
@@ -193,7 +212,7 @@ open class CustomBandDescription {
             
             for lineData in csvData.rows {
                 if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                    print ("descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
+                    print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
                     bandDescriptionUrl[(lineData[bandField])!] = lineData[urlField]
                     
                     bandDescriptionLock.async(flags: .barrier) {
@@ -201,11 +220,11 @@ open class CustomBandDescription {
                     }
                     
                 } else {
-                    print ("Unable to parse descriptionMap line")
+                    print ("commentFile  Unable to parse descriptionMap line \(lineData)")
                 }
             }
         } else {
-            print ("Encountered an error could not open descriptionMap file")
+            print ("commentFile Encountered an error could not open descriptionMap file")
         }
     }
     
