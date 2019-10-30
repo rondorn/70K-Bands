@@ -70,3 +70,24 @@ func getDateFormatter() -> DateFormatter {
     
     return dateFormatter
 }
+
+
+func monthDateRegionalFormatting(dateValue: String)->String{
+    
+    var newDateValue = dateValue
+    
+    let monthDayValues = dateValue.split(separator: "/");
+    
+    //pick a static date, in this case 10/29/2019 (or 29/10/2019 as the case maybe)
+    let myDate = NSDate.init(timeIntervalSince1970: 1572359503);
+    let timestamp = DateFormatter.localizedString(from: myDate as Date, dateStyle: .short, timeStyle: .short)
+    let dateString = timestamp as String
+    
+    //determine if the local time format puts day before month
+    if (dateString.contains("29/10") == true && dateValue.contains("Day") == false){
+        newDateValue = monthDayValues[1] + "/" + monthDayValues[0]
+    }
+    
+    return newDateValue;
+    
+}

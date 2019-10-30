@@ -414,7 +414,7 @@ public class showBandDetails extends Activity {
                 String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
 
 
-                scheduleHtmlData = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay() + " - ";
+                scheduleHtmlData = Utilities.monthDateRegionalFormatting(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay()) + " - ";
                 scheduleHtmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
                 scheduleHtmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
                 scheduleHtmlData += "</font><font color='" + iconResolve.getLocationColor(location) + "'>" + location + "</font><font color='" + color + "'>- ";

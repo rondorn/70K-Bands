@@ -79,6 +79,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                          object: nil)
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
+        refreshControl.tintColor = UIColor.red;
         self.refreshControl = refreshControl
         
         scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)

@@ -510,7 +510,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         eventTypeImageView.isHidden = false
 
         let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
-        let day = schedule.getData(bandName, index: timeIndex, variable: dayField)
+        let day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
         let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
