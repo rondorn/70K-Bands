@@ -511,7 +511,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 for index in sortedArray {
                     
                     let location = schedule.getData(bandName, index:index, variable: locationField)
-                    let day = schedule.getData(bandName, index: index, variable: dayField)
+                    let day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: index, variable: dayField))
                     var startTime = schedule.getData(bandName, index: index, variable: startTimeField)
                     var endTime = schedule.getData(bandName, index: index, variable: endTimeField)
                     let date = schedule.getData(bandName, index:index, variable: dateField)

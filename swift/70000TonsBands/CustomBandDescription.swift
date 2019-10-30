@@ -70,6 +70,18 @@ open class CustomBandDescription {
         }
     }
     
+    func writeUrlFile (bandName: String, descriptionUrl: String){
+        
+        let commentFileName = bandName + "_commentUrl.txt";
+        let commentFile = directoryPath.appendingPathComponent( commentFileName);
+        
+        do {
+            try descriptionUrl.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+        } catch {
+            print("commentFile " + error.localizedDescription)
+}
+    }
+    
     func getAllDescriptions(){
         
         if (downloadingAllComments == false){
@@ -156,7 +168,8 @@ open class CustomBandDescription {
                 print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    let httpData = getUrlData(urlString: self.bandDescriptionUrl[bandName]!);
+                    var url = self.bandDescriptionUrl[bandName]!
+                    let httpData = getUrlData(urlString: url);
                     print ("Trying to download comment from url \(httpData)")
                     //do not write if we are getting 404 error
                     if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -166,6 +179,8 @@ open class CustomBandDescription {
                         print ("Wrote commentFile for \(bandName) " + commentText)
                         do {
                             try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                            self.writeUrlFile(bandName: bandName, descriptionUrl: url)
+                            
                         } catch {
                             print("commentFile " + error.localizedDescription)
                         }

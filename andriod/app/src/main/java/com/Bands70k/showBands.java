@@ -164,6 +164,7 @@ public class showBands extends Activity {
         }
 
         staticVariablesInitialize();
+
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
 
@@ -962,6 +963,7 @@ public class showBands extends Activity {
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
+
             bandNames.add("Waiting for data to load, please standby....");
         }
 
