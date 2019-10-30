@@ -43,7 +43,7 @@ public class bandListItem {
         return day;
     }
     public void setDay(String day) {
-        this.day = day;
+        this.day = Utilities.monthDateRegionalFormatting(day);
     }
 
     public String getStartTime() {

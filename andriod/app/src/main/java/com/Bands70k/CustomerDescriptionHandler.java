@@ -180,7 +180,7 @@ public class CustomerDescriptionHandler {
 
             } catch (Exception error){
                 Log.d("descriptionMapFile!", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
-                return;
+                return ;
             }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
