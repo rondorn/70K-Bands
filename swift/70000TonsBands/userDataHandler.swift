@@ -17,9 +17,10 @@ class userDataHandler: NSObject {
     var lanuchCount: Int
     
     override init(){
-        self.uid = (UIDevice.current.identifierForVendor?.uuidString)!
-        self.country = NSLocale.current.regionCode!
-        self.language = Locale.current.languageCode!
+        
+        self.uid = (UIDevice.current.identifierForVendor?.uuidString) ?? "Unknown";
+        self.country = NSLocale.current.regionCode ?? "Unknown";
+        self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date
         self.lanuchCount = 1
         
