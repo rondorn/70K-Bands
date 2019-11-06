@@ -79,53 +79,7 @@ open class CustomBandDescription {
             try descriptionUrl.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
         } catch {
             print("commentFile " + error.localizedDescription)
-        }
-    }
- 
-    func saveComments(bandName: String, commentText: String)->Bool{
-        
-        var saveSuccessfull = true;
-        
-        let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
-        if (commentText.starts(with: "Comment text is not available yet") == true){
-            saveSuccessfull = false;
-            removeBadNote(commentFile: commentFile)
-            
-        } else if (commentText.count < 2){
-            saveSuccessfull = false;
-            removeBadNote(commentFile: commentFile)
-
-        } else {
-            print ("COMMENT saving commentFile");
-        
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                print ("COMMENT Writting commentFile " + commentText)
-
-                do {
-                    try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
-                } catch {
-                    print("COMMENT commentFile " + error.localizedDescription)
-                }
-            }
-        }
-
-        return saveSuccessfull;
-    }
-    
-    func removeBadNote(commentFile: URL){
-        do {
-            print ("commentFile being deleted \(commentFile)")
-            try FileManager.default.removeItem(atPath: commentFile.path)
-            
-        } catch let error as NSError {
-            print ("Encountered an error removing old commentFile " + error.debugDescription)
-        }
-        
-        if (FileManager.default.fileExists(atPath: commentFile.path) == true){
-            print ("ERROR: commentFile was not deleted")
-        } else {
-            print ("CONFIRMATION: commentFile was deleted")
-        }
+}
     }
     
     func getAllDescriptions(){
@@ -152,30 +106,8 @@ open class CustomBandDescription {
         print ("commentFile lookup for \(commentFile)");
         return (FileManager.default.fileExists(atPath: commentFile.path))
     }
- 
-    func doesUrlFileExists(bandName: String) -> Bool {
-        
-        let commentFileName = bandName + "_commentUrl.txt";
-        let commentFile = directoryPath.appendingPathComponent( commentFileName)
-        
-        print ("commentFile lookup for \(commentFile)");
-        return (FileManager.default.fileExists(atPath: commentFile.path))
-    }
-    /*
-    func getTextFromUrl (bandName: String){
-        
-        let commentUrlFile = bandName + "_commentUrl.txt";
-        if (doesUrlFileExists(bandName: bandName) == true){
-            
-            let commetUrl = "";
-            if let data = try? String(contentsOf: commentUrlFile, encoding: String.Encoding.utf8) {
-                if (data.count > 2){
-                    commetUrl = data
-                }
-            }
-        }
-    }
-    */
+    
+    
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
         print ("commentFile lookup for \(bandName) via \(descriptionUrl) hmmm")
@@ -208,9 +140,9 @@ open class CustomBandDescription {
             }
         }
     
-        commentText = removeSpecialCharsFromString(text: commentText)
-        return commentText;
-    }
+    commentText = removeSpecialCharsFromString(text: commentText)
+    return commentText;
+}
     
     func getDescription(bandName: String) -> String {
         
@@ -326,6 +258,7 @@ open class CustomBandDescription {
         return url
     }
 }
+
 
 
 
