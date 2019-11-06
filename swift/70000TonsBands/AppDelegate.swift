@@ -220,8 +220,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 Messaging.messaging().subscribe(toTopic: subscriptionTopic)
                 Messaging.messaging().subscribe(toTopic: subscriptionTopicTest)
                 
+                print("FCM - subscribed to " + subscriptionTopic)
+                print("FCM - subscribed to " + subscriptionTopicTest)
+                
                 if (defaults.bool(forKey: "alertForUnofficalEvents") == true){
                     Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
+                    print("FCM - subscribed to " + subscriptionUnofficalTopic)
                 } else {
                     Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
                 }
@@ -229,8 +233,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
             
              UIApplication.shared.registerForRemoteNotifications();
+
+            print ("FCM - start")
             let token = InstanceID.instanceID().token()
             
+            print ("FCM - Stop")
             //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
             
         }
@@ -317,6 +324,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
+        
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
     }
     // [END connect_on_active]
