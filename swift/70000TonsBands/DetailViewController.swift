@@ -313,14 +313,49 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     func saveComments(){
+        
         if (bandName != nil && bandName.isEmpty == false){
-            var sucessfull = bandNotes.saveComments(bandName: bandName, commentText: customNotesText.text)
-            if (sucessfull == false){
-                loadComments();
+            let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
+            if (customNotesText.text.starts(with: "Comment text is not available yet") == true){
+                    removeBadNote(commentFile: commentFile)
+                
+            } else if (customNotesText.text.count < 2){
+                removeBadNote(commentFile: commentFile)
+
+            } else {
+                print ("saving commentFile");
+                
+                let commentString = self.customNotesText.text;
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    print ("Writting commentFile " + commentString!)
+
+                    do {
+                        try commentString?.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                    } catch {
+                        print("commentFile " + error.localizedDescription)
+                    }
+                }
             }
+
         }
     }
+    
+    func removeBadNote(commentFile: URL){
+        do {
+            print ("commentFile being deleted \(commentFile)")
+            try FileManager.default.removeItem(atPath: commentFile.path)
+            
+        } catch let error as NSError {
+            print ("Encountered an error removing old commentFile " + error.debugDescription)
+        }
         
+        if (FileManager.default.fileExists(atPath: commentFile.path) == true){
+            print ("ERROR: commentFile was not deleted")
+        } else {
+            print ("CONFIRMATION: commentFile was deleted")
+            loadComments()
+        }
+    }
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         saveComments()
