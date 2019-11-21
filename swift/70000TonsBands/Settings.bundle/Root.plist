@@ -32,16 +32,26 @@
 			<key>Key</key>
 			<string>scheduleUrl</string>
 		</dict>
-        <dict>
-            <key>DefaultValue</key>
-            <string>Prod</string>
-            <key>Type</key>
-            <string>PSTextFieldSpecifier</string>
-            <key>Title</key>
-            <string>PointerUrl</string>
-            <key>Key</key>
-            <string>PointerUrl</string>
-        </dict>
+		<dict>
+			<key>DefaultValue</key>
+			<string>Prod</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>PointerUrl</string>
+			<key>Key</key>
+			<string>PointerUrl</string>
+		</dict>
+		<dict>
+			<key>DefaultValue</key>
+			<string>YES</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>iCloud</string>
+			<key>Key</key>
+			<string>iCloud</string>
+		</dict>
 	</array>
 </dict>
 </plist>

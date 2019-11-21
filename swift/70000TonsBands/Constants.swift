@@ -185,6 +185,7 @@ let showSpecialDefault = "YES"
 let showMandGDefault = "YES"
 let showClinicsDefault = "YES"
 let showListeningDefault = "YES"
+let iCloudActiveDefault = "YES"
 
 let showPoolShowsDefault = "YES"
 let showTheaterShowsDefault = "YES"
@@ -245,7 +246,7 @@ func getPointerUrlData(keyValue: String) -> String {
     //does not change very often during the year
     storePointerLock.sync() {
         if (cacheVariables.storePointerData.isEmpty == false){
-            url = cacheVariables.storePointerData[keyValue]!
+            url = cacheVariables.storePointerData[keyValue] ?? "Unable to communicate with Drop Box!"
         }
     }
 
@@ -310,19 +311,19 @@ func setupDefaults() {
                     "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
                     "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
                     "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
-                    "hideExpireScheduleData": hideExpireScheduleDataDefault]
+                    "hideExpireScheduleData": hideExpireScheduleDataDefault, "iCloud": iCloudActiveDefault]
     
     UserDefaults.standard.register(defaults: defaults)
     
     setupVenueLocations()
     
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
-    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!;
+    eventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 2020;
 
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1
     }
-    
+
     print ("eventYear = \(eventYear)")
 }
 

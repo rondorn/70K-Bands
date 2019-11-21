@@ -101,6 +101,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         bandDescriptions.getDescriptionMapFile();
         
         application.registerForRemoteNotifications()
+        
         return true
     
     }
@@ -130,7 +131,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         if (remoteMessage != nil){
             if (remoteMessage.appData != nil){
-                displayNotification(message: remoteMessage.appData["message"] as! String)
+                if (remoteMessage.appData["message"] != nil){
+                    displayNotification(message: remoteMessage.appData["message"] as! String)
+                }
             }
         }
 
