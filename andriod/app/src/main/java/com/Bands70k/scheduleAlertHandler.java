@@ -112,13 +112,18 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                 alertDateTime.setTimeZone(TimeZone.getTimeZone("PST8PDT"));
                                 String alertDateTimeText = alertDateTime.format(new Date(alertTime));
 
+                                Log.d("SchedNotications", bandName + " Alerttime of Epoch is " + String.valueOf(alertTime));
+
                                 int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert()) * 60) * 1000);
                                 int delayInseconds = (delay / 1000);
 
-                                if (delay > 1) {
-                                    Log.d("SchedNotications", "!Timing1 " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
+                                if (delay > 1 && delay < 604800) {
+                                    Log.d("SchedNotications", "!Timing1 " + String.valueOf(delay) + " - " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
 
                                     sendLocalAlert(alertMessage, delayInseconds);
+
+                                } else {
+                                    Log.d("SchedNotications", bandName + " delay is too long or short " + String.valueOf(delay));
 
                                 }
 
@@ -270,16 +275,16 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
     private static boolean checkRank (String rank, String attendedStatus){
 
         if (rank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getMustSeeAlert() == true){
-            Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMustSeeAlert() + " and " + staticVariables.mustSeeIcon);
+            //Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMustSeeAlert() + " and " + staticVariables.mustSeeIcon);
             return true;
 
         } else if (rank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getMightSeeAlert() == true) {
-            Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMightSeeAlert() + " and " + staticVariables.mightSeeIcon);
+            //Log.d("SchedNotications", "!Timing " + staticBandName + " alerting " + staticVariables.preferences.getMightSeeAlert() + " and " + staticVariables.mightSeeIcon);
 
             return true;
 
         } else if (staticVariables.preferences.getMustSeeAlert() == true && attendedStatus != staticVariables.sawNoneStatus){
-            Log.d("SchedNotications", "!!Timing " + staticBandName + " alerting based on  " + attendedStatus);
+            //Log.d("SchedNotications", "!!Timing " + staticBandName + " alerting based on  " + attendedStatus);
             return true;
         }
 

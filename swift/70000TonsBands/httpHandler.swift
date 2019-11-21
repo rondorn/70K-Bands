@@ -51,15 +51,18 @@ func getUrlData(urlString: String) -> String{
     if (urlString.isEmpty == false){
         print ("\(currentQueueLabel ?? "") !!Looking up url \(urlString)")
         
-        //create the url with NSURL
-        let url = URL(string: urlString)! //change the url
-        
-        do {
-            let contents = try String(contentsOf: url)
-            print(contents)
-            results = contents
-        } catch {
-            print ("Failed to find data !!Looking up url \(urlString)")
+        if (urlString == "Unable to communicate with Drop Box!"){
+                results = urlString
+        } else {
+            do {
+                //create the url with NSURL
+                let url = try URL(string: urlString)! //change the url
+                let contents = try String(contentsOf: url)
+                print(contents)
+                results = contents
+            } catch {
+                print ("Failed to find data !!Looking up url \(urlString)")
+            }
         }
     }
     return results

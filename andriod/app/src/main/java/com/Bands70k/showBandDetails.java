@@ -85,6 +85,7 @@ public class showBandDetails extends Activity {
         } else {
             onBackPressed();
         }
+        
     }
 
     @Override
@@ -98,6 +99,7 @@ public class showBandDetails extends Activity {
             orientation = "portrait";
         }
     }
+
 
     private void initializeWebContent (){
 

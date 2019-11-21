@@ -18,7 +18,14 @@ class userDataHandler: NSObject {
     
     override init(){
         
-        self.uid = (UIDevice.current.identifierForVendor?.uuidString) ?? "Unknown";
+        var uidString = "Unknown"
+        if (UIDevice.current.identifierForVendor != nil){
+            if (UIDevice.current.identifierForVendor != nil){
+                uidString = UIDevice.current.identifierForVendor!.uuidString
+            }
+        }
+    
+        self.uid = uidString
         self.country = NSLocale.current.regionCode ?? "Unknown";
         self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date

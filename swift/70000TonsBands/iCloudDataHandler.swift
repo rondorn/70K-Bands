@@ -15,9 +15,26 @@ class iCloudDataHandler {
         
     }
     
+    func checkForIcloud()->Bool {
+        
+        var status = false
+        UserDefaults.standard.synchronize()
+        var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
+        iCloudIndicator = iCloudIndicator?.uppercased()
+        if (iCloudIndicator == "YES" || iCloudIndicator == "YES "){
+            status = true
+        }
+        
+        print ("iCloud status is \(status)")
+        return status
+    }
     
     func readCloudData (){
         
+        if (checkForIcloud() == false){
+            return
+        }
+                    
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let dataHandle = dataHandler();
             let attendedHandle = ShowsAttended()
@@ -29,6 +46,10 @@ class iCloudDataHandler {
     }
     
     func writeiCloudAttendedData (attendedHandle: ShowsAttended){
+        
+        if (checkForIcloud() == false){
+            return
+        }
         
         if (internetAvailble == true){
             let showsAttendedData = attendedHandle.getShowsAttended()
@@ -51,6 +72,10 @@ class iCloudDataHandler {
     }
     
     func readCloudAttendedData (attendedHandle: ShowsAttended){
+        
+        if (checkForIcloud() == false){
+            return
+        }
         
         if (internetAvailble == true){
             
@@ -94,6 +119,10 @@ class iCloudDataHandler {
 
     func writeiCloudPriorityData (dataHandle: dataHandler){
         
+        if (checkForIcloud() == false){
+            return
+        }
+        
         if (internetAvailble == true){
             let priorityData = dataHandle.getPriorityData()
             var dataString: String = ""
@@ -116,6 +145,10 @@ class iCloudDataHandler {
     }
     
     func readCloudAPriorityData (dataHandle: dataHandler){
+        
+        if (checkForIcloud() == false){
+            return
+        }
         
         if (internetAvailble == true){
             

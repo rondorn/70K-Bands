@@ -15,7 +15,13 @@ func showAlert (_ message: String, title:String){
     
     let alert = UIAlertView()
     if (message.isEmpty == false){
-        alert.title = title
+        
+        if (title.isEmpty == false){
+            alert.title = title
+        } else {
+            alert.title = "70K Bands"
+        }
+        
         alert.message = message
         alert.addButton(withTitle: "Ok")
         alert.show()
