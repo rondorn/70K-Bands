@@ -33,10 +33,19 @@ class dataHandler {
                 print ("Loading bandPriorityStorage Cache did not load, loading from file")
                 self.refreshData()
             }
+            
+            UserDefaults.standard.synchronize()
+            var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
+            iCloudIndicator = iCloudIndicator?.uppercased()
+            if (iCloudIndicator == "YES" || iCloudIndicator == "YES "){
+                print ("iCloudIndicator is true, loading iCloud data")
+                iCloudHandle.readCloudAPriorityData(dataHandle: self)
+                usleep(50000)
+            } else {
+                print ("iCloudIndicator is false, NOT loading iCloud data  \(iCloudIndicator)")
+            }
+            print ("Done Loading bandName Data cache")
         }
-        
-        iCloudHandle.readCloudAPriorityData(dataHandle: self)
-        print ("Done Loading bandName Data cache")
     }
     
     func refreshData(){
