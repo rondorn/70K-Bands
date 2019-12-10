@@ -36,25 +36,26 @@ class filebaseBandDataWrite {
         if (internetAvailble == true && usingSimulator == false){
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-            
-            buildBandRankArray()
-            
-            if (checkIfDataHasChanged(bandRank: bandRank) == true){
-                for bandName in bandRank.keys {
-                    
-                    let ranking = bandRank[bandName]
-                    
-                    self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
-                                "bandName": bandName,
-                                "ranking": ranking!,
-                                "userID": uid,
-                                "year": String(eventYear)]){
-                                        (error:Error?, ref:DatabaseReference) in
-                                        if let error = error {
-                                            print("Writing firebase data could not be saved: \(error).")
-                                        } else {
-                                            print("Writing firebase data saved successfully!")
-                                        }
+            if (uid.isEmpty == false){
+                buildBandRankArray()
+                
+                if (checkIfDataHasChanged(bandRank: bandRank) == true){
+                    for bandName in bandRank.keys {
+                        
+                        let ranking = bandRank[bandName]
+                        
+                        self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
+                                    "bandName": bandName,
+                                    "ranking": ranking!,
+                                    "userID": uid,
+                                    "year": String(eventYear)]){
+                                            (error:Error?, ref:DatabaseReference) in
+                                            if let error = error {
+                                                print("Writing firebase data could not be saved: \(error).")
+                                            } else {
+                                                print("Writing firebase data saved successfully!")
+                                            }
+                        }
                     }
                 }
             }

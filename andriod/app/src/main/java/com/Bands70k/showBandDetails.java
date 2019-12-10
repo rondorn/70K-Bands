@@ -88,6 +88,7 @@ public class showBandDetails extends Activity {
         
     }
 
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -98,8 +99,13 @@ public class showBandDetails extends Activity {
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             orientation = "portrait";
         }
-    }
 
+        Log.d("RotationChange", "'" + orientation + "'");
+
+        if (inLink == false){
+            recreate();
+        }
+    }
 
     private void initializeWebContent (){
 
@@ -168,6 +174,7 @@ public class showBandDetails extends Activity {
 
             @JavascriptInterface
             public void webLinkClick(String value) {
+
                 staticVariables.webHelpMessage = setWebHelpMessage(value);
                 Log.d("webHelpMessage", staticVariables.webHelpMessage );
                 inLink = true;

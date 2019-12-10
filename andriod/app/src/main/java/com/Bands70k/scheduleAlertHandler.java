@@ -117,7 +117,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                 int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert()) * 60) * 1000);
                                 int delayInseconds = (delay / 1000);
 
-                                if (delay > 1 && delay < 604800) {
+                                if (delay > 1 && delayInseconds < 604800) {
                                     Log.d("SchedNotications", "!Timing1 " + String.valueOf(delay) + " - " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
 
                                     sendLocalAlert(alertMessage, delayInseconds);

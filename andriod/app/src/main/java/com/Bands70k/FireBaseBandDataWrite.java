@@ -30,7 +30,7 @@ public class FireBaseBandDataWrite {
 
         Log.d("FireBaseBandDataWrite", "In write routine");
 
-        if (staticVariables.isTestingEnv == false) {
+        if (staticVariables.isTestingEnv == false || staticVariables.userID.isEmpty() == true) {
             buildBandRankArray();
             Log.d("FireBaseBandDataWrite", "has data changed");
 

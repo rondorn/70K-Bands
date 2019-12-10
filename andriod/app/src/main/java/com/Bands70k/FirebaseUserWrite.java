@@ -22,7 +22,7 @@ public class FirebaseUserWrite {
 
     public void writeData(){
 
-        if (staticVariables.isTestingEnv == false) {
+        if (staticVariables.isTestingEnv == false || staticVariables.userID.isEmpty() == true) {
 
             HashMap<String, Object> userData = new HashMap<>();
 

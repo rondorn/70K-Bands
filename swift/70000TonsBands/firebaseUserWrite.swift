@@ -32,25 +32,27 @@ class firebaseUserWrite {
         if (internetAvailble == true && usingSimulator == false){
             
             let userDataHandle = userDataHandler()
-            print ("Firebase UserID is \(userDataHandle.uid)");
             
-            print ("Writing firebase data to userData start");
+            if (userDataHandle.uid.isEmpty == false){
+                print ("Firebase UserID is \(userDataHandle.uid)");
+                
+                print ("Writing firebase data to userData start");
 
-            self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
-                                                                           "country": userDataHandle.country,
-                                                                           "language": userDataHandle.language,
-                                                                           "platform": "iOS",
-                                                                           "lastLaunch": userDataHandle.getCurrentDateString()]) {
-                                                                            (error:Error?, ref:DatabaseReference) in
-                                                                            if let error = error {
-                                                                                print("Writing firebase data could not be saved: \(error).")
-                                                                            } else {
-                                                                                print("Writing firebase data saved successfully!")
-                                                                            }
-            }
-        
-            print ("Writing firebase data to userData stop")
+                self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
+                                                                               "country": userDataHandle.country,
+                                                                               "language": userDataHandle.language,
+                                                                               "platform": "iOS",
+                                                                               "lastLaunch": userDataHandle.getCurrentDateString()]) {
+                                                                                (error:Error?, ref:DatabaseReference) in
+                                                                                if let error = error {
+                                                                                    print("Writing firebase data could not be saved: \(error).")
+                                                                                } else {
+                                                                                    print("Writing firebase data saved successfully!")
+                                                                                }
+                }
             
+                print ("Writing firebase data to userData stop")
+            }
         } else {
             if (usingSimulator == true){
                 //this is being done soley to prevent capturing garbage stats data within my app!
