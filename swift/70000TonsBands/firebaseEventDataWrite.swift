@@ -34,40 +34,42 @@ class firebaseEventDataWrite {
         if (internetAvailble == true && usingSimulator == false){
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
-            let showsAttendedArray = attended.getShowsAttended();
-            
-            schedule.buildTimeSortedSchedulingData();
-            
-            if (checkIfDataHasChanged(showsAttnded:showsAttendedArray) == false){
-                return;
-            }
-            
-            if (schedule.getBandSortedSchedulingData().count > 0){
-                for index in showsAttendedArray {
-                    
-                    let indexArray = index.key.split(separator: ":")
-                    
-                    let bandName = String(indexArray[0])
-                    let location = String(indexArray[1])
-                    let startTimeHour = String(indexArray[2])
-                    let startTimeMin = String(indexArray[3])
-                    let eventType = String(indexArray[4])
-                    let year = String(indexArray[5])
-                    let status = index.value
-                    
-                    self.ref.child("showData/").child(uid).child(String(year)).child(index.key).setValue([
-                                        "bandName": bandName,
-                                         "location": location,
-                                         "startTimeHour": startTimeHour,
-                                         "startTimeMin": startTimeMin,
-                                         "eventType": eventType,
-                                         "status": status]){
-                                            (error:Error?, ref:DatabaseReference) in
-                                            if let error = error {
-                                                print("Writing firebase data could not be saved: \(error).")
-                                            } else {
-                                                print("Writing firebase data saved successfully!")
-                                            }
+            if (uid.isEmpty == false){
+                let showsAttendedArray = attended.getShowsAttended();
+                
+                schedule.buildTimeSortedSchedulingData();
+                
+                if (checkIfDataHasChanged(showsAttnded:showsAttendedArray) == false){
+                    return;
+                }
+                
+                if (schedule.getBandSortedSchedulingData().count > 0){
+                    for index in showsAttendedArray {
+                        
+                        let indexArray = index.key.split(separator: ":")
+                        
+                        let bandName = String(indexArray[0])
+                        let location = String(indexArray[1])
+                        let startTimeHour = String(indexArray[2])
+                        let startTimeMin = String(indexArray[3])
+                        let eventType = String(indexArray[4])
+                        let year = String(indexArray[5])
+                        let status = index.value
+                        
+                        self.ref.child("showData/").child(uid).child(String(year)).child(index.key).setValue([
+                                            "bandName": bandName,
+                                             "location": location,
+                                             "startTimeHour": startTimeHour,
+                                             "startTimeMin": startTimeMin,
+                                             "eventType": eventType,
+                                             "status": status]){
+                                                (error:Error?, ref:DatabaseReference) in
+                                                if let error = error {
+                                                    print("Writing firebase data could not be saved: \(error).")
+                                                } else {
+                                                    print("Writing firebase data saved successfully!")
+                                                }
+                        }
                     }
                 }
             }
