@@ -102,6 +102,7 @@ public class CustomerDescriptionHandler {
     public String getDescription (String bandNameValue){
 
 
+        Log.d("saveNote", "Loading description for " + bandNameValue);
         String bandName = bandNameValue;
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
@@ -120,11 +121,11 @@ public class CustomerDescriptionHandler {
                     Log.d("descriptionMapFileError", bandName + " loading from static " + staticVariables.showNotesMap.get(bandName));
                     loadNoteFromURL(bandName);
                     bandNote = bandNoteHandler.getBandNoteFromFile();
+
+                    Log.d("descriptionMapFileError",  "bandNote = " + bandNote);
+                    return bandNote;
                 }
             }
-
-            Log.d("descriptionMapFileError",  "bandNote = " + bandNote);
-            return bandNote;
         }
 
         if (bandNoteHandler.fileExists() == false) {
@@ -137,6 +138,7 @@ public class CustomerDescriptionHandler {
         bandNote = bandNoteHandler.getBandNoteFromFile();
         bandNote = removeSpecialCharsFromString(bandNote);
 
+        Log.d("saveNote", "Returning note of  " + bandNote);
         return bandNote;
     }
 

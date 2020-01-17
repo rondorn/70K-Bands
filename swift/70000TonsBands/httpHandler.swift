@@ -55,6 +55,7 @@ func getUrlData(urlString: String) -> String{
                 results = urlString
         } else {
             do {
+                print ("Problem URL string is \(urlString)")
                 //create the url with NSURL
                 let url = try URL(string: urlString)! //change the url
                 let contents = try String(contentsOf: url)

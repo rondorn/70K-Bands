@@ -68,15 +68,17 @@ public class BandNotes {
 
     public void saveBandNote(String notesData){
 
+        Log.d("saveNote", "attempting to write message " + notesData);
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2) {
 
             notesData = notesData.replaceAll("\\n", "<br>");
             notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
 
-            Log.d("descriptionMapFile", "writing data to " + bandNoteFile + " - " + notesData);
+            Log.d("saveNote", "writing data to " + bandNoteFile + " - " + notesData);
             FileHandler70k.saveData(notesData, bandNoteFile);
 
+            Log.d("saveNote", "Data saved for " + bandNoteFile);
         } else {
             bandNoteFile.delete();
         }

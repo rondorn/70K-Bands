@@ -466,7 +466,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     //var bandText = String()
     var dayText = String()
     var locationText = String()
-    var timeText = String()
+    var startTimeText = String()
+    var endTimeText = String()
     var scheduleText = String()
     var rankGraphic = UIImageView()
     var indexText = String()
@@ -478,7 +479,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let rankImageView = cell.viewWithTag(5) as! UIImageView
     let attendedView = cell.viewWithTag(6) as! UIImageView
     let rankImageViewNoSchedule = cell.viewWithTag(7) as! UIImageView
-    let timeView = cell.viewWithTag(8) as! UILabel
+    let startTimeView = cell.viewWithTag(14) as! UILabel
+    let endTimeView = cell.viewWithTag(8) as! UILabel
     let dayLabelView = cell.viewWithTag(9) as! UILabel
     let dayView = cell.viewWithTag(10) as! UILabel
     let locationColor = cell.viewWithTag(12) as! UILabel
@@ -487,7 +489,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
     locationView.textColor = UIColor.lightGray
-    timeView.textColor = UIColor.lightGray
+    startTimeView.textColor = UIColor.white
+    endTimeView.textColor = UIColor.darkGray
     dayView.textColor = UIColor.white
     bandNameNoSchedule.textColor = UIColor.white
     
@@ -502,7 +505,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         hasScheduleData = true
         
         locationView.isHidden = false
-        timeView.isHidden = false
+        startTimeView.isHidden = false
+        endTimeView.isHidden = false
         dayView.isHidden = false
         dayLabelView.isHidden = false
         attendedView.isHidden = false
@@ -512,6 +516,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
         let day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
         let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
+        let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
         
@@ -525,14 +530,15 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         }
         
         print(bandName + " displaying timeIndex of \(timeIndex) ")
-        timeText = formatTimeValue(timeValue: startTime)
+        startTimeText = formatTimeValue(timeValue: startTime)
+        endTimeText = formatTimeValue(timeValue: endTime)
         locationText = location;
         
         if (venueLocation[location] != nil){
             locationText += " " + venueLocation[location]!
         }
         
-        scheduleText = bandName + ":" + timeText + ":" + locationText
+        scheduleText = bandName + ":" + startTimeText + ":" + locationText
         scheduleButton = false
     
         print("scheduleText  = \(scheduleText)")
@@ -568,8 +574,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         dayView.text = dayText
         dayLabelView.text = "Day"
         locationView.text = locationText
-        timeView.text = timeText
-        
+        startTimeView.text = startTimeText
+        endTimeView.text = endTimeText
         
         rankLocationSchedule = true
         bandNameView.isHidden = false
@@ -580,7 +586,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         print ("Not display schedule for band " + bandName)
         scheduleButton = true
         locationView.isHidden = true
-        timeView.isHidden = true
+        startTimeView.isHidden = true
+        endTimeView.isHidden = true
         dayView.isHidden = true
         dayLabelView.isHidden = true
         attendedView.isHidden = true
