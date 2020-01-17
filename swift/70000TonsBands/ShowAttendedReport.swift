@@ -26,6 +26,7 @@ class showAttendenceReport {
     func assembleReport (){
         
         let showsAttendedArray = attendedHandle.getShowsAttended();
+        let allBands = bandNamesHandle.getBandNames()
         var unuiqueSpecial = [String]()
         
         schedule.buildTimeSortedSchedulingData();
@@ -39,6 +40,15 @@ class showAttendenceReport {
                 let year = String(indexArray[5])
                 
                 if (year != String(eventYear)){
+                    continue
+                }
+                
+                if (allBands.contains(bandName) == false &&
+                    eventType != unofficalEventType &&
+                    eventType != karaokeEventType &&
+                    eventType != specialEventType &&
+                    eventType != unofficalEventTypeOld){
+
                     continue
                 }
                 

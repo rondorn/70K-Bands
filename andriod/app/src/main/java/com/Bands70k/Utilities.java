@@ -30,8 +30,12 @@ public class Utilities {
         //DateFormat format = DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault());
         String dateString = DateFormat.getDateInstance(DateFormat.SHORT,Locale.getDefault()).format(date);
 
-        if (dateString.contains("29/10") == true && dateValue.contains("Day") == false){
-            newDateValue =  monthDayValues[1] + "/" +   monthDayValues[0];
+        try {
+            if (dateString.contains("29/10") == true && dateValue.contains("Day") == false){
+                newDateValue =  monthDayValues[1] + "/" +   monthDayValues[0];
+            }
+        } catch (Exception error){
+            newDateValue = dateValue;
         }
 
         Log.d("monthDateRegional", "Converting " + dateValue + " to " + newDateValue  + " using " + dateString);

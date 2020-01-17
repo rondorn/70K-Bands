@@ -70,7 +70,7 @@ open class bandNamesHandler {
                 print ("done")
             
             } else {
-                artistUrl = "http://www.apple.com";
+                artistUrl = "http://dropbox.com";
             }
             
             print ("Getting band data from " + artistUrl!);
@@ -202,7 +202,8 @@ open class bandNamesHandler {
             }
         } else {
             print ("can not load data\n");
-            bandNamesArray.append("Unable to load band data, unknown error")
+            //getCachedData()
+            //bandNamesArray.append("Unable to load band data, unknown error")
         }
         print ("bandNamesArray data is \(bandNamesArray)")
         return bandNamesArray
