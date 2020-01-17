@@ -81,9 +81,7 @@ open class ShowsAttended {
                     
                     let bandName = String(indexArray[0])
                     let eventType = String(indexArray[4])
-                    
-                    print ("cleanup event data old or new  \(indexArray.count)")
-             
+
                     if (indexArray.count == 5 && artistUrl == defaultPrefsValue){
                         print ("converting data for index \(index.key)")
                         var useEventYear = eventYear;

@@ -103,11 +103,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             bandName = bandSelected
         }
         
-        if (bandName == nil || bands.isEmpty == true) {
+        if ((bandName == nil || bands.isEmpty == true) && bands.count > 0) {
             var bands = bandNameHandle.getBandNames()
             print ("bands discovered are \(bands)")
             bandName = bands[0]
             print("Providing default band of " + bandName)
+        } else if (bandName == nil || bands.isEmpty == true){
+                bandName = "Waiting for Data"
         }
         
         print ("bandName is " + bandName)

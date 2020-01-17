@@ -10,6 +10,7 @@ import Foundation
 import CoreData
 import SystemConfiguration
 import UIKit
+import Network
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
 
@@ -54,6 +55,8 @@ let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 
 var iCloudCheck = false;
+var internetCheckCache = ""
+var internetCheckCacheDate = NSDate().timeIntervalSince1970
 
 //prevent mutiple threads doing the same thing
 var isAlertGenerationRunning = false
@@ -338,7 +341,71 @@ func setupVenueLocations(){
     venueLocation["Boleros Lounge"] = "Deck 4"
     
 }
+
 func isInternetAvailable() -> Bool {
+    
+    return isInternetAvailableOlder()
+    
+    var returnState = false
+    
+    if (internetCheckCache.isEmpty == false && NSDate().timeIntervalSince1970 < internetCheckCacheDate){
+        if internetCheckCache == "false" {
+            returnState = false
+        } else {
+            returnState = true
+        }
+        
+        print ("Internet Found cache is \(returnState)")
+        return returnState
+    }
+
+    guard let url = URL(string: "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1") else { return false}
+    var request = URLRequest(url: url)
+    request.timeoutInterval = 3.0
+    
+    var wait = true
+    
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            print("Internet Found \(error.localizedDescription)")
+            returnState = false
+        }
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Internet Found statusCode: \(httpResponse.statusCode)")
+            // do your logic here
+            if httpResponse.statusCode == 200{
+                returnState = true
+                print ("Internet Found returnState = \(returnState)")
+            } else {
+                print("Internet Found  is not 200 status \(httpResponse.statusCode)")
+            }
+            wait = false
+        } else {
+            print ("Internet Found WTF 1")
+            wait = false
+        }
+    }
+    
+    task.resume()
+    while (wait == true){
+        print ("Internet Found Waiting")
+        sleep(2);
+    }
+    
+    if (returnState == false){
+        internetCheckCache = "false"
+    } else {
+        internetCheckCache = "true"
+    }
+    
+    internetCheckCacheDate = NSDate().timeIntervalSince1970 + 1800
+    
+    print ("Internet Found is \(returnState)")
+    return returnState
+}
+
+
+func isInternetAvailableOlder() -> Bool {
     
     var zeroAddress = sockaddr_in()
     zeroAddress.sin_len = UInt8(MemoryLayout.size(ofValue: zeroAddress))

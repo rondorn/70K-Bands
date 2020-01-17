@@ -146,6 +146,7 @@ public class showBandDetails extends Activity {
 
                 }else if (value.startsWith("UserNoteSubmit:")) {
 
+                    Log.d("saveNote", "Save note now");
                     staticVariables.writeNoteHtml = "";
                     //code to write note for band
                     value = value.replaceFirst("UserNoteSubmit:", "");
