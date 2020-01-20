@@ -17,9 +17,9 @@ public class dateTimeFormatter {
         if (DateFormat.is24HourFormat(staticVariables.context) == false){
             try {
 
-                SimpleDateFormat _24HourSDF = new SimpleDateFormat("HH:mm");
+                SimpleDateFormat _24HourSDF = new SimpleDateFormat("H:mm");
 
-                SimpleDateFormat _12HourSDF = new SimpleDateFormat("hh:mm a");
+                SimpleDateFormat _12HourSDF = new SimpleDateFormat("h:mm a");
                 Date _24HourDt = _24HourSDF.parse(timeValue);
 
                 timeValue = (_12HourSDF.format(_24HourDt));

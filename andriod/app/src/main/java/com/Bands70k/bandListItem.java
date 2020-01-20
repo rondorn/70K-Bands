@@ -11,6 +11,7 @@ public class bandListItem {
     private String locationColor;
     private String day;
     private String startTime;
+    private String endTime;
 
 
     public bandListItem(String bandName) {
@@ -51,6 +52,13 @@ public class bandListItem {
     }
     public void setStartTime(String startTime) {
         this.startTime = startTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
+    }
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
     }
 
     public int getRankImg() {
