@@ -1010,6 +1010,7 @@ public class showBands extends Activity {
                         scheduleHandler scheduleHandle = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
                         String location = scheduleHandle.getShowLocation();
                         String startTime = scheduleHandle.getStartTimeString();
+                        String endTime = scheduleHandle.getEndTimeString();
                         String eventType = scheduleHandle.getShowType();
                         String day = scheduleHandle.getShowDay();
                         String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
@@ -1024,6 +1025,7 @@ public class showBands extends Activity {
 
                         Log.d("PopulatingDayValue", "Day = " + day);
                         startTime = dateTimeFormatter.formatScheduleTime(startTime);
+                        endTime = dateTimeFormatter.formatScheduleTime(endTime);
 
                         bandItem.setLocationColor(iconResolve.getLocationColor(location));
 
@@ -1035,6 +1037,7 @@ public class showBands extends Activity {
 
                         bandItem.setLocation(location);
                         bandItem.setStartTime(startTime);
+                        bandItem.setEndTime(endTime);
                         bandItem.setDay(day);
 
                         if (eventImage != 0) {

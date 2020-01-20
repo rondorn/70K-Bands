@@ -91,8 +91,10 @@ public class scheduleInfo {
                             scheduleLine.setShowLocation(RowData[labelKeys.get(staticVariables.schedLocationRow)]);
                             scheduleLine.setShowDay(RowData[labelKeys.get(staticVariables.schedDayRow)]);
                             scheduleLine.setShowType(RowData[labelKeys.get(staticVariables.schedTypeRow)]);
+
                             scheduleLine.setStartTimeString(RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
                             scheduleLine.setEndTimeString(RowData[labelKeys.get(staticVariables.schedEndTimeRow)]);
+
                             scheduleLine.setStartTime(RowData[labelKeys.get(staticVariables.schedDateRow)],
                                     RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
                             scheduleLine.setEndTime(RowData[labelKeys.get(staticVariables.schedDateRow)],

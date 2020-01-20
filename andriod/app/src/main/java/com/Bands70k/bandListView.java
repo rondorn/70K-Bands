@@ -46,7 +46,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         TextView location;
         TextView locationColor;
         TextView day;
-        TextView time;
+        TextView startTime;
+        TextView endTime;
         TextView dayLable;
         TextView bandNameNoSchedule;
 
@@ -89,7 +90,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.location = (TextView) row.findViewById(R.id.locationInCell);
             viewHolder.locationColor = (TextView) row.findViewById(R.id.locationColorInCell);
             viewHolder.day = (TextView) row.findViewById(R.id.dayInCell);
-            viewHolder.time = (TextView) row.findViewById(R.id.timeInCell);
+            viewHolder.startTime = (TextView) row.findViewById(R.id.startTimeInCell);
+            viewHolder.endTime = (TextView) row.findViewById(R.id.endTimeInCell);
             viewHolder.dayLable = (TextView) row.findViewById(R.id.dayLabelInCell);
 
             viewHolder.bottomSpacer = (TextView) row.findViewById(R.id.bottomSpacer);
@@ -114,7 +116,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.location.setVisibility(View.INVISIBLE);
             viewHolder.locationColor.setVisibility(View.INVISIBLE);
             viewHolder.day.setVisibility(View.INVISIBLE);
-            viewHolder.time.setVisibility(View.INVISIBLE);
+            viewHolder.startTime.setVisibility(View.INVISIBLE);
+            viewHolder.endTime.setVisibility(View.INVISIBLE);
             viewHolder.dayLable.setVisibility(View.INVISIBLE);
 
             viewHolder.rankImage.setVisibility(View.INVISIBLE);
@@ -141,7 +144,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.location.setVisibility(View.VISIBLE);
             viewHolder.locationColor.setVisibility(View.VISIBLE);
             viewHolder.day.setVisibility(View.VISIBLE);
-            viewHolder.time.setVisibility(View.VISIBLE);
+            viewHolder.startTime.setVisibility(View.VISIBLE);
+            viewHolder.endTime.setVisibility(View.VISIBLE);
             viewHolder.dayLable.setVisibility(View.VISIBLE);
             viewHolder.bottomSpacer.setVisibility(View.VISIBLE);
             viewHolder.rankImage.setVisibility(View.VISIBLE);
@@ -184,8 +188,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
             viewHolder.bandName.setText(bandData.getBandName());
             viewHolder.day.setText(bandData.getDay());
-            viewHolder.time.setText(bandData.getStartTime());
-
+            viewHolder.startTime.setText(bandData.getStartTime());
+            viewHolder.endTime.setText(bandData.getEndTime());
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
                 viewHolder.bandName.setTextSize(23);
             }

@@ -50,14 +50,17 @@ public class showsAttendedReport {
         }
     }
 
-    public String addPlural(Integer count){
+    public String addPlural(Integer count, String eventType){
 
         String message = "";
 
-        if (count >= 2){
+
+
+        if (count >= 2 && eventType.contentEquals(staticVariables.unofficalEvent) == false){
             message += "s";
         }
-        //message += "\n";
+
+        Log.d("addPlural", "eventType is '" + eventType + "' - '" + staticVariables.unofficalEvent + "' - " + message);
 
         return message;
 
@@ -84,12 +87,12 @@ public class showsAttendedReport {
             if (sawAllCount != null && sawAllCount >= 1) {
                 eventCountExists.put(eventType, true);
                 String sawAllCountString = sawAllCount.toString();
-                message += "Saw " + sawAllCountString + " " + eventType + addPlural(sawAllCount) + "\n";
+                message += "Saw " + sawAllCountString + " " + eventType + addPlural(sawAllCount, eventType) + "\n";
             }
             if (sawSomeCount != null && sawSomeCount >= 1) {
                 eventCountExists.put(eventType, true);
                 String sawSomeCountString = sawSomeCount.toString();
-                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(sawSomeCount) + "\n";
+                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(sawSomeCount, eventType) + "\n";
             }
         }
 
@@ -106,7 +109,7 @@ public class showsAttendedReport {
 
             if (eventCountExists.containsKey(eventType) == true){
 
-                message += "\nFor " + eventType + "s";
+                message += "\nFor " + eventType + addPlural(1, eventType);
 
                 for (String bandName : sortedBandNamesArray){
 
@@ -115,13 +118,13 @@ public class showsAttendedReport {
                         sawCount = sawCount + bandCounts.get(eventType).get(bandName).get(staticVariables.sawAllStatus);
                     }
                     if (bandCounts.get(eventType).get(bandName).get(staticVariables.sawSomeStatus) != null){
-                        sawSomeCount = sawCount + bandCounts.get(eventType).get(bandName).get(staticVariables.sawSomeStatus);
+                        sawSomeCount = sawSomeCount + bandCounts.get(eventType).get(bandName).get(staticVariables.sawSomeStatus);
                     }
 
                     if (sawCount >= 1){
                         String sawCountString = sawCount.toString();
                         if (eventType.equals(staticVariables.show)){
-                            message += "\n     " + bandName + " " + sawCountString + " time" + addPlural(sawCount);
+                            message += "\n     " + bandName + " " + sawCountString + " time" + addPlural(sawCount, "");
                         } else {
                             message += "\n      " + bandName;
                         }

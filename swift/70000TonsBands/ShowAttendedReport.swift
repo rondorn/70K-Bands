@@ -25,21 +25,45 @@ class showAttendenceReport {
     
     func assembleReport (){
         
+        schedule.buildTimeSortedSchedulingData();
+        
+        let scheduleData = schedule.getBandSortedSchedulingData();
         let showsAttendedArray = attendedHandle.getShowsAttended();
         let allBands = bandNamesHandle.getBandNames()
         var unuiqueSpecial = [String]()
         
-        schedule.buildTimeSortedSchedulingData();
         if (schedule.getBandSortedSchedulingData().count > 0){
             for index in showsAttendedArray {
                 
                 let indexArray = index.key.split(separator: ":")
                 
                 let bandName = String(indexArray[0])
+                let location = String(indexArray[1])
+                let hour = String(indexArray[2])
+                let min = String(indexArray[3])
                 let eventType = String(indexArray[4])
                 let year = String(indexArray[5])
                 
                 if (year != String(eventYear)){
+                    continue
+                }
+                
+
+                var validateEvent = false
+                if scheduleData.index(forKey: bandName) != nil {
+                    for timeIndex in scheduleData[bandName]!.keys {
+                        print ("scheduleData[bandName] \(scheduleData[bandName]?[timeIndex])")
+                        if (scheduleData[bandName]?[timeIndex]?["Location"] == location &&
+                            scheduleData[bandName]?[timeIndex]?["Type"] == eventType &&
+                            scheduleData[bandName]?[timeIndex]?["Start Time"] == hour + ":" + min){
+                            validateEvent = true;
+                            continue
+                        }
+                        
+                    }
+                }
+                
+                if (validateEvent == false){
                     continue
                 }
                 
@@ -52,6 +76,7 @@ class showAttendenceReport {
                     continue
                 }
                 
+                print ("eventType = \(eventType) - \(index.value) - \(indexArray)")
                 getEventTypeCounts(eventType: eventType, sawStatus: index.value)
                 getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
                 
@@ -59,11 +84,11 @@ class showAttendenceReport {
         }
     }
     
-    func addPlural(count : Int)->String{
+    func addPlural(count : Int, eventType: String)->String{
         
         var message = "";
         
-        if (count >= 2){
+        if (count >= 2 && eventType != unofficalEventType){
             message += "s"
         }
         message += "\n"
@@ -90,12 +115,12 @@ class showAttendenceReport {
                 if (sawAllCount != nil && sawAllCount! >= 1){
                     eventCountExists[eventType] = true
                     let sawAllCountString = String(sawAllCount!)
-                    message += "Saw " + sawAllCountString + " " + eventType + addPlural(count: sawAllCount!)
+                    message += "Saw " + sawAllCountString + " " + eventType + addPlural(count: sawAllCount!, eventType: eventType)
                 }
                 if (sawSomeCount != nil && sawSomeCount! >= 1){
                     eventCountExists[eventType] = true
                     let sawSomeCountString = String(sawSomeCount!)
-                    message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(count: sawSomeCount!)
+                    message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(count: sawSomeCount!, eventType: eventType)
                 }
             }
             
@@ -107,7 +132,7 @@ class showAttendenceReport {
                 let sortedBandNames = Array(index.value.keys).sorted()
                 
                 if (eventCountExists[eventType] == true){
-                    message += "For " + eventType + "s\n"
+                    message += "For " + eventType + addPlural(count: 1, eventType: eventType)
                     
                     for bandName in sortedBandNames {
 
@@ -122,7 +147,7 @@ class showAttendenceReport {
                         if (sawCount >= 1){
                             let sawCountString = String(sawCount)
                             if (eventType == showType){
-                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount)
+                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount, eventType: eventType)
                             } else {
                                 message += "     " + bandName + "\n";
                             }

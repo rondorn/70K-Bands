@@ -374,7 +374,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 
                 Links.isHidden = true
                 Links.sizeToFit()
-            
+                
+                Event1.font = UIFont.systemFont(ofSize: 25)
+                Event2.font = UIFont.systemFont(ofSize: 25)
+                Event3.font = UIFont.systemFont(ofSize: 25)
+                Event4.font = UIFont.systemFont(ofSize: 25)
+                Event5.font = UIFont.systemFont(ofSize: 25)
+                
+                Event1.sizeToFit()
+                Event2.sizeToFit()
+                Event3.sizeToFit()
+                Event4.sizeToFit()
+                Event5.sizeToFit()
             }
             
             
@@ -400,6 +411,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 Links.sizeToFit()
                 extraData.sizeToFit()
                 loadComments()
+                
+                
+                Event1.font = UIFont.systemFont(ofSize: 17)
+                Event2.font = UIFont.systemFont(ofSize: 17)
+                Event3.font = UIFont.systemFont(ofSize: 17)
+                Event4.font = UIFont.systemFont(ofSize: 17)
+                Event5.font = UIFont.systemFont(ofSize: 17)
+                
             }
             
             imageSizeController(special: "scale")
