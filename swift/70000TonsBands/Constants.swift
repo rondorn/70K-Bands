@@ -295,6 +295,7 @@ func getPointerUrlData(keyValue: String) -> String {
         }
 
     }
+    
     return url
 }
 
@@ -321,7 +322,7 @@ func setupDefaults() {
     setupVenueLocations()
     
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
-    eventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 2020;
+    eventYear = 2020//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2020;
 
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1
@@ -344,8 +345,6 @@ func setupVenueLocations(){
 
 func isInternetAvailable() -> Bool {
     
-    return isInternetAvailableOlder()
-    
     var returnState = false
     
     if (internetCheckCache.isEmpty == false && NSDate().timeIntervalSince1970 < internetCheckCacheDate){
@@ -357,53 +356,83 @@ func isInternetAvailable() -> Bool {
         
         print ("Internet Found cache is \(returnState)")
         return returnState
-    }
-
-    guard let url = URL(string: "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1") else { return false}
-    var request = URLRequest(url: url)
-    request.timeoutInterval = 3.0
     
-    var wait = true
-    
-    let task = URLSession.shared.dataTask(with: request) { data, response, error in
-        if let error = error {
-            print("Internet Found \(error.localizedDescription)")
+    //cache has expired, but lets return last answer and check again in the background
+    } else if (internetCheckCache.isEmpty == false){
+        
+        if internetCheckCache == "false" {
             returnState = false
-        }
-        if let httpResponse = response as? HTTPURLResponse {
-            print("Internet Found statusCode: \(httpResponse.statusCode)")
-            // do your logic here
-            if httpResponse.statusCode == 200{
-                returnState = true
-                print ("Internet Found returnState = \(returnState)")
-            } else {
-                print("Internet Found  is not 200 status \(httpResponse.statusCode)")
-            }
-            wait = false
         } else {
-            print ("Internet Found WTF 1")
-            wait = false
+            returnState = true
         }
-    }
-    
-    task.resume()
-    while (wait == true){
-        print ("Internet Found Waiting")
-        sleep(2);
-    }
-    
-    if (returnState == false){
-        internetCheckCache = "false"
+        
+        print ("Internet Found cache is \(returnState), but refreshing cache in background")
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            isInternetAvailableSynchronous()
+        }
+        
     } else {
-        internetCheckCache = "true"
+        
+        returnState = isInternetAvailableSynchronous()
     }
     
-    internetCheckCacheDate = NSDate().timeIntervalSince1970 + 1800
+    return returnState;
+    
+}
+
+func isInternetAvailableSynchronous() -> Bool {
+    
+    var returnState = false
+    
+    if (isInternetAvailableOlder() == true){
+        guard let url = URL(string: "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1") else { return false}
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15.0
+        
+        var wait = true
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Internet Found \(error.localizedDescription)")
+                returnState = false
+            }
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Internet Found statusCode: \(httpResponse.statusCode)")
+                // do your logic here
+                if httpResponse.statusCode == 200{
+                    returnState = true
+                    print ("Internet Found returnState = \(returnState)")
+                } else {
+                    print("Internet Found  is not 200 status \(httpResponse.statusCode)")
+                }
+                wait = false
+            } else {
+                print ("Internet Found WTF 1")
+                wait = false
+            }
+        }
+        
+        task.resume()
+        while (wait == true){
+            print ("Internet Found Waiting")
+            sleep(2);
+        }
+        
+        if (returnState == false){
+            internetCheckCache = "false"
+        } else {
+            internetCheckCache = "true"
+        }
+    } else {
+        print ("Internet Found is airplane mode...not even testing")
+    }
+    
+    internetCheckCacheDate = NSDate().timeIntervalSince1970 + 500
     
     print ("Internet Found is \(returnState)")
     return returnState
+    
 }
-
 
 func isInternetAvailableOlder() -> Bool {
     

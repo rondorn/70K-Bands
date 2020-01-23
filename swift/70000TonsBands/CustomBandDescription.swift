@@ -270,6 +270,7 @@ open class CustomBandDescription {
             descriptionPointer = "descriptionMapLastYear"
         }
         
+        print ("Gertting descriptionPointerUrl 1");
         url = getPointerUrlData(keyValue: descriptionPointer)
         
         return url

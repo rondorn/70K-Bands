@@ -53,6 +53,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var bandsByName = [String]()
     var reloadTableBool = true
     
+    var bandDescriptions = CustomBandDescription()
+    
     @IBOutlet weak var titleLabel: UINavigationItem!
     
     var dataHandle = dataHandler()
@@ -332,7 +334,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshFromCache()
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            
+        
             let dataHandle = dataHandler()
             var offline = true
 
@@ -377,6 +379,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
             }
+            self.bandDescriptions.getDescriptionMapFile();
+            self.bandDescriptions.getAllDescriptions()
         
         }
     } 

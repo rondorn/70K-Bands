@@ -97,9 +97,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let userDataHandle = firebaseUserWrite()
         userDataHandle.writeData()
         
- 
-        bandDescriptions.getDescriptionMapFile();
-        
         application.registerForRemoteNotifications()
         
         return true

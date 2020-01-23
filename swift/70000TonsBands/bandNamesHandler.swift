@@ -62,10 +62,11 @@ open class bandNamesHandler {
             var artistUrl = defaults.string(forKey: "artistUrl")
             
             if (artistUrl == defaultPrefsValue){
+                print ("Getting artistUrl 1");
                 artistUrl = getPointerUrlData(keyValue: artistUrlpointer)
             
             } else if (artistUrl == lastYearSetting){
-                print ("Calling getPointerUrlData")
+                print ("Getting artistUrl 2");
                 artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
                 print ("done")
             
