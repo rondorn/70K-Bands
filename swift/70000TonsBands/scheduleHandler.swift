@@ -181,6 +181,7 @@ open class scheduleHandler {
         if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
             scheduleUrl = lastYearSetting;
         } else {
+            print ("getting scheduleURL 1")
             scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
         }
         
@@ -190,9 +191,11 @@ open class scheduleHandler {
     
         print ("Downloading Schedule URL " + scheduleUrl);
         if (scheduleUrl == defaultPrefsValue){
+            print ("getting scheduleURL 2")
             scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
             
         } else if (scheduleUrl == lastYearSetting){
+            print ("getting scheduleURL 3")
             scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
         
         }
