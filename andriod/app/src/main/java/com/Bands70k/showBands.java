@@ -163,12 +163,18 @@ public class showBands extends Activity {
             staticVariables.attendedHandler = new showsAttended();
         }
 
+        Log.d("startup", "show init start - 1");
+
         staticVariablesInitialize();
 
+        Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
 
+        Log.d("startup", "show init start - 3");
         scheduleAlertHandler alertHandler = new scheduleAlertHandler();
+
+        Log.d("startup", "show init start - 4");
         //alertHandler.sendLocalAlert("Testing after 10 seconds", 5);
 
         Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
@@ -205,16 +211,21 @@ public class showBands extends Activity {
         );
 
         Log.d(TAG, "2 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
+        Log.d("startup", "show init start - 5");
         populateBandList();
+        Log.d("startup", "show init start - 6");
         showNotification();
+        Log.d("startup", "show init start - 7");
         setFilterDefaults();
-
+        Log.d("startup", "show init start - 8");
         setupButtonFilters();
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
+        Log.d("startup", "show init start - 9");
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
 
+        Log.d("startup", "show init start - 10");
     }
 
 
@@ -847,7 +858,7 @@ public class showBands extends Activity {
         showBandLayout.invalidate();
         showBandLayout.requestLayout();
 
-        Log.d("BandData Loaded", "from Internet");
+        Log.d("refreshNewData", "refreshNewData - 1");
 
         AsyncListViewLoader mytask = new AsyncListViewLoader();
         mytask.execute();
@@ -855,18 +866,21 @@ public class showBands extends Activity {
         AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
         myNotesTask.execute();
 
+        Log.d("refreshNewData", "refreshNewData - 2");
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
+        Log.d("refreshNewData", "refreshNewData - 3");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display header " + headerText);
 
+        Log.d("refreshNewData", "refreshNewData - 4");
         if (headerText.equals("70,000 Tons")){
             Log.d("DisplayListData", "running extra refresh");
             displayBandData();
         }
-
+        Log.d("refreshNewData", "refreshNewData - 5");
     }
 
     public void onStop() {
@@ -886,15 +900,19 @@ public class showBands extends Activity {
         if (fileDownloaded == true) {
             Log.d("BandData Loaded", "from Cache");
 
+            Log.d("reloadData", "reloadData - 1");
             BandInfo bandInfoNames = new BandInfo();
             bandNames = bandInfoNames.getBandNames();
 
+            Log.d("reloadData", "reloadData - 2");
             rankedBandNames = bandInfo.getRankedBandNames(bandNames);
             rankStore.getBandRankings();
 
+            Log.d("reloadData", "reloadData - 3");
             Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
             bandNamesList.setSelection(listPosition);
 
+            Log.d("reloadData", "reloadData - 4");
             scheduleAlertHandler alerts = new scheduleAlertHandler();
             alerts.execute();
 
@@ -955,11 +973,14 @@ public class showBands extends Activity {
 
     private void displayBandDataWithSchedule(){
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
         bandNamesList.setAdapter(adapter);
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
         BandInfo bandInfoNames = new BandInfo();
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 3");
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
@@ -967,12 +988,15 @@ public class showBands extends Activity {
             bandNames.add("Waiting for data to load, please standby....");
         }
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
         rankedBandNames = bandInfo.getRankedBandNames(bandNames);
         rankStore.getBandRankings();
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 5");
         listHandler = new mainListHandler(showBands.this);
 
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
         scheduleSortedBandNames = listHandler.getSortableBandNames();
 
         if (scheduleSortedBandNames.isEmpty() == true){
@@ -980,13 +1004,15 @@ public class showBands extends Activity {
         }
 
         if (scheduleSortedBandNames.get(0).contains(":") == false){
+            Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
             Log.d("DisplayListData", "starting file download ");
-            bandInfoNames.DownloadBandFile();
+            //bandInfoNames.DownloadBandFile();
             bandNames = bandInfoNames.getBandNames();
             Log.d("DisplayListData", "starting file download, done ");
         }
 
         Integer counter = 0;
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         for (String bandIndex: scheduleSortedBandNames){
 
             Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex " + bandIndex);
@@ -1076,6 +1102,7 @@ public class showBands extends Activity {
             setShowAttendedFilterButton();
         }
 
+        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
@@ -1153,14 +1180,16 @@ public class showBands extends Activity {
     @Override
     public void onResume() {
 
-        Log.d(TAG, notificationTag + " In onResume");
+        Log.d(TAG, notificationTag + " In onResume - 1");
         super.onResume();
 
         Log.d("DisplayListData", "On Resume refreshNewData");
         inBackground = false;
 
+        Log.d(TAG, notificationTag + " In onResume - 2");
         refreshNewData();
 
+        Log.d(TAG, notificationTag + " In onResume - 3");
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // argument position gives the index of item which is clicked
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
@@ -1183,22 +1212,30 @@ public class showBands extends Activity {
                 }
             }
         });
+
+        Log.d(TAG, notificationTag + " In onResume - 4");
         if(listState != null) {
             Log.d("State Status", "restoring state during Resume");
             bandNamesList.onRestoreInstanceState(listState);
         }
+
+        Log.d(TAG, notificationTag + " In onResume - 5");
         setupNoneFilterButtons();
         //setupButtonFilters();
         registerReceiver();
 
+        Log.d(TAG, notificationTag + " In onResume - 6");
         //populateBandList();
         Log.d(TAG, notificationTag + " calling showNotification");
         showNotification();
 
         subscribeToAlerts();
 
+        Log.d(TAG, notificationTag + " In onResume - 7");
         Log.d("Setting position", "Setting position in onResume to " + String.valueOf(listPosition));
         bandNamesList.setSelection(listPosition);
+
+        Log.d(TAG, notificationTag + " In onResume - 8");
     }
 
     @Override
@@ -1259,10 +1296,12 @@ public class showBands extends Activity {
             super.onPreExecute();
             if (staticVariables.loadingBands == false) {
 
+                Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 1");
                 staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
-                refreshData();
+                //refreshData();
                 staticVariables.loadingBands = false;
+                Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 2");
 
             }
         }
@@ -1299,22 +1338,27 @@ public class showBands extends Activity {
 
             if (staticVariables.loadingBands == false) {
 
-                Log.d("DisplayListData", "called from postExecute");
+                refreshData();
+
+                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
 
                 displayBandDataWithSchedule();
 
-
+                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 2");
                 showBands.this.bandNamesList.setVisibility(View.VISIBLE);
                 showBands.this.bandNamesList.requestLayout();
 
+                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 3");
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(false);
 
                 fileDownloaded = true;
 
+                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 4");
                 Log.d("Setting position", "Setting position in onPostExecute to " + String.valueOf(listPosition));
                 bandNamesList.setSelection(listPosition);
 
+                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 5");
 
             }
         }
