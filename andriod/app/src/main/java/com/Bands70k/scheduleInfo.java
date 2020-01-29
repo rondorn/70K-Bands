@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.os.Environment;
+import android.os.Looper;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -26,29 +27,32 @@ public class scheduleInfo {
 
         Log.d("ScheduleLine", "Attempting to download file content from network");
         //Log.d("bandUrlIs", scheduleUrl);
-        try {
-            URL u = new URL(scheduleUrl);
-            InputStream is = u.openStream();
 
-            DataInputStream dis = new DataInputStream(is);
+        if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
+            try {
+                URL u = new URL(scheduleUrl);
+                InputStream is = u.openStream();
 
-            byte[] buffer = new byte[1024];
-            int length;
+                DataInputStream dis = new DataInputStream(is);
 
-            FileOutputStream fos = new FileOutputStream(FileHandler70k.schedule);
-            while ((length = dis.read(buffer))>0) {
-                fos.write(buffer, 0, length);
+                byte[] buffer = new byte[1024];
+                int length;
+
+                FileOutputStream fos = new FileOutputStream(FileHandler70k.schedule);
+                while ((length = dis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+
+            } catch (MalformedURLException mue) {
+                Log.e("SYNC getUpdate", "malformed url error", mue);
+            } catch (IOException ioe) {
+                Log.e("SYNC getUpdate", "io error", ioe);
+            } catch (SecurityException se) {
+                Log.e("SYNC getUpdate", "security error", se);
+
+            } catch (Exception generalError) {
+                Log.e("General Exception", "Downloading bandData", generalError);
             }
-
-        } catch (MalformedURLException mue) {
-            Log.e("SYNC getUpdate", "malformed url error", mue);
-        } catch (IOException ioe) {
-            Log.e("SYNC getUpdate", "io error", ioe);
-        } catch (SecurityException se) {
-            Log.e("SYNC getUpdate", "security error", se);
-
-        } catch (Exception generalError){
-            Log.e("General Exception", "Downloading bandData", generalError);
         }
 
         Log.d("ScheduleLine", "Attempting to download file content from file");

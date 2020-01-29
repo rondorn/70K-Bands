@@ -164,6 +164,7 @@ let testingSetting = "Testing"
 
 var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"
 let lastYearsartistUrlpointer = "lastYearsartistUrl"
@@ -345,114 +346,12 @@ func setupVenueLocations(){
 
 func isInternetAvailable() -> Bool {
     
-    var returnState = false
+    var networkTesting = NetworkTesting()
     
-    if (internetCheckCache.isEmpty == false && NSDate().timeIntervalSince1970 < internetCheckCacheDate){
-        if internetCheckCache == "false" {
-            returnState = false
-        } else {
-            returnState = true
-        }
-        
-        print ("Internet Found cache is \(returnState)")
-        return returnState
-    
-    //cache has expired, but lets return last answer and check again in the background
-    } else if (internetCheckCache.isEmpty == false){
-        
-        if internetCheckCache == "false" {
-            returnState = false
-        } else {
-            returnState = true
-        }
-        
-        print ("Internet Found cache is \(returnState), but refreshing cache in background")
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            isInternetAvailableSynchronous()
-        }
-        
-    } else {
-        
-        returnState = isInternetAvailableSynchronous()
-    }
+    var returnState = networkTesting.isInternetAvailable()
     
     return returnState;
     
-}
-
-func isInternetAvailableSynchronous() -> Bool {
-    
-    var returnState = false
-    
-    if (isInternetAvailableOlder() == true){
-        guard let url = URL(string: "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1") else { return false}
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 15.0
-        
-        var wait = true
-        
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Internet Found \(error.localizedDescription)")
-                returnState = false
-            }
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Internet Found statusCode: \(httpResponse.statusCode)")
-                // do your logic here
-                if httpResponse.statusCode == 200{
-                    returnState = true
-                    print ("Internet Found returnState = \(returnState)")
-                } else {
-                    print("Internet Found  is not 200 status \(httpResponse.statusCode)")
-                }
-                wait = false
-            } else {
-                print ("Internet Found WTF 1")
-                wait = false
-            }
-        }
-        
-        task.resume()
-        while (wait == true){
-            print ("Internet Found Waiting")
-            sleep(2);
-        }
-        
-        if (returnState == false){
-            internetCheckCache = "false"
-        } else {
-            internetCheckCache = "true"
-        }
-    } else {
-        print ("Internet Found is airplane mode...not even testing")
-    }
-    
-    internetCheckCacheDate = NSDate().timeIntervalSince1970 + 500
-    
-    print ("Internet Found is \(returnState)")
-    return returnState
-    
-}
-
-func isInternetAvailableOlder() -> Bool {
-    
-    var zeroAddress = sockaddr_in()
-    zeroAddress.sin_len = UInt8(MemoryLayout.size(ofValue: zeroAddress))
-    zeroAddress.sin_family = sa_family_t(AF_INET)
-    
-    let defaultRouteReachability = withUnsafePointer(to: &zeroAddress) {
-        $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {zeroSockAddress in
-            SCNetworkReachabilityCreateWithAddress(nil, zeroSockAddress)
-        }
-    }
-    
-    var flags = SCNetworkReachabilityFlags()
-    if !SCNetworkReachabilityGetFlags(defaultRouteReachability!, &flags) {
-        return false
-    }
-    let isReachable = flags.contains(.reachable)
-    let needsConnection = flags.contains(.connectionRequired)
-    return (isReachable && !needsConnection)
 }
 
 struct cacheVariables {

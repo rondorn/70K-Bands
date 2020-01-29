@@ -117,9 +117,9 @@ public class staticVariables {
 
     public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
-
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
-
+    //public final static String networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
+    public final static String networkTestingUrl = "https://www.dropbox.com";
     public static String artistURL;
     public static String scheduleURL;
     public static String previousYearArtist;
@@ -437,44 +437,45 @@ public class staticVariables {
 
         Log.d("pointerUrl", "pointerUrl equals " + pointerUrl);
 
-        try {
-            URL url = new URL(pointerUrl);
-            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-            String data = "";
-            String line;
+        if (OnlineStatus.isOnline() == true) {
+            try {
+                URL url = new URL(pointerUrl);
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                String data = "";
+                String line;
 
-            Map<String, String> downloadUrls = new HashMap<String,String>();
+                Map<String, String> downloadUrls = new HashMap<String, String>();
 
-            while ((line = in.readLine()) != null) {
-                data += line + "\n";
-            }
-            in.close();
+                while ((line = in.readLine()) != null) {
+                    data += line + "\n";
+                }
+                in.close();
 
-            Log.d("defaultUrls", data);
+                Log.d("defaultUrls", data);
 
-            String[] records = data.split("\\n");
-            for (String record : records) {
-                Log.d("defaultUrls 1", record);
-                String[] recordData = record.split("::");
-                //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
-                if (recordData.length >= 2) {
-                    downloadUrls.put(recordData[0], recordData[1]);
+                String[] records = data.split("\\n");
+                for (String record : records) {
+                    Log.d("defaultUrls 1", record);
+                    String[] recordData = record.split("::");
+                    //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
+                    if (recordData.length >= 2) {
+                        downloadUrls.put(recordData[0], recordData[1]);
+                    }
+
                 }
 
+                previousYearArtist = downloadUrls.get("lastYearsartistUrl");
+                previousYearSchedule = downloadUrls.get("lastYearsScheduleUrl");
+                artistURL = downloadUrls.get("artistUrl");
+                scheduleURL = downloadUrls.get("scheduleUrl");
+                descriptionMap = downloadUrls.get("descriptionMap");
+                previousYearDescriptionMap = downloadUrls.get("descriptionMapLastYear");
+                eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
+
+            } catch (Exception error) {
+                Log.d("Error", error.getMessage());
             }
-
-            previousYearArtist = downloadUrls.get("lastYearsartistUrl");
-            previousYearSchedule = downloadUrls.get("lastYearsScheduleUrl");
-            artistURL = downloadUrls.get("artistUrl");
-            scheduleURL = downloadUrls.get("scheduleUrl");
-            descriptionMap = downloadUrls.get("descriptionMap");
-            previousYearDescriptionMap = downloadUrls.get("descriptionMapLastYear");
-            eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
-
-        } catch (Exception error){
-            Log.d("Error", error.getMessage());
         }
-
     }
 
 }
