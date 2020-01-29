@@ -41,10 +41,10 @@
                                 </constraints>
                             </imageView>
                             <view contentMode="center" translatesAutoresizingMaskIntoConstraints="NO" id="uaF-dJ-7Dc">
-                                <rect key="frame" x="0.0" y="135" width="320" height="22"/>
+                                <rect key="frame" x="0.0" y="135" width="320" height="37"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Vist Band On:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7eU-qa-VIQ">
-                                        <rect key="frame" x="10" y="0.0" width="110" height="24"/>
+                                        <rect key="frame" x="10" y="0.0" width="110" height="39"/>
                                         <color key="backgroundColor" cocoaTouchSystemColor="darkTextColor"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="110" id="hVP-b7-qPD"/>
@@ -54,10 +54,10 @@
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <stackView opaque="NO" contentMode="right" distribution="fillEqually" spacing="24" baselineRelativeArrangement="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cNj-Lf-NzH">
-                                        <rect key="frame" x="118" y="0.0" width="194" height="22"/>
+                                        <rect key="frame" x="118" y="0.0" width="194" height="37"/>
                                         <subviews>
                                             <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pII-w4-ri7" userLabel="Officall Web Site">
-                                                <rect key="frame" x="0.0" y="0.0" width="30.5" height="22"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="30.5" height="37"/>
                                                 <accessibility key="accessibilityConfiguration" identifier="Offical Web Site"/>
                                                 <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
                                                 <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="11"/>
@@ -71,7 +71,7 @@
                                                 </connections>
                                             </button>
                                             <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6Zv-yV-wLQ">
-                                                <rect key="frame" x="54.5" y="0.0" width="30.5" height="22"/>
+                                                <rect key="frame" x="54.5" y="0.0" width="30.5" height="37"/>
                                                 <accessibility key="accessibilityConfiguration" identifier="Metal Archives"/>
                                                 <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
                                                 <inset key="contentEdgeInsets" minX="2" minY="0.0" maxX="2" maxY="0.0"/>
@@ -84,7 +84,7 @@
                                                 </connections>
                                             </button>
                                             <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gni-Y6-ugV">
-                                                <rect key="frame" x="109" y="0.0" width="30.5" height="22"/>
+                                                <rect key="frame" x="109" y="0.0" width="30.5" height="37"/>
                                                 <accessibility key="accessibilityConfiguration" identifier="Wikipedia"/>
                                                 <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
                                                 <inset key="contentEdgeInsets" minX="2" minY="0.0" maxX="2" maxY="0.0"/>
@@ -98,7 +98,7 @@
                                                 </connections>
                                             </button>
                                             <button opaque="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageSizeForAccessibilityContentSizeCategory="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="KER-Ol-1XT">
-                                                <rect key="frame" x="163.5" y="0.0" width="30.5" height="22"/>
+                                                <rect key="frame" x="163.5" y="0.0" width="30.5" height="37"/>
                                                 <accessibility key="accessibilityConfiguration" identifier="YouTube"/>
                                                 <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
                                                 <inset key="contentEdgeInsets" minX="2" minY="0.0" maxX="2" maxY="0.0"/>
@@ -126,7 +126,7 @@
                                 <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="klk-SA-oTX">
-                                <rect key="frame" x="0.0" y="162" width="320" height="69"/>
+                                <rect key="frame" x="0.0" y="177" width="320" height="69"/>
                                 <subviews>
                                     <textField autoresizesSubviews="NO" opaque="NO" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="Country:" minimumFontSize="1" translatesAutoresizingMaskIntoConstraints="NO" id="Atp-OR-BA6">
                                         <rect key="frame" x="10" y="0.0" width="300" height="23.5"/>
@@ -161,10 +161,10 @@
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="i1L-g3-deM">
-                                <rect key="frame" x="9" y="231" width="300" height="156"/>
+                                <rect key="frame" x="9" y="246" width="300" height="141"/>
                                 <subviews>
                                     <textView clipsSubviews="YES" contentMode="top" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="250" bounces="NO" showsVerticalScrollIndicator="NO" contentInsetAdjustmentBehavior="scrollableAxes" bouncesZoom="NO" text="Add your custom notes here" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EXR-5H-hTd">
-                                        <rect key="frame" x="0.0" y="0.0" width="300" height="156"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="300" height="141"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" keyboardKey="YES"/>
                                         </accessibility>
@@ -675,7 +675,7 @@
                     <items>
                         <barButtonItem style="plain" id="5va-1n-IZ8">
                             <button key="customView" opaque="NO" tag="20" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="vna-V9-U4m">
-                                <rect key="frame" x="16" y="7.5" width="35" height="29"/>
+                                <rect key="frame" x="16" y="0.0" width="53" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                 <state key="normal" image="icon-going-yes">
@@ -689,7 +689,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="jiI-qV-mcD"/>
                         <barButtonItem style="plain" id="U7v-VF-EaZ">
                             <button key="customView" opaque="NO" tag="21" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
-                                <rect key="frame" x="60.5" y="7.5" width="29" height="29"/>
+                                <rect key="frame" x="69" y="0.0" width="53" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                 <state key="normal" image="icon-going-maybe">
@@ -703,7 +703,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
                         <barButtonItem style="plain" id="WGm-Pk-oWK">
                             <button key="customView" opaque="NO" tag="22" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
-                                <rect key="frame" x="99" y="7.5" width="29" height="29"/>
+                                <rect key="frame" x="122" y="0.0" width="53" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                 <state key="normal" image="icon-going-no">
@@ -717,7 +717,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
                         <barButtonItem style="plain" id="VdB-M1-Pt3">
                             <button key="customView" opaque="NO" tag="23" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
-                                <rect key="frame" x="138" y="0.0" width="46" height="44"/>
+                                <rect key="frame" x="175" y="0.0" width="46" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                 <state key="normal" image="icon-unknown">
@@ -731,7 +731,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
                         <barButtonItem style="plain" id="3Y8-mq-vik">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="owc-3D-aHq">
-                                <rect key="frame" x="193.5" y="8" width="31" height="28"/>
+                                <rect key="frame" x="221" y="2" width="61" height="40"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="1"/>
                                 <state key="normal" image="icon-seen">
@@ -745,8 +745,8 @@
                         </barButtonItem>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="mbA-H1-3pm"/>
                         <barButtonItem style="plain" id="5on-Su-FWN">
-                            <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
-                                <rect key="frame" x="234" y="7" width="25" height="30"/>
+                            <button key="customView" opaque="NO" contentMode="scaleAspectFit" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
+                                <rect key="frame" x="282" y="0.0" width="17" height="44"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="25"/>
                                 <state key="normal" image="icon-sort-az-decending">

@@ -61,10 +61,12 @@ public class ImageHandler {
 
             URI remoteURl = null;
 
-            try {
-                remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
-            } catch (Exception error){
-                remoteURl = URI.create(staticVariables.logo70kUrl);
+            if (OnlineStatus.isOnline() == true) {
+                try {
+                    remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
+                } catch (Exception error) {
+                    remoteURl = URI.create(staticVariables.logo70kUrl);
+                }
             }
             return remoteURl;
         }
@@ -79,20 +81,22 @@ public class ImageHandler {
 
         String imageUrl = BandInfo.getImageUrl(bandName);
 
-        try {
-            URL url = new URL(imageUrl);
-            InputStream in = new BufferedInputStream(url.openStream());
-            OutputStream out = new BufferedOutputStream(new FileOutputStream(bandImageFile.getAbsoluteFile()));
+        if (OnlineStatus.isOnline() == true) {
+            try {
+                URL url = new URL(imageUrl);
+                InputStream in = new BufferedInputStream(url.openStream());
+                OutputStream out = new BufferedOutputStream(new FileOutputStream(bandImageFile.getAbsoluteFile()));
 
-            for (int i; (i = in.read()) != -1; ) {
-                out.write(i);
+                for (int i; (i = in.read()) != -1; ) {
+                    out.write(i);
+                }
+
+                in.close();
+                out.close();
+
+            } catch (Exception error) {
+                Log.e("writingImageFile", "Unable to get band Image file " + error.getMessage());
             }
-
-            in.close();
-            out.close();
-
-        } catch (Exception error){
-            Log.e("writingImageFile", "Unable to get band Image file " + error.getMessage());
         }
     }
 

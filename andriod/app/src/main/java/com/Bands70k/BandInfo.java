@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.os.Environment;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -245,31 +246,33 @@ public class BandInfo {
 
         getDownloadtUrls();
 
-        //Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
-        try {
-            URL u = new URL(downloadUrls.get("artistUrl"));
-            InputStream is = u.openStream();
+        if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
+            //Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
+            try {
+                URL u = new URL(downloadUrls.get("artistUrl"));
+                InputStream is = u.openStream();
 
-            DataInputStream dis = new DataInputStream(is);
+                DataInputStream dis = new DataInputStream(is);
 
-            byte[] buffer = new byte[1024];
-            int length;
+                byte[] buffer = new byte[1024];
+                int length;
 
-            FileOutputStream fos = new FileOutputStream(FileHandler70k.bandInfo);
-            while ((length = dis.read(buffer))>0) {
-                fos.write(buffer, 0, length);
+                FileOutputStream fos = new FileOutputStream(FileHandler70k.bandInfo);
+                while ((length = dis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+
+
+            } catch (MalformedURLException mue) {
+                Log.e("SYNC getUpdate", "malformed url error", mue);
+            } catch (IOException ioe) {
+                Log.e("SYNC getUpdate", "io error", ioe);
+            } catch (SecurityException se) {
+                Log.e("SYNC getUpdate", "security error", se);
+
+            } catch (Exception generalError) {
+                Log.e("General Exception", "Downloading bandData", generalError);
             }
-
-
-        } catch (MalformedURLException mue) {
-            Log.e("SYNC getUpdate", "malformed url error", mue);
-        } catch (IOException ioe) {
-            Log.e("SYNC getUpdate", "io error", ioe);
-        } catch (SecurityException se) {
-            Log.e("SYNC getUpdate", "security error", se);
-
-        } catch (Exception generalError){
-            Log.e("General Exception", "Downloading bandData", generalError);
         }
 
         ArrayList<String> bandNames = ParseBandCSV();

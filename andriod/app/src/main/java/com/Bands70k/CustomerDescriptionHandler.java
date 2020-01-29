@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -37,33 +38,34 @@ public class CustomerDescriptionHandler {
             descriptionMapURL = staticVariables.previousYearDescriptionMap;
         }
 
-        try {
+        if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
+            try {
 
-            URL u = new URL(descriptionMapURL);
-            InputStream is = u.openStream();
+                URL u = new URL(descriptionMapURL);
+                InputStream is = u.openStream();
 
-            DataInputStream dis = new DataInputStream(is);
+                DataInputStream dis = new DataInputStream(is);
 
-            byte[] buffer = new byte[1024];
-            int length;
+                byte[] buffer = new byte[1024];
+                int length;
 
-            FileOutputStream fos = new FileOutputStream(FileHandler70k.descriptionMapFile);
-            while ((length = dis.read(buffer))>0) {
-                fos.write(buffer, 0, length);
+                FileOutputStream fos = new FileOutputStream(FileHandler70k.descriptionMapFile);
+                while ((length = dis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+
+
+            } catch (MalformedURLException mue) {
+                Log.e("SYNC getUpdate", "descriptionMapFile malformed url error", mue);
+            } catch (IOException ioe) {
+                Log.e("SYNC getUpdate", "descriptionMapFile io error", ioe);
+            } catch (SecurityException se) {
+                Log.e("SYNC getUpdate", "descriptionMapFile security error", se);
+
+            } catch (Exception generalError) {
+                Log.e("General Exception", "Downloading descriptionMapFile", generalError);
             }
-
-
-        } catch (MalformedURLException mue) {
-            Log.e("SYNC getUpdate", "descriptionMapFile malformed url error", mue);
-        } catch (IOException ioe) {
-            Log.e("SYNC getUpdate", "descriptionMapFile io error", ioe);
-        } catch (SecurityException se) {
-            Log.e("SYNC getUpdate", "descriptionMapFile security error", se);
-
-        } catch (Exception generalError){
-            Log.e("General Exception", "Downloading descriptionMapFile", generalError);
         }
-
     }
 
     public Map<String, String>  getDescriptionMap(){
@@ -167,22 +169,27 @@ public class CustomerDescriptionHandler {
 
 
             URL url;
-            try {
-                if (staticVariables.showNotesMap.containsKey(bandName) &&
-                        staticVariables.showNotesMap.get(bandName).length() > 5){
-                    url = new URL(staticVariables.showNotesMap.get(bandName));
-                    Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
-                } else if (descriptionMapData.containsKey(bandName) == true) {
-                    url = new URL(descriptionMapData.get(bandName));
-                    Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
-                } else {
-                    Log.d("descriptionMapFile!", "no description for bandName " + bandName );
+            if (OnlineStatus.isOnline() == true) {
+
+                try {
+                    if (staticVariables.showNotesMap.containsKey(bandName) &&
+                            staticVariables.showNotesMap.get(bandName).length() > 5) {
+                        url = new URL(staticVariables.showNotesMap.get(bandName));
+                        Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                    } else if (descriptionMapData.containsKey(bandName) == true) {
+                        url = new URL(descriptionMapData.get(bandName));
+                        Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                    } else {
+                        Log.d("descriptionMapFile!", "no description for bandName " + bandName);
+                        return;
+                    }
+
+                } catch (Exception error) {
+                    Log.d("descriptionMapFile!", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
                     return;
                 }
-
-            } catch (Exception error){
-                Log.d("descriptionMapFile!", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
-                return ;
+            } else {
+                return;
             }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
