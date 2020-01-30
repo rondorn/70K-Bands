@@ -25,11 +25,12 @@ public class scheduleInfo {
 
     public Map<String, scheduleTimeTracker> DownloadScheduleFile(String scheduleUrl){
 
-        Log.d("ScheduleLine", "Attempting to download file content from network");
+        Log.d("ScheduleLine", "DownloadScheduleFile - 1");
         //Log.d("bandUrlIs", scheduleUrl);
 
         if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
             try {
+                Log.d("ScheduleLine", "DownloadScheduleFile - 2");
                 URL u = new URL(scheduleUrl);
                 InputStream is = u.openStream();
 
@@ -42,21 +43,22 @@ public class scheduleInfo {
                 while ((length = dis.read(buffer)) > 0) {
                     fos.write(buffer, 0, length);
                 }
-
+                Log.d("ScheduleLine", "DownloadScheduleFile - 3");
             } catch (MalformedURLException mue) {
-                Log.e("SYNC getUpdate", "malformed url error", mue);
+                Log.e("SYNC getUpdate", "DownloadScheduleFile malformed url error", mue);
             } catch (IOException ioe) {
-                Log.e("SYNC getUpdate", "io error", ioe);
+                Log.e("SYNC getUpdate", "DownloadScheduleFile io error", ioe);
             } catch (SecurityException se) {
-                Log.e("SYNC getUpdate", "security error", se);
+                Log.e("SYNC getUpdate", "DownloadScheduleFile security error", se);
 
             } catch (Exception generalError) {
-                Log.e("General Exception", "Downloading bandData", generalError);
+                Log.e("General Exception", "DownloadScheduleFile Downloading bandData", generalError);
             }
         }
 
-        Log.d("ScheduleLine", "Attempting to download file content from file");
+        Log.d("ScheduleLine", "DownloadScheduleFile - 4");
         Map<String, scheduleTimeTracker> bandSchedule = ParseScheduleCSV();
+        Log.d("ScheduleLine", "DownloadScheduleFile - 5");
         return bandSchedule;
     }
 
@@ -64,6 +66,7 @@ public class scheduleInfo {
 
         Map<String, scheduleTimeTracker> bandSchedule = new HashMap<>();
 
+        Log.d("ParseScheduleCSV", "ParseScheduleCSV - 1");
         try {
             File file = FileHandler70k.schedule;
 
@@ -73,9 +76,11 @@ public class scheduleInfo {
             boolean labelRow = true;
             Map<String, Integer> labelKeys = new HashMap<>();
 
+            Log.d("ParseScheduleCSV", "ParseScheduleCSV - 2");
             while ((line = br.readLine()) != null) {
                 Log.d("ScheduleLine", line);
                 try {
+                    Log.d("ParseScheduleCSV", "ParseScheduleCSV - 3");
                     String[] RowData = line.split(",");
                     if (labelRow == true){
                         Integer subCounter = 0;
@@ -137,6 +142,7 @@ public class scheduleInfo {
                     }
 
                 } catch (Exception error) {
+                    Log.d("ParseScheduleCSV", "ParseScheduleCSV - 5");
                     Log.d("ScheduleLine", "Error" + error.toString() + "-" + error.getMessage());
                     //just keep going
                 }
@@ -144,11 +150,13 @@ public class scheduleInfo {
             }
 
         } catch (Exception e) {
+            Log.d("ParseScheduleCSV", "ParseScheduleCSV - 6");
             Log.e("ScheduleLine Exception", "Parsing bandData", e);
 
         }
         //Log.d("Output of bandData", bandSchedule.toString());
 
+        Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
         return bandSchedule;
     }
 

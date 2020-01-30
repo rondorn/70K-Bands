@@ -53,7 +53,6 @@ public class BandInfo {
 
         ArrayList<String> bandNames = ParseBandCSV();
 
-
         Collections.sort(bandNames);
 
         ArrayList<String> filteredBandNames = new ArrayList<String>();
