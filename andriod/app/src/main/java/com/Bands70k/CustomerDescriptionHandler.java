@@ -65,6 +65,8 @@ public class CustomerDescriptionHandler {
             } catch (Exception generalError) {
                 Log.e("General Exception", "Downloading descriptionMapFile", generalError);
             }
+
+            Log.d("descriptionMapFile", "descriptionMapFile Downloaded!");
         }
     }
 
@@ -104,43 +106,51 @@ public class CustomerDescriptionHandler {
     public String getDescription (String bandNameValue){
 
 
-        Log.d("saveNote", "Loading description for " + bandNameValue);
+        Log.d("getDescription", "getDescription - 1 " + bandNameValue);
+
         String bandName = bandNameValue;
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
-        Log.d("descriptionMapFile", "Looking up note for  " + bandName);
 
         if (descriptionMapData.keySet().size() == 0) {
             descriptionMapData = this.getDescriptionMap();
+            Log.d("getDescription", "getDescription - 2 " + bandNameValue);
         }
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
+        if (descriptionMapData.containsKey(bandName) == false) {
+            descriptionMapData = getDescriptionMap();
+            Log.d("getDescription", "getDescription - 3a " + descriptionMapData);
+        } else {
+            Log.d("getDescription", "getDescription - 3b " + descriptionMapData.get(bandName));
+        }
+
         if (descriptionMapData.containsKey(bandName) == false){
-            Log.d("descriptionMapFileError",  bandName + " does not have data in the descriptionMapData");
+            Log.d("getDescription", "getDescription - 3 " + bandNameValue);
             if (staticVariables.showNotesMap.containsKey(bandName) == true) {
                 if (staticVariables.showNotesMap.get(bandName).length() > 5) {
-                    Log.d("descriptionMapFileError", bandName + " loading from static " + staticVariables.showNotesMap.get(bandName));
+                    Log.d("getDescription", "getDescription - 4 " + bandNameValue);
                     loadNoteFromURL(bandName);
+                    Log.d("getDescription", "getDescription - 5 " + bandNameValue);
                     bandNote = bandNoteHandler.getBandNoteFromFile();
-
-                    Log.d("descriptionMapFileError",  "bandNote = " + bandNote);
+                    Log.d("getDescription", "getDescription - 6 " + bandNameValue);
                     return bandNote;
                 }
             }
         }
 
         if (bandNoteHandler.fileExists() == false) {
-
-            AsyncDescriptionLoader myNotesTask = new AsyncDescriptionLoader();
-            myNotesTask.execute(bandName);
-
+            loadNoteFromURL(bandNameValue);
+            //AsyncDescriptionLoader myNotesTask = new AsyncDescriptionLoader();
+            //myNotesTask.execute(bandName);
+            Log.d("getDescription", "getDescription - 7 " + bandNameValue);
         }
 
         bandNote = bandNoteHandler.getBandNoteFromFile();
         bandNote = removeSpecialCharsFromString(bandNote);
 
-        Log.d("saveNote", "Returning note of  " + bandNote);
+        Log.d("getDescription", "getDescription - 8 " + bandNote);
         return bandNote;
     }
 
@@ -239,8 +249,10 @@ public class CustomerDescriptionHandler {
                 getDescriptionMapFile();
                 descriptionMapData = descriptionHandler.getDescriptionMap();
 
+                Log.d("AsyncTask", "Downloading NoteData for " + descriptionMapData);
                 if (descriptionMapData != null) {
                     for (String bandName : descriptionMapData.keySet()) {
+                        Log.d("AsyncTask", "Downloading NoteData for  -1 " + bandName);
                         descriptionHandler.loadNoteFromURL(bandName);
                     }
                     staticVariables.notesLoaded = false;
