@@ -1299,10 +1299,12 @@ public class showBands extends Activity {
                 Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 1");
                 staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
-                //refreshData();
+                refreshData();
                 staticVariables.loadingBands = false;
                 Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 2");
 
+                AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
+                myNotesTask.execute();
             }
         }
 
@@ -1321,7 +1323,6 @@ public class showBands extends Activity {
                 try {
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();
-                    //bandNotes.getAllDescriptions();
 
                 } catch (Exception error) {
                     Log.d("bandInfo", error.getMessage());
@@ -1341,8 +1342,6 @@ public class showBands extends Activity {
                 refreshData();
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
-
-                displayBandDataWithSchedule();
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 2");
                 showBands.this.bandNamesList.setVisibility(View.VISIBLE);
@@ -1386,6 +1385,10 @@ public class showBands extends Activity {
                 Log.d("AsyncTask", "Downloading data");
 
                 try {
+
+                    //get the descriptionMap
+                    bandNotes.getDescriptionMap();
+
                     //download all descriptions in the background
                     bandNotes.getAllDescriptions();
 
