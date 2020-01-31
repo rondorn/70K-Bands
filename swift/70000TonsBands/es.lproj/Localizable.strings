@@ -43,6 +43,9 @@
 "Part Of Event"="Asistir a parte de este evento";
 "None Of Event"="No voy a ver este evento";
 
+"Prompt For Attended Status"="Solicitar estado atendido";
+"Go To Details"="Ir a detalles";
+
 "Special Event"="Eventos Especiales";
 "Meet and Greet"="Meet and Greets";
 "Clinic"="Clinicas";

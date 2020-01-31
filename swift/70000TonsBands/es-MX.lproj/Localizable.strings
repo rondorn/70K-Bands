@@ -44,6 +44,9 @@
 "Part Of Event"="Asistir a parte de este evento";
 "None Of Event"="No voy a ver este evento";
 
+"Prompt For Attended Status"="Solicitar estado atendido";
+"Go To Details"="Ir a detalles";
+
 "Minutes Before Event to Alert"="Alerta antes del evento (minutos)"; //I NEED CONTEXT FOR A BETTER ONE HERE
 "Alert For Shows"="Alerta Para Conciertos";
 "Alert For Special Events"="Alerta Para Eventos Especiales";

@@ -99,6 +99,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
+        attendedHandle.loadShowsAttended()
         if (bandName == nil && bandSelected.isEmpty == false){
             bandName = bandSelected
         }

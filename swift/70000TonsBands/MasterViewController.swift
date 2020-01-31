@@ -766,9 +766,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
-        
-        
-        
+
         print ("Waiting for band data to load, Done")
         self.splitViewController!.delegate = self;
         
@@ -778,30 +776,132 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if segue.identifier == "showDetail" {
             if let indexPath = self.tableView.indexPathForSelectedRow {
-                
+            
                 let cell = self.tableView.cellForRow(at: indexPath)
                 let bandNameView = cell!.viewWithTag(2) as! UILabel
-
+                
+                let cellDataView = cell!.viewWithTag(1) as! UILabel
+                let cellDataText = cellDataView.text ?? "";
                 let bandName = bandNameView.text ?? "";
                 
-                 if (bandName.isEmpty == false){
-                    bandSelected = bandName;
-                    print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
-                    bandListIndexCache = indexPath.row
-                    let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
-                
-                        print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
-
-                        controller.detailItem = bandName as AnyObject
-                        controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
-                        controller.navigationItem.leftItemsSupplementBackButton = true
-                } else {
-                    print ("Found an issue with the selection");
-                    return
-                }
+                detailMenuChoices(cellDataText: cellDataText, bandName: bandName, segue: segue, indexPath: indexPath)
             }
         }
         tableView.reloadData()
+    }
+    
+    func detailMenuChoices(cellDataText :String, bandName :String, segue :UIStoryboardSegue, indexPath: IndexPath) {
+           
+           var cellData = cellDataText.split(separator: ";")
+           if (cellData.count == 4 && defaults.bool(forKey: "promptForAttended") == true){
+               
+                let cellBandName = String(cellData[0])
+                let cellLocation = String(cellData[1])
+                let cellEventType  = String(cellData[2])
+                let cellStartTime = String(cellData[3])
+
+                let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
+               
+                let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
+               
+                let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
+                   print("Go To Deatails")
+                   self.goToDetailsScreen(segue: segue, bandName: bandName, indexPath: indexPath);
+                }
+                alert.addAction(goToDeatils)
+
+                let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
+
+                if (currentAttendedStatus != sawAllStatus){
+                   let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
+                      print("You Attended")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus)
+                   }
+                   alert.addAction(attendChoice)
+                }
+
+                if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
+                   let partialAttend = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
+                       print("You Partially Attended")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus)
+                   }
+                   alert.addAction(partialAttend)
+                }
+
+                if (currentAttendedStatus != sawNoneStatus){
+                   let notAttend = UIAlertAction.init(title: NSLocalizedString("None Of Event", comment: ""), style: .default) { _ in
+                       print("You will not Attended")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus)
+                   }
+                   alert.addAction(notAttend)
+                }
+                
+                let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .default) { _ in
+                    return
+                }
+                alert.addAction(cancelDialog)
+            
+                self.present(alert, animated: true, completion: nil)
+
+           } else {
+               print ("Going strait to the details screen")
+               
+               let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+           
+               print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
+
+               controller.detailItem = bandName as AnyObject
+               controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
+               controller.navigationItem.leftItemsSupplementBackButton = true
+           }
+       }
+       
+    func goToDetailsScreen(segue :UIStoryboardSegue, bandName :String, indexPath :IndexPath){
+        
+         print ("bandName = \(bandName) and segue \(segue)")
+         if (bandName.isEmpty == false){
+            
+            bandSelected = bandName;
+            bandListIndexCache = indexPath.row
+            let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+        
+            print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
+
+            controller.detailItem = bandName as AnyObject
+            controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
+            controller.navigationItem.leftItemsSupplementBackButton = true
+        
+            performSegue(withIdentifier: segue.identifier!, sender: self)
+            
+        } else {
+            print ("Found an issue with the selection 1");
+            return
+        }
+
+    }
+    
+    func markAttendingStatus (cellDataText :String, status: String){
+        
+        var cellData = cellDataText.split(separator: ";")
+        if (cellData.count == 4){
+            print ("Cell data is we have data for \(cellData[3])");
+            
+            let cellBandName = String(cellData[0])
+            let cellLocation = String(cellData[1])
+            let cellEventType  = String(cellData[2])
+            let cellStartTime = String(cellData[3])
+            
+            attendedHandle.addShowsAttendedWithStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType,eventYearString: String(eventYear), status: status);
+            
+            let empty : UITextField = UITextField();
+            let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
+            
+            isLoadingBandData = false
+            self.quickRefresh()
+            print ("Cell data is marked show attended \(message)");
+            
+        }
+        
     }
     
     func resortBandsByTime(){

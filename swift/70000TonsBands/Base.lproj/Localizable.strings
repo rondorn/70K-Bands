@@ -32,6 +32,9 @@
 "Part Of Event"="Attending some of this event";
 "None Of Event"="I will not see this event";
 
+"Prompt For Attended Status"="Prompt For Attended Status";
+"Go To Details"="Go To Details";
+
 "ShowHideEvents"="Show/Hide Expired";
 "HideExpiredEvents"="Hide Expired Events";
 
