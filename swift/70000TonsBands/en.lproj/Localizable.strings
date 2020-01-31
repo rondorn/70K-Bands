@@ -32,6 +32,9 @@
 "Part Of Event"="Attending some of this event";
 "None Of Event"="I will not see this event";
 
+"Prompt For Attended Status"="Prompt For Attended Status";
+"Go To Details"="Go To Details";
+
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
 "Alert For Shows"="Alert For Shows";
 "Alert For Special Events"="Alert For Special Events";

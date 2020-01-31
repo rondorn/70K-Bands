@@ -29,6 +29,9 @@
 "Part Of Event"="Osallistuu osaan tästä tapahtumasta";
 "None Of Event"="En näe tätä tapahtumaa";
 
+"Prompt For Attended Status"="Kysy vierailijan tilalle";
+"Go To Details"="Siirry yksityiskohtiin";
+
 "Only alert for shows you will attend"="Vain hälytyksiä näytöille, joihin osallistut";
 "Alert for shows according to your favorites selection"="Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukset";
 

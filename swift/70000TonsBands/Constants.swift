@@ -198,6 +198,7 @@ let showLoungeShowsDefault = "YES"
 let showOtherShowsDefault = "YES"
 let showUnofficalEventsDefault = "YES"
 var hideExpireScheduleDataDefault = "YES";
+var promptForAttendedDefault = "YES";
 
 var internetAvailble = isInternetAvailable();
 
@@ -316,7 +317,8 @@ func setupDefaults() {
                     "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
                     "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
                     "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
-                    "hideExpireScheduleData": hideExpireScheduleDataDefault, "iCloud": iCloudActiveDefault]
+                    "hideExpireScheduleData": hideExpireScheduleDataDefault, "promptForAttended": promptForAttendedDefault,
+                    "iCloud": iCloudActiveDefault]
     
     UserDefaults.standard.register(defaults: defaults)
     

@@ -37,6 +37,9 @@
 "Part Of Event"="Teilnehmen an dieser Veranstaltung";
 "None Of Event"="Ich werde dieses Ereignis nicht sehen";
 
+"Prompt For Attended Status"="Aufforderung zur Teilnahme am Status";
+"Go To Details"="Gehe zu Details";
+
 "Minutes Before Event to Alert"="Alarm X minuten vor Event";
 "Alert For Shows"="Alarm für Shows";
 "Alert For Special Events"="Alarm für 'Special Events'";

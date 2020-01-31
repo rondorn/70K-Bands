@@ -33,6 +33,9 @@
 "Part Of Event"="Assistindo alguns deste evento";
 "None Of Event"="Eu não vou ver esse evento";
 
+"Prompt For Attended Status"="Solicitar status assistido";
+"Go To Details"="Ir para detalhes";
+
 "ShowHideEvents"="Mostrar/Ocultar Expirado";
 "HideExpiredEvents"="Ocultar Eventos Expirados";
 

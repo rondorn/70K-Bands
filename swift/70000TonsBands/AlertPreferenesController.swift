@@ -78,6 +78,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var showOtherShows = Bool()
     var showUnofficalEvents = Bool()
     var hideExpireScheduleData = Bool()
+    var promptForAttended = Bool()
     
     @IBOutlet weak var VenuePoolLabel: UILabel!
     @IBOutlet weak var VenueTheaterLabel: UILabel!
@@ -109,6 +110,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var HideExpiredSwitchLabel: UILabel!
     @IBOutlet weak var HideExpiredSwitch: UISwitch!
     
+    @IBOutlet weak var PromptForAttendedLabel: UILabel!
+    @IBOutlet weak var PromptForAttendedSwitchLabel: UILabel!
+    @IBOutlet weak var PromptForAttendedSwitch: UISwitch!
     
     @IBOutlet weak var alertPreferenceHeader: UILabel!
     @IBOutlet weak var AlertOnMustSee: UISwitch!
@@ -232,6 +236,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
         HideExpiredSwitchLabel.text = NSLocalizedString("hideExpiredEvents", comment: "")
+        
+        PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
+        PromptForAttendedSwitchLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
     }
     
     func setExistingValues (){
@@ -282,6 +289,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         showOtherShows = defaults.bool(forKey: "showOtherShows")
         showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
         hideExpireScheduleData = defaults.bool(forKey: "hideExpireScheduleData")
+        promptForAttended = defaults.bool(forKey: "promptForAttended")
         
         EventSpecialSwitch.isOn = showSpecialValue;
         EventMeetAndGreetSwitch.isOn = showMandGValue;
@@ -295,6 +303,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         VenueOtherSwitch.isOn = showOtherShows;
         EventCruiserOrganizedSwitch.isOn = showUnofficalEvents
         HideExpiredSwitch.isOn = hideExpireScheduleData
+        PromptForAttendedSwitch.isOn = promptForAttended
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -461,6 +470,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     @IBAction func hideExpired(_ sender: Any) {
         defaults.set(HideExpiredSwitch.isOn, forKey: "hideExpireScheduleData")
+    }
+
+    @IBAction func promptForAttended(_ sender: Any) {
+        defaults.set(PromptForAttendedSwitch.isOn, forKey: "promptForAttended")
     }
     
     @IBAction func UseLastYearsDataAction() {
