@@ -225,6 +225,9 @@ public class showBands extends Activity {
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
 
+        BandInfo bandInfo = new BandInfo();
+        bandInfo.DownloadBandFile();
+        refreshData();
         Log.d("startup", "show init start - 10");
     }
 
@@ -1293,6 +1296,7 @@ public class showBands extends Activity {
         @Override
         protected void onPreExecute() {
 
+            Log.d("Refresh", "Refresh Stage = Pre-Start");
             super.onPreExecute();
             if (staticVariables.loadingBands == false) {
 
@@ -1306,12 +1310,14 @@ public class showBands extends Activity {
                 AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
                 myNotesTask.execute();
             }
+            Log.d("Refresh", "Refresh Stage = Pre-Stop");
         }
 
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
+            Log.d("Refresh", "Refresh Stage = Background-Start");
             if (staticVariables.loadingBands == false) {
                 staticVariables.loadingBands = true;
 
@@ -1329,6 +1335,8 @@ public class showBands extends Activity {
                 }
                 staticVariables.loadingBands = false;
             }
+
+            Log.d("Refresh", "Refresh Stage = Background-Stop");
             return result;
 
         }
@@ -1337,6 +1345,7 @@ public class showBands extends Activity {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
+            Log.d("Refresh", "Refresh Stage = Post-Start");
             if (staticVariables.loadingBands == false) {
 
                 refreshData();
@@ -1360,6 +1369,7 @@ public class showBands extends Activity {
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 5");
 
             }
+            Log.d("Refresh", "Refresh Stage = Post-Stop");
         }
     }
 
