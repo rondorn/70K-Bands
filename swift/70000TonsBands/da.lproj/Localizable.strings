@@ -32,6 +32,9 @@
 "Part Of Event"="Deltager nogle af denne begivenhed";
 "None Of Event"="Jeg vil ikke se denne begivenhed";
 
+"Prompt For Attended Status"="Spørg om deltaget status";
+"Go To Details"="Gå til detaljer";
+
 "ShowHideEvents"="Vis/Skjul Udløbet";
 "HideExpiredEvents"="Skjul Udløbet Begivenheder";
 

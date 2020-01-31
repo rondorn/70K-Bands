@@ -123,6 +123,17 @@ open class ShowsAttended {
     
     }
     
+    func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String){
+        
+        let index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
+            
+        changeShowAttendedStatus(index: index, status: status)
+        
+        staticLastModifiedDate.async(flags: .barrier) {
+            cacheVariables.lastModifiedDate = Date()
+        }
+    }
+    
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
         
         if (showsAttendedArray.count == 0){
@@ -254,6 +265,25 @@ open class ShowsAttended {
         }
 
         return value
+    }
+    
+    func getShowAttendedStatusUserFriendly (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
+        var status = getShowAttendedStatus(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+        
+        var userFriendlyStatus = "";
+        
+        if (status == sawAllStatus){
+            status = NSLocalizedString("All Of Event", comment: "")
+        
+        } else if (status == sawSomeStatus){
+                status = NSLocalizedString("Part Of Event", comment: "")
+            
+        } else {
+                status = NSLocalizedString("None Of Event", comment: "")
+        }
+        
+        return status
+        
     }
     
     func setShowsAttendedStatus(_ sender: UITextField, status: String)->String{
