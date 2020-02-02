@@ -836,7 +836,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                    alert.addAction(notAttend)
                 }
                 
-                let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .default) { _ in
+            let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
                     return
                 }
                 alert.addAction(cancelDialog)

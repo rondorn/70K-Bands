@@ -118,7 +118,6 @@ public class staticVariables {
     public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
-    //public final static String networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
     public final static String networkTestingUrl = "https://www.dropbox.com";
     public static String artistURL;
     public static String scheduleURL;
