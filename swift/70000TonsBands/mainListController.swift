@@ -524,6 +524,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         indexText += ";" + location + ";" + event + ";" + startTime
         
+        timeIndexMap[String(timeIndex) + ":" + bandName] = indexText 
+        
         if (listOfVenues.contains(location) == false){
             print ("Adding location " + location)
             listOfVenues.append(location)

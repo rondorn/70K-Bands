@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 import Firebase
 
+
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
     @IBOutlet var mainTableView: UITableView!
@@ -356,6 +357,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     let bandNotes = CustomBandDescription();
                     let imageHandle = imageHandler()
                     
+                    bandNotes.getDescriptionMapFile();
                     bandNotes.getAllDescriptions()
                     imageHandle.getAllImages(bandNameHandle: bandNameHandle)
                 }
@@ -368,6 +370,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
             self.bandsByName = self.bands
             
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readCloudData()
             
             DispatchQueue.main.async{
                 self.bandNameHandle.readBandFile()
@@ -379,8 +383,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
             }
-            self.bandDescriptions.getDescriptionMapFile();
-            self.bandDescriptions.getAllDescriptions()
+            //self.bandDescriptions.getDescriptionMapFile();
+            //self.bandDescriptions.getAllDescriptions()
         
         }
     } 
@@ -782,6 +786,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 let cellDataView = cell!.viewWithTag(1) as! UILabel
                 let cellDataText = cellDataView.text ?? "";
+                
+                eventSelectedIndex = cellDataView.text!
+                
                 let bandName = bandNameView.text ?? "";
                 
                 detailMenuChoices(cellDataText: cellDataText, bandName: bandName, segue: segue, indexPath: indexPath)
@@ -836,12 +843,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                    alert.addAction(notAttend)
                 }
                 
-            let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+                let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
                     return
                 }
                 alert.addAction(cancelDialog)
+                
+                 if let popoverController = alert.popoverPresentationController {
+                       popoverController.sourceView = self.view
+                        popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+                       popoverController.permittedArrowDirections = []
+                }
             
-                self.present(alert, animated: true, completion: nil)
+                present(alert, animated: true, completion: nil)
+
 
            } else {
                print ("Going strait to the details screen")
@@ -849,7 +863,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
            
                print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
-
+                
                controller.detailItem = bandName as AnyObject
                controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
                controller.navigationItem.leftItemsSupplementBackButton = true
@@ -957,3 +971,5 @@ extension UITableViewRowAction {
         self.backgroundColor = UIColor.init(patternImage: actionImage)
     }
 }
+
+
