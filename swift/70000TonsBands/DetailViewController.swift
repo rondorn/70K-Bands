@@ -103,6 +103,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (bandName == nil && bandSelected.isEmpty == false){
             bandName = bandSelected
         }
+         //print ("bandName is 2 " + bandName)
         
         if ((bandName == nil || bands.isEmpty == true) && bands.count > 0) {
             var bands = bandNameHandle.getBandNames()
@@ -113,8 +114,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 bandName = "Waiting for Data"
         }
         
-        print ("bandName is " + bandName)
+        print ("bandName is 3 " + bandName)
         
+        //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
             let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
@@ -154,6 +156,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             self.Event4.delegate = self
             self.Event5.delegate = self
             
+            if (defaults.bool(forKey: "notesFontSizeLarge") == true){
+                customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
+            }
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)
             
         }
@@ -461,12 +466,164 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
     }
     
+    @IBAction func swipeRightAction(_ sender: Any) {
+        swipeNextRecord(direction: "Next");
+    }
+        
+    @IBAction func swipeLeftAction(_ sender: Any) {
+        swipeNextRecord(direction: "Previous");
+    }
+    
+    func swipeNextRecord(direction: String){
+        
+        bands =  [String]()
+        bandNameHandle.readBandFile()
+        schedule.getCachedData()
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        
+        var bandNameNext = ""
+        var bandNameIndex = ""
+        var timeIndex = "";
+        var last = false;
+        var scheduleMatch = false;
+        
+        var sizeBands = bands.count;
+        var counter = 0;
+        
+        for band in bands {
+            
+            counter = counter + 1
+            var indexSplit = band.components(separatedBy: ":")
+            var currentBandInLoop = bandNameFromIndex(index: band)
+                        
+            if (indexSplit.count >= 1){
+                if (indexSplit[0].isNumeric == true){
+                    if (timeIndexMap[band] == eventSelectedIndex){
+                        if (sizeBands != counter){
+                            if (direction == "Previous"){
+                                counter = counter - 2;
+                                if (counter > -1){
+                                    eventSelectedIndex = timeIndexMap[bands[counter]] ?? ""
+                                    bandNameNext = bandNameFromIndex(index: bands[counter])
+                                }
+                            } else {
+                                if (counter < sizeBands){
+                                    eventSelectedIndex = timeIndexMap[bands[counter]] ?? ""
+                                    bandNameNext = bandNameFromIndex(index: bands[counter])
+                                }
+                            }
+                        }
+                        break
+                    }
+                } else {
+                    if (currentBandInLoop == bandName){
+                        if (direction == "Previous"){
+                            counter = counter - 2;
+                            if (counter > -1){
+                                 bandNameNext = bandNameFromIndex(index: bands[counter])
+                             }
+                        } else {
+                            if (counter < sizeBands){
+                                 bandNameNext = bandNameFromIndex(index: bands[counter])
+                             }
+                        }
+                        break
+                    }
+                }
+            } else {
+            
+                if (currentBandInLoop == bandName){
+                    if (direction == "Previous"){
+                        counter = counter - 2;
+                        if (counter > -1){
+                            bandNameNext = bandNameFromIndex(index: bands[counter])
+                        }
+
+                    }
+                    if (counter < sizeBands){
+                        bandNameNext = bandNameFromIndex(index: bands[counter])
+                    }
+                    break
+                }
+            }
+        }
+        print ("swipeAction \(direction) - bandNameNext = \(bandNameNext) bandName = \(bandName)")
+        while (bandNameNext == bandName){
+            if (direction == "Next"){
+                counter = counter + 1
+            } else {
+                counter = counter - 1
+            }
+            print ("swipeRightAction - counter = \(counter) sizeBands = \(sizeBands)")
+            if (counter <= (sizeBands - 1)){
+                bandNameNext = bandNameFromIndex(index: bands[counter])
+            } else {
+                counter = sizeBands
+            }
+            
+        }
+        if (counter == sizeBands || counter < 0){
+            bandNameNext = ""
+        }
+        jumpToNextOrPreviousScreen(nextBandName: bandNameNext, direction: direction)
+    }
+
+    func bandNameFromIndex(index :String) -> String{
+        
+        var bandName = index;
+        var indexSplit = index.components(separatedBy: ":")
+        if (indexSplit.count >= 2){
+            var index1 = indexSplit[0]
+            var index2 = indexSplit[1]
+            
+            if (index1.isNumeric == true){
+                bandName = index2;
+            } else {
+               bandName = index1;
+            }
+        }
+        
+        return bandName;
+    }
+    
+    @IBAction func ClickOnNotes(_ sender: Any) {
+        //ToastMessages("Edit Notes").show(self, cellLocation: self.view.frame)
+        textViewDidBeginEditing(customNotesText)
+        //customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 25)
+
+    }
     @IBAction func setBandPriority() {
         if (bandName != nil){
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
             
             let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+        }
+    }
+    
+    func jumpToNextOrPreviousScreen(nextBandName :String, direction :String){
+        
+        var message = ""
+        print ("jumpToNextOrPreviousScreen -  bandName \(nextBandName)")
+        if (nextBandName.isEmpty == true){
+            if (direction == "Next"){
+                message = "End of List"
+            } else {
+                message = "Already at start of List"
+            }
+            ToastMessages(message).show(self, cellLocation: self.view.frame)
+        } else {
+            message = direction + "-" + nextBandName
+        
+        
+            bandSelected = nextBandName
+            bandName = nextBandName
+            
+            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            
+            detailItem = bandName as AnyObject
+            self.viewDidLoad()
+            self.viewWillAppear(true)
         }
     }
     
@@ -805,4 +962,12 @@ extension UIImage {
         return scaledImage
     }
     
+}
+
+extension String {
+    var isNumeric: Bool {
+        guard self.characters.count > 0 else { return false }
+        let nums: Set<Character> = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
+        return Set(self).isSubset(of: nums)
+    }
 }

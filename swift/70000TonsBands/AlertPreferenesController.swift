@@ -59,6 +59,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var alertForUnofficalEventsValue = Bool()
 
     var minBeforeAlertValue = Double()
+    var notesFontSizeLargeValue = Bool()
     
     var minBeforeAlertLabel = String()
     var restartAlertTitle = String();
@@ -85,6 +86,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var VenueRinkLabel: UILabel!
     @IBOutlet weak var VenueLoungeLabel: UILabel!
     @IBOutlet weak var VenueOtherLabel: UILabel!
+    
+    
+    @IBOutlet weak var DetailScreenSection: UILabel!
+    @IBOutlet weak var NotesFontSizeLargeLabel: UILabel!
+    @IBOutlet weak var NotesFontSizeLargeSwitch: UISwitch!
     
     @IBOutlet weak var showHideVenues: UILabel!
     @IBOutlet weak var VenuePoolSwitch: UISwitch!
@@ -252,6 +258,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForMandGValue = defaults.bool(forKey: "alertForMandG")
         alertForClinicsValue = defaults.bool(forKey: "alertForClinics")
         alertForListeningValue = defaults.bool(forKey: "alertForListening")
+        notesFontSizeLargeValue = defaults.bool(forKey: "notesFontSizeLarge")
         
         alertForUnofficalEventsValue = defaults.bool(forKey: "alertForUnofficalEvents")
 
@@ -268,7 +275,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         AlertForClinic.isOn = alertForClinicsValue
         AlertForListeningEvent.isOn = alertForListeningValue
         alertForUnofficalEvents.isOn = alertForUnofficalEventsValue
-
+        NotesFontSizeLargeSwitch.isOn = notesFontSizeLargeValue
+        
         self.MinBeforeAlert.delegate = self
         
         if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
@@ -290,6 +298,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
         hideExpireScheduleData = defaults.bool(forKey: "hideExpireScheduleData")
         promptForAttended = defaults.bool(forKey: "promptForAttended")
+        
         
         EventSpecialSwitch.isOn = showSpecialValue;
         EventMeetAndGreetSwitch.isOn = showMandGValue;
@@ -474,6 +483,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
     @IBAction func promptForAttended(_ sender: Any) {
         defaults.set(PromptForAttendedSwitch.isOn, forKey: "promptForAttended")
+    }
+    
+    @IBAction func notesFontSizeLarge(_ sender: Any) {
+        defaults.set(NotesFontSizeLargeSwitch.isOn, forKey: "notesFontSizeLarge")
     }
     
     @IBAction func UseLastYearsDataAction() {
