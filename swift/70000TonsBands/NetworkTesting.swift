@@ -30,7 +30,7 @@ open class NetworkTesting {
             print ("Internet Found cache is \(returnState)")
         
         //cache has expired, but lets return last answer and check again in the background
-        } else if (internetCheckCache.isEmpty == false){
+        } else if (internetCheckCache.isEmpty == false && Thread.isMainThread == false){
             
             if internetCheckCache == "false" {
                 returnState = false
@@ -42,6 +42,10 @@ open class NetworkTesting {
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 self.isInternetAvailableSynchronous()
             }
+        
+        } else if (Thread.isMainThread == true){
+            returnState = false
+            print ("Internet Found in main thread, returning false")
             
         } else {
             
@@ -59,7 +63,7 @@ open class NetworkTesting {
         if (isInternetAvailableBasic() == true){
             guard let url = URL(string: networkTestingUrl) else { return false}
             var request = URLRequest(url: url)
-            request.timeoutInterval = 15.0
+            request.timeoutInterval = 10.0
             
             var wait = true
             

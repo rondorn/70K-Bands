@@ -37,6 +37,9 @@ let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 var downloadingAllComments = false
 var downloadingAllImages = false
 var bandSelected = String();
+var eventSelectedIndex = String();
+
+var timeIndexMap : [String:String] = [String:String]();
 
 var inTestEnvironment = false;
 
@@ -190,7 +193,7 @@ let showMandGDefault = "YES"
 let showClinicsDefault = "YES"
 let showListeningDefault = "YES"
 let iCloudActiveDefault = "YES"
-
+let notesFontSizeLargeDefault = "NO"
 let showPoolShowsDefault = "YES"
 let showTheaterShowsDefault = "YES"
 let showRinkShowsDefault = "YES"
@@ -318,7 +321,7 @@ func setupDefaults() {
                     "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
                     "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
                     "hideExpireScheduleData": hideExpireScheduleDataDefault, "promptForAttended": promptForAttendedDefault,
-                    "iCloud": iCloudActiveDefault]
+                    "iCloud": iCloudActiveDefault, "notesFontSizeLarge" : notesFontSizeLargeDefault]
     
     UserDefaults.standard.register(defaults: defaults)
     
