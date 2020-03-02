@@ -140,6 +140,13 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
+                                
+                                let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
+                                let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
+                                let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
+                                let indexText = bandName + ";" + location + ";" + event + ";" + startTime
+                                timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
+                                
                             }
                         }
                     }
@@ -524,7 +531,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         indexText += ";" + location + ";" + event + ";" + startTime
         
-        timeIndexMap[String(timeIndex) + ":" + bandName] = indexText 
+        //timeIndexMap[String(timeIndex) + ":" + bandName] = indexText 
         
         if (listOfVenues.contains(location) == false){
             print ("Adding location " + location)

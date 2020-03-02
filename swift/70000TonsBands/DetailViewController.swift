@@ -476,11 +476,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func swipeNextRecord(direction: String){
         
-        bands =  [String]()
-        bandNameHandle.readBandFile()
-        schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
-        
         var bandNameNext = ""
         var bandNameIndex = ""
         var timeIndex = "";
@@ -490,8 +485,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         var sizeBands = bands.count;
         var counter = 0;
         
-        for band in bands {
+        for band in currentBandList {
             
+            print ("swipeAction bandName - \(band)")
             counter = counter + 1
             var indexSplit = band.components(separatedBy: ":")
             var currentBandInLoop = bandNameFromIndex(index: band)
@@ -503,13 +499,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                             if (direction == "Previous"){
                                 counter = counter - 2;
                                 if (counter > -1){
-                                    eventSelectedIndex = timeIndexMap[bands[counter]] ?? ""
-                                    bandNameNext = bandNameFromIndex(index: bands[counter])
+                                    eventSelectedIndex = timeIndexMap[currentBandList[counter]]!
+                                    bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                                 }
                             } else {
+                                print ("swipeAction Next - bandNameNext = \(timeIndexMap[currentBandList[counter]]) bandName = \(currentBandList[counter]) - \(currentBandList.count) = \(counter)")
                                 if (counter < sizeBands){
-                                    eventSelectedIndex = timeIndexMap[bands[counter]] ?? ""
-                                    bandNameNext = bandNameFromIndex(index: bands[counter])
+                                    eventSelectedIndex = timeIndexMap[currentBandList[counter]]!
+                                    bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                                 }
                             }
                         }
@@ -520,11 +517,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         if (direction == "Previous"){
                             counter = counter - 2;
                             if (counter > -1){
-                                 bandNameNext = bandNameFromIndex(index: bands[counter])
+                                 bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                              }
                         } else {
                             if (counter < sizeBands){
-                                 bandNameNext = bandNameFromIndex(index: bands[counter])
+                                 bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                              }
                         }
                         break
@@ -536,12 +533,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     if (direction == "Previous"){
                         counter = counter - 2;
                         if (counter > -1){
-                            bandNameNext = bandNameFromIndex(index: bands[counter])
+                            bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                         }
 
                     }
                     if (counter < sizeBands){
-                        bandNameNext = bandNameFromIndex(index: bands[counter])
+                        bandNameNext = bandNameFromIndex(index: currentBandList[counter])
                     }
                     break
                 }
@@ -556,7 +553,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             print ("swipeRightAction - counter = \(counter) sizeBands = \(sizeBands)")
             if (counter <= (sizeBands - 1)){
-                bandNameNext = bandNameFromIndex(index: bands[counter])
+                bandNameNext = bandNameFromIndex(index: currentBandList[counter])
             } else {
                 counter = sizeBands
             }
