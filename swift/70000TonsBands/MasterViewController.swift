@@ -368,6 +368,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             schedule.populateSchedule()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
+            
+            currentBandList = self.bands
             self.bandsByName = self.bands
             
             let iCloudHandle = iCloudDataHandler()

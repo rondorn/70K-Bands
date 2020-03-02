@@ -34,6 +34,8 @@ var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlCon
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 
+var currentBandList = [String]()
+
 var downloadingAllComments = false
 var downloadingAllImages = false
 var bandSelected = String();
