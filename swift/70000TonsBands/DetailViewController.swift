@@ -114,6 +114,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 bandName = "Waiting for Data"
         }
         
+        self.title = bandName
         print ("bandName is 3 " + bandName)
         
         //bandSelected = bandName
@@ -467,11 +468,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     @IBAction func swipeRightAction(_ sender: Any) {
-        swipeNextRecord(direction: "Next");
+        swipeNextRecord(direction: "Previous");
     }
         
     @IBAction func swipeLeftAction(_ sender: Any) {
-        swipeNextRecord(direction: "Previous");
+        swipeNextRecord(direction: "Next");
     }
     
     func swipeNextRecord(direction: String){

@@ -82,6 +82,8 @@
 
 "AlertPreferences" = "Hälytysasetukset";
 
+"disableAttendedPrompt" = "Poista tämä kehote käytöstä";
+
 
 
 

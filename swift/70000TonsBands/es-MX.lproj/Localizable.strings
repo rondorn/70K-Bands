@@ -90,3 +90,5 @@
 "hideExpiredEvents" = "Ocultar Eventos Vencidos";
 
 "AlertPreferences" = "Preferencias de Alerta";
+
+"disableAttendedPrompt" = "Deshabilitar este aviso";
