@@ -66,5 +66,8 @@
     <string name="YouTubeLinkHelp">Recherche de vidéos officielles sur YouTube</string>
     <string name="MetalArchiveLinkHelp">Rechercher dans les archives métalliques</string>
 
+    <string name="PromptForAttendedStatus">Demander le statut de présence</string>
+    <string name="GoToDetails">Aller aux détails</string>
 
+    <string name="disableAttendedPrompt">Désactiver cette invite</string>
 </resources>

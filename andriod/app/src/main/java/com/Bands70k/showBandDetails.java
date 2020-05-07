@@ -135,7 +135,7 @@ public class showBandDetails extends Activity {
                     if (clickedOnEvent == false){
                         clickedOnEvent = true;
                         Log.d("showAttended", " Lets set this value of " + value);
-                        String status = staticVariables.attendedHandler.addShowsAttended(value);
+                        String status = staticVariables.attendedHandler.addShowsAttended(value, "");
                         String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
                         HelpMessageHandler.showMessage(message);
 

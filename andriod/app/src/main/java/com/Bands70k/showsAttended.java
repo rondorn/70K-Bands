@@ -115,7 +115,7 @@ public class showsAttended {
         return showsAttendedArray;
     }
 
-    public String addShowsAttended (String index) {
+    public String addShowsAttended (String index, String attendedStatus) {
 
         String value = "";
 
@@ -125,21 +125,24 @@ public class showsAttended {
         Log.d("showAttended", "adding " + index + "-" + eventType);
         Log.d("showAttended", showsAttendedHash.toString());
 
-        if (showsAttendedHash.containsKey(index) == false || showsAttendedHash.get(index).equals(staticVariables.sawNoneStatus)){
+        if (attendedStatus.isEmpty() == true) {
+            if (showsAttendedHash.containsKey(index) == false || showsAttendedHash.get(index).equals(staticVariables.sawNoneStatus)) {
 
-            value = staticVariables.sawAllStatus;
-            Log.d("showAttended", "Setting value to all for index " + index);
-        } else if (showsAttendedHash.get(index).equals(staticVariables.sawAllStatus) && eventType.equals(staticVariables.show)){
-            value = staticVariables.sawSomeStatus;
-            Log.d("showAttended", "Setting value to some for index " + index);
-        } else if (showsAttendedHash.get(index).equals(staticVariables.sawSomeStatus)){
-            value = staticVariables.sawNoneStatus;
-            Log.d("showAttended", "Setting value to none 1 for index " + index);
+                value = staticVariables.sawAllStatus;
+                Log.d("showAttended", "Setting value to all for index " + index);
+            } else if (showsAttendedHash.get(index).equals(staticVariables.sawAllStatus) && eventType.equals(staticVariables.show)) {
+                value = staticVariables.sawSomeStatus;
+                Log.d("showAttended", "Setting value to some for index " + index);
+            } else if (showsAttendedHash.get(index).equals(staticVariables.sawSomeStatus)) {
+                value = staticVariables.sawNoneStatus;
+                Log.d("showAttended", "Setting value to none 1 for index " + index);
+            } else {
+                value = staticVariables.sawNoneStatus;
+                Log.d("showAttended", "Setting value to none 2 for index " + index);
+            }
         } else {
-            value = staticVariables.sawNoneStatus;
-            Log.d("showAttended", "Setting value to none 2 for index " + index);
+            value = attendedStatus;
         }
-
         this.showsAttendedHash.put(index,value);
 
         this.saveShowsAttended(showsAttendedHash);
@@ -152,7 +155,17 @@ public class showsAttended {
         String eventYear = String.valueOf(staticVariables.eventYear);
 
         String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
-        String value = addShowsAttended(index);
+        String value = addShowsAttended(index, "");
+
+        return value;
+    }
+
+    public String addShowsAttended (String band, String location, String startTime, String eventType, String attendedStatus) {
+
+        String eventYear = String.valueOf(staticVariables.eventYear);
+
+        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
+        String value = addShowsAttended(index, attendedStatus);
 
         return value;
     }

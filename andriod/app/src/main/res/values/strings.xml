@@ -66,6 +66,11 @@
     <string name="YouTubeLinkHelp">Searching YouTube for offical videos</string>
     <string name="MetalArchiveLinkHelp">Searching Metal Archives</string>
 
+    <string name="PromptForAttendedStatus">Prompt For Attended Status</string>
+    <string name="GoToDetails">Go To Details</string>
+
+    <string name="disableAttendedPrompt">Disable This Prompt</string>
+
 </resources>
 
 

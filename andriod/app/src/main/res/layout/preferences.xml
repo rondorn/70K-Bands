@@ -417,11 +417,75 @@
     </TableLayout>
     </LinearLayout>
 
+    <!-- prompt for attended status header -->
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="450dp"
+        android:layout_alignParentLeft="false">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/PromptForAttendedStatus"
+            android:layout_marginLeft="10dp"
+            android:id="@+id/headerTextExpiredEvents"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:gravity="center_horizontal"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <!-- prompt for attended status preferences -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="false"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="480dp"
+        android:orientation="vertical"
+        android:layout_alignParentLeft="false">
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:stretchColumns="1"
+            android:background="@color/common_google_signin_btn_text_dark_focused"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            >
+            <TableRow
+                android:layout_width="fill_parent">
+                <TextView
+                    android:text="@string/PromptForAttendedStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:layout_column="9"
+                    android:layout_gravity="left"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default"
+                    android:width="255dp" />
+
+
+                <CheckBox
+                    android:id="@+id/promptForAttendedStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="27"
+                    android:buttonTint="@color/common_google_signin_btn_text_dark"
+                    android:enabled="true"
+                    android:layout_marginRight="80dp"
+                    />
+            </TableRow>
+        </TableLayout>
+    </LinearLayout>
+
     <!-- alert preferences header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="450dp"
+        android:layout_marginTop="510dp"
         android:orientation="vertical">
 
         <TextView
@@ -443,7 +507,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="480dp"
+        android:layout_marginTop="540dp"
         android:orientation="vertical"
         android:layout_alignParentLeft="false">
 
@@ -770,7 +834,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="false"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="940dp"
+        android:layout_marginTop="1000dp"
         android:orientation="vertical"
         android:layout_alignParentLeft="false">
 
