@@ -229,34 +229,40 @@ open class CustomBandDescription {
     
     func getDescriptionMap(){
         
-        print ("commentFile looking for descriptionMapFile")
-        
-        if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
-            getDescriptionMapFile();
-        }
-        
-        print ("commentFile looking for descriptionMapFile of \(descriptionMapFile)")
-        if let csvDataString = try? String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8) {
+        if descriptionLock == false {
+            descriptionLock = true;
             
-            var csvData: CSV
+            print ("commentFile looking for descriptionMapFile")
             
-            csvData = try! CSV(csvStringToParse: csvDataString)
-            
-            for lineData in csvData.rows {
-                if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                    print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
-                    bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
-                    
-                    bandDescriptionLock.async(flags: .barrier) {
-                        cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
-                    }
-                    
-                } else {
-                    print ("commentFile  Unable to parse descriptionMap line \(lineData)")
-                }
+            if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
+                getDescriptionMapFile();
             }
-        } else {
-            print ("commentFile Encountered an error could not open descriptionMap file")
+            
+            print ("commentFile looking for descriptionMapFile of \(descriptionMapFile)")
+            if let csvDataString = try? String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8) {
+                
+                var csvData: CSV
+                
+                csvData = try! CSV(csvStringToParse: csvDataString)
+                
+                for lineData in csvData.rows {
+                    if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
+                        print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
+                        bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
+                        
+                        bandDescriptionLock.async(flags: .barrier) {
+                            cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
+                        }
+                        
+                    } else {
+                        print ("commentFile  Unable to parse descriptionMap line \(lineData)")
+                    }
+                }
+            } else {
+                print ("commentFile Encountered an error could not open descriptionMap file")
+            }
+            
+            descriptionLock = false;
         }
     }
     

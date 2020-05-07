@@ -81,3 +81,5 @@
 "hideExpiredEvents" = "Ocultar Eventos Expirados";
 
 "AlertPreferences" = "Preferências de Alerta";
+
+"disableAttendedPrompt" = "Desativar este prompt";

@@ -82,3 +82,5 @@
 "hideExpiredEvents" = "Ausblenden Abgelaufene Ereignissen";
 
 "AlertPreferences" = "Benachrichtigungseinstellungen";
+
+"disableAttendedPrompt" = "Deaktivieren Sie diese Eingabeaufforderung";
