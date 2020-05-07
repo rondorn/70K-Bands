@@ -66,4 +66,8 @@
     <string name="YouTubeLinkHelp">Hae YouTubesta virallisia videoita varten</string>
     <string name="MetalArchiveLinkHelp">Metal-arkistojen etsiminen</string>
 
+    <string name="PromptForAttendedStatus">Kysy vierailijan tilalle</string>
+    <string name="GoToDetails">Siirry yksityiskohtiin</string>
+
+    <string name="disableAttendedPrompt">Poista tämä kehote käytöstä</string>
 </resources>

@@ -128,6 +128,7 @@
 		11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowAttendedReport.swift; sourceTree = "<group>"; };
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
 		1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTesting.swift; sourceTree = "<group>"; };
+		11274945242D044800B8E1B8 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		1139BEB11AF52C2C0011EF60 /* 70K Bands WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "70K Bands WatchKit Extension.entitlements"; sourceTree = "<group>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
@@ -244,6 +245,7 @@
 		0FEC1B59E1103D353D6EEC04 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				11274945242D044800B8E1B8 /* WebKit.framework */,
 				11FD1F1D20E006C100BE0141 /* CloudKit.framework */,
 				11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */,
 				114976C51C838D87003316D4 /* libz.tbd */,
@@ -930,7 +932,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D39B0CFE785970E65068434A /* Pods-70K Bands.debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -939,7 +940,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				CURRENT_PROJECT_VERSION = 20200301001;
+				CURRENT_PROJECT_VERSION = 20200329001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = YES;
@@ -962,7 +963,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20200301001;
+				MARKETING_VERSION = 20200329001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1006,14 +1007,13 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 28A69905D2E8A774B4EAA32A /* Pods-70K Bands.release.xcconfig */;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 20200301001;
+				CURRENT_PROJECT_VERSION = 20200329001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = YES;
@@ -1036,7 +1036,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20200301001;
+				MARKETING_VERSION = 20200329001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
