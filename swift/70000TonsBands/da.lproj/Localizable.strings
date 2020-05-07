@@ -80,3 +80,4 @@
 
 "AlertPreferences" = "Indstillinger for Alarm";
 
+"disableAttendedPrompt" = "Deaktiver denne prompt";

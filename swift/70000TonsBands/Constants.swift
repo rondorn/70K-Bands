@@ -70,6 +70,7 @@ var isLoadingSchedule = false
 var isLoadingCommentData = false
 var isPerformingQuickLoad = false
 var isReadingBandFile = false;
+var isGetFilteredBands = false;
 
 let scheduleQueue = DispatchQueue(label: "scheduleQueue")
 let bandNameQueue = DispatchQueue(label: "bandNameQueue")
@@ -131,6 +132,8 @@ var officalSiteButtonName = "Offical Web Site"
 var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
+
+var descriptionLock = false;
 
 let venuePoolKey:String = "Pool";
 let venueTheaterKey:String = "Theater";

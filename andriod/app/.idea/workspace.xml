@@ -106,16 +106,16 @@
         <entry file="file://$PROJECT_DIR$/src/main/res/values/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="458">
-              <caret line="71" column="2" lean-forward="true" selection-start-line="71" selection-start-column="2" selection-end-line="71" selection-end-column="69" />
+              <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="69" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/res/values-da/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="517">
-              <caret line="72" selection-start-line="72" selection-end-line="72" selection-end-column="72" />
+              <caret line="72" column="63" lean-forward="true" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="63" />
             </state>
           </provider>
         </entry>
@@ -124,7 +124,7 @@
         <entry file="file://$PROJECT_DIR$/src/main/res/values-de/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="528">
-              <caret line="71" column="2" selection-start-line="71" selection-start-column="2" selection-end-line="71" selection-end-column="92" />
+              <caret line="71" column="83" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="83" />
             </state>
           </provider>
         </entry>
@@ -133,7 +133,7 @@
         <entry file="file://$PROJECT_DIR$/src/main/res/values-es/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="528">
-              <caret line="73" selection-start-line="73" selection-end-line="73" selection-end-column="73" />
+              <caret line="73" column="64" selection-start-line="73" selection-start-column="41" selection-end-line="73" selection-end-column="64" />
             </state>
           </provider>
         </entry>
@@ -142,7 +142,7 @@
         <entry file="file://$PROJECT_DIR$/src/main/res/values-fi/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="528">
-              <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="77" />
+              <caret line="71" column="68" lean-forward="true" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="68" />
             </state>
           </provider>
         </entry>
@@ -151,16 +151,16 @@
         <entry file="file://$PROJECT_DIR$/src/main/res/values-fr/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="528">
-              <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="73" />
+              <caret line="71" column="64" lean-forward="true" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="64" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/res/values-pt/strings.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="528">
-              <caret line="72" column="62" selection-start-line="72" selection-start-column="62" selection-end-line="72" selection-end-column="62" />
+            <state relative-caret-position="531">
+              <caret line="72" column="62" lean-forward="true" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="62" />
             </state>
           </provider>
         </entry>
@@ -883,49 +883,49 @@
     <entry file="file://$PROJECT_DIR$/src/main/res/values/strings.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="458">
-          <caret line="71" column="2" lean-forward="true" selection-start-line="71" selection-start-column="2" selection-end-line="71" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-da/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="517">
-          <caret line="72" selection-start-line="72" selection-end-line="72" selection-end-column="72" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-de/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="528">
-          <caret line="71" column="2" selection-start-line="71" selection-start-column="2" selection-end-line="71" selection-end-column="92" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-es/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="528">
-          <caret line="73" selection-start-line="73" selection-end-line="73" selection-end-column="73" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-fi/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="528">
-          <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="77" />
+          <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="69" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/values-fr/strings.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="528">
-          <caret line="71" selection-start-line="71" selection-end-line="71" selection-end-column="73" />
+          <caret line="71" column="64" lean-forward="true" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values-de/strings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="71" column="83" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="83" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values-es/strings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="73" column="64" selection-start-line="73" selection-start-column="41" selection-end-line="73" selection-end-column="64" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values-fi/strings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="528">
+          <caret line="71" column="68" lean-forward="true" selection-start-line="71" selection-start-column="41" selection-end-line="71" selection-end-column="68" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/values-pt/strings.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="528">
-          <caret line="72" column="62" selection-start-line="72" selection-start-column="62" selection-end-line="72" selection-end-column="62" />
+        <state relative-caret-position="531">
+          <caret line="72" column="62" lean-forward="true" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values-da/strings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="517">
+          <caret line="72" column="63" lean-forward="true" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="63" />
         </state>
       </provider>
     </entry>

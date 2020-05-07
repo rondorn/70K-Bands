@@ -237,7 +237,7 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
 }
 
 func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String] {
-
+    
     let allBands = bandNameHandle.getBandNames()
 
     var sortedBy = getSortedBy()
@@ -251,42 +251,48 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     
     var newAllBands = [String]()
     
-    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
-    
-    if (getShowOnlyWillAttened() == true){
-        filteredBands = newAllBands;
+    if (isGetFilteredBands == false){
         
-    } else {
-        for bandNameIndex in newAllBands {
+        isGetFilteredBands = true;
+
+            newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
             
-            let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
-            
-            switch dataHandle.getPriorityData(bandName) {
-            case 1:
-                if (getMustSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
+            if (getShowOnlyWillAttened() == true){
+                filteredBands = newAllBands;
                 
-            case 2:
-                if (getMightSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
+            } else {
+                for bandNameIndex in newAllBands {
+                    
+                    let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
+                    
+                    switch dataHandle.getPriorityData(bandName) {
+                    case 1:
+                        if (getMustSeeOn() == true){
+                            filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 2:
+                    if (getMightSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 3:
+                    if (getWontSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                case 0:
+                    if (getUnknownSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                    }
+                    
+                default:
+                    print("Encountered unexpected value of ", terminator: "")
+                    print (dataHandle.getPriorityData(bandName))
                 }
-                
-            case 3:
-                if (getWontSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            case 0:
-                if (getUnknownSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            default:
-                print("Encountered unexpected value of ", terminator: "")
-                print (dataHandle.getPriorityData(bandName))
             }
         }
+        isGetFilteredBands = false;
     }
     return filteredBands
 }

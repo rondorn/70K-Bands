@@ -844,6 +844,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                    alert.addAction(notAttend)
                 }
                 
+                let disablePrompt = UIAlertAction.init(title: NSLocalizedString("disableAttendedPrompt", comment: ""), style: .default) { _ in
+                    defaults.set(false, forKey: "promptForAttended")
+                }
+                alert.addAction(disablePrompt)
+            
                 let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
                     return
                 }
