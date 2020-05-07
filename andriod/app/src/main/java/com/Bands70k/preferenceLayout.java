@@ -43,6 +43,7 @@ public class preferenceLayout  extends Activity {
     private CheckBox showOtherShows;
 
     private CheckBox hideExpiredEvents;
+    private CheckBox promptForAttendedStatus;
 
     private CheckBox mustSee;
     private CheckBox mightSee;
@@ -439,6 +440,16 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setHideExpiredEvents(hideExpiredEvents.isChecked());
+            }
+        });
+
+        promptForAttendedStatus = (CheckBox)findViewById(R.id.promptForAttendedStatus);
+        promptForAttendedStatus.setChecked(staticVariables.preferences.getPromptForAttendedStatus());
+        promptForAttendedStatus.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setPromptForAttendedStatus(promptForAttendedStatus.isChecked());
             }
         });
     }

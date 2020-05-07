@@ -46,6 +46,7 @@ public class preferencesHandler {
     private Boolean showUnknown = true;
 
     private Boolean hideExpiredEvents = true;
+    private Boolean promptForAttendedStatus = true;
 
     private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
@@ -192,6 +193,9 @@ public class preferencesHandler {
 
                         case "hideExpiredEvents":
                             setHideExpiredEvents(Boolean.valueOf(RowData[1]));
+
+                        case "promptForAttendedStatus":
+                            setPromptForAttendedStatus(Boolean.valueOf(RowData[1]));
                     }
                 }
             } catch (Exception error) {
@@ -249,6 +253,7 @@ public class preferencesHandler {
         dataString += "pointerUrl," + pointerUrl + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
+        dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
@@ -355,6 +360,7 @@ public class preferencesHandler {
     public Boolean getHideExpiredEvents() {
         return this.hideExpiredEvents;
     }
+    public Boolean getPromptForAttendedStatus() { return this.promptForAttendedStatus;}
 
     public Boolean getShowWillAttend() { return this.showWillAttend;}
 
@@ -403,6 +409,9 @@ public class preferencesHandler {
 
     public void setHideExpiredEvents(Boolean value) {
         this.hideExpiredEvents = value;
+    }
+    public void setPromptForAttendedStatus(Boolean value) {
+        this.promptForAttendedStatus = value;
     }
 
     public void setShowWillAttend(Boolean showWillAttendValue) {

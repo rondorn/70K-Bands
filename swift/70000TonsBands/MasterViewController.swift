@@ -10,7 +10,6 @@ import UIKit
 import CoreData
 import Firebase
 
-
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
     @IBOutlet var mainTableView: UITableView!

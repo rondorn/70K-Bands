@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 
+
 class firebaseUserWrite {
     
     var ref: DatabaseReference!

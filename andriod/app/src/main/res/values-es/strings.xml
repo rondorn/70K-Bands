@@ -68,4 +68,8 @@
     <string name="YouTubeLinkHelp">Buscando videos oficiales en YouTube</string>
     <string name="MetalArchiveLinkHelp">Buscando archivos de metal</string>
 
+    <string name="PromptForAttendedStatus">Solicitar estado atendido</string>
+    <string name="GoToDetails">Ir a detalles</string>
+
+    <string name="disableAttendedPrompt">Deshabilitar este aviso</string>
 </resources>

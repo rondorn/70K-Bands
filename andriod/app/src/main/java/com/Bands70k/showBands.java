@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -22,8 +23,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +42,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
@@ -52,6 +56,7 @@ import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.Bands70k.staticVariables.*;
@@ -232,8 +237,6 @@ public class showBands extends Activity {
     }
 
 
-
-
     private void setupSwipeList (){
 
         List<String> sortedList = new ArrayList<>();
@@ -368,6 +371,8 @@ public class showBands extends Activity {
         */
 
     }
+
+
 
     private void setupOnSwipeListener(){
 
@@ -976,14 +981,14 @@ public class showBands extends Activity {
 
     private void displayBandDataWithSchedule(){
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
         bandNamesList.setAdapter(adapter);
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
         BandInfo bandInfoNames = new BandInfo();
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 3");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 3");
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
@@ -991,15 +996,15 @@ public class showBands extends Activity {
             bandNames.add("Waiting for data to load, please standby....");
         }
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
         rankedBandNames = bandInfo.getRankedBandNames(bandNames);
         rankStore.getBandRankings();
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 5");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 5");
         listHandler = new mainListHandler(showBands.this);
 
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
         scheduleSortedBandNames = listHandler.getSortableBandNames();
 
         if (scheduleSortedBandNames.isEmpty() == true){
@@ -1007,15 +1012,15 @@ public class showBands extends Activity {
         }
 
         if (scheduleSortedBandNames.get(0).contains(":") == false){
-            Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
-            Log.d("DisplayListData", "starting file download ");
+            //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
+            //Log.d("DisplayListData", "starting file download ");
             //bandInfoNames.DownloadBandFile();
             bandNames = bandInfoNames.getBandNames();
             Log.d("DisplayListData", "starting file download, done ");
         }
 
         Integer counter = 0;
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         for (String bandIndex: scheduleSortedBandNames){
 
             Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex " + bandIndex);
@@ -1105,7 +1110,7 @@ public class showBands extends Activity {
             setShowAttendedFilterButton();
         }
 
-        Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
+        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
@@ -1198,17 +1203,7 @@ public class showBands extends Activity {
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
 
                 try {
-                    String selectedBand;
-                    getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
-
-                    selectedBand = listHandler.bandNamesIndex.get(position);
-
-                    //Log.d("The follow band was clicked ", selectedBand);
-
-                    BandInfo.setSelectedBand(selectedBand);
-
-                    Intent showDetails = new Intent(showBands.this, showBandDetails.class);
-                    startActivity(showDetails);
+                    showClickChoices(position);
                 } catch (Exception error) {
                     Log.e("Unable to find band", error.toString());
                     System.exit(0);
@@ -1239,6 +1234,136 @@ public class showBands extends Activity {
         bandNamesList.setSelection(listPosition);
 
         Log.d(TAG, notificationTag + " In onResume - 8");
+    }
+
+    public void showClickChoices(final int position) {
+
+        final String selectedBand = listHandler.bandNamesIndex.get(position);
+        AlertDialog.Builder builder = new AlertDialog.Builder(showBands.this, R.style.AlertDialog);
+
+        String bandIndex = scheduleSortedBandNames.get(position);
+
+        String bandName = getBandNameFromIndex(bandIndex);
+        Long timeIndex = getTimeIndexFromIndex(bandIndex);
+
+        if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false){
+            showDetailsScreen(position, selectedBand);
+            return;
+        }
+
+        final String location = listHandler.getLocation(bandName, timeIndex);
+        final String startTime = listHandler.getStartTime(bandName, timeIndex);
+        final String eventType = listHandler.getEventType(bandName, timeIndex);
+
+        final String attendedString = getResources().getString(R.string.AllOfEvent);
+        final String partAttendedString = getResources().getString(R.string.PartOfEvent);
+        final String notAttendedString = getResources().getString(R.string.NoneOfEvent);
+        final String goToDetailsString = getResources().getString(R.string.GoToDetails);
+
+        final String disablePrompt = getResources().getString(R.string.disableAttendedPrompt);
+
+        final String status = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, eventYear.toString());
+
+        // String array for alert dialog multi choice items
+        ArrayList<String> eventChoices = new ArrayList<String>();
+        eventChoices.add(goToDetailsString);
+
+        String titleStatus;
+        if (status.equals(sawAllStatus)) {
+            titleStatus = attendedString;
+            if (eventType.equals(show)) {
+                eventChoices.add(partAttendedString);
+            }
+            eventChoices.add(notAttendedString);
+
+        } else if (status.equals(sawSomeStatus)) {
+            titleStatus = partAttendedString;
+            eventChoices.add(attendedString);
+            eventChoices.add(notAttendedString);
+
+        } else {
+            titleStatus = notAttendedString;
+            eventChoices.add(attendedString);
+            if (eventType.equals(show)) {
+                eventChoices.add(partAttendedString);
+            }
+        }
+
+        eventChoices.add(disablePrompt);
+
+        // Set a title for alert dialog
+        builder.setTitle(selectedBand + "\n" + titleStatus);
+
+        // Convert the color array to list
+        final List<String> eventChoicesList = eventChoices;
+        String[] eventChoicesArray = eventChoices.toArray(new String[eventChoices.size()]);
+
+        builder.setItems(eventChoicesArray, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                // Get the current focused item
+                String currentItem = eventChoicesList.get(which);
+                String message = "";
+
+                if (currentItem.equals(goToDetailsString)) {
+                    showDetailsScreen(position, selectedBand);
+
+                } else if (currentItem.equals(attendedString)) {
+                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawAllStatus);
+                    message = attendedHandler.setShowsAttendedStatus(status);
+
+                } else if (currentItem.equals(partAttendedString)) {
+                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawSomeStatus);
+                    message = attendedHandler.setShowsAttendedStatus(status);
+
+                } else if (currentItem.equals(notAttendedString)) {
+                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawNoneStatus);
+                    message = attendedHandler.setShowsAttendedStatus(status);
+
+                } else if (currentItem.equals(disablePrompt)){
+                    preferences.setPromptForAttendedStatus(false);
+                }
+
+                if (message.isEmpty() == false) {
+                    Toast.makeText(getApplicationContext(),
+                            message + " ", Toast.LENGTH_SHORT).show();
+
+                    refreshData();
+                }
+            }
+        });
+
+        // Specify the dialog is not cancelable
+        builder.setCancelable(true);
+
+
+        // Set the neutral/cancel button click listener
+        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //do nothing
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        // Display the alert dialog on interface
+        dialog.show();
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.LTGRAY));
+
+
+    }
+
+
+    public void showDetailsScreen(int position, String selectedBand){
+
+        getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
+
+        BandInfo.setSelectedBand(selectedBand);
+
+        Intent showDetails = new Intent(showBands.this, showBandDetails.class);
+        startActivity(showDetails);
     }
 
     @Override

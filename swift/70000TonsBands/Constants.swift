@@ -165,7 +165,7 @@ var scheduleUrlDefault = ""
 
 let defaultPrefsValue = "Default";
 let lastYearSetting = "lastYear"
-let testingSetting = "Testing"
+let testingSetting = "hero"
 
 var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
