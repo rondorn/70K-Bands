@@ -79,3 +79,8 @@
 "AlertPreferences" = "Alert Preferences";
 
 "disableAttendedPrompt" = "Disable This Prompt";
+
+"EndofList" = "End of List";
+"AlreadyAtStart" = "Already At Start of List";
+"Next" = "Next";
+"Previous" = "Previous";

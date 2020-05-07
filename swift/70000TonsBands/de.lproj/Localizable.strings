@@ -84,3 +84,8 @@
 "AlertPreferences" = "Benachrichtigungseinstellungen";
 
 "disableAttendedPrompt" = "Deaktivieren Sie diese Eingabeaufforderung";
+
+"EndofList" = "Ende der Liste";
+"AlreadyAtStart" = "Bereits am Anfang der Liste";
+"Next" = "Nächster";
+"Previous" = "Bisherige";

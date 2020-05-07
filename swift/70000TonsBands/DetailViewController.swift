@@ -602,16 +602,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func jumpToNextOrPreviousScreen(nextBandName :String, direction :String){
         
         var message = ""
+        var translatedDirection = NSLocalizedString(direction, comment: "");
+        
         print ("jumpToNextOrPreviousScreen -  bandName \(nextBandName)")
+        
         if (nextBandName.isEmpty == true){
             if (direction == "Next"){
-                message = "End of List"
+                message = NSLocalizedString("EndofList", comment: "");
             } else {
-                message = "Already at start of List"
+                message = NSLocalizedString("AlreadyAtStart", comment: "");
             }
             ToastMessages(message).show(self, cellLocation: self.view.frame)
         } else {
-            message = direction + "-" + nextBandName
+            message = translatedDirection + "-" + nextBandName
         
         
             bandSelected = nextBandName
