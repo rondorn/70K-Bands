@@ -83,3 +83,8 @@
 "AlertPreferences" = "Preferências de Alerta";
 
 "disableAttendedPrompt" = "Desativar este prompt";
+
+"EndofList" = "Fim da lista";
+"AlreadyAtStart" = "Já no início da lista";
+"Next" = "Próximo";
+"Previous" = "Anterior";

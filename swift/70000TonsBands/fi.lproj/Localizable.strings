@@ -84,6 +84,11 @@
 
 "disableAttendedPrompt" = "Poista tämä kehote käytöstä";
 
+"EndofList" = "Luettelon loppu";
+"AlreadyAtStart" = "Jo luettelon alussa";
+"Next" = "Seuraava";
+"Previous" = "Edellinen";
+
 
 
 

@@ -83,3 +83,9 @@
 "AlertPreferences" = "Preferencias de Alerta";
 
 "disableAttendedPrompt" = "Deshabilitar este aviso";
+
+
+"EndofList" = "Fin de la lista";
+"AlreadyAtStart" = "Ya al inicio de la lista";
+"Next" = "Siguiente";
+"Previous" = "Previo";
