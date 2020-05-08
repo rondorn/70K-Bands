@@ -71,6 +71,11 @@
 
     <string name="disableAttendedPrompt">Disable This Prompt</string>
 
+    <string name="EndofList">End of List</string>
+    <string name="AlreadyAtStart">Already At Start of List</string>
+    <string name="Next">Next</string>
+    <string name="Previous">Previous</string>
+
 </resources>
 
 

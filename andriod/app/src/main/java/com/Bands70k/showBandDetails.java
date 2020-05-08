@@ -6,6 +6,7 @@ package com.Bands70k;
 
 import android.app.Activity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -15,16 +16,22 @@ import android.os.SystemClock;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+
+import static com.Bands70k.staticVariables.context;
 
 
 public class showBandDetails extends Activity {
@@ -55,8 +62,6 @@ public class showBandDetails extends Activity {
     private Integer startLocationEvents = 40;
     private Integer startBelowEvents = 25;
 
-    private String linkMessage = "";
-
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
@@ -85,7 +90,7 @@ public class showBandDetails extends Activity {
         } else {
             onBackPressed();
         }
-        
+
     }
 
 
@@ -107,12 +112,74 @@ public class showBandDetails extends Activity {
         }
     }
 
+    private void changeBand(String currentBand, String direction){
+        BandInfo.setSelectedBand(currentBand);
+        Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+        startActivity(showDetails);
+        finish();
+        if (direction == "Next") {
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
+        } else {
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
+        }
+    }
+
+    private void nextRecord(String direction){
+
+        String directionMessage = "";
+        String currentBand = "";
+
+        if (staticVariables.currentListPosition == 0 && direction == "Previous"){
+            HelpMessageHandler.showMessage(getResources().getString(R.string.AlreadyAtStart));
+            return;
+
+        } else if (staticVariables.currentListPosition == staticVariables.currentListForDetails.size() &&
+                    direction == "Next") {
+            HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
+            return;
+
+        } else if (direction == "Next"){
+            staticVariables.currentListPosition = staticVariables.currentListPosition + 1;
+            directionMessage = getResources().getString(R.string.Next);
+
+        } else {
+            staticVariables.currentListPosition = staticVariables.currentListPosition - 1;
+            directionMessage = getResources().getString(R.string.Previous);
+        }
+
+        //sometime the list is not as long as is advertised
+        try {
+            currentBand = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
+        } catch (Exception error){
+            staticVariables.currentListPosition = staticVariables.currentListPosition - 1;
+            HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
+            return;
+        }
+
+        HelpMessageHandler.showMessage(directionMessage + " " + currentBand);
+        changeBand(currentBand, direction);
+
+    }
+
     private void initializeWebContent (){
 
         webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
 
         mWebView = (WebView) findViewById(R.id.detailWebView);
         mWebView.setWebViewClient(new customWebViewClient());
+
+        mWebView.setOnTouchListener(new OnSwipeTouchListener(context) {
+            @Override
+            public void onSwipeLeft() {
+                nextRecord("Next");
+            }
+
+            @Override
+            public void onSwipeRight() {
+                nextRecord("Previous");
+            }
+
+        });
 
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -156,7 +223,7 @@ public class showBandDetails extends Activity {
                     finish();
 
                 } else if (value.equals("webLink")){
-                    linkMessage = "It appeas that the " + value + " link was clicked on";
+
                     WebView htmlWebView = (WebView)findViewById(R.id.detailWebView);
                     htmlWebView.loadUrl(BandInfo.getOfficalWebLink(bandName));
 
@@ -616,5 +683,53 @@ public class showBandDetails extends Activity {
             return true;
         }
     }
+
 }
 
+/**
+ * Detects left and right swipes across a view.
+ */
+class OnSwipeTouchListener implements View.OnTouchListener {
+
+    private final GestureDetector gestureDetector;
+
+    public OnSwipeTouchListener(Context context) {
+        gestureDetector = new GestureDetector(context, new GestureListener());
+    }
+
+    public void onSwipeLeft() {
+    }
+
+    public void onSwipeRight() {
+    }
+
+    public boolean onTouch(View view, MotionEvent event) {
+
+        return gestureDetector.onTouchEvent(event);
+    }
+
+    private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        private static final int SWIPE_DISTANCE_THRESHOLD = 100;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return false;
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            float distanceX = e2.getX() - e1.getX();
+            float distanceY = e2.getY() - e1.getY();
+            if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > SWIPE_DISTANCE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                if (distanceX > 0)
+                    onSwipeRight();
+                else
+                    onSwipeLeft();
+                return true;
+            }
+            return false;
+        }
+    }
+}

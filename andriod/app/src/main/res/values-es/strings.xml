@@ -72,4 +72,10 @@
     <string name="GoToDetails">Ir a detalles</string>
 
     <string name="disableAttendedPrompt">Deshabilitar este aviso</string>
+
+    <string name="EndofList">Fin de la lista</string>
+    <string name="AlreadyAtStart">Ya al inicio de la lista</string>
+    <string name="Next">Siguiente</string>
+    <string name="Previous">Previo</string>
+
 </resources>
