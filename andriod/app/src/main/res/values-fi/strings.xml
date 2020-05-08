@@ -70,4 +70,10 @@
     <string name="GoToDetails">Siirry yksityiskohtiin</string>
 
     <string name="disableAttendedPrompt">Poista tämä kehote käytöstä</string>
+
+    <string name="EndofList">Luettelon loppu</string>
+    <string name="AlreadyAtStart">Jo luettelon alussa</string>
+    <string name="Next">Seuraava</string>
+    <string name="Previous">Edellinen</string>
+
 </resources>

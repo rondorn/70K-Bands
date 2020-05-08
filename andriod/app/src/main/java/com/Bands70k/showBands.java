@@ -931,14 +931,12 @@ public class showBands extends Activity {
     private String getBandNameFromIndex(String index){
 
         String bandName = "";
-        Long timeIndex = Long.valueOf(0);
 
         String[] indexSplit = index.split(":");
 
         if (indexSplit.length == 2) {
 
             try {
-                timeIndex = Long.valueOf(indexSplit[0]);
                 bandName = indexSplit[1];
 
             } catch (NumberFormatException e) {
@@ -1239,6 +1237,10 @@ public class showBands extends Activity {
     public void showClickChoices(final int position) {
 
         final String selectedBand = listHandler.bandNamesIndex.get(position);
+
+        currentListForDetails =  listHandler.bandNamesIndex;
+        currentListPosition = position;
+
         AlertDialog.Builder builder = new AlertDialog.Builder(showBands.this, R.style.AlertDialog);
 
         String bandIndex = scheduleSortedBandNames.get(position);

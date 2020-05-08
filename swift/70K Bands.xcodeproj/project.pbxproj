@@ -71,6 +71,7 @@
 		11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
+		11BB85FD2465BA900050DC9E /* SegueFromLeft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BB85FC2465BA900050DC9E /* SegueFromLeft.swift */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
 		11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
@@ -178,6 +179,7 @@
 		11AC1D7C1A682AF100267A8F /* ApiKeys.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ApiKeys.plist; sourceTree = "<group>"; };
 		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		11BB85FC2465BA900050DC9E /* SegueFromLeft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegueFromLeft.swift; sourceTree = "<group>"; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
 		11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandler.swift; sourceTree = "<group>"; };
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
@@ -330,6 +332,7 @@
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
 				11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
+				11BB85FC2465BA900050DC9E /* SegueFromLeft.swift */,
 			);
 			path = 70000TonsBands;
 			sourceTree = "<group>";
@@ -693,6 +696,7 @@
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				11DCE9BA1A86D84D00A25FB8 /* validateCSVschedule.swift in Sources */,
 				11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */,
+				11BB85FD2465BA900050DC9E /* SegueFromLeft.swift in Sources */,
 				11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,

@@ -627,6 +627,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             self.viewWillAppear(true)
         }
     }
+ 
     
     @IBAction func openLink(_ sender: UIButton) {
         
