@@ -70,4 +70,10 @@
     <string name="GoToDetails">Aller aux détails</string>
 
     <string name="disableAttendedPrompt">Désactiver cette invite</string>
+
+    <string name="EndofList">Fin de liste</string>
+    <string name="AlreadyAtStart">Déjà au début de la liste</string>
+    <string name="Next">Prochain</string>
+    <string name="Previous">Précédent</string>
+
 </resources>

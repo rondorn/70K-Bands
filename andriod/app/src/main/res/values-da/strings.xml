@@ -71,4 +71,10 @@
     <string name="GoToDetails">Gå til detaljer</string>
 
     <string name="disableAttendedPrompt">Deaktiver denne prompt</string>
+
+    <string name="EndofList">Slut på listen</string>
+    <string name="AlreadyAtStart">Allerede ved start af listen</string>
+    <string name="Next">Næste</string>
+    <string name="Previous">Tidligere</string>
+
 </resources>
