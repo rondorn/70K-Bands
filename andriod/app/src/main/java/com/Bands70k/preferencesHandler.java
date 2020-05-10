@@ -275,13 +275,22 @@ public class preferencesHandler {
     }
 
     public Boolean getAlertForUnofficalEvents() {
+
+        if (alertForUnofficalEvents == null){
+            alertForUnofficalEvents = true;
+        }
         return alertForUnofficalEvents;
     }
+
     public void setAlertForUnofficalEvents(Boolean alertUnofficalEvents) {
         this.alertForUnofficalEvents = alertUnofficalEvents;
     }
 
     public Boolean getMustSeeAlert() {
+
+        if (mustSeeAlert == null){
+            mustSeeAlert = true;
+        }
         return mustSeeAlert;
     }
     public void setMustSeeAlert(Boolean mustSeeAlert) {
@@ -289,13 +298,22 @@ public class preferencesHandler {
     }
 
     public Boolean getMightSeeAlert() {
+
+        if (mightSeeAlert == null){
+            mightSeeAlert = true;
+        }
         return mightSeeAlert;
     }
+
     public void setMightSeeAlert(Boolean mightSeeAlert) {
         this.mightSeeAlert = mightSeeAlert;
     }
 
     public Boolean getAlertForShows() {
+
+        if (alertForShows == null){
+            alertForShows = true;
+        }
         return alertForShows;
     }
     public void setAlertForShows(Boolean alertForShows) {

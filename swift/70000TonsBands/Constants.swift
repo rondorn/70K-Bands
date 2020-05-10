@@ -72,6 +72,8 @@ var isPerformingQuickLoad = false
 var isReadingBandFile = false;
 var isGetFilteredBands = false;
 
+var refreshDataLock = false;
+
 let scheduleQueue = DispatchQueue(label: "scheduleQueue")
 let bandNameQueue = DispatchQueue(label: "bandNameQueue")
 let bandPriorityQueue = DispatchQueue(label: "bandPriorityQueue")
