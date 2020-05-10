@@ -187,7 +187,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         loadComments()
         super.viewDidAppear(animated)
-        
+                
     }
     
     func imageSizeController(special: String){
@@ -486,6 +486,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         var sizeBands = bands.count;
         var counter = 0;
         
+        if (currentBandList.count == 0){
+            
+        }
         for band in currentBandList {
             
             print ("swipeAction bandName - \(band)")
@@ -602,7 +605,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func jumpToNextOrPreviousScreen(nextBandName :String, direction :String){
         
         var message = ""
+        var animationMovement = CGFloat.init();
+        
         var translatedDirection = NSLocalizedString(direction, comment: "");
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            animationMovement = 0;
+        } else {
+            if (direction == "Next"){
+                animationMovement = -600;
+            } else {
+                animationMovement = 600;
+            }
+        }
         
         print ("jumpToNextOrPreviousScreen -  bandName \(nextBandName)")
         
@@ -622,6 +637,30 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             ToastMessages(message).show(self, cellLocation: self.view.frame)
             
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
+                
+                var frameNotes = self.customNotesText.frame
+                frameNotes.origin.x += animationMovement
+                self.customNotesText.frame = frameNotes
+
+                var frameLogo = self.bandLogo.frame
+                frameLogo.origin.x += animationMovement
+                self.bandLogo.frame = frameLogo
+
+                var frameLinks = self.Links.frame
+                frameLinks.origin.x += animationMovement
+                self.Links.frame = frameLinks
+                
+                var frameEvents = self.eventView.frame
+                frameEvents.origin.x += animationMovement
+                self.eventView.frame = frameEvents
+                
+                var frameExtras = self.extraData.frame
+                frameExtras.origin.x += animationMovement
+                self.extraData.frame = frameExtras
+                
+            }, completion: { finished in })
+        
             detailItem = bandName as AnyObject
             self.viewDidLoad()
             self.viewWillAppear(true)

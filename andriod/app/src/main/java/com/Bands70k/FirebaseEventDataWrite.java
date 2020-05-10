@@ -28,7 +28,7 @@ public class FirebaseEventDataWrite {
 
     public void writeData(){
 
-        if (staticVariables.isTestingEnv == false || staticVariables.userID.isEmpty() == true) {
+        if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
             showsAttended attendedHandler = new showsAttended();
             Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
 

@@ -128,6 +128,7 @@ public class showBandDetails extends Activity {
 
         String directionMessage = "";
         String currentBand = "";
+        String oldBandValue = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
 
         if (staticVariables.currentListPosition == 0 && direction == "Previous"){
             HelpMessageHandler.showMessage(getResources().getString(R.string.AlreadyAtStart));
@@ -150,6 +151,11 @@ public class showBandDetails extends Activity {
         //sometime the list is not as long as is advertised
         try {
             currentBand = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
+            Log.d("NextRecord", "Old Record is " + oldBandValue + " new record is " + currentBand);
+            if (oldBandValue.equals(currentBand)){
+                nextRecord(direction);
+                return;
+            }
         } catch (Exception error){
             staticVariables.currentListPosition = staticVariables.currentListPosition - 1;
             HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));

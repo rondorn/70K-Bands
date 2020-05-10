@@ -931,12 +931,14 @@ public class showBands extends Activity {
     private String getBandNameFromIndex(String index){
 
         String bandName = "";
+        Long timeIndex = Long.valueOf(0);
 
         String[] indexSplit = index.split(":");
 
         if (indexSplit.length == 2) {
 
             try {
+                timeIndex = Long.valueOf(indexSplit[0]);
                 bandName = indexSplit[1];
 
             } catch (NumberFormatException e) {
@@ -1037,6 +1039,21 @@ public class showBands extends Activity {
 
                 if (timeIndex > 0) {
 
+                    if (bandName == null || timeIndex == null || BandInfo.scheduleRecords == null){
+                        return;
+                    }
+                    if (BandInfo.scheduleRecords.containsKey(bandName) == false){
+                        Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname " + bandName + " - " + timeIndex);
+                        bandName = bandNames.get(0);
+                        if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
+                            Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
+                        }
+                    }
+                    if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false){
+                        return;
+                    }
+
+                    Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
                     if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
 
                         scheduleHandler scheduleHandle = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);

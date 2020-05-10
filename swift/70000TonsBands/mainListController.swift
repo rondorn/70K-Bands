@@ -251,8 +251,12 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     
     var newAllBands = [String]()
     
-    if (isGetFilteredBands == false){
-        
+    if (isGetFilteredBands == true){
+        while (isGetFilteredBands == true){
+            sleep(1);
+        }
+    } else {
+ 
         isGetFilteredBands = true;
 
             newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);

@@ -418,7 +418,8 @@ public class staticVariables {
 
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
-
+            //default year if there are issues (This should be updated every year
+            eventYearString = "2020";
         }
 
         return Integer.valueOf(eventYearString);
