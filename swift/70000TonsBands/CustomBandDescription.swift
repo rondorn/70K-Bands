@@ -162,9 +162,6 @@ open class CustomBandDescription {
                 }
             }
             
-            print ("commentFile does not exist \(bandDescriptionUrl)")
-            print ("commentFile does not exist \(bandName) - \(bandDescriptionUrl[bandName])")
-            
             //bandDescriptionLock.sync() {
                 if (bandDescriptionUrl.index(forKey: bandName) != nil && bandDescriptionUrl[bandName] != nil){
                     

@@ -334,7 +334,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshFromCache()
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-        
+            
+            while (refreshDataLock == true){
+                sleep(1);
+            }
+            refreshDataLock = true;
             let dataHandle = dataHandler()
             var offline = true
 
@@ -386,7 +390,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             //self.bandDescriptions.getDescriptionMapFile();
             //self.bandDescriptions.getAllDescriptions()
-        
+            refreshDataLock = false;
         }
     } 
     
@@ -771,8 +775,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
-
+        
+        currentBandList = self.bands
         print ("Waiting for band data to load, Done")
+        if (currentBandList.count == 0){
+            while(currentBandList.count == 0){
+                refreshFromCache()
+                currentBandList = self.bands
+            }
+        }
         self.splitViewController!.delegate = self;
         
         self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
