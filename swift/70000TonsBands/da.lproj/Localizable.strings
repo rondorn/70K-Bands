@@ -80,3 +80,9 @@
 
 "AlertPreferences" = "Indstillinger for Alarm";
 
+"disableAttendedPrompt" = "Deaktiver denne prompt";
+
+"EndofList" = "Slut på listen";
+"AlreadyAtStart" = "Allerede ved start af listen";
+"Next" = "Næste";
+"Previous" = "Tidligere";

@@ -67,4 +67,14 @@
     <string name="YouTubeLinkHelp">Søgning på YouTube til officielle videoer</string>
     <string name="MetalArchiveLinkHelp">Søgning på metalarkivers</string>
 
+    <string name="PromptForAttendedStatus">Spørg om deltaget status</string>
+    <string name="GoToDetails">Gå til detaljer</string>
+
+    <string name="disableAttendedPrompt">Deaktiver denne prompt</string>
+
+    <string name="EndofList">Slut på listen</string>
+    <string name="AlreadyAtStart">Allerede ved start af listen</string>
+    <string name="Next">Næste</string>
+    <string name="Previous">Tidligere</string>
+
 </resources>

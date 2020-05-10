@@ -114,6 +114,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 bandName = "Waiting for Data"
         }
         
+        self.title = bandName
         print ("bandName is 3 " + bandName)
         
         //bandSelected = bandName
@@ -186,7 +187,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         loadComments()
         super.viewDidAppear(animated)
-        
+                
     }
     
     func imageSizeController(special: String){
@@ -467,11 +468,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     @IBAction func swipeRightAction(_ sender: Any) {
-        swipeNextRecord(direction: "Next");
+        swipeNextRecord(direction: "Previous");
     }
         
     @IBAction func swipeLeftAction(_ sender: Any) {
-        swipeNextRecord(direction: "Previous");
+        swipeNextRecord(direction: "Next");
     }
     
     func swipeNextRecord(direction: String){
@@ -485,6 +486,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         var sizeBands = bands.count;
         var counter = 0;
         
+        if (currentBandList.count == 0){
+            
+        }
         for band in currentBandList {
             
             print ("swipeAction bandName - \(band)")
@@ -601,16 +605,31 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func jumpToNextOrPreviousScreen(nextBandName :String, direction :String){
         
         var message = ""
+        var animationMovement = CGFloat.init();
+        
+        var translatedDirection = NSLocalizedString(direction, comment: "");
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            animationMovement = 0;
+        } else {
+            if (direction == "Next"){
+                animationMovement = -600;
+            } else {
+                animationMovement = 600;
+            }
+        }
+        
         print ("jumpToNextOrPreviousScreen -  bandName \(nextBandName)")
+        
         if (nextBandName.isEmpty == true){
             if (direction == "Next"){
-                message = "End of List"
+                message = NSLocalizedString("EndofList", comment: "");
             } else {
-                message = "Already at start of List"
+                message = NSLocalizedString("AlreadyAtStart", comment: "");
             }
             ToastMessages(message).show(self, cellLocation: self.view.frame)
         } else {
-            message = direction + "-" + nextBandName
+            message = translatedDirection + "-" + nextBandName
         
         
             bandSelected = nextBandName
@@ -618,11 +637,36 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             ToastMessages(message).show(self, cellLocation: self.view.frame)
             
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
+                
+                var frameNotes = self.customNotesText.frame
+                frameNotes.origin.x += animationMovement
+                self.customNotesText.frame = frameNotes
+
+                var frameLogo = self.bandLogo.frame
+                frameLogo.origin.x += animationMovement
+                self.bandLogo.frame = frameLogo
+
+                var frameLinks = self.Links.frame
+                frameLinks.origin.x += animationMovement
+                self.Links.frame = frameLinks
+                
+                var frameEvents = self.eventView.frame
+                frameEvents.origin.x += animationMovement
+                self.eventView.frame = frameEvents
+                
+                var frameExtras = self.extraData.frame
+                frameExtras.origin.x += animationMovement
+                self.extraData.frame = frameExtras
+                
+            }, completion: { finished in })
+        
             detailItem = bandName as AnyObject
             self.viewDidLoad()
             self.viewWillAppear(true)
         }
     }
+ 
     
     @IBAction func openLink(_ sender: UIButton) {
         

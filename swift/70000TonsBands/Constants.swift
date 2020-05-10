@@ -70,6 +70,9 @@ var isLoadingSchedule = false
 var isLoadingCommentData = false
 var isPerformingQuickLoad = false
 var isReadingBandFile = false;
+var isGetFilteredBands = false;
+
+var refreshDataLock = false;
 
 let scheduleQueue = DispatchQueue(label: "scheduleQueue")
 let bandNameQueue = DispatchQueue(label: "bandNameQueue")
@@ -132,6 +135,8 @@ var wikipediaButtonName = "Wikipedia"
 var youTubeButtonName = "YouTube"
 var metalArchivesButtonName = "Metal Archives"
 
+var descriptionLock = false;
+
 let venuePoolKey:String = "Pool";
 let venueTheaterKey:String = "Theater";
 let venueLoungeKey:String = "Lounge";
@@ -165,7 +170,7 @@ var scheduleUrlDefault = ""
 
 let defaultPrefsValue = "Default";
 let lastYearSetting = "lastYear"
-let testingSetting = "Testing"
+let testingSetting = "hero"
 
 var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"

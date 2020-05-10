@@ -193,6 +193,9 @@ public class staticVariables {
     public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
     public static Integer graphicGeneralEvent = R.drawable.icon_ship_event;
 
+    public static Integer currentListPosition = 0;
+    public static List<String> currentListForDetails = new ArrayList<String>();
+
     public static Map<String,String> venueLocation =  new HashMap<String, String>();
 
     public static Integer alertTracker = 0;
@@ -415,7 +418,8 @@ public class staticVariables {
 
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
-
+            //default year if there are issues (This should be updated every year
+            eventYearString = "2020";
         }
 
         return Integer.valueOf(eventYearString);

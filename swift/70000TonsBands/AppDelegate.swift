@@ -14,6 +14,7 @@ import FirebaseCore
 import FirebaseMessaging
 import FirebaseInstanceID
 
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
     
@@ -361,8 +362,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationDidEnterBackground(_ application: UIApplication) {
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 
-        //        let userDataHandle = firebaseUserWrite()
-        //userDataHandle.writeData()
+        let userDataHandle = firebaseUserWrite()
+        userDataHandle.writeData()
         
         let bandWrite  = filebaseBandDataWrite();
         bandWrite.writeData();

@@ -84,6 +84,12 @@
 
 "AlertPreferences" = "Préférences d'alerte";
 
+"disableAttendedPrompt" = "Désactiver cette invite";
+
+"EndofList" = "Fin de liste";
+"AlreadyAtStart" = "Déjà au début de la liste";
+"Next" = "Prochain";
+"Previous" = "Précédent";
 
 
 
