@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.app.ActivityManager.isRunningInTestHarness;
+
 /**
  * Created by rdorn on 7/25/15.
  */
@@ -245,8 +247,9 @@ public class BandInfo {
 
         getDownloadtUrls();
 
-        if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
-            //Log.d("bandUrlIs", downloadUrls.get("artistUrl"));
+        System.out.println("in DownloadBandFile " +  isRunningInTestHarness());
+        if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) ||  staticVariables.inUnitTests == true) {
+            System.out.println("inside DownloadBandFile");
             try {
                 URL u = new URL(downloadUrls.get("artistUrl"));
                 InputStream is = u.openStream();

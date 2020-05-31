@@ -51,6 +51,10 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:1.+'
     testImplementation 'junit:junit:4.12'
 
+    testImplementation "org.robolectric:robolectric:3.0"
+    testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
+    testImplementation 'org.powermock:powermock:1.6.5'
+    testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
 }
 
 buildscript {
