@@ -47,6 +47,8 @@ public class staticVariables {
     public final static String  loungeVenueIcon = "🎤";
     public static String  rinkVenueIcon = "\uD83D\uDD03";
 
+    public static Boolean inUnitTests = false;
+
     public static Integer eventYear = 0;
     public static Integer eventYearRaw = 0;
 
