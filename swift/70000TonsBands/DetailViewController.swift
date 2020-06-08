@@ -69,14 +69,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var displayedImaged:UIImage?
     
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
-    var eventData : [String:[String:String]] = [String:[String:String]]()
-    
-    var event1TimeIndex:TimeInterval = 0
-    var event2TimeIndex:TimeInterval = 0
-    var event3TimeIndex:TimeInterval = 0
-    var event4TimeIndex:TimeInterval = 0
-    var event5TimeIndex:TimeInterval = 0
-    
+
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
@@ -754,24 +747,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         switch count {
                         case 1:
                             print ("Case1")
-                            populateScheduleData(eventSlot: "event1", eventView: EventView1, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
-                            event1TimeIndex = index
+                            populateScheduleData(eventSlot: "event1", eventView: EventView1, location: location, day: day, startTime: rawStartTime, endTime: endTime, date: date, eventType: type, notes: notes, timeIndex: index)
                         case 2:
                             print ("Case2")
-                            populateScheduleData(eventSlot: "event2", eventView: EventView2, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
-                            event2TimeIndex = index
+                            populateScheduleData(eventSlot: "event2", eventView: EventView2, location: location, day: day, startTime: rawStartTime, endTime: endTime, date: date, eventType: type, notes: notes, timeIndex: index)
                             
                         case 3:
-                            populateScheduleData(eventSlot: "event3", eventView: EventView3, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
-                            event3TimeIndex = index
+                            populateScheduleData(eventSlot: "event3", eventView: EventView3, location: location, day: day, startTime: rawStartTime, endTime: endTime, date: date, eventType: type,notes: notes, timeIndex: index)
                             
                         case 4:
-                           populateScheduleData(eventSlot: "event4",eventView: EventView4, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
-                           event4TimeIndex = index
+                           populateScheduleData(eventSlot: "event4",eventView: EventView4, location: location, day: day, startTime: rawStartTime, endTime: endTime, date: date, eventType: type,notes: notes, timeIndex: index)
                             
                         case 5:
-                            populateScheduleData(eventSlot: "event5",eventView: EventView5, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
-                            event5TimeIndex = index
+                            populateScheduleData(eventSlot: "event5",eventView: EventView5, location: location, day: day, startTime: rawStartTime, endTime: endTime, date: date, eventType: type,notes: notes, timeIndex: index)
                         default:
                             print("To many events")
                         }
@@ -786,16 +774,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     func populateScheduleData(eventSlot: String, eventView: UIView, location: String, day:String, startTime: String,
-                              endTime: String, date: String, eventType: String, timeIndex: TimeInterval){
+                              endTime: String, date: String, eventType: String, notes: String,timeIndex: TimeInterval){
         
-        eventData[eventSlot] = [String:String]()
-        eventData[eventSlot]?["location"] = location
-        eventData[eventSlot]?["day"] = day
-        eventData[eventSlot]?["startTime"] = startTime
-        eventData[eventSlot]?["endTime"] = endTime
-        eventData[eventSlot]?["date"] = date
-        eventData[eventSlot]?["eventType"] = eventType
- 
+        let attendedView = eventView.viewWithTag(4) as! UIImageView
+        print ("Icon parms \(bandName) \(location) \(startTime) \(eventType)")
+        let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: eventType,eventYearString: String(eventYear));
+        attendedView.image = icon
+        attendedView.sizeToFit()
+        
         var locationColor = eventView.viewWithTag(1)
         locationColor?.backgroundColor = getVenueColor(venue: location);
         
@@ -817,11 +803,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         eventTypeText.sizeToFit()
     
-        
-        let attendedView = eventView.viewWithTag(4) as! UIImageView
-        let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: eventType,eventYearString: String(eventYear));
-        attendedView.image = icon
-        
+            
         let eventTypeImageView = eventView.viewWithTag(5) as! UIImageView
         let eventIcon = getEventTypeIcon(eventType: eventType, eventName: bandName)
         eventTypeImageView.image = eventIcon
@@ -864,6 +846,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         dayView.text = dayText
         dayView.sizeToFit()
+        
+ 
+        let notesView = eventView.viewWithTag(10) as! UILabel
+        notesView.textColor = UIColor.lightGray
+        notesView.text = notes
+        notesView.sizeToFit()
     }
     
     func hideEmptyData() {
@@ -876,41 +864,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant + 5
         
-        var eventSlot = "event1"
-        var eventIndex = event1TimeIndex
-        
-        var lastView:UIView = EventView1
-        
         if (eventTypeText1.text?.isEmpty)!{
             hideEvent(eventView: EventView1)
         }
         
         if (eventTypeText2.text?.isEmpty)!{
             hideEvent(eventView: EventView2)
-        } else {
-            eventSlot = "event2"
-            eventIndex = event2TimeIndex
-            lastView = EventView2
         }
         if (eventTypeText3.text?.isEmpty)!{
             hideEvent(eventView: EventView3)
-        
-        } else {
-            eventSlot = "event3"
-            eventIndex = event3TimeIndex
-            lastView = EventView3
         }
-            
         if (eventTypeText4.text?.isEmpty)!{
             hideEvent(eventView: EventView4)
-        } else {
-            eventSlot = "event4"
-            eventIndex = event4TimeIndex
-            lastView = EventView4
         }
-        
         if (eventTypeText5.text?.isEmpty)!{
-
             hideEvent(eventView: EventView5)
         }
     }
@@ -943,6 +910,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         let dayView = eventView.viewWithTag(9) as! UILabel
         dayView.removeFromSuperview()
+        
+        let notesView = eventView.viewWithTag(10) as! UILabel
+        notesView.removeFromSuperview()
         
         linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant - 50
         dataViewTopSpacingConstraint.constant = dataViewTopSpacingConstraint.constant - 50

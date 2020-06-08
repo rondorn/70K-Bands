@@ -561,6 +561,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleButton = false
     
         print("scheduleText  = \(scheduleText)")
+        print ("Icon parms \(bandName) \(location) \(startTime) \(event)")
         let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
     
         attendedView.image = icon
