@@ -11,13 +11,16 @@ import CoreData
 
 class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate{
     
-    
-    
     @IBOutlet weak var linkGroup: UIStackView!
     
     @IBOutlet weak var titleLable: UINavigationItem!
     @IBOutlet weak var bandLogo: UIImageView!
 
+    @IBOutlet weak var linkViewTopSpacingConstraint: NSLayoutConstraint!
+    @IBOutlet weak var dataViewTopSpacingConstraint: NSLayoutConstraint!
+    
+    @IBOutlet weak var notesViewTopSpacingConstraint: NSLayoutConstraint!
+    
     @IBOutlet weak var LinksSection: UIView!
     @IBOutlet weak var vistLinksLable: UILabel!
     @IBOutlet weak var officialUrlButton: UIButton!
@@ -32,28 +35,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var notesSection: UIView!
 
     @IBOutlet weak var extraData: UIView!
-    @IBOutlet weak var eventView: UIView!
+    //@IBOutlet weak var eventView: UIView!
     
     @IBOutlet weak var returnToMaster: UINavigationItem!
-    
-    
-    @IBOutlet weak var Event1AttendedIcon: UIImageView!
-    @IBOutlet weak var Event2AttendedIcon: UIImageView!
-    @IBOutlet weak var Event3AttendedIcon: UIImageView!
-    @IBOutlet weak var Event4AttendedIcon: UIImageView!
-    @IBOutlet weak var Event5AttendedIcon: UIImageView!
-    
-    @IBOutlet weak var Event1TypeIcon: UIImageView!
-    @IBOutlet weak var Event2TypeIcon: UIImageView!
-    @IBOutlet weak var Event3TypeIcon: UIImageView!
-    @IBOutlet weak var Event4TypeIcon: UIImageView!
-    @IBOutlet weak var Event5TypeIcon: UIImageView!
-    
-    @IBOutlet weak var Event1: UITextField!
-    @IBOutlet weak var Event2: UITextField!
-    @IBOutlet weak var Event3: UITextField!
-    @IBOutlet weak var Event4: UITextField!
-    @IBOutlet weak var Event5: UITextField!
     
     @IBOutlet weak var PriorityIcon: UIImageView!
     @IBOutlet weak var priorityButtons: UISegmentedControl!
@@ -62,6 +46,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var Country: UITextField!
     @IBOutlet weak var Genre: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
+    
+    @IBOutlet weak var EventView1: UIView!
+    @IBOutlet weak var EventView2: UIView!
+    @IBOutlet weak var EventView3: UIView!
+    @IBOutlet weak var EventView4: UIView!
+    @IBOutlet weak var EventView5: UIView!
+    
     
     var backgroundNotesText = "";
     var bandName :String!
@@ -78,7 +69,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var displayedImaged:UIImage?
     
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
-
+    var eventData : [String:[String:String]] = [String:[String:String]]()
+    
+    var event1TimeIndex:TimeInterval = 0
+    var event2TimeIndex:TimeInterval = 0
+    var event3TimeIndex:TimeInterval = 0
+    var event4TimeIndex:TimeInterval = 0
+    var event5TimeIndex:TimeInterval = 0
+    
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
@@ -150,13 +148,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             disableButtonsIfNeeded()
             disableLinksWithEmptyData();
             
-            //used to disable keyboard input for these fields
-            self.Event1.delegate = self
-            self.Event2.delegate = self
-            self.Event3.delegate = self
-            self.Event4.delegate = self
-            self.Event5.delegate = self
-            
             if (defaults.bool(forKey: "notesFontSizeLarge") == true){
                 customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
             }
@@ -199,8 +190,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 self.bandLogo.contentMode = UIView.ContentMode.top
                 self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             } else if (special == "scale"){
-                 self.bandLogo.contentMode = UIView.ContentMode.top
-                 self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
+                self.bandLogo.contentMode = UIView.ContentMode.top
+                self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             }
             self.bandLogo.sizeToFit()
         } else {
@@ -381,18 +372,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 
                 Links.isHidden = true
                 Links.sizeToFit()
-                
-                Event1.font = UIFont.systemFont(ofSize: 25)
-                Event2.font = UIFont.systemFont(ofSize: 25)
-                Event3.font = UIFont.systemFont(ofSize: 25)
-                Event4.font = UIFont.systemFont(ofSize: 25)
-                Event5.font = UIFont.systemFont(ofSize: 25)
-                
-                Event1.sizeToFit()
-                Event2.sizeToFit()
-                Event3.sizeToFit()
-                Event4.sizeToFit()
-                Event5.sizeToFit()
             }
             
             
@@ -418,13 +397,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 Links.sizeToFit()
                 extraData.sizeToFit()
                 loadComments()
-                
-                
-                Event1.font = UIFont.systemFont(ofSize: 17)
-                Event2.font = UIFont.systemFont(ofSize: 17)
-                Event3.font = UIFont.systemFont(ofSize: 17)
-                Event4.font = UIFont.systemFont(ofSize: 17)
-                Event5.font = UIFont.systemFont(ofSize: 17)
                 
             }
             
@@ -651,9 +623,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 frameLinks.origin.x += animationMovement
                 self.Links.frame = frameLinks
                 
-                var frameEvents = self.eventView.frame
-                frameEvents.origin.x += animationMovement
-                self.eventView.frame = frameEvents
+                //var frameEvents = self.eventView.frame
+                //frameEvents.origin.x += animationMovement
+                //self.eventView.frame = frameEvents
                 
                 var frameExtras = self.extraData.frame
                 frameExtras.origin.x += animationMovement
@@ -781,21 +753,25 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                         print ("Show Attended Load \(status) - \(location) - \(startTime) - \(type)")
                         switch count {
                         case 1:
-                            
-                            setLocationInfo(eventField: Event1, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event1AttendedIcon, EventTypeIcon: Event1TypeIcon)
-
+                            print ("Case1")
+                            populateScheduleData(eventSlot: "event1", eventView: EventView1, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
+                            event1TimeIndex = index
                         case 2:
-                            setLocationInfo(eventField: Event2, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event2AttendedIcon, EventTypeIcon: Event2TypeIcon)
+                            print ("Case2")
+                            populateScheduleData(eventSlot: "event2", eventView: EventView2, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
+                            event2TimeIndex = index
                             
                         case 3:
-                            setLocationInfo(eventField: Event3, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event3AttendedIcon, EventTypeIcon: Event3TypeIcon)
+                            populateScheduleData(eventSlot: "event3", eventView: EventView3, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
+                            event3TimeIndex = index
                             
                         case 4:
-                            setLocationInfo(eventField: Event4, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event4AttendedIcon, EventTypeIcon: Event4TypeIcon)
+                           populateScheduleData(eventSlot: "event4",eventView: EventView4, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
+                           event4TimeIndex = index
                             
                         case 5:
-                            setLocationInfo(eventField: Event5, scheduleText: scheduleText, bandName: bandName, locationName: location, status: status, type: type, EventAttendedIcon: Event5AttendedIcon, EventTypeIcon: Event5TypeIcon)
-                            
+                            populateScheduleData(eventSlot: "event5",eventView: EventView5, location: location, day: day, startTime: startTime, endTime: endTime, date: date, eventType: type, timeIndex: index)
+                            event5TimeIndex = index
                         default:
                             print("To many events")
                         }
@@ -809,44 +785,170 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
     }
     
-    func setLocationInfo(eventField: UITextField, scheduleText: String, bandName: String, locationName: String, status: String, type: String, EventAttendedIcon: UIImageView, EventTypeIcon: UIImageView){
+    func populateScheduleData(eventSlot: String, eventView: UIView, location: String, day:String, startTime: String,
+                              endTime: String, date: String, eventType: String, timeIndex: TimeInterval){
         
-        eventField.text = scheduleText
-        _ = attendedHandle.setShowsAttendedStatus(eventField,status: status);
-        EventAttendedIcon.image = getAttendedIcons(attendedStatus: status)
-        EventTypeIcon.image = getEventTypeIcon(eventType: type, eventName: bandName)
+        eventData[eventSlot] = [String:String]()
+        eventData[eventSlot]?["location"] = location
+        eventData[eventSlot]?["day"] = day
+        eventData[eventSlot]?["startTime"] = startTime
+        eventData[eventSlot]?["endTime"] = endTime
+        eventData[eventSlot]?["date"] = date
+        eventData[eventSlot]?["eventType"] = eventType
+ 
+        var locationColor = eventView.viewWithTag(1)
+        locationColor?.backgroundColor = getVenueColor(venue: location);
         
-        eventField.halfTextColorChange(fullText: eventField.text!, changeText: locationName, locationColor: getVenueColor(venue: locationName))
+        var locationView = eventView.viewWithTag(2) as! UILabel
+        var locationText = location
+        if (venueLocation[location] != nil){
+            locationText += " " + venueLocation[location]!
+        }
+        locationView.textColor = UIColor.white
+        locationView.text = locationText
+        locationView.sizeToFit()
+        
+        let eventTypeText = eventView.viewWithTag(3)  as! UILabel
+        eventTypeText.textColor = UIColor.lightGray
+        if (eventType == showType){
+            eventTypeText.text = " "
+        } else {
+            eventTypeText.text = eventType
+        }
+        eventTypeText.sizeToFit()
+    
+        
+        let attendedView = eventView.viewWithTag(4) as! UIImageView
+        let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: eventType,eventYearString: String(eventYear));
+        attendedView.image = icon
+        
+        let eventTypeImageView = eventView.viewWithTag(5) as! UIImageView
+        let eventIcon = getEventTypeIcon(eventType: eventType, eventName: bandName)
+        eventTypeImageView.image = eventIcon
+        
+        let startTimeView = eventView.viewWithTag(6) as! UILabel
+        let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
+        let startTimeText = formatTimeValue(timeValue: startTime)
+        startTimeView.textColor = UIColor.white
+        startTimeView.text = startTimeText
+        startTimeView.sizeToFit()
+        
+        let endTimeView = eventView.viewWithTag(7) as! UILabel
+        let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
+        let endTimeText = formatTimeValue(timeValue: endTime)
+        endTimeView.textColor = UIColor.darkGray
+        endTimeView.text = endTimeText
+        endTimeView.sizeToFit()
+        
+        let dayLabelView = eventView.viewWithTag(8) as! UILabel
+        dayLabelView.text = "Day"
+        
+        let dayView = eventView.viewWithTag(9) as! UILabel
+        dayView.textColor = UIColor.white
+        var dayText = ""
+        if day == "Day 1"{
+            dayText = "1";
+        
+        } else if day == "Day 2"{
+            dayText = "2";
+            
+        } else if day == "Day 3"{
+            dayText = "3";
+            
+        } else if day == "Day 4"{
+            dayText = "4";
+            
+        } else {
+            dayText = day
+        }
+        
+        dayView.text = dayText
+        dayView.sizeToFit()
     }
     
     func hideEmptyData() {
-        if (Event1.text?.isEmpty)!{
-            Event1.isHidden = true;
-        } else {
-            Event1.isHidden = false;
+        
+        let eventTypeText1 = EventView1.viewWithTag(3)  as! UILabel
+        let eventTypeText2 = EventView2.viewWithTag(3)  as! UILabel
+        let eventTypeText3 = EventView3.viewWithTag(3)  as! UILabel
+        let eventTypeText4 = EventView4.viewWithTag(3)  as! UILabel
+        let eventTypeText5 = EventView5.viewWithTag(3)  as! UILabel
+        
+        linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant + 5
+        
+        var eventSlot = "event1"
+        var eventIndex = event1TimeIndex
+        
+        var lastView:UIView = EventView1
+        
+        if (eventTypeText1.text?.isEmpty)!{
+            hideEvent(eventView: EventView1)
         }
-        if (Event2.text?.isEmpty)!{
-            Event2.isHidden = true;
+        
+        if (eventTypeText2.text?.isEmpty)!{
+            hideEvent(eventView: EventView2)
         } else {
-            Event2.isHidden = false;
+            eventSlot = "event2"
+            eventIndex = event2TimeIndex
+            lastView = EventView2
         }
-        if (Event3.text?.isEmpty)!{
-            Event3.isHidden = true;
+        if (eventTypeText3.text?.isEmpty)!{
+            hideEvent(eventView: EventView3)
+        
         } else {
-            Event3.isHidden = false;
+            eventSlot = "event3"
+            eventIndex = event3TimeIndex
+            lastView = EventView3
         }
-        if (Event4.text?.isEmpty)!{
-            Event4.isHidden = true;
+            
+        if (eventTypeText4.text?.isEmpty)!{
+            hideEvent(eventView: EventView4)
         } else {
-            Event4.isHidden = false;
+            eventSlot = "event4"
+            eventIndex = event4TimeIndex
+            lastView = EventView4
         }
-        if (Event5.text?.isEmpty)!{
-            Event5.isHidden = true;
-        } else {
-            Event5.isHidden = false;
+        
+        if (eventTypeText5.text?.isEmpty)!{
+
+            hideEvent(eventView: EventView5)
         }
     }
 
+    func hideEvent(eventView: UIView){
+        
+        var locationColor = eventView.viewWithTag(1)
+        locationColor?.removeFromSuperview()
+        
+        var locationView = eventView.viewWithTag(2) as! UILabel
+        locationView.removeFromSuperview()
+        
+        let eventTypeText = eventView.viewWithTag(3)  as! UILabel
+        eventTypeText.removeFromSuperview()
+        
+        let attendedView = eventView.viewWithTag(4) as! UIImageView
+        attendedView.removeFromSuperview()
+        
+        let eventTypeImageView = eventView.viewWithTag(5) as! UIImageView
+        eventTypeImageView.removeFromSuperview()
+        
+        let startTimeView = eventView.viewWithTag(6) as! UILabel
+        startTimeView.removeFromSuperview()
+        
+        let endTimeView = eventView.viewWithTag(7) as! UILabel
+        endTimeView.removeFromSuperview()
+        
+        let dayLabelView = eventView.viewWithTag(8) as! UILabel
+        dayLabelView.removeFromSuperview()
+        
+        let dayView = eventView.viewWithTag(9) as! UILabel
+        dayView.removeFromSuperview()
+        
+        linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant - 50
+        dataViewTopSpacingConstraint.constant = dataViewTopSpacingConstraint.constant - 50
+        notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 50
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -917,19 +1019,24 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         switch sender.tag {
         case 11:
-            attendGraphicField = Event1AttendedIcon
+            print ("Case11")
+            //attendGraphicField = Event1AttendedIcon
             
         case 12:
-            attendGraphicField = Event2AttendedIcon
+            print ("Case12")
+            //attendGraphicField = Event2AttendedIcon
             
         case 13:
-            attendGraphicField = Event3AttendedIcon
+            print ("Case13")
+            //attendGraphicField = Event3AttendedIcon
  
         case 14:
-            attendGraphicField = Event4AttendedIcon
+            print ("Case14")
+            //attendGraphicField = Event4AttendedIcon
             
         case 15:
-            attendGraphicField = Event5AttendedIcon
+            print ("Case15")
+            //attendGraphicField = Event5AttendedIcon
             
         default:
             skip = true
