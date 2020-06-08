@@ -53,6 +53,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var EventView4: UIView!
     @IBOutlet weak var EventView5: UIView!
     
+    var eventView1Hidden = false
+    var eventView2Hidden = false
+    var eventView3Hidden = false
+    var eventView4Hidden = false
+    var eventView5Hidden = false
     
     var backgroundNotesText = "";
     var bandName :String!
@@ -146,12 +151,31 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)
             
+            setupEventAttendClicks()
         }
         
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
+    }
+    
+    func setupEventAttendClicks(){
+            
+        let gesture1 = UITapGestureRecognizer(target: self, action:  #selector(self.clickedOnEvent))
+        self.EventView1.addGestureRecognizer(gesture1)
+        
+        let gesture2 = UITapGestureRecognizer(target: self, action:  #selector(self.clickedOnEvent))
+        self.EventView2.addGestureRecognizer(gesture2)
+ 
+        let gesture3 = UITapGestureRecognizer(target: self, action:  #selector(self.clickedOnEvent))
+        self.EventView3.addGestureRecognizer(gesture3)
+        
+        let gesture4 = UITapGestureRecognizer(target: self, action:  #selector(self.clickedOnEvent))
+        self.EventView4.addGestureRecognizer(gesture4)
+        
+        let gesture5 = UITapGestureRecognizer(target: self, action:  #selector(self.clickedOnEvent))
+        self.EventView5.addGestureRecognizer(gesture5)
     }
     
     //used to disable keyboard input for event fields
@@ -616,9 +640,25 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 frameLinks.origin.x += animationMovement
                 self.Links.frame = frameLinks
                 
-                //var frameEvents = self.eventView.frame
-                //frameEvents.origin.x += animationMovement
-                //self.eventView.frame = frameEvents
+                var frameEvents1 = self.EventView1.frame
+                frameEvents1.origin.x += animationMovement
+                self.EventView1.frame = frameEvents1
+                
+                var frameEvents2 = self.EventView2.frame
+                frameEvents2.origin.x += animationMovement
+                self.EventView2.frame = frameEvents2
+                
+                var frameEvents3 = self.EventView3.frame
+                frameEvents3.origin.x += animationMovement
+                self.EventView3.frame = frameEvents3
+                
+                var frameEvents4 = self.EventView4.frame
+                frameEvents4.origin.x += animationMovement
+                self.EventView4.frame = frameEvents4
+                
+                var frameEvents5 = self.EventView5.frame
+                frameEvents5.origin.x += animationMovement
+                self.EventView5.frame = frameEvents5
                 
                 var frameExtras = self.extraData.frame
                 frameExtras.origin.x += animationMovement
@@ -724,22 +764,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     
                     var scheduleText = String()
                     if (!date.isEmpty){
-                        scheduleText = day
-                        scheduleText += " - " + startTime
-                        scheduleText += " - " + endTime
-                        scheduleText += " - " + location
-                        scheduleText += " - " + type
-                        
-                        if (notes.isEmpty == false && notes != " "){
-                            scheduleText += " - " + notes
-                        }
-                        
-                        scheduleIndex[scheduleText] = [String:String]()
-                    
-                        scheduleIndex[scheduleText]!["bandName"] = bandName;
-                        scheduleIndex[scheduleText]!["location"] = location;
-                        scheduleIndex[scheduleText]!["startTime"] = rawStartTime;
-                        scheduleIndex[scheduleText]!["eventType"] = type;
                         
                         let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: rawStartTime, eventType: type, eventYearString: String(eventYear));
                         
@@ -776,12 +800,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func populateScheduleData(eventSlot: String, eventView: UIView, location: String, day:String, startTime: String,
                               endTime: String, date: String, eventType: String, notes: String,timeIndex: TimeInterval){
         
+        scheduleIndex[eventSlot] = [String:String]();
+        scheduleIndex[eventSlot]!["location"] = location
+        scheduleIndex[eventSlot]!["eventType"] = eventType
+        scheduleIndex[eventSlot]!["startTime"] = startTime
+        
         let attendedView = eventView.viewWithTag(4) as! UIImageView
         print ("Icon parms \(bandName) \(location) \(startTime) \(eventType)")
         let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: eventType,eventYearString: String(eventYear));
         attendedView.image = icon
-        attendedView.sizeToFit()
-        
+
         var locationColor = eventView.viewWithTag(1)
         locationColor?.backgroundColor = getVenueColor(venue: location);
         
@@ -792,8 +820,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         locationView.textColor = UIColor.white
         locationView.text = locationText
-        locationView.sizeToFit()
-        
+
         let eventTypeText = eventView.viewWithTag(3)  as! UILabel
         eventTypeText.textColor = UIColor.lightGray
         if (eventType == showType){
@@ -801,7 +828,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         } else {
             eventTypeText.text = eventType
         }
-        eventTypeText.sizeToFit()
     
             
         let eventTypeImageView = eventView.viewWithTag(5) as! UIImageView
@@ -813,14 +839,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let startTimeText = formatTimeValue(timeValue: startTime)
         startTimeView.textColor = UIColor.white
         startTimeView.text = startTimeText
-        startTimeView.sizeToFit()
         
         let endTimeView = eventView.viewWithTag(7) as! UILabel
         let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let endTimeText = formatTimeValue(timeValue: endTime)
         endTimeView.textColor = UIColor.darkGray
         endTimeView.text = endTimeText
-        endTimeView.sizeToFit()
         
         let dayLabelView = eventView.viewWithTag(8) as! UILabel
         dayLabelView.text = "Day"
@@ -845,46 +869,75 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         
         dayView.text = dayText
-        dayView.sizeToFit()
-        
+
  
         let notesView = eventView.viewWithTag(10) as! UILabel
         notesView.textColor = UIColor.lightGray
         notesView.text = notes
-        notesView.sizeToFit()
+
     }
     
     func hideEmptyData() {
         
-        let eventTypeText1 = EventView1.viewWithTag(3)  as! UILabel
-        let eventTypeText2 = EventView2.viewWithTag(3)  as! UILabel
-        let eventTypeText3 = EventView3.viewWithTag(3)  as! UILabel
-        let eventTypeText4 = EventView4.viewWithTag(3)  as! UILabel
-        let eventTypeText5 = EventView5.viewWithTag(3)  as! UILabel
+        var genericUIText:UILabel = UILabel()
+        genericUIText.text = "placeHolder"
         
-        linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant + 5
+        var eventTypeText1:UILabel = UILabel()
+        var eventTypeText2:UILabel  = UILabel()
+        var eventTypeText3:UILabel  = UILabel()
+        var eventTypeText4:UILabel  = UILabel()
+        var eventTypeText5:UILabel  = UILabel()
         
-        if (eventTypeText1.text?.isEmpty)!{
-            hideEvent(eventView: EventView1)
+        if (eventView1Hidden == false){
+            eventTypeText1 = EventView1.viewWithTag(3) as! UILabel
+        }
+        if (eventView2Hidden == false){
+            eventTypeText2 = EventView2.viewWithTag(3) as! UILabel
+        }
+        if (eventView3Hidden == false){
+            eventTypeText3 = EventView3.viewWithTag(3) as! UILabel
+        }
+        if (eventView4Hidden == false){
+            eventTypeText4 = EventView4.viewWithTag(3) as! UILabel
+        }
+        if (eventView5Hidden == false){
+            eventTypeText5 = EventView5.viewWithTag(3) as! UILabel
         }
         
-        if (eventTypeText2.text?.isEmpty)!{
-            hideEvent(eventView: EventView2)
+        if (eventView1Hidden == false){
+            if (eventTypeText1.text?.isEmpty)!{
+                hideEvent(eventView: EventView1)
+                eventView1Hidden = true
+            }
         }
-        if (eventTypeText3.text?.isEmpty)!{
-            hideEvent(eventView: EventView3)
+        if (eventView2Hidden == false){
+            if (eventTypeText2.text?.isEmpty)!{
+                hideEvent(eventView: EventView2)
+                eventView2Hidden = true
+            }
         }
-        if (eventTypeText4.text?.isEmpty)!{
-            hideEvent(eventView: EventView4)
+        if (eventView3Hidden == false){
+            if (eventTypeText3.text?.isEmpty)!{
+                hideEvent(eventView: EventView3)
+                eventView3Hidden = true
+            }
         }
-        if (eventTypeText5.text?.isEmpty)!{
-            hideEvent(eventView: EventView5)
+        if (eventView4Hidden == false){
+            if (eventTypeText4.text?.isEmpty)!{
+                hideEvent(eventView: EventView4)
+                eventView4Hidden = true
+            }
+        }
+        if (eventView5Hidden == false){
+            if (eventTypeText5.text?.isEmpty)!{
+                hideEvent(eventView: EventView5)
+                eventView5Hidden = true
+            }
         }
     }
 
     func hideEvent(eventView: UIView){
-        
-        var locationColor = eventView.viewWithTag(1)
+                var locationColor = eventView.viewWithTag(1)
         locationColor?.removeFromSuperview()
         
         var locationView = eventView.viewWithTag(2) as! UILabel
@@ -959,27 +1012,37 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         customNotesText.frame.size.height = screenSize.height
     }
     
-    @IBAction func clickedOnEvent(_ sender: UITextField) {
+    @objc func clickedOnEvent(sender: UITapGestureRecognizer) {
         
-        sender.resignFirstResponder()
-        let scheduleText = attendedHandle.removeIcons(text: sender.text!);
+        var eventString = ""
+        if (sender.view?.tag == 51){
+            eventString = "event1";
         
-        print ("scheduleIndex = \(scheduleText)")
-        let location = scheduleIndex[scheduleText]!["location"]
-        let startTime = scheduleIndex[scheduleText]!["startTime"]
-        let eventType = scheduleIndex[scheduleText]!["eventType"]
+        } else if (sender.view?.tag == 52){
+            eventString = "event2";
+        
+        } else if (sender.view?.tag == 53){
+            eventString = "event3";
+
+        } else if (sender.view?.tag == 54){
+            eventString = "event4";
+
+        } else if (sender.view?.tag == 55){
+            eventString = "event5";
+        }
+
+        let location = scheduleIndex[eventString]!["location"]
+        let startTime = scheduleIndex[eventString]!["startTime"]
+        let eventType = scheduleIndex[eventString]!["eventType"]
         
         let status = attendedHandle.addShowsAttended(band: bandName, location: location!, startTime: startTime!, eventType: eventType!,eventYearString: String(eventYear));
         
-        let message = attendedHandle.setShowsAttendedStatus(sender,status: status);
-        
-        sender.halfTextColorChange(fullText: sender.text!, changeText: location!, locationColor: getVenueColor(venue: location!))
-        
-        let eventImage = getAttendedIcons(attendedStatus: status)
-        
-        updateEventImage(sender: sender, eventImage: eventImage)
+        let empty : UITextField = UITextField();
+        let message = attendedHandle.setShowsAttendedStatus(empty,status: status);
         
         ToastMessages(message).show(self, cellLocation: self.view.frame)
+
+        showFullSchedule ()
     }
     
     func updateEventImage(sender: UITextField, eventImage: UIImage) {

@@ -42,7 +42,7 @@
                                 <edgeInsets key="layoutMargins" top="0.0" left="0.0" bottom="0.0" right="0.0"/>
                                 <preferredSymbolConfiguration key="preferredSymbolConfiguration" scale="default"/>
                             </imageView>
-                            <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KT1-tz-CRu" userLabel="EventView1">
+                            <view tag="51" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KT1-tz-CRu" userLabel="EventView1">
                                 <rect key="frame" x="14" y="174" width="386" height="50"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aBV-6s-syy" userLabel="locationColor1">
@@ -166,7 +166,7 @@
                                     <constraint firstItem="cvO-ma-yYj" firstAttribute="top" secondItem="0to-rS-1a7" secondAttribute="bottom" id="z1J-NC-5y6"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kQu-xV-0IC" userLabel="EventView2">
+                            <view tag="52" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="kQu-xV-0IC" userLabel="EventView2">
                                 <rect key="frame" x="14" y="224" width="386" height="50"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AiA-9g-cbK" userLabel="locationColor2">
@@ -290,7 +290,7 @@
                                     <constraint firstItem="Ann-cl-V9v" firstAttribute="bottom" secondItem="fde-DP-m3b" secondAttribute="bottom" id="zk5-70-EiY"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="u8K-qt-J6y" userLabel="EventView3">
+                            <view tag="53" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="u8K-qt-J6y" userLabel="EventView3">
                                 <rect key="frame" x="14" y="274" width="386" height="50"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PaM-hS-PIA" userLabel="locationColor3">
@@ -415,7 +415,7 @@
                                     <constraint firstItem="Fw4-zs-flD" firstAttribute="firstBaseline" secondItem="lBU-bg-1HA" secondAttribute="firstBaseline" constant="3" id="z1l-bo-75D"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Xw6-E5-ecm" userLabel="EventView4">
+                            <view tag="54" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Xw6-E5-ecm" userLabel="EventView4">
                                 <rect key="frame" x="14" y="324" width="386" height="50"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KLe-nf-iZw" userLabel="locationColor4">
@@ -540,7 +540,7 @@
                                     <constraint firstItem="LVb-gQ-ZJj" firstAttribute="leading" secondItem="zG9-20-I3G" secondAttribute="leading" id="zLY-PI-zD9"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="d9h-A4-voG" userLabel="EventView5">
+                            <view tag="55" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="d9h-A4-voG" userLabel="EventView5">
                                 <rect key="frame" x="14" y="374" width="386" height="0.0"/>
                                 <subviews>
                                     <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ird-li-hM8" userLabel="locationColor5">
