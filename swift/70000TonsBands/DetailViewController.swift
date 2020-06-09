@@ -24,10 +24,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var linkViewNumber = CGFloat(0)
     var dataViewNumber = CGFloat(0)
     var notesViewNumber = CGFloat(0)
+    var noteHeightMove = 49
     
     var mainConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     var notesViewConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     
+    var everyOtherFlag = true
     
     @IBOutlet weak var vistLinksLable: UILabel!
     @IBOutlet weak var officialUrlButton: UIButton!
@@ -183,6 +185,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         Genre.isHidden = false
         NoteWorthy.isHidden = false
         
+        if (everyOtherFlag == false){
+            noteHeightMove = 51
+            everyOtherFlag = true
+        } else {
+            noteHeightMove = 49
+            everyOtherFlag = false
+        }
+        
         if (eventView1Hidden == true){
             restoreEvents(eventView: EventView1, eventIndex: "event1")
             eventView1Hidden = false
@@ -304,6 +314,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             linkGroup.isHidden = true
             vistLinksLable.isHidden = true;
             LinksSection.isHidden = true;
+        } else {
+            officialUrlButton.isHidden = false;
+            wikipediaUrlButton.isHidden = false;
+            youtubeUrlButton.isHidden = false;
+            metalArchivesButton.isHidden = false;
+            linkGroup.isHidden = false
+            vistLinksLable.isHidden = false;
+            LinksSection.isHidden = false;
         }
     }
   
@@ -999,9 +1017,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         var eventTypeText = eventView.viewWithTag(3) as! UILabel
         eventTypeText.text = ""
         
-        self.linkViewTopSpacingConstraint.constant = self.linkViewTopSpacingConstraint.constant + 50
+        self.notesViewTopSpacingConstraint.constant =  self.notesViewTopSpacingConstraint.constant + CGFloat(noteHeightMove)
         self.dataViewTopSpacingConstraint.constant = self.dataViewTopSpacingConstraint.constant + 50
-        self.notesViewTopSpacingConstraint.constant =  self.notesViewTopSpacingConstraint.constant + 49
+        self.linkViewTopSpacingConstraint.constant = self.linkViewTopSpacingConstraint.constant + 50
+        
     }
     
     func restorEvent(eventView: UIView, eventIndex: String, fieldIndex: String){
