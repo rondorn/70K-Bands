@@ -848,7 +848,7 @@
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="KT1-tz-CRu" secondAttribute="leading" id="5hu-E8-QoX"/>
                             <constraint firstItem="xFH-H2-L3J" firstAttribute="leading" secondItem="svH-Pt-448" secondAttribute="leadingMargin" constant="-6" id="6Mw-Qn-uqj"/>
                             <constraint firstItem="GAO-Cl-Wes" firstAttribute="top" secondItem="lEP-z4-PfZ" secondAttribute="bottom" constant="8" symbolic="YES" id="9Wp-e0-Zkr"/>
-                            <constraint firstItem="i1L-g3-deM" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="bottom" priority="250" constant="-1.5" id="C1H-Yp-HTa"/>
+                            <constraint firstItem="i1L-g3-deM" firstAttribute="top" secondItem="klk-SA-oTX" secondAttribute="bottom" priority="250" id="C1H-Yp-HTa"/>
                             <constraint firstItem="kQu-xV-0IC" firstAttribute="trailing" secondItem="u8K-qt-J6y" secondAttribute="trailing" id="DHU-CU-PbZ"/>
                             <constraint firstItem="klk-SA-oTX" firstAttribute="top" secondItem="uaF-dJ-7Dc" secondAttribute="bottom" priority="250" id="EFJ-j3-L5m"/>
                             <constraint firstItem="uaF-dJ-7Dc" firstAttribute="top" secondItem="d9h-A4-voG" secondAttribute="bottom" priority="250" constant="27" id="F2x-Xp-fK1"/>
@@ -893,7 +893,6 @@
                         <outlet property="EventView4" destination="Xw6-E5-ecm" id="Dvc-8M-8XH"/>
                         <outlet property="EventView5" destination="d9h-A4-voG" id="0N1-2G-O4a"/>
                         <outlet property="Genre" destination="NIR-Ul-YFm" id="POq-4h-2uF"/>
-                        <outlet property="Links" destination="uaF-dJ-7Dc" id="g9J-jd-zOh"/>
                         <outlet property="LinksSection" destination="uaF-dJ-7Dc" id="IRM-8t-Rvw"/>
                         <outlet property="NoteWorthy" destination="auh-JV-Kjw" id="Zye-0x-izb"/>
                         <outlet property="PriorityIcon" destination="Ryr-rp-o9R" id="tqR-r6-Jci"/>
@@ -903,6 +902,7 @@
                         <outlet property="extraData" destination="klk-SA-oTX" id="PJL-jI-waj"/>
                         <outlet property="linkGroup" destination="cNj-Lf-NzH" id="Fxi-e5-NNs"/>
                         <outlet property="linkViewTopSpacingConstraint" destination="3Z5-8u-uAh" id="Inq-Tn-X53"/>
+                        <outlet property="mainView" destination="svH-Pt-448" id="Ghv-gX-ziX"/>
                         <outlet property="metalArchivesButton" destination="6Zv-yV-wLQ" id="7Gp-MG-Dkb"/>
                         <outlet property="notesSection" destination="i1L-g3-deM" id="Iip-Yu-e8d"/>
                         <outlet property="notesViewTopSpacingConstraint" destination="ZPB-Ha-aXl" id="ima-Zt-CDa"/>
