@@ -164,8 +164,21 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)
             
             setupEventAttendClicks()
-            
+            setupSwipeGenstures()
+            customNotesText.isScrollEnabled = false
         }
+        
+    }
+    
+    func setupSwipeGenstures(){
+        
+        var swipeRight = UISwipeGestureRecognizer(target: self, action: "swipeRightAction:")
+        swipeRight.direction = UISwipeGestureRecognizer.Direction.right
+        self.mainView.addGestureRecognizer(swipeRight)
+        
+        var swipeLeft = UISwipeGestureRecognizer(target: self, action: "swipeLeftAction:")
+        swipeLeft.direction = UISwipeGestureRecognizer.Direction.left
+        self.mainView.addGestureRecognizer(swipeLeft)
         
     }
     
@@ -180,6 +193,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         wikipediaUrlButton.isHidden = false
         youtubeUrlButton.isHidden = false
         metalArchivesButton.isHidden = false
+        
+        disableLinksWithEmptyData()
         
         Country.isHidden = false
         Genre.isHidden = false
@@ -409,6 +424,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func loadComments(){
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
         customNotesText.textColor = UIColor.white
+        customNotesText.isScrollEnabled = true
         setNotesHeight()
     }
     
@@ -699,7 +715,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             } else {
                 message = NSLocalizedString("AlreadyAtStart", comment: "");
             }
-            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
         } else {
             message = translatedDirection + "-" + nextBandName
         
@@ -707,7 +723,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             bandSelected = nextBandName
             bandName = nextBandName
             
-            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
             
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
                 
@@ -1021,6 +1037,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         self.dataViewTopSpacingConstraint.constant = self.dataViewTopSpacingConstraint.constant + 50
         self.linkViewTopSpacingConstraint.constant = self.linkViewTopSpacingConstraint.constant + 50
         
+        
     }
     
     func restorEvent(eventView: UIView, eventIndex: String, fieldIndex: String){
@@ -1161,7 +1178,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let empty : UITextField = UITextField();
         let message = attendedHandle.setShowsAttendedStatus(empty,status: status);
         
-        ToastMessages(message).show(self, cellLocation: self.view.frame)
+        ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
 
         showFullSchedule ()
     }
