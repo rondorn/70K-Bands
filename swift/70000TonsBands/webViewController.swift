@@ -36,7 +36,7 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         print ("Loading url of " + url)
         let requestURL = URL(string: url)
         
-        ToastMessages(webMessageHelp).show(self, cellLocation: self.view.frame)
+        ToastMessages(webMessageHelp).show(self, cellLocation: self.view.frame, heightValue: 8)
         webMessageHelp = String()
         if (requestURL != nil){
             let request = URLRequest(url: requestURL!)

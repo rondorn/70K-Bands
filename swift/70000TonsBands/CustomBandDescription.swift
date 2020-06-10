@@ -163,54 +163,56 @@ open class CustomBandDescription {
             }
             
             //bandDescriptionLock.sync() {
-                if (bandDescriptionUrl.index(forKey: bandName) != nil && bandDescriptionUrl[bandName] != nil){
+            if (bandDescriptionUrl.index(forKey: bandName) != nil && bandDescriptionUrl[bandName] != nil){
+                
+                print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
-                    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    var url = self.bandDescriptionUrl[bandName]!
+                    let httpData = getUrlData(urlString: url);
+                    print ("Trying to download comment from url \(httpData)")
+                    //do not write if we are getting 404 error
+                    if (httpData.starts(with: "<!DOCTYPE") == false){
+                        commentText = httpData;
+                        print ("commentFile text is '" + commentText + "'")
                         
-                        var url = self.bandDescriptionUrl[bandName]!
-                        let httpData = getUrlData(urlString: url);
-                        print ("Trying to download comment from url \(httpData)")
-                        //do not write if we are getting 404 error
-                        if (httpData.starts(with: "<!DOCTYPE") == false){
-                            commentText = httpData;
-                            print ("commentFile text is '" + commentText + "'")
+                        print ("Wrote commentFile for \(bandName) " + commentText)
+                        do {
+                            try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                            self.writeUrlFile(bandName: bandName, descriptionUrl: url)
                             
-                            print ("Wrote commentFile for \(bandName) " + commentText)
-                            do {
-                                try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
-                                self.writeUrlFile(bandName: bandName, descriptionUrl: url)
-                                
-                            } catch {
-                                print("commentFile " + error.localizedDescription)
-                            }
+                        } catch {
+                            print("commentFile " + error.localizedDescription)
                         }
                     }
                 }
-            } else {
-                print ("No URL for band \(bandName) - \(commentFile)")
-            if FileManager.default.fileExists(atPath: commentFile.path){
-                    print ("No URL for band \(bandName) - file exists")
-                } else {
-                    print ("No URL for band \(bandName) - file does not exists")
-                }
-            
             }
-            
+        } else {
+            print ("No URL for band \(bandName) - \(commentFile)")
+        if FileManager.default.fileExists(atPath: commentFile.path){
+                print ("No URL for band \(bandName) - file exists")
+            } else {
+                print ("No URL for band \(bandName) - file does not exists")
+            }
+        
+        }
+        
 
-            if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-                if (data.count > 2){
-                    commentText = data
-                } else {
-                    print ("No URL for band  What happened here - \(data)")
-                }
+        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
+            if (data.count > 2){
+                commentText = data
             } else {
-                    print ("No URL for band  What happened here")
+                print ("No URL for band  What happened here - \(data)")
             }
-            
-            
-            commentText = removeSpecialCharsFromString(text: commentText)
-        //}
+        } else {
+                print ("No URL for band  What happened here")
+        }
+        
+        
+        commentText = removeSpecialCharsFromString(text: commentText)
+        //remove leading space
+        commentText = commentText.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
+ 
         return commentText;
     }
     
