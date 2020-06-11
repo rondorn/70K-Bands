@@ -564,99 +564,90 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     func swipeNextRecord(direction: String){
-        
+            
+        var loopThroughBandList = [String]()
+        var previousInLoop = ""
         var bandNameNext = ""
-        var bandNameIndex = ""
-        var timeIndex = "";
-        var last = false;
-        var scheduleMatch = false;
+        var timeView = true
         
-        var sizeBands = bands.count;
-        var counter = 0;
-        
-        if (currentBandList.count == 0){
+        //build universal list of bands for all view types
+        for index in currentBandList {
             
+            var bandInIndex = getBandFromIndex(index: index)
+            
+            //disallow back to back duplicates
+            if (bandInIndex == previousInLoop){
+                continue
+            }
+            previousInLoop = bandInIndex
+            
+            loopThroughBandList.append(bandInIndex)
+            
+            //determine if time applies here
+            var indexSplit = index.components(separatedBy: ":")
+            if (indexSplit.count == 1){
+                timeView = false
+            }
         }
-        for band in currentBandList {
+        
+        //find where in list
+        var counter = 0
+        let sizeBands = loopThroughBandList.count
+        for index in loopThroughBandList{
             
-            print ("swipeAction bandName - \(band)")
+            var indexSplit = index.components(separatedBy: ":")
+            var bandNamefromIndex = indexSplit[1]
+            var timeIndex = indexSplit[0]
+            var scheduleIndex = timeIndexMap[index]
+            
             counter = counter + 1
-            var indexSplit = band.components(separatedBy: ":")
-            var currentBandInLoop = bandNameFromIndex(index: band)
-                        
-            if (indexSplit.count >= 1){
-                if (indexSplit[0].isNumeric == true){
-                    if (timeIndexMap[band] == eventSelectedIndex){
-                        if (sizeBands != counter){
-                            if (direction == "Previous"){
-                                counter = counter - 2;
-                                if (counter > -1){
-                                    eventSelectedIndex = timeIndexMap[currentBandList[counter]]!
-                                    bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-                                }
-                            } else {
-                                print ("swipeAction Next - bandNameNext = \(timeIndexMap[currentBandList[counter]]) bandName = \(currentBandList[counter]) - \(currentBandList.count) = \(counter)")
-                                if (counter < sizeBands){
-                                    eventSelectedIndex = timeIndexMap[currentBandList[counter]]!
-                                    bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-                                }
-                            }
-                        }
-                        break
+            
+            print ("Checking next bandName \(eventSelectedIndex) == \(scheduleIndex) && \(bandNamefromIndex) == \(bandName)")
+            if ((eventSelectedIndex == scheduleIndex || timeIndex == "0") && bandNamefromIndex == bandName){
+                print ("Checking next bandName size \(sizeBands) == \(counter)")
+                if (direction == "Previous"){
+                    counter = counter - 2;
+                    if (counter > -1){
+                        var nextIndex = getBandFromIndex(index: loopThroughBandList[counter])
+                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
+                        var bandNamefromIndex =  nextIndex.components(separatedBy: ":")
+                        bandNameNext = bandNamefromIndex[1]
+                        print ("Checking next bandName Previous \(nextIndex) - \(eventSelectedIndex) - \(bandNamefromIndex) - \(bandNameNext)")
                     }
                 } else {
-                    if (currentBandInLoop == bandName){
-                        if (direction == "Previous"){
-                            counter = counter - 2;
-                            if (counter > -1){
-                                 bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-                             }
-                        } else {
-                            if (counter < sizeBands){
-                                 bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-                             }
-                        }
-                        break
-                    }
-                }
-            } else {
-            
-                if (currentBandInLoop == bandName){
-                    if (direction == "Previous"){
-                        counter = counter - 2;
-                        if (counter > -1){
-                            bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-                        }
-
-                    }
                     if (counter < sizeBands){
-                        bandNameNext = bandNameFromIndex(index: currentBandList[counter])
+                        var nextIndex = getBandFromIndex(index: loopThroughBandList[counter])
+                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
+                        var bandNamefromIndex =  nextIndex.components(separatedBy: ":")
+                        bandNameNext = bandNamefromIndex[1]
+                        print ("Checking next bandName Next \(nextIndex) - \(eventSelectedIndex) - \(bandNamefromIndex) - \(bandNameNext)")
                     }
-                    break
                 }
             }
         }
-        print ("swipeAction \(direction) - bandNameNext = \(bandNameNext) bandName = \(bandName)")
-        while (bandNameNext == bandName){
-            if (direction == "Next"){
-                counter = counter + 1
-            } else {
-                counter = counter - 1
-            }
-            print ("swipeRightAction - counter = \(counter) sizeBands = \(sizeBands)")
-            if (counter <= (sizeBands - 1)){
-                bandNameNext = bandNameFromIndex(index: currentBandList[counter])
-            } else {
-                counter = sizeBands
-            }
-            
-        }
-        if (counter == sizeBands || counter < 0){
-            bandNameNext = ""
-        }
+        
+        print ("Checking next bandName Found \(eventSelectedIndex) - \(bandNameNext)")
         jumpToNextOrPreviousScreen(nextBandName: bandNameNext, direction: direction)
     }
-
+    
+    func getBandFromIndex(index: String)->String{
+        
+        var bandInIndex = ""
+        var indexSplit = index.components(separatedBy: ":")
+        
+        if (indexSplit.count == 1){
+            bandInIndex = "0:" + index
+        
+        } else if (indexSplit[0].isNumeric == true){
+            bandInIndex = indexSplit[0] + ":" + indexSplit[1]
+            
+        } else if (indexSplit[1].isNumeric == true){
+            bandInIndex = "0:" + indexSplit[0]
+        }
+        
+        return bandInIndex
+    }
+    
     func bandNameFromIndex(index :String) -> String{
         
         var bandName = index;
