@@ -104,8 +104,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             notesViewNumber = notesViewTopSpacingConstraint.constant
             dataViewNumber = dataViewTopSpacingConstraint.constant
             print ("Notes hight is \(notesViewNumber) 1")
+            print ("Notes hight is \(linkViewNumber) 1-linkViewNumber")
+            print ("Notes hight is \(dataViewNumber) 1-dataViewNumber")
         }
         print ("Notes hight is \(notesViewNumber) 2")
+        print ("Notes hight is \(linkViewNumber) 2-linkViewNumber")
+        print ("Notes hight is \(dataViewNumber) 2-dataViewNumber")
         customNotesText.textColor = UIColor.white
         
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
@@ -169,6 +173,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setupEventAttendClicks()
             setupSwipeGenstures()
             customNotesText.setContentOffset(.zero, animated: true)
+            customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
         }
         
     }
@@ -209,10 +214,14 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             everyOtherFlag = true
             notesViewTopSpacingConstraint.constant = notesViewNumber + 1
             print ("Notes hight is \(notesViewNumber) 3")
+            print ("Notes hight is \(linkViewNumber) 3-linkViewNumber")
+            print ("Notes hight is \(dataViewNumber) 3-dataViewNumber")
         } else {
             everyOtherFlag = false
             notesViewTopSpacingConstraint.constant = notesViewNumber - 1
             print ("Notes hight is \(notesViewNumber) 4")
+            print ("Notes hight is \(linkViewNumber) 4-linkViewNumber")
+            print ("Notes hight is \(dataViewNumber) 4-dataViewNumber")
         }
         
         if (eventView1Hidden == true){
@@ -307,17 +316,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 self.bandLogo.contentMode = UIView.ContentMode.top
                 self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             }
+            customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
             self.bandLogo.sizeToFit()
         } else {
             
-            self.customNotesText.textContainerInset = UIEdgeInsets(top: 50, left: 0, bottom: 5, right: 0)
+            //self.customNotesText.textContainerInset = UIEdgeInsets(top: 50, left: 0, bottom: 5, right: 0)
+            customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
             self.bandLogo.contentMode = UIView.ContentMode.top
             self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
             self.bandLogo.sizeToFit()
         }
         
         if (eventCount <= 1){
-            customNotesText.frame.size.height = screenSize.height * 0.47
+            //customNotesText.frame.size.height = screenSize.height * 0.47
+            //customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
         }
         
         self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
@@ -336,7 +348,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             linkGroup.isHidden = true
             vistLinksLable.isHidden = true;
             LinksSection.isHidden = true;
-            notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 66
+            notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 65
         } else {
             officialUrlButton.isHidden = false;
             wikipediaUrlButton.isHidden = false;
@@ -353,35 +365,47 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (UIApplication.shared.statusBarOrientation  == .portrait ||
             UIDevice.current.userInterfaceIdiom == .pad){
             
+            var allDetailsHidden = true
             let bandCountry = bandNameHandle.getBandCountry(bandName)
             print ("Band County is \(bandCountry)")
             if (bandCountry.isEmpty == true){
                 Country.text = "";
                 Country.isHidden = true
                 extraData.isHidden = true
+
             } else {
                 Country.text = "Country:\t" + bandCountry
                 Country.isHidden = false
+                allDetailsHidden = false
             }
             
             let bandGenre = bandNameHandle.getBandGenre(bandName)
             if (bandGenre.isEmpty == true){
                 Genre.text = ""
                 Genre.isHidden = true
-            
+
             } else {
                 Genre.text = "Genre:\t" + bandGenre
                 Genre.isHidden = false
-            
+                allDetailsHidden = false
             }
             
             let bandNoteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
             if (bandNoteWorthy.isEmpty == true){
                 NoteWorthy.text = ""
                 NoteWorthy.isHidden = true
+
             } else {
                 NoteWorthy.text = "Note:\t" + bandNoteWorthy
                 NoteWorthy.isHidden = false
+                allDetailsHidden = false
+            }
+            
+            if (allDetailsHidden == true){
+                extraData.isHidden = true
+                //notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 20
+            } else {
+                extraData.isHidden = false
             }
             
         } else if (UIDevice.current.userInterfaceIdiom == .phone) {
@@ -605,6 +629,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             var indexSplit = index.components(separatedBy: ":")
             var bandNamefromIndex = indexSplit[1]
             var timeIndex = indexSplit[0]
+
             var scheduleIndex = timeIndexMap[index]
             
             counter = counter + 1
@@ -1021,9 +1046,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func hideEvent(eventView: UIView, eventIndex: String){
 
         eventView.isHidden = true
-        linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant - 50
-        dataViewTopSpacingConstraint.constant = dataViewTopSpacingConstraint.constant - 50
-        notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 50
+        linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant - 40
+        dataViewTopSpacingConstraint.constant = dataViewTopSpacingConstraint.constant - 40
+        notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 40
     }
     
     override func didReceiveMemoryWarning() {
