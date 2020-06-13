@@ -24,7 +24,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var linkViewNumber = CGFloat(0)
     var dataViewNumber = CGFloat(0)
     var notesViewNumber = CGFloat(0)
-    var noteHeightMove = 49
     
     var mainConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     var notesViewConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
@@ -68,9 +67,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var eventView4Hidden = false
     var eventView5Hidden = false
     
-    var eventRestoreMap:[String:[String:UIView]] = [String:[String:UIView]]();
-    var constraintRestoreMap:[String:[String:[NSLayoutConstraint]]] = [String:[String:[NSLayoutConstraint]]]();
-    
     var backgroundNotesText = "";
     var bandName :String!
     var schedule = scheduleHandler()
@@ -103,6 +99,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
+        if (linkViewNumber == 0){
+            linkViewNumber = linkViewTopSpacingConstraint.constant
+            notesViewNumber = notesViewTopSpacingConstraint.constant
+            dataViewNumber = dataViewTopSpacingConstraint.constant
+            print ("Notes hight is \(notesViewNumber) 1")
+        }
+        print ("Notes hight is \(notesViewNumber) 2")
         customNotesText.textColor = UIColor.white
         
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
@@ -165,7 +168,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             setupEventAttendClicks()
             setupSwipeGenstures()
-            customNotesText.isScrollEnabled = false
+            customNotesText.setContentOffset(.zero, animated: true)
         }
         
     }
@@ -200,45 +203,49 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         Genre.isHidden = false
         NoteWorthy.isHidden = false
         
+        dataViewTopSpacingConstraint.constant = dataViewNumber
+        linkViewTopSpacingConstraint.constant = linkViewNumber
         if (everyOtherFlag == false){
-            noteHeightMove = 51
             everyOtherFlag = true
+            notesViewTopSpacingConstraint.constant = notesViewNumber + 1
+            print ("Notes hight is \(notesViewNumber) 3")
         } else {
-            noteHeightMove = 49
             everyOtherFlag = false
+            notesViewTopSpacingConstraint.constant = notesViewNumber - 1
+            print ("Notes hight is \(notesViewNumber) 4")
         }
         
         if (eventView1Hidden == true){
-            restoreEvents(eventView: EventView1, eventIndex: "event1")
+            EventView1.isHidden = false
             eventView1Hidden = false
         } else {
             var eventTypeText1 = EventView1.viewWithTag(3) as! UILabel
             eventTypeText1.text = ""
         }
+        
         if (eventView2Hidden == true){
-            restoreEvents(eventView: EventView2, eventIndex: "event2")
+            EventView2.isHidden = false
             eventView2Hidden = false
         } else {
-            
             var eventTypeText2 = EventView2.viewWithTag(3) as! UILabel
             eventTypeText2.text = ""
         }
         if (eventView3Hidden == true){
-            restoreEvents(eventView: EventView3, eventIndex: "event3")
+            EventView3.isHidden = false
             eventView3Hidden = false
         } else {
             var eventTypeText3 = EventView3.viewWithTag(3) as! UILabel
             eventTypeText3.text = ""
         }
         if (eventView4Hidden == true){
-            restoreEvents(eventView: EventView4, eventIndex: "event4")
+            EventView4.isHidden = false
             eventView4Hidden = false
         } else {
             var eventTypeText4 = EventView4.viewWithTag(3) as! UILabel
             eventTypeText4.text = ""
         }
         if (eventView5Hidden == true){
-            restoreEvents(eventView: EventView5, eventIndex: "event5")
+            EventView5.isHidden = false
             eventView5Hidden = false
         } else {
             var eventTypeText5 = EventView5.viewWithTag(3) as! UILabel
@@ -329,6 +336,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             linkGroup.isHidden = true
             vistLinksLable.isHidden = true;
             LinksSection.isHidden = true;
+            notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 66
         } else {
             officialUrlButton.isHidden = false;
             wikipediaUrlButton.isHidden = false;
@@ -424,7 +432,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func loadComments(){
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
         customNotesText.textColor = UIColor.white
-        customNotesText.isScrollEnabled = true
         setNotesHeight()
     }
     
@@ -1007,95 +1014,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func restoreEvents(eventView: UIView, eventIndex: String){
         
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "locationColor")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "locationView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "eventTypeText")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "attendedView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "eventTypeImageView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "startTimeView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "endTimeView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "dayLabelView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "dayView")
-        restorEvent(eventView: eventView, eventIndex: eventIndex, fieldIndex: "notesView")
+        eventView.isHidden = false
         
-        let currentConstraints = constraintRestoreMap[eventIndex]?[eventIndex]
-        eventView.addConstraints(currentConstraints!)
-        
-        var eventTypeText = eventView.viewWithTag(3) as! UILabel
-        eventTypeText.text = ""
-        
-        self.notesViewTopSpacingConstraint.constant =  self.notesViewTopSpacingConstraint.constant + CGFloat(noteHeightMove)
-        self.dataViewTopSpacingConstraint.constant = self.dataViewTopSpacingConstraint.constant + 50
-        self.linkViewTopSpacingConstraint.constant = self.linkViewTopSpacingConstraint.constant + 50
-        
-        
-    }
-    
-    func restorEvent(eventView: UIView, eventIndex: String, fieldIndex: String){
-        
-        let currentView = eventRestoreMap[eventIndex]?[fieldIndex]
-        let currentConstraints = constraintRestoreMap[eventIndex]?[fieldIndex]
-        currentView?.addConstraints(currentConstraints!)
-        eventView.addSubview(currentView!)
     }
     
     func hideEvent(eventView: UIView, eventIndex: String){
-        
-        eventRestoreMap[eventIndex] = [String:UIView]();
-        constraintRestoreMap[eventIndex] = [String:[NSLayoutConstraint]]();
-        
-        constraintRestoreMap[eventIndex]?[eventIndex] = eventView.constraints
-        
-        var locationColor = eventView.viewWithTag(1)
-        eventRestoreMap[eventIndex]?["locationColor"] = locationColor;
-        constraintRestoreMap[eventIndex]?["locationColor"] = locationColor?.constraints
-        locationColor?.removeFromSuperview()
-        
-        var locationView = eventView.viewWithTag(2) as! UILabel
-        eventRestoreMap[eventIndex]?["locationView"] = locationView;
-        constraintRestoreMap[eventIndex]?["locationView"] = locationView.constraints
-        locationView.removeFromSuperview()
-        
-        let eventTypeText = eventView.viewWithTag(3)  as! UILabel
-        eventRestoreMap[eventIndex]?["eventTypeText"] = eventTypeText;
-        constraintRestoreMap[eventIndex]?["eventTypeText"] = eventTypeText.constraints
-        eventTypeText.removeFromSuperview()
-        
-        let attendedView = eventView.viewWithTag(4) as! UIImageView
-        eventRestoreMap[eventIndex]?["attendedView"] = attendedView;
-        constraintRestoreMap[eventIndex]?["attendedView"] = attendedView.constraints
-        attendedView.removeFromSuperview()
-        
-        let eventTypeImageView = eventView.viewWithTag(5) as! UIImageView
-        eventRestoreMap[eventIndex]?["eventTypeImageView"] = eventTypeImageView;
-        constraintRestoreMap[eventIndex]?["eventTypeImageView"] = eventTypeImageView.constraints
-        eventTypeImageView.removeFromSuperview()
-        
-        let startTimeView = eventView.viewWithTag(6) as! UILabel
-        eventRestoreMap[eventIndex]?["startTimeView"] = startTimeView;
-        constraintRestoreMap[eventIndex]?["startTimeView"] = startTimeView.constraints
-        startTimeView.removeFromSuperview()
-        
-        let endTimeView = eventView.viewWithTag(7) as! UILabel
-        eventRestoreMap[eventIndex]?["endTimeView"] = endTimeView;
-        constraintRestoreMap[eventIndex]?["endTimeView"] = endTimeView.constraints
-        endTimeView.removeFromSuperview()
-        
-        let dayLabelView = eventView.viewWithTag(8) as! UILabel
-        eventRestoreMap[eventIndex]?["dayLabelView"] = dayLabelView;
-        constraintRestoreMap[eventIndex]?["dayLabelView"] = dayLabelView.constraints
-        dayLabelView.removeFromSuperview()
-        
-        let dayView = eventView.viewWithTag(9) as! UILabel
-        eventRestoreMap[eventIndex]?["dayView"] = dayView;
-        constraintRestoreMap[eventIndex]?["dayView"] = dayView.constraints
-        dayView.removeFromSuperview()
-        
-        let notesView = eventView.viewWithTag(10) as! UILabel
-        eventRestoreMap[eventIndex]?["notesView"] = notesView;
-        constraintRestoreMap[eventIndex]?["notesView"] = notesView.constraints
-        notesView.removeFromSuperview()
-        
+
+        eventView.isHidden = true
         linkViewTopSpacingConstraint.constant = linkViewTopSpacingConstraint.constant - 50
         dataViewTopSpacingConstraint.constant = dataViewTopSpacingConstraint.constant - 50
         notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 50
