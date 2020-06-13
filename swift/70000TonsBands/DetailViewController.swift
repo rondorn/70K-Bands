@@ -994,7 +994,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let notesView = eventView.viewWithTag(10) as! UILabel
         notesView.textColor = UIColor.lightGray
         notesView.text = notes
-
+        
+        eventView.frame = CGRect(x: 14 , y: 173, width: 386, height: 40)
+        locationColor!.frame = CGRect(x: 0 , y: 0, width: 4, height: 40)
+        locationView.frame = CGRect(x: 5 , y: 0, width: 236, height: 20)
+        eventTypeText.frame = CGRect(x: 5 , y: 20, width: 233, height: 10)
+        notesView.frame = CGRect(x: 5 , y: 30, width: 233, height: 10)
+        attendedView.frame = CGRect(x: 241 , y: 0, width: 20, height: 20)
+        eventTypeImageView.frame = CGRect(x: 241 , y: 20, width: 20, height: 20)
+        startTimeView.frame = CGRect(x: 261 , y: 0, width: 93, height: 20)
+        endTimeView.frame = CGRect(x: 251 , y: 20, width: 93, height: 20)
+        dayLabelView.frame = CGRect(x: 361 , y: 0, width: 25, height: 20)
+        dayView.frame = CGRect(x: 361 , y: 20, width: 25, height: 20)
     }
     
     func hideEmptyData() {
