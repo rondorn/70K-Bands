@@ -35,20 +35,25 @@ class ToastMessages : UILabel {
 
     }
     
-    public func show(_ parent: UIViewController, heightValue: CGFloat) {
+    public func show(_ parent: UIViewController, placeHigh: Bool) {
         
-        show(parent,cellLocation: ToastMessages.cellLocationStore, heightValue: heightValue)
+        show(parent,cellLocation: ToastMessages.cellLocationStore, placeHigh: placeHigh)
     }
     
     
-    public func show(_ parent: UIViewController, cellLocation: CGRect, heightValue: CGFloat) {
+    public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
         //width: UIScreen.main.bounds.width - 2
         print ("ToastMessage = \(cellLocation) - \(text)")
         
-        let heightOffSet = cellLocation.height/heightValue;
+        var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
         
-        frame = CGRect(x: SIDE_MARGIN, y: cellLocation.midY - heightOffSet, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
+        if (placeHigh == true){
+            heightOffSet = 100
+        }
+        
+        print ("heightOffSet is \(heightOffSet)")
+        frame = CGRect(x: SIDE_MARGIN, y: heightOffSet, width: cellLocation.width - 2 * SIDE_MARGIN, height: HEIGHT)
 
         ToastMessages.cellLocationStore = frame
         
@@ -80,7 +85,7 @@ class ToastMessages : UILabel {
             
             if !ToastMessages.queue.isEmpty {
                 let holder = ToastMessages.queue.removeFirst()
-                holder.toast.show(holder.parent, heightValue: 8)
+                holder.toast.show(holder.parent, placeHigh: false)
             }
         })
     }
