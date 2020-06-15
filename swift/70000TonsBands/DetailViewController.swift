@@ -738,7 +738,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             } else {
                 message = NSLocalizedString("AlreadyAtStart", comment: "");
             }
-            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
         } else {
             message = translatedDirection + "-" + nextBandName
         
@@ -746,7 +746,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             bandSelected = nextBandName
             bandName = nextBandName
             
-            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
             
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
                 
@@ -1130,7 +1130,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let empty : UITextField = UITextField();
         let message = attendedHandle.setShowsAttendedStatus(empty,status: status);
         
-        ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+        ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
 
         showFullSchedule ()
     }

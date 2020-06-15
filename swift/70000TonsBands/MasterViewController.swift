@@ -453,11 +453,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             unknownButton.isEnabled = false
             
             let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false)
             
         } else {
             let message = NSLocalizedString("showAttendedFilterFalseHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+            ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
             
             setShowOnlyWillAttened(false)
             willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
@@ -695,12 +695,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let empty : UITextField = UITextField();
                 let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
                 
-                ToastMessages(message).show(self, cellLocation: placementOfCell!, heightValue: 3)
+                ToastMessages(message).show(self, cellLocation: placementOfCell!,  placeHigh: false)
                 isLoadingBandData = false
                 self.quickRefresh()
             } else {
                 let message =  "No Show Is Associated With This Entry"
-                ToastMessages(message).show(self, cellLocation: placementOfCell!, heightValue: 3)
+                ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
             }
         })
         sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
@@ -952,7 +952,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             sortedBy = "name"
         }
         setSortedBy(sortedBy)
-        ToastMessages(message).show(self, cellLocation: self.view.frame, heightValue: 3)
+        ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
         ensureCorrectSorting()
         dataHandle.writeFiltersFile()
         self.tableView.reloadData()
