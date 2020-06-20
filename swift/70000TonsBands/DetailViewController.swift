@@ -589,10 +589,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
         priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
         
+        print ("Setting priorityButtons for \(bandName) - bandPriorityStorage")
+        if (bandPriorityStorage[bandName!] == nil){
+            bandPriorityStorage[bandName!] = 0
+        }
+        
         if (bandPriorityStorage[bandName!] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
             let priorityImageName = getPriorityGraphic(bandPriorityStorage[bandName!]!)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            print ("Setting priorityButtons for \(bandName) - \(priorityImageName)")
         }
     }
     
@@ -765,7 +771,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             bandName = nextBandName
             
             ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
-            
+            print ("Starting animtion")
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
     
                 var frameNotes = self.customNotesText.frame
@@ -817,10 +823,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 self.priorityButtons.frame = framePriorityView
                 
             }, completion: { finished in })
-        
+            
+            print ("Ending animtion")
             detailItem = bandName as AnyObject
             
             self.viewDidLoad()
+            setButtonNames()
             self.viewWillAppear(true)
         }
     }
