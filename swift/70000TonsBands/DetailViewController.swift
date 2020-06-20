@@ -67,6 +67,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var eventView4Hidden = false
     var eventView5Hidden = false
     
+    var blockSwiping = false;
+    
     var backgroundNotesText = "";
     var bandName :String!
     var schedule = scheduleHandler()
@@ -117,16 +119,24 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         attendedHandle.loadShowsAttended()
         if (bandName == nil && bandSelected.isEmpty == false){
             bandName = bandSelected
+            blockSwiping = false
         }
          //print ("bandName is 2 " + bandName)
         
         if ((bandName == nil || bands.isEmpty == true) && bands.count > 0) {
-            var bands = bandNameHandle.getBandNames()
-            print ("bands discovered are \(bands)")
             bandName = bands[0]
             print("Providing default band of " + bandName)
+            blockSwiping = false
+            
         } else if (bandName == nil || bands.isEmpty == true){
-                bandName = "Waiting for Data"
+            bands = bandNameHandle.getBandNames()
+            bandName = bands[0]
+            blockSwiping = true
+        }
+        //catch all if we are still screwed
+        if (bandName == nil || bands.isEmpty == true){
+            bandName = "Waiting for Data"
+            blockSwiping = true
         }
         
         self.title = bandName
@@ -601,6 +611,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         var bandNameNext = ""
         var timeView = true
         
+        //disable swiping if needed
+        if (blockSwiping == true){
+            return
+        }
+        
         //build universal list of bands for all view types
         for index in currentBandList {
             
@@ -629,7 +644,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             var indexSplit = index.components(separatedBy: ":")
             var bandNamefromIndex = indexSplit[1]
             var timeIndex = indexSplit[0]
-
+            
+            if (index == nil){
+                continue;
+            }
             var scheduleIndex = timeIndexMap[index]
             
             counter = counter + 1
