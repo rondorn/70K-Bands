@@ -767,7 +767,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
             
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
-                
+    
                 var frameNotes = self.customNotesText.frame
                 frameNotes.origin.x += animationMovement
                 self.customNotesText.frame = frameNotes
@@ -803,6 +803,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 var frameExtras = self.extraData.frame
                 frameExtras.origin.x += animationMovement
                 self.extraData.frame = frameExtras
+
+                var framePriorityIcon = self.PriorityIcon.frame
+                framePriorityIcon.origin.x += animationMovement
+                self.PriorityIcon.frame = framePriorityIcon
+                
+                var framePriorityButtons = self.priorityButtons.frame
+                framePriorityButtons.origin.x += animationMovement
+                self.priorityButtons.frame = framePriorityButtons
+
+                var framePriorityView = self.priorityButtons.frame
+                framePriorityView.origin.x += animationMovement
+                self.priorityButtons.frame = framePriorityView
                 
             }, completion: { finished in })
         
