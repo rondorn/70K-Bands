@@ -119,6 +119,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
                                                name: Notification.Name("FCMToken"), object: nil)
+        
+        
     }
     
     @objc func displayFCMToken(notification: NSNotification){
@@ -388,8 +390,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
             }
-            //self.bandDescriptions.getDescriptionMapFile();
-            //self.bandDescriptions.getAllDescriptions()
+  
             refreshDataLock = false;
         }
     } 
@@ -533,6 +534,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         quickRefresh()
         
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+    
         
         updateCountLable()
         tableView.reloadData()
@@ -751,7 +753,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        
         setUnknownAction.setIcon(iconImage: UIImage(named: unknownIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         if (eventCount == 0){
