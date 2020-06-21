@@ -654,6 +654,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             if (index == nil){
                 continue;
             }
+            if (isGetFilteredBands == true){
+                while (isGetFilteredBands == true){
+                    print ("Encountred a conflict...need to sleep")
+                    sleep(1);
+                }
+            }
             var scheduleIndex = timeIndexMap[index]
             
             counter = counter + 1
