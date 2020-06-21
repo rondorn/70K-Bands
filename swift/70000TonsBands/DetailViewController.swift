@@ -166,7 +166,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             print ("showFullSchedule");
             showFullSchedule()
             setButtonNames()
-            rotationChecking()
             
             print ("showBandDetails");
             showBandDetails()
@@ -184,6 +183,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setupSwipeGenstures()
             customNotesText.setContentOffset(.zero, animated: true)
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
+            
+            rotationChecking()
         }
         
     }
@@ -334,7 +335,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
             self.bandLogo.contentMode = UIView.ContentMode.top
             self.bandLogo.contentMode = UIView.ContentMode.scaleAspectFit
-            self.bandLogo.sizeToFit()
+            //self.bandLogo.sizeToFit()
         }
         
         if (eventCount <= 1){
@@ -525,36 +526,58 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             //if schdule exists, hide the web links that probably dont work anyway
             //only needed on iPhones. iPads have enought room for both
             
+            print ("schedule.schedulingData[bandName] is \(schedule.schedulingData[bandName])")
             if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
                 
                 LinksSection.isHidden = true
-                LinksSection.sizeToFit()
+
+                vistLinksLable.isHidden = true
+                officialUrlButton.isHidden = true
+                wikipediaUrlButton.isHidden = true
+                youtubeUrlButton.isHidden = true
+                metalArchivesButton.isHidden = true
+            
+                priorityButtons.isHidden = true
+                PriorityIcon.isHidden = true
             }
             
             
             if (UIDevice.current.userInterfaceIdiom == .phone){
                 extraData.isHidden = true
                 extraData.sizeToFit()
-                
                 notesSection.isHidden = true
                 customNotesText.text = "";
                 setNotesHeight()
+
+
             }
             
             imageSizeController(special: "top")
             
-            
         } else {
 
             if (UIDevice.current.userInterfaceIdiom == .phone){
-                LinksSection.isHidden = false
+                
                 extraData.isHidden = false
                 notesSection.isHidden = false
                 
-                LinksSection.sizeToFit()
+                if (bandNameHandle.getofficalPage(bandName).isEmpty == false && bandNameHandle.getofficalPage(bandName) != "Unavailable"){
+                    LinksSection.isHidden = false
+                    vistLinksLable.isHidden = false
+                    officialUrlButton.isHidden = false
+                    wikipediaUrlButton.isHidden = false
+                    youtubeUrlButton.isHidden = false
+                    metalArchivesButton.isHidden = false
+                    LinksSection.sizeToFit()
+                }
+                
                 extraData.sizeToFit()
                 loadComments()
                 
+                priorityButtons.isHidden = false
+                PriorityIcon.isHidden = false
+                
+                //disableLinksWithEmptyData()
             }
             
             imageSizeController(special: "scale")
@@ -1039,7 +1062,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         notesView.textColor = UIColor.lightGray
         notesView.text = notes
         
-        eventView.frame = CGRect(x: 14 , y: 173, width: 386, height: 40)
+        eventView.frame = CGRect(x: 14 , y: 94, width: 386, height: 40)
         locationColor!.frame = CGRect(x: 0 , y: 0, width: 4, height: 40)
         locationView.frame = CGRect(x: 5 , y: 0, width: 236, height: 20)
         eventTypeText.frame = CGRect(x: 5 , y: 20, width: 233, height: 10)
