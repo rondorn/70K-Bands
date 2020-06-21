@@ -525,7 +525,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if(UIApplication.shared.statusBarOrientation  == .landscapeLeft || UIApplication.shared.statusBarOrientation  == .landscapeRight){
             //if schdule exists, hide the web links that probably dont work anyway
             //only needed on iPhones. iPads have enought room for both
-            
+
             print ("schedule.schedulingData[bandName] is \(schedule.schedulingData[bandName])")
             if (schedule.schedulingData[bandName]?.isEmpty == false && UIDevice.current.userInterfaceIdiom == .phone){
                 
@@ -539,6 +539,17 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
                 priorityButtons.isHidden = true
                 PriorityIcon.isHidden = true
+            } else {
+                LinksSection.isHidden = false
+
+                vistLinksLable.isHidden = false
+                officialUrlButton.isHidden = false
+                wikipediaUrlButton.isHidden = false
+                youtubeUrlButton.isHidden = false
+                metalArchivesButton.isHidden = false
+            
+                priorityButtons.isHidden = false
+                PriorityIcon.isHidden = false
             }
             
             
@@ -577,7 +588,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 priorityButtons.isHidden = false
                 PriorityIcon.isHidden = false
                 
-                //disableLinksWithEmptyData()
             }
             
             imageSizeController(special: "scale")
