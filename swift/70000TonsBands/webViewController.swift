@@ -8,29 +8,29 @@
 
 
 import UIKit
+import WebKit
 
-class WebViewController: UIViewController, UIWebViewDelegate {
+class WebViewController: UIViewController, WKNavigationDelegate {
 
-    @IBOutlet weak var webDisplay: UIWebView!
+    @IBOutlet weak var webDisplay: WKWebView!
     
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-    
-    @IBOutlet var swipeRight: UISwipeGestureRecognizer!
-    
-    @IBOutlet var swipeLeft: UISwipeGestureRecognizer!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.webDisplay.delegate = self
+        webDisplay.navigationDelegate = self
         
+        webDisplay.allowsBackForwardNavigationGestures = true
+        webDisplay.addSubview(activityIndicator)
         let url = getUrl()
         
         splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
-        
-        self.webDisplay.allowsInlineMediaPlayback = true
-        self.webDisplay.mediaPlaybackAllowsAirPlay = true
-        self.webDisplay.mediaPlaybackRequiresUserAction = false
+    
+
+        //self.webDisplay.allowsInlineMediaPlayback = true
+        //self.webDisplay.mediaPlaybackAllowsAirPlay = true
+        //self.webDisplay.mediaPlaybackRequiresUserAction = false
 
         self.activityIndicator.hidesWhenStopped = true;
         print ("Loading url of " + url)
@@ -40,8 +40,21 @@ class WebViewController: UIViewController, UIWebViewDelegate {
         webMessageHelp = String()
         if (requestURL != nil){
             let request = URLRequest(url: requestURL!)
-            self.webDisplay.loadRequest(request)
+            self.webDisplay.load(request)
         }
+        
+        activityIndicator.hidesWhenStopped = true
+        activityIndicator.style = UIActivityIndicatorView.Style.gray
+
+        var swipeRight = UISwipeGestureRecognizer(target: self, action: "swipeRightAction:")
+        swipeRight.direction = UISwipeGestureRecognizer.Direction.right
+        webDisplay.addGestureRecognizer(swipeRight)
+         
+        var swipeLeft = UISwipeGestureRecognizer(target: self, action: "swipeLeftAction:")
+        swipeLeft.direction = UISwipeGestureRecognizer.Direction.left
+        webDisplay.addGestureRecognizer(swipeLeft)
+        
+        webDisplay.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
     }
     
     override func didReceiveMemoryWarning() {
@@ -50,26 +63,52 @@ class WebViewController: UIViewController, UIWebViewDelegate {
     }
     
     func webViewDidStartLoad(_ webView: UIWebView){
-        
+        startActivity()
+    }
+    
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        startActivity()
+    }
+    
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        endActivity()
+    }
+    
+    func webViewDidFinishLoad(_ webView: UIWebView){
+       endActivity()
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!) {
+        endActivity()
+    }
+
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            endActivity()
+        }
+    }
+
+    func startActivity(){
+        print ("WebView start busy Animation")
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
-        
     }
-    func webViewDidFinishLoad(_ webView: UIWebView){
-        
+    
+    func endActivity(){
+        print ("WebView end busy Animation")
         activityIndicator.isHidden = true
         activityIndicator.stopAnimating()
     }
     
-    @IBAction func goForward(_ sender: AnyObject) {
-        webDisplay.goForward()
-    }
-    
-    @IBAction func GoBack(_ sender: AnyObject) {
+    @IBAction func swipeRightAction(_ sender: Any) {
+        print ("WebView Go Back")
         webDisplay.goBack()
     }
-    
-    
+
+    @IBAction func swipeLeftAction(_ sender: Any) {
+        print ("WebView Go Forward")
+        webDisplay.goForward()
+    }
 }
 
 
