@@ -130,8 +130,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
         } else if (bandName == nil || bands.isEmpty == true){
             bands = bandNameHandle.getBandNames()
-            bandName = bands[0]
-            blockSwiping = true
+            if (bands.count > 0){
+                bandName = bands[0]
+                blockSwiping = true
+            }
         }
         //catch all if we are still screwed
         if (bandName == nil || bands.isEmpty == true){
