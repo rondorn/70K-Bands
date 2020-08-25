@@ -18,13 +18,17 @@ import android.os.Bundle;
 
 import android.os.SystemClock;
 
+import android.support.annotation.ColorRes;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 
 import android.webkit.WebSettings;
@@ -62,6 +66,9 @@ public class showBandDetails extends Activity {
     private int noteViewPercentage = 35;
 
     public void onCreate(Bundle savedInstanceState) {
+
+        setTheme(R.style.AppTheme);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
 
@@ -123,6 +130,7 @@ public class showBandDetails extends Activity {
             overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
         }
     }
+
 
     private void nextRecord(String direction){
 
