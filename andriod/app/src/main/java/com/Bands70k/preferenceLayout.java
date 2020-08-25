@@ -65,6 +65,7 @@ public class preferenceLayout  extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.preferences);
 
