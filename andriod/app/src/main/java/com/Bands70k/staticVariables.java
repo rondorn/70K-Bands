@@ -366,6 +366,29 @@ public class staticVariables {
         return icon;
     }
 
+    public static String getVenueColor(String venue){
+
+        String color = "";
+
+        if (venue.equals(poolVenueText)){
+            color = poolVenueColor;
+
+        } else if (venue.equals(theaterVenueText)){
+            color = theaterVenueColor;
+
+        } else if (venue.equals(rinkVenueText)){
+            color = rinkVenueColor;
+
+        } else if (venue.equals(loungeVenueText)){
+            color = loungeVenueColor;
+
+        } else {
+            color =  unknownVenueColor;
+        }
+
+        return color;
+    }
+
     public static String getRankIcon (String rankName){
 
         String icon = "";
