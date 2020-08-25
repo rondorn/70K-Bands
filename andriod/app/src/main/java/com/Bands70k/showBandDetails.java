@@ -9,28 +9,35 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+
+import android.net.Uri;
 import android.os.Bundle;
 
 import android.os.SystemClock;
+
 import android.support.v4.app.NavUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
 import static com.Bands70k.staticVariables.context;
 
 
@@ -52,21 +59,14 @@ public class showBandDetails extends Activity {
     private Boolean clickedOnEvent = false;
 
     private String rankIconLocation = "";
-
-    private Integer startLocationTitle = 0;
-    private Integer startLocationLogo = 20;
-    private Integer startLocationLinks= 100;
-    private Integer startLocationExtraInfo= 100;
-    private Integer startLocationNotes= 235;
-
-    private Integer startLocationEvents = 40;
-    private Integer startBelowEvents = 25;
+    private int noteViewPercentage = 35;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
 
         View view = getWindow().getDecorView();
+
         int orientationNum = getResources().getConfiguration().orientation;
         if (Configuration.ORIENTATION_LANDSCAPE == orientationNum) {
             orientation = "landscape";
@@ -172,6 +172,7 @@ public class showBandDetails extends Activity {
         webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
 
         mWebView = (WebView) findViewById(R.id.detailWebView);
+        mWebView.setBackgroundColor(Color.argb(1, 0, 0, 0));
         mWebView.setWebViewClient(new customWebViewClient());
 
         mWebView.setOnTouchListener(new OnSwipeTouchListener(context) {
@@ -190,14 +191,15 @@ public class showBandDetails extends Activity {
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
-
+        mWebView.setVerticalScrollBarEnabled(false);
+        mWebView.setHorizontalScrollBarEnabled(false);
         mWebView.addJavascriptInterface(new Object() {
 
             @JavascriptInterface
             public void performClick(String value) {
-                Log.d("Variable is", "'" + value + "'");
+                Log.d("Variable is", "Variable is - '" + value + "'");
                 if (value.equals("Notes")) {
-                    Log.d("Variable is", " Lets run this code");
+                    Log.d("Variable is", "Variable is -  Lets run this code to edit notes");
                     staticVariables.writeNoteHtml = createEditNoteInterface(BandInfo.getSelectedBand());
                     Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                     startActivity(showDetails);
@@ -229,7 +231,7 @@ public class showBandDetails extends Activity {
                     finish();
 
                 } else if (value.equals("webLink")){
-
+                    Log.d("webLink", "Going to weblink! " + BandInfo.getOfficalWebLink(bandName));
                     WebView htmlWebView = (WebView)findViewById(R.id.detailWebView);
                     htmlWebView.loadUrl(BandInfo.getOfficalWebLink(bandName));
 
@@ -248,10 +250,19 @@ public class showBandDetails extends Activity {
 
             @JavascriptInterface
             public void webLinkClick(String value) {
-
+                Log.d("webLink", "Going to weblinks kind of " + value);
                 staticVariables.webHelpMessage = setWebHelpMessage(value);
                 Log.d("webHelpMessage", staticVariables.webHelpMessage );
                 inLink = true;
+
+                String webUrl = getWebUrl(value);
+                Log.d("webLink", "Going to weblinks Done " + webUrl);
+
+
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webUrl));
+                startActivity(browserIntent);
+
+
             }
 
         }, "link");
@@ -260,6 +271,7 @@ public class showBandDetails extends Activity {
         webProgressBar.setVisibility(View.GONE);
 
     }
+
 
     private String setWebHelpMessage(String linkType){
 
@@ -279,6 +291,28 @@ public class showBandDetails extends Activity {
         }
 
         return webHelpMessage;
+    }
+
+    private String getWebUrl(String linkType){
+
+        String urlString = "";
+
+        if (linkType.equals("webPage")) {
+            urlString = BandInfo.getOfficalWebLink(bandName);
+
+        } else if (linkType.equals("wikipedia")) {
+            urlString = BandInfo.getWikipediaWebLink (bandName);
+
+        } else if (linkType.equals("youTube")) {
+            urlString = BandInfo.getYouTubeWebLink(bandName);
+
+        } else if (linkType.equals("metalArchives")) {
+            urlString = BandInfo.getMetalArchivesWebLink(bandName);
+        }
+
+        urlString = urlString.replace("http://","https://");
+
+        return urlString;
     }
 
     @Override
@@ -376,192 +410,217 @@ public class showBandDetails extends Activity {
 
         SetButtonColors();
 
-        String scheduleText = "";
-        String commentHeight;
-        String startHeight;
-        ImageHandler imageHandler = new ImageHandler(bandName);
-        try {
-            scheduleText = buildScheduleView();
-        } catch (Exception error){
-            //if this causes an exception, no worries..just don't display the schedule
-        }
+        htmlText = setupTitleAndLogo(bandName);
 
-        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == false) {
-            Log.d("descriptionMapFileError", "setting comment Higher 80 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "62%";
+        if (staticVariables.writeNoteHtml.isEmpty() == false) {
+            Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
+            htmlText += staticVariables.writeNoteHtml;
 
-        } else if (scheduleText.contains("onclick") == false ){
-            Log.d("descriptionMapFileError",  "setting comment Higher 46 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "65%";
         } else {
-            Log.d("descriptionMapFileError",  "setting comment Higher 20 " + BandInfo.getOfficalWebLink(bandName));
-            commentHeight = "50%";
+            htmlText += displaySchedule();
+
+            htmlText += displayLinks(bandName);
+
+            htmlText += displayExtraData(bandName);
+
+            htmlText += displayNotes();
+
+            htmlText += displayMustMightWont();
+
         }
-            htmlText =
-                    "<html><head><script>function invert(){\n" +
-                            "document.getElementById(\"bandLogo\").style.filter=\"invert(100%)\";\n" +
-                            "}</script><body bgcolor=\"black\" style='color:white;height:100%'> <div style='position: fixed;height:20px;top:" + startLocationTitle + ";font-size:130%;left:0;right:0;'>" +
-                            "<center>" + bandName + "</center>" + "</div><br><br>" +
-                            "<div style='position: fixed;height:25px;top:" + startLocationLogo + ";width=100%;left:0;right:0;'>" +
-                            "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageHandler.getImage() + "'</img></div><br><br><br>";
 
-                htmlText += displayLinks(bandName);
+        Log.d("exportedHtml", htmlText);
 
-                if (staticVariables.writeNoteHtml.isEmpty() == false) {
-                    Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
-                    htmlText += staticVariables.writeNoteHtml;
+        mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
 
-                } else {
-
-                    startLocationExtraInfo = startLocationLinks;
-
-                    if (orientation == "portrait") {
-
-                        if (BandInfo.getCountry(bandName) != "") {
-                            startLocationExtraInfo = startLocationExtraInfo + 25;
-
-                            htmlText += "<div style='position: fixed;height:35px;top:" + startLocationExtraInfo + ";width=100%; left:0;right:0;width=100%;'>" +
-                                    "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
-
-                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Country:</li>";
-                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
-
-                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Genre:</li>";
-                            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
-
-                            if (BandInfo.getNote(bandName) != "") {
-                                startLocationExtraInfo = startLocationExtraInfo + 25;
-                                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Misc:</li>";
-                                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
-                            }
-                            htmlText += "</ul></div>";
-
-                        }
+    }
 
 
-                        startLocationExtraInfo = startLocationExtraInfo + 70;
 
-                        startLocationNotes = startLocationExtraInfo;
-                        if (bandNote != "") {
-                            htmlText += "</div><br><br><center><br><br>";
-                            htmlText += "<div style='text-align:left;padding-bottom:20px;top:" + startLocationNotes + ";bottom:" + startLocationEvents + ";position: fixed;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
-                        }
+    private String setupTitleAndLogo(String bandName){
+
+        ImageHandler imageHandler = new ImageHandler(bandName);
+
+        String htmlText =
+                "<html><head>" +
+                        "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+                        "<script>function invert(){\n" +
+                        "document.getElementById(\"bandLogo\").style.filter=\"invert(100%)\";\n" +
+                        "}</script><body leftmargin=0 topmargin=0 rightmargin=0 bottommargin=0 bgcolor=\"black\" style='color:white;height:100%'> " +
+                        "<div style='overflow: hidden;height=90%'>" +
+                        "<div style='height:20px;font-size:130%;left:0;right:0;'>" +
+                        "<center>" + bandName + "</center>" + "</div>" +
+                        "<div style='width=100%;left:0;right:0;'>" +
+                        "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageHandler.getImage() + "'</img></center></div>";
+
+        return htmlText;
+
+    }
+
+
+    private String displayMustMightWont(){
+
+        String htmlText = "<div style='position:fixed;bottom:10;width: 100%;left:0;right:0'><center>";
+        htmlText += "<div style='display:grid;grid-template-columns:1fr 2fr 2fr 2fr 2fr;height:25px;width:100%;margin:0'>";
+
+        if (rankIconLocation.isEmpty() == false) {
+            htmlText += "<div><img src=" + rankIconLocation + " height=28 width=28></div>";
+        } else {
+            htmlText += "<div></div>";
+        }
+
+        htmlText += "<div><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></div>" +
+                "<div><button style='color:white;width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></div>" +
+                "<div><button style='color:white;width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></div>" +
+                "<div'><button style='color:white;width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></div>" +
+                "</div></center></div></div>" +
+                "</body></html>";
+
+
+        Log.d("schedule htmlData is", "Adding MustMightWont HTML text of: " + htmlText);
+        return htmlText;
+    }
+
+    private String displayNotes(){
+
+        String notesHeight = String.valueOf(noteViewPercentage) + "%";
+
+        Log.d("notesHeight", "notesHeight equals " + notesHeight);
+        String htmlText = "";
+        if (bandNote != "") {
+            htmlText += "<br>";
+            htmlText += "<div style='height:" + notesHeight + ";text-align:left;padding-bottom:20px;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+        }
+
+        return htmlText;
+    }
+
+    private String displayExtraData(String bandName){
+
+        String htmlText = "";
+        if (BandInfo.getCountry(bandName) != "") {
+
+            htmlText += "<div style='width=100%; left:0;right:0;width=100%;'>" +
+                    "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
+
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Country:</li>";
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
+
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Genre:</li>";
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
+
+            if (BandInfo.getNote(bandName) != "") {
+                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Misc:</li>";
+                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
+            }
+            htmlText += "</ul></div>";
+
+        }
+
+        return htmlText;
+    }
+
+    private String displaySchedule(){
+
+        String scheduleHtml = "";
+
+        noteViewPercentage = 65;
+
+        try {
+            if (BandInfo.scheduleRecords.get(bandName) != null) {
+                Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
+
+                DisplayMetrics metrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(metrics);
+                int widthPixels = metrics.widthPixels;
+                float densityDpi = metrics.density;
+                float scaleDense = metrics.scaledDensity;
+                float xdpi = metrics.xdpi;
+
+                int displayWidth = (widthPixels/(int)scaleDense - 100);
+
+
+                Log.d("schedule htmlData is", "display width processes: " + displayWidth + " - " + (int)densityDpi);
+                Log.d("schedule htmlData is", "display width processes: - " + widthPixels + " - " + (int)scaleDense  + " - " + (int)xdpi);
+                displayWidth = 440;
+                int locationWidth = displayWidth - 150;
+
+                while (entries.hasNext()) {
+
+                    noteViewPercentage = noteViewPercentage - 8;
+                    Map.Entry thisEntry = (Map.Entry) entries.next();
+                    Object key = thisEntry.getKey();
+
+                    String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
+                    String locationColor = staticVariables.getVenueColor(location);
+
+                    String startTime = dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString());
+                    String endTime = dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString());
+                    String dayNumber = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay();
+                    dayNumber = dayNumber.replaceFirst("Day ", "");
+
+                    String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
+                    String eventNote = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
+
+                    String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
+                    String eventTypeImage = getEventTypeImage(eventType, bandName);
+                    String attendedImage = getAttendedImage(attendIndex);
+
+                    //dont need to display show for that event type as this is assumed to be the dsefault
+                    if (eventType.equals(staticVariables.show)){
+                        eventType = "";
+                    }
+
+                    location = location + " " + staticVariables.venueLocation.get(location);
+
+                    //top row
+                    scheduleHtml += "<div style='face=sans-serif-thin;text-align::left;display:grid;grid-template-columns: 2% 62% 7% 20% 7%;height:21px;width=100%;left:0;right:0;margin:0;background:black' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                    scheduleHtml += "<div style='background:" + locationColor + "'></div>";
+                    scheduleHtml += "<div style='background:black;font-size:18px;color:white'>" + location + "</div>";
+
+
+                    if (attendedImage.isEmpty() == false) {
+                        scheduleHtml += "<div style='background:black'><image src='" + attendedImage + "' height=12 width=18/>&nbsp;</div>";
                     } else {
-                        htmlText += "<br><br>";
+                        scheduleHtml += "<div style='background:black'></div>";
                     }
 
-                    htmlText += scheduleText;
+                    scheduleHtml += "<div style='text-align:right;background:black;font-size:14px;color:white'>" + startTime + "&nbsp;</div>";
+                    scheduleHtml += "<div style='text-align:center;background:grey;font-size:12px;color:white'>Day</div></div>";
 
-                    htmlText += "</div><div style='font-size:3vw;height:20px;position:fixed;bottom:0;width:100%'><center><table style='font-size:3vw;height:20px;position:fixed;bottom:0;width:95%'><tr width=100%>";
+                    //bottom row
+                    scheduleHtml += "<div style='face=sans-serif-thin;text-align::left;display:grid;grid-template-columns: 2% 62% 7% 20% 7%;height:21px;width=100%;left:0;right:0;margin:0;background:black' onclick='ok.performClick(\"" + attendIndex + "\");'>";
+                    scheduleHtml += "<div style='background:" + locationColor + "'></div>";
+                    scheduleHtml += "<div style='display:grid;grid-template-columns:100%;height:21px;width=100%;left:0;right:0'>";
+                    scheduleHtml += "<div style='display:grid;grid-template-columns:100%'>";
+                    scheduleHtml += "<div style='text-align:right;background:black;font-size:10px;color:white'>" + eventType + "&nbsp;</div></div>";
+                    scheduleHtml += "<div style='display:grid;grid-template-columns:72%'>";
+                    scheduleHtml += "<div style='text-align:left;background:black;font-size:10px;color:white'>" + eventNote + "</div></div></div>";
 
-                    if (rankIconLocation.isEmpty() == false) {
-                        htmlText += "<td width=12%><img src=" + rankIconLocation + " height=28 width=28></td>";
+                    if (eventType.isEmpty() == true){
+                        scheduleHtml += "<div style='background:black'></div>";
+                    } else {
+                        scheduleHtml += "<div style='background:black'><image src='" + eventTypeImage + "' height=16 width=16/>&nbsp;</div>";
                     }
 
-                    htmlText += "<td width=22%><button style='color:white;width:100%;background:" + unknownButtonColor + "' type=button value=" + staticVariables.unknownKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.unknown) + "</button></td>" +
-                            "<td width=22%><button style='color:white;width:100%;background:" + mustButtonColor + "' type=button value=" + staticVariables.mustSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.must) + "</button></td>" +
-                            "<td width=22%><button style='color:white;width:100%;background:" + mightButtonColor + "' type=button value=" + staticVariables.mightSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.might) + "</button></td>" +
-                            "<td width=22%><button style='color:white;width:100%;background:" + wontButtonColor + "' type=button value=" + staticVariables.wontSeeKey + " onclick='ok.performClick(this.value);'>" + getString(R.string.wont) + "</button></td>" +
-                            "</tr></table></center></div>" +
-                            "</body></html>";
+
+
+                    scheduleHtml += "<div style='text-align:right;background:black;font-size:14px;color:grey'>" + endTime + "&nbsp;</div>";
+                    scheduleHtml += "<div style='text-align:center;background:grey;font-size:14px;color:white'><b>" + dayNumber + "</b></div></div>";
+
+
                 }
 
-                Log.d("exportedHtml", htmlText);
-            mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
-
-    }
-
-    private String buildScheduleView(){
-
-        String scheduleHtml = "<br>";
-
-        String scheduleHtmlData = "";
-
-        if (BandInfo.scheduleRecords.get(bandName) != null) {
-            Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
-
-            while (entries.hasNext()) {
-
-                startLocationEvents = startLocationEvents + 13;
-
-                Map.Entry thisEntry = (Map.Entry) entries.next();
-                Object key = thisEntry.getKey();
-
-                String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
-                String locationIcon = staticVariables.getVenuIcon(location);
-
-                String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString();
-                String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
-
-                String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
-                String color = staticVariables.attendedHandler.getShowAttendedColor(attendIndex);
-
-
-                scheduleHtmlData = Utilities.monthDateRegionalFormatting(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay()) + " - ";
-                scheduleHtmlData += dateTimeFormatter.formatScheduleTime(startTime) + " - ";
-                scheduleHtmlData += dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString()) + " - ";
-                scheduleHtmlData += "</font><font color='" + iconResolve.getLocationColor(location) + "'>" + location + "</font><font color='" + color + "'>- ";
-                scheduleHtmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType() + " ";
-                scheduleHtmlData += BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
-                scheduleHtmlData += "</font></li>";
-
-                String fontSize = setEventFontSize(scheduleHtmlData);
-
-                scheduleHtml += "<li style='font-size:" + fontSize + ";margin-top:8px;margin-top:8px;' onclick='ok.performClick(\"" + attendIndex + "\");'>";
-                scheduleHtml += "<img src=" + getAttendedImage(attendIndex) + " height=12 width=18>&nbsp;";
-                scheduleHtml += "<img src=" + getEventTypeImage(eventType, bandName) + " height=16 width=16>&nbsp;";
-                scheduleHtml += "<font style='vertical-align:top' color='" + color + "' >";
-                scheduleHtml += scheduleHtmlData;
-
-
-                Log.d("htmlData is", "Adding HTML text of " + scheduleHtml);
             }
+        } catch (Exception error){
+            //no worries
+
         }
 
-        Log.d("startLocationEvents", "startLocationEvents =" + String.valueOf(startLocationEvents));
-        String htmlData = "<div style='position:fixed;bottom:" + startBelowEvents + "'>";
-        if (orientation == "portrait") {
-            htmlData += "<ul width=100% style='white-space:nowrap;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
-        } else {
-            htmlData += "<ul width=100% style='white-space:nowrap;list-style-type:none;text-align:left;margin-left:-40px;margin-top:20px;face=\"sans-serif-thin\">";
-        }
+        Log.d("schedule htmlData is", "Adding Schedule HTML text of: " + scheduleHtml);
 
-        htmlData += scheduleHtml + "</ul></div>";
-
-
-        return htmlData;
+        return scheduleHtml;
     }
-
-    private String setEventFontSize(String eventText){
-
-        Integer textSize = eventText.length();
-        String fontSize = "";
-
-        if (textSize < 105){
-            fontSize = "5vw";
-
-        } else  if (textSize < 110) {
-            fontSize = "4.7vw";
-
-        } else  if (textSize < 115) {
-            fontSize = "4.3vw";
-
-        } else  if (textSize < 120) {
-            fontSize = "3.8vw";
-
-        } else  if (textSize < 130) {
-            fontSize = "3.2vw";
-
-        } else  {
-            fontSize = "3.0vw";
-
-        }
-
-        Log.d("fontSize", "event text is " + eventText + " size of " + fontSize + " length " + String.valueOf(textSize));
-
-        return fontSize;
-    }
-
 
     private String getAttendedImage(String attendIndex){
 
@@ -612,8 +671,6 @@ public class showBandDetails extends Activity {
 
         String html = "";
 
-        startLocationLinks = startLocationLogo + 100;
-
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") == true) {
 
             String disable;
@@ -627,7 +684,7 @@ public class showBandDetails extends Activity {
             if (orientation == "portrait") {
 
                 Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
-                html = "<br><div style='position: fixed;height:30px;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>" +
+                html = "<div style='width=100%; left:0;right:0;'>" +
                         "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
                         "<td  style='color:" + staticVariables.blueColor + "' + staticVariables.blueColor + \"' width=40%>Visit Band On: </td>" +
                         "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick(\"webPage\")'><img src=file:///android_res/drawable/icon_www.png height=24 width=27></a></td>" +
@@ -636,13 +693,13 @@ public class showBandDetails extends Activity {
                         "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick(\"youTube\")'><img src=file:///android_res/drawable/icon_youtube.png height=19 width=27></a></td>" +
                         "</tr></table></center></div>";
             }
-            startLocationLinks = startLocationLinks;
 
         }
 
         return html;
 
     }
+
 
     private String createEditNoteInterface(String bandName){
 
@@ -653,7 +710,7 @@ public class showBandDetails extends Activity {
         }
 
         bandNote = bandNote.replaceAll("<br>", "\n");
-        html += "<br><div style='width:100%;height:90%;position: fixed;top:" + startLocationLinks + ";width=100%; left:0;right:0;'>";
+        html += "<br><div style='width:100%;height:90%;width=100%; left:0;right:0;'>";
         html += "<center><form><textarea name='userNotes' id='userNotes' style='text-align:left;width:95%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
         html += bandNote;
         html += "</textarea>";
@@ -676,20 +733,19 @@ public class showBandDetails extends Activity {
             // TODO Auto-generated method stub
 
             webProgressBar.setVisibility(View.VISIBLE);
-            if (staticVariables.webHelpMessage .isEmpty() == false) {
+            if (staticVariables.webHelpMessage.isEmpty() == false) {
                 HelpMessageHandler.showMessage(staticVariables.webHelpMessage);
                 staticVariables.webHelpMessage = "";
             }
             super.onPageStarted(view, url, favicon);
         }
 
-        public boolean shouldOverrideUrlLoading(WebView view, String url){
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
 
             view.loadUrl(url);
             return true;
         }
     }
-
 }
 
 /**
@@ -738,4 +794,5 @@ class OnSwipeTouchListener implements View.OnTouchListener {
             return false;
         }
     }
+
 }

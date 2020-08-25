@@ -133,7 +133,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.bottomSpacer.setVisibility(View.INVISIBLE);
 
             if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.O){
-                viewHolder.bandNameNoSchedule.setTextSize(26);
+                viewHolder.bandNameNoSchedule.setTextSize(25);
             }
 
         } else {

@@ -122,6 +122,7 @@ public class showBands extends Activity {
             newRootDir =Bands70k.getAppContext().getFilesDir().getPath();
         }
 
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
 
         if (staticVariables.preferences == null) {

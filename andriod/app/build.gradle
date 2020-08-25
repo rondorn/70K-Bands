@@ -55,6 +55,7 @@ dependencies {
     testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
     testImplementation 'org.powermock:powermock:1.6.5'
     testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
+    implementation 'com.android.support:customtabs:28.0.0'
 }
 
 buildscript {
