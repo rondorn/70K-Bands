@@ -27,6 +27,7 @@ import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -415,10 +416,10 @@ public class showBands extends Activity {
 
                         if (timeIndex != 0) {
                             String location = listHandler.getLocation(bandName, timeIndex);
-                            String startTime = listHandler.getStartTime(bandName, timeIndex);
+                            String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
                             String eventType = listHandler.getEventType(bandName, timeIndex);
 
-                            String status = attendedHandler.addShowsAttended(bandName, location, startTime, eventType);
+                            String status = attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType);
                             message = attendedHandler.setShowsAttendedStatus(status);
                         } else {
                             message = "No Show Is Associated With This Entry";
@@ -1259,30 +1260,27 @@ public class showBands extends Activity {
         currentListForDetails =  listHandler.bandNamesIndex;
         currentListPosition = position;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(showBands.this, R.style.AlertDialog);
-
         String bandIndex = scheduleSortedBandNames.get(position);
 
         String bandName = getBandNameFromIndex(bandIndex);
         Long timeIndex = getTimeIndexFromIndex(bandIndex);
 
+        //bypass prompt if appropriate
         if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false){
             showDetailsScreen(position, selectedBand);
             return;
         }
 
+        final String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
         final String location = listHandler.getLocation(bandName, timeIndex);
         final String startTime = listHandler.getStartTime(bandName, timeIndex);
         final String eventType = listHandler.getEventType(bandName, timeIndex);
+        final String status = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, eventYear.toString());
 
         final String attendedString = getResources().getString(R.string.AllOfEvent);
         final String partAttendedString = getResources().getString(R.string.PartOfEvent);
         final String notAttendedString = getResources().getString(R.string.NoneOfEvent);
         final String goToDetailsString = getResources().getString(R.string.GoToDetails);
-
-        final String disablePrompt = getResources().getString(R.string.disableAttendedPrompt);
-
-        final String status = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, eventYear.toString());
 
         // String array for alert dialog multi choice items
         ArrayList<String> eventChoices = new ArrayList<String>();
@@ -1309,72 +1307,99 @@ public class showBands extends Activity {
             }
         }
 
-        eventChoices.add(disablePrompt);
-
-        // Set a title for alert dialog
+        // create an alert builder
+        final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
         builder.setTitle(selectedBand + "\n" + titleStatus);
 
-        // Convert the color array to list
-        final List<String> eventChoicesList = eventChoices;
-        String[] eventChoicesArray = eventChoices.toArray(new String[eventChoices.size()]);
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
+        builder.setView(customLayout);
 
-        builder.setItems(eventChoicesArray, new DialogInterface.OnClickListener() {
+        Button goToDetails = (Button) customLayout.findViewById(R.id.GoToDetails);
+        Button attendAll = (Button) customLayout.findViewById(R.id.AttendedAll);
+        Button attendSome = (Button) customLayout.findViewById(R.id.AttendeSome);
+        Button attendNone = (Button) customLayout.findViewById(R.id.AttendeNone);
+        Button disable = (Button) customLayout.findViewById(R.id.Disable);
+
+        if (status.equals(sawAllStatus)) {
+            attendAll.setVisibility(View.GONE);
+
+        } else if (status.equals(sawSomeStatus)) {
+            attendSome.setVisibility(View.GONE);
+
+        } else {
+            attendNone.setVisibility(View.GONE);
+        }
+
+        goToDetails.setText(getResources().getString(R.string.GoToDetails));
+        attendAll.setText(getResources().getString(R.string.AllOfEvent));
+        attendSome.setText(getResources().getString(R.string.PartOfEvent));
+        attendNone.setText(getResources().getString(R.string.NoneOfEvent));
+        disable.setText(getResources().getString(R.string.disableAttendedPrompt));
+
+        // add a button
+        builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                // Get the current focused item
-                String currentItem = eventChoicesList.get(which);
-                String message = "";
-
-                if (currentItem.equals(goToDetailsString)) {
-                    showDetailsScreen(position, selectedBand);
-
-                } else if (currentItem.equals(attendedString)) {
-                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawAllStatus);
-                    message = attendedHandler.setShowsAttendedStatus(status);
-
-                } else if (currentItem.equals(partAttendedString)) {
-                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawSomeStatus);
-                    message = attendedHandler.setShowsAttendedStatus(status);
-
-                } else if (currentItem.equals(notAttendedString)) {
-                    String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, sawNoneStatus);
-                    message = attendedHandler.setShowsAttendedStatus(status);
-
-                } else if (currentItem.equals(disablePrompt)){
-                    preferences.setPromptForAttendedStatus(false);
-                }
-
-                if (message.isEmpty() == false) {
-                    Toast.makeText(getApplicationContext(),
-                            message + " ", Toast.LENGTH_SHORT).show();
-
-                    refreshData();
-                }
             }
         });
 
-        // Specify the dialog is not cancelable
-        builder.setCancelable(true);
+        // create and show the alert dialog
+        final AlertDialog dialog = builder.create();
 
 
-        // Set the neutral/cancel button click listener
-        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //do nothing
+        goToDetails.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+                showDetailsScreen(position, selectedBand);
             }
         });
 
-        AlertDialog dialog = builder.create();
+        attendAll.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                setAttendedStatusViaDialog(sawAllStatus, selectedBand, location, rawStartTime, eventType, dialog);
+            }
+        });
 
-        // Display the alert dialog on interface
+        attendSome.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                setAttendedStatusViaDialog(sawSomeStatus, selectedBand, location, rawStartTime, eventType, dialog);
+            }
+        });
+
+        attendNone.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                setAttendedStatusViaDialog(sawNoneStatus, selectedBand, location, rawStartTime, eventType, dialog);
+            }
+        });
+
+        disable.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                preferences.setPromptForAttendedStatus(false);
+                dialog.dismiss();
+            }
+        });
+
         dialog.show();
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.LTGRAY));
-
-
     }
 
+    private void setAttendedStatusViaDialog(String desiredStatus,
+                                            String selectedBand,
+                                            String location,
+                                            String startTime,
+                                            String eventType,
+                                            AlertDialog dialog){
+
+        String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, desiredStatus);
+        String message = attendedHandler.setShowsAttendedStatus(status);
+
+        dialog.dismiss();
+        Toast.makeText(getApplicationContext(),
+                message + " ", Toast.LENGTH_SHORT).show();
+
+        refreshData();
+    }
 
     public void showDetailsScreen(int position, String selectedBand){
 
