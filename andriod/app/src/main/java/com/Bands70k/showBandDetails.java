@@ -562,7 +562,8 @@ public class showBandDetails extends Activity {
                     String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
                     String locationColor = staticVariables.getVenueColor(location);
 
-                    String startTime = dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString());
+                    String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString();
+                    String startTime = dateTimeFormatter.formatScheduleTime(rawStartTime);
                     String endTime = dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString());
                     String dayNumber = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay();
                     dayNumber = dayNumber.replaceFirst("Day ", "");
@@ -570,7 +571,7 @@ public class showBandDetails extends Activity {
                     String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
                     String eventNote = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
 
-                    String attendIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
+                    String attendIndex = bandName + ":" + location + ":" + rawStartTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
                     String eventTypeImage = getEventTypeImage(eventType, bandName);
                     String attendedImage = getAttendedImage(attendIndex);
 

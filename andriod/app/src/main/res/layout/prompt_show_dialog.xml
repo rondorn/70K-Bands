@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerHorizontal="true"
+    android:foregroundGravity="center_vertical|center_horizontal"
+    android:orientation="vertical"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp"
+    android:theme="@style/AppTheme"
+    android:background="#505050">
+
+    <Button
+        android:id="@+id/GoToDetails"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:text="Go To Details" />
+
+    <Button
+        android:id="@+id/AttendedAll"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:text="Attending All Of This Event" />
+
+    <Button
+        android:id="@+id/AttendeSome"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:text="Attending Some Of This Event" />
+
+    <Button
+        android:id="@+id/AttendeNone"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:text="I will not see this event" />
+
+    <Button
+        android:id="@+id/Disable"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:text="Disable This Prompt" />
+
+</LinearLayout>
