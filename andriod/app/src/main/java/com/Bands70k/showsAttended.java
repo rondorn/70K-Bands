@@ -117,12 +117,13 @@ public class showsAttended {
 
     public String addShowsAttended (String index, String attendedStatus) {
 
+        index = index.replaceAll("\\.", "");
         String value = "";
 
         String[] valueTypes = index.split(":");
         String eventType = valueTypes[4];
 
-        Log.d("showAttended", "adding " + index + "-" + eventType);
+        Log.d("showAttended", "adding show data" + index + "-" + eventType);
         Log.d("showAttended", showsAttendedHash.toString());
 
         if (attendedStatus.isEmpty() == true) {

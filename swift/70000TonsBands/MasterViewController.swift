@@ -119,6 +119,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
                                                name: Notification.Name("FCMToken"), object: nil)
+        
+        
     }
     
     @objc func displayFCMToken(notification: NSNotification){
@@ -388,8 +390,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
             }
-            //self.bandDescriptions.getDescriptionMapFile();
-            //self.bandDescriptions.getAllDescriptions()
+  
             refreshDataLock = false;
         }
     } 
@@ -453,11 +454,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             unknownButton.isEnabled = false
             
             let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false)
             
         } else {
             let message = NSLocalizedString("showAttendedFilterFalseHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame)
+            ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
             
             setShowOnlyWillAttened(false)
             willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
@@ -533,6 +534,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         quickRefresh()
         
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+    
         
         updateCountLable()
         tableView.reloadData()
@@ -695,12 +697,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let empty : UITextField = UITextField();
                 let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
                 
-                ToastMessages(message).show(self, cellLocation: placementOfCell!)
+                ToastMessages(message).show(self, cellLocation: placementOfCell!,  placeHigh: false)
                 isLoadingBandData = false
                 self.quickRefresh()
             } else {
                 let message =  "No Show Is Associated With This Entry"
-                ToastMessages(message).show(self, cellLocation: placementOfCell!)
+                ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
             }
         })
         sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
@@ -751,7 +753,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        
         setUnknownAction.setIcon(iconImage: UIImage(named: unknownIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         if (eventCount == 0){
@@ -952,7 +953,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             sortedBy = "name"
         }
         setSortedBy(sortedBy)
-        ToastMessages(message).show(self, cellLocation: self.view.frame)
+        ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
         ensureCorrectSorting()
         dataHandle.writeFiltersFile()
         self.tableView.reloadData()

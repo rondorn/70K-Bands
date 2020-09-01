@@ -406,7 +406,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             helpMessage = NSLocalizedString("Alert for shows according to your favorites selection", comment: "")
         }
         
-        ToastMessages(helpMessage).show(self, cellLocation: self.view.frame)
+        ToastMessages(helpMessage).show(self, cellLocation: self.view.frame, placeHigh: false)
     }
     
     @IBAction func AlertForShowsChange() {
