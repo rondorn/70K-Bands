@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="fill_horizontal"
     android:layout_centerHorizontal="true"
     android:foregroundGravity="center_vertical|center_horizontal"
     android:orientation="vertical"
@@ -10,7 +11,8 @@
     android:paddingTop="20dp"
     android:paddingBottom="20dp"
     android:theme="@style/AppTheme"
-    android:background="#505050">
+    android:background="#505050"
+    >
 
     <Button
         android:id="@+id/GoToDetails"
@@ -19,6 +21,8 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:foregroundGravity="center_vertical|center_horizontal"
         android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
         android:text="Go To Details" />
 
     <Button
@@ -28,6 +32,8 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:foregroundGravity="center_vertical|center_horizontal"
         android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
         android:text="Attending All Of This Event" />
 
     <Button
@@ -37,6 +43,8 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:foregroundGravity="center_vertical|center_horizontal"
         android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
         android:text="Attending Some Of This Event" />
 
     <Button
@@ -46,6 +54,8 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:foregroundGravity="center_vertical|center_horizontal"
         android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
         android:text="I will not see this event" />
 
     <Button
@@ -55,6 +65,8 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:foregroundGravity="center_vertical|center_horizontal"
         android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
         android:text="Disable This Prompt" />
 
 </LinearLayout>
