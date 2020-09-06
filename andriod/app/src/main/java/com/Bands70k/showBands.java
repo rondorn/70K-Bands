@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -112,13 +113,22 @@ public class showBands extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Log.d("get perms", "Getting access to storage");
             int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
             if (permission != 0) {
                 requestPermissions(INITIAL_PERMS, REQUEST);
                 while (permission != 0) {
                     permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
                 }
             }
+            if (readpermission != 0) {
+                requestPermissions(INITIAL_PERMS, REQUEST);
+                while (readpermission != 0) {
+                    readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                }
+            }
+
         } else {
             newRootDir =Bands70k.getAppContext().getFilesDir().getPath();
         }
@@ -1307,9 +1317,18 @@ public class showBands extends Activity {
             }
         }
 
+        TextView titleView = new TextView(context);
+        titleView.setText(selectedBand + "\n" + titleStatus);
+        titleView.setPadding(20, 30, 20, 30);
+        titleView.setTextSize(20F);
+        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setBackgroundColor(Color.parseColor("#505050"));
+        titleView.setTextColor(Color.WHITE);
+
         // create an alert builder
         final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
-        builder.setTitle(selectedBand + "\n" + titleStatus);
+        builder.setCustomTitle(titleView);
 
         // set the custom layout
         final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
@@ -1331,11 +1350,12 @@ public class showBands extends Activity {
             attendNone.setVisibility(View.GONE);
         }
 
-        goToDetails.setText(getResources().getString(R.string.GoToDetails));
-        attendAll.setText(getResources().getString(R.string.AllOfEvent));
-        attendSome.setText(getResources().getString(R.string.PartOfEvent));
-        attendNone.setText(getResources().getString(R.string.NoneOfEvent));
-        disable.setText(getResources().getString(R.string.disableAttendedPrompt));
+        goToDetails.setText(getText(R.string.GoToDetails));
+        attendAll.setText(getText(R.string.AllOfEvent));
+        attendSome.setText(getText(R.string.PartOfEvent));
+        attendNone.setText(getText(R.string.NoneOfEvent));
+        disable.setText(getText(R.string.disableAttendedPrompt));
+
 
         // add a button
         builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {

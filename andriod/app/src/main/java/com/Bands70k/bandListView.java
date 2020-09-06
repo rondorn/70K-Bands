@@ -21,7 +21,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ImageView;
 
-import com.google.firebase.database.collection.LLRBNode;
 
 import java.util.ArrayList;
 import java.util.List;

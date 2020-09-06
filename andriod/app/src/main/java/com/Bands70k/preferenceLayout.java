@@ -13,8 +13,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.CheckBox;
+import android.widget.Switch;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,31 +31,31 @@ import static android.app.PendingIntent.getActivity;
 public class preferenceLayout  extends Activity {
 
 
-    private CheckBox showSpecialEvents;
-    private CheckBox showMeetAndGreet;
-    private CheckBox showClinicEvents;
-    private CheckBox showAlbumListen;
-    private CheckBox showUnoffical;
+    private Switch showSpecialEvents;
+    private Switch showMeetAndGreet;
+    private Switch showClinicEvents;
+    private Switch showAlbumListen;
+    private Switch showUnoffical;
 
-    private CheckBox showPoolShows;
-    private CheckBox showTheaterShows;
-    private CheckBox showRinkShows;
-    private CheckBox showLoungeShows;
-    private CheckBox showOtherShows;
+    private Switch showPoolShows;
+    private Switch showTheaterShows;
+    private Switch showRinkShows;
+    private Switch showLoungeShows;
+    private Switch showOtherShows;
 
-    private CheckBox hideExpiredEvents;
-    private CheckBox promptForAttendedStatus;
+    private Switch hideExpiredEvents;
+    private Switch promptForAttendedStatus;
 
-    private CheckBox mustSee;
-    private CheckBox mightSee;
-    private CheckBox alertForShows;
-    private CheckBox alertForSpecial;
-    private CheckBox alertForClinics;
-    private CheckBox alertForMeetAndGreet;
-    private CheckBox alertForAlbum;
-    private CheckBox alertUnofficalEvents;
-    private CheckBox lastYearsData;
-    private CheckBox onlyForShowWillAttend;
+    private Switch mustSee;
+    private Switch mightSee;
+    private Switch alertForShows;
+    private Switch alertForSpecial;
+    private Switch alertForClinics;
+    private Switch alertForMeetAndGreet;
+    private Switch alertForAlbum;
+    private Switch alertUnofficalEvents;
+    private Switch lastYearsData;
+    private Switch onlyForShowWillAttend;
 
     private EditText alertMin;
 
@@ -215,7 +216,7 @@ public class preferenceLayout  extends Activity {
 
     private void setValues(){
 
-        mustSee = (CheckBox)findViewById(R.id.mustSeecheckBox);
+        mustSee = (Switch)findViewById(R.id.mustSeecheckBox);
         mustSee.setChecked(staticVariables.preferences.getMustSeeAlert());
         mustSee.setOnClickListener(new View.OnClickListener() {
 
@@ -225,7 +226,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        mightSee = (CheckBox)findViewById(R.id.mightSeecheckBox);
+        mightSee = (Switch)findViewById(R.id.mightSeecheckBox);
         mightSee.setChecked(staticVariables.preferences.getMightSeeAlert());
         mightSee.setOnClickListener(new View.OnClickListener() {
 
@@ -235,7 +236,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        onlyForShowWillAttend = (CheckBox)findViewById(R.id.alertOnlyForShowWillAttendCheckBox);
+        onlyForShowWillAttend = (Switch)findViewById(R.id.alertOnlyForShowWillAttendSwitch);
         onlyForShowWillAttend.setChecked(staticVariables.preferences.getAlertOnlyForShowWillAttend());
         onlyForShowWillAttend.setOnClickListener(new View.OnClickListener() {
 
@@ -251,7 +252,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertForShows = (CheckBox)findViewById(R.id.alertForShows);
+        alertForShows = (Switch)findViewById(R.id.alertForShows);
         alertForShows.setChecked(staticVariables.preferences.getAlertForShows());
         alertForShows.setOnClickListener(new View.OnClickListener() {
 
@@ -261,7 +262,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertForSpecial = (CheckBox)findViewById(R.id.alertForSpecialEvents);
+        alertForSpecial = (Switch)findViewById(R.id.alertForSpecialEvents);
         alertForSpecial.setChecked(staticVariables.preferences.getAlertForSpecialEvents());
         alertForSpecial.setOnClickListener(new View.OnClickListener() {
 
@@ -271,7 +272,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertForClinics = (CheckBox)findViewById(R.id.alertForClinics);
+        alertForClinics = (Switch)findViewById(R.id.alertForClinics);
         alertForClinics.setChecked(staticVariables.preferences.getAlertForClinics());
         alertForClinics.setOnClickListener(new View.OnClickListener() {
 
@@ -281,7 +282,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertForMeetAndGreet = (CheckBox)findViewById(R.id.alertForMeetAndGreet);
+        alertForMeetAndGreet = (Switch)findViewById(R.id.alertForMeetAndGreet);
         alertForMeetAndGreet.setChecked(staticVariables.preferences.getAlertForMeetAndGreet());
         alertForMeetAndGreet.setOnClickListener(new View.OnClickListener() {
 
@@ -291,7 +292,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertForAlbum = (CheckBox)findViewById(R.id.alertForAlbumListen);
+        alertForAlbum = (Switch)findViewById(R.id.alertForAlbumListen);
         alertForAlbum.setChecked(staticVariables.preferences.getAlertForListeningParties());
         alertForAlbum.setOnClickListener(new View.OnClickListener() {
 
@@ -301,7 +302,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertUnofficalEvents = (CheckBox)findViewById(R.id.alertForUnofficalEvents);
+        alertUnofficalEvents = (Switch)findViewById(R.id.alertForUnofficalEvents);
         alertUnofficalEvents.setChecked(staticVariables.preferences.getAlertForUnofficalEvents());
         alertUnofficalEvents.setOnClickListener(new View.OnClickListener() {
 
@@ -311,7 +312,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        lastYearsData = (CheckBox)findViewById(R.id.useLastYearsData);
+        lastYearsData = (Switch)findViewById(R.id.useLastYearsData);
         lastYearsData.setChecked(staticVariables.preferences.getUseLastYearsData());
         lastYearsData.setOnClickListener(new View.OnClickListener() {
 
@@ -334,7 +335,7 @@ public class preferenceLayout  extends Activity {
         pointerUrl = (EditText)findViewById(R.id.pointerUrl);
         pointerUrl.setText(staticVariables.preferences.getPointerUrl().toString());
 
-        showSpecialEvents = (CheckBox)findViewById(R.id.showSpecialEvent);
+        showSpecialEvents = (Switch)findViewById(R.id.showSpecialEvent);
         showSpecialEvents.setChecked(staticVariables.preferences.getShowSpecialEvents());
         showSpecialEvents.setOnClickListener(new View.OnClickListener() {
 
@@ -344,7 +345,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showMeetAndGreet = (CheckBox)findViewById(R.id.showMeetAndGreet);
+        showMeetAndGreet = (Switch)findViewById(R.id.showMeetAndGreet);
         showMeetAndGreet.setChecked(staticVariables.preferences.getShowMeetAndGreet());
         showMeetAndGreet.setOnClickListener(new View.OnClickListener() {
 
@@ -354,7 +355,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showClinicEvents = (CheckBox)findViewById(R.id.showClinic);
+        showClinicEvents = (Switch)findViewById(R.id.showClinic);
         showClinicEvents.setChecked(staticVariables.preferences.getShowClinicEvents());
         showClinicEvents.setOnClickListener(new View.OnClickListener() {
 
@@ -364,7 +365,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showAlbumListen = (CheckBox)findViewById(R.id.showListeningEvent);
+        showAlbumListen = (Switch)findViewById(R.id.showListeningEvent);
         showAlbumListen.setChecked(staticVariables.preferences.getShowAlbumListen());
         showAlbumListen.setOnClickListener(new View.OnClickListener() {
 
@@ -374,7 +375,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showUnoffical = (CheckBox)findViewById(R.id.unofficalEvent);
+        showUnoffical = (Switch)findViewById(R.id.unofficalEvent);
         showUnoffical.setChecked(staticVariables.preferences.getShowUnofficalEvents());
         showUnoffical.setOnClickListener(new View.OnClickListener() {
 
@@ -384,7 +385,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showPoolShows = (CheckBox)findViewById(R.id.showPool);
+        showPoolShows = (Switch)findViewById(R.id.showPool);
         showPoolShows.setChecked(staticVariables.preferences.getShowPoolShows());
         showPoolShows.setOnClickListener(new View.OnClickListener() {
 
@@ -394,7 +395,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showTheaterShows = (CheckBox)findViewById(R.id.showTheater);
+        showTheaterShows = (Switch)findViewById(R.id.showTheater);
         showTheaterShows.setChecked(staticVariables.preferences.getShowTheaterShows());
         showTheaterShows.setOnClickListener(new View.OnClickListener() {
 
@@ -404,7 +405,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showRinkShows = (CheckBox)findViewById(R.id.showRink);
+        showRinkShows = (Switch)findViewById(R.id.showRink);
         showRinkShows.setChecked(staticVariables.preferences.getShowRinkShows());
         showRinkShows.setOnClickListener(new View.OnClickListener() {
 
@@ -414,7 +415,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showLoungeShows = (CheckBox)findViewById(R.id.showLounge);
+        showLoungeShows = (Switch)findViewById(R.id.showLounge);
         showLoungeShows.setChecked(staticVariables.preferences.getShowLoungeShows());
         showLoungeShows.setOnClickListener(new View.OnClickListener() {
 
@@ -424,7 +425,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        showOtherShows = (CheckBox)findViewById(R.id.showOther);
+        showOtherShows = (Switch)findViewById(R.id.showOther);
         showOtherShows.setChecked(staticVariables.preferences.getShowOtherShows());
         showOtherShows.setOnClickListener(new View.OnClickListener() {
 
@@ -434,7 +435,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        hideExpiredEvents = (CheckBox)findViewById(R.id.hideExpiredEvents);
+        hideExpiredEvents = (Switch)findViewById(R.id.hideExpiredEvents);
         hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
         hideExpiredEvents.setOnClickListener(new View.OnClickListener() {
 
@@ -444,7 +445,7 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        promptForAttendedStatus = (CheckBox)findViewById(R.id.promptForAttendedStatus);
+        promptForAttendedStatus = (Switch)findViewById(R.id.promptForAttendedStatus);
         promptForAttendedStatus.setChecked(staticVariables.preferences.getPromptForAttendedStatus());
         promptForAttendedStatus.setOnClickListener(new View.OnClickListener() {
 

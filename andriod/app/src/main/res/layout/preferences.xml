@@ -83,16 +83,17 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showPool"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
-                    android:layout_marginRight="80dp"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
-
+                    android:checked="true"
+                    android:layout_gravity="left"
+                    android:theme="@style/MySwitch"
                     />
+
             </TableRow>
             <TableRow
                 android:layout_width="fill_parent">
@@ -107,14 +108,14 @@
                     android:layout_gravity="left"
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
-                <CheckBox
+                <Switch
                     android:id="@+id/showTheater"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
-
+                    android:layout_gravity="left"
                     />
             </TableRow>
             <TableRow
@@ -131,13 +132,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showRink"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
 
                     />
             </TableRow>
@@ -157,13 +159,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showLounge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -180,7 +183,7 @@
                     android:layout_gravity="left"
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
-                <CheckBox
+                <Switch
                     android:id="@+id/showOther"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -188,6 +191,7 @@
                     android:layout_marginRight="80dp"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
 
                     />
             </TableRow>
@@ -242,13 +246,14 @@
                     android:layout_gravity="left"
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
-                <CheckBox
+                <Switch
                     android:id="@+id/showSpecialEvent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -266,13 +271,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showMeetAndGreet"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -292,13 +298,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showClinic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
             <TableRow
@@ -316,13 +323,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/showListeningEvent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
             <TableRow
@@ -340,7 +348,7 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/unofficalEvent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -348,6 +356,7 @@
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
                     android:layout_marginRight="80dp"
+                    android:layout_gravity="left"
                     />
             </TableRow>
         </TableLayout>
@@ -404,7 +413,7 @@
             android:width="255dp" />
 
 
-        <CheckBox
+        <Switch
             android:id="@+id/hideExpiredEvents"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -412,6 +421,7 @@
             android:buttonTint="@color/common_google_signin_btn_text_dark"
             android:enabled="true"
             android:layout_marginRight="80dp"
+            android:layout_gravity="left"
             />
     </TableRow>
     </TableLayout>
@@ -468,7 +478,7 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/promptForAttendedStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -476,6 +486,7 @@
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
                     android:layout_marginRight="80dp"
+                    android:layout_gravity="left"
                     />
             </TableRow>
         </TableLayout>
@@ -536,7 +547,7 @@
                     />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/mustSeecheckBox"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -544,6 +555,7 @@
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
                     android:layout_marginRight="80dp"
+                    android:layout_gravity="left"
                     />
             </TableRow>
             <TableRow
@@ -560,13 +572,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/mightSeecheckBox"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -585,13 +598,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
-                    android:id="@+id/alertOnlyForShowWillAttendCheckBox"
+                <Switch
+                    android:id="@+id/alertOnlyForShowWillAttendSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -636,13 +650,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForShows"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -661,13 +676,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForSpecialEvents"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -686,13 +702,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForUnofficalEvents"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -710,13 +727,14 @@
                     android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:width="255dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForMeetAndGreet"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -735,13 +753,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForClinics"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
@@ -760,13 +779,14 @@
                     android:width="255dp" />
 
 
-                <CheckBox
+                <Switch
                     android:id="@+id/alertForAlbumListen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
             <TableRow
@@ -798,13 +818,14 @@
                     android:layout_column="9"
                     android:layout_marginLeft="10dp" />
 
-                <CheckBox
+                <Switch
                     android:id="@+id/useLastYearsData"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
                     android:buttonTint="@color/common_google_signin_btn_text_dark"
                     android:enabled="true"
+                    android:layout_gravity="left"
                     />
             </TableRow>
 
