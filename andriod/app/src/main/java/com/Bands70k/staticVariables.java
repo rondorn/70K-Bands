@@ -1,11 +1,15 @@
 package com.Bands70k;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 
@@ -28,6 +32,14 @@ public class staticVariables {
 
     private static File eventYearFile;
 
+    // Storage Permissions
+    public static final int REQUEST_EXTERNAL_STORAGE = 1;
+    public static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+
     public static Boolean initializedSortButtons = false;
     public final static String mustSeeIcon = "\uD83C\uDF7A";
     public final static String mightSeeIcon = "\u2714"; //2705 //2611 //2714
@@ -38,14 +50,14 @@ public class staticVariables {
     public final static String showTypeIcon = "";
     public final static String specialEventTypeIcon = "🌟";
     public final static String mAndmEventTypeIcon = "\uD83D\uDCF7";
-    public final static String listeningEventTypeIcon =  "💽";
+    public final static String listeningEventTypeIcon = "💽";
     public final static String clinicEventTypeIcon = "🎸";
     public final static String unofficalEventTypeIcon = "\uD83D\uDC79";
 
-    public final static String  poolVenueIcon = "🏊";
-    public final static String  theaterVenueIcon = "🎭";
-    public final static String  loungeVenueIcon = "🎤";
-    public static String  rinkVenueIcon = "\uD83D\uDD03";
+    public final static String poolVenueIcon = "🏊";
+    public final static String theaterVenueIcon = "🎭";
+    public final static String loungeVenueIcon = "🎤";
+    public static String rinkVenueIcon = "\uD83D\uDD03";
 
     public static Boolean inUnitTests = false;
 
@@ -64,8 +76,8 @@ public class staticVariables {
     public final static String sawNoneIcon = "";
     public static String attendedShowIcon = "\uD83C\uDFC3\u200D";
 
-    public static Map<String,String> showNotesMap = new HashMap<String, String>();
-    public static Map<String,String> imageUrlMap = new HashMap<String, String>();
+    public static Map<String, String> showNotesMap = new HashMap<String, String>();
+    public static Map<String, String> imageUrlMap = new HashMap<String, String>();
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
@@ -79,10 +91,10 @@ public class staticVariables {
     public static String notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
     public final static Uri alarmSound = Uri.parse("android.resource://com.Bands70k/" + R.raw.onmywaytodeath);
 
-    public final static String  poolVenueText = "Pool";
-    public final static String  theaterVenueText = "Theater";
-    public final static String  loungeVenueText = "Lounge";
-    public final static String  rinkVenueText = "Rink";
+    public final static String poolVenueText = "Pool";
+    public final static String theaterVenueText = "Theater";
+    public final static String loungeVenueText = "Lounge";
+    public final static String rinkVenueText = "Rink";
 
     public final static String show = "Show";
     public final static String meetAndGreet = "Meet and Greet";
@@ -198,7 +210,7 @@ public class staticVariables {
     public static Integer currentListPosition = 0;
     public static List<String> currentListForDetails = new ArrayList<String>();
 
-    public static Map<String,String> venueLocation =  new HashMap<String, String>();
+    public static Map<String, String> venueLocation = new HashMap<String, String>();
 
     public static Integer alertTracker = 0;
 
@@ -207,56 +219,60 @@ public class staticVariables {
     public static Boolean isTestingEnv = false;
 
     public static bandListView adapterCache;
+
     public static synchronized void updateAdapterCache(bandListView adapter) {
         Log.d("adapterCache", "updating cache");
         staticVariables.adapterCache = adapter;
         Log.d("adapterCache", "done updating cache");
     }
+
     public static synchronized bandListView getAdapterCache() {
         return staticVariables.adapterCache;
     }
 
     public static mainListHandler listHandlerCache;
+
     public static synchronized void updatelistHandlerCache(mainListHandler listHandler) {
         Log.d("listHandlerCache", "updating cache");
         staticVariables.listHandlerCache = listHandler;
         Log.d("listHandlerCache", "done updating cache");
     }
+
     public static synchronized mainListHandler getlistHandlerCache() {
         return staticVariables.listHandlerCache;
     }
 
-    public static void staticVariablesInitialize (){
+    public static void staticVariablesInitialize() {
 
         preferences.loadData();
 
-        if (Build.HARDWARE.contains("golfdish") || preferences.getPointerUrl() == "Testing"){
+        if (Build.HARDWARE.contains("golfdish") || preferences.getPointerUrl() == "Testing") {
             isTestingEnv = true;
         }
 
-        if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null){
+        if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.mustSeeIcon, staticVariables.preferences.getShowMust());
         }
-        if (staticVariables.filterToogle.get(staticVariables.mightSeeIcon) == null){
-            staticVariables.filterToogle.put(staticVariables.mightSeeIcon,  staticVariables.preferences.getShowMight());
+        if (staticVariables.filterToogle.get(staticVariables.mightSeeIcon) == null) {
+            staticVariables.filterToogle.put(staticVariables.mightSeeIcon, staticVariables.preferences.getShowMight());
         }
-        if (staticVariables.filterToogle.get(staticVariables.wontSeeIcon) == null){
+        if (staticVariables.filterToogle.get(staticVariables.wontSeeIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.wontSeeIcon, staticVariables.preferences.getShowWont());
         }
-        if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == null){
+        if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.unknownIcon, staticVariables.preferences.getShowUnknown());
         }
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             rinkVenueIcon = "\u26F8";
         }
 
         //use more update to date icons, but only if present
-        if (canShowFlagEmoji("\uD83E\uDD18") == true){
+        if (canShowFlagEmoji("\uD83E\uDD18") == true) {
             sawAllIcon = "\uD83E\uDD18";
             sawSomeIcon = "\uD83D\uDC4D";
         }
-        if (canShowFlagEmoji("\uD83C\uDF9F") == true){
+        if (canShowFlagEmoji("\uD83C\uDF9F") == true) {
             attendedShowIcon = "\uD83C\uDF9F";
         }
 
@@ -264,11 +280,11 @@ public class staticVariables {
             lookupUrls();
         }
 
-        if (context == null){
+        if (context == null) {
             context = Bands70k.getAppContext();
         }
 
-        if (eventYear == 0){
+        if (eventYear == 0) {
             getEventYear();
         }
 
@@ -301,7 +317,7 @@ public class staticVariables {
         }
     }
 
-    public static void setupVenueLocations(){
+    public static void setupVenueLocations() {
 
         venueLocation.put(poolVenueText, "Deck 11");
         venueLocation.put(rinkVenueText, "Deck 3");
@@ -310,6 +326,24 @@ public class staticVariables {
         venueLocation.put("Sports Bar", "Deck 4");
         venueLocation.put("Viking Crown", "Deck 14");
         venueLocation.put("Boleros Lounge", "Deck 4");
+    }
+
+    public static void verifyStoragePermissions(Activity activity){
+
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+            if(permission != PackageManager.PERMISSION_GRANTED)
+
+        {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+
     }
 
     public static String getEventTypeIcon (String eventType){
@@ -406,6 +440,7 @@ public class staticVariables {
 
         }
 
+        Log.d("Ranking", "Returning ranking image of " + icon);
         return icon;
     }
 

@@ -1,6 +1,8 @@
 package com.Bands70k;
 
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -49,29 +51,41 @@ public class ImageHandler {
         URI localURL;
 
         if (this.bandName.isEmpty() == true){
+            Log.d("loadImageFile", "image file already exists band null, returning");
             return null;
         }
 
-        if (bandImageFile.exists() == false){
+        if (bandImageFile.exists() == false) {
 
             AsyncImageLoader myImageTask = new AsyncImageLoader();
             myImageTask.execute(bandName);
 
-            Log.e("loadImageFile", "Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
+            Log.e("loadImageFile", "image file already exists Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
 
             URI remoteURl = null;
 
             if (OnlineStatus.isOnline() == true) {
+                Log.e("loadImageFile", "image file already , in online mmode");
                 try {
                     remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
                 } catch (Exception error) {
                     remoteURl = URI.create(staticVariables.logo70kUrl);
                 }
+            } else {
+                Log.e("loadImageFile", "image file already , in offline mmode");
             }
+            Log.e("loadImageFile", "image file already existsremoteUrl is :" + remoteURl);
+
+            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+                String htmlImage = String.valueOf(remoteURl);
+                htmlImage = htmlImage.replace("https", "http");
+                remoteURl = URI.create(htmlImage);
+            }
+
             return remoteURl;
         }
 
-        Log.e("loadImageFile", "image file already exists from " + bandImageFile.getAbsolutePath());
+        Log.d("loadImageFile", "image file already exists from " + bandImageFile.getAbsolutePath());
         localURL = bandImageFile.toURI();
 
         return localURL;
