@@ -52,7 +52,7 @@ public class DetailHtmlGeneration {
 
                 while (entries.hasNext()) {
 
-                    noteViewPercentage = noteViewPercentage - 3;
+                    noteViewPercentage = noteViewPercentage - 4;
                     Map.Entry thisEntry = (Map.Entry) entries.next();
                     Object key = thisEntry.getKey();
 
