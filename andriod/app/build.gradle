@@ -10,16 +10,15 @@ android {
         applicationId "com.Bands70k"
         minSdkVersion 18
         targetSdkVersion 29
-        versionCode 302009053
-        versionName "302009053"
+        versionCode 302009054
+        versionName "302009054"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
