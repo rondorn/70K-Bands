@@ -3,15 +3,15 @@ apply plugin: 'com.android.application'
 android {
 
 
-    compileSdkVersion 29
+    compileSdkVersion 31
     //buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.Bands70k"
         minSdkVersion 18
-        targetSdkVersion 29
-        versionCode 302009054
-        versionName "302009054"
+        targetSdkVersion 31
+        versionCode 302112311
+        versionName "302112311"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -27,6 +27,7 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
+    buildToolsVersion '31.0.0'
 }
 
 configurations.all {
@@ -61,7 +62,7 @@ dependencies {
 
 buildscript {
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:3.2.0'
     }
     repositories {
         google()

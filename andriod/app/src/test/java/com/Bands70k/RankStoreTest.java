@@ -42,7 +42,7 @@ public class RankStoreTest extends TestCase {
         PowerMockito.mockStatic(Build.class);
         PowerMockito.mockStatic(OnlineStatus.class);
 
-        when(Environment.getExternalStorageDirectory()).thenReturn(tempFolder.newFolder());
+        when(staticVariables.context.getApplicationContext().getFilesDir().toString()).thenReturn(String.valueOf(tempFolder.newFolder()));
         when(OnlineStatus.isOnline()).thenReturn(true);
 
         ReflectionHelpers.setStaticField(Build.class,"HARDWARE", "golfdish");

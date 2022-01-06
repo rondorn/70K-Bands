@@ -12,6 +12,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
@@ -21,6 +22,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.ArrayMap;
@@ -57,6 +59,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,6 +102,9 @@ public class showBands extends Activity {
 
     private Boolean loadOnceStopper = false;
 
+    private Boolean sharedZipFile = false;
+    private File zipFile;
+
     // inside my class
     private static final String[] INITIAL_PERMS = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -113,7 +120,7 @@ public class showBands extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.d("get perms", "Getting access to storage");
+            Log.d("get perms", "Getting access to storage " + Build.VERSION.SDK_INT + "-" + Build.VERSION_CODES.M);
             int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
             int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
             if (permission != 0) {
@@ -130,7 +137,22 @@ public class showBands extends Activity {
             }
 
         } else {
-            newRootDir =Bands70k.getAppContext().getFilesDir().getPath();
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
+        }
+
+        try {
+            File testFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "test.txt");
+            String test = "test";
+            FileOutputStream stream = new FileOutputStream(testFile);
+            try {
+                stream.write(test.getBytes());
+            } finally {
+                stream.close();
+            }
+        } catch (Exception error) {
+            //It appears I do not have access to external storage...lets fix that
+            //by changing to use app storage
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
         }
 
         setTheme(R.style.AppTheme);
@@ -445,6 +467,116 @@ public class showBands extends Activity {
             }
         });
     }
+    public void shareMenuPrompt(){
+
+        sharedZipFile = false;
+        TextView titleView = new TextView(context);
+        titleView.setText("What do you want to share?");
+        titleView.setPadding(20, 30, 20, 30);
+        titleView.setTextSize(20F);
+        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setBackgroundColor(Color.parseColor("#505050"));
+        titleView.setTextColor(Color.WHITE);
+
+        // create an alert builder
+        final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
+        builder.setCustomTitle(titleView);
+
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
+        builder.setView(customLayout);
+
+        Button shareBandChoices = (Button) customLayout.findViewById(R.id.GoToDetails);
+        Button shareShowChoices = (Button) customLayout.findViewById(R.id.AttendedAll);
+        Button saveData = (Button) customLayout.findViewById(R.id.AttendeSome);
+        Button na1 = (Button) customLayout.findViewById(R.id.AttendeNone);
+        Button na2 = (Button) customLayout.findViewById(R.id.Disable);
+
+        shareBandChoices.setText("Share Band Choices");
+        shareShowChoices.setText("Share Show Choices");
+        saveData.setText("Export User Data");
+        na1.setVisibility(View.INVISIBLE);
+        na2.setVisibility(View.INVISIBLE);
+
+        // add a button
+        builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        // create and show the alert dialog
+        final AlertDialog dialog = builder.create();
+
+
+        shareBandChoices.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+
+                String shareBody = buildShareMessage();
+                String subject = "Bands I MUST see on 70,000 Tons";
+
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+            }
+        });
+
+        shareShowChoices.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+
+                showsAttendedReport reportHandler = new showsAttendedReport();
+                reportHandler.assembleReport();
+                String shareBody = reportHandler.buildMessage();
+                String subject = "These are the events I attended on the 70,000 Tons Cruise";
+
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+            }
+        });
+
+        saveData.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                String zipFileName = UserDataExportImport.exportDataToZip();
+
+                Log.d("", "Zip file name 1 is  " + zipFileName);
+                zipFile = new File(zipFileName);
+                Log.d("", "Zip file name 2 is  " + zipFile.getAbsolutePath());
+
+                Uri zipFileUri = FileProvider.getUriForFile(
+                        context,
+                        "com.Bands70k",
+                        zipFile);
+
+                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+
+                sharingIntent.setType("application/zip");
+                sharingIntent.putExtra(Intent.EXTRA_STREAM, zipFileUri);
+
+                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Sharing File...");
+                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing File...");
+
+                startActivity(Intent.createChooser(sharingIntent, "Share File"));
+
+                dialog.dismiss();
+                sharedZipFile = true;
+            }
+        });
+
+        dialog.show();
+
+        if (sharedZipFile == true){
+            zipFile.delete();
+        }
+    }
 
     private void showNotification(){
 
@@ -508,24 +640,10 @@ public class showBands extends Activity {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
-                String shareBody;
-                String subject;
+                HelpMessageHandler.showMessage("Share Button Was Pressed!");
 
-                if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
-                    showsAttendedReport reportHandler = new showsAttendedReport();
-                    reportHandler.assembleReport();
-                    shareBody = reportHandler.buildMessage();
-                    subject = "These are the events I attended on the 70,000 Tons Cruise";
+                shareMenuPrompt();
 
-                } else {
-                    shareBody = buildShareMessage();
-                    subject = "Bands I MUST see on 70,000 Tons";
-                }
-
-                Log.d("ShareMessage", shareBody);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-                startActivity(Intent.createChooser(sharingIntent, "Share via"));
             }
         });
 
