@@ -36,7 +36,7 @@ public class ImageHandler {
     public ImageHandler(String bandNameValue){
         this.bandName = bandNameValue;
         oldImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
-        bandImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.imageDirectory + bandName + ".png");
+        bandImageFile = new File(FileHandler70k.imageDirectory + bandName + ".png");
         this.moveOldToNew();
     }
 

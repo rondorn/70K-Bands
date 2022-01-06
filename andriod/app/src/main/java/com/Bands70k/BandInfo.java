@@ -141,7 +141,7 @@ public class BandInfo {
             return staticVariables.imageUrlMap.get(bandName);
 
         } else if (getBandDetailsData(bandName, "imageUrl") != null) {
-            Log.d("ImageUrlIs1", bandName + "  shttp://" + getBandDetailsData(bandName, "imageUrl"));
+            Log.d("ImageUrlIs1", bandName + "  http://" + getBandDetailsData(bandName, "imageUrl"));
             return "https://" + getBandDetailsData(bandName, "imageUrl");
 
         } else {
