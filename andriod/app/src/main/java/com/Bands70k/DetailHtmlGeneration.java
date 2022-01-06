@@ -1,8 +1,12 @@
 package com.Bands70k;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -20,7 +24,7 @@ public class DetailHtmlGeneration {
 
         ImageHandler imageHandler = new ImageHandler(bandName);
         String htmlImage = String.valueOf(imageHandler.getImage());
-
+        String imageSetup = getImageBoundry(htmlImage, bandName);
         String htmlText =
                 "<html><head>" +
                         "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
@@ -31,12 +35,45 @@ public class DetailHtmlGeneration {
                         "<div style='height:20px;font-size:130%;left:0;right:0;'>" +
                         "<center>" + bandName + "</center>" + "</div>" +
                         "<div style='width=100%;left:0;right:0;'>" +
-                        "<center><img height=10% Id=bandLogo src='" + htmlImage + "'/></center></div>";
+                        "<center><img " + imageSetup + " Id=bandLogo src='" + htmlImage + "'/></center></div>";
 
         Log.d("tileLogohtmlData", "tile Logo html Data is :" + htmlText);
 
         return htmlText;
 
+    }
+    public String getImageBoundry(String image, String bandName){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+        int width = 0;
+        int height = 0;
+        String imageSetup = "";
+
+        //Returns null, sizes are in the options variable
+        URL url = null;
+        try {
+            url = new URL(image);
+            Bitmap bmp = BitmapFactory.decodeStream(url.openStream());
+
+            width = bmp.getWidth();
+            height = bmp.getHeight();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        int ratio = (width/height);
+        if (ratio > 5) {
+            imageSetup = "width=70%";
+
+        } else {
+            imageSetup = "height=10%";
+        }
+
+        Log.d("tileLogohtmlData", "image dimensions are " + String.valueOf(ratio) + "-" + imageSetup + "-" + bandName);
+
+        return imageSetup;
     }
 
     public String displaySchedule(String bandName, int displayWidth){
