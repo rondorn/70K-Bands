@@ -42,6 +42,8 @@
     <string name="restarTitle">Genstart Påkrævet</string>
     <string name="restartMessage">Gør ikke dette på krydstogt.\nInternetforbindelse krævet.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
 
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+
     <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 
@@ -77,4 +79,5 @@
     <string name="Next">Næste</string>
     <string name="Previous">Tidligere</string>
 
+    <string name="ImportDataBackup">Importer Sikkerhedskopiering Af Data</string>
 </resources>

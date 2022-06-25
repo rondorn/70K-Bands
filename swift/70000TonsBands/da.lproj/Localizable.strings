@@ -86,3 +86,12 @@
 "AlreadyAtStart" = "Allerede ved start af listen";
 "Next" = "Næste";
 "Previous" = "Tidligere";
+
+"NoteFontSize" = "Bemærk skriftstørrelsen stor";
+
+"ShareBandChoices" = "Del Bandvalg";
+"ShareShowChoices" = "Del Vis valg";
+
+"visitBands" = "Links";
+"country" = "Land";
+"genre" = "Køn";

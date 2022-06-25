@@ -323,5 +323,6 @@ open class ShowsAttended {
         return textValue
         
     }
+    
 }
 

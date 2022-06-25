@@ -215,6 +215,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         youtubeUrlButton.isHidden = false
         metalArchivesButton.isHidden = false
         
+        vistLinksLable.text = NSLocalizedString("visitBands", comment: "Visit Band Via") + ":"
+        
         disableLinksWithEmptyData()
         
         Country.isHidden = false
@@ -387,7 +389,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 extraData.isHidden = true
 
             } else {
-                Country.text = "Country:\t" + bandCountry
+                let countryLablel = NSLocalizedString("country", comment: "Country")
+                Country.text = countryLablel + ":\t" + bandCountry
                 Country.isHidden = false
                 allDetailsHidden = false
             }
@@ -398,7 +401,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 Genre.isHidden = true
 
             } else {
-                Genre.text = "Genre:\t" + bandGenre
+                let genreLabel = NSLocalizedString("genre", comment: "Genre")
+                Genre.text = genreLabel + ":\t" + bandGenre
                 Genre.isHidden = false
                 allDetailsHidden = false
             }

@@ -6,23 +6,43 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Looper;
 import android.preference.Preference;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.Switch;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import static android.app.ActivityManager.isRunningInTestHarness;
 import static android.app.PendingIntent.getActivity;
+import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
+import static com.Bands70k.staticVariables.context;
 
 
 /**
@@ -30,6 +50,7 @@ import static android.app.PendingIntent.getActivity;
  */
 public class preferenceLayout  extends Activity {
 
+    private Button dataImportButton;
 
     private Switch showSpecialEvents;
     private Switch showMeetAndGreet;
@@ -82,9 +103,197 @@ public class preferenceLayout  extends Activity {
             //do nothing
         }
 
+        dataImportButton = (Button)findViewById(R.id.ImportDataBackup);
+        dataImportButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                dataImportFunc();
+            }
+        });
+
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
         headerText.setText("70K Bands Preferences - Build:" + versionString);
+    }
+
+    private void  dataImportFunc(){
+
+        TextView titleView = new TextView(context);
+        titleView.setText("Provide the URL to the Backup File");
+        titleView.setPadding(20, 30, 20, 30);
+        titleView.setTextSize(20F);
+        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setBackgroundColor(Color.parseColor("#505050"));
+        titleView.setTextColor(Color.WHITE);
+
+        // create an alert builder
+        final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
+        builder.setCustomTitle(titleView);
+
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.import_prompt, null);
+        builder.setView(customLayout);
+
+        Button importButton  = (Button) customLayout.findViewById(R.id.Import);
+        Button cancelButton  = (Button) customLayout.findViewById(R.id.Cancel);
+        final TextView importUrl = (TextView) customLayout.findViewById(R.id.pointerUrl);
+
+        // create and show the alert dialog
+        final AlertDialog dialog = builder.create();
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        importButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                InputMethodManager inputManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(customLayout.getWindowToken(), 0);
+
+                dialog.dismiss();
+                String downloadUrl = importUrl.getText().toString();
+                System.out.println("in DownloadBandFile " +  isRunningInTestHarness());
+                if (OnlineStatus.isOnline() == true) {
+                    System.out.println("downloading backup File from " + downloadUrl);
+                    try {
+                        //dropbox link fix
+                        if (downloadUrl.contains("dropbox") == true) {
+                            downloadUrl = downloadUrl.replaceAll("dl=0", "dl=1");
+
+                        //Google Drive link fix
+                        } else if (downloadUrl.contains("https://drive.google.com/file/d/") == true) {
+                            System.out.println("parsing download link 1 " + downloadUrl);
+                            downloadUrl = downloadUrl.replaceAll("https://drive.google.com/file/d/", "");
+                            System.out.println("parsing download link 2 " + downloadUrl);
+
+                            downloadUrl = downloadUrl.replaceAll("/.*", "");
+                            System.out.println("parsing download link 3 " + downloadUrl);
+
+                            downloadUrl = "https://drive.google.com/uc?export=download&id=" + downloadUrl;
+                            System.out.println("parsing download link 4 " + downloadUrl);
+
+                        } else if (downloadUrl.contains("https://onedrive.live.com/embed?") == true){
+                            downloadUrl = downloadUrl.replaceAll("https://onedrive.live.com/embed?", "https://onedrive.live.com/download?");
+                            System.out.println("parsing download link 4 " + downloadUrl);
+                        }
+
+                        URL u = new URL(downloadUrl);
+                        InputStream is = u.openStream();
+
+                        DataInputStream dis = new DataInputStream(is);
+
+                        byte[] buffer = new byte[1024];
+                        int length;
+
+                        FileOutputStream fos = new FileOutputStream(FileHandler70k.backupFileTemp);
+                        while ((length = dis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, length);
+                        }
+
+
+                    } catch (MalformedURLException mue) {
+                        Log.e("SYNC getUpdate", "malformed url error", mue);
+                    } catch (IOException ioe) {
+                        Log.e("SYNC getUpdate", "io error", ioe);
+                    } catch (SecurityException se) {
+                        Log.e("SYNC getUpdate", "security error", se);
+
+                    } catch (Exception generalError) {
+                        Log.e("General Exception", "Downloading bandData", generalError);
+                    }
+                }
+
+                File backupFile = new File(FileHandler70k.backupFileTemp.toURI());
+                if (backupFile.exists()){
+                    AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
+
+                    // Setting Dialog Title
+                    restartDialog.setTitle("Confirm Restart");
+
+                    // Setting Dialog Message
+                    restartDialog.setMessage(getResources().getString(R.string.importMessage));
+
+                    // Setting Icon to Dialog
+                    restartDialog.setIcon(R.drawable.alert_icon);
+
+                    // Setting Positive "Yes" Btn
+                    restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    unpackZip(FileHandler70k.baseDirectory.getPath() + "/", FileHandler70k.backupFileTemp.getAbsolutePath());
+                                    File backupFile = new File(FileHandler70k.backupFileTemp.toURI());
+                                    backupFile.delete();
+                                    finish();
+
+                                    finishAffinity();
+                                    System.exit(0);
+                                }
+                    });
+
+                    // Showing Alert Dialog
+                    restartDialog.show();
+                } else {
+                    HelpMessageHandler.showMessage("Something went wrong downloading file from URL " + importUrl.getText());
+                }
+
+            }
+        });
+
+        dialog.show();
+
+    }
+
+    private boolean unpackZip(String path, String zipname)
+    {
+        InputStream is;
+        ZipInputStream zis;
+        try
+        {
+            String filename;
+            is = new FileInputStream(zipname);
+            zis = new ZipInputStream(new BufferedInputStream(is));
+            ZipEntry ze;
+            byte[] buffer = new byte[1024];
+            int count;
+
+            while ((ze = zis.getNextEntry()) != null)
+            {
+                filename = ze.getName();
+
+                // Need to create directories if not exists, or
+                // it will generate an Exception...
+                if (ze.isDirectory()) {
+                    File fmd = new File(path + filename);
+                    fmd.mkdirs();
+                    continue;
+                }
+
+                FileOutputStream fout = new FileOutputStream(path + filename);
+
+                while ((count = zis.read(buffer)) != -1)
+                {
+                    fout.write(buffer, 0, count);
+                }
+
+                fout.close();
+                zis.closeEntry();
+            }
+
+            zis.close();
+        }
+        catch(IOException e)
+        {
+            Log.e("General Exception", "Something went wrong " +e.getMessage());
+            HelpMessageHandler.showMessage("Something went wrong " +e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 
     private void setLabels(){
