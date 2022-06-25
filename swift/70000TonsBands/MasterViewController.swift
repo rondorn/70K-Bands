@@ -47,6 +47,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
+    var sharedMessage = ""
     var objects = NSMutableArray()
     var bands =  [String]()
     var bandsByTime = [String]()
@@ -370,7 +371,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             self.bandsByName = [String]()
             self.bands =  [String]()
-            
+
             schedule.populateSchedule()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
             
@@ -567,13 +568,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
+                
+        detailShareChoices()
+    }
+    
+    func sendSharedMessage(message: String){
         
         var intro:String = ""
         
-        let reportHandler = showAttendenceReport()
-        reportHandler.assembleReport()
-            
-        intro += FCMnumber + " " + reportHandler.buildMessage()
+        print ("sending a shared message of : " + message)
+        intro += FCMnumber + " " + message
       
         let objectsToShare = [intro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
@@ -590,7 +594,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         self.present(activityVC, animated: true, completion: nil)
     }
-
+    
     func adaptivePresentationStyleForPresentationController(
         _ controller: UIPresentationController!) -> UIModalPresentationStyle {
             return .none
@@ -808,6 +812,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         tableView.reloadData()
+    }
+    
+    func detailShareChoices(){
+        
+        sharedMessage = "Start"
+        
+        let alert = UIAlertController.init(title: "Share Type", message: "", preferredStyle: .actionSheet)
+        let reportHandler = showAttendenceReport()
+        
+        let mustMightShare = UIAlertAction.init(title: NSLocalizedString("ShareBandChoices", comment: ""), style: .default) { _ in
+            print("shared message: Share Must/Might list")
+            var message = reportHandler.buildMessage(type: "MustMight")
+            self.sendSharedMessage(message: message)
+        }
+        alert.addAction(mustMightShare)
+        
+        reportHandler.assembleReport();
+        
+        if (reportHandler.getIsReportEmpty() == false){
+            let showsAttended = UIAlertAction.init(title: NSLocalizedString("ShareShowChoices", comment: ""), style: .default) { _ in
+                    print("shared message: Share Shows Attendedt list")
+                    var message = reportHandler.buildMessage(type: "Events")
+                    self.sendSharedMessage(message: message)
+            }
+            alert.addAction(showsAttended)
+        }
+        
+        let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+            self.sharedMessage = "Abort"
+            return
+        }
+        alert.addAction(cancelDialog)
+        
+        if let popoverController = alert.popoverPresentationController {
+              popoverController.sourceView = self.view
+               popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+              popoverController.permittedArrowDirections = []
+       }
+   
+       present(alert, animated: true, completion: nil)
+       
+        sharedMessage = "Done"
     }
     
     func detailMenuChoices(cellDataText :String, bandName :String, segue :UIStoryboardSegue, indexPath: IndexPath) {

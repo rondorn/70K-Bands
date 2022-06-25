@@ -9,9 +9,9 @@ android {
     defaultConfig {
         applicationId "com.Bands70k"
         minSdkVersion 18
-        targetSdkVersion 31
-        versionCode 302112311
-        versionName "302112311"
+        targetSdkVersion 30
+        versionCode 302201201
+        versionName "302201201"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }

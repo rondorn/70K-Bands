@@ -41,6 +41,8 @@
     <string name="restarTitle">Restart Required</string>
     <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
 
+    <string name="importMessage">This change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
+
     <string name="showAttendedFilterTrueHelp">Only show events that you indicate you will attend. Other filters will not apply</string>
     <string name="showAttendedFilterFalseHelp">Show bands and shows according to filters</string>
 
@@ -75,6 +77,8 @@
     <string name="AlreadyAtStart">Already At Start of List</string>
     <string name="Next">Next</string>
     <string name="Previous">Previous</string>
+
+    <string name="ImportDataBackup">Import Data Backup</string>
 
 </resources>
 

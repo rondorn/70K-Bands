@@ -640,7 +640,7 @@ public class showBands extends Activity {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
-                HelpMessageHandler.showMessage("Share Button Was Pressed!");
+                //HelpMessageHandler.showMessage("Share Button Was Pressed!");
 
                 shareMenuPrompt();
 

@@ -89,6 +89,14 @@
 "Next" = "Seuraava";
 "Previous" = "Edellinen";
 
+"NoteFontSize" = "Huomioi suuri fonttikoko";
+
+"ShareBandChoices" = "Jaa bändivalinnat";
+"ShareShowChoices" = "Jaa Show Choices";
+
+"visitBands" = "Linkit";
+"country" = "Maa";
+"genre" = "Sukupuoli";
 
 
 

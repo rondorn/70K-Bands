@@ -91,9 +91,14 @@
 "Next" = "Prochain";
 "Previous" = "Précédent";
 
+"NoteFontSize" = "Notez que la taille de la police est grande";
 
+"ShareBandChoices" = "Partager les choix de groupe";
+"ShareShowChoices" = "Partager Afficher les choix";
 
-
+"visitBands" = "Liens";
+"country" = "Pays";
+"genre" = "Le Genre";
 
 
 

@@ -42,6 +42,7 @@
 
     <string name="restarTitle">Es Necesario Reiniciar</string>
     <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET. \nEste cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
+    <string name="impotMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
 
@@ -78,4 +79,5 @@
     <string name="Next">Siguiente</string>
     <string name="Previous">Previo</string>
 
+    <string name="ImportDataBackup">Importar copia de seguridad de datos</string>
 </resources>
