@@ -43,6 +43,8 @@
     <string name="restarTitle">Necessário Reiniciar</string>
     <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. CONEXÃO DE INTERNET NECESSÁRIA.\nEssa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados</string>
 
+    <string name="importMessage">Essa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados</string>
+
     <string name="showAttendedFilterTrueHelp">Apenas mostre os eventos que você indicou que você irá participar. Outros filtros não serão aplicados</string>
     <string name="showAttendedFilterFalseHelp">Mostrar bandas e shows de acordo com filtros</string>
 
@@ -77,4 +79,5 @@
     <string name="Next">Próximo</string>
     <string name="Previous">Anterior</string>
 
+    <string name="ImportDataBackup">Importar backup de dados</string>
 </resources>

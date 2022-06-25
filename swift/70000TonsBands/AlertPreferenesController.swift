@@ -240,6 +240,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "")
         EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "")
         
+        NotesFontSizeLargeLabel.text = NSLocalizedString("NoteFontSize", comment: "")
+        
         HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
         HideExpiredSwitchLabel.text = NSLocalizedString("hideExpiredEvents", comment: "")
         

@@ -54,7 +54,7 @@ public class FileHandler70k {
     public static final File rootNoMedia = new File(showBands.newRootDir + directoryName + ".nomedia");
     public static final File mediaNoMedia = new File(showBands.newRootDir + imageDirectory + ".nomedia");
 
-
+    public static final File backupFileTemp = new File(showBands.newRootDir + directoryName + "backupFileTemp.zip");
     public static final File alertStorageFile = new File(showBands.newRootDir + directoryName + "70kbandAlertStorage.data");
 
 

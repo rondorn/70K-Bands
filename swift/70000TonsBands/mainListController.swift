@@ -18,6 +18,7 @@ var mightSeeOn = true;
 var wontSeeOn = true;
 var unknownSeeOn = true;
 
+var hasAttendedEvents = false
 var attendingCount = 0;
 
 var showOnlyWillAttened = false;

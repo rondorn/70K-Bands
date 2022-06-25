@@ -89,3 +89,12 @@
 "AlreadyAtStart" = "Ya al inicio de la lista";
 "Next" = "Siguiente";
 "Previous" = "Previo";
+
+"NoteFontSize" = "Tenga en cuenta el tamaño de fuente grande";
+
+"ShareBandChoices" = "Compartir opciones de bandas";
+"ShareShowChoices" = "Compartir Mostrar opciones";
+
+"visitBands" = "Enlaces";
+"country" = "País";
+"genre" = "Género";
