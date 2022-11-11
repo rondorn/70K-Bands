@@ -24,20 +24,22 @@ class firebaseUserWrite {
         var usingSimulator = false;
         
         #if targetEnvironment(simulator)
-            usingSimulator = true;
+        //    usingSimulator = true;
         #endif
         if (inTestEnvironment == true){
-            usingSimulator = true;
+            //usingSimulator = true;
         }
         
+        //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
         if (internetAvailble == true && usingSimulator == false){
             
             let userDataHandle = userDataHandler()
-            
+            print ("Writing Firebase  UserID is \(userDataHandle.uid)");
+            //("Writing Firebase data new userData Id is 1 " + userDataHandle.uid)
             if (userDataHandle.uid.isEmpty == false){
-                print ("Firebase UserID is \(userDataHandle.uid)");
+                NSLog("Writing Firebase data new userData Id is 2 " + userDataHandle.uid)
                 
-                print ("Writing firebase data to userData start");
+                print ("Writing Firebase  firebase data to userData start");
 
                 self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
                                                                                "country": userDataHandle.country,
@@ -52,12 +54,17 @@ class firebaseUserWrite {
                                                                                 }
                 }
             
-                print ("Writing firebase data to userData stop")
+                //NSLog("Writing Firebase data new userData Id is 3 " + userDataHandle.uid)
             }
         } else {
+        
             if (usingSimulator == true){
                 //this is being done soley to prevent capturing garbage stats data within my app!
-                print ("Bypassed firebase band data writes due to being in simulator!!!")
+                //NSLog("Writing Firebase data new userData canceling in simulator")
+
+            } else {
+                //NSLog("Writing Firebase data new userData canceling in offline")
+                
             }
         }
     }

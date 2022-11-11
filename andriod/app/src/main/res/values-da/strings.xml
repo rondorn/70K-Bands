@@ -80,4 +80,16 @@
     <string name="Previous">Tidligere</string>
 
     <string name="ImportDataBackup">Importer Sikkerhedskopiering Af Data</string>
+    <string name="ShareTitle">Hvad vil du dele?</string>
+    <string name="ShareBandChoices">Del Bandvalg</string>
+    <string name="ShareShowChoices">Del Vis valg</string>
+    <string name="ExportUserData">Eksporter brugerdata</string>
+
+    <string name="visitBands">Links</string>
+    <string name="country">Land</string>
+    <string name="genre">Køn</string>
+
+    <string name="verify_country">Bekræft dit land</string>
+    <string name="correct_if_needed">Ret dit land, hvis det er nødvendigt</string>
+    <string name="country_invalid">Landeværdien anerkendes ikke som gyldig</string>
 </resources>

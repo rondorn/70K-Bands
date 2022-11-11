@@ -545,6 +545,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
                 priorityButtons.isHidden = true
                 PriorityIcon.isHidden = true
+                
             } else {
                 LinksSection.isHidden = false
 
@@ -556,6 +557,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
                 priorityButtons.isHidden = false
                 PriorityIcon.isHidden = false
+                
+                disableLinksWithEmptyData()
             }
             
             

@@ -3,19 +3,19 @@ platform :ios, '9.0'
 # Uncomment this line if you're using Swift
 use_frameworks!
 
-pod 'Firebase/Core','~> 5.15.0'
-pod 'Firebase/Messaging','~> 5.15.0'
-pod 'Firebase/Database','~> 5.15.0'
+pod 'Firebase/Core','~> 5.16.0'
+pod 'Firebase/Messaging','~> 5.16.0'
+pod 'Firebase/Database','~> 5.16.0'
 
 target '70K Bands' do
-	pod 'Firebase/Core','~> 5.15.0'
-	pod 'Firebase/Messaging','~> 5.15.0'
-	pod 'Firebase/Database','~> 5.15.0'
+	pod 'Firebase/Core','~> 5.16.0'
+	pod 'Firebase/Messaging','~> 5.16.0'
+	pod 'Firebase/Database','~> 5.16.0'
 end
 
 target '70K BandsTests' do
-        pod 'Firebase/Core','~> 5.15.0'
-        pod 'Firebase/Messaging','~> 5.15.0'
-	pod 'Firebase/Database','~> 5.15.0'
+        pod 'Firebase/Core','~> 5.16.0'
+        pod 'Firebase/Messaging','~> 5.16.0'
+	pod 'Firebase/Database','~> 5.16.0'
 end
 

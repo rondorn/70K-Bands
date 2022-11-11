@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -21,6 +23,7 @@ import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
@@ -39,11 +42,13 @@ import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,6 +60,7 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -63,7 +69,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static com.Bands70k.staticVariables.*;
 import static java.lang.Thread.sleep;
@@ -100,6 +109,7 @@ public class showBands extends Activity {
     private bandListView adapter;
     private ListView listView;
 
+    private static Boolean recievedPermAnswer = false;
     private Boolean loadOnceStopper = false;
 
     private Boolean sharedZipFile = false;
@@ -116,30 +126,80 @@ public class showBands extends Activity {
     };
     private static final int REQUEST = 1337;
 
+    private boolean checkWriteExternalPermission()
+    {
+        String permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        int res = Bands70k.getAppContext().checkCallingOrSelfPermission(permission);
+        return (res == PackageManager.PERMISSION_GRANTED);
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("get perms", "Getting access to storage - results processesing " + requestCode);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        recievedPermAnswer = true;
+        Log.d("get perms", "Getting access to storage - results processesing " + requestCode);
+        if (requestCode == 1) {
+
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Thanks for enabling the permission", Toast.LENGTH_SHORT).show();
+
+                //do something permission is allowed here....
+
+            } else {
+
+                recievedPermAnswer = true;
+                Toast.makeText(this, "Please allow the Permission", Toast.LENGTH_SHORT).show();
+
+
+            }
+        }
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.d("get perms", "Getting access to storage " + Build.VERSION.SDK_INT + "-" + Build.VERSION_CODES.M);
-            int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
-            if (permission != 0) {
-                requestPermissions(INITIAL_PERMS, REQUEST);
-                while (permission != 0) {
-                    permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (this.checkWriteExternalPermission() == false){
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
+
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Log.d("get perms", "Getting access to storage " + Build.VERSION.SDK_INT + "-" + Build.VERSION_CODES.M);
+                int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                Log.d("get perms", "Getting access to storage - pre- asking");
+                if (permission != 0) {
+                    //ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+
+                    //requestPermissions((new String[]
+                    //        {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
+
+                    Log.d("get perms", "Getting access to storage - asking");
+                    Integer count = 0;
+                    while (permission != 0 || recievedPermAnswer == false) {
+                        permission = checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                        Log.d("get perms", "Getting access to storage - waiting " + permission + " " + count.toString());
+                        sleep(1000);
+                        requestPermissions((new String[]
+                                {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
+                        count = count + 1;
+                    }
+                    Log.d("get perms", "Getting access to storage - granted " + permission);
                 }
-            }
-            if (readpermission != 0) {
-                requestPermissions(INITIAL_PERMS, REQUEST);
-                while (readpermission != 0) {
-                    readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                if (readpermission != 0) {
+                    requestPermissions(INITIAL_PERMS, REQUEST);
+                    while (readpermission != 0) {
+                        readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                    }
                 }
+            } catch (Exception error){
+                newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
             }
 
         } else {
             newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
         }
-
+        Log.d("Rool volume", "Root volume is " + newRootDir);
         try {
             File testFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "test.txt");
             String test = "test";
@@ -261,15 +321,96 @@ public class showBands extends Activity {
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
         Log.d("startup", "show init start - 9");
+        this.getCountry();
+
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
-
         BandInfo bandInfo = new BandInfo();
         bandInfo.DownloadBandFile();
         refreshData();
         Log.d("startup", "show init start - 10");
+
     }
 
+    private void getCountry(){
+
+        Log.d("getCountry", "getCountry started");
+        if (FileHandler70k.doesCountryFileExist() == false){
+            Log.d("getCountry", "getCountry prompting for file");
+            sharedZipFile = false;
+            TextView titleView = new TextView(context);
+
+            titleView.setText(getString(R.string.verify_country));
+            titleView.setPadding(20, 30, 20, 30);
+            titleView.setTextSize(20F);
+            titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            titleView.setGravity(Gravity.CENTER);
+            titleView.setBackgroundColor(Color.parseColor("#505050"));
+            titleView.setTextColor(Color.WHITE);
+
+            // create an alert builder
+            final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
+            builder.setCustomTitle(titleView);
+            final View customLayout = getLayoutInflater().inflate(R.layout.ask_country, null);
+            builder.setView(customLayout);
+            builder.setCancelable(false);
+
+            Button okButton = (Button) customLayout.findViewById(R.id.ok_button);
+            TextView countryLabel = (TextView) customLayout.findViewById(R.id.CountryLabel);
+            final AutoCompleteTextView countryChoice = (AutoCompleteTextView) customLayout.findViewById(R.id.CountryList);
+
+            countryLabel.setText(getString(R.string.correct_if_needed));
+            countryLabel.setEnabled(false);
+            countryLabel.setTextSize(15F);
+            countryLabel.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            countryLabel.setGravity(Gravity.CENTER);
+            countryLabel.setPadding(20, 30, 20, 30);
+
+            Map<String, String> countryMap = CountryChoiceHandler.loadCountriesList();
+            String defaultCountryText = Locale.getDefault().getCountry();
+
+            defaultCountryText = countryMap.get(defaultCountryText);
+            countryChoice.setText(defaultCountryText);
+
+            String[] countries = countryMap.values().toArray(new String[0]);
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+                    android.R.layout.simple_dropdown_item_1line, countries);
+
+            countryChoice.setAdapter(adapter);
+
+            // create and show the alert dialog
+            final AlertDialog dialog = builder.create();
+
+
+            okButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Map<String, String> countryMap = CountryChoiceHandler.loadCountriesList();
+                    String country = String.valueOf(countryChoice.getText());
+                    if (countryMap.values().contains(country) == false){
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                        getCountry();
+                    }
+                    Map<String, String> countryMapRev = new HashMap<String, String>();
+                    for (String countryCode : countryMap.keySet()) {
+                        countryMapRev.put(countryMap.get(countryCode), countryCode);
+                    }
+                    staticVariables.userCountry = countryMapRev.get(country);
+                    FileHandler70k.saveData(staticVariables.userCountry, FileHandler70k.countryFile);
+                    Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
+                    dialog.dismiss();
+                }
+            });
+
+            dialog.show();
+
+        } else {
+            Log.d("getCountry", "getCountry loading from file");
+            staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
+            Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
+        }
+
+    }
 
     private void setupSwipeList (){
 
@@ -471,7 +612,7 @@ public class showBands extends Activity {
 
         sharedZipFile = false;
         TextView titleView = new TextView(context);
-        titleView.setText("What do you want to share?");
+        titleView.setText(getString(R.string.ShareTitle));
         titleView.setPadding(20, 30, 20, 30);
         titleView.setTextSize(20F);
         titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -493,9 +634,9 @@ public class showBands extends Activity {
         Button na1 = (Button) customLayout.findViewById(R.id.AttendeNone);
         Button na2 = (Button) customLayout.findViewById(R.id.Disable);
 
-        shareBandChoices.setText("Share Band Choices");
-        shareShowChoices.setText("Share Show Choices");
-        saveData.setText("Export User Data");
+        shareBandChoices.setText(getString(R.string.ShareBandChoices));
+        shareShowChoices.setText(getString(R.string.ShareShowChoices));
+        saveData.setText(getString(R.string.ExportUserData));
         na1.setVisibility(View.INVISIBLE);
         na2.setVisibility(View.INVISIBLE);
 
@@ -1025,12 +1166,12 @@ public class showBands extends Activity {
 
         super.onStop();
         inBackground = true;
-
         FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
         bandWrite.writeData();
 
         FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
         eventWrite.writeData();
+
     }
 
     private void reloadData (){
