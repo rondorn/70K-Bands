@@ -148,6 +148,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var useLastYearsLable: UILabel!
     @IBOutlet weak var alertForListeningLable: UILabel!
  
+    @IBOutlet weak var userIDLabel: UILabel!
     
     @IBOutlet weak var alertForUnofficalEventsLable: UILabel!
 
@@ -247,6 +248,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
         PromptForAttendedSwitchLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
+        
+        var uidString = "Unknown"
+        if (UIDevice.current.identifierForVendor != nil){
+            if (UIDevice.current.identifierForVendor != nil){
+                uidString = UIDevice.current.identifierForVendor!.uuidString
+            }
+        }
+        userIDLabel.text = "UserID: " + uidString
+        userIDLabel.adjustsFontSizeToFitWidth = true
     }
     
     func setExistingValues (){

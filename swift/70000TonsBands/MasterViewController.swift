@@ -121,6 +121,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
                                                name: Notification.Name("FCMToken"), object: nil)
         
+        getCountry()
         
     }
     
@@ -138,7 +139,112 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Reload Data here
        self.tableView.reloadData()
     }
+    
+    func getCountry(){
         
+        let dataHandle = dataHandler()
+        do {
+            userCountry = try String(contentsOf: countryFile, encoding: .utf8)
+            print ("Using countryValue value of " + userCountry)
+            return
+        } catch {
+            //do nothing
+        }
+
+            
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let defaultCountry = NSLocale.current.regionCode!
+        let countryShortLong = countryHandle.getCountryShortLong()
+        let countryLongShort = countryHandle.getCountryLongShort()
+        let defaultLongCountry = countryShortLong[defaultCountry] ?? ""
+        
+        //UIAlertControllerStyleAlert
+        let alert = UIAlertController.init(title: "Verify Your Country", message: "Correct Your Country If Needed", preferredStyle: UIAlertController.Style.alert)
+        
+        
+        alert.addTextField { (textField) in
+            textField.text = defaultLongCountry
+        }
+        
+        let OkButton = UIAlertAction.init(title: "Ok", style: .default) { _ in
+            print("countryValue Ok Button Was Pressed, value is " + alert.textFields![0].text!)
+            print("countryValue defaultLongCountry looks like \(defaultLongCountry) ")
+            var fieldValue = alert.textFields![0].text!
+            if (countryShortLong.values.contains(fieldValue) == false){
+                
+                var firstCharacterFieldValue = fieldValue.prefix(2)
+                var message = "Unable to find a valid country of " + (fieldValue) + "\n"
+                message = message + "Could you have ment \n"
+                for country in countryShortLong{
+                    var firstCharactercountry = country.value.prefix(2)
+                    if (firstCharactercountry == firstCharacterFieldValue){
+                        message = message + country.value + "\n"
+                    }
+                }
+                
+                ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
+                self.getCountry()
+            } else {
+                var countryValue = countryLongShort[alert.textFields![0].text!]
+                print ("countryValue Acceptable country of " + countryValue! + " found")
+                
+                do {
+                    //let countryFileUrl = URL(string: countryFile)
+                    print ("countryValue writing Acceptable country of " + countryValue! + " found")
+                    try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+                } catch {
+                    print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
+                }
+
+            }
+        }
+        alert.addAction(OkButton)
+        
+        if let popoverController = alert.popoverPresentationController {
+            popoverController.sourceView = self.view
+            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+       }
+   
+       present(alert, animated: true, completion: nil)
+        
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let countryShortLong = countryHandle.getCountryShortLong()
+        var autoCompletionPossibilities = [String]()
+        
+        for value in countryShortLong.values {
+            autoCompletionPossibilities.append(value)
+        }
+        
+        return !autoCompleteText( in : textField, using: string, suggestionsArray: autoCompletionPossibilities)
+    }
+    
+    func autoCompleteText( in textField: UITextField, using string: String, suggestionsArray: [String]) -> Bool {
+            if !string.isEmpty,
+                let selectedTextRange = textField.selectedTextRange,
+                selectedTextRange.end == textField.endOfDocument,
+                let prefixRange = textField.textRange(from: textField.beginningOfDocument, to: selectedTextRange.start),
+                let text = textField.text( in : prefixRange) {
+                let prefix = text + string
+                let matches = suggestionsArray.filter {
+                    $0.hasPrefix(prefix)
+                }
+                if (matches.count > 0) {
+                    textField.text = matches[0]
+                    if let start = textField.position(from: textField.beginningOfDocument, offset: prefix.count) {
+                        textField.selectedTextRange = textField.textRange(from: start, to: textField.endOfDocument)
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+    
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
         

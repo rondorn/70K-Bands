@@ -900,6 +900,30 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="User Identifier"
+                android:layout_column="9"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                android:layout_marginLeft="10dp" />
+
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:id="@+id/userIdentifier"
+                android:layout_marginLeft="10dp"
+                android:textColor="@color/common_google_signin_btn_text_dark_default"
+                android:layout_column="27" />
+        </TableRow>
+
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">

@@ -13,7 +13,7 @@ import Firebase
 import FirebaseCore
 import FirebaseMessaging
 import FirebaseInstanceID
-
+import Foundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
@@ -359,18 +359,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     //end push functions
     
-    func applicationDidEnterBackground(_ application: UIApplication) {
+    func reportData(){
+        
+        internetAvailble = isInternetAvailable();
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-
+        //NSLog("Writing Firebase data new userData")
         let userDataHandle = firebaseUserWrite()
         userDataHandle.writeData()
-        
+        //NSLog("Writing Firebase data new Band Write")
         let bandWrite  = filebaseBandDataWrite();
         bandWrite.writeData();
-        
+        //NSLog("Writing Firebase data new Show Write")
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
+    }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
         
+        reportData()
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
@@ -389,6 +395,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+        reportData()
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
@@ -485,7 +492,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     error = error1
                     // Replace this implementation with code to handle the error appropriately.
                     // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                    NSLog("Unresolved error \(error), \(error!.userInfo)")
+                    //NSLog("Unresolved error \(error), \(error!.userInfo)")
                     abort()
                 }
             }

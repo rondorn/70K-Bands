@@ -15,57 +15,6 @@
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
-		1128738824A54F350036CC2A /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
-		1128738924A54F350036CC2A /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
-		1128738A24A54F350036CC2A /* imageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6301A5758BF003F4764 /* imageHandler.swift */; };
-		1128738B24A54F350036CC2A /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
-		1128738C24A54F350036CC2A /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
-		1128738D24A54F350036CC2A /* SortMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortMenuController.swift */; };
-		1128738E24A54F350036CC2A /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
-		1128738F24A54F350036CC2A /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
-		1128739024A54F350036CC2A /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
-		1128739124A54F350036CC2A /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
-		1128739224A54F350036CC2A /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
-		1128739324A54F350036CC2A /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
-		1128739424A54F350036CC2A /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
-		1128739524A54F350036CC2A /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
-		1128739624A54F350036CC2A /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
-		1128739724A54F350036CC2A /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
-		1128739824A54F350036CC2A /* _0000TonsBands.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */; };
-		1128739924A54F350036CC2A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60B1A575893003F4764 /* AppDelegate.swift */; };
-		1128739A24A54F350036CC2A /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
-		1128739B24A54F350036CC2A /* bandNamesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNamesHandler.swift */; };
-		1128739C24A54F350036CC2A /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
-		1128739D24A54F350036CC2A /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
-		1128739E24A54F350036CC2A /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
-		1128739F24A54F350036CC2A /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
-		112873A024A54F350036CC2A /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6101A575893003F4764 /* MasterViewController.swift */; };
-		112873A124A54F350036CC2A /* validateCSVschedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */; };
-		112873A224A54F350036CC2A /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
-		112873A324A54F350036CC2A /* InterfaceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0331B1AB3A77F00AA29B8 /* InterfaceController.swift */; };
-		112873A424A54F350036CC2A /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
-		112873A524A54F350036CC2A /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6121A575893003F4764 /* DetailViewController.swift */; };
-		112873A624A54F350036CC2A /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
-		112873A724A54F350036CC2A /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
-		112873A924A54F350036CC2A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
-		112873AA24A54F350036CC2A /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
-		112873AB24A54F350036CC2A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D701A68283600267A8F /* Security.framework */; };
-		112873AC24A54F350036CC2A /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6E1A68282C00267A8F /* QuartzCore.framework */; };
-		112873AD24A54F350036CC2A /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6C1A68282100267A8F /* MobileCoreServices.framework */; };
-		112873AE24A54F350036CC2A /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6A1A68281500267A8F /* CoreLocation.framework */; };
-		112873AF24A54F350036CC2A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D681A68280A00267A8F /* CoreGraphics.framework */; };
-		112873B024A54F350036CC2A /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
-		112873B124A54F350036CC2A /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
-		112873B224A54F350036CC2A /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
-		112873B624A54F350036CC2A /* ApiKeys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 11AC1D7C1A682AF100267A8F /* ApiKeys.plist */; };
-		112873B724A54F350036CC2A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
-		112873B824A54F350036CC2A /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
-		112873B924A54F350036CC2A /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
-		112873BA24A54F350036CC2A /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
-		112873BB24A54F350036CC2A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
-		112873BC24A54F350036CC2A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* LaunchScreen.xib */; };
-		112873BD24A54F350036CC2A /* NotificationPayload.apns in Resources */ = {isa = PBXBuildFile; fileRef = 11FBBE1D232F26E000109035 /* NotificationPayload.apns */; };
-		112873BE24A54F350036CC2A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0741C79212600CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0751C79212D00CF5BF1 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* LaunchScreen.xib */; };
@@ -129,6 +78,10 @@
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
 		11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
 		11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
+		11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
+		11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
+		11D05AAF291C571B00D5B002 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
+		11D05AB0291C571D00D5B002 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
 		11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
 		11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
 		11D4844B2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
@@ -162,16 +115,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		112873B424A54F350036CC2A /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		11F033381AB3A77F00AA29B8 /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -191,7 +134,6 @@
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
 		1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTesting.swift; sourceTree = "<group>"; };
 		11274945242D044800B8E1B8 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
-		112873C324A54F350036CC2A /* 70K Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "70K Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		112873C424A54F370036CC2A /* 70K Bands copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "70K Bands copy-Info.plist"; path = "/Users/rdorn/personalGit/70K-Bands/swift/70K Bands copy-Info.plist"; sourceTree = "<absolute>"; };
 		1139BEB11AF52C2C0011EF60 /* 70K Bands WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "70K Bands WatchKit Extension.entitlements"; sourceTree = "<group>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
@@ -247,6 +189,8 @@
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
 		11C8BDC91A7D398400037F2B /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
 		11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		11D05AAB291C505200D5B002 /* countries.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = countries.txt; sourceTree = "<group>"; };
+		11D05AAC291C545000D5B002 /* countryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = countryHandler.swift; sourceTree = "<group>"; };
 		11D4844422418A9E00910878 /* firebaseUserWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseUserWrite.swift; sourceTree = "<group>"; };
 		11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = filebaseBandDataWrite.swift; sourceTree = "<group>"; };
 		11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseEventDataWrite.swift; sourceTree = "<group>"; };
@@ -276,23 +220,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		112873A824A54F350036CC2A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				112873A924A54F350036CC2A /* UserNotifications.framework in Frameworks */,
-				112873AA24A54F350036CC2A /* SystemConfiguration.framework in Frameworks */,
-				112873AB24A54F350036CC2A /* Security.framework in Frameworks */,
-				112873AC24A54F350036CC2A /* QuartzCore.framework in Frameworks */,
-				112873AD24A54F350036CC2A /* MobileCoreServices.framework in Frameworks */,
-				112873AE24A54F350036CC2A /* CoreLocation.framework in Frameworks */,
-				112873AF24A54F350036CC2A /* CoreGraphics.framework in Frameworks */,
-				112873B024A54F350036CC2A /* CloudKit.framework in Frameworks */,
-				112873B124A54F350036CC2A /* CFNetwork.framework in Frameworks */,
-				112873B224A54F350036CC2A /* AudioToolbox.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1154F6031A575893003F4764 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -368,7 +295,6 @@
 			children = (
 				1154F6061A575893003F4764 /* 70K Bands.app */,
 				1154F6201A575893003F4764 /* 70K BandsTests.xctest */,
-				112873C324A54F350036CC2A /* 70K Bands.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -382,6 +308,7 @@
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
+				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
@@ -421,6 +348,7 @@
 		1154F6091A575893003F4764 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				11D05AAB291C505200D5B002 /* countries.txt */,
 				1172A2251B5AADC900C28AB3 /* Localizable.strings */,
 				114F63AB1A84678D00584AD0 /* Settings.bundle */,
 				1154F60A1A575893003F4764 /* Info.plist */,
@@ -501,24 +429,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1128738524A54F350036CC2A /* 70K Bands Mac */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 112873C024A54F350036CC2A /* Build configuration list for PBXNativeTarget "70K Bands Mac" */;
-			buildPhases = (
-				1128738724A54F350036CC2A /* Sources */,
-				112873A824A54F350036CC2A /* Frameworks */,
-				112873B424A54F350036CC2A /* Embed App Extensions */,
-				112873B524A54F350036CC2A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "70K Bands Mac";
-			productName = 70000TonsBands;
-			productReference = 112873C324A54F350036CC2A /* 70K Bands.app */;
-			productType = "com.apple.product-type.application";
-		};
 		1154F6051A575893003F4764 /* 70K Bands */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1154F62A1A575893003F4764 /* Build configuration list for PBXNativeTarget "70K Bands" */;
@@ -634,28 +544,11 @@
 			targets = (
 				1154F6051A575893003F4764 /* 70K Bands */,
 				1154F61F1A575893003F4764 /* 70K BandsTests */,
-				1128738524A54F350036CC2A /* 70K Bands Mac */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		112873B524A54F350036CC2A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				112873B624A54F350036CC2A /* ApiKeys.plist in Resources */,
-				112873B724A54F350036CC2A /* GoogleService-Info.plist in Resources */,
-				112873B824A54F350036CC2A /* OnMyWayToDeath.wav in Resources */,
-				112873B924A54F350036CC2A /* Localizable.strings in Resources */,
-				112873BA24A54F350036CC2A /* Settings.bundle in Resources */,
-				112873BB24A54F350036CC2A /* Images.xcassets in Resources */,
-				112873BC24A54F350036CC2A /* LaunchScreen.xib in Resources */,
-				112873BD24A54F350036CC2A /* NotificationPayload.apns in Resources */,
-				112873BE24A54F350036CC2A /* Main.storyboard in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		114CC0731C79211200CF5BF1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -663,6 +556,7 @@
 				110C07B21C99FB7A00F4C1D0 /* ApiKeys.plist in Resources */,
 				115A52B01CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */,
+				11D05AAF291C571B00D5B002 /* countries.txt in Resources */,
 				110C07B11C98E50300F4C1D0 /* Localizable.strings in Resources */,
 				114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */,
 				114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */,
@@ -679,6 +573,7 @@
 				114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */,
 				115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
+				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
 				1155E3B61A8B126500D51ED9 /* OnMyWayToDeath.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -767,45 +662,6 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1128738724A54F350036CC2A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				1128738824A54F350036CC2A /* UtilityHandler.swift in Sources */,
-				1128738924A54F350036CC2A /* ToastMessages.swift in Sources */,
-				1128738A24A54F350036CC2A /* imageHandler.swift in Sources */,
-				1128738B24A54F350036CC2A /* userDataHandler.swift in Sources */,
-				1128738C24A54F350036CC2A /* filebaseBandDataWrite.swift in Sources */,
-				1128738D24A54F350036CC2A /* SortMenuController.swift in Sources */,
-				1128738E24A54F350036CC2A /* ShowsAttended.swift in Sources */,
-				1128738F24A54F350036CC2A /* AlertPreferenesController.swift in Sources */,
-				1128739024A54F350036CC2A /* Constants.swift in Sources */,
-				1128739124A54F350036CC2A /* iCloudDataHandler.swift in Sources */,
-				1128739224A54F350036CC2A /* firebaseUserWrite.swift in Sources */,
-				1128739324A54F350036CC2A /* firebaseEventDataWrite.swift in Sources */,
-				1128739424A54F350036CC2A /* webViewController.swift in Sources */,
-				1128739524A54F350036CC2A /* CSV.swift in Sources */,
-				1128739624A54F350036CC2A /* dataHandler.swift in Sources */,
-				1128739724A54F350036CC2A /* ShowAttendedReport.swift in Sources */,
-				1128739824A54F350036CC2A /* _0000TonsBands.xcdatamodeld in Sources */,
-				1128739924A54F350036CC2A /* AppDelegate.swift in Sources */,
-				1128739A24A54F350036CC2A /* Reachability.swift in Sources */,
-				1128739B24A54F350036CC2A /* bandNamesHandler.swift in Sources */,
-				1128739C24A54F350036CC2A /* mainListController.swift in Sources */,
-				1128739D24A54F350036CC2A /* localNotificationHandler.swift in Sources */,
-				1128739E24A54F350036CC2A /* urlStorage.swift in Sources */,
-				1128739F24A54F350036CC2A /* NetworkTesting.swift in Sources */,
-				112873A024A54F350036CC2A /* MasterViewController.swift in Sources */,
-				112873A124A54F350036CC2A /* validateCSVschedule.swift in Sources */,
-				112873A224A54F350036CC2A /* httpHandler.swift in Sources */,
-				112873A324A54F350036CC2A /* InterfaceController.swift in Sources */,
-				112873A424A54F350036CC2A /* guiIcons.swift in Sources */,
-				112873A524A54F350036CC2A /* DetailViewController.swift in Sources */,
-				112873A624A54F350036CC2A /* CustomBandDescription.swift in Sources */,
-				112873A724A54F350036CC2A /* scheduleHandler.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		1154F6021A575893003F4764 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -840,6 +696,7 @@
 				11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
+				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
@@ -879,6 +736,7 @@
 				1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */,
 				11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				110924371F748D19002237AB /* CustomBandDescription.swift in Sources */,
+				11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
@@ -939,162 +797,11 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		112873C124A54F350036CC2A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				CONFIGURATION_TEMP_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				CURRENT_PROJECT_VERSION = 20200623001;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = RYVG8BC9NZ;
-				ENABLE_BITCODE = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
-					"$(PROJECT_DIR)/Pods/GoogleUtilities/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = "70K Bands copy-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/lib/**",
-					"$(PROJECT_DIR)/lib/CommLibiOS",
-					"$(PROJECT_DIR)/lib/libav-11.4/lib",
-					"$(PROJECT_DIR)/lib/MediaLibiOS3x",
-					"$(PROJECT_DIR)/lib/speex-1.2rc2/lib",
-					"$(PROJECT_DIR)/lib/x264/lib",
-					"$(PROJECT_DIR)",
-				);
-				MARKETING_VERSION = 20200623001;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/Bolts\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GGLInstanceID\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/Google\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleCloudMessaging\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleIPhoneUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleInterchangeUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleNetworkingUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleSymbolUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
-				);
-				OTHER_LDFLAGS = "$(inherited)";
-				PODS_ROOT = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.-0000TonsBands";
-				PRODUCT_NAME = "70K Bands";
-				PROVISIONING_PROFILE = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTS_MACCATALYST = YES;
-				SWIFT_INSTALL_OBJC_HEADER = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_SUPPRESS_WARNINGS = YES;
-				SWIFT_VERSION = 4.2;
-				TARGETED_DEVICE_FAMILY = 2;
-			};
-			name = Debug;
-		};
-		112873C224A54F350036CC2A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CURRENT_PROJECT_VERSION = 20200623001;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = RYVG8BC9NZ;
-				ENABLE_BITCODE = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
-					"$(PROJECT_DIR)/Pods/GoogleUtilities/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = "70K Bands copy-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/lib/**",
-					"$(PROJECT_DIR)/lib/CommLibiOS",
-					"$(PROJECT_DIR)/lib/libav-11.4/lib",
-					"$(PROJECT_DIR)/lib/MediaLibiOS3x",
-					"$(PROJECT_DIR)/lib/speex-1.2rc2/lib",
-					"$(PROJECT_DIR)/lib/x264/lib",
-					"$(PROJECT_DIR)",
-				);
-				MARKETING_VERSION = 20200623001;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/Bolts\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GGLInstanceID\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/Google\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleCloudMessaging\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleIPhoneUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleInterchangeUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleNetworkingUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleSymbolUtilities\"",
-					"-isystem",
-					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
-				);
-				OTHER_LDFLAGS = "$(inherited)";
-				PODS_ROOT = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.-0000TonsBands";
-				PRODUCT_NAME = "70K Bands";
-				PROVISIONING_PROFILE = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTS_MACCATALYST = YES;
-				SWIFT_INSTALL_OBJC_HEADER = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
-				SWIFT_SUPPRESS_WARNINGS = YES;
-				SWIFT_VERSION = 4.2;
-				TARGETED_DEVICE_FAMILY = 2;
-			};
-			name = Release;
-		};
 		1154F6281A575893003F4764 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALTERNATE_GROUP = admin;
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -1125,13 +832,14 @@
 				CONFIGURATION_BUILD_DIR = "";
 				CONFIGURATION_TEMP_DIR = "";
 				COPY_PHASE_STRIP = NO;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = NO;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -1143,14 +851,19 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_PKGINFO_FILE = NO;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INSTALL_GROUP = admin;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
@@ -1158,6 +871,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = NO;
 			};
 			name = Debug;
 		};
@@ -1194,24 +908,32 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Ron DORN (RYVG8BC9NZ)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Ron DORN (RYVG8BC9NZ)";
 				COPY_PHASE_STRIP = NO;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = NO;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_PKGINFO_FILE = NO;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INSTALL_GROUP = admin;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
@@ -1236,10 +958,10 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				CURRENT_PROJECT_VERSION = 20220625001;
+				CURRENT_PROJECT_VERSION = 20221111001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
@@ -1247,7 +969,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBands/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1262,7 +984,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20220625001;
+				MARKETING_VERSION = 20221111001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1312,10 +1034,10 @@
 				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 20220625001;
+				CURRENT_PROJECT_VERSION = 20221111001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
-				ENABLE_BITCODE = YES;
+				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
@@ -1323,7 +1045,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBands/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1338,7 +1060,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20220625001;
+				MARKETING_VERSION = 20221111001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1519,15 +1241,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		112873C024A54F350036CC2A /* Build configuration list for PBXNativeTarget "70K Bands Mac" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				112873C124A54F350036CC2A /* Debug */,
-				112873C224A54F350036CC2A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		1154F6011A575893003F4764 /* Build configuration list for PBXProject "70K Bands" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
