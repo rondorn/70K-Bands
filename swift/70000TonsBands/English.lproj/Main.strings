@@ -1,0 +1,180 @@
+
+/* Class = "UILabel"; text = "Show/Hide Exipred Events"; ObjectID = "1yR-XY-eDY"; */
+"1yR-XY-eDY.text" = "Show/Hide Exipred Events";
+
+/* Class = "UILabel"; text = "Alert On Might See Bands"; ObjectID = "4Px-mQ-94P"; */
+"4Px-mQ-94P.text" = "Alert On Might See Bands";
+
+/* Class = "UILabel"; text = "Alert Preferences"; ObjectID = "5ng-cW-7vj"; */
+"5ng-cW-7vj.text" = "Alert Preferences";
+
+/* Class = "UILabel"; text = "Alert For Special Events"; ObjectID = "6rh-64-BHF"; */
+"6rh-64-BHF.text" = "Alert For Special Events";
+
+/* Class = "UILabel"; text = "Listening Party"; ObjectID = "7F3-rb-8Nf"; */
+"7F3-rb-8Nf.text" = "Listening Party";
+
+/* Class = "UITableViewController"; title = "Master"; ObjectID = "7bK-jq-Zjz"; */
+"7bK-jq-Zjz.title" = "Master";
+
+/* Class = "UILabel"; text = "Vist Band On:"; ObjectID = "7eU-qa-VIQ"; */
+"7eU-qa-VIQ.text" = "Vist Band On:";
+
+/* Class = "UILabel"; text = "Prompt For Attended Status"; ObjectID = "93y-fj-Ock"; */
+"93y-fj-Ock.text" = "Prompt For Attended Status";
+
+/* Class = "UILabel"; text = "Clinic"; ObjectID = "AKS-5M-cAg"; */
+"AKS-5M-cAg.text" = "Clinic";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "AiA-9g-cbK"; */
+"AiA-9g-cbK.text" = "spacer";
+
+/* Class = "UILabel"; text = "Use Last Years Data"; ObjectID = "AqN-Ko-joc"; */
+"AqN-Ko-joc.text" = "Use Last Years Data";
+
+/* Class = "UILabel"; text = "Name"; ObjectID = "Arm-wq-HPj"; */
+"Arm-wq-HPj.text" = "Name";
+
+/* Class = "UITextField"; text = "Country:"; ObjectID = "Atp-OR-BA6"; */
+"Atp-OR-BA6.text" = "Country:";
+
+/* Class = "UILabel"; text = "Special Event"; ObjectID = "B6F-y7-hNC"; */
+"B6F-y7-hNC.text" = "Special Event";
+
+/* Class = "UILabel"; text = "Alert For Clinic"; ObjectID = "DEu-Zn-f5v"; */
+"DEu-Zn-f5v.text" = "Alert For Clinic";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "DOz-eB-kBn"; */
+"DOz-eB-kBn.text" = "Day";
+
+/* Class = "UITextView"; text = "Add your custom notes here"; ObjectID = "EXR-5H-hTd"; */
+"EXR-5H-hTd.text" = "Add your custom notes here";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "HHM-Ec-6Fm"; */
+"HHM-Ec-6Fm.text" = "Day";
+
+/* Class = "UIViewController"; title = "Detail"; ObjectID = "JEX-9P-axG"; */
+"JEX-9P-axG.title" = "Detail";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "KLe-nf-iZw"; */
+"KLe-nf-iZw.text" = "spacer";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "LVb-gQ-ZJj"; */
+"LVb-gQ-ZJj.text" = "Day";
+
+/* Class = "UILabel"; text = "Detail Screen"; ObjectID = "Lyp-XW-17t"; */
+"Lyp-XW-17t.text" = "Detail Screen";
+
+/* Class = "UILabel"; text = "Lounge"; ObjectID = "Mn7-pm-lfF"; */
+"Mn7-pm-lfF.text" = "Lounge";
+
+/* Class = "UITextField"; text = "Genre:"; ObjectID = "NIR-Ul-YFm"; */
+"NIR-Ul-YFm.text" = "Genre:";
+
+/* Class = "UILabel"; text = "Hide Expired Events"; ObjectID = "OGG-X7-woy"; */
+"OGG-X7-woy.text" = "Hide Expired Events";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "PaM-hS-PIA"; */
+"PaM-hS-PIA.text" = "spacer";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "PbL-Em-oIR"; */
+"PbL-Em-oIR.text" = "spacer";
+
+/* Class = "UILabel"; text = "Show/Hide Event Type"; ObjectID = "PpZ-UV-H8I"; */
+"PpZ-UV-H8I.text" = "Show/Hide Event Type";
+
+/* Class = "UILabel"; text = "Rink"; ObjectID = "QVa-VZ-b9B"; */
+"QVa-VZ-b9B.text" = "Rink";
+
+/* Class = "UINavigationController"; title = "Master"; ObjectID = "RMx-3f-FxP"; */
+"RMx-3f-FxP.title" = "Master";
+
+/* Class = "UILabel"; text = "Show/Hide Venues"; ObjectID = "Vf2-vj-b8i"; */
+"Vf2-vj-b8i.text" = "Show/Hide Venues";
+
+/* Class = "UILabel"; text = "Min Before Event to Alert"; ObjectID = "VsJ-uI-fpU"; */
+"VsJ-uI-fpU.text" = "Min Before Event to Alert";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "XKo-Ns-QO8"; */
+"XKo-Ns-QO8.text" = "Day";
+
+/* Class = "UITextView"; text = "Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features."; ObjectID = "XwI-fp-dny"; */
+"XwI-fp-dny.text" = "Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+/* Class = "UILabel"; text = "Alert Only for Will Attend Events"; ObjectID = "Zb3-Lq-RyV"; */
+"Zb3-Lq-RyV.text" = "Alert Only for Will Attend Events";
+
+/* Class = "UINavigationItem"; title = "70,000 Tons"; ObjectID = "Zdf-7t-Un8"; */
+"Zdf-7t-Un8.title" = "70,000 Tons";
+
+/* Class = "UILabel"; text = "Alert On Must See Bands"; ObjectID = "Zdt-B0-gyT"; */
+"Zdt-B0-gyT.text" = "Alert On Must See Bands";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "aBV-6s-syy"; */
+"aBV-6s-syy.text" = "spacer";
+
+/* Class = "UILabel"; text = "Cruise Organized"; ObjectID = "aRh-31-2zu"; */
+"aRh-31-2zu.text" = "Cruise Organized";
+
+/* Class = "UILabel"; text = "Prompt For Attended Status"; ObjectID = "anq-kW-Rac"; */
+"anq-kW-Rac.text" = "Prompt For Attended Status";
+
+/* Class = "UITextField"; text = "Note Worthy:"; ObjectID = "auh-JV-Kjw"; */
+"auh-JV-Kjw.text" = "Note Worthy:";
+
+/* Class = "UILabel"; text = "Notes Font Size Large"; ObjectID = "bpf-ke-hGi"; */
+"bpf-ke-hGi.text" = "Notes Font Size Large";
+
+/* Class = "UILabel"; text = "Alert For Album Listening Events"; ObjectID = "c7E-hk-S5X"; */
+"c7E-hk-S5X.text" = "Alert For Album Listening Events";
+
+/* Class = "UILabel"; text = "Pool"; ObjectID = "gMd-iP-FpY"; */
+"gMd-iP-FpY.text" = "Pool";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "gin-Bv-NjO"; */
+"gin-Bv-NjO.text" = "Day";
+
+/* Class = "UILabel"; text = "spacer"; ObjectID = "ird-li-hM8"; */
+"ird-li-hM8.text" = "spacer";
+
+/* Class = "UILabel"; text = "Alert For Meeting and Greets"; ObjectID = "j7a-hd-VQL"; */
+"j7a-hd-VQL.text" = "Alert For Meeting and Greets";
+
+/* Class = "UILabel"; text = "Misc"; ObjectID = "ko3-AI-4e7"; */
+"ko3-AI-4e7.text" = "Misc";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[0] = "Unknown"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[0]" = "Unknown";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[1] = "Might See"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[1]" = "Might See";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[2] = "Wont See"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[2]" = "Wont See";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[3] = "Unknown"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[3]" = "Unknown";
+
+/* Class = "UILabel"; text = "Alert For Shows"; ObjectID = "lYb-Qt-dwe"; */
+"lYb-Qt-dwe.text" = "Alert For Shows";
+
+/* Class = "UINavigationItem"; title = "Detail"; ObjectID = "mOI-FS-AaM"; */
+"mOI-FS-AaM.title" = "Detail";
+
+/* Class = "UILabel"; text = "Other"; ObjectID = "mVs-BD-NVi"; */
+"mVs-BD-NVi.text" = "Other";
+
+/* Class = "UILabel"; text = "Alert For Unoffical Events"; ObjectID = "nHx-w9-R5A"; */
+"nHx-w9-R5A.text" = "Alert For Unoffical Events";
+
+/* Class = "UILabel"; text = "Theater"; ObjectID = "sUK-ud-3GB"; */
+"sUK-ud-3GB.text" = "Theater";
+
+/* Class = "UILabel"; text = "Meet And Greet"; ObjectID = "u4A-7m-1RH"; */
+"u4A-7m-1RH.text" = "Meet And Greet";
+
+/* Class = "UILabel"; text = "Day"; ObjectID = "uQv-Gi-GXJ"; */
+"uQv-Gi-GXJ.text" = "Day";
+
+/* Class = "UIViewController"; title = "Preferences"; ObjectID = "wME-gs-GWB"; */
+"wME-gs-GWB.title" = "Preferences";

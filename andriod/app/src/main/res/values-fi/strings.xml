@@ -79,4 +79,16 @@
     <string name="Previous">Edellinen</string>
 
     <string name="ImportDataBackup">Tuo tietojen varmuuskopio</string>
+    <string name="ShareTitle">Mitä haluat jakaa?</string>
+    <string name="ShareBandChoices">Jaa bändivalinnat</string>
+    <string name="ShareShowChoices">Jaa Show Choices</string>
+    <string name="ExportUserData">Vie käyttäjätiedot</string>
+
+    <string name="visitBands">Linkit</string>
+    <string name="country">Maa</string>
+    <string name="genre">Sukupuoli</string>
+
+    <string name="verify_country">Vahvista maasi</string>
+    <string name="correct_if_needed">Korjaa maasi tarvittaessa</string>
+    <string name="country_invalid">Maa-arvoa ei tunnisteta kelvolliseksi</string>
 </resources>

@@ -78,4 +78,16 @@
     <string name="Previous">Précédent</string>
 
     <string name="ImportDataBackup">Importer une sauvegarde de données</string>
+    <string name="ShareTitle">Que veux tu partager?</string>
+    <string name="ShareBandChoices">Partager les choix de groupe</string>
+    <string name="ShareShowChoices">Partager Afficher les choix</string>
+    <string name="ExportUserData">Exporter les données utilisateur</string>
+
+    <string name="visitBands">Liens</string>
+    <string name="country">Pays</string>
+    <string name="genre">Le Genre</string>
+
+    <string name="verify_country">Vérifiez votre pays</string>
+    <string name="correct_if_needed">Corrigez votre pays si nécessaire</string>
+    <string name="country_invalid">La valeur du pays n\'est pas reconnue comme valide</string>
 </resources>

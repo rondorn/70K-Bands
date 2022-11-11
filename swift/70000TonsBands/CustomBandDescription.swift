@@ -222,7 +222,7 @@ open class CustomBandDescription {
         var newText = text;
         newText = text.replacingOccurrences(of: "\r", with: "\n")
         let okayChars : Set<Character> =
-            Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890+-*=(),.:!_\n")
+        Set("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLKMNOPQRSTUVWXYZ1234567890+-*=(),.:!_\n$\\//")
         return String(newText.filter {okayChars.contains($0) })
     }
     

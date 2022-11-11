@@ -115,6 +115,7 @@ public class preferenceLayout  extends Activity {
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
         headerText.setText("70K Bands Preferences - Build:" + versionString);
+
     }
 
     private void  dataImportFunc(){
@@ -135,6 +136,7 @@ public class preferenceLayout  extends Activity {
         // set the custom layout
         final View customLayout = getLayoutInflater().inflate(R.layout.import_prompt, null);
         builder.setView(customLayout);
+
 
         Button importButton  = (Button) customLayout.findViewById(R.id.Import);
         Button cancelButton  = (Button) customLayout.findViewById(R.id.Cancel);
@@ -331,6 +333,12 @@ public class preferenceLayout  extends Activity {
 
         TextView unofficalEventLable = (TextView)findViewById(R.id.unofficalEventLable);
         unofficalEventLable.setText(getResources().getString(R.string.unofficalEventLable));
+
+        TextView userIdentifier = (TextView) findViewById(R.id.userIdentifier);
+        userIdentifier.setText(staticVariables.userID);
+        userIdentifier.setTextColor(Color.WHITE);
+        userIdentifier.setBackgroundColor(Color.parseColor("#505050"));
+        userIdentifier.setGravity(Gravity.CENTER);
     }
 
     private void buildRebootDialog(){
@@ -663,6 +671,8 @@ public class preferenceLayout  extends Activity {
                 staticVariables.preferences.setPromptForAttendedStatus(promptForAttendedStatus.isChecked());
             }
         });
+
+
     }
 
     @Override

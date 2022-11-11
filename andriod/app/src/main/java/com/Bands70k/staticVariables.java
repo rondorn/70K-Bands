@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,7 @@ public class staticVariables {
     public final static String wontSeeIcon = "\uD83D\uDEAB";
     public final static String unknownIcon = "\u2753";
     public final static String oldMightSeeIcon = "\u2705";
+    public static String userCountry = "";
 
     public final static String showTypeIcon = "";
     public final static String specialEventTypeIcon = "🌟";
@@ -67,7 +69,7 @@ public class staticVariables {
     public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "Testing_09_2020";
+    public final static String testAlertChannel = "Testing_10_2022";
     public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
@@ -78,6 +80,7 @@ public class staticVariables {
 
     public static Map<String, String> showNotesMap = new HashMap<String, String>();
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
+    public static Map<String, Date> descriptionMapModData = new HashMap<String, Date>();
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
@@ -129,8 +132,9 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?dl=1";
+    public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
+
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
     public final static String networkTestingUrl = "https://www.dropbox.com";
     public static String artistURL;
@@ -468,18 +472,21 @@ public class staticVariables {
         String eventYearString = "";
         try {
 
-            BufferedReader br = new BufferedReader(new FileReader(eventYearFile));
+            //BufferedReader br = new BufferedReader(new FileReader(eventYearFile));
 
-            String line;
+            //String line;
 
-            while ((line = br.readLine()) != null) {
-                eventYearString = line;
-            }
+            //while ((line = br.readLine()) != null) {
+            //    eventYearString = line;
+            //}
+            lookupUrls();
+            eventYearString = String.valueOf(eventYearRaw);
+            Log.d("EventYear", "Event year read as  " + eventYearString);
 
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
             //default year if there are issues (This should be updated every year
-            eventYearString = "2020";
+            eventYearString = "2023";
         }
 
         return Integer.valueOf(eventYearString);

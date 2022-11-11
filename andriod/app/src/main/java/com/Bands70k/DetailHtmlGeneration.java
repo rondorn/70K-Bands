@@ -1,6 +1,7 @@
 package com.Bands70k;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -25,6 +26,7 @@ public class DetailHtmlGeneration {
         ImageHandler imageHandler = new ImageHandler(bandName);
         String htmlImage = String.valueOf(imageHandler.getImage());
         String imageSetup = getImageBoundry(htmlImage, bandName);
+        Log.d("loadImageFile", "htmlImahge is   " + htmlImage);
         String htmlText =
                 "<html><head>" +
                         "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
@@ -62,13 +64,18 @@ public class DetailHtmlGeneration {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        int ratio = 0;
+        if (width > 0 &&  height > 0) {
+            ratio = (width / height);
+            if (ratio > 5) {
+                imageSetup = "width=70%";
 
-        int ratio = (width/height);
-        if (ratio > 5) {
-            imageSetup = "width=70%";
-
+            } else {
+                imageSetup = "height=10%";
+            }
         } else {
-            imageSetup = "height=10%";
+            imageSetup = "width=70%";
+            ratio = 5;
         }
 
         Log.d("tileLogohtmlData", "image dimensions are " + String.valueOf(ratio) + "-" + imageSetup + "-" + bandName);
@@ -172,11 +179,11 @@ public class DetailHtmlGeneration {
             }
 
             if (orientation == "portrait") {
-
+                String linkLabel = staticVariables.context.getString(R.string.visitBands);
                 Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
                 html = "<div style='width=100%; left:0;right:0;'>" +
                         "<center><table width=95%><tr width=100% style='font-size:15px;font-size:5.0vw;list-style-type:none;text-align:left;margin-left:60px'>" +
-                        "<td  style='color:" + staticVariables.blueColor + "' + staticVariables.blueColor + \"' width=40%>Visit Band On: </td>" +
+                        "<td  style='color:" + staticVariables.blueColor + "' + staticVariables.blueColor + \"' width=40%>" + linkLabel + ": </td>" +
                         "<td width=15%><a " + disable + " href='" + BandInfo.getOfficalWebLink(bandName) + "' onclick='link.webLinkClick(\"webPage\")'><img src=file:///android_res/drawable/icon_www.png height=24 width=27></a></td>" +
                         "<td width=15%><a " + disable + " href='" + BandInfo.getMetalArchivesWebLink(bandName) + "' onclick='link.webLinkClick(\"metalArchives\")'><img src=file:///android_res/drawable/icon_ma.png height=21 width=27></a></td>" +
                         "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick(\"wikipedia\")'><img src=file:///android_res/drawable/icon_wiki.png height=17 width=27></a></td>" +
@@ -195,13 +202,16 @@ public class DetailHtmlGeneration {
         String htmlText = "";
         if (BandInfo.getCountry(bandName) != "") {
 
+            String countryLabel = staticVariables.context.getString(R.string.country);
+            String genreLabel = staticVariables.context.getString(R.string.genre);
+
             htmlText += "<div style='width=100%; left:0;right:0;width=100%;'>" +
                     "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
 
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Country:</li>";
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>" + countryLabel + ":</li>";
             htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
 
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Genre:</li>";
+            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>" + genreLabel + ":</li>";
             htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
 
             if (BandInfo.getNote(bandName) != "") {
@@ -223,7 +233,7 @@ public class DetailHtmlGeneration {
         String htmlText = "";
         if (bandNote != "") {
             htmlText += "<br>";
-            htmlText += "<div style='height:" + notesHeight + ";text-align:left;padding-bottom:20px;overflow:auto;width:98%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+            htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
         }
 
         return htmlText;

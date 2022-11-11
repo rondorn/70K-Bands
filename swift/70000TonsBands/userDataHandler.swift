@@ -18,20 +18,22 @@ class userDataHandler: NSObject {
     
     override init(){
         
+        print ("Writing Firebase new userData 1")
         var uidString = "Unknown"
         if (UIDevice.current.identifierForVendor != nil){
             if (UIDevice.current.identifierForVendor != nil){
                 uidString = UIDevice.current.identifierForVendor!.uuidString
             }
         }
-    
+        print ("Writing Firebase new userData 2")
         self.uid = uidString
-        self.country = NSLocale.current.regionCode ?? "Unknown";
+        self.country = userCountry;
         self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date
         self.lanuchCount = 1
         
-        print ("new userData - " + self.uid + " - " + self.country + " - " + self.language);
+        print ("Writing Firebase  new userData 3")
+        print ("Writing Firebase new userData - " + self.uid + " - " + self.country + " - " + self.language);
     }
     
     func getCurrentDateString()->String {

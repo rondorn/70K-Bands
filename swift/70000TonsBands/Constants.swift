@@ -33,6 +33,7 @@ var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
 var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
+let countryFile = directoryPath.appendingPathComponent("countryFile")
 
 var currentBandList = [String]()
 
@@ -172,7 +173,10 @@ let defaultPrefsValue = "Default";
 let lastYearSetting = "lastYear"
 let testingSetting = "Testing"
 
-var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
+var userCountry = ""
+
+//var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
+var defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
@@ -335,7 +339,7 @@ func setupDefaults() {
     setupVenueLocations()
     
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
-    eventYear = 2020//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2020;
+    eventYear = 2023//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2023;
 
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1

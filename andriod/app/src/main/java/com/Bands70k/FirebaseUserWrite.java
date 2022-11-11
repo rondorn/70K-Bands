@@ -23,10 +23,14 @@ public class FirebaseUserWrite {
     public void writeData(){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
-
+            //FirebaseDatabase.getInstance().goOnline();
             HashMap<String, Object> userData = new HashMap<>();
 
-            String country = Locale.getDefault().getCountry();
+            if (staticVariables.userCountry.isEmpty()){
+                staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
+            }
+
+            String country = staticVariables.userCountry;
             String language = Locale.getDefault().getLanguage();
 
             userData.put("userID", staticVariables.userID);
@@ -38,6 +42,7 @@ public class FirebaseUserWrite {
             Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
 
             mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+            //FirebaseDatabase.getInstance().goOffline();
         }
     }
 

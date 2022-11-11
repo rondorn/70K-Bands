@@ -46,8 +46,11 @@ public class FirebaseEventDataWrite {
                     String eventType = indexArray[4];
                     String eventYear = "";
 
+                    for (String data : indexArray) {
+                        Log.d("FireBaseBandDataWrite", "showsAttendedArrayData - " + data);
+                    }
 
-                    index = index.replaceAll("[^:a-zA-Z0-9_-]", "");
+                    //index = index.replaceAll("[^:a-zA-Z0-9_-]", "");
                     bandName = bandName.replaceAll("[^a-zA-Z0-9_-]", "");
                     location = location.replaceAll("[^a-zA-Z0-9_-]", "");
                     startTimeHour = startTimeHour.replaceAll("[^a-zA-Z0-9_-]", "");
@@ -61,7 +64,7 @@ public class FirebaseEventDataWrite {
                     }
 
                     String attendedStatus = showsAttendedArray.get(index);
-
+                    Log.d("FireBaseBandDataWrite", "showsAttendedArray - " + showsAttendedArray.get(index));
                     eventData.put("bandName", bandName);
                     eventData.put("location", location);
                     eventData.put("startTimeHour", startTimeHour);
@@ -73,6 +76,7 @@ public class FirebaseEventDataWrite {
 
                     mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(index).setValue(eventData);
                 }
+                //FirebaseDatabase.getInstance().goOffline();
             }
         }
     }
