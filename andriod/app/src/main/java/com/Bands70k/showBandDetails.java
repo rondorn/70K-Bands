@@ -224,7 +224,7 @@ public class showBandDetails extends Activity {
                     staticVariables.writeNoteHtml = "";
                     //code to write note for band
                     value = value.replaceFirst("UserNoteSubmit:", "");
-                    bandHandler.saveBandNote(value);
+                    bandHandler.saveCustomBandNote(value);
                     Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
                     startActivity(showDetails);
                     finish();

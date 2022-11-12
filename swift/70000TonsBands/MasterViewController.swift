@@ -140,8 +140,41 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
        self.tableView.reloadData()
     }
     
+    func chooseCountry(){
+        
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let defaultCountry = NSLocale.current.regionCode!
+        var countryLongShort = countryHandle.getCountryLongShort()
+
+        
+      let alertController = UIAlertController(title: "Change Profile Photo", message: nil, preferredStyle: .actionSheet)
+        var sortedKeys = countryLongShort.keys.sorted()
+        for keyValue in sortedKeys {
+            alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
+                do {
+                    let finalCountyValue = countryLongShort[keyValue] ?? "Unknown"
+                    print ("countryValue writing Acceptable country of " + finalCountyValue + " found")
+                    try finalCountyValue.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+                } catch {
+                    print ("countryValue Error writing Acceptable country of " + countryLongShort[keyValue]! + " found " + error.localizedDescription)
+                }
+            }))
+        }
+
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.sourceView = self.view
+            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+       }
+   
+
+      present(alertController, animated: true, completion: nil)
+    }
+    
     func getCountry(){
         
+        //chooseCountry()
         let dataHandle = dataHandler()
         do {
             userCountry = try String(contentsOf: countryFile, encoding: .utf8)
@@ -160,46 +193,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let defaultLongCountry = countryShortLong[defaultCountry] ?? ""
         
         //UIAlertControllerStyleAlert
-        let alert = UIAlertController.init(title: "Verify Your Country", message: "Correct Your Country If Needed", preferredStyle: UIAlertController.Style.alert)
+        let alert = UIAlertController.init(title: NSLocalizedString("verifyCountry", comment: ""), message: NSLocalizedString("correctCountryDescription", comment: ""), preferredStyle: UIAlertController.Style.alert)
         
         
         alert.addTextField { (textField) in
             textField.text = defaultLongCountry
+            textField.isEnabled = false
         }
-        
-        let OkButton = UIAlertAction.init(title: "Ok", style: .default) { _ in
-            print("countryValue Ok Button Was Pressed, value is " + alert.textFields![0].text!)
-            print("countryValue defaultLongCountry looks like \(defaultLongCountry) ")
-            var fieldValue = alert.textFields![0].text!
-            if (countryShortLong.values.contains(fieldValue) == false){
-                
-                var firstCharacterFieldValue = fieldValue.prefix(2)
-                var message = "Unable to find a valid country of " + (fieldValue) + "\n"
-                message = message + "Could you have ment \n"
-                for country in countryShortLong{
-                    var firstCharactercountry = country.value.prefix(2)
-                    if (firstCharactercountry == firstCharacterFieldValue){
-                        message = message + country.value + "\n"
-                    }
-                }
-                
-                ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
-                self.getCountry()
-            } else {
-                var countryValue = countryLongShort[alert.textFields![0].text!]
-                print ("countryValue Acceptable country of " + countryValue! + " found")
-                
-                do {
-                    //let countryFileUrl = URL(string: countryFile)
-                    print ("countryValue writing Acceptable country of " + countryValue! + " found")
-                    try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
-                } catch {
-                    print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
-                }
 
+        let correctButton = UIAlertAction.init(title: NSLocalizedString("correctCountry", comment: ""), style: .default) { _ in
+            alert.dismiss(animated: true)
+            self.chooseCountry();
+        }
+        alert.addAction(correctButton)
+        
+        let OkButton = UIAlertAction.init(title: NSLocalizedString("confirmCountry", comment: ""), style: .default) { _ in
+            var countryValue = countryLongShort[alert.textFields![0].text!]
+            print ("countryValue Acceptable country of " + countryValue! + " found")
+            
+            do {
+                //let countryFileUrl = URL(string: countryFile)
+                print ("countryValue writing Acceptable country of " + countryValue! + " found")
+                try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+            } catch {
+                print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
             }
         }
         alert.addAction(OkButton)
+        
         
         if let popoverController = alert.popoverPresentationController {
             popoverController.sourceView = self.view
