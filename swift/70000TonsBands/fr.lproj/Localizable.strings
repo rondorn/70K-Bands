@@ -100,6 +100,10 @@
 "country" = "Pays";
 "genre" = "Le Genre";
 
+"verifyCountry" = "Vérifiez votre pays";
+"correctCountryDescription" = "Corrigez votre pays si nécessaire";
+"confirmCountry" = "Confirmer";
+"correctCountry" = "Corriger";
 
 
 

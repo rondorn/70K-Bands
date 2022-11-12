@@ -133,29 +133,6 @@ public class showBands extends Activity {
         return (res == PackageManager.PERMISSION_GRANTED);
     }
 
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("get perms", "Getting access to storage - results processesing " + requestCode);
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        recievedPermAnswer = true;
-        Log.d("get perms", "Getting access to storage - results processesing " + requestCode);
-        if (requestCode == 1) {
-
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Thanks for enabling the permission", Toast.LENGTH_SHORT).show();
-
-                //do something permission is allowed here....
-
-            } else {
-
-                recievedPermAnswer = true;
-                Toast.makeText(this, "Please allow the Permission", Toast.LENGTH_SHORT).show();
-
-
-            }
-        }
-
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 

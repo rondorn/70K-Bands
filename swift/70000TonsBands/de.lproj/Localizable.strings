@@ -98,3 +98,8 @@
 "visitBands" = "Verknüpfungen";
 "country" = "Land";
 "genre" = "Geschlecht";
+
+"verifyCountry" = "Bestätigen Sie Ihr Land";
+"correctCountryDescription" = "Korrigieren Sie bei Bedarf Ihr Land";
+"confirmCountry" = "Bestätigen";
+"correctCountry" = "Richtig";
