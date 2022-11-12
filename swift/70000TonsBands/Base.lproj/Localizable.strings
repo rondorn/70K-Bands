@@ -93,3 +93,8 @@
 "visitBands" = "Links";
 "country" = "Country";
 "genre" = "Genre";
+
+"verifyCountry" = "Verify Your Country";
+"correctCountryDescription" = "Correct Your Country If Needed";
+"confirmCountry" = "Confirm";
+"correctCountry" = "Correct";

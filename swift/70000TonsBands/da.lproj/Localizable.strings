@@ -95,3 +95,8 @@
 "visitBands" = "Links";
 "country" = "Land";
 "genre" = "Køn";
+
+"verifyCountry" = "Bekræft dit land";
+"correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
+"confirmCountry" = "Bekræfte";
+"correctCountry" = "Korrekt";
