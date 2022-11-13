@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.os.SystemClock;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -60,15 +61,31 @@ public class BandNotes {
 
         }
 
-        String newBandNote = getBandNote();
+        oldBandNoteFile.delete();
 
-        if (newBandNote != oldNoteText){
+        CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
+        noteHandler.loadNoteFromURL(bandName);
+        Map<String, String> notesData = FileHandler70k.readObject(bandNoteFile);
+        String newBandNote = notesData.get("defaultNote");
+
+        String newBandNoteStripped = this.stripDataForCompare(newBandNote);
+        String oldBandNoteStripped = this.stripDataForCompare(oldNoteText);
+
+        if (newBandNoteStripped.equals(oldBandNoteStripped) == false){
             saveCustomBandNote(oldNoteText);
         } else {
             saveDefaultBandNote(newBandNote);
         }
 
-        oldBandNoteFile.delete();
+    }
+
+    private String stripDataForCompare(String dataString){
+
+        String strippedDataString = dataString.replaceAll("\\s", "");
+        strippedDataString = strippedDataString.replaceAll("<br>", "");
+        strippedDataString = strippedDataString.replaceAll("\n", "");
+
+        return strippedDataString;
     }
 
     public String getBandNoteFromFile(){
@@ -130,13 +147,19 @@ public class BandNotes {
 
         Map<String, String> defaultNotesData = FileHandler70k.readObject(bandNoteFile);
         String defaultNote = defaultNotesData.get("defaultNote");
-        String strippedDefaultNote = defaultNote.replaceAll("\\s", "");
-        String strippedCustomNote = notesData.replaceAll("\\s", "");
+        if (defaultNote == ""){
+            SystemClock.sleep(1000);
+            defaultNotesData = FileHandler70k.readObject(bandNoteFile);
+            defaultNote = defaultNotesData.get("defaultNote");
+        }
+
+        String strippedDefaultNote = this.stripDataForCompare(defaultNote);
+        String strippedCustomNote = this.stripDataForCompare(notesData);
 
         Log.d("saveNote", "comparing " + strippedDefaultNote + " to " + strippedCustomNote);
 
         if (notesData.startsWith("Comment text is not available yet") == false &&
-                notesData.length() > 2 && strippedDefaultNote != strippedCustomNote) {
+                notesData.length() > 2 && strippedDefaultNote.equals(strippedCustomNote) == false) {
 
             notesData = notesData.replaceAll("\\n", "<br>");
             notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
