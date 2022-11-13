@@ -179,7 +179,7 @@ public class CustomerDescriptionHandler {
         return fixedText;
     }
 
-    private void loadNoteFromURL(String bandName){
+    public void loadNoteFromURL(String bandName){
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
         File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
@@ -284,10 +284,6 @@ public class CustomerDescriptionHandler {
                 if (descriptionMapData != null) {
                     for (String bandName : descriptionMapData.keySet()) {
                         Log.d("AsyncTask", "Downloading NoteData for  -1 " + bandName);
-                        descriptionHandler.loadNoteFromURL(bandName);
-                    }
-                    for (String bandName : staticVariables.showNotesMap.keySet()){
-                        Log.d("AsyncTask", "Downloading NoteData for  -2 " + bandName);
                         descriptionHandler.loadNoteFromURL(bandName);
                     }
                     staticVariables.notesLoaded = false;
