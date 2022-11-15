@@ -98,7 +98,7 @@ public class CustomerDescriptionHandler {
                     descriptionMapData.put(rowData[0], rowData[1]);
                     if (rowData.length > 2){
                         Log.d("descriptionMapFile", "Date value is " + rowData[2]);
-                        staticVariables.descriptionMapModData.put(rowData[0], Date.valueOf(rowData[2]));
+                        staticVariables.descriptionMapModData.put(rowData[0], rowData[2]);
                     }
                 }
             }
