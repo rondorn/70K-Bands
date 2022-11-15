@@ -206,7 +206,6 @@ public class showBands extends Activity {
         StrictMode.setThreadPolicy(policy);
 
         setContentView(R.layout.activity_show_bands);
-
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -242,7 +241,7 @@ public class showBands extends Activity {
         Log.d("startup", "show init start - 1");
 
         staticVariablesInitialize();
-
+        this.getCountry();
         Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
@@ -298,7 +297,7 @@ public class showBands extends Activity {
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
         Log.d("startup", "show init start - 9");
-        this.getCountry();
+
 
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
@@ -365,17 +364,25 @@ public class showBands extends Activity {
                     Map<String, String> countryMap = CountryChoiceHandler.loadCountriesList();
                     String country = String.valueOf(countryChoice.getText());
                     if (countryMap.values().contains(country) == false){
+                        String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
+                        countryChoice.setText(defaultCountry);
                         HelpMessageHandler.showMessage(getString(R.string.country_invalid));
-                        getCountry();
                     }
                     Map<String, String> countryMapRev = new HashMap<String, String>();
                     for (String countryCode : countryMap.keySet()) {
                         countryMapRev.put(countryMap.get(countryCode), countryCode);
                     }
-                    staticVariables.userCountry = countryMapRev.get(country);
-                    FileHandler70k.saveData(staticVariables.userCountry, FileHandler70k.countryFile);
-                    Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
-                    dialog.dismiss();
+                    if (countryMapRev.containsKey(country) == true) {
+
+                        staticVariables.userCountry = countryMapRev.get(country);
+                        FileHandler70k.saveData(staticVariables.userCountry, FileHandler70k.countryFile);
+                        Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry);
+                        dialog.dismiss();
+                    } else {
+                        String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
+                        countryChoice.setText(defaultCountry);
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                    }
                 }
             });
 
@@ -385,6 +392,9 @@ public class showBands extends Activity {
             Log.d("getCountry", "getCountry loading from file");
             staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
             Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
+            if (staticVariables.userCountry.isEmpty() == true){
+                this.getCountry();
+            }
         }
 
     }

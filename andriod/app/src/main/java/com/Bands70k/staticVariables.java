@@ -80,7 +80,7 @@ public class staticVariables {
 
     public static Map<String, String> showNotesMap = new HashMap<String, String>();
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
-    public static Map<String, Date> descriptionMapModData = new HashMap<String, Date>();
+    public static Map<String, String> descriptionMapModData = new HashMap<String, String>();
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";

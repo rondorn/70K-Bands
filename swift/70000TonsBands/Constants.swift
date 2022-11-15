@@ -96,6 +96,7 @@ var startTimeField = "Start Time"
 var endTimeField = "End Time"
 var notesField = "Notes"
 var urlField = "URL"
+var urlDateField = "Date"
 var descriptionUrlField = "Description URL"
 var imageUrlField = "ImageURL"
 
@@ -381,6 +382,7 @@ struct cacheVariables {
     static var bandNamesArrayStaticCache = [String]()
     static var storePointerData = [String:String]()
     static var bandDescriptionUrlCache = [String:String]()
+    static var bandDescriptionUrlDateCache = [String:String]()
     static var lastModifiedDate:Date? = nil;
 }
 

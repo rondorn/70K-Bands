@@ -63,6 +63,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        getCountry()
+        
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
@@ -121,7 +123,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
                                                name: Notification.Name("FCMToken"), object: nil)
         
-        getCountry()
+        
         
     }
     
@@ -179,7 +181,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         do {
             userCountry = try String(contentsOf: countryFile, encoding: .utf8)
             print ("Using countryValue value of " + userCountry)
-            return
+            
+            if (userCountry.isEmpty == false){
+                return
+            }
         } catch {
             //do nothing
         }
