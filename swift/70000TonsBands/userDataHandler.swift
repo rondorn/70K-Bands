@@ -25,9 +25,25 @@ class userDataHandler: NSObject {
                 uidString = UIDevice.current.identifierForVendor!.uuidString
             }
         }
+        
+        
+        var detectedCountry = ""
+        do {
+            detectedCountry = try String(contentsOf: countryFile, encoding: .utf8)
+            print ("From countryFile \(countryFile) for a country of \(detectedCountry)")
+            if (detectedCountry.isEmpty == true){
+                print ("Falling back to default Country with empty CountryFile")
+                detectedCountry = NSLocale.current.regionCode!
+            }
+        } catch {
+            print ("Error - Falling back to default CountryFile")
+            detectedCountry = NSLocale.current.regionCode!
+        }
+        
         print ("Writing Firebase new userData 2")
+        
         self.uid = uidString
-        self.country = userCountry;
+        self.country = detectedCountry
         self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date
         self.lanuchCount = 1
@@ -36,6 +52,7 @@ class userDataHandler: NSObject {
         print ("Writing Firebase new userData - " + self.uid + " - " + self.country + " - " + self.language);
     }
     
+
     func getCurrentDateString()->String {
         
         let now = Date()

@@ -192,10 +192,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         let countryHandle = countryHandler()
         countryHandle.loadCountryData()
-        let defaultCountry = NSLocale.current.regionCode!
+        let defaultCountry = NSLocale.current.regionCode ?? "United States"
         let countryShortLong = countryHandle.getCountryShortLong()
         let countryLongShort = countryHandle.getCountryLongShort()
-        let defaultLongCountry = countryShortLong[defaultCountry] ?? ""
+        let defaultLongCountry = countryShortLong[defaultCountry] ?? "Unknown"
         
         //UIAlertControllerStyleAlert
         let alert = UIAlertController.init(title: NSLocalizedString("verifyCountry", comment: ""), message: NSLocalizedString("correctCountryDescription", comment: ""), preferredStyle: UIAlertController.Style.alert)

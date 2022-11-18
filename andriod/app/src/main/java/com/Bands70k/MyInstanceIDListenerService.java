@@ -21,19 +21,24 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
 
     @Override
     public void onTokenRefresh() {
-        // Get updated InstanceID token.
-        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.d(TAG, "Refreshed token: " + refreshedToken);
-        // TODO: Implement this method to send any registration to your app's servers.
-        sendRegistrationToServer(refreshedToken);
+        try {
+            // Get updated InstanceID token.
+            String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+            Log.d(TAG, "Refreshed token: " + refreshedToken);
+            // TODO: Implement this method to send any registration to your app's servers.
+            sendRegistrationToServer(refreshedToken);
 
-        Log.d(TAG, "Subscribing to topics");
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
-        if (staticVariables.preferences.getAlertForUnofficalEvents() == true){
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
-        } else {
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            Log.d(TAG, "Subscribing to topics");
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+
+            if (staticVariables.preferences.getAlertForUnofficalEvents() == true) {
+                FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+            } else {
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            }
+        } catch (Exception error){
+            onTokenRefresh();
         }
     }
 

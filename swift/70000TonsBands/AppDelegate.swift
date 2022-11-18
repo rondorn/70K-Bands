@@ -95,8 +95,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                
         
         //generate user data
-        let userDataHandle = firebaseUserWrite()
-        userDataHandle.writeData()
+        print ("Firebase, calling ")
+        let userDataHandle = userDataHandler()
+        let userDataReportHandle = firebaseUserWrite()
+        userDataReportHandle.writeData()
         
         application.registerForRemoteNotifications()
         
@@ -376,12 +378,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func applicationDidEnterBackground(_ application: UIApplication) {
         
-        reportData()
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
         Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
+        reportData()
         
     }
 
@@ -395,7 +397,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-        reportData()
+        
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
