@@ -125,7 +125,7 @@ open class CustomBandDescription {
                 matches = true
             }
         }
-        
+    
         return matches
         
     }
@@ -156,7 +156,7 @@ open class CustomBandDescription {
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
         print ("commentFile lookup for \(bandName) via \(descriptionUrl) hmmm")
-        var commentText = "Comment text is not available yet."
+        var commentText = ""
         
         let commentFileName = getNoteFileName(bandName: bandName)
         
@@ -211,7 +211,7 @@ open class CustomBandDescription {
             
             var isDefaultNote = self.custMatchesDefault(customNote: oldCommentText, bandName: bandName)
             
-            if (isDefaultNote == false){
+            if (oldCommentText.starts(with: "commentFile Comment text is not available yet") == false && isDefaultNote == false){
                 do {
                     try oldCommentText.write(to: newCustCommentFile, atomically: false, encoding: String.Encoding.utf8)
                 } catch {
