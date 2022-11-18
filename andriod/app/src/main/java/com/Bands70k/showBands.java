@@ -1843,7 +1843,7 @@ public class showBands extends Activity {
                     imageHandler.getAllRemoteImages();
 
                 } catch (Exception error) {
-                    Log.d("bandInfo", error.getMessage());
+                    //Log.d("bandInfo", error.getMessage());
                 }
                 staticVariables.loadingNotes = false;
             }

@@ -153,7 +153,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 
                 let imageHandle = imageHandler()
-                
+                print ("displayedImaged URL is \(imageURL) for \(self.bandName)")
                 self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: self.bandName)
                 DispatchQueue.main.async {
                     // Calculate the biggest size that fixes in the given CGSize
