@@ -3,10 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 51;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		06C68AAEA9EABE099DB7F774 /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */; };
+		1107C6C629293100002CEF9D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		110924361F748601002237AB /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
 		110924371F748D19002237AB /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
 		110C07B11C98E50300F4C1D0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
@@ -16,8 +18,6 @@
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
 		114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
-		114CC0741C79212600CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
-		114CC0751C79212D00CF5BF1 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* LaunchScreen.xib */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
 		114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
 		1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60B1A575893003F4764 /* AppDelegate.swift */; };
@@ -50,6 +50,8 @@
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
 		115A52B01CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
 		115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
+		115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
+		115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
 		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
@@ -100,8 +102,7 @@
 		11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0331B1AB3A77F00AA29B8 /* InterfaceController.swift */; };
 		11FBBE1E232F26E100109035 /* NotificationPayload.apns in Resources */ = {isa = PBXBuildFile; fileRef = 11FBBE1D232F26E000109035 /* NotificationPayload.apns */; };
 		11FD1F1E20E006C100BE0141 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
-		A2C6C2F0803C2751C2650189 /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63AF497DB9FBC1E759BD66C1 /* Pods_70K_BandsTests.framework */; };
-		FF07F4E8D78EF5F49A2258BE /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B27E910CED6EF71427B48418 /* Pods_70K_Bands.framework */; };
+		C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,20 +116,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		11F033381AB3A77F00AA29B8 /* Embed App Extensions */ = {
+		11F033381AB3A77F00AA29B8 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0CAFB9AE174300D5A2B877B7 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
+		0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.debug.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.debug.xcconfig"; sourceTree = "<group>"; };
 		110924351F748601002237AB /* CustomBandDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBandDescription.swift; sourceTree = "<group>"; };
 		11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowAttendedReport.swift; sourceTree = "<group>"; };
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -148,7 +149,7 @@
 		1154F6101A575893003F4764 /* MasterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
 		1154F6121A575893003F4764 /* DetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
 		1154F6171A575893003F4764 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		1154F61A1A575893003F4764 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		1154F61A1A575893003F4764 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/UILaunchScreen.xib; sourceTree = "<group>"; };
 		1154F6201A575893003F4764 /* 70K BandsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "70K BandsTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1154F6251A575893003F4764 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = _0000TonsBandsTests.swift; sourceTree = "<group>"; };
@@ -212,11 +213,11 @@
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		63AF497DB9FBC1E759BD66C1 /* Pods_70K_BandsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_BandsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B27E910CED6EF71427B48418 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		BF3909FAAD806B224060B780 /* Pods-70K BandsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.debug.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.debug.xcconfig"; sourceTree = "<group>"; };
-		CD892C629AA08E508C3B3CEB /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
-		E182CE47200B34BD2DFECCBD /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_BandsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
+		FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
+		FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -235,7 +236,7 @@
 				11FD1F1E20E006C100BE0141 /* CloudKit.framework in Frameworks */,
 				11AC1D671A6827FC00267A8F /* CFNetwork.framework in Frameworks */,
 				11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */,
-				FF07F4E8D78EF5F49A2258BE /* Pods_70K_Bands.framework in Frameworks */,
+				06C68AAEA9EABE099DB7F774 /* Pods_70K_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,7 +245,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */,
-				A2C6C2F0803C2751C2650189 /* Pods_70K_BandsTests.framework in Frameworks */,
+				C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,8 +261,8 @@
 				114976C51C838D87003316D4 /* libz.tbd */,
 				114976B31C837C6E003316D4 /* libsqlite3.0.tbd */,
 				11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */,
-				B27E910CED6EF71427B48418 /* Pods_70K_Bands.framework */,
-				63AF497DB9FBC1E759BD66C1 /* Pods_70K_BandsTests.framework */,
+				FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */,
+				7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -321,7 +322,7 @@
 				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
-				1154F6191A575893003F4764 /* LaunchScreen.xib */,
+				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -418,10 +419,10 @@
 		EB50CED3291C1995D716A750 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				BF3909FAAD806B224060B780 /* Pods-70K BandsTests.debug.xcconfig */,
-				0CAFB9AE174300D5A2B877B7 /* Pods-70K BandsTests.release.xcconfig */,
-				E182CE47200B34BD2DFECCBD /* Pods-70K Bands.debug.xcconfig */,
-				CD892C629AA08E508C3B3CEB /* Pods-70K Bands.release.xcconfig */,
+				720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */,
+				FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */,
+				0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */,
+				7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -433,12 +434,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1154F62A1A575893003F4764 /* Build configuration list for PBXNativeTarget "70K Bands" */;
 			buildPhases = (
-				B69FD7EDA10F5809EC2191C6 /* [CP] Check Pods Manifest.lock */,
+				D33BDE25FCA55CE093D49EF4 /* [CP] Check Pods Manifest.lock */,
 				1154F6021A575893003F4764 /* Sources */,
 				1154F6031A575893003F4764 /* Frameworks */,
-				11F033381AB3A77F00AA29B8 /* Embed App Extensions */,
+				11F033381AB3A77F00AA29B8 /* Embed Foundation Extensions */,
 				114CC0731C79211200CF5BF1 /* Resources */,
-				99C2517E92A86F957B822A77 /* [CP] Embed Pods Frameworks */,
+				12F0543C88C59132472E4C47 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -453,11 +454,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1154F62D1A575893003F4764 /* Build configuration list for PBXNativeTarget "70K BandsTests" */;
 			buildPhases = (
-				19D603B2AB8D12642E2AE337 /* [CP] Check Pods Manifest.lock */,
+				ED0C3D3A19CF7B0035F18CB9 /* [CP] Check Pods Manifest.lock */,
 				1154F61C1A575893003F4764 /* Sources */,
 				1154F61D1A575893003F4764 /* Frameworks */,
 				1154F61E1A575893003F4764 /* Resources */,
-				74B10571D8482A55400F671D /* [CP] Embed Pods Frameworks */,
+				8F077B451801DD4DC1848014 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -477,7 +478,7 @@
 			attributes = {
 				LastSwiftMigration = 0730;
 				LastSwiftUpdateCheck = 0730;
-				LastUpgradeCheck = 1000;
+				LastUpgradeCheck = 1410;
 				ORGANIZATIONNAME = "Ron Dorn";
 				TargetAttributes = {
 					1154F6051A575893003F4764 = {
@@ -515,10 +516,9 @@
 			};
 			buildConfigurationList = 1154F6011A575893003F4764 /* Build configuration list for PBXProject "70K Bands" */;
 			compatibilityVersion = "Xcode 8.0";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
 				Base,
 				nl,
@@ -553,16 +553,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */,
 				110C07B21C99FB7A00F4C1D0 /* ApiKeys.plist in Resources */,
+				1107C6C629293100002CEF9D /* Main.storyboard in Resources */,
 				115A52B01CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */,
 				11D05AAF291C571B00D5B002 /* countries.txt in Resources */,
 				110C07B11C98E50300F4C1D0 /* Localizable.strings in Resources */,
 				114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */,
 				114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */,
-				114CC0751C79212D00CF5BF1 /* LaunchScreen.xib in Resources */,
 				11FBBE1E232F26E100109035 /* NotificationPayload.apns in Resources */,
-				114CC0741C79212600CF5BF1 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -574,6 +574,7 @@
 				115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
+				115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */,
 				1155E3B61A8B126500D51ED9 /* OnMyWayToDeath.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -581,63 +582,55 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		19D603B2AB8D12642E2AE337 /* [CP] Check Pods Manifest.lock */ = {
+		12F0543C88C59132472E4C47 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			inputFileListPaths = (
 			);
 			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
+				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-70K BandsTests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		74B10571D8482A55400F671D /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		99C2517E92A86F957B822A77 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Protobuf.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B69FD7EDA10F5809EC2191C6 /* [CP] Check Pods Manifest.lock */ = {
+		8F077B451801DD4DC1848014 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Protobuf.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D33BDE25FCA55CE093D49EF4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -653,6 +646,28 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-70K Bands-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		ED0C3D3A19CF7B0035F18CB9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-70K BandsTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -761,12 +776,12 @@
 			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
-		1154F6191A575893003F4764 /* LaunchScreen.xib */ = {
+		1154F6191A575893003F4764 /* UILaunchScreen.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				1154F61A1A575893003F4764 /* Base */,
 			);
-			name = LaunchScreen.xib;
+			name = UILaunchScreen.xib;
 			sourceTree = "<group>";
 		};
 		1172A2251B5AADC900C28AB3 /* Localizable.strings */ = {
@@ -822,6 +837,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -854,16 +870,16 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				GENERATE_PKGINFO_FILE = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INSTALL_GROUP = admin;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
@@ -900,6 +916,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -924,10 +941,10 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				GENERATE_PKGINFO_FILE = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INSTALL_GROUP = admin;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
@@ -937,10 +954,9 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
@@ -948,7 +964,7 @@
 		};
 		1154F62B1A575893003F4764 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E182CE47200B34BD2DFECCBD /* Pods-70K Bands.debug.xcconfig */;
+			baseConfigurationReference = 720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -958,8 +974,9 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
-				CURRENT_PROJECT_VERSION = 20221118001;
+				CURRENT_PROJECT_VERSION = 20221118003;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -969,11 +986,10 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBands/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
@@ -984,7 +1000,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20221118001;
+				MARKETING_VERSION = 20221118003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1026,7 +1042,7 @@
 		};
 		1154F62C1A575893003F4764 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CD892C629AA08E508C3B3CEB /* Pods-70K Bands.release.xcconfig */;
+			baseConfigurationReference = FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -1034,8 +1050,9 @@
 				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 20221118001;
+				CURRENT_PROJECT_VERSION = 20221118003;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1045,11 +1062,10 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBands/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
@@ -1060,7 +1076,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20221118001;
+				MARKETING_VERSION = 20221118003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1101,11 +1117,12 @@
 		};
 		1154F62E1A575893003F4764 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BF3909FAAD806B224060B780 /* Pods-70K BandsTests.debug.xcconfig */;
+			baseConfigurationReference = 0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1119,12 +1136,9 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBandsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_MAP_FILE_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
@@ -1174,11 +1188,12 @@
 		};
 		1154F62F1A575893003F4764 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0CAFB9AE174300D5A2B877B7 /* Pods-70K BandsTests.release.xcconfig */;
+			baseConfigurationReference = 7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
@@ -1186,12 +1201,9 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBandsTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_MAP_FILE_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/**",
