@@ -25,10 +25,10 @@ class firebaseEventDataWrite {
         
         var usingSimulator = false;
         #if targetEnvironment(simulator)
-            usingSimulator = true;
+            //usingSimulator = true;
         #endif
         if (inTestEnvironment == true){
-            usingSimulator = true;
+            //usingSimulator = true;
         }
         
         if (internetAvailble == true && usingSimulator == false){
