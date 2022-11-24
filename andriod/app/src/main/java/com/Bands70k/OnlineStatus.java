@@ -86,6 +86,7 @@ public class OnlineStatus {
                 OnlineStatus.backgroundLookup = true;
                 IsInternetAvailableAsynchronous checkInternet = new IsInternetAvailableAsynchronous();
                 checkInternet.execute();
+                OnlineStatus.backgroundLookup = false;
             }
 
         } else {
@@ -129,7 +130,7 @@ public class OnlineStatus {
 
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
-                //Log.d("Internet Found", "Internet Found https called returned " + out.toString());
+                Log.d("Internet Found", "Internet Found https called returned " + connection.toString());
 
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     Log.d("Internet Found", "Internet Found true ");
@@ -149,7 +150,7 @@ public class OnlineStatus {
             OnlineStatus.internetCheckCache = "false";
         }
 
-        OnlineStatus.internetCheckCacheDate = currentEpoc + 30;
+        OnlineStatus.internetCheckCacheDate = currentEpoc + 15;
 
         Log.d("Internet Found", "Internet Found " + returnState);
         return returnState;

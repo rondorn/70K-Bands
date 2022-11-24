@@ -99,10 +99,10 @@
             </intent-filter>
         </service>
         <!-- [END instanceId_listener] -->
-        <servicexx
+        <service
             android:name=".RegistrationIntentService"
             android:exported="false">
-        </servicexx>
+        </service>
 
         <meta-data android:name="com.Bands70k"
             android:value="@integer/google_play_services_version" />
