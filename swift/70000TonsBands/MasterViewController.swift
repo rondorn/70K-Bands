@@ -146,7 +146,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let countryHandle = countryHandler()
         countryHandle.loadCountryData()
-        let defaultCountry = NSLocale.current.regionCode!
+        let defaultCountry = NSLocale.current.regionCode ?? "US"
         var countryLongShort = countryHandle.getCountryLongShort()
 
         
