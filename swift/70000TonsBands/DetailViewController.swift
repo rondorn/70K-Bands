@@ -481,14 +481,17 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (bandName != nil && bandName.isEmpty == false){
             let custCommentFile = directoryPath.appendingPathComponent( bandName + "_comment.note-cust")
 
-            if (customNotesText.text.starts(with: "commentFile Comment text is not available yet") == true){
+            if (customNotesText.text.starts(with: "Comment text is not available yet") == true){
+                print ("commentFile being deleted -- Default waiting message");
                 removeBadNote(commentFile: custCommentFile)
                 
             } else if (customNotesText.text.count < 2){
+                print ("commentFile being deleted -- less then 2 characters");
                 removeBadNote(commentFile: custCommentFile)
                 
             } else if (bandNotes.custMatchesDefault(customNote: customNotesText.text, bandName: bandName) == true){
-                removeBadNote(commentFile: custCommentFile)
+                //print ("commentFile being deleted -- text appears to be default..ensure no cust descrip made");
+                //removeBadNote(commentFile: custCommentFile)
                 
             } else {
                 print ("saving commentFile");
@@ -510,7 +513,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func removeBadNote(commentFile: URL){
         do {
-            print ("commentFile being deleted \(commentFile)")
+            print ("commentFile being deleted \(commentFile) - removeBadNote")
             try FileManager.default.removeItem(atPath: commentFile.path)
             
         } catch let error as NSError {

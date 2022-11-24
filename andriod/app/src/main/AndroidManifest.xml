@@ -22,7 +22,8 @@
         android:theme="@style/splashScreenTheme" >
         <activity
             android:name=".showBands"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,17 +33,20 @@
         <activity
             android:name=".showBandDetails"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:label="showBandDetails" >
+            android:label="showBandDetails"
+            android:exported="true">
         </activity>
 
         <activity
             android:name=".preferenceLayout"
-            android:label="Preferences" >
+            android:label="Preferences"
+            android:exported="true">
         </activity>
 
         <activity
             android:name=".filterMenu"
-            android:label="Filter" >
+            android:label="Filter"
+            android:exported="true">
         </activity>
 
         <provider
@@ -58,7 +62,9 @@
         </provider>
 
         <receiver
+            android:exported="true"
             android:name="com.Bands70k.NotificationPublisher"
+
             android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action
@@ -70,6 +76,7 @@
         </receiver>
         <service android:name=".BackgroundService" />
         <service
+            android:exported="true"
             android:name=".MyFcmListenerService">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -85,16 +92,17 @@
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
         <service
+            android:exported="true"
             android:name=".MyInstanceIDListenerService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
         <!-- [END instanceId_listener] -->
-        <service
+        <servicexx
             android:name=".RegistrationIntentService"
             android:exported="false">
-        </service>
+        </servicexx>
 
         <meta-data android:name="com.Bands70k"
             android:value="@integer/google_play_services_version" />

@@ -27,8 +27,11 @@ open class NetworkTesting {
                 returnState = true
             }
             
-            print ("Internet Found cache is \(returnState)")
-        
+            print ("Internet Found cache is \(returnState), but refreshing cache in background")
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                self.isInternetAvailableSynchronous()
+            }
+            
         //cache has expired, but lets return last answer and check again in the background
         } else if (internetCheckCache.isEmpty == false && Thread.isMainThread == false){
             
@@ -91,7 +94,7 @@ open class NetworkTesting {
             task.resume()
             while (wait == true){
                 print ("Internet Found Waiting")
-                sleep(2);
+                sleep(1);
             }
             
             if (returnState == false){
