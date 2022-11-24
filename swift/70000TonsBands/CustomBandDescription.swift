@@ -187,6 +187,7 @@ open class CustomBandDescription {
         }
     
         commentText = removeSpecialCharsFromString(text: commentText)
+        
         return commentText;
     }
     
@@ -211,7 +212,7 @@ open class CustomBandDescription {
             
             var isDefaultNote = self.custMatchesDefault(customNote: oldCommentText, bandName: bandName)
             
-            if (oldCommentText.starts(with: "commentFile Comment text is not available yet") == false && isDefaultNote == false){
+            if (oldCommentText.starts(with: "Comment text is not available yet") == false && isDefaultNote == false){
                 do {
                     try oldCommentText.write(to: newCustCommentFile, atomically: false, encoding: String.Encoding.utf8)
                 } catch {
@@ -281,7 +282,16 @@ open class CustomBandDescription {
         commentText = removeSpecialCharsFromString(text: commentText)
         //remove leading space
         commentText = commentText.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
- 
+        
+        if (commentText.contains("Comment text is not available yet. Please wait")){
+            do {
+                print ("commentFile being deleted \(commentFile) -! - \(commentText)")
+                try FileManager.default.removeItem(atPath: commentFile.path)
+                
+            } catch let error as NSError {
+                print ("Encountered an error removing old commentFile " + error.debugDescription)
+            }
+        }
         return commentText;
     }
     

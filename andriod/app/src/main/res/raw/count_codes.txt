@@ -167,7 +167,7 @@ Norway,NO
 Oman,OM
 Pakistan,PK
 Palau,PW
-Palestine, State of,PS
+Palestine,PS
 Panama,PA
 Papua New Guinea,PG
 Paraguay,PY
@@ -215,7 +215,7 @@ Swaziland,SZ
 Sweden,SE
 Switzerland,CH
 Syrian Arab Republic,SY
-Taiwan, Province of China,TW
+Taiwan,TW
 Tajikistan,TJ
 Tanzania, TZ
 Thailand,TH
@@ -240,8 +240,8 @@ Uzbekistan,UZ
 Vanuatu,VU
 Venezuela,VE
 Viet Nam,VN
-Virgin Islands, British,VG
-Virgin Islands, U.S.,VI
+Virgin Islands British,VG
+Virgin Islands U.S.,VI
 Wallis and Futuna,WF
 Western Sahara,EH
 Yemen,YE
