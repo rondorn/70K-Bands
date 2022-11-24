@@ -12,7 +12,6 @@ open class bandNamesHandler {
 
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
-
     let dataHandle = dataHandler()
     
     init(){
@@ -77,7 +76,11 @@ open class bandNamesHandler {
             print ("Getting band data from " + artistUrl!);
             let httpData = getUrlData(urlString: artistUrl!)
             print ("Getting band data of " + httpData);
-            writeBandFile(httpData);
+            if (httpData.isEmpty == false) {
+                writeBandFile(httpData);
+            } else {
+                print ("Internet is down, prevented blanking out data")
+            }
         }
         readBandFile()
         populateCache()
