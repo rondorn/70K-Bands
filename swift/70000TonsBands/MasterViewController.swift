@@ -150,7 +150,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var countryLongShort = countryHandle.getCountryLongShort()
 
         
-      let alertController = UIAlertController(title: "Change Profile Photo", message: nil, preferredStyle: .actionSheet)
+        let alertController = UIAlertController(title: "Choose Country", message: nil, preferredStyle: .actionSheet)
         var sortedKeys = countryLongShort.keys.sorted()
         for keyValue in sortedKeys {
             alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
@@ -180,7 +180,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let dataHandle = dataHandler()
         do {
             userCountry = try String(contentsOf: countryFile, encoding: .utf8)
-            print ("Using countryValue value of " + userCountry)
+            print ("Using countryValue value of " + userCountry + " \(countryFile)")
             
             if (userCountry.isEmpty == false){
                 return

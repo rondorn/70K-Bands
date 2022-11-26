@@ -178,7 +178,7 @@ var userCountry = ""
 
 var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
 //var defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
-let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"

@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="com.google.android.c2dm.permission.REGISTER" />
-
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <application
         android:name="Bands70k"
         android:allowBackup="true"
@@ -50,7 +50,7 @@
         </activity>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="com.Bands70k"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -91,13 +91,13 @@
 
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
-        <service
+        <!--service
             android:exported="true"
-            android:name=".MyInstanceIDListenerService">
+            android:name="MyInstanceIDListenerService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
-        </service>
+        </service -->
         <!-- [END instanceId_listener] -->
         <service
             android:name=".RegistrationIntentService"

@@ -9,17 +9,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.util.Log;
 
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,7 +67,7 @@ public class staticVariables {
     public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "Testing_10_2022";
+    public final static String testAlertChannel = "Testing_11_26_2022";
     public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
@@ -133,7 +131,7 @@ public class staticVariables {
     public final static String unknownKey = "unknown";
 
     public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1";
-    public final static String defaultUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
+    public final static String defaultUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
     public final static String networkTestingUrl = "https://www.dropbox.com";
