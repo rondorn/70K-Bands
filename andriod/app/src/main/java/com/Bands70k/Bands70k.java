@@ -2,8 +2,6 @@ package com.Bands70k;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.Build;
-import android.support.v4.app.ActivityCompat;
 
 /**
  * Created by rdorn on 5/26/16.

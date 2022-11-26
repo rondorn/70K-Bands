@@ -2,8 +2,8 @@ package com.baoyz.swipemenulistview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.widget.ScrollerCompat;
+import androidx.core.view.GestureDetectorCompat;
+import androidx.core.widget.ScrollerCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;

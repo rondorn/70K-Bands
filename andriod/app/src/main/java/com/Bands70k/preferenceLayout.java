@@ -3,28 +3,19 @@ package com.Bands70k;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Looper;
-import android.preference.Preference;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.Switch;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -41,7 +32,6 @@ import java.util.zip.ZipInputStream;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static android.app.PendingIntent.getActivity;
-import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
 
 
