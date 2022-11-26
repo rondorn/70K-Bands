@@ -1,14 +1,12 @@
 package com.Bands70k;
 
 import android.util.Log;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.FirebaseInstanceIdService;
-import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 import static android.content.ContentValues.TAG;
 
 
-public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
+class MyInstanceIDListenerServicex extends FirebaseMessagingService {
 
     //private static final String TAG = "MyInstanceIDLS";
 
@@ -18,7 +16,12 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
      * InstanceID provider.
      */
     // [START refresh_token]
-
+    @Override
+    public void onNewToken(String s) {
+        super.onNewToken(s);
+        Log.d("Refreshed token:",s);
+    }
+    /*
     @Override
     public void onTokenRefresh() {
         try {
@@ -41,7 +44,7 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
             onTokenRefresh();
         }
     }
-
+    */
     private void sendRegistrationToServer(String token) {
         // TODO: Implement this method to send token to your app server.
     }

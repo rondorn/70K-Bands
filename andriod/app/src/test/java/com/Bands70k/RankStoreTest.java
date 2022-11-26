@@ -32,7 +32,7 @@ public class RankStoreTest extends TestCase {
     private static final String firstBand = "Aborted";
     private static final String lastBand = "Zero Theorem";
 
-
+    /*
     @Rule
     TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -79,4 +79,6 @@ public class RankStoreTest extends TestCase {
         assertEquals(staticVariables.wontSeeIcon, lastBandRank);
 
     }
+
+     */
 }

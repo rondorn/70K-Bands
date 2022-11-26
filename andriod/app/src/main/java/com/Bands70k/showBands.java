@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -22,23 +21,18 @@ import android.os.Handler;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.ArrayMap;
-import android.util.DisplayMetrics;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.ContextThemeWrapper;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -46,9 +40,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.MultiAutoCompleteTextView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,15 +52,13 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+//import com.google.firebase.iid.FirebaseInstanceId;
+//import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -220,7 +210,8 @@ public class showBands extends Activity {
         registerReceiver();
 
         //get FCM token for testing
-        FirebaseInstanceId.getInstance().getInstanceId()
+        /*
+        FirebaseMessagingService.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                     @Override
                     public void onComplete(@NonNull Task<InstanceIdResult> task) {
@@ -233,7 +224,7 @@ public class showBands extends Activity {
                         Log.d(TAG, "FCM Token Is " + token);
                     }
                 });
-
+        */
         if (staticVariables.attendedHandler == null){
             staticVariables.attendedHandler = new showsAttended();
         }
@@ -393,6 +384,7 @@ public class showBands extends Activity {
             staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
             Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
             if (staticVariables.userCountry.isEmpty() == true){
+                FileHandler70k.countryFile.delete();
                 this.getCountry();
             }
         }

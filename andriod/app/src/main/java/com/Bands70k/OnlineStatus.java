@@ -3,37 +3,16 @@ package com.Bands70k;
 /**
  * Created by rdorn on 6/3/16.
  */
-import android.app.Activity;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Looper;
-import android.os.StrictMode;
-import android.provider.Settings;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
-import android.view.View;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Scanner;
-
-import static com.Bands70k.staticVariables.fileDownloaded;
-import static com.Bands70k.staticVariables.listPosition;
 
 
 public class OnlineStatus {
