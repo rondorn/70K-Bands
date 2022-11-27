@@ -153,7 +153,7 @@ let sawNoneStatus = "sawNone";
 
 //alert topics
 let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing202211318"
+let subscriptionTopicTest = "Testing20221127"
 let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
