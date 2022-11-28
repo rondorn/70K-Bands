@@ -12,7 +12,6 @@ import UserNotifications
 import Firebase
 import FirebaseCore
 import FirebaseMessaging
-import FirebaseInstanceID
 import Foundation
 
 let appDelegate : AppDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -85,22 +84,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             completionHandler: {_, _ in })
         // For iOS 10 data message (sent via FCM
         Messaging.messaging().delegate = self
-        InstanceID.instanceID().instanceID { (result, error) in
-          if let error = error {
-            print("FCM Error fetching remote instance ID: \(error)")
-          } else if let result = result {
-            print("FCM Remote instance ID token: \(result.token)")
-          }
-        }
+        //InstanceID.instanceID().instanceID { (result, error) in
+        //  if let error = error {
+        //    print("FCM Error fetching remote instance ID: \(error)")
+        //  } else if let result = result {
+        //    print("FCM Remote instance ID token: \(result.token)")
+        //  }
+        //}
         //} else {
         //  let settings: UIUserNotificationSettings =
         //    UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
         //  application.registerUserNotificationSettings(settings)
        // }
 
-       NotificationCenter.default.addObserver(self, selector:
-       #selector(tokenRefreshNotification), name:
-       NSNotification.Name.InstanceIDTokenRefresh, object: nil)
+       //NotificationCenter.default.addObserver(self, selector:
+       //#selector(tokenRefreshNotification), name:
+       //NSNotification.Name.InstanceIDTokenRefresh, object: nil)
        printFCMToken()
                
         
@@ -128,7 +127,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // TODO: If necessary send token to application server.
         // Note: This callback is fired at each app startup and whenever a new token is generated.
     }
-         
+    
+    /*
     func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage){
         print("FCM \(remoteMessage.appData)")
                 //let title = remoteMessage.appData[("data"): {"title"}]
@@ -151,6 +151,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
 
     }
+    */
     
     func displayNotification (message: String){
         

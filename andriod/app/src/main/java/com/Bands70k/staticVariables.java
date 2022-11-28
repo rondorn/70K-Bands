@@ -67,7 +67,7 @@ public class staticVariables {
     public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "Testing20221126";
+    public final static String testAlertChannel = "Testing20221127";
     public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
