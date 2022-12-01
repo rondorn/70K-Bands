@@ -124,7 +124,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                name: Notification.Name("FCMToken"), object: nil)
         
         
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        let userDataHandle = firebaseUserWrite()
+        userDataHandle.writeData()
+    }
+    
+    @objc func refreshMainDisplayAfterRefresh() {
         
+        print ("Refresh done, so updating the display in main 3")
+        if (Thread.isMainThread == true){
+            refreshFromCache()
+        }
     }
     
     @objc func displayFCMToken(notification: NSNotification){
@@ -140,6 +150,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Reload Data here
        self.tableView.reloadData()
+
     }
     
     func chooseCountry(){
@@ -367,6 +378,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
+
     }
     
     @objc func refreshAlerts(){
@@ -449,13 +461,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshData(){
         
-        print ("Waiting for bandData, Done")
-        
+        print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         //check if the timezonr has changes for whatever reason
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
         
         internetAvailble = isInternetAvailable();
-        print ("Internetavailable is  \(internetAvailble)");
+        print ("Refresh Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
         
@@ -468,7 +479,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         refreshFromCache()
         
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             
             while (refreshDataLock == true){
                 sleep(1);
@@ -484,7 +495,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandNameHandle = bandNamesHandler()
             let schedule = scheduleHandler()
             if (offline == false){
-            
+                cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 self.attendedHandle.loadShowsAttended()
@@ -513,20 +524,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readCloudData()
             
+            
             DispatchQueue.main.async{
+                print ("Refreshing data in backgroud");
+
                 self.bandNameHandle.readBandFile()
                 self.dataHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.updateCountLable()
-                self.tableView.reloadData()
                 self.refreshAlerts()
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
+                print ("DONE Refreshing data in backgroud 1");
+                refreshDataLock = false;
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
             }
-  
-            refreshDataLock = false;
+            //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
+        //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        print ("Done Refreshing data in backgroud 2");
     } 
+    
     
     func setShowOnlyAttenedFilterStatus(){
         

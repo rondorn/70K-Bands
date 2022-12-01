@@ -20,6 +20,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -209,22 +210,6 @@ public class showBands extends Activity {
         // Registering BroadcastReceiver
         registerReceiver();
 
-        //get FCM token for testing
-        /*
-        FirebaseMessagingService.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "getInstanceId failed", task.getException());
-                            return;
-                        }
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
-                        Log.d(TAG, "FCM Token Is " + token);
-                    }
-                });
-        */
         if (staticVariables.attendedHandler == null){
             staticVariables.attendedHandler = new showsAttended();
         }
@@ -268,7 +253,10 @@ public class showBands extends Activity {
 
                         //start spinner and stop after 5 seconds
                         bandNamesPullRefresh.setRefreshing(true);
+                        bandInfo = new BandInfo();
+                        staticVariables.loadingNotes = false;
                         refreshNewData();
+                        reloadData();
 
                     }
 

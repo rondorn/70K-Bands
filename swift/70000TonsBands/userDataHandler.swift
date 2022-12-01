@@ -15,6 +15,8 @@ class userDataHandler: NSObject {
     var language: String
     var lastLaunch: Date
     var lanuchCount: Int
+    var bandsVersion: String
+    var iosVersion: String
     
     override init(){
         
@@ -47,6 +49,8 @@ class userDataHandler: NSObject {
         self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date
         self.lanuchCount = 1
+        self.bandsVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+        self.iosVersion = UIDevice.current.systemVersion
         
         print ("Writing Firebase  new userData 3")
         print ("Writing Firebase new userData - " + self.uid + " - " + self.country + " - " + self.language);
