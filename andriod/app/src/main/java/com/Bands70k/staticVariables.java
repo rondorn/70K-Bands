@@ -141,7 +141,7 @@ public class staticVariables {
     public static String previousYearSchedule;
     public static String descriptionMap;
     public static String previousYearDescriptionMap;
-
+    public static Boolean checkingInternet = false;
 
     public static String webHelpMessage = "";
 
