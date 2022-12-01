@@ -23,7 +23,7 @@ var ATTENDED = "attended";
 var NOTE = "note";
 
 var FCMnumber = "";
-
+var refreshDataCounter = 0;
 var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
 var directoryPath = URL(fileURLWithPath:dirs[0])
 var storageFile = directoryPath.appendingPathComponent( "data.txt")
@@ -372,7 +372,7 @@ func isInternetAvailable() -> Bool {
 }
 
 struct cacheVariables {
- 
+    
     static var bandPriorityStorageCache = [String:Int]()
     static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()

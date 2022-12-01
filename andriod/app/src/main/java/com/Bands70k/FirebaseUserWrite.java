@@ -2,6 +2,8 @@ package com.Bands70k;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import android.content.pm.PackageInfo;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
@@ -23,6 +25,14 @@ public class FirebaseUserWrite {
     public void writeData(){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
+            String version70k = "Unknown";
+            try {
+                PackageInfo pInfo = staticVariables.context.getPackageManager().getPackageInfo(staticVariables.context.getPackageName(), 0);
+                version70k = pInfo.versionName;
+            } catch (Exception error){
+                //do nothing
+            }
+
             //FirebaseDatabase.getInstance().goOnline();
             HashMap<String, Object> userData = new HashMap<>();
 
@@ -38,6 +48,9 @@ public class FirebaseUserWrite {
             userData.put("language", language);
             userData.put("platform", "Android");
             userData.put("lastLaunch", getCurrentDateString());
+            userData.put("70kVersion", version70k);
+            userData.put("osVersion", android.os.Build.VERSION.SDK_INT);
+
 
             Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
 

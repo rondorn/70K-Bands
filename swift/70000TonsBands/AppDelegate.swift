@@ -356,7 +356,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
-        
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
     }
     // [END connect_on_active]
@@ -426,7 +425,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-        
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {

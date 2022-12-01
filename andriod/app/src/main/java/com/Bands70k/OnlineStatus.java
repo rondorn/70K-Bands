@@ -20,20 +20,20 @@ public class OnlineStatus {
 
     public static String internetCheckCache = "Unknown";
     public static Long internetCheckCacheDate = 0L;
-    public static Boolean backgroundLookup = false;
     public static URL dnsResolveCache = null;
 
     public static boolean isOnline() {
 
         Log.d("Internet Found", "Internet Found Checking Internet");
+        staticVariables.checkingInternet = true;
         OnlineStatus statusCheckHandler = new OnlineStatus();
-        Boolean onlineCheck = statusCheckHandler.isInternetAvailable();
+        Boolean onlineCheck = statusCheckHandler.isInternetAvailableTest();
 
         Log.d("Internet Found", "Internet Found Checking Internet Done");
         return onlineCheck;
     }
 
-    public boolean isInternetAvailable() {
+    public boolean isInternetAvailableTest() {
 
         Boolean returnState = false;
 
@@ -61,11 +61,10 @@ public class OnlineStatus {
 
             Log.d("Internet Found", "Internet Found Return state is cached, but refreshing " + returnState);
 
-            if (OnlineStatus.backgroundLookup == false) {
-                OnlineStatus.backgroundLookup = true;
+            if (staticVariables.checkingInternet == false) {
+                staticVariables.checkingInternet  = true;
                 IsInternetAvailableAsynchronous checkInternet = new IsInternetAvailableAsynchronous();
                 checkInternet.execute();
-                OnlineStatus.backgroundLookup = false;
             }
 
         } else {
@@ -76,7 +75,7 @@ public class OnlineStatus {
         return returnState;
     }
 
-    public Boolean isInternetAvailableSynchronous() {
+    public static Boolean isInternetAvailableSynchronous() {
 
         Boolean returnState = false;
 
@@ -149,8 +148,7 @@ public class OnlineStatus {
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
-            OnlineStatus statusCheckHandler = new OnlineStatus();
-            Boolean onlineCheck = statusCheckHandler.isInternetAvailableSynchronous();
+            Boolean onlineCheck = isInternetAvailableTest();
 
             if (onlineCheck == true) {
                 OnlineStatus.internetCheckCache = "true";
@@ -167,7 +165,7 @@ public class OnlineStatus {
 
             Long currentEpoc = System.currentTimeMillis() / 1000L;
             OnlineStatus.internetCheckCacheDate = currentEpoc + 30;
-            OnlineStatus.backgroundLookup = false;
+            staticVariables.checkingInternet  = false;
         }
     }
 

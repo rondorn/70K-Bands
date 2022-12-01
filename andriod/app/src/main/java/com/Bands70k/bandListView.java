@@ -156,11 +156,14 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             if (bandData.getRankImg() == 0){
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);
             } else {
-                try {
+
+                Log.d("bandListView", "ranking image is " + String.valueOf(bandData.getRankImg()));
+                if (bandData.getRankImg() != 50000000) {
                     viewHolder.rankImage.setImageResource(bandData.getRankImg());
-                } catch (Exception error){
-                    //do nothing
+                } else {
+                    viewHolder.rankImage.setImageResource(0);
                 }
+
                 viewHolder.rankImage.setVisibility(View.VISIBLE);
             }
 

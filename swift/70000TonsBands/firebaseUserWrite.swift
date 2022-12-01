@@ -45,12 +45,14 @@ class firebaseUserWrite {
                                                                                "country": userDataHandle.country,
                                                                                "language": userDataHandle.language,
                                                                                "platform": "iOS",
+                                                                                "osVersion" : userDataHandle.iosVersion,
+                                                                                "70kVersion" : userDataHandle.bandsVersion,
                                                                                "lastLaunch": userDataHandle.getCurrentDateString()]) {
                                                                                 (error:Error?, ref:DatabaseReference) in
                                                                                 if let error = error {
-                                                                                    print("Writing firebase data could not be saved: \(error).")
+                                                                                    print("Writing Firebase data could not be saved: \(error).")
                                                                                 } else {
-                                                                                    print("Writing firebase data saved successfully!")
+                                                                                    print("Writing Firebase data saved successfully!")
                                                                                 }
                 }
             
