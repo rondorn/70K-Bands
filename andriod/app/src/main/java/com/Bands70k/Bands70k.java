@@ -7,6 +7,7 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -20,6 +21,8 @@ public class Bands70k extends Application {
         super.onCreate();
 
         Bands70k.context = getApplicationContext();
+        OnlineStatus.isOnline();
+        SystemClock.sleep(3000);
 
     }
 

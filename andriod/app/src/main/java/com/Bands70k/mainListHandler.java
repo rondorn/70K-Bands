@@ -323,15 +323,19 @@ public class mainListHandler {
 
         if (numberOfBands != 0) {
             displayText = "70,0000 Tons " + numberOfBands + " bands";
+            staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
             displayText = "70,0000 Tons " + altNumberOfBands + " bands";
+            staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
             displayText = "70,0000 Tons " + numberOfEvents + " events";
+            staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
         } else {
             displayText = "70,0000 Tons 0 bands";
+            staticVariables.staticBandCount = 0;
         }
 
         return displayText;

@@ -63,11 +63,12 @@ public class staticVariables {
 
     public static Integer eventYear = 0;
     public static Integer eventYearRaw = 0;
+    public static Integer staticBandCount = 0;
 
     public static String userID = "";
     //firebase channels
     public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "Testing20221127";
+    public final static String testAlertChannel = "Testing20221203";
     public final static String unofficalAlertChannel = "unofficalEvents";
 
     //shows attended
@@ -142,6 +143,8 @@ public class staticVariables {
     public static String descriptionMap;
     public static String previousYearDescriptionMap;
     public static Boolean checkingInternet = false;
+    public static String internetCheckCache = "Unknown";
+    public static Long internetCheckCacheDate = 0L;
 
     public static String webHelpMessage = "";
 

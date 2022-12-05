@@ -36,8 +36,13 @@ public class FirebaseUserWrite {
             //FirebaseDatabase.getInstance().goOnline();
             HashMap<String, Object> userData = new HashMap<>();
 
+            //if country is empty, read from the file
             if (staticVariables.userCountry.isEmpty()){
                 staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
+            }
+            //if country is still empty, use the default local for now
+            if (staticVariables.userCountry.isEmpty()){
+                staticVariables.userCountry = Locale.getDefault().getCountry();
             }
 
             String country = staticVariables.userCountry;
