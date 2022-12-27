@@ -125,8 +125,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
-        let userDataHandle = firebaseUserWrite()
-        userDataHandle.writeData()
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -306,6 +304,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isLoadingBandData = false
         quickRefresh()
         refreshDisplayAfterWake();
+        let userDataHandle = firebaseUserWrite()
+        userDataHandle.writeData()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {

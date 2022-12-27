@@ -81,10 +81,12 @@ public class BandNotes {
 
     private String stripDataForCompare(String dataString){
 
-        String strippedDataString = dataString.replaceAll("\\s", "");
-        strippedDataString = strippedDataString.replaceAll("<br>", "");
-        strippedDataString = strippedDataString.replaceAll("\n", "");
-
+        String strippedDataString = "";
+        if (dataString != null) {
+            strippedDataString = dataString.replaceAll("\\s", "");
+            strippedDataString = strippedDataString.replaceAll("<br>", "");
+            strippedDataString = strippedDataString.replaceAll("\n", "");
+        }
         return strippedDataString;
     }
 

@@ -673,6 +673,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         
         //build universal list of bands for all view types
+        print ("Checking next bandName currentBandList is \(currentBandList)")
         for index in currentBandList {
             
             var bandInIndex = getBandFromIndex(index: index)
@@ -695,6 +696,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //find where in list
         var counter = 0
         let sizeBands = loopThroughBandList.count
+        print ("Checking next bandName list of bands is \(loopThroughBandList)")
         for index in loopThroughBandList{
             
             var indexSplit = index.components(separatedBy: ":")
