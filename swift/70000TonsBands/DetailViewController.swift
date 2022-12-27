@@ -757,6 +757,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
         } else if (indexSplit[1].isNumeric == true){
             bandInIndex = "0:" + indexSplit[0]
+            
+        } else {
+            bandInIndex = indexSplit[0] + ":" + indexSplit[1]
         }
         
         return bandInIndex
