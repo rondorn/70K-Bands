@@ -35,11 +35,11 @@ class userDataHandler: NSObject {
             print ("From countryFile \(countryFile) for a country of \(detectedCountry)")
             if (detectedCountry.isEmpty == true){
                 print ("Falling back to default Country with empty CountryFile")
-                detectedCountry = NSLocale.current.regionCode!
+                detectedCountry = NSLocale.current.regionCode ?? "US"
             }
         } catch {
             print ("Error - Falling back to default CountryFile")
-            detectedCountry = NSLocale.current.regionCode!
+            detectedCountry = NSLocale.current.regionCode  ?? "US"
         }
         
         print ("Writing Firebase new userData 2")
