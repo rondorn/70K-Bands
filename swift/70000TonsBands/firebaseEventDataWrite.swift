@@ -28,7 +28,7 @@ class firebaseEventDataWrite {
             //usingSimulator = true;
         #endif
         if (inTestEnvironment == true){
-            //usingSimulator = true;
+            usingSimulator = true;
         }
         
         if (internetAvailble == true && usingSimulator == false){

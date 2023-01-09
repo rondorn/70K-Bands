@@ -27,7 +27,7 @@ class firebaseUserWrite {
             //usingSimulator = true;
         #endif
         if (inTestEnvironment == true){
-            //xusingSimulator = true;
+            usingSimulator = true;
         }
         
         //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
