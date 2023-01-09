@@ -185,7 +185,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setupSwipeGenstures()
             customNotesText.setContentOffset(.zero, animated: true)
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-            
+            loadComments()
             rotationChecking()
         }
         
@@ -758,8 +758,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         } else if (indexSplit[1].isNumeric == true){
             bandInIndex = "0:" + indexSplit[0]
             
-        } else {
+        } else if (indexSplit[0].isDouble() == true){
             bandInIndex = indexSplit[0] + ":" + indexSplit[1]
+            
+        } else if (indexSplit[1].isDouble() == true){
+            bandInIndex = "0:" + indexSplit[0]
+            
         }
         
         return bandInIndex
@@ -1302,5 +1306,21 @@ extension UIImage {
 extension String {
     var isNumeric: Bool {
         return !isEmpty && rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil
+    }
+    func isDouble() -> Bool {
+
+        if let doubleValue = Double(self) {
+            return true
+        }
+
+        return false
+    }
+    func isFloat() -> Bool {
+
+        if let floatValue = Float(self) {
+            return true
+        }
+
+        return false
     }
 }
