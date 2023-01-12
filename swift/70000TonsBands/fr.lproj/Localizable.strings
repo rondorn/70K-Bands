@@ -105,6 +105,9 @@
 "confirmCountry" = "Confirmer";
 "correctCountry" = "Changer";
 
+"waiting_for_data" = "En attente de chargement des données, veuillez patienter....";
+"data_filter_issue" = "Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données";
+
 
 
 

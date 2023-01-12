@@ -92,4 +92,7 @@
     <string name="verify_country">Bekræft dit land</string>
     <string name="correct_if_needed">Ret dit land, hvis det er nødvendigt</string>
     <string name="country_invalid">Landeværdien anerkendes ikke som gyldig</string>
+
+    <string name="waiting_for_data">Venter på, at data indlæses. Standby...</string>
+    <string name="data_filter_issue">Alle data filtreres fra. Fjern filtre for at se data</string>
 </resources>

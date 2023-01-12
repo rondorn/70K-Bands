@@ -100,3 +100,6 @@
 "correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
 "confirmCountry" = "Bekræfte";
 "correctCountry" = "Lave om";
+
+"waiting_for_data" = "Venter på, at data indlæses. Standby...";
+"data_filter_issue" = "Alle data filtreres fra. Fjern filtre for at se data";

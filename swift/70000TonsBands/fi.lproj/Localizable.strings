@@ -103,3 +103,7 @@
 "correctCountryDescription" = "Korjaa maasi tarvittaessa";
 "confirmCountry" = "Vahvistaa";
 "correctCountry" = "Muuttaa";
+
+"waiting_for_data" = "Odotetaan tietojen latautumista, ole valmiustilassa....";
+"data_filter_issue" = "Kaikki tiedot suodatetaan pois. Poista suodattimet nähdäksesi tiedot";
+

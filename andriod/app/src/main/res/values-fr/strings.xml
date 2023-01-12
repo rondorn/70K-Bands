@@ -90,4 +90,7 @@
     <string name="verify_country">Vérifiez votre pays</string>
     <string name="correct_if_needed">Corrigez votre pays si nécessaire</string>
     <string name="country_invalid">La valeur du pays n\'est pas reconnue comme valide</string>
+
+    <string name="waiting_for_data">En attente de chargement des données, veuillez patienter....</string>
+    <string name="data_filter_issue">Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données</string>
 </resources>

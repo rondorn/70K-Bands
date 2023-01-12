@@ -5,6 +5,7 @@ package com.Bands70k;
  */
 import android.os.AsyncTask;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.net.HttpURLConnection;
@@ -36,7 +37,7 @@ public class OnlineStatus {
         Long currentEpoc = System.currentTimeMillis() / 1000L;
 
         Log.d("Internet Found", "Internet Found " + currentEpoc + " < " + staticVariables.internetCheckCacheDate);
-
+        String previousValue = staticVariables.internetCheckCache;
         if (currentEpoc > staticVariables.internetCheckCacheDate){
             Log.d("Internet Found", "Internet Found Clearing cache");
             currentEpoc = System.currentTimeMillis() / 1000L;
@@ -44,7 +45,7 @@ public class OnlineStatus {
             staticVariables.internetCheckCache = "Unknown";
         }
 
-        if (staticVariables.internetCheckCache != "Unknown") {
+        if (staticVariables.internetCheckCache.equals("Unknown") == false){
             if (staticVariables.internetCheckCache == "false") {
                 returnState = false;
             } else {
@@ -54,7 +55,11 @@ public class OnlineStatus {
 
         } else {
 
-            returnState = false;
+            if (previousValue == "false") {
+                returnState = false;
+            } else {
+                returnState = true;
+            }
 
             Log.d("Internet Found", "Internet Found Return state is cached, but refreshing " + returnState);
 
@@ -62,9 +67,7 @@ public class OnlineStatus {
             checkInternet.execute();
 
         }
-        //if (FileHandler70k.doesCountryFileExist() == false){
-        //    returnState = true;
-        //}
+
         staticVariables.internetCheckCache = String.valueOf(returnState);
         return returnState;
     }
@@ -116,6 +119,7 @@ public class OnlineStatus {
                 returnState = false;
             }
         } else {
+            Log.d("Internet Found", "Internet Found false 2 ");
             returnState = false;
         }
 
