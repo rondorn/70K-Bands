@@ -51,6 +51,8 @@ public class showBandDetails extends Activity {
     private BandNotes bandHandler;
     private Boolean clickedOnEvent = false;
 
+    private Intent browserIntent = null;
+
     private String rankIconLocation = "";
     private int noteViewPercentage = 35;
 
@@ -166,12 +168,14 @@ public class showBandDetails extends Activity {
 
     private void initializeWebContent (){
 
+        Log.d("initializeWebContent", "Start");
         webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
 
         mWebView = (WebView) findViewById(R.id.detailWebView);
         mWebView.setBackgroundColor(Color.argb(1, 0, 0, 0));
         mWebView.setWebViewClient(new customWebViewClient());
-
+        mWebView.getSettings().setJavaScriptEnabled(true);
+        Log.d("initializeWebContent", "setOnTouchListener");
         mWebView.setOnTouchListener(new OnSwipeTouchListener(context) {
             @Override
             public void onSwipeLeft() {
@@ -191,6 +195,7 @@ public class showBandDetails extends Activity {
         webSettings.setAllowFileAccess(true);
         mWebView.setVerticalScrollBarEnabled(false);
         mWebView.setHorizontalScrollBarEnabled(false);
+        Log.d("initializeWebContent", "writeNoteHtml");
         mWebView.addJavascriptInterface(new Object() {
 
             @JavascriptInterface
@@ -243,7 +248,7 @@ public class showBandDetails extends Activity {
             }
 
         }, "ok");
-
+        Log.d("initializeWebContent", "webLink");
         mWebView.addJavascriptInterface(new Object() {
 
             @JavascriptInterface
@@ -254,20 +259,20 @@ public class showBandDetails extends Activity {
                 inLink = true;
 
                 String webUrl = getWebUrl(value);
-                Log.d("webLink", "Going to weblinks Done " + webUrl);
+                Log.d("webLink", "Going to weblinks Start " + webUrl);
 
+                browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webUrl));
+                browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(webUrl));
                 startActivity(browserIntent);
-
 
             }
 
         }, "link");
-
         createDetailHTML();
         webProgressBar.setVisibility(View.GONE);
-
+        Log.d("initializeWebContent", "Done");
     }
 
 
@@ -330,6 +335,7 @@ public class showBandDetails extends Activity {
     @Override
     public void onBackPressed() {
 
+        Log.d("WebView", "Back button pressed");
         staticVariables.writeNoteHtml = "";
         if (inLink){
             mWebView.onPause();
@@ -519,6 +525,7 @@ public class showBandDetails extends Activity {
 
         @Override
         public void onPageFinished(WebView view, String url) {
+            Log.d("WebView", "finished with webLink");
             // TODO Auto-generated method stub
             super.onPageFinished(view, url);
             webProgressBar.setVisibility(View.GONE);

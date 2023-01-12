@@ -103,3 +103,6 @@
 "correctCountryDescription" = "Korrigieren Sie bei Bedarf Ihr Land";
 "confirmCountry" = "Bestätigen";
 "correctCountry" = "Veränderung";
+
+"waiting_for_data" = "Warten auf das Laden der Daten, bitte Standby....";
+"data_filter_issue" = "Alle Daten werden herausgefiltert, bitte entfernen Sie die Filter, um die Daten anzuzeigen";

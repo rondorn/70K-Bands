@@ -1230,8 +1230,13 @@ public class showBands extends Activity {
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
-
-            bandNames.add("Waiting for data to load, please standby....");
+            String emptyDataMessage = "";
+            if (unfilteredBandCount > 1){
+                emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+            } else {
+                emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            }
+            bandNames.add(emptyDataMessage);
         }
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
@@ -1258,6 +1263,7 @@ public class showBands extends Activity {
         }
 
         Integer counter = 0;
+
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         for (String bandIndex: scheduleSortedBandNames){
 
@@ -1350,7 +1356,13 @@ public class showBands extends Activity {
             }
 
             if (counter == 0){
-                bandListItem bandItem = new bandListItem("Waiting for data to load, please standby....");
+                String emptyDataMessage = "";
+                if (unfilteredBandCount > 1){
+                    emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+                } else {
+                    emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+                }
+                bandListItem bandItem = new bandListItem(emptyDataMessage);
                 adapter.add(bandItem);
             }
             setFilterButton();
@@ -1382,6 +1394,7 @@ public class showBands extends Activity {
 
     @Override
     public void onBackPressed(){
+
         moveTaskToBack(true);
     }
 

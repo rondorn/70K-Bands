@@ -98,3 +98,7 @@
 "correctCountryDescription" = "Correct Your Country If Needed";
 "confirmCountry" = "Confirm";
 "correctCountry" = "Change";
+
+"waiting_for_data" = "Waiting for data to load, please standby....";
+"data_filter_issue" = "All data is being filtered out, please remove filters to view data";
+

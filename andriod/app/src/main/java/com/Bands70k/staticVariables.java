@@ -64,6 +64,7 @@ public class staticVariables {
     public static Integer eventYear = 0;
     public static Integer eventYearRaw = 0;
     public static Integer staticBandCount = 0;
+    public static Integer unfilteredBandCount = 0;
 
     public static String userID = "";
     //firebase channels

@@ -6,6 +6,7 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="Internet Found" />
     <option name="TOOL_WINDOW_LOG_LEVEL" value="debug" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
@@ -83,7 +84,7 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[R38N100ZG0M]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[/Users/rdorn/.android/avd/Pixel_5_API_30.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -284,7 +285,7 @@
     <property name="project.structure.last.edited" value="Suggestions" />
     <property name="project.structure.proportion" value="0.17" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.project.gradle" />
+    <property name="settings.editor.selected.configurable" value="device.file.explorer" />
     <property name="show.do.not.ask.upgrade.gradle.plugin" value="3.1.4" />
     <property name="sync.plugin.last.upgrade.timestamp" value="1540482687287" />
   </component>

@@ -223,6 +223,9 @@ let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
 var listOfVenues = [String]()
 
+var filteredBandCount = 0
+var unfilteredBandCount = 0
+
 var masterView: MasterViewController!
 
 var googleCloudID = "Nothing";
