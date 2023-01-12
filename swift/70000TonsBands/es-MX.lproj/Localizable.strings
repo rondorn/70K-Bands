@@ -111,3 +111,7 @@
 "correctCountryDescription" = "Corrija su país si es necesario";
 "confirmCountry" = "Confirmar";
 "correctCountry" = "Cambio";
+
+"waiting_for_data" = "Esperando a que se carguen los datos, por favor, espera....";
+"data_filter_issue" = "Todos los datos se están filtrando, elimine los filtros para ver los datos";
+

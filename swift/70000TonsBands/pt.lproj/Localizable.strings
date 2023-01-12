@@ -102,3 +102,6 @@
 "correctCountryDescription" = "Corrija seu país se necessário";
 "confirmCountry" = "Confirme";
 "correctCountry" = "Mudar";
+
+"waiting_for_data" = "Aguardando o carregamento dos dados, aguarde....";
+"data_filter_issue" = "Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados";
