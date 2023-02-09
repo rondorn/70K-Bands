@@ -3,78 +3,59 @@ package com.Bands70k;
 /**
  * Created by rdorn on 6/3/16.
  */
-import android.app.Activity;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Looper;
-import android.os.StrictMode;
-import android.provider.Settings;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.os.SystemClock;
 import android.util.Log;
-import android.view.View;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Scanner;
-
-import static com.Bands70k.staticVariables.fileDownloaded;
-import static com.Bands70k.staticVariables.listPosition;
 
 
 public class OnlineStatus {
 
-
-    public static String internetCheckCache = "Unknown";
-    public static Long internetCheckCacheDate = 0L;
-    public static Boolean backgroundLookup = false;
     public static URL dnsResolveCache = null;
 
     public static boolean isOnline() {
 
         Log.d("Internet Found", "Internet Found Checking Internet");
         OnlineStatus statusCheckHandler = new OnlineStatus();
-        Boolean onlineCheck = statusCheckHandler.isInternetAvailable();
+        Boolean onlineCheck = statusCheckHandler.isInternetAvailableTest();
 
         Log.d("Internet Found", "Internet Found Checking Internet Done");
         return onlineCheck;
     }
 
-    public boolean isInternetAvailable() {
+    public Boolean isInternetAvailableTest() {
 
         Boolean returnState = false;
 
         Long currentEpoc = System.currentTimeMillis() / 1000L;
 
-        Log.d("Internet Found", "Internet Found " + currentEpoc + " < " + internetCheckCacheDate);
+        Log.d("Internet Found", "Internet Found " + currentEpoc + " < " + staticVariables.internetCheckCacheDate);
+        String previousValue = staticVariables.internetCheckCache;
+        if (currentEpoc > staticVariables.internetCheckCacheDate){
+            Log.d("Internet Found", "Internet Found Clearing cache");
+            currentEpoc = System.currentTimeMillis() / 1000L;
+            staticVariables.internetCheckCacheDate = currentEpoc + 15;
+            staticVariables.internetCheckCache = "Unknown";
+        }
 
-        if (internetCheckCache != "Unknown" && currentEpoc < internetCheckCacheDate) {
-            if (internetCheckCache == "false") {
+        if (staticVariables.internetCheckCache.equals("Unknown") == false){
+            if (staticVariables.internetCheckCache == "false") {
                 returnState = false;
             } else {
                 returnState = true;
             }
-
             Log.d("Internet Found", "Internet Found Return state is cached  " + returnState);
 
-            //cache has expired, but lets return last answer and check again in the background
-        } else if (internetCheckCache != "Unknown") {
+        } else {
 
-            if (internetCheckCache == "false") {
+            if (previousValue == "false") {
                 returnState = false;
             } else {
                 returnState = true;
@@ -82,21 +63,16 @@ public class OnlineStatus {
 
             Log.d("Internet Found", "Internet Found Return state is cached, but refreshing " + returnState);
 
-            if (OnlineStatus.backgroundLookup == false) {
-                OnlineStatus.backgroundLookup = true;
-                IsInternetAvailableAsynchronous checkInternet = new IsInternetAvailableAsynchronous();
-                checkInternet.execute();
-            }
+            IsInternetAvailableAsynchronous checkInternet = new IsInternetAvailableAsynchronous();
+            checkInternet.execute();
 
-        } else {
-
-            returnState = isInternetAvailableSynchronous();
         }
 
+        staticVariables.internetCheckCache = String.valueOf(returnState);
         return returnState;
     }
 
-    public Boolean isInternetAvailableSynchronous() {
+    public static Boolean testInternetAvailableSynchronous() {
 
         Boolean returnState = false;
 
@@ -105,17 +81,13 @@ public class OnlineStatus {
         //Get the IP of the Host
         URL url = null;
         try {
-            url = ResolveHostIP(staticVariables.networkTestingUrl,10000);
+            url = ResolveHostIP(staticVariables.networkTestingUrl,5000);
             dnsResolveCache = url;
 
         } catch (MalformedURLException e) {
-            Log.d("INFO", "Internet Found URL resovle error of " + e.getMessage());
-            try {
-                dnsResolveCache = new URL("https://162.125.248.1");
-            } catch (MalformedURLException error) {
 
-            }
         }
+
         Log.d("Internet Found", "Internet Found using URL of " + url);
         if(url != null) {
 
@@ -127,31 +99,34 @@ public class OnlineStatus {
                 HttpURLConnection connection = (HttpURLConnection) new URL(staticVariables.networkTestingUrl).openConnection();
                 connection.setRequestMethod("HEAD");
 
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
-                //Log.d("Internet Found", "Internet Found https called returned " + out.toString());
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                Log.d("Internet Found", "Internet Found https called returned " + connection.toString());
 
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     Log.d("Internet Found", "Internet Found true ");
                     returnState = true;
-                    internetCheckCache = "true";
+                    staticVariables.internetCheckCache = "true";
                     connection.disconnect();
                 } else {
+                    returnState = false;
                     Log.d("Internet Found", "Internet Found false " + connection.getResponseCode());
                 }
 
 
             } catch (Exception generalError) {
                 Log.d("Internet Found", "Internet Found false 1 " + generalError.getMessage());
-                internetCheckCache = "false";
+                returnState = false;
             }
         } else {
-            OnlineStatus.internetCheckCache = "false";
+            Log.d("Internet Found", "Internet Found false 2 ");
+            returnState = false;
         }
 
-        OnlineStatus.internetCheckCacheDate = currentEpoc + 30;
+        staticVariables.internetCheckCacheDate = currentEpoc + 15;
+        staticVariables.internetCheckCache = String.valueOf(returnState);
 
-        Log.d("Internet Found", "Internet Found " + returnState);
+        Log.d("Internet Found", "Internet Found results are " + returnState);
         return returnState;
     }
 
@@ -162,20 +137,19 @@ public class OnlineStatus {
 
         @Override
         protected void onPreExecute() {
-
+            staticVariables.internetCheckCache = "true";
         }
 
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
-            OnlineStatus statusCheckHandler = new OnlineStatus();
-            Boolean onlineCheck = statusCheckHandler.isInternetAvailableSynchronous();
+            Boolean onlineCheck = testInternetAvailableSynchronous();
 
             if (onlineCheck == true) {
-                OnlineStatus.internetCheckCache = "true";
+                staticVariables.internetCheckCache = "true";
             } else {
-                OnlineStatus.internetCheckCache = "false";
+                staticVariables.internetCheckCache = "false";
             }
 
             return result;
@@ -185,9 +159,6 @@ public class OnlineStatus {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
-            Long currentEpoc = System.currentTimeMillis() / 1000L;
-            OnlineStatus.internetCheckCacheDate = currentEpoc + 30;
-            OnlineStatus.backgroundLookup = false;
         }
     }
 

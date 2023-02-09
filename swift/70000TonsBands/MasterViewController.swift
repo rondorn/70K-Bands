@@ -47,6 +47,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
+    var sharedMessage = ""
     var objects = NSMutableArray()
     var bands =  [String]()
     var bandsByTime = [String]()
@@ -61,6 +62,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        getCountry()
         
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
         self.navigationController?.navigationBar.tintColor = UIColor.white
@@ -121,6 +124,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                name: Notification.Name("FCMToken"), object: nil)
         
         
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+    }
+    
+    @objc func refreshMainDisplayAfterRefresh() {
+        
+        print ("Refresh done, so updating the display in main 3")
+        if (Thread.isMainThread == true){
+            refreshFromCache()
+        }
     }
     
     @objc func displayFCMToken(notification: NSNotification){
@@ -136,8 +148,138 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Reload Data here
        self.tableView.reloadData()
+
     }
+    
+    func chooseCountry(){
         
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let defaultCountry = NSLocale.current.regionCode ?? "US"
+        var countryLongShort = countryHandle.getCountryLongShort()
+
+        
+        let alertController = UIAlertController(title: "Choose Country", message: nil, preferredStyle: .actionSheet)
+        var sortedKeys = countryLongShort.keys.sorted()
+        for keyValue in sortedKeys {
+            alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
+                do {
+                    let finalCountyValue = countryLongShort[keyValue] ?? "Unknown"
+                    print ("countryValue writing Acceptable country of " + finalCountyValue + " found")
+                    try finalCountyValue.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+                } catch {
+                    print ("countryValue Error writing Acceptable country of " + countryLongShort[keyValue]! + " found " + error.localizedDescription)
+                }
+            }))
+        }
+
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.sourceView = self.view
+            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+       }
+   
+
+      present(alertController, animated: true, completion: nil)
+    }
+    
+    func getCountry(){
+        
+        //chooseCountry()
+        let dataHandle = dataHandler()
+        do {
+            userCountry = try String(contentsOf: countryFile, encoding: .utf8)
+            print ("Using countryValue value of " + userCountry + " \(countryFile)")
+            
+            if (userCountry.isEmpty == false){
+                return
+            }
+        } catch {
+            //do nothing
+        }
+
+            
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let defaultCountry = NSLocale.current.regionCode ?? "United States"
+        let countryShortLong = countryHandle.getCountryShortLong()
+        let countryLongShort = countryHandle.getCountryLongShort()
+        let defaultLongCountry = countryShortLong[defaultCountry] ?? "Unknown"
+        
+        //UIAlertControllerStyleAlert
+        let alert = UIAlertController.init(title: NSLocalizedString("verifyCountry", comment: ""), message: NSLocalizedString("correctCountryDescription", comment: ""), preferredStyle: UIAlertController.Style.alert)
+        
+        
+        alert.addTextField { (textField) in
+            textField.text = defaultLongCountry
+            textField.isEnabled = false
+        }
+
+        let correctButton = UIAlertAction.init(title: NSLocalizedString("correctCountry", comment: ""), style: .default) { _ in
+            alert.dismiss(animated: true)
+            self.chooseCountry();
+        }
+        alert.addAction(correctButton)
+        
+        let OkButton = UIAlertAction.init(title: NSLocalizedString("confirmCountry", comment: ""), style: .default) { _ in
+            var countryValue = countryLongShort[alert.textFields![0].text!]
+            print ("countryValue Acceptable country of " + countryValue! + " found")
+            
+            do {
+                //let countryFileUrl = URL(string: countryFile)
+                print ("countryValue writing Acceptable country of " + countryValue! + " found")
+                try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+            } catch {
+                print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
+            }
+        }
+        alert.addAction(OkButton)
+        
+        
+        if let popoverController = alert.popoverPresentationController {
+            popoverController.sourceView = self.view
+            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+       }
+   
+       present(alert, animated: true, completion: nil)
+        
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let countryHandle = countryHandler()
+        countryHandle.loadCountryData()
+        let countryShortLong = countryHandle.getCountryShortLong()
+        var autoCompletionPossibilities = [String]()
+        
+        for value in countryShortLong.values {
+            autoCompletionPossibilities.append(value)
+        }
+        
+        return !autoCompleteText( in : textField, using: string, suggestionsArray: autoCompletionPossibilities)
+    }
+    
+    func autoCompleteText( in textField: UITextField, using string: String, suggestionsArray: [String]) -> Bool {
+            if !string.isEmpty,
+                let selectedTextRange = textField.selectedTextRange,
+                selectedTextRange.end == textField.endOfDocument,
+                let prefixRange = textField.textRange(from: textField.beginningOfDocument, to: selectedTextRange.start),
+                let text = textField.text( in : prefixRange) {
+                let prefix = text + string
+                let matches = suggestionsArray.filter {
+                    $0.hasPrefix(prefix)
+                }
+                if (matches.count > 0) {
+                    textField.text = matches[0]
+                    if let start = textField.position(from: textField.beginningOfDocument, offset: prefix.count) {
+                        textField.selectedTextRange = textField.textRange(from: start, to: textField.endOfDocument)
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+    
     func setToolbar(){
         navigationController?.navigationBar.barTintColor = UIColor.black
         
@@ -162,6 +304,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isLoadingBandData = false
         quickRefresh()
         refreshDisplayAfterWake();
+        let userDataHandle = firebaseUserWrite()
+        userDataHandle.writeData()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
@@ -234,6 +378,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
+
     }
     
     @objc func refreshAlerts(){
@@ -316,13 +461,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshData(){
         
-        print ("Waiting for bandData, Done")
-        
+        print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         //check if the timezonr has changes for whatever reason
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
         
         internetAvailble = isInternetAvailable();
-        print ("Internetavailable is  \(internetAvailble)");
+        print ("Refresh Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
         
@@ -335,7 +479,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         refreshFromCache()
         
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             
             while (refreshDataLock == true){
                 sleep(1);
@@ -351,7 +495,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandNameHandle = bandNamesHandler()
             let schedule = scheduleHandler()
             if (offline == false){
-            
+                cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 self.attendedHandle.loadShowsAttended()
@@ -370,7 +514,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             self.bandsByName = [String]()
             self.bands =  [String]()
-            
+
             schedule.populateSchedule()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
             
@@ -380,20 +524,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readCloudData()
             
+            
             DispatchQueue.main.async{
+                print ("Refreshing data in backgroud");
+
                 self.bandNameHandle.readBandFile()
                 self.dataHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.updateCountLable()
-                self.tableView.reloadData()
                 self.refreshAlerts()
                 self.setShowOnlyAttenedFilterStatus()
                 self.tableView.reloadData()
+                print ("DONE Refreshing data in backgroud 1");
+                refreshDataLock = false;
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
             }
-  
-            refreshDataLock = false;
+            //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
+        //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        print ("Done Refreshing data in backgroud 2");
     } 
+    
     
     func setShowOnlyAttenedFilterStatus(){
         
@@ -567,13 +718,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
+                
+        detailShareChoices()
+    }
+    
+    func sendSharedMessage(message: String){
         
         var intro:String = ""
         
-        let reportHandler = showAttendenceReport()
-        reportHandler.assembleReport()
-            
-        intro += FCMnumber + " " + reportHandler.buildMessage()
+        print ("sending a shared message of : " + message)
+        intro += FCMnumber + " " + message
       
         let objectsToShare = [intro]
         let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: [])
@@ -590,7 +744,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         self.present(activityVC, animated: true, completion: nil)
     }
-
+    
     func adaptivePresentationStyleForPresentationController(
         _ controller: UIPresentationController!) -> UIModalPresentationStyle {
             return .none
@@ -808,6 +962,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         tableView.reloadData()
+    }
+    
+    func detailShareChoices(){
+        
+        sharedMessage = "Start"
+        
+        let alert = UIAlertController.init(title: "Share Type", message: "", preferredStyle: .actionSheet)
+        let reportHandler = showAttendenceReport()
+        
+        let mustMightShare = UIAlertAction.init(title: NSLocalizedString("ShareBandChoices", comment: ""), style: .default) { _ in
+            print("shared message: Share Must/Might list")
+            var message = reportHandler.buildMessage(type: "MustMight")
+            self.sendSharedMessage(message: message)
+        }
+        alert.addAction(mustMightShare)
+        
+        reportHandler.assembleReport();
+        
+        if (reportHandler.getIsReportEmpty() == false){
+            let showsAttended = UIAlertAction.init(title: NSLocalizedString("ShareShowChoices", comment: ""), style: .default) { _ in
+                    print("shared message: Share Shows Attendedt list")
+                    var message = reportHandler.buildMessage(type: "Events")
+                    self.sendSharedMessage(message: message)
+            }
+            alert.addAction(showsAttended)
+        }
+        
+        let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+            self.sharedMessage = "Abort"
+            return
+        }
+        alert.addAction(cancelDialog)
+        
+        if let popoverController = alert.popoverPresentationController {
+              popoverController.sourceView = self.view
+               popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+              popoverController.permittedArrowDirections = []
+       }
+   
+       present(alert, animated: true, completion: nil)
+       
+        sharedMessage = "Done"
     }
     
     func detailMenuChoices(cellDataText :String, bandName :String, segue :UIStoryboardSegue, indexPath: IndexPath) {

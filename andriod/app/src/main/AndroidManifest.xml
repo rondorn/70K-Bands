@@ -3,26 +3,29 @@
     package="com.Bands70k" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="com.google.android.c2dm.permission.REGISTER" />
-
-
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <application
         android:name="Bands70k"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/splashScreenTheme" >
         <activity
             android:name=".showBands"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,21 +35,37 @@
         <activity
             android:name=".showBandDetails"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:label="showBandDetails" >
+            android:label="showBandDetails"
+            android:exported="true">
         </activity>
 
         <activity
             android:name=".preferenceLayout"
-            android:label="Preferences" >
+            android:label="Preferences"
+            android:exported="true">
         </activity>
 
         <activity
             android:name=".filterMenu"
-            android:label="Filter" >
+            android:label="Filter"
+            android:exported="true">
         </activity>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.Bands70k"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <!-- ressource file to create -->
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths">
+            </meta-data>
+        </provider>
         <receiver
+            android:exported="true"
             android:name="com.Bands70k.NotificationPublisher"
+
             android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action
@@ -58,6 +77,7 @@
         </receiver>
         <service android:name=".BackgroundService" />
         <service
+            android:exported="true"
             android:name=".MyFcmListenerService">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -72,12 +92,13 @@
 
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
-        <service
-            android:name=".MyInstanceIDListenerService">
+        <!--service
+            android:exported="true"
+            android:name="MyInstanceIDListenerService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
-        </service>
+        </service -->
         <!-- [END instanceId_listener] -->
         <service
             android:name=".RegistrationIntentService"
