@@ -12,11 +12,13 @@ import UserNotifications
 import Firebase
 import FirebaseCore
 import FirebaseMessaging
-import FirebaseInstanceID
+import Foundation
 
+let appDelegate : AppDelegate = UIApplication.shared.delegate as! AppDelegate
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
+    
     
     var window: UIWindow?
     var registrationToken: String?
@@ -34,6 +36,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
+                     
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         let splitViewController = self.window!.rootViewController as! UISplitViewController
@@ -41,6 +44,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
+        FirebaseApp.configure()
+        FirebaseConfiguration.shared.setLoggerLevel(.min)
+        
         //icloud code
         // Register for notification of iCloud key-value changes
         NotificationCenter.default.addObserver(self,
@@ -59,47 +65,55 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         setupDefaults()
         
         // [END register_for_notifications]
-       FirebaseApp.configure()
+       //FirebaseApp.configure()
                
        // [START set_messaging_delegate]
-       Messaging.messaging().delegate = self as! MessagingDelegate
+       Messaging.messaging().delegate = self
        //Messaging.messaging().remoteMessageDelegate = self
        // [END set_messaging_delegate]
        
        // Register for remote notifications. This shows a permission dialog on first run, to
        // show the dialog at a more appropriate time move this registration accordingly.
        // [START register_for_notifications]
-       if #available(iOS 10.0, *) {
-           // For iOS 10 display notification (sent via APNS)
-           UNUserNotificationCenter.current().delegate = self
-           
-           let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-           UNUserNotificationCenter.current().requestAuthorization(
-               options: authOptions,
-               completionHandler: {_, _ in })
-               Messaging.messaging().delegate = self
-            print ("FCM Registerd via IOS10")
-           
-       } else {
-           let settings: UIUserNotificationSettings =
-               UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-           application.registerUserNotificationSettings(settings)
-       }
-              
-        UIApplication.shared.registerForRemoteNotifications()
-        
-       NotificationCenter.default.addObserver(self, selector:
-       #selector(tokenRefreshNotification), name:
-       NSNotification.Name.InstanceIDTokenRefresh, object: nil)
+       //if #available(iOS 10.0, *) {
+          // For iOS 10 display notification (sent via APNS)
+        UNUserNotificationCenter.current().delegate = self
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: authOptions,
+            completionHandler: {_, _ in })
+        // For iOS 10 data message (sent via FCM
+        Messaging.messaging().delegate = self
+        //InstanceID.instanceID().instanceID { (result, error) in
+        //  if let error = error {
+        //    print("FCM Error fetching remote instance ID: \(error)")
+        //  } else if let result = result {
+        //    print("FCM Remote instance ID token: \(result.token)")
+        //  }
+        //}
+        //} else {
+        //  let settings: UIUserNotificationSettings =
+        //    UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
+        //  application.registerUserNotificationSettings(settings)
+       // }
+
+       //NotificationCenter.default.addObserver(self, selector:
+       //#selector(tokenRefreshNotification), name:
+       //NSNotification.Name.InstanceIDTokenRefresh, object: nil)
        printFCMToken()
                
         
-        //generate user data
-        let userDataHandle = firebaseUserWrite()
-        userDataHandle.writeData()
+
         
         application.registerForRemoteNotifications()
         
+
+        //generate user data
+        print ("Firebase, calling ")
+        let userDataHandle = userDataHandler()
+        let userDataReportHandle = firebaseUserWrite()
+        userDataReportHandle.writeData()
+
         return true
     
     }
@@ -113,7 +127,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // TODO: If necessary send token to application server.
         // Note: This callback is fired at each app startup and whenever a new token is generated.
     }
-         
+    
+    /*
     func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage){
         print("FCM \(remoteMessage.appData)")
                 //let title = remoteMessage.appData[("data"): {"title"}]
@@ -136,6 +151,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
 
     }
+    */
     
     func displayNotification (message: String){
         
@@ -155,10 +171,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     @objc func tokenRefreshNotification(_ notification: Notification) {
-        if let refreshedToken = InstanceID.instanceID().token() {
-            print("InstanceID token: \(refreshedToken)")
-            UIPasteboard.general.string =  "InstanceID token: \(refreshedToken)";
-        }
+        //if let refreshedToken = InstanceID.instanceID().token() {
+        //    print("InstanceID token: \(refreshedToken)")
+        //    UIPasteboard.general.string =  "InstanceID token: \(refreshedToken)";
+        //}
         
         // Connect to FCM since connection may have failed when attempted before having a token.
         connectToFcm()
@@ -193,11 +209,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     func printFCMToken() {
-        if let token = InstanceID.instanceID().token() {
+        
+        Messaging.messaging().token { token, error in
             print("Your FCM token is \(token)")
-        } else {
-            print("You don't yet have an FCM token.")
         }
+
     }
 
     
@@ -205,10 +221,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // [START connect_to_fcm]
     func connectToFcm() {
         // Won't connect since there is no token
-        guard InstanceID.instanceID().token() != nil else {
-            return
+        Messaging.messaging().token { token, error in
+            if token == nil {
+                return;
+            }
         }
+        Messaging.messaging().subscribe(toTopic: subscriptionTopic)
+        Messaging.messaging().subscribe(toTopic: subscriptionTopicTest)
         
+        print("FCM - subscribed to " + subscriptionTopic)
+        print("FCM - subscribed to " + subscriptionTopicTest)
+        if (defaults.bool(forKey: "alertForUnofficalEvents") == true){
+            Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
+            print("FCM - subscribed to " + subscriptionUnofficalTopic)
+        } else {
+            Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
+        }
+        /*
         // Disconnect previous FCM connection if it exists.
         Messaging.messaging().disconnect()
         
@@ -242,7 +271,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
             
         }
-        
+        */
     }
     // [END connect_to_fcm]
 
@@ -274,7 +303,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         Messaging.messaging().apnsToken = deviceToken
 
-        print("fcm recieved background alert")
+        print("FCM recieved background alert - \(deviceToken)")
     }
     
      // [START receive_message]
@@ -302,6 +331,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                      fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         
         if #available(iOS 10.0, *) {
+            print("Firebase - didReceiveRemoteNotification encountered!!!")
+            print("Firebase  - \(userInfo)")
             //exit without doing anything, this is handled in another routine
             return
         }
@@ -325,20 +356,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
-        
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
     }
     // [END connect_on_active]
         
     func extractAlertMessage (userInfo : Dictionary<String, AnyObject>){
         
-        print("fcm sendLocalAlert! \(userInfo)")
+        print("FCM sendLocalAlert! \(userInfo)")
         if let info = userInfo["aps"] as? Dictionary<String, AnyObject> {
             // Default printout of info = userInfo["aps"]
-            print("fcm sendLocalAlert!  \n\(info)\n")
+            print("FCM sendLocalAlert!  \n\(info)\n")
             
             for (key, value) in info {
-                print("fcm sendLocalAlert! APS: \(key) —> \(value)")
+                print("FCM sendLocalAlert! APS: \(key) —> \(value)")
                 if (key == "alert"){
                     if (value is NSDictionary){
                         //displayNotification(message: value as! String);
@@ -359,23 +389,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     //end push functions
     
-    func applicationDidEnterBackground(_ application: UIApplication) {
+    func reportData(){
+        
+        internetAvailble = isInternetAvailable();
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-
+        //NSLog("Writing Firebase data new userData")
         let userDataHandle = firebaseUserWrite()
         userDataHandle.writeData()
-        
+        //NSLog("Writing Firebase data new Band Write")
         let bandWrite  = filebaseBandDataWrite();
         bandWrite.writeData();
-        
+        //NSLog("Writing Firebase data new Show Write")
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
+    }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
         
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
-        Messaging.messaging().disconnect()
+        //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
+        reportData()
         
     }
 
@@ -485,7 +521,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     error = error1
                     // Replace this implementation with code to handle the error appropriately.
                     // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                    NSLog("Unresolved error \(error), \(error!.userInfo)")
+                    //NSLog("Unresolved error \(error), \(error!.userInfo)")
                     abort()
                 }
             }
@@ -494,8 +530,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
 }
 
-// [START ios_10_message_handling]
-@available(iOS 10, *)
 extension AppDelegate : UNUserNotificationCenterDelegate {
     
     // Receive displayed notifications for iOS 10 devices.
@@ -509,9 +543,11 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
 
             // Print full message.
             print("sendLocalAlert! 1 \(userInfo)")
+            
             extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
             completionHandler([])
         } else {
+             Messaging.messaging().appDidReceiveMessage(userInfo)
              completionHandler([.alert, .badge, .sound])
         }
     }
@@ -530,19 +566,36 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
         print(userInfo)
         print("sendLocalAlert! 2 \(userInfo)")
         extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
+        Messaging.messaging().appDidReceiveMessage(userInfo)
         completionHandler()
     }
  
 }
 // [END ios_10_message_handling]
+/*
 extension AppDelegate : MessagingDelegate {
     // [START refresh_token]
     func messaging(_ messaging: Messaging, didRefreshRegistrationToken fcmToken: String) {
-        print("Firebase registration token: \(fcmToken)")
+        print("FCM Firebase registration token: \(fcmToken)")
         //let helpMessage = "Firebase registration token: \(fcmToken)"
         
         //let pasteBoard = UIPasteboard.general
         //pasteBoard.string = helpMessage
     }
     // [END refresh_token]
+}
+*/
+
+extension AppDelegate: MessagingDelegate {
+  func messaging(
+    _ messaging: Messaging,
+    didReceiveRegistrationToken fcmToken: String?
+  ) {
+    print("FCM Firebase registration token: \(fcmToken)")
+    let tokenDict = ["token": fcmToken ?? ""]
+    NotificationCenter.default.post(
+      name: Notification.Name("FCMToken"),
+      object: nil,
+      userInfo: tokenDict)
+  }
 }

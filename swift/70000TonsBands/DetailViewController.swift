@@ -153,7 +153,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 
                 let imageHandle = imageHandler()
-                
+                print ("displayedImaged URL is \(imageURL) for \(self.bandName)")
                 self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: self.bandName)
                 DispatchQueue.main.async {
                     // Calculate the biggest size that fixes in the given CGSize
@@ -185,7 +185,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setupSwipeGenstures()
             customNotesText.setContentOffset(.zero, animated: true)
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-            
+            loadComments()
             rotationChecking()
         }
         
@@ -214,6 +214,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         wikipediaUrlButton.isHidden = false
         youtubeUrlButton.isHidden = false
         metalArchivesButton.isHidden = false
+        
+        vistLinksLable.text = NSLocalizedString("visitBands", comment: "Visit Band Via") + ":"
         
         disableLinksWithEmptyData()
         
@@ -387,7 +389,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 extraData.isHidden = true
 
             } else {
-                Country.text = "Country:\t" + bandCountry
+                let countryLablel = NSLocalizedString("country", comment: "Country")
+                Country.text = countryLablel + ":\t" + bandCountry
                 Country.isHidden = false
                 allDetailsHidden = false
             }
@@ -398,7 +401,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 Genre.isHidden = true
 
             } else {
-                Genre.text = "Genre:\t" + bandGenre
+                let genreLabel = NSLocalizedString("genre", comment: "Genre")
+                Genre.text = genreLabel + ":\t" + bandGenre
                 Genre.isHidden = false
                 allDetailsHidden = false
             }
@@ -475,22 +479,29 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func saveComments(){
         
         if (bandName != nil && bandName.isEmpty == false){
-            let commentFile = directoryPath.appendingPathComponent( bandName + "_comment.txt")
+            let custCommentFile = directoryPath.appendingPathComponent( bandName + "_comment.note-cust")
+
             if (customNotesText.text.starts(with: "Comment text is not available yet") == true){
-                    removeBadNote(commentFile: commentFile)
+                print ("commentFile being deleted -- Default waiting message");
+                removeBadNote(commentFile: custCommentFile)
                 
             } else if (customNotesText.text.count < 2){
-                removeBadNote(commentFile: commentFile)
-
+                print ("commentFile being deleted -- less then 2 characters");
+                removeBadNote(commentFile: custCommentFile)
+                
+            } else if (bandNotes.custMatchesDefault(customNote: customNotesText.text, bandName: bandName) == true){
+                //print ("commentFile being deleted -- text appears to be default..ensure no cust descrip made");
+                //removeBadNote(commentFile: custCommentFile)
+                
             } else {
                 print ("saving commentFile");
                 
                 let commentString = self.customNotesText.text;
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    print ("Writting commentFile " + commentString!)
+                    print ("Writting commentFile " + commentString! + "- \(custCommentFile)")
 
                     do {
-                        try commentString?.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                        try commentString?.write(to: custCommentFile, atomically: false, encoding: String.Encoding.utf8)
                     } catch {
                         print("commentFile " + error.localizedDescription)
                     }
@@ -502,7 +513,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     func removeBadNote(commentFile: URL){
         do {
-            print ("commentFile being deleted \(commentFile)")
+            print ("commentFile being deleted \(commentFile) - removeBadNote")
             try FileManager.default.removeItem(atPath: commentFile.path)
             
         } catch let error as NSError {
@@ -516,6 +527,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             loadComments()
         }
     }
+    
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         saveComments()
@@ -541,6 +553,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
                 priorityButtons.isHidden = true
                 PriorityIcon.isHidden = true
+                
             } else {
                 LinksSection.isHidden = false
 
@@ -552,6 +565,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
                 priorityButtons.isHidden = false
                 PriorityIcon.isHidden = false
+                
+                disableLinksWithEmptyData()
             }
             
             
@@ -658,6 +673,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         
         //build universal list of bands for all view types
+        print ("Checking next bandName currentBandList is \(currentBandList)")
         for index in currentBandList {
             
             var bandInIndex = getBandFromIndex(index: index)
@@ -680,6 +696,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //find where in list
         var counter = 0
         let sizeBands = loopThroughBandList.count
+        print ("Checking next bandName list of bands is \(loopThroughBandList)")
         for index in loopThroughBandList{
             
             var indexSplit = index.components(separatedBy: ":")
@@ -740,6 +757,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
         } else if (indexSplit[1].isNumeric == true){
             bandInIndex = "0:" + indexSplit[0]
+            
+        } else if (indexSplit[0].isDouble() == true){
+            bandInIndex = indexSplit[0] + ":" + indexSplit[1]
+            
+        } else if (indexSplit[1].isDouble() == true){
+            bandInIndex = "0:" + indexSplit[0]
+            
         }
         
         return bandInIndex
@@ -1281,8 +1305,22 @@ extension UIImage {
 
 extension String {
     var isNumeric: Bool {
-        guard self.characters.count > 0 else { return false }
-        let nums: Set<Character> = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "."]
-        return Set(self).isSubset(of: nums)
+        return !isEmpty && rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil
+    }
+    func isDouble() -> Bool {
+
+        if let doubleValue = Double(self) {
+            return true
+        }
+
+        return false
+    }
+    func isFloat() -> Bool {
+
+        if let floatValue = Float(self) {
+            return true
+        }
+
+        return false
     }
 }

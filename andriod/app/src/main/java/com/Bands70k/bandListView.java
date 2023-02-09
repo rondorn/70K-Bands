@@ -21,7 +21,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.ImageView;
 
-import com.google.firebase.database.collection.LLRBNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,7 +156,14 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             if (bandData.getRankImg() == 0){
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);
             } else {
-                viewHolder.rankImage.setImageResource(bandData.getRankImg());
+
+                Log.d("bandListView", "ranking image is " + String.valueOf(bandData.getRankImg()));
+                if (bandData.getRankImg() != 50000000) {
+                    viewHolder.rankImage.setImageResource(bandData.getRankImg());
+                } else {
+                    viewHolder.rankImage.setImageResource(0);
+                }
+
                 viewHolder.rankImage.setVisibility(View.VISIBLE);
             }
 

@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,10 @@ import java.util.Map;
 public class CustomerDescriptionHandler {
 
     private Map<String, String> descriptionMapData = new HashMap<String,String>();
+
+    public CustomerDescriptionHandler(){
+        descriptionMapData = this.getDescriptionMap();
+    }
 
     public void getDescriptionMapFile(){
 
@@ -71,6 +76,10 @@ public class CustomerDescriptionHandler {
     }
 
     public Map<String, String>  getDescriptionMap(){
+        //only load data if it is not already populated
+        if (descriptionMapData.isEmpty() == false){
+            return this.descriptionMapData;
+        }
 
         if (FileHandler70k.descriptionMapFile.exists() == false){
             this.getDescriptionMapFile();
@@ -87,6 +96,10 @@ public class CustomerDescriptionHandler {
                 if (rowData[0] != "Band") {
                     Log.d("descriptionMapFile", "Adding " + rowData[0] + "-" + rowData[1]);
                     descriptionMapData.put(rowData[0], rowData[1]);
+                    if (rowData.length > 2){
+                        Log.d("descriptionMapFile", "Date value is " + rowData[2]);
+                        staticVariables.descriptionMapModData.put(rowData[0], rowData[2]);
+                    }
                 }
             }
 
@@ -112,6 +125,12 @@ public class CustomerDescriptionHandler {
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
 
+        Log.d("getDescription", "1a descriptionMapData is " + descriptionMapData);
+
+        if (descriptionMapData.containsKey(bandName) == false) {
+            return bandNoteDefault;
+        }
+
         if (descriptionMapData.keySet().size() == 0) {
             descriptionMapData = this.getDescriptionMap();
             Log.d("getDescription", "getDescription - 2 " + bandNameValue);
@@ -120,6 +139,7 @@ public class CustomerDescriptionHandler {
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
         if (descriptionMapData.containsKey(bandName) == false) {
+            descriptionMapData = new HashMap<String,String>();
             descriptionMapData = getDescriptionMap();
             Log.d("getDescription", "getDescription - 3a " + descriptionMapData);
         } else {
@@ -140,12 +160,8 @@ public class CustomerDescriptionHandler {
             }
         }
 
-        if (bandNoteHandler.fileExists() == false) {
-            loadNoteFromURL(bandNameValue);
-            //AsyncDescriptionLoader myNotesTask = new AsyncDescriptionLoader();
-            //myNotesTask.execute(bandName);
-            Log.d("getDescription", "getDescription - 7 " + bandNameValue);
-        }
+        loadNoteFromURL(bandNameValue);
+        Log.d("getDescription", "getDescription - 7 " + bandNameValue);
 
         bandNote = bandNoteHandler.getBandNoteFromFile();
         bandNote = removeSpecialCharsFromString(bandNote);
@@ -155,24 +171,38 @@ public class CustomerDescriptionHandler {
     }
 
     private String removeSpecialCharsFromString(String text) {
-        String fixedText = text.replaceAll("\\r", "<br><br>");
-        fixedText = fixedText.replaceAll("\\n", "<br><br>");
-        fixedText = fixedText.replaceAll("[^\\p{ASCII}]", "");
-        fixedText = fixedText.replaceAll("\\?", "");
-
+        String fixedText = "";
+        if (text != null) {
+            fixedText = text.replaceAll("\\r", "<br><br>");
+            fixedText = fixedText.replaceAll("\\n", "<br><br>");
+            fixedText = fixedText.replaceAll("[^\\p{ASCII}]", "");
+            fixedText = fixedText.replaceAll("\\?", "");
+        }
         return fixedText;
     }
 
-    private void loadNoteFromURL(String bandName){
+    public void loadNoteFromURL(String bandName){
+
+        BandNotes bandNoteHandler = new BandNotes(bandName);
+        File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
+        if (oldBandNoteFile.exists() == true){
+            bandNoteHandler.convertOldBandNote();
+        }
+
         try {
 
-            BandNotes bandNoteHandler = new BandNotes(bandName);
+            File changeFileFlag = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
+            File bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
+            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false){
+                Log.d("getDescription", "getDescription, re-downloading default data due to change! " + bandName);
 
-            if (bandNoteHandler.fileExists() == true){
+            } else if (bandNoteHandler.fileExists() == true){
+                Log.d("getDescription", "getDescription, NOT re-downloading default data due to change! "+ bandName);
                 return;
             }
-
+            Log.d("getDescription", "getDescription, NOT re-downloading default data due to change! "+ bandName);
             if (descriptionMapData.containsKey(bandName) == false) {
+                descriptionMapData = new HashMap<String,String>();
                 getDescriptionMapFile();
                 descriptionMapData = this.getDescriptionMap();
             }
@@ -211,7 +241,10 @@ public class CustomerDescriptionHandler {
             in.close();
 
             bandNote = this.removeSpecialCharsFromString(bandNote);
-            bandNoteHandler.saveBandNote(bandNote);
+
+
+
+            bandNoteHandler.saveDefaultBandNote(bandNote);
 
         } catch (MalformedURLException mue) {
             Log.e("SYNC getUpdate", "descriptionMapFile malformed url error", mue);

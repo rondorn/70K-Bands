@@ -58,18 +58,15 @@ public class BandInfo {
         Collections.sort(bandNames);
 
         ArrayList<String> filteredBandNames = new ArrayList<String>();
-
+        staticVariables.unfilteredBandCount = 0;
         for (String bandName: bandNames){
-            //prevent wrong year from manifesting itself for 2020
-            if (staticVariables.eventYear == 2020 && bandName.equals("Mors Principium Est")){
-                staticVariables.eventYear = 2019;
-            }
 
             String bandRank = rankStore.getRankForBand(bandName);
 
             if (bandName.isEmpty()){
                 continue;
             }
+            staticVariables.unfilteredBandCount = staticVariables.unfilteredBandCount + 1;
             staticVariables.staticVariablesInitialize();
             Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.filterToogle.get(staticVariables.mustSeeIcon));
 
@@ -141,7 +138,7 @@ public class BandInfo {
             return staticVariables.imageUrlMap.get(bandName);
 
         } else if (getBandDetailsData(bandName, "imageUrl") != null) {
-            Log.d("ImageUrlIs1", bandName + "  shttp://" + getBandDetailsData(bandName, "imageUrl"));
+            Log.d("ImageUrlIs1", bandName + "  http://" + getBandDetailsData(bandName, "imageUrl"));
             return "https://" + getBandDetailsData(bandName, "imageUrl");
 
         } else {

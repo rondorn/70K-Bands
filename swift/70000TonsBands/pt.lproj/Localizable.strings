@@ -88,3 +88,20 @@
 "AlreadyAtStart" = "Já no início da lista";
 "Next" = "Próximo";
 "Previous" = "Anterior";
+
+"NoteFontSize" = "Observe o tamanho da fonte grande";
+
+"ShareBandChoices" = "Compartilhar opções de banda";
+"ShareShowChoices" = "Compartilhar opções de exibição";
+
+"visitBands" = "Links";
+"country" = "País";
+"genre" = "Gênero";
+
+"verifyCountry" = "Verifique seu país";
+"correctCountryDescription" = "Corrija seu país se necessário";
+"confirmCountry" = "Confirme";
+"correctCountry" = "Mudar";
+
+"waiting_for_data" = "Aguardando o carregamento dos dados, aguarde....";
+"data_filter_issue" = "Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados";

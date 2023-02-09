@@ -41,6 +41,7 @@
 
     <string name="restarTitle">Redémarrage Nécessaire</string>
     <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
+    <string name="importMessage">Ce changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 
     <string name="showAttendedFilterTrueHelp">N`affichez que les événements auxquels vous avez participé. Les autres filtres ne s`appliqueront pas</string>
     <string name="showAttendedFilterFalseHelp">Afficher les groupes et les émissions en fonction des filtres</string>
@@ -76,4 +77,20 @@
     <string name="Next">Prochain</string>
     <string name="Previous">Précédent</string>
 
+    <string name="ImportDataBackup">Importer une sauvegarde de données</string>
+    <string name="ShareTitle">Que veux tu partager?</string>
+    <string name="ShareBandChoices">Partager les choix de groupe</string>
+    <string name="ShareShowChoices">Partager Afficher les choix</string>
+    <string name="ExportUserData">Exporter les données utilisateur</string>
+
+    <string name="visitBands">Liens</string>
+    <string name="country">Pays</string>
+    <string name="genre">Le Genre</string>
+
+    <string name="verify_country">Vérifiez votre pays</string>
+    <string name="correct_if_needed">Corrigez votre pays si nécessaire</string>
+    <string name="country_invalid">La valeur du pays n\'est pas reconnue comme valide</string>
+
+    <string name="waiting_for_data">En attente de chargement des données, veuillez patienter....</string>
+    <string name="data_filter_issue">Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données</string>
 </resources>

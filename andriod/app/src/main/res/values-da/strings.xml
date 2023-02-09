@@ -42,6 +42,8 @@
     <string name="restarTitle">Genstart Påkrævet</string>
     <string name="restartMessage">Gør ikke dette på krydstogt.\nInternetforbindelse krævet.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
 
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+
     <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 
@@ -77,4 +79,20 @@
     <string name="Next">Næste</string>
     <string name="Previous">Tidligere</string>
 
+    <string name="ImportDataBackup">Importer Sikkerhedskopiering Af Data</string>
+    <string name="ShareTitle">Hvad vil du dele?</string>
+    <string name="ShareBandChoices">Del Bandvalg</string>
+    <string name="ShareShowChoices">Del Vis valg</string>
+    <string name="ExportUserData">Eksporter brugerdata</string>
+
+    <string name="visitBands">Links</string>
+    <string name="country">Land</string>
+    <string name="genre">Køn</string>
+
+    <string name="verify_country">Bekræft dit land</string>
+    <string name="correct_if_needed">Ret dit land, hvis det er nødvendigt</string>
+    <string name="country_invalid">Landeværdien anerkendes ikke som gyldig</string>
+
+    <string name="waiting_for_data">Venter på, at data indlæses. Standby...</string>
+    <string name="data_filter_issue">Alle data filtreres fra. Fjern filtre for at se data</string>
 </resources>

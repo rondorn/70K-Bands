@@ -86,3 +86,20 @@
 "AlreadyAtStart" = "Allerede ved start af listen";
 "Next" = "Næste";
 "Previous" = "Tidligere";
+
+"NoteFontSize" = "Bemærk skriftstørrelsen stor";
+
+"ShareBandChoices" = "Del Bandvalg";
+"ShareShowChoices" = "Del Vis valg";
+
+"visitBands" = "Links";
+"country" = "Land";
+"genre" = "Køn";
+
+"verifyCountry" = "Bekræft dit land";
+"correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
+"confirmCountry" = "Bekræfte";
+"correctCountry" = "Lave om";
+
+"waiting_for_data" = "Venter på, at data indlæses. Standby...";
+"data_filter_issue" = "Alle data filtreres fra. Fjern filtre for at se data";

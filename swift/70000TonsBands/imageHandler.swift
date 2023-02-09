@@ -57,6 +57,7 @@ open class imageHandler {
                     returnedImage = image
        
                     do {
+                        print ("Loading image URL String from file \(imageStoreFile)")
                         let imageData = returnedImage?.jpegData(compressionQuality: 0.75)
                         try imageData?.write(to: imageStoreFile, options: [.atomic])
                     } catch {
@@ -78,7 +79,7 @@ open class imageHandler {
             print ("Image URL string is not Inverted for " + urlString);
         } else {
             print ("Image URL string is Inverted for " + urlString);
-            returnedImage = invertImage(imageValue: returnedImage ?? UIImage(named: "70000TonsLogo")!)
+            returnedImage = returnedImage?.inverseImage(cgResult: true)
         }
         
         return returnedImage ?? UIImage(named: "70000TonsLogo")!;
@@ -106,16 +107,16 @@ open class imageHandler {
         downloadingAllImages = false
     }
 
-    func invertImage(imageValue: UIImage) -> UIImage {
-        
-        var newImage = UIImage()
-        let beginImage = CIImage(image: imageValue)
-        
-        let filter = CIFilter(name: "CIColorInvert")
-        filter!.setValue(beginImage, forKey: kCIInputImageKey)
-        newImage = UIImage(ciImage: (filter?.outputImage!)!)
-        
-        return newImage
+}
+extension UIImage {
+    func inverseImage(cgResult: Bool) -> UIImage? {
+        let coreImage = UIKit.CIImage(image: self)
+        guard let filter = CIFilter(name: "CIColorInvert") else { return nil }
+        filter.setValue(coreImage, forKey: kCIInputImageKey)
+        guard let result = filter.value(forKey: kCIOutputImageKey) as? UIKit.CIImage else { return nil }
+        if cgResult { // I've found that UIImage's that are based on CIImages don't work with a lot of calls properly
+            return UIImage(cgImage: CIContext(options: nil).createCGImage(result, from: result.extent)!)
+        }
+        return UIImage(ciImage: result)
     }
-
 }

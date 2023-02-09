@@ -7,16 +7,21 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.Bands70k.staticVariables.context;
 
@@ -34,7 +39,7 @@ public class FileHandler70k {
 
     public static final File baseDirectory = new File(showBands.newRootDir + directoryName);
 
-    public static final String imageDirectory = directoryName + "cachedImages/";
+    public static final String imageDirectory = directoryName + "/cachedImages/";
     public static final File baseImageDirectory = new File(showBands.newRootDir + imageDirectory);
 
     public static final File bandInfo = new File(showBands.newRootDir + directoryName + "70kbandInfo.csv");
@@ -45,7 +50,7 @@ public class FileHandler70k {
     public static final File schedule = new File(showBands.newRootDir + directoryName + "70kScheduleInfo.csv");
     public static final File descriptionMapFile = new File(showBands.newRootDir + directoryName + "70kbandDescriptionMap.csv");
     public static final File showsAttendedFile = new File(showBands.newRootDir + directoryName + "showsAtteded.data");
-
+    public static final File countryFile = new File(showBands.newRootDir + directoryName + "country.txt");
 
     public static final File bandListCache = new File(showBands.newRootDir + directoryName + "bandListCache.data");
 
@@ -54,7 +59,7 @@ public class FileHandler70k {
     public static final File rootNoMedia = new File(showBands.newRootDir + directoryName + ".nomedia");
     public static final File mediaNoMedia = new File(showBands.newRootDir + imageDirectory + ".nomedia");
 
-
+    public static final File backupFileTemp = new File(showBands.newRootDir + directoryName + "backupFileTemp.zip");
     public static final File alertStorageFile = new File(showBands.newRootDir + directoryName + "70kbandAlertStorage.data");
 
 
@@ -122,7 +127,18 @@ public class FileHandler70k {
         if (baseImageDirectory.exists() && baseImageDirectory.isDirectory()) {
             //do nothing
         } else {
+            Log.e("ImageFile", "creating " + baseImageDirectory.getAbsolutePath());
             baseImageDirectory.mkdir();
+        }
+
+        if (rootNoMedia.exists()){
+            //do nothing
+        } else {
+            try {
+                rootNoMedia.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         if (rootNoMedia.exists()){
@@ -147,6 +163,17 @@ public class FileHandler70k {
 
     }
 
+    public static Boolean doesCountryFileExist(){
+
+        Boolean exists = false;
+
+        if (countryFile.exists()){
+            exists = true;
+        }
+
+        return exists;
+    }
+
     public static void saveData(String data, File fileHandle){
 
         Log.d("Save Data", data);
@@ -163,17 +190,51 @@ public class FileHandler70k {
 
     }
 
-    public static void writeObject (Object object, File fileHandle){
+    public static String loadData(File fileHandle){
+
+        String data = "";
 
         try {
-            FileOutputStream fos = context.openFileOutput(bandListCache.getAbsolutePath(), Context.MODE_PRIVATE);
-             ObjectOutputStream os = new ObjectOutputStream(fos);
-            os.writeObject(object);
-            os.close();
-            fos.close();
+            BufferedReader br = new BufferedReader(new FileReader(fileHandle));
+            String line;
+            while ((line = br.readLine()) != null) {
+                data = data + line + "\n";
+            }
+            br.close();
         } catch (Exception error) {
+            Log.e("Save Data Error", error.getMessage());
+        }
+
+        data = data.trim();
+
+        return data;
+    }
+    public static void writeObject (Object object, File fileHandle){
+
+        ObjectOutput out = null;
+
+        try {
+            out = new ObjectOutputStream(new FileOutputStream(fileHandle));
+            out.writeObject(object);
+            out.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Map<String,String> readObject(File fileHandle){
+        ObjectInputStream input;
+        Map<String, String> dataBundle = new HashMap<String, String>();
+        try {
+            input = new ObjectInputStream(new FileInputStream(fileHandle));
+            dataBundle = (Map<String, String>) input.readObject();
+            input.close();
+        } catch (Exception error){
             error.printStackTrace();
         }
+
+        return dataBundle;
     }
 
     public static mainListHandler readmainListHandlerCache (File fileHandle){

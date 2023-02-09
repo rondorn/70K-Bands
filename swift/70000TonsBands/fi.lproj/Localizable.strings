@@ -89,6 +89,21 @@
 "Next" = "Seuraava";
 "Previous" = "Edellinen";
 
+"NoteFontSize" = "Huomioi suuri fonttikoko";
+
+"ShareBandChoices" = "Jaa bändivalinnat";
+"ShareShowChoices" = "Jaa Show Choices";
+
+"visitBands" = "Linkit";
+"country" = "Maa";
+"genre" = "Sukupuoli";
 
 
+"verifyCountry" = "Vahvista maasi";
+"correctCountryDescription" = "Korjaa maasi tarvittaessa";
+"confirmCountry" = "Vahvistaa";
+"correctCountry" = "Muuttaa";
+
+"waiting_for_data" = "Odotetaan tietojen latautumista, ole valmiustilassa....";
+"data_filter_issue" = "Kaikki tiedot suodatetaan pois. Poista suodattimet nähdäksesi tiedot";
 

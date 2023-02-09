@@ -23,7 +23,7 @@ var ATTENDED = "attended";
 var NOTE = "note";
 
 var FCMnumber = "";
-
+var refreshDataCounter = 0;
 var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
 var directoryPath = URL(fileURLWithPath:dirs[0])
 var storageFile = directoryPath.appendingPathComponent( "data.txt")
@@ -33,6 +33,7 @@ var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
 var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
 var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
+let countryFile = directoryPath.appendingPathComponent("countryFile")
 
 var currentBandList = [String]()
 
@@ -95,6 +96,7 @@ var startTimeField = "Start Time"
 var endTimeField = "End Time"
 var notesField = "Notes"
 var urlField = "URL"
+var urlDateField = "Date"
 var descriptionUrlField = "Description URL"
 var imageUrlField = "ImageURL"
 
@@ -151,7 +153,7 @@ let sawNoneStatus = "sawNone";
 
 //alert topics
 let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing20200623"
+let subscriptionTopicTest = "Testing20221127-1"
 let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
@@ -172,8 +174,11 @@ let defaultPrefsValue = "Default";
 let lastYearSetting = "lastYear"
 let testingSetting = "Testing"
 
+var userCountry = ""
+
 var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
-let defaultStorageUrlTest = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+//var defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"
@@ -217,6 +222,9 @@ var hasScheduleData = false;
 let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
 var listOfVenues = [String]()
+
+var filteredBandCount = 0
+var unfilteredBandCount = 0
 
 var masterView: MasterViewController!
 
@@ -335,7 +343,7 @@ func setupDefaults() {
     setupVenueLocations()
     
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
-    eventYear = 2020//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2020;
+    eventYear = 2023//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2023;
 
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1
@@ -348,7 +356,7 @@ func setupVenueLocations(){
     
     venueLocation[poolVenueText] = "Deck 11"
     venueLocation[rinkVenueText] = "Deck 3"
-    venueLocation[loungeVenueText] = "Deck 4"
+    venueLocation[loungeVenueText] = "Deck 5"
     venueLocation[theaterVenueText] = "Deck 3/4"
     venueLocation["Sports Bar"] = "Deck 4"
     venueLocation["Viking Crown"] = "Deck 14"
@@ -367,7 +375,7 @@ func isInternetAvailable() -> Bool {
 }
 
 struct cacheVariables {
- 
+    
     static var bandPriorityStorageCache = [String:Int]()
     static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
@@ -377,6 +385,7 @@ struct cacheVariables {
     static var bandNamesArrayStaticCache = [String]()
     static var storePointerData = [String:String]()
     static var bandDescriptionUrlCache = [String:String]()
+    static var bandDescriptionUrlDateCache = [String:String]()
     static var lastModifiedDate:Date? = nil;
 }
 

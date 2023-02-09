@@ -6,9 +6,12 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="adding show data" />
+    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="Internet Found" />
     <option name="TOOL_WINDOW_LOG_LEVEL" value="debug" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
   </component>
   <component name="AvailableLibraryUpdateStorage">
     <library-updates>
@@ -76,16 +79,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="da3a7138-a25a-4f24-b988-699f976c644e" name="Default" comment="" />
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="DefaultGradleProjectSettings">
-    <option name="isMigrated" value="true" />
-  </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="Pixel_3a_XL_API_26" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[/Users/rdorn/.android/avd/Pixel_4_API_30.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -101,154 +100,54 @@
   <component name="FavoritesManager">
     <favorites_list name="andriod" />
   </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="226">
-              <caret line="564" column="42" selection-start-line="564" selection-start-column="42" selection-end-line="564" selection-end-column="126" />
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#10092#10150#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/build.gradle">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="225">
-              <caret line="15" column="28" lean-forward="true" selection-start-line="15" selection-start-column="28" selection-end-line="15" selection-end-column="28" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="125">
-              <caret line="418" column="140" selection-start-line="418" selection-start-column="140" selection-end-line="418" selection-end-column="140" />
-              <folding>
-                <element signature="e#52168#52224#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseEventDataWrite.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="224">
-              <caret line="32" column="85" selection-start-line="32" selection-start-column="69" selection-end-line="32" selection-end-column="85" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="246">
-              <caret line="125" column="31" selection-start-line="125" selection-start-column="31" selection-end-line="125" selection-end-column="48" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleTimeTracker.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="270">
-              <caret line="23" selection-start-line="23" selection-end-line="23" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleHandler.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="13" column="28" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="28" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/res/values/strings.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1065">
-              <caret line="71" column="39" selection-start-line="71" selection-start-column="18" selection-end-line="71" selection-end-column="39" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/res/values/styles.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="47" selection-start-line="9" selection-start-column="47" selection-end-line="9" selection-end-column="47" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/res/layout/prompt_show_dialog.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="39" selection-start-line="2" selection-start-column="39" selection-end-line="2" selection-end-column="39" />
-            </state>
-          </provider>
-          <provider editor-type-id="android-designer2" />
-        </entry>
-      </file>
-    </leaf>
-  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="layoutResourceFile_vertical" />
-        <option value="resourceFile" />
-        <option value="Class" />
         <option value="layoutResourceFile" />
+        <option value="resourceFile" />
+        <option value="valueResourceFile" />
+        <option value="Class" />
       </list>
     </option>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>createEditNoteInterface</find>
-      <find>writeNoteHtml</find>
-      <find>onclick</find>
-      <find>performClick</find>
-      <find>webPage</find>
-      <find>setWebHelpMessage</find>
-      <find>webUrl</find>
-      <find>getWebUrl</find>
-      <find>disableSSLCertificateChecking</find>
-      <find>defaultUrlTest</find>
-      <find>notes</find>
-      <find>note</find>
-      <find>displayNotes</find>
-      <find>displayN</find>
-      <find>noteViewPercentage</find>
-      <find>onCreate</find>
-      <find>color</find>
-      <find>GoToDetails</find>
-      <find>eventChoices</find>
-      <find>prompt</find>
-      <find>EndofList</find>
-      <find>officialWebSiteLinkHelp</find>
-      <find>index</find>
-      <find>listHandler</find>
-      <find>startTime</find>
-      <find>value</find>
-      <find>add</find>
-      <find>setAttendedStatusViaDialog</find>
+      <find>graphicMustSeeSmall</find>
+      <find>getRank</find>
+      <find>getRankImageForBand</find>
       <find>displaySchedule</find>
-      <find>addShowsAttended</find>
+      <find>getEventTypeImage</find>
+      <find>getAttendedImage</find>
+      <find>displayExtraData</find>
+      <find>displayNotes</find>
+      <find>displayMustMightWont</find>
+      <find>getResources</find>
+      <find>getString</find>
+      <find>SwipeMenuItem</find>
+      <find>newDetailHtmlGeneration</find>
+      <find>setupTitleAndLogo</find>
+      <find>displayLinks</find>
+      <find>showPool</find>
+      <find>showPoolShows</find>
+      <find>version</find>
+      <find>androidx.ver</find>
+      <find>CheckBox</find>
+      <find>Cancel</find>
+      <find>DetailHtmlGeneration</find>
+      <find>check_box</find>
+      <find>Check</find>
+      <find>Color</find>
+      <find>AlertDialog</find>
+      <find>Attending</find>
+      <find>im</find>
+      <find>network</find>
+      <find>ResolveHostIP</find>
     </findStrings>
     <replaceStrings>
       <replace>255dp</replace>
       <replace>android:layout_marginTop=&quot;2dp&quot;</replace>
+      <replace>Switch</replace>
     </replaceStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/../</dir>
@@ -257,25 +156,22 @@
   </component>
   <component name="GenerateSignedApkSettings">
     <option name="EXPORT_PRIVATE_KEY" value="false" />
-    <option name="KEY_STORE_PATH" value="$USER_HOME$/Dropbox/Certs/android70KBands.jks" />
+    <option name="KEY_STORE_PATH" value="$USER_HOME$/Certs/android70KBands.jks" />
     <option name="KEY_ALIAS" value="70k bands" />
     <option name="REMEMBER_PASSWORDS" value="true" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$USER_HOME$/Documents/AndroidStudio/DeviceExplorer/Pixel_2_API_25 [emulator-5554]/mnt/sdcard/70kBands/bandRankings.txt" />
-        <option value="$USER_HOME$/Documents/AndroidStudio/DeviceExplorer/Pixel_2_API_25 [emulator-5554]/mnt/sdcard/70kBands/bandRankings.bk" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleAlertHandler.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/BandNotes.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/Utilities.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/bandListItem.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/dateTimeFormatter.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttendedReport.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/ImageHandler.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/CustomerDescriptionHandler.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java" />
-        <option value="$PROJECT_DIR$/src/main/res/layout/preferences.xml" />
         <option value="$PROJECT_DIR$/src/main/res/values/strings.xml" />
         <option value="$PROJECT_DIR$/src/main/res/values-da/strings.xml" />
         <option value="$PROJECT_DIR$/src/main/res/values-de/strings.xml" />
@@ -288,8 +184,6 @@
         <option value="$PROJECT_DIR$/src/main/res/anim/slide_in_left.xml" />
         <option value="$PROJECT_DIR$/src/main/res/anim/slide_out_left.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/preferencesHandler.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseUserWrite.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FireBaseBandDataWrite.java" />
         <option value="$PROJECT_DIR$/src/test/java/com/Bands70k/EnvironmentHelper.java" />
         <option value="$PROJECT_DIR$/local.properties" />
         <option value="$PROJECT_DIR$/../build.gradle" />
@@ -301,19 +195,32 @@
         <option value="$PROJECT_DIR$/src/test/java/com/Bands70k/BandInfoTest.java" />
         <option value="$PROJECT_DIR$/src/test/java/com/Bands70k/ShowsAttendedTest.java" />
         <option value="$PROJECT_DIR$/src/main/res/layout/band_details.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java" />
         <option value="$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml" />
         <option value="$PROJECT_DIR$/src/main/res/layout/splash_screen.xml" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/Bands70k.java" />
-        <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java" />
-        <option value="$PROJECT_DIR$/src/main/res/values/styles.xml" />
-        <option value="$PROJECT_DIR$/src/main/res/layout/prompt_show_dialog.xml" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseEventDataWrite.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FireBaseBandDataWrite.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseEventDataWrite.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseUserWrite.java" />
+        <option value="$PROJECT_DIR$/src/main/AndroidManifest.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/rankStore.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/baoyz/swipemenulistview/SwipeMenuItem.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/newDetailHtmlGeneration.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/oldDetailHtmlGeneration.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java" />
+        <option value="$PROJECT_DIR$/src/main/res/drawable/custom_checkbox.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java" />
+        <option value="$PROJECT_DIR$/src/main/res/layout/preferences.xml" />
+        <option value="$PROJECT_DIR$/src/main/res/values-v19/styles.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java" />
+        <option value="$PROJECT_DIR$/src/main/res/layout/prompt_show_dialog.xml" />
+        <option value="$PROJECT_DIR$/src/main/res/values/styles.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/ImageHandler.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/DetailHtmlGeneration.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java" />
+        <option value="$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleAlertHandler.java" />
         <option value="$PROJECT_DIR$/build.gradle" />
       </list>
     </option>
@@ -324,53 +231,17 @@
     <option name="width" value="1680" />
     <option name="height" value="1027" />
   </component>
+  <component name="ProjectId" id="1yHU0Wdxv8d9vm93nHbnqzE3czq" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
       <pane id="PackagesPane" />
-      <pane id="Scope" />
       <pane id="ProjectPane" />
       <pane id="AndroidView">
         <subPane>
           <expand>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-            </path>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-              <item name="java" type="edd41e36:AndroidSourceTypeNode" />
-            </path>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-              <item name="java" type="edd41e36:AndroidSourceTypeNode" />
-              <item name="com" type="cbb59c9e:AndroidPsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-              <item name="java" type="edd41e36:AndroidSourceTypeNode" />
-              <item name="com" type="cbb59c9e:AndroidPsiDirectoryNode" />
-              <item name="Bands70k" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-              <item name="java" type="edd41e36:AndroidSourceTypeNode" />
-              <item name="com" type="cbb59c9e:AndroidPsiDirectoryNode" />
-              <item name="Bands70k" type="462c0819:PsiDirectoryNode" />
-              <item name="showBandDetails.java" type="529ef68f:ClassesTreeStructureProvider$PsiClassOwnerTreeNode" />
-            </path>
-            <path>
-              <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
-              <item name="app" type="feadf853:AndroidModuleNode" />
-              <item name="java" type="edd41e36:AndroidSourceTypeNode" />
-              <item name="Bands70k" type="cbb59c9e:AndroidPsiDirectoryNode" />
-            </path>
             <path>
               <item name="andriod" type="1abcf292:AndroidViewProjectNode" />
               <item name="Gradle Scripts" type="ae0cef3a:AndroidBuildScriptsGroupNode" />
@@ -379,11 +250,18 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent">
+    <property name="ApkExportedModule" value="andriod.app" />
+    <property name="BundleExportedModule" value="andriod.app" />
     <property name="DeviceAndSnapshotComboBoxAction.selectedDevice" value="R38N100ZG0M" />
-    <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2020-08-28T14:28:26.406Z" />
+    <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2020-09-11T15:41:56.454Z" />
     <property name="ExportApk.ApkPath" value="$PROJECT_DIR$" />
     <property name="ExportApk.BuildType" value="release" />
     <property name="ExportApk.BuildVariants" value="release" />
@@ -394,17 +272,20 @@
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="MemberChooser.sorted" value="false" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="android.profiler.active" value="true" />
     <property name="android.project.structure.last.selected" value="Project" />
     <property name="android.project.structure.proportion" value="0.15" />
     <property name="android.sdk.path" value="$USER_HOME$/Library/Android/sdk" />
     <property name="device.picker.selection" value="Pixel_3_XL_API_26" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/src/main/res/drawable-mdpi-v11" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/build.gradle" />
-    <property name="project.structure.last.edited" value="SDK Location" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/res/raw" />
+    <property name="memory.settings.postsync.last.time.stamp" value="1657468278228" />
+    <property name="project.structure.last.edited" value="Suggestions" />
     <property name="project.structure.proportion" value="0.17" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.project.gradle" />
+    <property name="settings.editor.selected.configurable" value="device.file.explorer" />
     <property name="show.do.not.ask.upgrade.gradle.plugin" value="3.1.4" />
     <property name="sync.plugin.last.upgrade.timestamp" value="1540482687287" />
   </component>
@@ -412,48 +293,34 @@
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/res/raw" />
+      <recent name="$PROJECT_DIR$/src/main/res/layout" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/src/main/res/anim" />
+      <recent name="$PROJECT_DIR$/src/main/res/drawable-mdpi-v11" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/res/drawable-mdpi" />
       <recent name="$PROJECT_DIR$/src/main/res/raw" />
     </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/src/main/res/anim" />
-      <recent name="$PROJECT_DIR$/src/main/res/drawable-mdpi-v11" />
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.Bands70k" />
     </key>
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
-  </component>
   <component name="RunManager" selected="Android App.app">
-    <configuration default="true" type="JUnit" factoryName="JUnit">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="METHOD_NAME" />
+    <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
       <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="moduleWithDependencies" />
-      </option>
-      <envs />
-      <patterns />
-      <method />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="Applet">
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
     </configuration>
     <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
       <Host>localhost</Host>
@@ -473,23 +340,6 @@
       <option name="PACKAGE_NAME" value="com.Bands70k" />
       <option name="MAIN_CLASS_NAME" value="com.Bands70k.BandInfoTest" />
       <option name="TEST_OBJECT" value="class" />
-      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <method v="2">
-        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="BandInfoTest.getSchedule" type="AndroidJUnit" factoryName="Android JUnit" temporary="true" nameIsGenerated="true">
-      <module name="app" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.Bands70k.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.Bands70k" />
-      <option name="MAIN_CLASS_NAME" value="com.Bands70k.BandInfoTest" />
-      <option name="METHOD_NAME" value="getSchedule" />
-      <option name="TEST_OBJECT" value="method" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
       <method v="2">
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
@@ -553,20 +403,15 @@
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
-      <option name="TEST_OBJECT" value="class" />
-      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <method v="2">
-        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="app" />
+      <module name="andriod.app" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
       <option name="DEPLOY_AS_INSTANT" value="false" />
       <option name="ARTIFACT_NAME" value="" />
       <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
       <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
       <option name="ACTIVITY_EXTRA_FLAGS" value="" />
       <option name="MODE" value="default_activity" />
@@ -575,8 +420,8 @@
       <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
       <option name="FORCE_STOP_RUNNING_APP" value="true" />
       <option name="TARGET_SELECTION_MODE" value="SHOW_DIALOG" />
-      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
-      <option name="PREFERRED_AVD" value="" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -602,23 +447,54 @@
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
         <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Sampled (Java)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
       <method v="2">
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="Applet">
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="Application" factoryName="Application">
+    <configuration name="BandInfoTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="--tests &quot;com.Bands70k.BandInfoTest&quot;" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":app:cleanTestDebugUnitTest" />
+            <option value=":app:testDebugUnitTest" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="TEST_OBJECT" value="class" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -637,14 +513,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Android JUnit.Bands70k in app" />
-        <item itemvalue="Android JUnit.ShowsAttendedTest" />
-        <item itemvalue="Android JUnit.BandInfoTest.testGetSchedule" />
-        <item itemvalue="Android JUnit.BandInfoTest.getSchedule" />
-        <item itemvalue="Android JUnit.RankStoreTest" />
+        <item itemvalue="Gradle.BandInfoTest" />
       </list>
     </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -714,17 +587,17 @@
       <window_info id="Resources Explorer" order="8" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.328084" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49928468" weight="0.3262032" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.497558" weight="0.3262032" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3272727" />
-      <window_info anchor="bottom" id="Android Profiler" order="7" weight="0.32513368" />
-      <window_info anchor="bottom" id="Logcat" order="8" sideWeight="0.7985348" weight="0.24919786" />
+      <window_info anchor="bottom" id="Android Profiler" order="7" show_stripe_button="false" weight="0.32513368" />
+      <window_info anchor="bottom" id="Logcat" order="8" sideWeight="0.7863248" weight="0.24919786" />
       <window_info anchor="bottom" id="Version Control" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Build" order="10" sideWeight="0.7075702" visible="true" weight="0.32085562" />
+      <window_info anchor="bottom" id="Build" order="10" sideWeight="0.6965812" visible="true" weight="0.32085562" />
       <window_info anchor="bottom" id="Terminal" order="11" weight="0.3262032" />
-      <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.2924298" side_tool="true" visible="true" weight="0.32085562" />
+      <window_info anchor="bottom" id="Event Log" order="12" sideWeight="0.21367522" side_tool="true" weight="0.24919786" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -737,6 +610,9 @@
       <window_info anchor="right" id="Assistant" order="9" weight="0.32967034" />
     </layout>
   </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.csv" />
+  </component>
   <component name="VcsManagerConfiguration">
     <ignored-roots>
       <path value="$PROJECT_DIR$/../.." />
@@ -748,114 +624,12 @@
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/Bands70k/filterMenu.java</url>
           <line>49</line>
-          <properties />
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-fr/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="393">
-          <caret line="73" selection-start-line="73" selection-end-line="76" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values-pt/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="78" column="4" selection-start-line="78" selection-start-column="4" selection-end-line="78" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/anim/slide_out_right.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="36" selection-start-line="3" selection-start-column="36" selection-end-line="3" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/anim/slide_out_left.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="83" selection-start-line="3" selection-start-column="83" selection-end-line="3" selection-end-column="83" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/anim/slide_left_in.xml">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/anim/slide_in_right.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="36" selection-start-line="3" selection-start-column="36" selection-end-line="3" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/anim/slide_in_left.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="82" selection-start-line="3" selection-start-column="82" selection-end-line="3" selection-end-column="82" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseUserWrite.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="24" column="94" selection-start-line="24" selection-start-column="94" selection-end-line="24" selection-end-column="94" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FireBaseBandDataWrite.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="32" column="52" selection-start-line="32" selection-start-column="52" selection-end-line="32" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/Utilities.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="23" column="41" selection-start-line="23" selection-start-column="41" selection-end-line="23" selection-end-column="41" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/androidTest/java/com/Bands70k/ApplicationTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="8" column="42" selection-start-line="8" selection-start-column="42" selection-end-line="8" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/test/java/com/Bands70k/EnvironmentHelper.java" />
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FileHandler70k.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="32" column="24" selection-start-line="32" selection-start-column="24" selection-end-line="32" selection-end-column="97" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/rankStore.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="990">
-          <caret line="77" column="38" selection-start-line="77" selection-start-column="23" selection-end-line="77" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleInfo.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="30" column="135" selection-start-line="30" selection-start-column="135" selection-end-line="30" selection-end-column="135" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/mainListHandler.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="764">
@@ -877,13 +651,6 @@
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/BandInfo.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3375">
-          <caret line="249" column="8" selection-start-line="249" selection-start-column="8" selection-end-line="249" selection-end-column="79" />
         </state>
       </provider>
     </entry>
@@ -925,32 +692,15 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/listview_row.xml">
+      <provider editor-type-id="android-designer2" />
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <caret column="24" selection-start-column="24" selection-end-column="24" />
         </state>
       </provider>
-      <provider editor-type-id="android-designer2" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="135" column="60" selection-start-line="135" selection-start-column="60" selection-end-line="135" selection-end-column="60" />
-        </state>
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../settings.gradle">
       <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3850">
-          <caret line="137" column="30" selection-start-line="137" selection-start-column="26" selection-end-line="137" selection-end-column="30" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/drawable/ic_launcher.png">
       <provider selected="true" editor-type-id="images" />
@@ -970,56 +720,34 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/band_details.xml">
+      <provider editor-type-id="android-designer2" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
           <caret line="16" column="40" selection-start-line="16" selection-start-column="40" selection-end-line="16" selection-end-column="40" />
         </state>
       </provider>
-      <provider editor-type-id="android-designer2" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/activity_show_bands.xml">
+      <provider editor-type-id="android-designer2" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="354">
           <caret line="26" column="8" selection-start-line="26" selection-start-column="8" selection-end-line="26" selection-end-column="8" />
         </state>
       </provider>
-      <provider editor-type-id="android-designer2" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/splash_screen.xml">
+      <provider editor-type-id="android-designer2" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
           <caret line="14" column="15" selection-start-line="14" selection-start-column="15" selection-end-line="14" selection-end-column="15" />
         </state>
       </provider>
-      <provider editor-type-id="android-designer2" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/res/layout/bandlist70k.xml">
+      <provider editor-type-id="android-designer2" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="330">
           <caret line="22" column="39" selection-start-line="22" selection-start-column="39" selection-end-line="22" selection-end-column="39" />
-        </state>
-      </provider>
-      <provider editor-type-id="android-designer2" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
-      <provider editor-type-id="android-manifest" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="47" selection-start-line="21" selection-start-column="47" selection-end-line="21" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="219">
-          <caret line="67" column="35" selection-start-line="67" selection-start-column="35" selection-end-line="67" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/preferencesHandler.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4500">
-          <caret line="314" column="25" selection-start-line="314" selection-start-column="25" selection-end-line="314" selection-end-column="25" />
         </state>
       </provider>
     </entry>
@@ -1030,32 +758,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values/strings.xml">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1065">
-          <caret line="71" column="39" selection-start-line="71" selection-start-column="18" selection-end-line="71" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/values/styles.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="47" selection-start-line="9" selection-start-column="47" selection-end-line="9" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/res/layout/prompt_show_dialog.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="39" selection-start-line="2" selection-start-column="39" selection-end-line="2" selection-end-column="39" />
-        </state>
-      </provider>
-      <provider editor-type-id="android-designer2" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseEventDataWrite.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="224">
-          <caret line="32" column="85" selection-start-line="32" selection-start-column="69" selection-end-line="32" selection-end-column="85" />
+        <state relative-caret-position="1650">
+          <caret line="125" column="31" selection-start-line="125" selection-start-column="31" selection-end-line="125" selection-end-column="48" />
         </state>
       </provider>
     </entry>
@@ -1073,38 +779,249 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseUserWrite.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="226">
-          <caret line="564" column="42" selection-start-line="564" selection-start-column="42" selection-end-line="564" selection-end-column="126" />
+        <state relative-caret-position="120">
+          <caret line="17" column="24" selection-start-line="17" selection-start-column="24" selection-end-line="17" selection-end-column="24" />
+          <folding>
+            <element signature="e#508#509#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/preferencesHandler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="17" column="31" selection-start-line="17" selection-start-column="13" selection-end-line="17" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FirebaseEventDataWrite.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="29" selection-start-line="29" selection-end-line="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/FireBaseBandDataWrite.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="112">
+          <caret line="30" column="59" selection-start-line="30" selection-start-column="59" selection-end-line="30" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/BandInfo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="615">
+          <caret line="249" column="8" selection-start-line="249" selection-start-column="8" selection-end-line="249" selection-end-column="79" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListView.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1990">
+          <caret line="158" column="73" selection-start-line="158" selection-start-column="63" selection-end-line="158" selection-end-column="73" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10092#10150#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandListItem.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="125">
-          <caret line="418" column="140" selection-start-line="418" selection-start-column="140" selection-end-line="418" selection-end-column="140" />
+        <state relative-caret-position="143">
+          <caret line="33" column="5" selection-start-line="33" selection-start-column="5" selection-end-line="33" selection-end-column="5" />
           <folding>
-            <element signature="e#52168#52224#0" expanded="true" />
+            <element signature="e#1405#1406#0" expanded="true" />
+            <element signature="e#1435#1436#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showsAttended.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/rankStore.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="125" column="31" selection-start-line="125" selection-start-column="31" selection-end-line="125" selection-end-column="48" />
+        <state relative-caret-position="396">
+          <caret line="61" column="13" lean-forward="true" selection-start-line="61" selection-start-column="13" selection-end-line="61" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/bandViewRow.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-368" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/baoyz/swipemenulistview/SwipeMenuItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="12" column="26" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="26" />
+          <folding>
+            <element signature="e#1141#1142#0" expanded="true" />
+            <element signature="e#1202#1203#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/newDetailHtmlGeneration.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="210" column="26" selection-start-line="210" selection-start-column="26" selection-end-line="210" selection-end-column="102" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#380#381#0" expanded="true" />
+            <element signature="e#414#415#0" expanded="true" />
+            <element signature="e#12078#12129#0" expanded="true" />
+            <element signature="e#12344#12392#0" expanded="true" />
+            <element signature="e#12609#12658#0" expanded="true" />
+            <element signature="e#12874#12922#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values-v19/styles.xml" />
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBandDetails.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="727">
+          <caret line="439" column="39" selection-start-line="439" selection-start-column="39" selection-end-line="439" selection-end-column="39" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/preferences.xml">
+      <provider editor-type-id="android-designer2" />
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="622">
+          <caret line="71" column="21" selection-start-line="71" selection-start-column="21" selection-end-line="71" selection-end-column="21" />
+          <folding>
+            <element signature="e#5287#5306#0" expanded="true" />
+            <element signature="e#6324#6345#0" expanded="true" />
+            <element signature="e#7367#7387#0" expanded="true" />
+            <element signature="e#8943#8973#0" expanded="true" />
+            <element signature="e#10065#10088#0" expanded="true" />
+            <element signature="e#11059#11081#0" expanded="true" />
+            <element signature="e#12168#12190#0" expanded="true" />
+            <element signature="e#13265#13295#0" expanded="true" />
+            <element signature="e#14443#14472#0" expanded="true" />
+            <element signature="e#15983#16013#0" expanded="true" />
+            <element signature="e#17176#17203#0" expanded="true" />
+            <element signature="e#18590#18623#0" expanded="true" />
+            <element signature="e#19814#19847#0" expanded="true" />
+            <element signature="e#21270#21296#0" expanded="true" />
+            <element signature="e#22500#22529#0" expanded="true" />
+            <element signature="e#23629#23659#0" expanded="true" />
+            <element signature="e#24685#24721#0" expanded="true" />
+            <element signature="e#25764#25799#0" expanded="true" />
+            <element signature="e#26909#26932#0" expanded="true" />
+            <element signature="e#27955#27986#0" expanded="true" />
+            <element signature="e#29018#29045#0" expanded="true" />
+            <element signature="e#30079#30118#0" expanded="true" />
+            <element signature="e#31148#31173#0" expanded="true" />
+            <element signature="e#32199#32237#0" expanded="true" />
+            <element signature="e#33918#33944#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/drawable/custom_checkbox.xml" />
+    <entry file="file://$PROJECT_DIR$/src/main/AndroidManifest.xml">
+      <provider editor-type-id="android-manifest" />
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="16" selection-start-line="15" selection-start-column="16" selection-end-line="15" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/DetailHtmlGeneration.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="30" column="84" selection-start-line="30" selection-start-column="84" selection-end-line="30" selection-end-column="84" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/ImageHandler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="915">
+          <caret line="78" column="12" selection-start-line="78" selection-start-column="12" selection-end-line="78" selection-end-column="74" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/OnlineStatus.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2775">
+          <caret line="215" column="44" selection-start-line="215" selection-start-column="44" selection-end-line="215" selection-end-column="44" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/preferenceLayout.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="915">
+          <caret line="83" selection-start-line="83" selection-end-line="83" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/staticVariables.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="420">
+          <caret line="51" column="67" selection-start-line="51" selection-start-column="67" selection-end-line="51" selection-end-column="67" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values/styles.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="23" column="12" selection-start-line="23" selection-start-column="12" selection-end-line="23" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/layout/prompt_show_dialog.xml">
+      <provider editor-type-id="android-designer2" />
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="840">
+          <caret line="56" column="36" selection-start-line="56" selection-start-column="36" selection-end-line="56" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/res/values/strings.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="795">
+          <caret line="53" column="29" selection-start-line="53" selection-start-column="18" selection-end-line="53" selection-end-column="29" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/build.gradle">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="28" lean-forward="true" selection-start-line="15" selection-start-column="28" selection-end-line="15" selection-end-column="28" />
+        <state relative-caret-position="180">
+          <caret line="12" column="29" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/NotificationPublisher.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/scheduleAlertHandler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1470">
+          <caret line="129" column="66" selection-start-line="129" selection-start-column="66" selection-end-line="129" selection-end-column="75" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/Bands70k/showBands.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="347">
+          <caret line="1158" column="16" selection-start-line="1158" selection-start-column="16" selection-end-line="1158" selection-end-column="16" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#45838#45839#0" expanded="true" />
+            <element signature="e#45874#45875#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

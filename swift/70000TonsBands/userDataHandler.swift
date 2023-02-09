@@ -15,25 +15,48 @@ class userDataHandler: NSObject {
     var language: String
     var lastLaunch: Date
     var lanuchCount: Int
+    var bandsVersion: String
+    var iosVersion: String
     
     override init(){
         
+        print ("Writing Firebase new userData 1")
         var uidString = "Unknown"
         if (UIDevice.current.identifierForVendor != nil){
             if (UIDevice.current.identifierForVendor != nil){
                 uidString = UIDevice.current.identifierForVendor!.uuidString
             }
         }
-    
+        
+        
+        var detectedCountry = ""
+        do {
+            detectedCountry = try String(contentsOf: countryFile, encoding: .utf8)
+            print ("From countryFile \(countryFile) for a country of \(detectedCountry)")
+            if (detectedCountry.isEmpty == true){
+                print ("Falling back to default Country with empty CountryFile")
+                detectedCountry = NSLocale.current.regionCode ?? "US"
+            }
+        } catch {
+            print ("Error - Falling back to default CountryFile")
+            detectedCountry = NSLocale.current.regionCode  ?? "US"
+        }
+        
+        print ("Writing Firebase new userData 2")
+        
         self.uid = uidString
-        self.country = NSLocale.current.regionCode ?? "Unknown";
+        self.country = detectedCountry
         self.language = Locale.current.languageCode ?? "Unknown";
         self.lastLaunch = NSDate() as Date
         self.lanuchCount = 1
+        self.bandsVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+        self.iosVersion = UIDevice.current.systemVersion
         
-        print ("new userData - " + self.uid + " - " + self.country + " - " + self.language);
+        print ("Writing Firebase  new userData 3")
+        print ("Writing Firebase new userData - " + self.uid + " - " + self.country + " - " + self.language);
     }
     
+
     func getCurrentDateString()->String {
         
         let now = Date()

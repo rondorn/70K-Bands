@@ -28,7 +28,8 @@ func HTTPsendRequest(_ request: URLRequest,
 }
 
 func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
-    if (url.isEmpty == false && url != " "){
+    internetAvailble = isInternetAvailable();
+    if (url.isEmpty == false && url != " " && internetAvailble == true){
         print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)
         request.timeoutInterval = 15;
@@ -57,7 +58,7 @@ func getUrlData(urlString: String) -> String{
             do {
                 print ("Problem URL string is \(urlString)")
                 //create the url with NSURL
-                let url = try URL(string: urlString)! //change the url
+                let url = try URL(string: urlString) ?? URL(fileURLWithPath: "") //change the url
                 let contents = try String(contentsOf: url)
                 print(contents)
                 results = contents

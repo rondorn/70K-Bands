@@ -35,6 +35,7 @@ public class FireBaseBandDataWrite {
             Log.d("FireBaseBandDataWrite", "has data changed");
 
             if (checkIfDataHasChanged() == true) {
+                //FirebaseDatabase.getInstance().goOnline();
                 for (String bandName : bandRanks.keySet()) {
 
                     HashMap<String, Object> bandData = new HashMap<>();
@@ -51,6 +52,7 @@ public class FireBaseBandDataWrite {
                     mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
 
                 }
+                //FirebaseDatabase.getInstance().goOffline();
             }
         }
     }

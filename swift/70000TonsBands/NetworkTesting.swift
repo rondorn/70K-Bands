@@ -11,7 +11,9 @@ import Network
 import SystemConfiguration
 
 open class NetworkTesting {
-
+    
+    var internetCurrentlyTesting = false
+    
     init(){
     }
 
@@ -27,8 +29,8 @@ open class NetworkTesting {
                 returnState = true
             }
             
-            print ("Internet Found cache is \(returnState)")
-        
+            print ("Internet Found cache is \(returnState), cache will expire at \(internetCheckCacheDate)")
+
         //cache has expired, but lets return last answer and check again in the background
         } else if (internetCheckCache.isEmpty == false && Thread.isMainThread == false){
             
@@ -61,49 +63,62 @@ open class NetworkTesting {
         var returnState = false
         
         if (isInternetAvailableBasic() == true){
-            guard let url = URL(string: networkTestingUrl) else { return false}
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 10.0
-            
-            var wait = true
-            
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    print("Internet Found \(error.localizedDescription)")
-                    returnState = false
-                }
-                if let httpResponse = response as? HTTPURLResponse {
-                    print("Internet Found statusCode: \(httpResponse.statusCode)")
-                    // do your logic here
-                    if httpResponse.statusCode == 200{
-                        returnState = true
-                        print ("Internet Found returnState = \(returnState)")
-                    } else {
-                        print("Internet Found  is not 200 status \(httpResponse.statusCode)")
+            if (internetCurrentlyTesting == false){
+                internetCurrentlyTesting = true
+                guard let url = URL(string: networkTestingUrl) else { return false}
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 10.0
+                
+                var wait = true
+                
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        print("Internet Found \(error.localizedDescription)")
+                        returnState = false
                     }
-                    wait = false
-                } else {
-                    print ("Internet Found WTF 1")
-                    wait = false
+                    if let httpResponse = response as? HTTPURLResponse {
+                        print("Internet Found statusCode: \(httpResponse.statusCode)")
+                        // do your logic here
+                        if httpResponse.statusCode == 200{
+                            returnState = true
+                            print ("Internet Found returnState = \(returnState)")
+                        } else {
+                            print("Internet Found  is not 200 status \(httpResponse.statusCode)")
+                        }
+                        wait = false
+                    } else {
+                        print ("Internet Found WTF 1")
+                        returnState = false
+                        wait = false
+                    }
                 }
-            }
-            
-            task.resume()
-            while (wait == true){
-                print ("Internet Found Waiting")
-                sleep(2);
-            }
-            
-            if (returnState == false){
-                internetCheckCache = "false"
+                
+                task.resume()
+                while (wait == true){
+                    print ("Internet Found Waiting")
+                    sleep(1);
+                }
+                
+                if (returnState == false){
+                    internetCheckCache = "false"
+                } else {
+                    internetCheckCache = "true"
+                }
+                internetCurrentlyTesting = false
             } else {
-                internetCheckCache = "true"
+                print ("Internet already being tested")
+                if internetCheckCache == "false" {
+                    returnState = false
+                } else {
+                    returnState = true
+                }
+                return returnState
             }
         } else {
             print ("Internet Found is airplane mode...not even testing")
         }
         
-        internetCheckCacheDate = NSDate().timeIntervalSince1970 + 30
+        internetCheckCacheDate = NSDate().timeIntervalSince1970 + 15
         
         print ("Internet Found is \(returnState)")
         return returnState
