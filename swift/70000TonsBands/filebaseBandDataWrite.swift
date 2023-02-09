@@ -28,7 +28,7 @@ class filebaseBandDataWrite {
         
         var usingSimulator = false;
         #if targetEnvironment(simulator)
-            usingSimulator = true;
+            //usingSimulator = true;
         #endif
         if (inTestEnvironment == true){
             usingSimulator = true;

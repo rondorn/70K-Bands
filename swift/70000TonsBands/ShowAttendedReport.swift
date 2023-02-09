@@ -19,8 +19,15 @@ class showAttendenceReport {
     var bandNamesHandle = bandNamesHandler()
     var dataHandle = dataHandler()
     
+    var isReportEmpty = false
+    var indexMap = [String]()
+    
     init(){
 
+    }
+    
+    func getIsReportEmpty()->Bool {
+        return isReportEmpty
     }
     
     func assembleReport (){
@@ -32,8 +39,16 @@ class showAttendenceReport {
         let allBands = bandNamesHandle.getBandNames()
         var unuiqueSpecial = [String]()
         
+        var tempEventCount = 0
+        
         if (schedule.getBandSortedSchedulingData().count > 0){
             for index in showsAttendedArray {
+                
+                //prevent duplicate events
+                if (indexMap.contains(index.key)){
+                    continue
+                }
+                indexMap.append(index.key)
                 
                 let indexArray = index.key.split(separator: ":")
                 
@@ -43,12 +58,18 @@ class showAttendenceReport {
                 let min = String(indexArray[3])
                 let eventType = String(indexArray[4])
                 let year = String(indexArray[5])
+                let status = String(showsAttendedArray[index.key]!)
                 
                 if (year != String(eventYear)){
                     continue
                 }
+                if (status == "sawNone"){
+                    continue
+                }
                 
-
+                if (bandName == "Vio-Lence"){
+                    print ("Violence data is \(location) - \(hour) - \(min) - \(eventType) - \(year) - \(status)")
+                }
                 var validateEvent = false
                 if scheduleData.index(forKey: bandName) != nil {
                     for timeIndex in scheduleData[bandName]!.keys {
@@ -75,13 +96,21 @@ class showAttendenceReport {
 
                     continue
                 }
+                tempEventCount = tempEventCount + 1
+                print ("tempEventCount is \(tempEventCount) - \(year) - \(bandName) - \(location) = \(status)")
                 
                 print ("eventType = \(eventType) - \(index.value) - \(indexArray)")
                 getEventTypeCounts(eventType: eventType, sawStatus: index.value)
                 getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
                 
             }
+        } else {
+            isReportEmpty = true
         }
+        if (tempEventCount == 0){
+            isReportEmpty = true
+        }
+
     }
     
     func addPlural(count : Int, eventType: String)->String{
@@ -95,16 +124,20 @@ class showAttendenceReport {
         
         return message
     }
-    
-    func buildMessage()->String{
         
-        var message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n"
-        var eventCountExists : [String: Bool] = [String: Bool]();
+    func buildMessage(type: String)->String{
         
-        if (eventCounts.isEmpty == true){
+        var message = ""
+        
+        if (type == "MustMight"){
             message = buildMustMightReport();
             
-        } else {
+        } else if (type == "Events"){
+            message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n"
+            var eventCountExists : [String: Bool] = [String: Bool]();
+            
+            assembleReport()
+            
             for index in eventCounts {
                 
                 let eventType = index.key
@@ -174,7 +207,7 @@ class showAttendenceReport {
     
     func buildMustMightReport()->String {
         
-        var intro = getMustSeeIcon() + " These are the bands I MUST see on the 70,000 Tons Cruise\n"
+        var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
         let bands = bandNamesHandle.getBandNames()
         for band in bands {
             if (dataHandle.getPriorityData(band) == 1){
@@ -182,7 +215,7 @@ class showAttendenceReport {
                 intro += "\t\t" +  band + "\n"
             }
         }
-        intro += "\n\n" + getMightSeeIcon() + " These are the bands I might see\n"
+        intro += "\n\n" + "These are the bands I might see\n"
         for band in bands {
             if (dataHandle.getPriorityData(band) == 2){
                 print ("Adding band " + band)

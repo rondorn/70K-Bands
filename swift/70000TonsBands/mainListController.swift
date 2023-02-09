@@ -18,6 +18,7 @@ var mightSeeOn = true;
 var wontSeeOn = true;
 var unknownSeeOn = true;
 
+var hasAttendedEvents = false
 var attendingCount = 0;
 
 var showOnlyWillAttened = false;
@@ -112,6 +113,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
         print ("Sorting by name!!!");
         for bandName in schedule.getBandSortedSchedulingData().keys {
+            unfilteredBandCount = unfilteredBandCount + 1
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
                     if (timeIndex > Date().timeIntervalSince1970 - 3600  || defaults.bool(forKey: "hideExpireScheduleData") == false){
@@ -134,6 +136,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         for timeIndex in schedule.getTimeSortedSchedulingData().keys {
             if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
                 for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys)!{
+                    unfilteredBandCount = unfilteredBandCount + 1
                     if (timeIndex > Date().timeIntervalSince1970 - 3600 || defaults.bool(forKey: "hideExpireScheduleData") == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
@@ -251,6 +254,9 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     
     var newAllBands = [String]()
     
+    filteredBandCount = 0
+    unfilteredBandCount = 0
+    
     if (isGetFilteredBands == true){
         while (isGetFilteredBands == true){
             sleep(1);
@@ -259,22 +265,22 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
  
         isGetFilteredBands = true;
 
-            newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
+        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
+        
+        if (getShowOnlyWillAttened() == true){
+            filteredBands = newAllBands;
             
-            if (getShowOnlyWillAttened() == true){
-                filteredBands = newAllBands;
+        } else {
+            for bandNameIndex in newAllBands {
+                unfilteredBandCount = unfilteredBandCount + 1
+                let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
                 
-            } else {
-                for bandNameIndex in newAllBands {
-                    
-                    let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
-                    
-                    switch dataHandle.getPriorityData(bandName) {
-                    case 1:
-                        if (getMustSeeOn() == true){
-                            filteredBands.append(bandNameIndex)
-                    }
-                    
+                switch dataHandle.getPriorityData(bandName) {
+                case 1:
+                    if (getMustSeeOn() == true){
+                        filteredBands.append(bandNameIndex)
+                }
+                
                 case 2:
                     if (getMightSeeOn() == true){
                         filteredBands.append(bandNameIndex)
@@ -298,6 +304,26 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
         }
         isGetFilteredBands = false;
     }
+    filteredBandCount = filteredBands.count
+
+    if (filteredBandCount == 0){
+        filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
+    }
+    return filteredBands
+}
+
+func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
+    
+    var filteredBands = [String]()
+    var localMessage = ""
+    if (bandNameHandle.bandNames.count == 0){
+        localMessage = NSLocalizedString("waiting_for_data", comment: "")
+    } else {
+        localMessage = NSLocalizedString("data_filter_issue", comment: "")
+    }
+    
+    filteredBands.append(localMessage)
+    
     return filteredBands
 }
 

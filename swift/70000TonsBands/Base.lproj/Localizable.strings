@@ -84,3 +84,21 @@
 "AlreadyAtStart" = "Already At Start of List";
 "Next" = "Next";
 "Previous" = "Previous";
+
+"NoteFontSize" = "Note Front Size Large";
+
+"ShareBandChoices" = "Share Band Choices";
+"ShareShowChoices" = "Share Show Chocies";
+
+"visitBands" = "Links";
+"country" = "Country";
+"genre" = "Genre";
+
+"verifyCountry" = "Verify Your Country";
+"correctCountryDescription" = "Correct Your Country If Needed";
+"confirmCountry" = "Confirm";
+"correctCountry" = "Change";
+
+"waiting_for_data" = "Waiting for data to load, please standby....";
+"data_filter_issue" = "All data is being filtered out, please remove filters to view data";
+

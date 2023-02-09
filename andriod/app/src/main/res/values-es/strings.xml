@@ -42,6 +42,7 @@
 
     <string name="restarTitle">Es Necesario Reiniciar</string>
     <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET. \nEste cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
+    <string name="impotMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
 
@@ -78,4 +79,20 @@
     <string name="Next">Siguiente</string>
     <string name="Previous">Previo</string>
 
+    <string name="ImportDataBackup">Importar copia de seguridad de datos</string>
+    <string name="ShareTitle">¿Qué es lo que deseas compartir?</string>
+    <string name="ShareBandChoices">Compartir opciones de bandas</string>
+    <string name="ShareShowChoices">Compartir Mostrar elección</string>
+    <string name="ExportUserData">Exportar datos de usuario</string>
+
+    <string name="visitBands">Enlaces</string>
+    <string name="country">País</string>
+    <string name="genre">Género</string>
+
+    <string name="verify_country">Verifica tu país</string>
+    <string name="correct_if_needed">Corrija su país si es necesario</string>
+    <string name="country_invalid">El valor del país no se reconoce como válido</string>
+
+    <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera....</string>
+    <string name="data_filter_issue">Todos los datos se están filtrando, elimine los filtros para ver los datos</string>
 </resources>

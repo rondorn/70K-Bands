@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,38 +9,38 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.ArrayMap;
-import android.util.DisplayMetrics;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.util.Log;
-import android.view.ContextMenu;
 import android.view.ContextThemeWrapper;
-import android.view.Display;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -52,13 +53,17 @@ import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+//import com.google.firebase.iid.FirebaseInstanceId;
+//import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static com.Bands70k.staticVariables.*;
 import static java.lang.Thread.sleep;
@@ -95,7 +100,11 @@ public class showBands extends Activity {
     private bandListView adapter;
     private ListView listView;
 
+    private static Boolean recievedPermAnswer = false;
     private Boolean loadOnceStopper = false;
+
+    private Boolean sharedZipFile = false;
+    private File zipFile;
 
     // inside my class
     private static final String[] INITIAL_PERMS = {
@@ -108,19 +117,70 @@ public class showBands extends Activity {
     };
     private static final int REQUEST = 1337;
 
+    private boolean checkWriteExternalPermission()
+    {
+        String permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        int res = Bands70k.getAppContext().checkCallingOrSelfPermission(permission);
+        return (res == PackageManager.PERMISSION_GRANTED);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            if (permission != 0) {
-                requestPermissions(INITIAL_PERMS, REQUEST);
-                while (permission != 0) {
-                    permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (this.checkWriteExternalPermission() == false){
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
+
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Log.d("get perms", "Getting access to storage " + Build.VERSION.SDK_INT + "-" + Build.VERSION_CODES.M);
+                int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                Log.d("get perms", "Getting access to storage - pre- asking");
+                if (permission != 0) {
+                    //ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+
+                    //requestPermissions((new String[]
+                    //        {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
+
+                    Log.d("get perms", "Getting access to storage - asking");
+                    Integer count = 0;
+                    while (permission != 0 || recievedPermAnswer == false) {
+                        permission = checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                        Log.d("get perms", "Getting access to storage - waiting " + permission + " " + count.toString());
+                        sleep(1000);
+                        requestPermissions((new String[]
+                                {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
+                        count = count + 1;
+                    }
+                    Log.d("get perms", "Getting access to storage - granted " + permission);
                 }
+                if (readpermission != 0) {
+                    requestPermissions(INITIAL_PERMS, REQUEST);
+                    while (readpermission != 0) {
+                        readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
+                    }
+                }
+            } catch (Exception error){
+                newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
             }
+
         } else {
-            newRootDir =Bands70k.getAppContext().getFilesDir().getPath();
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
+        }
+        Log.d("Rool volume", "Root volume is " + newRootDir);
+        try {
+            File testFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "test.txt");
+            String test = "test";
+            FileOutputStream stream = new FileOutputStream(testFile);
+            try {
+                stream.write(test.getBytes());
+            } finally {
+                stream.close();
+            }
+        } catch (Exception error) {
+            //It appears I do not have access to external storage...lets fix that
+            //by changing to use app storage
+            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
         }
 
         setTheme(R.style.AppTheme);
@@ -137,7 +197,6 @@ public class showBands extends Activity {
         StrictMode.setThreadPolicy(policy);
 
         setContentView(R.layout.activity_show_bands);
-
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -151,21 +210,6 @@ public class showBands extends Activity {
         // Registering BroadcastReceiver
         registerReceiver();
 
-        //get FCM token for testing
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w(TAG, "getInstanceId failed", task.getException());
-                            return;
-                        }
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
-                        Log.d(TAG, "FCM Token Is " + token);
-                    }
-                });
-
         if (staticVariables.attendedHandler == null){
             staticVariables.attendedHandler = new showsAttended();
         }
@@ -173,7 +217,7 @@ public class showBands extends Activity {
         Log.d("startup", "show init start - 1");
 
         staticVariablesInitialize();
-
+        this.getCountry();
         Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
         bandNotes = new CustomerDescriptionHandler();
@@ -209,7 +253,10 @@ public class showBands extends Activity {
 
                         //start spinner and stop after 5 seconds
                         bandNamesPullRefresh.setRefreshing(true);
+                        bandInfo = new BandInfo();
+                        staticVariables.loadingNotes = false;
                         refreshNewData();
+                        reloadData();
 
                     }
 
@@ -229,15 +276,108 @@ public class showBands extends Activity {
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
         Log.d("startup", "show init start - 9");
+
+
         FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
         userDataWrite.writeData();
-
         BandInfo bandInfo = new BandInfo();
         bandInfo.DownloadBandFile();
         refreshData();
         Log.d("startup", "show init start - 10");
+
     }
 
+    private void getCountry(){
+
+        Log.d("getCountry", "getCountry started");
+        if (FileHandler70k.doesCountryFileExist() == false){
+            Log.d("getCountry", "getCountry prompting for file");
+            sharedZipFile = false;
+            TextView titleView = new TextView(context);
+
+            titleView.setText(getString(R.string.verify_country));
+            titleView.setPadding(20, 30, 20, 30);
+            titleView.setTextSize(20F);
+            titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            titleView.setGravity(Gravity.CENTER);
+            titleView.setBackgroundColor(Color.parseColor("#505050"));
+            titleView.setTextColor(Color.WHITE);
+
+            // create an alert builder
+            final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
+            builder.setCustomTitle(titleView);
+            final View customLayout = getLayoutInflater().inflate(R.layout.ask_country, null);
+            builder.setView(customLayout);
+            builder.setCancelable(false);
+
+            Button okButton = (Button) customLayout.findViewById(R.id.ok_button);
+            TextView countryLabel = (TextView) customLayout.findViewById(R.id.CountryLabel);
+            final AutoCompleteTextView countryChoice = (AutoCompleteTextView) customLayout.findViewById(R.id.CountryList);
+
+            countryLabel.setText(getString(R.string.correct_if_needed));
+            countryLabel.setEnabled(false);
+            countryLabel.setTextSize(15F);
+            countryLabel.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            countryLabel.setGravity(Gravity.CENTER);
+            countryLabel.setPadding(20, 30, 20, 30);
+
+            Map<String, String> countryMap = CountryChoiceHandler.loadCountriesList();
+            String defaultCountryText = Locale.getDefault().getCountry();
+
+            defaultCountryText = countryMap.get(defaultCountryText);
+            countryChoice.setText(defaultCountryText);
+
+            String[] countries = countryMap.values().toArray(new String[0]);
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+                    android.R.layout.simple_dropdown_item_1line, countries);
+
+            countryChoice.setAdapter(adapter);
+
+            // create and show the alert dialog
+            final AlertDialog dialog = builder.create();
+
+
+            okButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Map<String, String> countryMap = CountryChoiceHandler.loadCountriesList();
+                    String country = String.valueOf(countryChoice.getText());
+                    if (countryMap.values().contains(country) == false){
+                        String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
+                        countryChoice.setText(defaultCountry);
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                    }
+                    Map<String, String> countryMapRev = new HashMap<String, String>();
+                    for (String countryCode : countryMap.keySet()) {
+                        countryMapRev.put(countryMap.get(countryCode), countryCode);
+                    }
+                    if (countryMapRev.containsKey(country) == true) {
+
+                        staticVariables.userCountry = countryMapRev.get(country);
+                        FileHandler70k.saveData(staticVariables.userCountry, FileHandler70k.countryFile);
+                        Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry);
+                        dialog.dismiss();
+                    } else {
+                        String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
+                        countryChoice.setText(defaultCountry);
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                    }
+                }
+            });
+
+            dialog.show();
+
+        } else {
+            Log.d("getCountry", "getCountry loading from file");
+            staticVariables.userCountry = FileHandler70k.loadData(FileHandler70k.countryFile);
+            Log.d("getCountry", "getCountry is now set to " + staticVariables.userCountry );
+            if (staticVariables.userCountry.isEmpty() == true){
+                FileHandler70k.countryFile.delete();
+                this.getCountry();
+            }
+        }
+
+    }
 
     private void setupSwipeList (){
 
@@ -435,6 +575,116 @@ public class showBands extends Activity {
             }
         });
     }
+    public void shareMenuPrompt(){
+
+        sharedZipFile = false;
+        TextView titleView = new TextView(context);
+        titleView.setText(getString(R.string.ShareTitle));
+        titleView.setPadding(20, 30, 20, 30);
+        titleView.setTextSize(20F);
+        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setBackgroundColor(Color.parseColor("#505050"));
+        titleView.setTextColor(Color.WHITE);
+
+        // create an alert builder
+        final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
+        builder.setCustomTitle(titleView);
+
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
+        builder.setView(customLayout);
+
+        Button shareBandChoices = (Button) customLayout.findViewById(R.id.GoToDetails);
+        Button shareShowChoices = (Button) customLayout.findViewById(R.id.AttendedAll);
+        Button saveData = (Button) customLayout.findViewById(R.id.AttendeSome);
+        Button na1 = (Button) customLayout.findViewById(R.id.AttendeNone);
+        Button na2 = (Button) customLayout.findViewById(R.id.Disable);
+
+        shareBandChoices.setText(getString(R.string.ShareBandChoices));
+        shareShowChoices.setText(getString(R.string.ShareShowChoices));
+        saveData.setText(getString(R.string.ExportUserData));
+        na1.setVisibility(View.INVISIBLE);
+        na2.setVisibility(View.INVISIBLE);
+
+        // add a button
+        builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        // create and show the alert dialog
+        final AlertDialog dialog = builder.create();
+
+
+        shareBandChoices.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+
+                String shareBody = buildShareMessage();
+                String subject = "Bands I MUST see on 70,000 Tons";
+
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+            }
+        });
+
+        shareShowChoices.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+
+                showsAttendedReport reportHandler = new showsAttendedReport();
+                reportHandler.assembleReport();
+                String shareBody = reportHandler.buildMessage();
+                String subject = "These are the events I attended on the 70,000 Tons Cruise";
+
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+            }
+        });
+
+        saveData.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                String zipFileName = UserDataExportImport.exportDataToZip();
+
+                Log.d("", "Zip file name 1 is  " + zipFileName);
+                zipFile = new File(zipFileName);
+                Log.d("", "Zip file name 2 is  " + zipFile.getAbsolutePath());
+
+                Uri zipFileUri = FileProvider.getUriForFile(
+                        context,
+                        "com.Bands70k",
+                        zipFile);
+
+                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+
+                sharingIntent.setType("application/zip");
+                sharingIntent.putExtra(Intent.EXTRA_STREAM, zipFileUri);
+
+                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Sharing File...");
+                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing File...");
+
+                startActivity(Intent.createChooser(sharingIntent, "Share File"));
+
+                dialog.dismiss();
+                sharedZipFile = true;
+            }
+        });
+
+        dialog.show();
+
+        if (sharedZipFile == true){
+            zipFile.delete();
+        }
+    }
 
     private void showNotification(){
 
@@ -498,24 +748,10 @@ public class showBands extends Activity {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
-                String shareBody;
-                String subject;
+                //HelpMessageHandler.showMessage("Share Button Was Pressed!");
 
-                if (staticVariables.showsIwillAttend > 0 && listHandler.numberOfEvents != listHandler.numberOfUnofficalEvents){
-                    showsAttendedReport reportHandler = new showsAttendedReport();
-                    reportHandler.assembleReport();
-                    shareBody = reportHandler.buildMessage();
-                    subject = "These are the events I attended on the 70,000 Tons Cruise";
+                shareMenuPrompt();
 
-                } else {
-                    shareBody = buildShareMessage();
-                    subject = "Bands I MUST see on 70,000 Tons";
-                }
-
-                Log.d("ShareMessage", shareBody);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-                startActivity(Intent.createChooser(sharingIntent, "Share via"));
             }
         });
 
@@ -897,12 +1133,12 @@ public class showBands extends Activity {
 
         super.onStop();
         inBackground = true;
-
         FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
         bandWrite.writeData();
 
         FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
         eventWrite.writeData();
+
     }
 
     private void reloadData (){
@@ -994,8 +1230,13 @@ public class showBands extends Activity {
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0){
-
-            bandNames.add("Waiting for data to load, please standby....");
+            String emptyDataMessage = "";
+            if (unfilteredBandCount > 1){
+                emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+            } else {
+                emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            }
+            bandNames.add(emptyDataMessage);
         }
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
@@ -1022,6 +1263,7 @@ public class showBands extends Activity {
         }
 
         Integer counter = 0;
+
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         for (String bandIndex: scheduleSortedBandNames){
 
@@ -1114,7 +1356,13 @@ public class showBands extends Activity {
             }
 
             if (counter == 0){
-                bandListItem bandItem = new bandListItem("Waiting for data to load, please standby....");
+                String emptyDataMessage = "";
+                if (unfilteredBandCount > 1){
+                    emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+                } else {
+                    emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+                }
+                bandListItem bandItem = new bandListItem(emptyDataMessage);
                 adapter.add(bandItem);
             }
             setFilterButton();
@@ -1146,6 +1394,7 @@ public class showBands extends Activity {
 
     @Override
     public void onBackPressed(){
+
         moveTaskToBack(true);
     }
 
@@ -1307,9 +1556,18 @@ public class showBands extends Activity {
             }
         }
 
+        TextView titleView = new TextView(context);
+        titleView.setText(selectedBand + "\n" + titleStatus);
+        titleView.setPadding(20, 30, 20, 30);
+        titleView.setTextSize(20F);
+        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setBackgroundColor(Color.parseColor("#505050"));
+        titleView.setTextColor(Color.WHITE);
+
         // create an alert builder
         final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
-        builder.setTitle(selectedBand + "\n" + titleStatus);
+        builder.setCustomTitle(titleView);
 
         // set the custom layout
         final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
@@ -1331,11 +1589,12 @@ public class showBands extends Activity {
             attendNone.setVisibility(View.GONE);
         }
 
-        goToDetails.setText(getResources().getString(R.string.GoToDetails));
-        attendAll.setText(getResources().getString(R.string.AllOfEvent));
-        attendSome.setText(getResources().getString(R.string.PartOfEvent));
-        attendNone.setText(getResources().getString(R.string.NoneOfEvent));
-        disable.setText(getResources().getString(R.string.disableAttendedPrompt));
+        goToDetails.setText(getText(R.string.GoToDetails));
+        attendAll.setText(getText(R.string.AllOfEvent));
+        attendSome.setText(getText(R.string.PartOfEvent));
+        attendNone.setText(getText(R.string.NoneOfEvent));
+        disable.setText(getText(R.string.disableAttendedPrompt));
+
 
         // add a button
         builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
@@ -1577,7 +1836,7 @@ public class showBands extends Activity {
                     imageHandler.getAllRemoteImages();
 
                 } catch (Exception error) {
-                    Log.d("bandInfo", error.getMessage());
+                    //Log.d("bandInfo", error.getMessage());
                 }
                 staticVariables.loadingNotes = false;
             }

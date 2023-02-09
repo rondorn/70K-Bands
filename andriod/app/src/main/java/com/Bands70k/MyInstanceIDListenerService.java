@@ -1,14 +1,12 @@
 package com.Bands70k;
 
 import android.util.Log;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.FirebaseInstanceIdService;
-import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 import static android.content.ContentValues.TAG;
 
 
-public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
+class MyInstanceIDListenerServicex extends FirebaseMessagingService {
 
     //private static final String TAG = "MyInstanceIDLS";
 
@@ -18,25 +16,35 @@ public class MyInstanceIDListenerService extends FirebaseInstanceIdService {
      * InstanceID provider.
      */
     // [START refresh_token]
-
+    @Override
+    public void onNewToken(String s) {
+        super.onNewToken(s);
+        Log.d("Refreshed token:",s);
+    }
+    /*
     @Override
     public void onTokenRefresh() {
-        // Get updated InstanceID token.
-        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.d(TAG, "Refreshed token: " + refreshedToken);
-        // TODO: Implement this method to send any registration to your app's servers.
-        sendRegistrationToServer(refreshedToken);
+        try {
+            // Get updated InstanceID token.
+            String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+            Log.d(TAG, "Refreshed token: " + refreshedToken);
+            // TODO: Implement this method to send any registration to your app's servers.
+            sendRegistrationToServer(refreshedToken);
 
-        Log.d(TAG, "Subscribing to topics");
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
-        if (staticVariables.preferences.getAlertForUnofficalEvents() == true){
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
-        } else {
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            Log.d(TAG, "Subscribing to topics");
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+
+            if (staticVariables.preferences.getAlertForUnofficalEvents() == true) {
+                FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+            } else {
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            }
+        } catch (Exception error){
+            onTokenRefresh();
         }
     }
-
+    */
     private void sendRegistrationToServer(String token) {
         // TODO: Implement this method to send token to your app server.
     }

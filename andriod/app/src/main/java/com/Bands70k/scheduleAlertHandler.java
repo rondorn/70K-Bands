@@ -9,13 +9,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioAttributes;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.SystemClock;
-import android.provider.Settings;
-import android.support.v4.app.AlarmManagerCompat;
+
+import androidx.core.app.AlarmManagerCompat;
 import android.util.Log;
 
 import java.io.FileInputStream;
@@ -88,6 +86,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             Calendar cal = Calendar.getInstance();
             long currentEpoch = cal.getTime().getTime();
+            currentEpoch = currentEpoch / 1000;
 
             if (BandInfo.scheduleRecords != null) {
                 if (BandInfo.scheduleRecords.keySet().size() > 0) {
@@ -112,20 +111,32 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                                 alertDateTime.setTimeZone(TimeZone.getTimeZone("PST8PDT"));
                                 String alertDateTimeText = alertDateTime.format(new Date(alertTime));
 
-                                Log.d("SchedNotications", bandName + " Alerttime of Epoch is " + String.valueOf(alertTime));
+                                Log.d("SchedNotications", "Current Epoch in miliseconds = " + currentEpoch);
+                                //convert time from mili second
 
-                                int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert()) * 60) * 1000);
-                                int delayInseconds = (delay / 1000);
+                                alertTime = alertTime / 1000;
 
-                                if (delay > 1 && delayInseconds < 604800) {
-                                    Log.d("SchedNotications", "!Timing1 " + String.valueOf(delay) + " - " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
+                                Log.d("SchedNotications", "Current Epoch in seconds = " + currentEpoch);
 
-                                    sendLocalAlert(alertMessage, delayInseconds);
+                                //if (alertTime > currentEpoch) {
+                                    int delay = (int) (alertTime - currentEpoch) - (((staticVariables.preferences.getMinBeforeToAlert()) * 60));
+                                    //int delayInseconds = (delay / 1000);
 
-                                } else {
-                                    Log.d("SchedNotications", bandName + " delay is too long or short " + String.valueOf(delay));
+                                    Log.d("SchedNotications", bandName + " Alerttime of Epoch is " + String.valueOf(alertTime) + " - " + currentEpoch + " delay is " + delay);
 
-                                }
+                                    if (delay > 1 && delay < 604800) {
+                                        Log.d("SchedNotications", "!Timing1 " + String.valueOf(delay) + " - " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
+
+                                        sendLocalAlert(alertMessage, delay);
+
+                                    } else {
+                                        Log.d("SchedNotications", bandName + " delay is too long or short " + String.valueOf(delay));
+
+                                    }
+                                //} else {
+                                //    Log.d("SchedNotications", bandName + " Not adding  Alerttime of Epoch is " + String.valueOf(alertTime) + " - " + currentEpoch);
+
+                                //}
 
                             }
                         }
@@ -163,7 +174,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         notificationIntent.setAction(content);
 
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
 
@@ -206,7 +217,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                 context,
                 0,
                 showApp,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_IMMUTABLE);
 
         Notification.Builder builder = new Notification.Builder(context);
 
@@ -346,7 +357,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                 notificationIntent.putExtra("messageText", messageContent);
                 notificationIntent.setAction(messageContent);
 
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
                 Log.d("clearLocalAlerts", "Clearing alert " + id.toString());
                 clearAlarm.cancel(pendingIntent);
