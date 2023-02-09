@@ -356,7 +356,7 @@ func setupVenueLocations(){
     
     venueLocation[poolVenueText] = "Deck 11"
     venueLocation[rinkVenueText] = "Deck 3"
-    venueLocation[loungeVenueText] = "Deck 4"
+    venueLocation[loungeVenueText] = "Deck 5"
     venueLocation[theaterVenueText] = "Deck 3/4"
     venueLocation["Sports Bar"] = "Deck 4"
     venueLocation["Viking Crown"] = "Deck 14"

@@ -81,7 +81,7 @@ public class OnlineStatus {
         //Get the IP of the Host
         URL url = null;
         try {
-            url = ResolveHostIP(staticVariables.networkTestingUrl,10000);
+            url = ResolveHostIP(staticVariables.networkTestingUrl,5000);
             dnsResolveCache = url;
 
         } catch (MalformedURLException e) {
@@ -99,8 +99,8 @@ public class OnlineStatus {
                 HttpURLConnection connection = (HttpURLConnection) new URL(staticVariables.networkTestingUrl).openConnection();
                 connection.setRequestMethod("HEAD");
 
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
                 Log.d("Internet Found", "Internet Found https called returned " + connection.toString());
 
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
