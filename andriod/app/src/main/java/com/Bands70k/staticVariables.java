@@ -133,6 +133,7 @@ public class staticVariables {
     public final static String unknownKey = "unknown";
 
     public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1";
+    //public final static String defaultUrls = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
@@ -327,7 +328,7 @@ public class staticVariables {
 
         venueLocation.put(poolVenueText, "Deck 11");
         venueLocation.put(rinkVenueText, "Deck 3");
-        venueLocation.put(loungeVenueText, "Deck 4");
+        venueLocation.put(loungeVenueText, "Deck 5");
         venueLocation.put(theaterVenueText, "Deck 3/4");
         venueLocation.put("Sports Bar", "Deck 4");
         venueLocation.put("Viking Crown", "Deck 14");
