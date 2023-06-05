@@ -45,6 +45,7 @@ func getUrlData(urlString: String) -> String{
     let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
     
     if (isInternetAvailable() == false){
+        print ("Internet is down, returning empty")
         return ""
     }
     var results = String()

@@ -269,23 +269,25 @@ func getPointerUrlData(keyValue: String) -> String {
     //does not change very often during the year
     storePointerLock.sync() {
         if (cacheVariables.storePointerData.isEmpty == false){
-            url = cacheVariables.storePointerData[keyValue] ?? "Unable to communicate with Drop Box!"
+            url = cacheVariables.storePointerData[keyValue] ?? ""
+            print ("got cached URL data of = \(url) for \(keyValue)")
         }
     }
 
     if (url.isEmpty == true){
-        print ("getting URL data of")
+        print ("getting URL data of \(defaultStorageUrl) - \(keyValue)")
         let httpData = getUrlData(urlString: defaultStorageUrl)
-        print ("httpData = \(httpData)")
+        print ("httpData for pointers data = \(httpData)")
         if (httpData.isEmpty == false){
-
+            
             let dataArray = httpData.components(separatedBy: "\n")
             for record in dataArray {
+                print ("httpRecord for pointers data = \(record)")
                 var valueArray = record.components(separatedBy: "::")
-
                 if (valueArray.isEmpty == false && valueArray.count >= 2){
-                    print ("Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
+                    print ("2 Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
                     if (valueArray[0] == keyValue){
+                        
                         url = valueArray[1]
                     }
                     
@@ -294,27 +296,28 @@ func getPointerUrlData(keyValue: String) -> String {
                     }
                 }
             }
-        } else if (keyValue == "eventYear"){
-            print ("eventYear = unknown \(eventYear)")
-            do {
-                url = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-            } catch let error as NSError {
-                print ("Encountered an error of reading file eventYearFile " + error.debugDescription)
-            }
+        } else {
+            print ("Why is \(keyValue) emptry - \(url)")
         }
-        
-        print ("Using default " + keyValue + " of " + url)
         
         if (keyValue == "eventYear"){
             do {
-                try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
-                print ("Just created file " + eventYearFile);
+                if (url.count == 4){
+                    try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
+                    try cacheVariables.storePointerData[keyValue] = url
+                    print ("Just created eventYear file " + eventYearFile);
+                } else {
+                    try url = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                    print ("Just reading eventYear file " + eventYearFile + " and got \(url)");
+                }
             } catch let error as NSError {
                 print ("Encountered an error of creating file eventYearFile " + error.debugDescription)
+                url = "2024" //provide a default year
             }
         }
 
     }
+    print ("Using Final value of " + keyValue + " of " + url)
     
     return url
 }
@@ -343,13 +346,17 @@ func setupDefaults() {
     setupVenueLocations()
     
     print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
-    eventYear = 2023//Int(getPointerUrlData(keyValue: "eventYear")) ?? 2023;
+    
 
+    print ("Trying to get the year  \(eventYear)")
+    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+
+    print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
+    
     if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
         eventYear = eventYear - 1
     }
 
-    print ("eventYear = \(eventYear)")
 }
 
 func setupVenueLocations(){

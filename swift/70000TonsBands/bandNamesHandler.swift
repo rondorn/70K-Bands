@@ -50,6 +50,8 @@ open class bandNamesHandler {
     func gatherData() {
 
         if isInternetAvailable() == true {
+            
+            eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("Loading bandName Data gatherData")
             let defaults = UserDefaults.standard
             
