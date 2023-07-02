@@ -1,4 +1,4 @@
-/* 
+/*
   LocalizationStrings.strings
   70K Bands
 
@@ -6,6 +6,8 @@
   Copyright (c) 2015 Ron Dorn. All rights reserved.
  
  Translation provided by Memnoch, thank you kind sir!
+ 
+ Partially retranslated on 20230628 - this should be more natural to read. -Jussi
 */
 
 "Must"="Kyllä";
@@ -15,70 +17,70 @@
 "Ok"="Kyllä";
 "Cancel"="Peruuta";
 
-"Alert On Must See Bands"="Hälytys Kyllä-bändeille";
-"Alert On Might See Bands"="Hälytys Ehkä-bändeille";
-"Alert Only for Will Attend Events"="Vain kuulustelu osallistuu tapahtumiin";
+"Alert On Must See Bands"="Hälytä Kyllä-listan yhtyeistä";
+"Alert On Might See Bands"="Hälytä Ehkä-listan yhtyeistä";
+"Alert Only for Will Attend Events"="Hälytä vain tapahtumista, joihin aiot osallistua";
 
-"showAttendedFilterTrueHelp"="Näytä vain tapahtumat, joihin ilmoitat, että osallistut. Muita suodattimia ei sovelleta";
-"showAttendedFilterFalseHelp"="Näytä yhtyeet ja näytöt suodattimien mukaan";
+"showAttendedFilterTrueHelp"="Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä";
+"showAttendedFilterFalseHelp"="Näytä yhtyeet ja esitykset suodattimien mukaan";
 
-"Sorting Chronologically"="Lajittelu kronologisesti";
+"Sorting Chronologically"="Lajittelu aikajärjestyksessä";
 "Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
 
-"All Of Event"="Osallistuu kaikkiin tähän tapahtumaan";
-"Part Of Event"="Osallistuu osaan tästä tapahtumasta";
-"None Of Event"="En näe tätä tapahtumaa";
+"All Of Event"="Osallistun koko tapahtumaan";
+"Part Of Event"="Osallistun osaan tästä tapahtumasta";
+"None Of Event"="En tule osallistumaan tähän tapahtumaan";
 
-"Prompt For Attended Status"="Kysy vierailijan tilalle";
-"Go To Details"="Siirry yksityiskohtiin";
+"Prompt For Attended Status"="Osallistumiskysely";
+"Go To Details"="Siirry lisätietoihin";
 
-"Only alert for shows you will attend"="Vain hälytyksiä näytöille, joihin osallistut";
-"Alert for shows according to your favorites selection"="Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukset";
+"Only alert for shows you will attend"="Hälytä vain esityksistä, joihin aiot osallistua";
+"Alert for shows according to your favorites selection"="Hälytä esityksistä valitsemiesi suosikkien ja tämän sivun asetusten mukaan";
 
-"ShowHideEvents"="Näytä/Piilota Vanhentunut";
-"HideExpiredEvents"="Piilota Vanhentuneet Tapahtumat";
+"ShowHideEvents"="Näytä/piilota vanhentunut";
+"HideExpiredEvents"="Piilota vanhentuneet tapahtumat";
 
-"Minutes Before Event to Alert"="Hälytys ennen tapahtumaa (minuuttia)";
-"Alert For Shows"="Hälytys keikoille";
-"Alert For Special Events"="Hälytys muihin tapahtumiin";
-"Alert For Meeting and Greet Events"="Hälytys 'Meet and Greet' eille";
-"Alert For Clinics"="Hälytys klinikoille";
+"Minutes Before Event to Alert"="Hälytä ennen tapahtumaa (minuuttia)";
+"Alert For Shows"="Hälytä esityksistä";
+"Alert For Special Events"="Hälytä erikoistapahtumista";
+"Alert For Meeting and Greet Events"="Hälytä artistitapaamisista";
+"Alert For Clinics"="Hälytä klinikoista";
 "Use Last Years Data"="Käytä viime vuoden tietoja";
-"Alert For Album Listening Events"="Hälytys levyjen ennakkokuunteluihin";
-"Alert For Unofficial Events"="Hälytys Cruiser järjestettyihin tapahtuman";
+"Alert For Album Listening Events"="Hälytä levyjen kuuntelutapahtumista";
+"Alert For Unofficial Events"="Hälytä kanssaristeilijöiden järjestämistä tapahtumista";
 
-"Special Event"="muihin tapahtumiin";
-"Meet and Greet"="Meet and Greets";
-"Clinic"="Klinikoille";
-"Listening Party"="levyjen ennakkokuunteluihin";
-"Unofficial Events"="Cruiser järjestetty";
+"Special Event"="Erikoistapahtuma";
+"Meet and Greet"="Artistitapaaminen";
+"Clinic"="Klinikka";
+"Listening Party"="Levyn kuuntelutapahtuma";
+"Unofficial Events"="Kanssaristeilijöiden järjestämä tapahtuma";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
 
-"LastYearsFeatureExplication"="'Käytä viime vuoden tietoja'-valinta näyttää viime vuoden aikataulut, mutta sovittaa aikataulun kuluvan viikon torstaista sunnuntaihin. Tämä on tarkoitettu esittelyä ja aikataulun ominaisuuksien testaamista varten.";
+"LastYearsFeatureExplication"="'Käytä viime vuoden tietoja'-valinta lataa viime vuoden aikataulun ja simuloi kyseisen artistikattauksen, sovittaen sen tämän viikon torstaista sunnuntaihin. Tämä on tarkoitettu aikataulutusominaisuuksien esittelyä ja testausta varten.";
 
 "restarTitle" = "Vaatii uudelleenkäynnistyksen";
-"restartMessage" = "ÄLÄ TEE NÄIN LAIVALLA. VAATII INTERNET-YHTEYDEN. Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä. 70K Bändit suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot";
+"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.\nTämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot";
 
 
-"officialWebSiteLinkHelp" = "Otat sinut viralliselle sivustolle";
-"WikipediaLinkHelp" = "Etsitään Wikipediaa";
-"YouTubeLinkHelp" = "Hae YouTubesta virallisia videoita varten";
-"MetalArchiveLinkHelp" = "Metal-arkistojen etsiminen";
+"officialWebSiteLinkHelp" = "Ohjataan viralliselle sivustolle";
+"WikipediaLinkHelp" = "Etsitään Wikipediasta";
+"YouTubeLinkHelp" = "Etsitään virallisia videoita YouTubesta";
+"MetalArchiveLinkHelp" = "Etsitään Metal Archives-sivustolta";
 
 
-"PoolVenue" = "Pool";
+"PoolVenue" = "Allas";
 "TheaterVenue" = "Teatteri";
-"LoungeVenue" = "Aula";
+"LoungeVenue" = "Baari";
 "RinkVenue" = "Jäähalli";
 "OtherVenue" = "Muut";
 
-"venueFilterHeader" = "Näytä/Piilota Paikka";
-"showTypeFilterHeader" = "Näytä/Piilota Tapahtumatyyppi";
+"venueFilterHeader" = "Näytä/piilota paikka";
+"showTypeFilterHeader" = "Näytä/piilota tapahtumatyyppi";
 
-"showHideExpiredLabel" = "Näytä/Piilota Vanhentunut Tapahtumat";
-"hideExpiredEvents" = "Piilota Vanhentuneet Tapahtumat";
+"showHideExpiredLabel" = "Näytä/piilota vanhentuneet tapahtumat";
+"hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
 
 "AlertPreferences" = "Hälytysasetukset";
 
@@ -89,21 +91,22 @@
 "Next" = "Seuraava";
 "Previous" = "Edellinen";
 
-"NoteFontSize" = "Huomioi suuri fonttikoko";
+"NoteFontSize" = "Suuri fonttikoko";
 
 "ShareBandChoices" = "Jaa bändivalinnat";
-"ShareShowChoices" = "Jaa Show Choices";
+"ShareShowChoices" = "Jaa esitysvalinnat";
 
 "visitBands" = "Linkit";
 "country" = "Maa";
-"genre" = "Sukupuoli";
+"genre" = "Tyylilaji";
 
 
 "verifyCountry" = "Vahvista maasi";
 "correctCountryDescription" = "Korjaa maasi tarvittaessa";
-"confirmCountry" = "Vahvistaa";
-"correctCountry" = "Muuttaa";
+"confirmCountry" = "Vahvista";
+"correctCountry" = "Muuta";
 
-"waiting_for_data" = "Odotetaan tietojen latautumista, ole valmiustilassa....";
-"data_filter_issue" = "Kaikki tiedot suodatetaan pois. Poista suodattimet nähdäksesi tiedot";
+"waiting_for_data" = "Odotetaan tietojen latautumista, odota hetki....";
+"data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
+
 

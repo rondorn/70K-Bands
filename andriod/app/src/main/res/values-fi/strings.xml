@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Partially retranslated on 28th June 2023 and tweaked on 2nd July - this should be more natural to read. -Jussi -->
 <resources>
     <string name="app_name">70K Bands</string>
     <string name="might">Ehkä</string>
@@ -9,67 +10,67 @@
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
 
-    <string name="AlertOnMustSeeBands">Hälyttävät Kyllä ohjelmat</string>
-    <string name="AlertOnMightSeeBands">Hälyttävät Voi Olla ohjelmat</string>
+    <string name="AlertOnMustSeeBands">Hälytä Kyllä-listan yhtyeistä</string>
+    <string name="AlertOnMightSeeBands">Hälytä Ehkä-listan yhtyeistä</string>
 
-    <string name="OnlyAlertForShowsYouWillAttend">Vain hälytyksiä näytöille, joihin osallistut</string>
-    <string name="AlertForShowsAccordingToSelection">Hälytykset esityksistä suosikkien valinnan mukaan ja tässä näytössä näkyvät asetukse</string>
+    <string name="OnlyAlertForShowsYouWillAttend">Hälytä vain esityksistä, joihin aiot osallistua</string>
+    <string name="AlertForShowsAccordingToSelection">Hälytä esityksistä valitsemiesi suosikkien ja tämän sivun asetusten mukaan</string>
 
-    <string name="MinutesBeforeEventtoAlert">Ilmoita, ennen tapahtumaa (minuuttia)</string>
-    <string name="AlertForShows">Alert näytöksiin</string>
-    <string name="AlertForSpecialEvents">Hälytys muihin tapahtumiin</string>
-    <string name="AlertForUnoffical">Hälytys Cruiser järjestettyihin tapahtuman</string>
-    <string name="AlertForMeetingandGreetEvents">Hälytys \'Meet and Greet\' eille</string>
-    <string name="AlertForClinics">Hälytys klinikoille</string>
-    <string name="AlertForAlbumListeningEvents">Hälytys levyjen ennakkokuunteluihin</string>
+    <string name="MinutesBeforeEventtoAlert">Hälytä (minuuttia) ennen tapahtumaa</string>
+    <string name="AlertForShows">Hälytä esityksistä</string>
+    <string name="AlertForSpecialEvents">Hälytä erikoistapahtumista</string>
+    <string name="AlertForUnoffical">Hälytä kanssaristeilijöiden järjestämistä tapahtumista</string>
+    <string name="AlertForMeetingandGreetEvents">Hälytä artistitapaamisista</string>
+    <string name="AlertForClinics">Hälytä klinikoista</string>
+    <string name="AlertForAlbumListeningEvents">Hälytä levyjen kuuntelutapahtumista</string>
 
-    <string name="PoolVenue">Pool</string>
+    <string name="PoolVenue">Allas</string>
     <string name="TheaterVenue">Teatteri</string>
-    <string name="LoungeVenue">Aula</string>
+    <string name="LoungeVenue">Klubi</string>
     <string name="RinkVenue">Jäähalli</string>
     <string name="OtherVenue">Muut</string>
 
-    <string name="SpecialEvents">muihin tapahtumiin</string>
-    <string name="MeetAndGreet">Meeting and Greet</string>
-    <string name="ClinicEvents">Klinikoille</string>
-    <string name="AlbumListeningEvents">levyjen ennakkokuunteluihin</string>
-    <string name="unofficalEventLable">Cruiser järjestetty</string>
+    <string name="SpecialEvents">Erikoistapahtumat</string>
+    <string name="MeetAndGreet">Artistitapaamiset</string>
+    <string name="ClinicEvents">Klinikat</string>
+    <string name="AlbumListeningEvents">Levyjen kuuntelutapahtumat</string>
+    <string name="unofficalEventLable">Kanssaristeilijöiden järjestämät</string>
 
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
-    <string name="LastYearsFeatureExplication">Aktivointi \'Käytä Viime vuoden tiedot\' lataa näyttää aikataulut välillä viime vuonna, mutta käytä simuloitu to-su näyttää aikataulun käyttämällä nykyisen viikon. Tämä on tarkoitettu esittelyä ja testaus aikataulujen ominaisuuksia.</string>
+    <string name="LastYearsFeatureExplication">\'Käytä viime vuoden tietoja\'-valinta lataa viime vuoden aikataulun ja simuloi kyseisen artistikattauksen, sovittaen sen tämän viikon torstaista sunnuntaihin. Tämä on tarkoitettu aikataulutusominaisuuksien esittelyä ja testausta varten.</string>
     <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
 
-    <string name="restarTitle">uudelleenkäynnistykseen</string>
-    <string name="restartMessage">ÄLÄ TEE NÄIN ON CRUISE. Interent yhteyttä ei tarvita. Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot</string>
+    <string name="restarTitle">Uudelleenkäynnistys tarvitaan</string>
+    <string name="restartMessage">"ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.\nTämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 
-    <string name="importMessage">Tämä muutos edellyttää uudelleenkäynnistystä sovelluksen. 70K Bändit nyt lopettaa. Elvyttämään nähdä uudet tiedot</string>
+    <string name="importMessage">Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 
-    <string name="showAttendedFilterTrueHelp">Näytä vain tapahtumat, joihin ilmoitit osallistuessasi. Muita suodattimia ei sovelleta</string>
-    <string name="showAttendedFilterFalseHelp">Näytä yhtyeet ja näytöt suodattimien mukaan</string>
+    <string name="showAttendedFilterTrueHelp">Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä</string>
+    <string name="showAttendedFilterFalseHelp">Näytä yhtyeet ja esitykset suodattimien mukaan</string>
 
-    <string name="alertOnlyForShowWillAttend">Vain kuulustelu osallistuu tapahtumiin</string>
+    <string name="alertOnlyForShowWillAttend">Hälytä vain esityksistä, joihin aiot osallistua</string>
 
-    <string name="SortingChronologically">Lajittelu kronologisesti</string>
+    <string name="SortingChronologically">Lajittelu aikajärjestyksessä</string>
     <string name="SortingAlphabetically">Lajittelu aakkosjärjestyksessä</string>
 
-    <string name="AllOfEvent">Osallistuu kaikkiin tähän tapahtumaan</string>
-    <string name="PartOfEvent">Osallistuu osaan tästä tapahtumasta</string>
-    <string name="NoneOfEvent">En näe tätä tapahtumaa</string>
+    <string name="AllOfEvent">Osallistun koko tapahtumaan</string>
+    <string name="PartOfEvent">Osallistun osaan tapahtumasta</string>
+    <string name="NoneOfEvent">En tule osallistumaan tähän tapahtumaan</string>
 
-    <string name="venueFilterHeader">Näytä/Piilota Paikka</string>
-    <string name="showTypeFilterHeader">Näytä/Piilota Tapahtumatyyppi</string>
-    <string name="showHideExpiredLabel">Näytä/Piilota Vanhentunut Tapahtumat</string>
-    <string name="hideExpiredEvents">Piilota Vanhentuneet Tapahtumat</string>
+    <string name="venueFilterHeader">Näytä/piilota paikka</string>
+    <string name="showTypeFilterHeader">Näytä/piilota tapahtumatyyppi</string>
+    <string name="showHideExpiredLabel">Näytä/piilota vanhentuneet tapahtumat</string>
+    <string name="hideExpiredEvents">Piilota vanhentuneet tapahtumat</string>
 
     <string name="AlertPreferences">Hälytysasetukset</string>
 
-    <string name="officialWebSiteLinkHelp">Otat sinut viralliselle sivustolle</string>
-    <string name="WikipediaLinkHelp">Etsitään Wikipediaa</string>
-    <string name="YouTubeLinkHelp">Hae YouTubesta virallisia videoita varten</string>
-    <string name="MetalArchiveLinkHelp">Metal-arkistojen etsiminen</string>
+    <string name="officialWebSiteLinkHelp">Ohjataan viralliselle sivustolle</string>
+    <string name="WikipediaLinkHelp">Etsitään Wikipediasta</string>
+    <string name="YouTubeLinkHelp">Etsitään virallisia videoita YouTubesta</string>
+    <string name="MetalArchiveLinkHelp">Etsitään Metal Archives-sivustolta</string>
 
-    <string name="PromptForAttendedStatus">Kysy vierailijan tilalle</string>
-    <string name="GoToDetails">Siirry yksityiskohtiin</string>
+    <string name="PromptForAttendedStatus">Kysy osallistumisesta</string>
+    <string name="GoToDetails">Siirry lisätietoihin</string>
 
     <string name="disableAttendedPrompt">Poista tämä kehote käytöstä</string>
 
@@ -80,18 +81,18 @@
 
     <string name="ImportDataBackup">Tuo tietojen varmuuskopio</string>
     <string name="ShareTitle">Mitä haluat jakaa?</string>
-    <string name="ShareBandChoices">Jaa bändivalinnat</string>
-    <string name="ShareShowChoices">Jaa Show Choices</string>
+    <string name="ShareBandChoices">Jaa yhtyevalinnat</string>
+    <string name="ShareShowChoices">Jaa esitysvalinnat</string>
     <string name="ExportUserData">Vie käyttäjätiedot</string>
 
     <string name="visitBands">Linkit</string>
     <string name="country">Maa</string>
-    <string name="genre">Sukupuoli</string>
+    <string name="genre">Tyylilaji</string>
 
     <string name="verify_country">Vahvista maasi</string>
     <string name="correct_if_needed">Korjaa maasi tarvittaessa</string>
-    <string name="country_invalid">Maa-arvoa ei tunnisteta kelvolliseksi</string>
+    <string name="country_invalid">Maata ei tunnistettu</string>
 
-    <string name="waiting_for_data">Odotetaan tietojen latautumista, ole valmiustilassa....</string>
-    <string name="data_filter_issue">Kaikki tiedot suodatetaan pois. Poista suodattimet nähdäksesi tiedot</string>
+    <string name="waiting_for_data">Ladataan tietoja, odota hetki....</string>
+    <string name="data_filter_issue">Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja</string>
 </resources>
