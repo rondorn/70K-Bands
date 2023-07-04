@@ -7,7 +7,7 @@
  
  Translation provided by Memnoch, thank you kind sir!
  
- Partially retranslated on 20230628 - this should be more natural to read. -Jussi
+ Partially retranslated on 28th June 2023 and tweaked on 2nd July - this should be more natural to read. -Jussi
 */
 
 "Must"="Kyllä";
@@ -28,10 +28,10 @@
 "Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
 
 "All Of Event"="Osallistun koko tapahtumaan";
-"Part Of Event"="Osallistun osaan tästä tapahtumasta";
+"Part Of Event"="Osallistun osaan tapahtumasta";
 "None Of Event"="En tule osallistumaan tähän tapahtumaan";
 
-"Prompt For Attended Status"="Osallistumiskysely";
+"Prompt For Attended Status"="Kysy osallistumisesta";
 "Go To Details"="Siirry lisätietoihin";
 
 "Only alert for shows you will attend"="Hälytä vain esityksistä, joihin aiot osallistua";
@@ -40,7 +40,7 @@
 "ShowHideEvents"="Näytä/piilota vanhentunut";
 "HideExpiredEvents"="Piilota vanhentuneet tapahtumat";
 
-"Minutes Before Event to Alert"="Hälytä ennen tapahtumaa (minuuttia)";
+"Minutes Before Event to Alert"="Hälytä (minuuttia) ennen tapahtumaa";
 "Alert For Shows"="Hälytä esityksistä";
 "Alert For Special Events"="Hälytä erikoistapahtumista";
 "Alert For Meeting and Greet Events"="Hälytä artistitapaamisista";
@@ -49,11 +49,11 @@
 "Alert For Album Listening Events"="Hälytä levyjen kuuntelutapahtumista";
 "Alert For Unofficial Events"="Hälytä kanssaristeilijöiden järjestämistä tapahtumista";
 
-"Special Event"="Erikoistapahtuma";
-"Meet and Greet"="Artistitapaaminen";
-"Clinic"="Klinikka";
-"Listening Party"="Levyn kuuntelutapahtuma";
-"Unofficial Events"="Kanssaristeilijöiden järjestämä tapahtuma";
+"Special Event"="Erikoistapahtumat";
+"Meet and Greet"="Artistitapaamiset";
+"Clinic"="Klinikat";
+"Listening Party"="Levyn kuuntelutapahtumat";
+"Unofficial Events"="Kanssaristeilijöiden järjestämät tapahtumat";
 
 //"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
@@ -72,7 +72,7 @@
 
 "PoolVenue" = "Allas";
 "TheaterVenue" = "Teatteri";
-"LoungeVenue" = "Baari";
+"LoungeVenue" = "Klubi";
 "RinkVenue" = "Jäähalli";
 "OtherVenue" = "Muut";
 
@@ -106,7 +106,6 @@
 "confirmCountry" = "Vahvista";
 "correctCountry" = "Muuta";
 
-"waiting_for_data" = "Odotetaan tietojen latautumista, odota hetki....";
+"waiting_for_data" = "Ladataan tietoja, odota hetki....";
 "data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
-
 
