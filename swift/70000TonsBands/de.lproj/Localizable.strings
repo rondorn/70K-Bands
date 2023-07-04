@@ -1,85 +1,86 @@
-/* 
+
+/*
   LocalizationStrings.strings
   70K Bands
 
   Created by Ron Dorn on 7/18/15.
   Copyright (c) 2015 Ron Dorn. All rights reserved.
  
-  Translation provided by Tobias Bauer. Thank you kind sir!
+  Translation provided by Tobias Bauer, Günter Vogel, Stefan Keseling.
 */
 
 
-"Must"="Ja";
-"Might"="Vielleicht";
+"Must"="Muss";
+"Might"="Kann";
 "Wont"="Nein";
-"Unknown" = "Unbekannte";
+"Unknown" = "Unbekannt";
 
 "Ok"="Ja";
-"Cancel"="Nein";
+"Cancel"="Abbrechen";
 
-"Alert On Must See Bands"="Alarm für 'Ja' Bands";
-"Alert On Might See Bands"="Alarm für 'Vielleicht' Bands";
-"Alert Only for Will Attend Events"="Warnung nur für Ereignisse";
+"Alert On Must See Bands"="Alarm für 'Muss'-Bands";
+"Alert On Might See Bands"="Alarm für 'Kann'-Bands";
+"Alert Only for Will Attend Events"="Alarm nur für zugesagte Events";
 
-"Only alert for shows you will attend"="Nur Benachrichtigungen für Shows, an denen Sie teilnehmen werden";
-"Alert for shows according to your favorites selection"="Alarm für Sendungen entsprechend Ihrer Favoritenauswahl und den auf diesem Bildschirm angezeigten Einstellungen";
+"Only alert for shows you will attend"="Alarm nur für zugesagte Shows ";
+"Alert for shows according to your favorites selection"="Alarm für Shows nach deiner Favoritenauswahl";
 
 "showAttendedFilterTrueHelp"="Zeige nur Ereignisse an, an denen du teilnimmst. Andere Filter werden nicht angewendet";
-"showAttendedFilterFalseHelp"="Zeigen Sie Bands und Shows nach Filtern";
+"showAttendedFilterFalseHelp"="Zeige Bands und Shows nach Filtern";
 
-"ShowHideEvents"="Show/Ausgelaufen Ausblenden";
-"HideExpiredEvents"="Abgelaufene Ereignisse Ausblenden";
+"ShowHideEvents"="Ereignisse einblenden/ausblenden";
+"HideExpiredEvents"="Abgelaufene Ereignisse ausblenden";
 
 "Sorting Chronologically"="Chronologisch sortieren";
 "Sorting Alphabetically"="Alphabetisch sortieren";
 
-"All Of Event"="An diesem Event teilnehmen";
-"Part Of Event"="Teilnehmen an dieser Veranstaltung";
-"None Of Event"="Ich werde dieses Ereignis nicht sehen";
+"All Of Event"="Komplette Teilnahme";
+"Part Of Event"="Teilweise Teilnahme";
+"None Of Event"="Keine Teilnahme";
 
-"Prompt For Attended Status"="Aufforderung zur Teilnahme am Status";
+"Prompt For Attended Status"="Aufforderung zur Eingabe der Teilnahme ";
 "Go To Details"="Gehe zu Details";
 
-"Minutes Before Event to Alert"="Alarm X minuten vor Event";
+"Minutes Before Event to Alert"="Alarm X Minuten vor Event";
 "Alert For Shows"="Alarm für Shows";
-"Alert For Special Events"="Alarm für 'Special Events'";
-"Alert For Meeting and Greet Events"="Alarm für 'Meet and Greet'";
-"Alert For Clinics"="Alarm für Kliniken";
-"Alert For Album Listening Events"="Alarm für 'Album Listening Events'";
-"Alert For Unofficial Events"="Alert für Cruiser organisierte Veranstaltungen";
+"Alert For Special Events"="Alarm für Special-Events";
+"Alert For Meeting and Greet Events"="Alarm für Meet and Greet";
+"Alert For Clinics"="Alarm für Kurzworkshop ";
+"Alert For Album Listening Events"="Alarm für Album-Vorstellungen";
+"Alert For Unofficial Events"="Alarm für Cruiser-organisierte Veranstaltungen";
 
-"Special Event"="Special Events";
-"Meet and Greet"="Meet and Greet Events";
-"Clinic"="Kliniken";
-"Listening Party"="Album Listening Events";
-"Unofficial Events"="Cruiser organisiert";
-
-//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+"Special Event"="Besondere Events";
+"Meet and Greet"="Meet and Greet";
+"Clinic"="Kurzworkshop";
+"Listening Party"="Album-Vorstellung";
+"Unofficial Events"="Cruiser-organisiert";
 
 
-"Use Last Years Data"="Daten des letzten Jahres verwenden";
+"Use Last Years Data"="Vorjährige Daten verwenden";
 
-"LastYearsFeatureExplication"="Das Aktivieren von 'Daten des letzten Jahres verwenden' lädt die Daten des letzten Jahres und wird dann anhand der aktuellen Woche eine simulierte Running Order der Shows für Donnerstag bis Sonntag erstellen. Dieses dient dazu, die Funktionalität  der Zeitplanung zu demonstrieren und zu testen. ";
+"LastYearsFeatureExplication"="Das Aktivieren von ‚vorjährige Daten verwenden' lädt die Daten des letzten Jahres und erstellt dann anhand der aktuellen Woche eine simulierte Running Order der Shows für Montag bis Donnerstag. So kann man die Funktionalität der Zeitplanung demonstrieren und testen.";
 
 "restarTitle" = "Neustart erforderlich";
-"restartMessage"  = "NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.";
+"restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. \n App neu starten, um die neuen Daten zu sehen.";
 
-"officialWebSiteLinkHelp" = "Weiterleitung zur offiziellen Website";
-"WikipediaLinkHelp" = "Wikipedia durchsuchen";
-"YouTubeLinkHelp" = "YouTube nach offiziellen Videos durchsuchen";
-"MetalArchiveLinkHelp" = "Durchsuchen von Metal-Archiven";
+"officialWebSiteLinkHelp" = "Weiterleitung zur Band-Website";
+"WikipediaLinkHelp" = "Band auf Wikipedia";
+"YouTubeLinkHelp" = "Band auf YouTube";
+"MetalArchiveLinkHelp" = "Band in Metal-Archives";
 
-"PoolVenue" = "Schwimmbad";
-"TheaterVenue" = "Theater";
-"LoungeVenue" = "Salon";
-"RinkVenue" = "Eisbahn";
-"OtherVenue" = "Andere";
+"venueFilterHeader" = "Ort anzeigen/ausblenden";
+"PoolVenue" = "Poolbühne";
+"TheaterVenue" = "Theatre";
+"LoungeVenue" = "Lounge";
+"RinkVenue" = "Eishalle";
+"OtherVenue" = "Anderer Ort";
 
-"venueFilterHeader" = "Anzeigen/Ausblenden Tagungsort";
-"showTypeFilterHeader" = "Anzeigen/Ausblenden Ereignistyp";
+"showTypeFilterHeader" = "Ereignistyp anzeigen/ausblenden";
+"showHideExpiredLabel" = "Vergangene Ereignisse anzeigen/ausblenden";
+"hideExpiredEvents" = "Vergangene Ereignisse ausblenden";
 
-"showHideExpiredLabel" = "Anzeigen/Ausblenden Abgelaufene Ereignisse";
-"hideExpiredEvents" = "Ausblenden Abgelaufene Ereignissen";
+
+
 
 "AlertPreferences" = "Benachrichtigungseinstellungen";
 
@@ -88,9 +89,9 @@
 "EndofList" = "Ende der Liste";
 "AlreadyAtStart" = "Bereits am Anfang der Liste";
 "Next" = "Nächster";
-"Previous" = "Bisherige";
+"Previous" = "Vorheriger";
 
-"NoteFontSize" = "Beachten Sie die große Schriftgröße";
+"NoteFontSize" = "Große Schrift verwenden";
 
 "ShareBandChoices" = "Bandauswahl teilen";
 "ShareShowChoices" = "Showauswahl teilen";
@@ -102,7 +103,7 @@
 "verifyCountry" = "Bestätigen Sie Ihr Land";
 "correctCountryDescription" = "Korrigieren Sie bei Bedarf Ihr Land";
 "confirmCountry" = "Bestätigen";
-"correctCountry" = "Veränderung";
+"correctCountry" = "Korrigieren";
 
-"waiting_for_data" = "Warten auf das Laden der Daten, bitte Standby....";
-"data_filter_issue" = "Alle Daten werden herausgefiltert, bitte entfernen Sie die Filter, um die Daten anzuzeigen";
+"waiting_for_data" = "Warten auf das Laden der Daten, bitte etwas Geduld ....";
+"data_filter_issue" = "Filter liefern keine Daten; bitte Filter entfernen, um Daten anzuzeigen";
