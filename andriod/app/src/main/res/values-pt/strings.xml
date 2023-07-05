@@ -1,98 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">70K Bands</string>
-    <string name="might">Noite</string>
+    <string name="might">Pode ser</string>
     <string name="must">Obrigatório</string>
     <string name="wont">Não</string>
     <string name="unknown">Desconhecido</string>
 
-    <string name="Ok">Sim</string>
-    <string name="Cancel">Não</string>
+    <string name="Ok">Ok</string>
+    <string name="Cancel">Cancelar</string>
 
-    <string name="AlertOnMustSeeBands">Alerta para Shows Obrigatórios</string>
-    <string name="AlertOnMightSeeBands">Alerta para Shows Possíveis</string>
+    <string name="AlertOnMustSeeBands">Alerta de Shows Obrigatórios</string>
+    <string name="AlertOnMightSeeBands">Alerta de Shows Interessantes</string>
 
-    <string name="OnlyAlertForShowsYouWillAttend">Apenas alerta para shows que você vai participar</string>
+    <string name="OnlyAlertForShowsYouWillAttend">Alerta apenas para shows que você irá assistir</string>
     <string name="AlertForShowsAccordingToSelection">Alerta para shows de acordo com sua seleção de favoritos e as configurações indicadas nesta tela</string>
 
-
-    <string name="MinutesBeforeEventtoAlert">Alertar-me antes do evento (minutos)</string>
-    <string name="AlertForShows">Alerta para shows</string>
+    <string name="MinutesBeforeEventtoAlert">Alerta Minutos Antes do Evento</string>
+    <string name="AlertForShows">Alerta Para Shows</string>
     <string name="AlertForSpecialEvents">Alerta para eventos especiais</string>
-    <string name="AlertForUnoffical">Alerta para cruzador järjestettyihin tapahtumiin</string>
-    <string name="AlertForMeetingandGreetEvents">Alerta para Eventos com Artistas</string>
-    <string name="AlertForClinics">Alerta para clínicas</string>
-    <string name="AlertForAlbumListeningEvents">Alerta para Eventos de Audição de Álbuns</string>
+    <string name="AlertForUnoffical">Alerta Para Eventos Organizados por Tripulantes</string>
+    <string name="AlertForMeetingandGreetEvents">Alerta para eventos Meeting and Greet</string>
+    <string name="AlertForClinics">Alerta Para Clínicas</string>
+    <string name="AlertForAlbumListeningEvents">Alerta Para Eventos de Audição do Álbum</string>
 
     <string name="PoolVenue">Piscina</string>
     <string name="TheaterVenue">Teatro</string>
     <string name="LoungeVenue">Salão</string>
-    <string name="RinkVenue">Pista de Gelo</string>
-    <string name="OtherVenue">De Outros</string>
+    <string name="RinkVenue">Pista</string>
+    <string name="OtherVenue">Outros</string>
 
     <string name="SpecialEvents">Eventos Especiais</string>
-    <string name="MeetAndGreet">Eventos com Artistas</string>
+    <string name="MeetAndGreet">Meeting and Greet</string>
     <string name="ClinicEvents">Clínicas</string>
-    <string name="AlbumListeningEvents">Eventos de Audição de Álbuns</string>
-    <string name="unofficalEventLable">Cruzador Organizado</string>
+    <string name="AlbumListeningEvents">Listening Party</string>
+    <string name="unofficalEventLable">Organizado pelos Tripulantes</string>
 
-    <string name="UseLastYearsData">Use as informações do ano passado</string>
-    <string name="LastYearsFeatureExplication">Ativando \'Use Informação dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>
+    <string name="UseLastYearsData">Use as Informações dos Últimos Anos</string>
+    <string name="LastYearsFeatureExplication">Ativando \'Usar Dados dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>
     <string name="AdvancedPreferences">Preferência Avançada\nNão modifique a menos que você saiba o que está fazendo!</string>
 
     <string name="restarTitle">Necessário Reiniciar</string>
-    <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. CONEXÃO DE INTERNET NECESSÁRIA.\nEssa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados</string>
+    <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.\nEssa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados</string>
 
-    <string name="importMessage">Essa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados</string>
+    <string name="importMessage">Essa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados</string>
 
     <string name="showAttendedFilterTrueHelp">Apenas mostre os eventos que você indicou que você irá participar. Outros filtros não serão aplicados</string>
-    <string name="showAttendedFilterFalseHelp">Mostrar bandas e shows de acordo com filtros</string>
+    <string name="showAttendedFilterFalseHelp">Mostrar bandas e shows de acordo com os filtros</string>
 
-    <string name="alertOnlyForShowWillAttend">Alerta somente para Will Attend Events</string>
+    <string name="alertOnlyForShowWillAttend">Alerta apenas para shows que você irá assistir</string>
 
-    <string name="SortingChronologically">Classificando Cronologicamente</string>
-    <string name="SortingAlphabetically">Classificando Alfabeticamente</string>
+    <string name="SortingChronologically">Ordenando Cronologicamente</string>
+    <string name="SortingAlphabetically">Ordenando Alfabeticamente</string>
 
-    <string name="AllOfEvent">Atendendo a todo este evento</string>
-    <string name="PartOfEvent">Assistindo alguns deste evento</string>
+    <string name="AllOfEvent">Participando de tudo deste evento</string>
+    <string name="PartOfEvent">Participando de alguns desde evento</string>
     <string name="NoneOfEvent">Eu não vou ver esse evento</string>
 
-    <string name="venueFilterHeader">Exposição/Ocultar Local</string>
-    <string name="showTypeFilterHeader">Exposição/Ocultar Tipo de Evento</string>
-    <string name="showHideExpiredLabel">Exposição/Ocultar Eventos Expirado</string>
+    <string name="venueFilterHeader">Mostrar/Ocultar Local</string>
+    <string name="showTypeFilterHeader">Mostrar/Ocultar Tipo de Evento</string>
+    <string name="showHideExpiredLabel">Mostrar/Ocultar Eventos Expirados</string>
     <string name="hideExpiredEvents">Ocultar Eventos Expirados</string>
 
     <string name="AlertPreferences">Preferências de Alerta</string>
 
-    <string name="officialWebSiteLinkHelp">Levando você para o site oficial</string>
+    <string name="officialWebSiteLinkHelp">Levando você para o Site Oficial</string>
     <string name="WikipediaLinkHelp">Pesquisando na Wikipedia</string>
     <string name="YouTubeLinkHelp">Pesquisando no YouTube por vídeos oficiais</string>
-    <string name="MetalArchiveLinkHelp">Pesquisando arquivos de metal</string>
+    <string name="MetalArchiveLinkHelp">Pesquisando na Metal Archives</string>
 
-    <string name="PromptForAttendedStatus">Solicitar status assistido</string>
-    <string name="GoToDetails">Ir para detalhes</string>
+    <string name="PromptForAttendedStatus">Aviso Para Status de Participantes</string>
+    <string name="GoToDetails">Ir Para Detalhes</string>
 
-    <string name="disableAttendedPrompt">Desativar este prompt</string>
+    <string name="disableAttendedPrompt">Desativar Este Aviso</string>
 
-    <string name="EndofList">Fim da lista</string>
-    <string name="AlreadyAtStart">Já no início da lista</string>
+    <string name="EndofList">Fim da Lista</string>
+    <string name="AlreadyAtStart">Já No Início da Lista</string>
     <string name="Next">Próximo</string>
     <string name="Previous">Anterior</string>
 
     <string name="ImportDataBackup">Importar backup de dados</string>
     <string name="ShareTitle">O que você quer compartilhar?</string>
-    <string name="ShareBandChoices">Compartilhar opções de banda</string>
-    <string name="ShareShowChoices">Compartilhar opções de exibição</string>
-    <string name="ExportUserData">Exportar dados do usuário</string>
+    <string name="ShareBandChoices">Compartilhar Opções de Banda</string>
+    <string name="ShareShowChoices">Compartilhar Opções de Shows</string>
+    <string name="ExportUserData">Exportar Dados do Usuário</string>
 
     <string name="visitBands">Links</string>
     <string name="country">País</string>
     <string name="genre">Gênero</string>
 
-    <string name="verify_country">Verifique seu país</string>
-    <string name="correct_if_needed">Corrija seu país se necessário</string>
+    <string name="verify_country">Verifique Seu País</string>
+    <string name="correct_if_needed">Corrija Seu País Se Necessário</string>
     <string name="country_invalid">O valor do país não é reconhecido como válido</string>
 
-    <string name="waiting_for_data">Aguardando o carregamento dos dados, aguarde....</string>
+    <string name="waiting_for_data">Aguardando o carregamento dos dados, por favor aguarde....</string>
     <string name="data_filter_issue">Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados</string>
 </resources>
