@@ -10,98 +10,95 @@
 
 
 "Must"="Obrigatório";
-"Might"="Noite";
+"Might"="Pode ser";
 "Wont"="Não";
 
-"Ok"="Sim";
-"Cancel"="Não";
+"Ok"="Ok";
+"Cancel"="Cancelar";
 
-"Alert On Must See Bands"="Alerta para Shows Obrigatórios";
-"Alert On Might See Bands"="Alerta para Shows Possíveis";
-"Alert Only for Will Attend Events"="Alerta somente para Will Attend Events";
+"Alert On Must See Bands"="Alerta de Shows Obrigatórios";
+"Alert On Might See Bands"="Alerta de Shows Interessantes";
+"Alert Only for Will Attend Events"="Alerta apenas para shows que você irá assistir";
 
-"showAttendedFilterTrueHelp"="Apenas mostre os eventos que você indicar que participará. Outros filtros não serão aplicados";
-"showAttendedFilterFalseHelp"="Mostrar bandas e shows de acordo com filtros";
+"showAttendedFilterTrueHelp"="Apenas mostre os eventos que você indicou que você irá participar. Outros filtros não serão aplicados";
+"showAttendedFilterFalseHelp"="Mostrar bandas e shows de acordo com os filtros";
 
-"Only alert for shows you will attend"="Apenas alerta para shows que você vai participar";
+"Only alert for shows you will attend"="Alerta apenas para shows que você irá assistir";
 "Alert for shows according to your favorites selection"="Alerta para shows de acordo com sua seleção de favoritos e as configurações indicadas nesta tela";
 
-"Sorting Chronologically"="Classificando Cronologicamente";
-"Sorting Alphabetically"="Classificando Alfabeticamente";
+"Sorting Chronologically"="Ordenando Cronologicamente";
+"Sorting Alphabetically"="Ordenando Alfabeticamente";
 
-"All Of Event"="Atendendo a todo este evento";
-"Part Of Event"="Assistindo alguns deste evento";
+"All Of Event"="Participando de tudo deste evento";
+"Part Of Event"="Participando de alguns desde evento";
 "None Of Event"="Eu não vou ver esse evento";
 
-"Prompt For Attended Status"="Solicitar status assistido";
-"Go To Details"="Ir para detalhes";
+"Prompt For Attended Status"="Aviso Para Status de Participantes";
+"Go To Details"="Ir Para Detalhes";
 
-"ShowHideEvents"="Mostrar/Ocultar Expirado";
+"ShowHideEvents"="Mostrar/Ocultar Eventos Expirados";
 "HideExpiredEvents"="Ocultar Eventos Expirados";
 
-"Minutes Before Event to Alert"="Alertar-me antes do evento (minutos)";
-"Alert For Shows"="Alerta para shows";
+"Minutes Before Event to Alert"="Alertar Minutos Antes do Evento";
+"Alert For Shows"="Alerta Para Shows";
 "Alert For Special Events"="Alerta para eventos especiais";
-"Alert For Meeting and Greet Events"="Alerta para Eventos com Artistas";
-"Alert For Clinics"="Alerta para clínicas";
-"Use Last Years Data"="Use as informações do ano passado";
+"Alert For Meeting and Greet Events"="Alerta para eventos Meeting and Greet";
+"Alert For Clinics"="Alerta Para Clínicas";
+"Use Last Years Data"="Use as Informações dos Últimos Anos";
 
-"Alert For Album Listening Events"="Alerta para Eventos de Audição de Álbuns";
-"Alert For Unofficial Events"="Alerta para cruzador järjestettyihin tapahtumiin";
+"Alert For Album Listening Events"="Alerta Para Eventos de Audição do Álbum";
+"Alert For Unofficial Events"="Alerta Para Eventos Organizados por Tripulantes";
 
 "Special Event"="Eventos Especiais";
-"Meet and Greet"="Eventos com Artistas";
+"Meet and Greet"="Meeting and Greet";
 "Clinic"="Clínicas";
-"Listening Party"="Eventos de Audição de Álbuns";
-"Unofficial Events"="Cruzador Organizado";
+"Listening Party"="Listening Party";
+"Unofficial Events"="Organizado pelos Tripulantes";
 
-"LastYearsFeatureExplication"="Ativando 'Use Informação dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
+"LastYearsFeatureExplication"="Ativando 'Use Dados dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
 
 "restarTitle" = "Necessário Reiniciar";
-"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. CONEXÃO DE INTERNET NECESSÁRIA.\nEssa mudança necessitae reiniciar o aplicativo.\n70K Bandas vai sair. Reinicie para ver novos dados ";
+"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.\nEssa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados ";
 
-
-"officialWebSiteLinkHelp" = "Levando você para o site oficial";
+"officialWebSiteLinkHelp" = "Levando você para o Site Oficial";
 "WikipediaLinkHelp" = "Pesquisando na Wikipedia";
 "YouTubeLinkHelp" = "Pesquisando no YouTube por vídeos oficiais";
-"MetalArchiveLinkHelp" = "Pesquisando arquivos de metal";
-
-
+"MetalArchiveLinkHelp" = "Pesquisando na Metal Archives";
 
 "PoolVenue" = "Piscina";
 "TheaterVenue" = "Teatro";
 "LoungeVenue" = "Salão";
-"RinkVenue" = "Pista de Gelo";
-"OtherVenue" = "De Outros";
+"RinkVenue" = "Pista";
+"OtherVenue" = "Outros";
 
-"venueFilterHeader" = "Exposição/Ocultar Local";
-"showTypeFilterHeader" = "Exposição/Ocultar Tipo de Evento";
+"venueFilterHeader" = "Mostrar/Ocultar Local";
+"showTypeFilterHeader" = "Mostrar/Ocultar Tipo de Evento";
 
-"showHideExpiredLabel" = "Exposição/Ocultar Eventos Expirado";
+"showHideExpiredLabel" = "Mostrar/Ocultar Eventos Expirados";
 "hideExpiredEvents" = "Ocultar Eventos Expirados";
 
 "AlertPreferences" = "Preferências de Alerta";
 
-"disableAttendedPrompt" = "Desativar este prompt";
+"disableAttendedPrompt" = "Desativar Este Aviso";
 
-"EndofList" = "Fim da lista";
-"AlreadyAtStart" = "Já no início da lista";
+"EndofList" = "Fim da Lista";
+"AlreadyAtStart" = "Já No Início da Lista";
 "Next" = "Próximo";
 "Previous" = "Anterior";
 
-"NoteFontSize" = "Observe o tamanho da fonte grande";
+"NoteFontSize" = "Observe o Tamanho Grande da Fonte";
 
-"ShareBandChoices" = "Compartilhar opções de banda";
-"ShareShowChoices" = "Compartilhar opções de exibição";
+"ShareBandChoices" = "Compartilhar Opções de Banda";
+"ShareShowChoices" = "Compartilhar Opções de Shows";
 
 "visitBands" = "Links";
 "country" = "País";
 "genre" = "Gênero";
 
-"verifyCountry" = "Verifique seu país";
-"correctCountryDescription" = "Corrija seu país se necessário";
-"confirmCountry" = "Confirme";
-"correctCountry" = "Mudar";
+"verifyCountry" = "Verifique Seu País";
+"correctCountryDescription" = "Corrija Seu País Se Necessário";
+"confirmCountry" = "Confirma";
+"correctCountry" = "Altera";
 
-"waiting_for_data" = "Aguardando o carregamento dos dados, aguarde....";
+"waiting_for_data" = "Aguardando o carregamento dos dados, por favor aguarde....";
 "data_filter_issue" = "Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados";
