@@ -148,6 +148,8 @@ public class staticVariables {
     public static String internetCheckCache = "Unknown";
     public static Long internetCheckCacheDate = 0L;
 
+    public static String userDataForCompareAndWriteBlock;
+
     public static String webHelpMessage = "";
 
     public static List<String> sortableBandNamesCache = new ArrayList<String>();

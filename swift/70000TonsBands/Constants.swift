@@ -263,7 +263,11 @@ func getPointerUrlData(keyValue: String) -> String {
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
         defaultStorageUrl = defaultStorageUrlTest
         inTestEnvironment = true;
+        
     }
+    #if targetEnvironment(simulator)
+        inTestEnvironment = true;
+    #endif
     
     //returned cached data when needed. Will only look up pointer data on launch as this
     //does not change very often during the year
