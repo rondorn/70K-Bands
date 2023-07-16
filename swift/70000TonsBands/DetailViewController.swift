@@ -795,6 +795,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     @IBAction func setBandPriority() {
         if (bandName != nil){
+            print ("Setting band priority  from Details")
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
             
             let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)

@@ -119,7 +119,7 @@ public class FireBaseBandDataWrite {
             Log.e("Save Data Error","on bandRankCacheFile.data " +  error.getMessage());
         }
 
-        Log.e("writing user data","Has changed is " + result.toString());
+        Log.e("writing band data","Has changed is " + result.toString());
 
         return result;
     }

@@ -4,10 +4,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import android.content.pm.PackageInfo;
+import android.os.AsyncTask;
+import android.os.StrictMode;
 import android.provider.Settings.Secure;
 import android.util.Log;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -56,11 +61,32 @@ public class FirebaseUserWrite {
             userData.put("70kVersion", version70k);
             userData.put("osVersion", android.os.Build.VERSION.SDK_INT);
 
+            DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+            Date today = new Date();
+            Date dateOnly = null;
+            try {
+                dateOnly = formatter.parse(formatter.format(today));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            String currentUserdata = country + '-' + language + '-' + version70k + dateOnly;
 
-            Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
+            if (currentUserdata.equals(staticVariables.userDataForCompareAndWriteBlock ) == true){
+                Log.d("FirebaseUserWrite", "NOT Writing user data " + userData.toString());
+            } else {
+                //get second to sleep trying to prevent an announcement from fillingup all available connections
+                int random_int = (int)Math.floor(Math.random() * (30000 - 5000 + 1) + 5000);
+                try {
+                    Log.d("FirebaseUserWrite", "Writing user data sleep for " + String.valueOf(random_int));
+                    Thread.sleep(random_int);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
 
-            mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
-            //FirebaseDatabase.getInstance().goOffline();
+                staticVariables.userDataForCompareAndWriteBlock = country + '-' + language + '-' + version70k + dateOnly;
+                Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
+                mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+            }
         }
     }
 
