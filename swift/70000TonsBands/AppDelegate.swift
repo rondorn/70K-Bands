@@ -110,9 +110,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         //generate user data
         print ("Firebase, calling ")
-        let userDataHandle = userDataHandler()
-        let userDataReportHandle = firebaseUserWrite()
-        userDataReportHandle.writeData()
+
 
         return true
     
@@ -357,6 +355,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        
+        let userDataHandle = userDataHandler()
+        let userDataReportHandle = firebaseUserWrite()
+        userDataReportHandle.writeData()
     }
     // [END connect_on_active]
         
@@ -394,8 +396,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         internetAvailble = isInternetAvailable();
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
         //NSLog("Writing Firebase data new userData")
-        let userDataHandle = firebaseUserWrite()
-        userDataHandle.writeData()
+        //let userDataHandle = firebaseUserWrite()
+        //userDataHandle.writeData()
         //NSLog("Writing Firebase data new Band Write")
         let bandWrite  = filebaseBandDataWrite();
         bandWrite.writeData();
@@ -425,6 +427,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+        
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {

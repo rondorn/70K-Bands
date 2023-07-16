@@ -217,6 +217,7 @@ public class showBands extends Activity {
         Log.d("startup", "show init start - 1");
 
         staticVariablesInitialize();
+
         this.getCountry();
         Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
@@ -277,12 +278,13 @@ public class showBands extends Activity {
 
         Log.d("startup", "show init start - 9");
 
-
-        FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
-        userDataWrite.writeData();
         BandInfo bandInfo = new BandInfo();
         bandInfo.DownloadBandFile();
         refreshData();
+
+        FirbaseAsyncUserWrite userDataWriteAsync = new FirbaseAsyncUserWrite();
+        userDataWriteAsync.execute();
+
         Log.d("startup", "show init start - 10");
 
     }
@@ -1133,12 +1135,8 @@ public class showBands extends Activity {
 
         super.onStop();
         inBackground = true;
-        FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
-        bandWrite.writeData();
-
-        FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
-        eventWrite.writeData();
-
+        FireBaseAsyncBandEventWrite backgroundTask = new FireBaseAsyncBandEventWrite();
+        backgroundTask.execute();
     }
 
     private void reloadData (){
@@ -1500,6 +1498,8 @@ public class showBands extends Activity {
         bandNamesList.setSelection(listPosition);
 
         Log.d(TAG, notificationTag + " In onResume - 8");
+
+
     }
 
     public void showClickChoices(final int position) {

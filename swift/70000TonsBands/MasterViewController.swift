@@ -108,6 +108,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
         }
         
+        
         refreshDisplayAfterWake();
         
         NotificationCenter.default.addObserver(self,
@@ -304,8 +305,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isLoadingBandData = false
         quickRefresh()
         refreshDisplayAfterWake();
-        let userDataHandle = firebaseUserWrite()
-        userDataHandle.writeData()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
