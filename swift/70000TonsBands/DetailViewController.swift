@@ -72,9 +72,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var backgroundNotesText = "";
     var bandName :String!
     var schedule = scheduleHandler()
+    let dataHandle = dataHandler()
     var bandNameHandle = bandNamesHandler()
     let attendedHandle = ShowsAttended()
-    let dataHandle = dataHandler()
     var bandPriorityStorage = [String:Int]()
     let bandNotes = CustomBandDescription();
     

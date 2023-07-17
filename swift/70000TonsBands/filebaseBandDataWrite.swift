@@ -16,7 +16,6 @@ class filebaseBandDataWrite {
     var bandCompareFile = directoryPath.appendingPathComponent( "bandCompare.data")
     
     var bandRank: [String : String] = [String : String]();
-    var dataHandle = dataHandler()
     
     init(){
         
@@ -24,52 +23,47 @@ class filebaseBandDataWrite {
         
     }
     
-    func writeData (){
-        
-        var usingSimulator = false;
-        #if targetEnvironment(simulator)
-            //usingSimulator = true;
-        #endif
-        if (inTestEnvironment == true){
-            usingSimulator = true;
-        }
-        
-        if (usingSimulator == false){
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-                if (uid.isEmpty == false){
-                    self.buildBandRankArray()
-                    
-                    if (self.checkIfDataHasChanged(bandRank: self.bandRank) == true){
-                        for bandName in self.bandRank.keys {
-                            
-                            let ranking = self.bandRank[bandName]
-                            
-                            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
-                                "bandName": bandName,
-                                "ranking": ranking!,
-                                "userID": uid,
-                                "year": String(eventYear)]){
-                                    (error:Error?, ref:DatabaseReference) in
-                                    if let error = error {
-                                        print("Writing firebase data could not be saved: \(error).")
-                                    } else {
-                                        print("Writing firebase data saved successfully!")
-                                    }
-                                }
-                        }
+    func writeSingleRecord(dataHandle: dataHandler, bandName: String, ranking: String){
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+            let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
+                "bandName": bandName,
+                "ranking": ranking,
+                "userID": uid,
+                "year": String(eventYear)]){
+                    (error:Error?, ref:DatabaseReference) in
+                    if let error = error {
+                        print("Writing firebase band data could not be saved: \(error).")
+                    } else {
+                        print("Writing firebase band data saved successfully \(bandName) - \(ranking)!")
                     }
                 }
-            }
-        } else {
-            if (usingSimulator == true){
-                //this is being done soley to prevent capturing garbage stats data within my app!
-                print ("Bypassed firebase band data writes due to being in simulator!!!")
-            }
+
         }
     }
     
-    func buildBandRankArray(){
+    func writeAllData (dataHandle: dataHandler){
+        
+        if inTestEnvironment == false {
+            dataHandle.getPriorityData()
+            let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+            if (uid.isEmpty == false){
+                self.buildBandRankArray(dataHandle: dataHandle)
+                
+                if (self.checkIfDataHasChanged(bandRank: self.bandRank) == true){
+                    for bandName in self.bandRank.keys {
+                        let ranking = self.bandRank[bandName]
+                        writeSingleRecord(dataHandle: dataHandle, bandName: bandName, ranking: ranking!)
+                    }
+                }
+            } else {
+                print("Not Writing firebase band data, nothing has changed")
+            }
+        
+        }
+    }
+    
+    func buildBandRankArray(dataHandle: dataHandler){
         
         let bandNameHandle = bandNamesHandler()
         
@@ -80,6 +74,18 @@ class filebaseBandDataWrite {
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
             bandRank[bandName] = rankingString;
+        }
+    }
+    
+    func updateBandCompare(bandRank:[String:String] ){
+        do {
+            if #available(iOS 11.0, *) {
+                let data = try NSKeyedArchiver.archivedData(withRootObject: bandRank, requiringSecureCoding: false)
+                try data.write(to: bandCompareFile)
+                
+            }
+        } catch {
+            print ("checkIfDataHasChanged - unable to write \(error)");
         }
     }
     
@@ -104,15 +110,7 @@ class filebaseBandDataWrite {
             }
         }
         
-        do {
-            if #available(iOS 11.0, *) {
-                let data = try NSKeyedArchiver.archivedData(withRootObject: bandRank, requiringSecureCoding: false)
-                try data.write(to: bandCompareFile)
-                
-            }
-        } catch {
-            print ("checkIfDataHasChanged - unable to write \(error)");
-        }
+        updateBandCompare(bandRank: bandRank)
         
         return result
     }

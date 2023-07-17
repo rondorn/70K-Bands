@@ -33,6 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     var bandPriorityStorage = [String:Int]()
     
     var bandDescriptions = CustomBandDescription()
+    var dataHandle = dataHandler()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
@@ -399,8 +400,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //let userDataHandle = firebaseUserWrite()
         //userDataHandle.writeData()
         //NSLog("Writing Firebase data new Band Write")
-        let bandWrite  = filebaseBandDataWrite();
-        bandWrite.writeData();
+        //let bandWrite  = filebaseBandDataWrite();
+        //bandWrite.writeData(dataHandle: dataHandle);
         //NSLog("Writing Firebase data new Show Write")
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
@@ -433,7 +434,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     @objc func iCloudKeysChanged(_ notification: Notification) {
         
         let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readCloudData()
+        iCloudHandle.readCloudData(dataHandle: dataHandle)
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

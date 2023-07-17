@@ -187,7 +187,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func getCountry(){
         
         //chooseCountry()
-        let dataHandle = dataHandler()
         do {
             userCountry = try String(contentsOf: countryFile, encoding: .utf8)
             print ("Using countryValue value of " + userCountry + " \(countryFile)")
@@ -484,7 +483,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 sleep(1);
             }
             refreshDataLock = true;
-            let dataHandle = dataHandler()
+
             var offline = true
 
             if Reachability.isConnectedToNetwork(){
@@ -521,7 +520,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bandsByName = self.bands
             
             let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readCloudData()
+            iCloudHandle.readCloudData(dataHandle: dataHandle)
             
             
             DispatchQueue.main.async{
@@ -825,7 +824,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let dataHandle = dataHandler()
         let attendedHandle = ShowsAttended()
         
         let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
@@ -863,7 +861,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 1);
+            self.dataHandle.addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
             isLoadingBandData = false
             self.quickRefresh()
@@ -877,7 +875,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 2);
+            self.dataHandle.addPriorityData(bandName, priority: 2);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -889,7 +887,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 3);
+            self.dataHandle.addPriorityData(bandName, priority: 3);
             isLoadingBandData = false
             self.quickRefresh()
             
@@ -901,7 +899,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            dataHandle.addPriorityData(bandName, priority: 0);
+            self.dataHandle.addPriorityData(bandName, priority: 0);
             isLoadingBandData = false
             self.quickRefresh()
             
