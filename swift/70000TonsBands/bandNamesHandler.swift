@@ -12,7 +12,6 @@ open class bandNamesHandler {
 
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
-    let dataHandle = dataHandler()
     
     init(){
         print ("Loading bandName Data")
