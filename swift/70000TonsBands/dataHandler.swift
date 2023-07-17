@@ -23,7 +23,7 @@ class dataHandler {
     func getCachedData(){
     
         print ("Loading priority Data cache")
-
+        
         staticData.sync() {
             if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
                 print ("Loading bandPriorityStorage from Data cache")
@@ -159,7 +159,7 @@ class dataHandler {
     func addPriorityData (_ bandname:String, priority: Int){
         
         bandPriorityStorage[bandname] = priority
-        
+
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
@@ -169,7 +169,9 @@ class dataHandler {
         }
         
         writeFile()
-        iCloudHandle.writeiCloudPriorityData(dataHandle: self)
+        let firebaseBandData = filebaseBandDataWrite()
+        firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: String(priority))
+        iCloudHandle.writeiCloudPriorityData(bandPriorityStorage: bandPriorityStorage)
     }
 
     func getPriorityData (_ bandname:String) -> Int {
