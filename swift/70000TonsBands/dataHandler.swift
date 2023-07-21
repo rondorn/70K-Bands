@@ -158,6 +158,7 @@ class dataHandler {
 
     func addPriorityData (_ bandname:String, priority: Int){
         
+        print ("addPriorityData for \(bandname) = \(priority)")
         bandPriorityStorage[bandname] = priority
 
         staticData.async(flags: .barrier) {
@@ -170,8 +171,10 @@ class dataHandler {
         
         writeFile()
         let firebaseBandData = filebaseBandDataWrite()
-        firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: String(priority))
+        let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
+        firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
         iCloudHandle.writeiCloudPriorityData(bandPriorityStorage: bandPriorityStorage)
+
     }
 
     func getPriorityData (_ bandname:String) -> Int {

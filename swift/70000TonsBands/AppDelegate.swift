@@ -395,14 +395,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func reportData(){
         
         internetAvailble = isInternetAvailable();
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        //NSLog("Writing Firebase data new userData")
-        //let userDataHandle = firebaseUserWrite()
-        //userDataHandle.writeData()
-        //NSLog("Writing Firebase data new Band Write")
-        //let bandWrite  = filebaseBandDataWrite();
-        //bandWrite.writeData(dataHandle: dataHandle);
-        //NSLog("Writing Firebase data new Show Write")
+        let bandWrite  = filebaseBandDataWrite();
+        bandWrite.writeData(dataHandle: dataHandle);
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
     }
