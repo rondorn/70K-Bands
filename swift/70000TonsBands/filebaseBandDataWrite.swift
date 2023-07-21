@@ -13,9 +13,10 @@ import Firebase
 class filebaseBandDataWrite {
     
     var ref: DatabaseReference!
-    var bandCompareFile = directoryPath.appendingPathComponent( "bandCompare.data")
-    
+    var bandCompareFile = "bandCompare.data"
+    var firebaseBandAttendedArray = [String : String]();
     var bandRank: [String : String] = [String : String]();
+    let variableStoreHandle = variableStore();
     
     init(){
         
@@ -23,8 +24,25 @@ class filebaseBandDataWrite {
         
     }
     
+    
+    func loadCompareFile()->[String:String]{
+        do {
+            print ("Staring loadedData")
+            firebaseBandAttendedArray = variableStoreHandle.readDataFromDisk(fileName: bandCompareFile) ?? [String : String]()
+            print ("Finished loadedData \(firebaseBandAttendedArray)")
+        } catch {
+            print("Couldn't read file.")
+        }
+        
+        return firebaseBandAttendedArray
+    }
+    
     func writeSingleRecord(dataHandle: dataHandler, bandName: String, ranking: String){
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+            
+            self.firebaseBandAttendedArray = self.loadCompareFile()
+            
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
                 "bandName": bandName,
@@ -36,25 +54,35 @@ class filebaseBandDataWrite {
                         print("Writing firebase band data could not be saved: \(error).")
                     } else {
                         print("Writing firebase band data saved successfully \(bandName) - \(ranking)!")
+                        
+                        self.firebaseBandAttendedArray[bandName] = ranking
+                        self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
+
                     }
                 }
 
         }
     }
     
-    func writeAllData (dataHandle: dataHandler){
+    func writeData (dataHandle: dataHandler){
         
         if inTestEnvironment == false {
-            dataHandle.getPriorityData()
+            dataHandle.refreshData()
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+            firebaseBandAttendedArray = self.loadCompareFile()
+            print ("bandDataReport - Loading firebaseBandAttendedArray \(firebaseBandAttendedArray)")
             if (uid.isEmpty == false){
                 self.buildBandRankArray(dataHandle: dataHandle)
-                
-                if (self.checkIfDataHasChanged(bandRank: self.bandRank) == true){
-                    for bandName in self.bandRank.keys {
-                        let ranking = self.bandRank[bandName]
-                        writeSingleRecord(dataHandle: dataHandle, bandName: bandName, ranking: ranking!)
+                for bandName in self.bandRank.keys {
+                    
+                    let rankingInteger = dataHandle.getPriorityData(bandName)
+                    let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
+                    print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
+                    if firebaseBandAttendedArray[bandName] != ranking {
+                        print ("bandDataReport - fixing record for \(bandName)")
+                        writeSingleRecord(dataHandle: dataHandle, bandName: bandName, ranking: ranking)
                     }
+                    
                 }
             } else {
                 print("Not Writing firebase band data, nothing has changed")
@@ -77,41 +105,5 @@ class filebaseBandDataWrite {
         }
     }
     
-    func updateBandCompare(bandRank:[String:String] ){
-        do {
-            if #available(iOS 11.0, *) {
-                let data = try NSKeyedArchiver.archivedData(withRootObject: bandRank, requiringSecureCoding: false)
-                try data.write(to: bandCompareFile)
-                
-            }
-        } catch {
-            print ("checkIfDataHasChanged - unable to write \(error)");
-        }
-    }
     
-    func checkIfDataHasChanged(bandRank:[String:String] )->Bool{
-        
-        var result = true
-        
-        var bandRankCache: [String : String] = [String : String]();
-        
-        do {
-            if (try bandCompareFile.checkResourceIsReachable() == true){
-                bandRankCache =  try (NSKeyedUnarchiver.unarchiveObject(withFile: bandCompareFile.path) as? [String:String])!
-                
-            }
-        } catch {
-            print ("checkIfDataHasChanged - unable to read \(error)");
-        }
-        
-        if (bandRankCache.count >= 1){
-            if (bandRankCache == bandRank){
-                result = false;
-            }
-        }
-        
-        updateBandCompare(bandRank: bandRank)
-        
-        return result
-    }
 }

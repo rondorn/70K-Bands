@@ -12,7 +12,7 @@ open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
     var showsAttendedArray = [String : String]();
-
+    
     init(){
         print ("Loading shows attended data")
         getCachedData()
@@ -178,6 +178,9 @@ open class ShowsAttended {
         
         print ("addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
         showsAttendedArray[index] = status
+        
+        let firebaseEventWrite = firebaseEventDataWrite();
+        firebaseEventWrite.writeEvent(index: index, status: status)
         
         staticAttended.async(flags: .barrier) {
             cacheVariables.attendedStaticCache[index] = status
