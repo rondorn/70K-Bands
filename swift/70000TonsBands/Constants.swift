@@ -388,6 +388,37 @@ func setupDefaults() {
     didVersionChangeFunction();
 }
 
+func setupCurrentYearUrls() {
+    
+    let filePath = defaultUrlConverFlagUrl.path
+    if(FileManager.default.fileExists(atPath: filePath)){
+        print ("setupCurrentYearUrls: Followup run of setupCurrentYearUrls routine")
+        artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? defaultPrefsValue
+        scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? defaultPrefsValue
+    } else {
+        print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine")
+       artistUrlDefault = defaultPrefsValue
+       scheduleUrlDefault = defaultPrefsValue
+       let flag = ""
+        do {
+            try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
+        }
+        catch {print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine Failed!")}
+    }
+    
+    print ("setupCurrentYearUrls: artistUrlDefault \(artistUrlDefault) - \(defaultPrefsValue)")
+    if (artistUrlDefault == defaultPrefsValue){
+        UserDefaults.standard.set(defaultPrefsValue, forKey: "artistUrl")
+    }
+    
+    print ("setupCurrentYearUrls: scheduleUrlDefault \(scheduleUrlDefault) - \(defaultPrefsValue)")
+    if (scheduleUrlDefault == defaultPrefsValue){
+        UserDefaults.standard.set(defaultPrefsValue, forKey: "scheduleUrl")
+    }
+    print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
+    
+}
+
 func didVersionChangeFunction(){
 
     var oldVersion = ""

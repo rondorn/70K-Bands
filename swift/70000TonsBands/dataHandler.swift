@@ -176,7 +176,12 @@ class dataHandler {
         iCloudHandle.writeiCloudPriorityData(bandPriorityStorage: bandPriorityStorage)
 
     }
-
+    
+    func clearCachedData(){
+        staticData.async(flags: .barrier) {
+            cacheVariables.bandPriorityStorageCache = [String:Int]()
+        }
+    }
     func getPriorityData (_ bandname:String) -> Int {
         
         var priority = 0
