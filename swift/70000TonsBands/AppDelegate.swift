@@ -64,43 +64,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         setupCurrentYearUrls()
         
         setupDefaults()
-        
-        // [END register_for_notifications]
-       //FirebaseApp.configure()
-               
-       // [START set_messaging_delegate]
+
        Messaging.messaging().delegate = self
-       //Messaging.messaging().remoteMessageDelegate = self
-       // [END set_messaging_delegate]
-       
-       // Register for remote notifications. This shows a permission dialog on first run, to
-       // show the dialog at a more appropriate time move this registration accordingly.
-       // [START register_for_notifications]
-       //if #available(iOS 10.0, *) {
-          // For iOS 10 display notification (sent via APNS)
+
         UNUserNotificationCenter.current().delegate = self
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
         UNUserNotificationCenter.current().requestAuthorization(
             options: authOptions,
             completionHandler: {_, _ in })
-        // For iOS 10 data message (sent via FCM
-        Messaging.messaging().delegate = self
-        //InstanceID.instanceID().instanceID { (result, error) in
-        //  if let error = error {
-        //    print("FCM Error fetching remote instance ID: \(error)")
-        //  } else if let result = result {
-        //    print("FCM Remote instance ID token: \(result.token)")
-        //  }
-        //}
-        //} else {
-        //  let settings: UIUserNotificationSettings =
-        //    UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
-        //  application.registerUserNotificationSettings(settings)
-       // }
 
-       //NotificationCenter.default.addObserver(self, selector:
-       //#selector(tokenRefreshNotification), name:
-       //NSNotification.Name.InstanceIDTokenRefresh, object: nil)
+        Messaging.messaging().delegate = self
+
        printFCMToken()
                
         
@@ -127,31 +101,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Note: This callback is fired at each app startup and whenever a new token is generated.
     }
     
-    /*
-    func messaging(_ messaging: Messaging, didReceive remoteMessage: MessagingRemoteMessage){
-        print("FCM \(remoteMessage.appData)")
-                //let title = remoteMessage.appData[("data"): {"title"}]
-               var title = "New Request"
 
-                for value in remoteMessage.appData{
-                    if let value = value as?  [AnyHashable:Any]{
-                    print("FCM \(value)")
-                    }
-                }
-                let message = "okay"
-        print("FCM \(message)");
-        
-        if (remoteMessage != nil){
-            if (remoteMessage.appData != nil){
-                if (remoteMessage.appData["message"] != nil){
-                    displayNotification(message: remoteMessage.appData["message"] as! String)
-                }
-            }
-        }
-
-    }
-    */
-    
     func displayNotification (message: String){
         
         //if (notificationDisplayed == false){
@@ -179,33 +129,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         connectToFcm()
     }
     
-    func setupCurrentYearUrls() {
-        
-        let filePath = defaultUrlConverFlagUrl.path
-        if(FileManager.default.fileExists(atPath: filePath)){
-            print ("Followup run of setupCurrentYearUrls routine")
-            artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? defaultPrefsValue
-            scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? defaultPrefsValue
-        } else {
-            print ("First run of setupCurrentYearUrls routine")
-           artistUrlDefault = defaultPrefsValue
-           scheduleUrlDefault = defaultPrefsValue
-           let flag = ""
-            do {
-                try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
-            }
-            catch {print ("First run of setupCurrentYearUrls routine Failed!")}
-        }
-        
-        if (artistUrlDefault == defaultPrefsValue){
-            UserDefaults.standard.set(defaultPrefsValue, forKey: "artistUrl")
-        }
-        
-        if (scheduleUrlDefault == defaultPrefsValue){
-            UserDefaults.standard.set(defaultPrefsValue, forKey: "scheduleUrl")
-        }
-        
-    }
     
     func printFCMToken() {
         

@@ -157,7 +157,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet var scrollView: UIScrollView!
     @IBOutlet var controlView: UIControl!
     
-    let dataHandle = dataHandler()
+    var dataHandle = dataHandler()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -562,7 +562,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         //clear all existing notifications
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications();
+
+        //setupCurrentYearUrls()
+        //setupDefaults()
         
+        /*var bandNamesHandle = bandNamesHandler()
+        bandNamesHandle.gatherData()
+        
+        dataHandle = dataHandler()
+        dataHandle.clearCachedData()
+        dataHandle.readFile(dateWinnerPassed: "")
+        */
         exit(0)
     }
     

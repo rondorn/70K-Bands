@@ -215,29 +215,10 @@ public class BandInfo {
 
     public void getDownloadtUrls(){
 
-        //staticVariables.preferences.loadData();
+        downloadUrls.put("artistUrl", staticVariables.artistURL);
+        downloadUrls.put("scheduleUrl", staticVariables.scheduleURL);
+        downloadUrls.put("descriptionMap", staticVariables.preferences.getDescriptionMapUrl());
 
-        if (staticVariables.preferences.getUseLastYearsData() == true){
-            downloadUrls.put("artistUrl", staticVariables.previousYearArtist);
-            downloadUrls.put("scheduleUrl", staticVariables.previousYearSchedule);
-
-
-        } else if (staticVariables.preferences.getArtsistsUrl().equals("Default") || staticVariables.preferences.getScheduleUrl().equals("Default")) {
-            downloadUrls.put("artistUrl", staticVariables.artistURL);
-            downloadUrls.put("scheduleUrl", staticVariables.scheduleURL);
-
-        }
-        if (staticVariables.preferences.getUseLastYearsData() == false) {
-            if (!staticVariables.preferences.getArtsistsUrl().equals("Default")) {
-                downloadUrls.put("artistUrl", staticVariables.preferences.getArtsistsUrl());
-            }
-            if (!staticVariables.preferences.getScheduleUrl().equals("Default")) {
-                downloadUrls.put("scheduleUrl", staticVariables.preferences.getScheduleUrl());
-            }
-            if (!staticVariables.preferences.getDescriptionMapUrl().equals("Default")) {
-                downloadUrls.put("descriptionMap", staticVariables.preferences.getDescriptionMapUrl());
-            }
-        }
     }
 
     public ArrayList<String> DownloadBandFile(){

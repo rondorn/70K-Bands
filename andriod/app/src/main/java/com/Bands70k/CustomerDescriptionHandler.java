@@ -39,9 +39,6 @@ public class CustomerDescriptionHandler {
         bandInfo.getDownloadtUrls();
 
         String descriptionMapURL = staticVariables.descriptionMap;
-        if (staticVariables.preferences.getUseLastYearsData() == true){
-            descriptionMapURL = staticVariables.previousYearDescriptionMap;
-        }
 
         if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
             try {

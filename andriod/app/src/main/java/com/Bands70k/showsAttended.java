@@ -94,15 +94,10 @@ public class showsAttended {
 
 
                     if (bandNames.contains(bandName) == false) {
-                        useEventYear = useEventYear - 1;
-
                         if ((eventType == staticVariables.specialEvent || eventType == staticVariables.unofficalEvent) && unuiqueSpecial.contains(bandName) == false) {
-                            useEventYear = useEventYear + 1;
                             unuiqueSpecial.add(bandName);
                         }
-
                     }
-
                     String newIndex = index + ":" + String.valueOf(useEventYear);
                     Log.d("loadShowAttended", "using new index of " + newIndex);
                     showsAttendedArray.put(newIndex, showsAttendedArray.get(index));
