@@ -178,28 +178,14 @@ open class scheduleHandler {
         
         print ("working with scheduleFile " + scheduleFile)
         print ("defaults is \(defaults)")
-        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
-            scheduleUrl = lastYearSetting;
-        } else {
-            print ("getting scheduleURL 1")
-            scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
-        }
-        
+
         if (scheduleUrl.isEmpty == true){
             scheduleUrl = defaultPrefsValue
         }
     
         print ("Downloading Schedule URL " + scheduleUrl);
-        if (scheduleUrl == defaultPrefsValue){
-            print ("getting scheduleURL 2")
-            scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
-            
-        } else if (scheduleUrl == lastYearSetting){
-            print ("getting scheduleURL 3")
-            scheduleUrl = getPointerUrlData(keyValue: lastYearscheduleUrlpointer)
-        
-        }
-        
+        scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
+
         print("scheduleUrl = " + scheduleUrl)
         
         let httpData = getUrlData(urlString: scheduleUrl)

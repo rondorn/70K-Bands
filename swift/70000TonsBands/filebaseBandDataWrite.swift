@@ -78,7 +78,7 @@ class filebaseBandDataWrite {
                     let rankingInteger = dataHandle.getPriorityData(bandName)
                     let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
                     print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
-                    if firebaseBandAttendedArray[bandName] != ranking {
+                    if firebaseBandAttendedArray[bandName] != ranking || didVersionChange == true {
                         print ("bandDataReport - fixing record for \(bandName)")
                         writeSingleRecord(dataHandle: dataHandle, bandName: bandName, ranking: ranking)
                     }

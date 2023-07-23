@@ -161,7 +161,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         let screenSize: CGRect = UIScreen.main.bounds
         var screenHeight = screenSize.height
         let screenWidth = screenSize.width
@@ -171,14 +171,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             scrollView.contentInset = UIEdgeInsets(top: 0, left: -25, bottom: 0, right: 0);
         }
         scrollView.contentSize = CGSize(width: 300,height: screenHeight);
-
-  
+        
+        
         // Do any additional setup after loading the view, typically from a nib.
         setExistingValues()
         setLocalizedLables()
         
         disableAlertButtonsIfNeeded()
-        self.navigationItem.title = "Preferences - Build:" + (((Bundle.main.infoDictionary?["CFBundleVersion"])!) as! String)
+        self.navigationItem.title = "Preferences - Build:" + versionInformation
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -296,6 +296,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         } else {
             UseLastYearsData.isOn = false
         }
+        print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) - \(lastYearSetting) - in AlertPrefs")
         
         showSpecialValue = defaults.bool(forKey: "showSpecial")
         showMandGValue = defaults.bool(forKey: "showMandG")

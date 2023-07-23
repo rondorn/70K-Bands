@@ -428,7 +428,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     @objc func iCloudKeysChanged(_ notification: Notification) {
         
         let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readCloudData(dataHandle: dataHandle)
+        iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: false)
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

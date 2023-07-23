@@ -29,7 +29,7 @@ class iCloudDataHandler {
         return status
     }
     
-    func readCloudData (dataHandle: dataHandler){
+    func readCloudData (dataHandle: dataHandler, sleepToCatchUp: Bool){
         
         if (checkForIcloud() == false){
             return
@@ -38,6 +38,9 @@ class iCloudDataHandler {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let attendedHandle = ShowsAttended()
             
+            if (sleepToCatchUp == true){
+                sleep(10)
+            }
             self.readCloudAPriorityData(dataHandle: dataHandle)
             self.readCloudAttendedData(attendedHandle: attendedHandle)
         }
@@ -56,17 +59,18 @@ class iCloudDataHandler {
                 var dataString: String = ""
                 
                 var counter = 0;
-                
-                for (index, attended) in showsAttendedData {
-                    dataString = dataString + index + "!" + attended + ";"
-                    print ("Adding icloud \(index) ATTENDED write '\(attended)'")
-                    counter += 1
-                }
-                
-                if (counter >= 1){
-                    print ("iCloud writing attended data \(dataString)")
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "attendedData")
-                    NSUbiquitousKeyValueStore.default.synchronize()
+                if showsAttendedData.isEmpty == false{
+                    for (index, attended) in showsAttendedData {
+                        dataString = dataString + index + "!" + attended + ";"
+                        print ("Adding icloud \(index) ATTENDED write '\(attended)'")
+                        counter += 1
+                    }
+                    
+                    if (counter >= 1){
+                        print ("iCloud writing attended data \(dataString)")
+                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "attendedData")
+                        NSUbiquitousKeyValueStore.default.synchronize()
+                    }
                 }
             }
         }
@@ -77,39 +81,40 @@ class iCloudDataHandler {
         if (checkForIcloud() == false){
             return
         }
-        
-        if (internetAvailble == true){
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                print ("reading iCloudAttended Data")
-                let showsAttendedData = attendedHandle.getShowsAttended()
-                NSUbiquitousKeyValueStore.default.synchronize()
-                var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
-                
-                if valueTemp.isEmpty == true {
-                    self.writeiCloudAttendedData(attendedHandle: attendedHandle)
-                    valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
-                }
-                
-                //if we have no data, lets bail
-                if valueTemp.isEmpty == true {
-                    return
-                }
-                
-                print ("Value pairs are \(valueTemp)")
-                let splitOutput = valueTemp.components(separatedBy: ";")
-                for record in splitOutput {
-                    if (record.isEmpty == false){
-                        print ("Reading from iCloud \(record)")
-                        var varValue = record.components(separatedBy: "!");
-                        var index = varValue[0];
-                        var status = varValue[1];
-                        if (index == "attended"){
-                            index = varValue[1]
-                            status = varValue[2]
-                        }
-                        
-                        print ("Exiting is for \(index) is \(showsAttendedData[index]) new is \(status)")
-                        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            print ("reading iCloudAttended Data")
+            let showsAttendedData = attendedHandle.getShowsAttended()
+            NSUbiquitousKeyValueStore.default.synchronize()
+            var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
+            
+            if valueTemp.isEmpty == true {
+                self.writeiCloudAttendedData(attendedHandle: attendedHandle)
+                valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
+            }
+            
+            //if we have no data, lets bail
+            if valueTemp.isEmpty == true {
+                return
+            }
+            
+            print ("Value pairs are \(valueTemp)")
+            let splitOutput = valueTemp.components(separatedBy: ";")
+            for record in splitOutput {
+                if (record.isEmpty == false){
+                    print ("Reading from iCloud \(record)")
+                    var varValue = record.components(separatedBy: "!");
+                    var index = varValue[0];
+                    var status = varValue[1];
+                    if (index == "attended"){
+                        index = varValue[1]
+                        status = varValue[2]
+                    }
+                    
+                    print ("Exiting is for \(index) is \(showsAttendedData[index]) new is \(status)")
+                    if status.isEmpty == true {
+                        status = "Unknown"
+                    }
+                    if showsAttendedData.keys.contains(index) == true {
                         if showsAttendedData[index] != status {
                             attendedHandle.changeShowAttendedStatus(index: index, status: status)
                         }
@@ -130,18 +135,19 @@ class iCloudDataHandler {
                 var dataString: String = ""
                 
                 var counter = 0;
-                
-                for (band, priority) in bandPriorityStorage {
-                    dataString = dataString + band + "!" + String(priority) + ";"
-                    print ("Adding icloud \(band) write '\(priority)'")
-                    counter += 1
-                }
-                
-                print ("iCloud priority write counter is \(counter)")
-                if (counter >= 1){
-                    print ("iCloud writing attended data \(dataString)")
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
-                    NSUbiquitousKeyValueStore.default.synchronize()
+                if (bandPriorityStorage.isEmpty == false){
+                    for (band, priority) in bandPriorityStorage {
+                        dataString = dataString + band + "!" + String(priority) + ";"
+                        print ("Adding icloud \(band) write '\(priority)'")
+                        counter += 1
+                    }
+                    
+                    print ("iCloud priority write counter is \(counter)")
+                    if (counter >= 1){
+                        print ("iCloud writing attended data \(dataString)")
+                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
+                        NSUbiquitousKeyValueStore.default.synchronize()
+                    }
                 }
             }
         }
@@ -156,7 +162,7 @@ class iCloudDataHandler {
         if (internetAvailble == true){
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 //do a short sleep to ensure that any write has a chance to happen and avoid a race condition
-                sleep(2)
+                sleep(10)
                 print ("reading iCloudPriority Data")
                 let priorityData = dataHandle.getPriorityData()
                 

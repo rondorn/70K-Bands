@@ -520,7 +520,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bandsByName = self.bands
             
             let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readCloudData(dataHandle: dataHandle)
+            iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: true)
             
             
             DispatchQueue.main.async{
