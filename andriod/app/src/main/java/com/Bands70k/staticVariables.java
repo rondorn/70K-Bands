@@ -132,18 +132,15 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1";
-    //public final static String defaultUrls = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1";
+    public final static String defaultUrls = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?raw=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
     public final static String networkTestingUrl = "https://www.dropbox.com";
     public static String artistURL;
     public static String scheduleURL;
-    public static String previousYearArtist;
-    public static String previousYearSchedule;
+
     public static String descriptionMap;
-    public static String previousYearDescriptionMap;
     public static Boolean checkingInternet = false;
     public static String internetCheckCache = "Unknown";
     public static Long internetCheckCacheDate = 0L;
@@ -285,7 +282,7 @@ public class staticVariables {
             attendedShowIcon = "\uD83C\uDF9F";
         }
 
-        if (previousYearArtist == null) {
+        if (artistURL == null) {
             lookupUrls();
         }
 
@@ -342,7 +339,7 @@ public class staticVariables {
         // Check if we have write permission
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-            if(permission != PackageManager.PERMISSION_GRANTED)
+        if(permission != PackageManager.PERMISSION_GRANTED)
 
         {
             // We don't have permission so prompt the user
@@ -440,7 +437,7 @@ public class staticVariables {
             icon = mustSeeIcon;
 
         } else if (rankName.equals(staticVariables.mightSeeKey) || rankName.equals(staticVariables.mightSeeIcon)
-                   || rankName.equals(staticVariables.oldMightSeeIcon)) {
+                || rankName.equals(staticVariables.oldMightSeeIcon)) {
 
             icon = mightSeeIcon;
 
@@ -463,10 +460,6 @@ public class staticVariables {
         } else {
             eventYear = eventYearRaw;
 
-            if (preferences.getUseLastYearsData() == true) {
-                eventYear = eventYear - 1;
-            }
-
             writeEventYearFile();
         }
 
@@ -477,13 +470,6 @@ public class staticVariables {
         String eventYearString = "";
         try {
 
-            //BufferedReader br = new BufferedReader(new FileReader(eventYearFile));
-
-            //String line;
-
-            //while ((line = br.readLine()) != null) {
-            //    eventYearString = line;
-            //}
             lookupUrls();
             eventYearString = String.valueOf(eventYearRaw);
             Log.d("EventYear", "Event year read as  " + eventYearString);
@@ -491,7 +477,7 @@ public class staticVariables {
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
             //default year if there are issues (This should be updated every year
-            eventYearString = "2023";
+            eventYearString = "2024";
         }
 
         return Integer.valueOf(eventYearString);
@@ -499,6 +485,7 @@ public class staticVariables {
 
     private static void writeEventYearFile(){
 
+        FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
         FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
 
     }
@@ -514,43 +501,59 @@ public class staticVariables {
 
         if (OnlineStatus.isOnline() == true) {
             try {
-                URL url = new URL(pointerUrl);
-                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                String eventYearIndex = "Default";
+
+                if (preferences.getUseLastYearsData() == true){
+                    eventYearIndex = "lastYear";
+                }
                 String data = "";
                 String line;
 
-                Map<String, String> downloadUrls = new HashMap<String, String>();
-
+                URL url = new URL(pointerUrl);
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
                 while ((line = in.readLine()) != null) {
                     data += line + "\n";
                 }
                 in.close();
 
+
                 Log.d("defaultUrls", data);
 
                 String[] records = data.split("\\n");
-                for (String record : records) {
-                    Log.d("defaultUrls 1", record);
-                    String[] recordData = record.split("::");
-                    //Log.d("defaultUrls downloading", recordData[0] + " to " + recordData[1]);
-                    if (recordData.length >= 2) {
-                        downloadUrls.put(recordData[0], recordData[1]);
-                    }
 
-                }
-
-                previousYearArtist = downloadUrls.get("lastYearsartistUrl");
-                previousYearSchedule = downloadUrls.get("lastYearsScheduleUrl");
+                Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
+                Log.d("defaultUrls",downloadUrls.toString());
                 artistURL = downloadUrls.get("artistUrl");
                 scheduleURL = downloadUrls.get("scheduleUrl");
                 descriptionMap = downloadUrls.get("descriptionMap");
-                previousYearDescriptionMap = downloadUrls.get("descriptionMapLastYear");
                 eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
 
+                Log.d("defaultUrls", "artistURL = " + artistURL);
+                Log.d("defaultUrls", "scheduleURL = " + scheduleURL);
+                Log.d("defaultUrls", "descriptionMap = " + descriptionMap);
+                Log.d("defaultUrls", "eventYearRaw = " + eventYearRaw);
             } catch (Exception error) {
                 Log.d("Error", error.getMessage());
+                Log.d("Error", String.valueOf(error.getCause()));
+                Log.d("Error", String.valueOf(error.getStackTrace()));
             }
         }
     }
 
+    private static Map<String, String> readPointData(String[] records, String eventYearIndex){
+
+        Map<String, String> downloadUrls = new HashMap<String, String>();
+        for (String record : records) {
+            String[] recordData = record.split("::");
+            Log.d("defaultUrls", "record = " + record);
+            if (recordData.length >= 3) {
+                Log.d("defaultUrls", "adding data  = " + recordData[0] + "-" + eventYearIndex + "-" + recordData[1] + "=" + recordData[2]);
+                if (eventYearIndex.equals(recordData[0])) {
+                    Log.d("defaultUrls", "REALLY adding data  = " + recordData[1] + "=" + recordData[2]);
+                    downloadUrls.put(recordData[1], recordData[2]);
+                }
+            }
+        }
+        return downloadUrls;
+    }
 }
