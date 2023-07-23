@@ -351,10 +351,6 @@ open class CustomBandDescription {
 
         var descriptionPointer = "descriptionMap";
         
-        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
-            descriptionPointer = "descriptionMapLastYear"
-        }
-        
         print ("Gertting descriptionPointerUrl 1");
         url = getPointerUrlData(keyValue: descriptionPointer)
         

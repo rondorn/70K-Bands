@@ -185,7 +185,7 @@ class dataHandler {
         
         if (bandPriorityStorage[bandname] != nil){
             priority = bandPriorityStorage[bandname]!
-            print("Returning data " + bandname + ":" + String(priority))
+            print("Reading data " + bandname + ":" + String(priority))
         }
         
 

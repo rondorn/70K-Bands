@@ -12,10 +12,11 @@ import Firebase
 class firebaseEventDataWrite {
     
     var ref: DatabaseReference!
-    var eventCompareFile = directoryPath.appendingPathComponent( "eventCompare.data")
+    var eventCompareFile = "eventCompare.data"
     var firebaseShowsAttendedArray = [String : String]();
     var schedule = scheduleHandler()
     let attended = ShowsAttended()
+    let variableStoreHandle = variableStore();
     
     init(){
         ref = Database.database().reference()
@@ -23,16 +24,16 @@ class firebaseEventDataWrite {
     
     func loadCompareFile()->[String:String]{
         do {
-            if let loadedData = try NSKeyedUnarchiver.unarchiveObject(withFile: eventCompareFile.absoluteString) as? [String:String] {
-                firebaseShowsAttendedArray = loadedData
-            }
+            print ("Staring loadedData")
+            firebaseShowsAttendedArray = variableStoreHandle.readDataFromDisk(fileName: eventCompareFile) ?? [String : String]()
+            print ("Finished loadedData \(firebaseShowsAttendedArray)")
         } catch {
             print("Couldn't read file.")
         }
         
         return firebaseShowsAttendedArray
     }
-    
+            
     func writeEvent(index: String, status: String){
         
         let indexArray = index.split(separator: ":")
@@ -62,8 +63,7 @@ class firebaseEventDataWrite {
                     } else {
                         print("Writing firebase data saved successfully!")
                         self.firebaseShowsAttendedArray[index] = status
-                        let data = try NSKeyedArchiver.archivedData(withRootObject: self.firebaseShowsAttendedArray, requiringSecureCoding: false)
-                        try data.write(to: self.eventCompareFile)
+                        self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
                     }
                 }
             
@@ -86,7 +86,7 @@ class firebaseEventDataWrite {
                     
                     if (self.schedule.getBandSortedSchedulingData().count > 0){
                         for index in showsAttendedArray {
-                            if (self.firebaseShowsAttendedArray[index.key] != index.value){
+                            if (self.firebaseShowsAttendedArray[index.key] != index.value || didVersionChange == true){
                                 self.writeEvent(index: index.key, status: index.value)
                             }
                         }

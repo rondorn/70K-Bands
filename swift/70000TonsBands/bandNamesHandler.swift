@@ -59,23 +59,10 @@ open class bandNamesHandler {
             }
             
             print ("artistUrl!! = " + defaults.string(forKey: "artistUrl")!)
-            var artistUrl = defaults.string(forKey: "artistUrl")
+            var artistUrl = getPointerUrlData(keyValue: artistUrlpointer) ?? "http://dropbox.com"
             
-            if (artistUrl == defaultPrefsValue){
-                print ("Getting artistUrl 1");
-                artistUrl = getPointerUrlData(keyValue: artistUrlpointer)
-            
-            } else if (artistUrl == lastYearSetting){
-                print ("Getting artistUrl 2");
-                artistUrl = getPointerUrlData(keyValue: lastYearsartistUrlpointer)
-                print ("done")
-            
-            } else {
-                artistUrl = "http://dropbox.com";
-            }
-            
-            print ("Getting band data from " + artistUrl!);
-            let httpData = getUrlData(urlString: artistUrl!)
+            print ("Getting band data from " + artistUrl);
+            let httpData = getUrlData(urlString: artistUrl)
             print ("Getting band data of " + httpData);
             if (httpData.isEmpty == false) {
                 writeBandFile(httpData);

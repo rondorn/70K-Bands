@@ -100,6 +100,9 @@ var urlDateField = "Date"
 var descriptionUrlField = "Description URL"
 var imageUrlField = "ImageURL"
 
+var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+var didVersionChange = false
+
 //link containers
 var wikipediaLink = [String: String]()
 var youtubeLinks = [String: String]()
@@ -163,6 +166,7 @@ let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
+let versionInfoFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
 
 var eventYear:Int = 0
 
@@ -176,15 +180,14 @@ let testingSetting = "Testing"
 
 var userCountry = ""
 
-var defaultStorageUrl = "https://www.dropbox.com/s/5bqlfnf41w7emgv/productionPointer2019New.txt?raw=1"
-//var defaultStorageUrl = "https://www.dropbox.com/s/sh6ctneu8kjkxrc/productionPointer2019Test.txt?raw=1"
+var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"
-let lastYearsartistUrlpointer = "lastYearsartistUrl"
+//let lastYearsartistUrlpointer = "lastYearsartistUrl"
 let scheduleUrlpointer = "scheduleUrl";
-let lastYearscheduleUrlpointer = "lastYearsScheduleUrl";
+//let lastYearscheduleUrlpointer = "lastYearsScheduleUrl";
 
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
@@ -229,6 +232,7 @@ var unfilteredBandCount = 0
 var masterView: MasterViewController!
 
 var googleCloudID = "Nothing";
+var currentPointerKey = ""
 
 func resolvePriorityNumber (priority: String)->String {
 
@@ -258,7 +262,7 @@ func getDocumentsDirectory() -> NSString {
 
 func getPointerUrlData(keyValue: String) -> String {
     
-    var url = String()
+    var dataString = String()
     
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
         defaultStorageUrl = defaultStorageUrlTest
@@ -273,57 +277,81 @@ func getPointerUrlData(keyValue: String) -> String {
     //does not change very often during the year
     storePointerLock.sync() {
         if (cacheVariables.storePointerData.isEmpty == false){
-            url = cacheVariables.storePointerData[keyValue] ?? ""
-            print ("got cached URL data of = \(url) for \(keyValue)")
+            dataString = cacheVariables.storePointerData[keyValue] ?? ""
+            print ("getPointerUrlData: got cached URL data of = \(dataString) for \(keyValue)")
         }
     }
+    print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) - \(lastYearSetting)")
+    
 
-    if (url.isEmpty == true){
-        print ("getting URL data of \(defaultStorageUrl) - \(keyValue)")
+    var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
+    var pointerValues : [String:[String:String]] = [String:[String:String]]()
+    
+    if (dataString.isEmpty == true){
+        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
         let httpData = getUrlData(urlString: defaultStorageUrl)
-        print ("httpData for pointers data = \(httpData)")
+        print ("getPointerUrlData: httpData for pointers data = \(httpData)")
         if (httpData.isEmpty == false){
             
             let dataArray = httpData.components(separatedBy: "\n")
             for record in dataArray {
-                print ("httpRecord for pointers data = \(record)")
-                var valueArray = record.components(separatedBy: "::")
-                if (valueArray.isEmpty == false && valueArray.count >= 2){
-                    print ("2 Checking " + valueArray[0] + " would use " + valueArray[1] + " Against key " + keyValue)
-                    if (valueArray[0] == keyValue){
-                        
-                        url = valueArray[1]
-                    }
-                    
-                    storePointerLock.async(flags: .barrier) {
-                        cacheVariables.storePointerData[valueArray[0]] = valueArray[1];
-                    }
-                }
+                pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
             }
+            
+            dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+
         } else {
-            print ("Why is \(keyValue) emptry - \(url)")
+            print ("getPointerUrlData: Why is \(keyValue) emptry - \(dataString)")
         }
         
         if (keyValue == "eventYear"){
             do {
-                if (url.count == 4){
-                    try url.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
-                    try cacheVariables.storePointerData[keyValue] = url
-                    print ("Just created eventYear file " + eventYearFile);
+                if (dataString.count == 4){
+                    try dataString.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
+                    try cacheVariables.storePointerData[keyValue] = dataString
+                    print ("getPointerUrlData: Just created eventYear file " + eventYearFile);
                 } else {
-                    try url = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-                    print ("Just reading eventYear file " + eventYearFile + " and got \(url)");
+                    try dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                    print ("getPointerUrlData: Just reading eventYear file " + eventYearFile + " and got \(dataString)");
                 }
             } catch let error as NSError {
-                print ("Encountered an error of creating file eventYearFile " + error.debugDescription)
-                url = "2024" //provide a default year
+                print ("getPointerUrlData: Encountered an error of creating file eventYear File " + error.debugDescription)
+                dataString = "2024" //provide a default year
             }
         }
 
     }
-    print ("Using Final value of " + keyValue + " of " + url)
+    print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString)
     
-    return url
+    return dataString
+}
+
+func readPointData(pointData:String, pointerValues: [String:[String:String]], pointerIndex: String)->[String:[String:String]]{
+    
+    var newPointValues = pointerValues
+    
+    var valueArray = pointData.components(separatedBy: "::")
+    
+    if (valueArray.isEmpty == false && valueArray.count >= 3){
+        let currentIndex = valueArray[0]
+        if (currentIndex == pointerIndex){
+            let currentKey = valueArray[1]
+            let currentValue = valueArray[2]
+            var tempHash = [String:String]()
+            tempHash[currentKey] = currentValue
+            print ("getPointerUrlData: Using in loop \(currentIndex) - \(currentKey) - getting \(currentValue)")
+            newPointValues[currentIndex] = tempHash
+            storePointerLock.async(flags: .barrier) {
+                do {
+                    try cacheVariables.storePointerData[currentKey] = currentValue;
+                } catch let error as NSError {
+                    print ("getPointerUrlData: looks like we don't have internet yet")
+                }
+            }
+        }
+    }
+    
+    return newPointValues
 }
 
 func setupDefaults() {
@@ -356,12 +384,34 @@ func setupDefaults() {
     eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
 
     print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
-    
-    if (UserDefaults.standard.string(forKey: "scheduleUrl") == lastYearSetting){
-        eventYear = eventYear - 1
-    }
 
+    didVersionChangeFunction();
 }
+
+func didVersionChangeFunction(){
+
+    var oldVersion = ""
+    
+    do {
+        if FileManager.default.fileExists(atPath: versionInfoFile) == false {
+            try versionInformation.write(toFile: versionInfoFile, atomically: true,encoding: String.Encoding.utf8)
+        } else {
+            try oldVersion = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+        }
+    } catch {
+        print ("Could not read or write version information")
+    }
+    
+    if (oldVersion != versionInformation){
+        didVersionChange = true
+        do {
+            try versionInformation.write(toFile: versionInfoFile, atomically: true,encoding: String.Encoding.utf8)
+        } catch {
+            print ("Could not write version information")
+        }
+    }
+}
+
 
 func setupVenueLocations(){
     
