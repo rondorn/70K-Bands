@@ -55,6 +55,10 @@ open class scheduleHandler {
         }
     }
     
+    func clearCache(){
+        cacheVariables.scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+    }
+    
     func populateSchedule(){
         
         print ("Loading schedule data 1")

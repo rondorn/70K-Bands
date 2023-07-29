@@ -55,10 +55,11 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Organizado pelos Tripulantes";
 
-"LastYearsFeatureExplication"="Ativando 'Use Dados dos Últimos Anos' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.";
+"LastYearsFeatureExplication"="";
 
 "restarTitle" = "Necessário Reiniciar";
-"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.\nEssa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados ";
+"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.";
+"yearChangeAborted" = "Nenhuma conexão com a Internet está disponível, NÃO pode mudar de ano neste momento";
 
 "officialWebSiteLinkHelp" = "Levando você para o Site Oficial";
 "WikipediaLinkHelp" = "Pesquisando na Wikipedia";

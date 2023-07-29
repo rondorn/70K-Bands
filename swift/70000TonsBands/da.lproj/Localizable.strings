@@ -53,12 +53,13 @@
 "Unofficial Events"="Cruiser Organiseret";
 
 "Use Last Years Data"="Brug sidste Ârs data";
-"LastYearsFeatureExplication"="Aktivering af 'Brug sidste Ârs data' vil indlÊse sidste Ârs spilleplan, men bruge et simuleret Tors-S¯n program ved at anvende din nuvÊrende uge. Dette er tiltÊnkt demonstration og test af begivenhedsfunktionerne.";
+"LastYearsFeatureExplication"="";
 
 
 
 "restarTitle" = "Genstart pÂkrÊvet";
-"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.\nDenne Êndring krÊver genstart af app'en.\n70K Bands Vil nu lukke ned. Genstart for at se nye data";
+"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
+"yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
 
 
 "officialWebSiteLinkHelp" = "Tager dig til den officielle hjemmeside";

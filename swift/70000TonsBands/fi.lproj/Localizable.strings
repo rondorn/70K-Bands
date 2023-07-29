@@ -55,14 +55,12 @@
 "Listening Party"="Levyn kuuntelutapahtumat";
 "Unofficial Events"="Kanssaristeilijöiden järjestämät tapahtumat";
 
-//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
-
-"LastYearsFeatureExplication"="'Käytä viime vuoden tietoja'-valinta lataa viime vuoden aikataulun ja simuloi kyseisen artistikattauksen, sovittaen sen tämän viikon torstaista sunnuntaihin. Tämä on tarkoitettu aikataulutusominaisuuksien esittelyä ja testausta varten.";
+"LastYearsFeatureExplication"="'";
 
 "restarTitle" = "Vaatii uudelleenkäynnistyksen";
-"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.\nTämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot";
-
+"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
+"yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
 
 "officialWebSiteLinkHelp" = "Ohjataan viralliselle sivustolle";
 "WikipediaLinkHelp" = "Etsitään Wikipediasta";
