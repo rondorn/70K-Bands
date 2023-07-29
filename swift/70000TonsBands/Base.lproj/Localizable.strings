@@ -1,4 +1,4 @@
-/* 
+/*
   LocalizationStrings.strings
   70K Bands
 
@@ -35,16 +35,17 @@
 "Prompt For Attended Status"="Prompt For Attended Status";
 "Go To Details"="Go To Details";
 
-"ShowHideEvents"="Show/Hide Expired";
-"HideExpiredEvents"="Hide Expired Events";
-
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
 "Alert For Shows"="Alert For Shows";
 "Alert For Special Events"="Alert For Special Events";
 "Alert For Meeting and Greet Events"="Alert For Meeting and Greet Events";
 "Alert For Clinics"="Alert For Clinics";
 "Alert For Album Listening Events"="Alert For Album Listening Events";
-"Alert For Unofficial Events"="Alert For Cruiser Organized Eventss";
+"Alert For Unofficial Events"="Alert For Cruiser Organized Events";
+"Use Last Years Data"="Use Last Years Data";
+
+"ShowHideEvents"="Show/Hide Expired";
+"HideExpiredEvents"="Hide Expired Events";
 
 "Special Event"="Special Event";
 "Meet and Greet"="Meet and Greet";
@@ -52,12 +53,11 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Cruiser Organized";
 
-"Use Last Years Data"="Use Last Years Data";
-"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
-
+"LastYearsFeatureExplication"="";
 
 "restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
+"yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
 
 "officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
@@ -94,6 +94,7 @@
 "country" = "Country";
 "genre" = "Genre";
 
+
 "verifyCountry" = "Verify Your Country";
 "correctCountryDescription" = "Correct Your Country If Needed";
 "confirmCountry" = "Confirm";
@@ -101,4 +102,7 @@
 
 "waiting_for_data" = "Waiting for data to load, please standby....";
 "data_filter_issue" = "All data is being filtered out, please remove filters to view data";
+
+
+
 

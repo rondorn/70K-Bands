@@ -58,10 +58,12 @@
 
 "Use Last Years Data"="Vorjährige Daten verwenden";
 
-"LastYearsFeatureExplication"="Das Aktivieren von ‚vorjährige Daten verwenden' lädt die Daten des letzten Jahres und erstellt dann anhand der aktuellen Woche eine simulierte Running Order der Shows für Montag bis Donnerstag. So kann man die Funktionalität der Zeitplanung demonstrieren und testen.";
+"LastYearsFeatureExplication"="";
 
 "restarTitle" = "Neustart erforderlich";
-"restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.\nDiese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. \n App neu starten, um die neuen Daten zu sehen.";
+"restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.";
+"yearChangeAborted" = "Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich";
+
 
 "officialWebSiteLinkHelp" = "Weiterleitung zur Band-Website";
 "WikipediaLinkHelp" = "Band auf Wikipedia";

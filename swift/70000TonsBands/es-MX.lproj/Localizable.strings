@@ -63,14 +63,13 @@
 
 "Use Last Years Data"="Utilizar datos del año pasado";
 
-//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
-
-"LastYearsFeatureExplication"="Al activar 'utilizar datos del año pasado' se cargará el programa de conciertos del año pasado, pero utilizando una simulación de jueves a domingo basado en tu semana actual. La finalidad de esta característica es demostrar y testear las funcionalidades de programación de eventos.";
+"LastYearsFeatureExplication"="";
 
 
 "restarTitle" = "Es Necesario Reiniciar";
-"restartMessage" = "NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET. \nEste cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos";
+"restartMessage" = "NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.";
+"yearChangeAborted" = "No hay conexión a Internet disponible, NO se puede cambiar de año en este momento";
 
 "officialWebSiteLinkHelp" = "Llevándote al sitio web oficial";
 "WikipediaLinkHelp" = "Buscando Wikipedia";

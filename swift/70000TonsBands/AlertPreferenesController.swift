@@ -57,7 +57,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var alertForListeningValue = Bool()
     
     var alertForUnofficalEventsValue = Bool()
-
+    
     var minBeforeAlertValue = Double()
     var notesFontSizeLargeValue = Bool()
     
@@ -66,6 +66,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var restartAlertText = String();
     var okPrompt = String();
     var cancelPrompt = String();
+    var yearChangeAborted = String();
     
     var showSpecialValue = Bool()
     var showMandGValue = Bool()
@@ -135,7 +136,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var UseLastYearsData: UISwitch!
     
     @IBOutlet weak var alertForUnofficalEvents: UISwitch!
-
+    
     //labels
     @IBOutlet weak var mustSeeAlertLable: UILabel!
     @IBOutlet weak var mightSeeAlertLable: UILabel!
@@ -147,11 +148,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var alertForClinicsLable: UILabel!
     @IBOutlet weak var useLastYearsLable: UILabel!
     @IBOutlet weak var alertForListeningLable: UILabel!
- 
+    
     @IBOutlet weak var userIDLabel: UILabel!
     
     @IBOutlet weak var alertForUnofficalEventsLable: UILabel!
-
+    
     @IBOutlet weak var lastYearsDetailsLable: UITextView!
     
     @IBOutlet var scrollView: UIScrollView!
@@ -220,6 +221,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         okPrompt = NSLocalizedString("Ok", comment: "")
         cancelPrompt = NSLocalizedString("Cancel", comment: "")
+        yearChangeAborted = NSLocalizedString("yearChangeAborted", comment: "")
         
         showHideVenues.text =  NSLocalizedString("venueFilterHeader", comment: "")
         VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "")
@@ -273,7 +275,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         notesFontSizeLargeValue = defaults.bool(forKey: "notesFontSizeLarge")
         
         alertForUnofficalEventsValue = defaults.bool(forKey: "alertForUnofficalEvents")
-
+        
         minBeforeAlertValue = Double(defaults.integer(forKey: "minBeforeAlert"))
         
         AlertOnMustSee.isOn = mustSeeAlertValue
@@ -394,7 +396,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             let alert = UIAlertView()
             alert.title = "Number Provided Is Invalid"
             alert.message =  "Number Provided Is Invalid\nMust be a value between 0 and 60"
-            alert.addButton(withTitle: "Ok")
+            alert.addButton(withTitle: okPrompt)
             alert.show()
         }
         
@@ -463,7 +465,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func venueLounge(_ sender: Any) {
-       defaults.set(VenueLoungeSwitch.isOn, forKey: "showLoungeShows")
+        defaults.set(VenueLoungeSwitch.isOn, forKey: "showLoungeShows")
     }
     
     @IBAction func venueOther(_ sender: Any) {
@@ -493,7 +495,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBAction func hideExpired(_ sender: Any) {
         defaults.set(HideExpiredSwitch.isOn, forKey: "hideExpireScheduleData")
     }
-
+    
     @IBAction func promptForAttended(_ sender: Any) {
         defaults.set(PromptForAttendedSwitch.isOn, forKey: "promptForAttended")
     }
@@ -503,17 +505,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func UseLastYearsDataAction() {
-    
+        
         print ("Files were in UseLastYearsDataAction")
         
         let alertController = UIAlertController(title: restartAlertTitle, message: restartAlertText, preferredStyle: .alert)
         
         // Create the actions
-        let okAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default) {
+        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
             UIAlertAction in
             self.lastYearWarningAccepted()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel) {
+        let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
             UIAlertAction in
             self.lastYearWarningRejected()
         }
@@ -526,8 +528,38 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.present(alertController, animated: true, completion: nil)
     }
     
+    func networkDownWarning(){
+        let alertController = UIAlertController(title: restartAlertTitle, message: yearChangeAborted, preferredStyle: .alert)
+        
+        // Create the actions
+        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
+            UIAlertAction in
+            return
+        }
+
+        // Add the actions
+        alertController.addAction(okAction)
+        
+        // Present the controller
+        self.present(alertController, animated: true, completion: nil)
+    }
+    
     func lastYearWarningAccepted(){
         
+        let netTest = NetworkTesting()
+        
+        internetAvailble = netTest.isInternetAvailableSynchronous()
+        if (internetAvailble == false){
+            print("No internet connection is available, can NOT switch years at this time")
+
+            if (UseLastYearsData.isOn == true){
+                UseLastYearsData.setOn(false, animated: true)
+            } else {
+                UseLastYearsData.setOn(true, animated: true)
+            }
+            networkDownWarning()
+            return()
+        }
         print ("Files were Ok, Pressed")
         if (UseLastYearsData.isOn == true){
             print ("Files were Seeing last years data")
@@ -540,8 +572,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
             defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
             defaults.setValue(true, forKey: "hideExpireScheduleData")
+
         }
-        print ("Files were Done setting")
+        
+        cacheVariables.storePointerData = [String:String]()
+        var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
+        print ("Files were Done setting \(pointerIndex)")
         do {
             try  FileManager.default.removeItem(atPath: scheduleFile)
             try  FileManager.default.removeItem(atPath: bandFile)
@@ -562,18 +598,20 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         //clear all existing notifications
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications();
-
-        //setupCurrentYearUrls()
-        //setupDefaults()
+        eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
         
-        /*var bandNamesHandle = bandNamesHandler()
+        setupCurrentYearUrls()
+        setupDefaults()
+        
+        print ("Refreshing data in backgroud..not really..\(eventYear)")
+        var bandNamesHandle = bandNamesHandler()
         bandNamesHandle.gatherData()
         
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
-        */
-        exit(0)
+  
+        //exit(0)
     }
     
     func lastYearWarningRejected(){
