@@ -46,6 +46,10 @@ open class bandNamesHandler {
         
     }
     
+    func clearCachedData(){
+        cacheVariables.bandNamesStaticCache = [String :[String : String]]()
+    }
+    
     func gatherData() {
 
         if isInternetAvailable() == true {

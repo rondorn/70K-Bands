@@ -159,41 +159,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         } else {
             Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
         }
-        /*
-        // Disconnect previous FCM connection if it exists.
-        Messaging.messaging().disconnect()
-        
-        Messaging.messaging().connect { (error) in
-            if error != nil {
-                print("Unable to connect with FCM. \(error?.localizedDescription ?? "")")
-            } else {
-                print("Connected to FCM.")
-                print("Token Connected to FCM.")
-                Messaging.messaging().subscribe(toTopic: subscriptionTopic)
-                Messaging.messaging().subscribe(toTopic: subscriptionTopicTest)
-                
-                print("FCM - subscribed to " + subscriptionTopic)
-                print("FCM - subscribed to " + subscriptionTopicTest)
-                
-                if (defaults.bool(forKey: "alertForUnofficalEvents") == true){
-                    Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
-                    print("FCM - subscribed to " + subscriptionUnofficalTopic)
-                } else {
-                    Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
-                }
-                self.printFCMToken();
-            }
-            
-             UIApplication.shared.registerForRemoteNotifications();
 
-            print ("FCM - start")
-            let token = InstanceID.instanceID().token()
-            
-            print ("FCM - Stop")
-            //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
-            
-        }
-        */
     }
     // [END connect_to_fcm]
 

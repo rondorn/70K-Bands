@@ -185,9 +185,7 @@ let defaultStorageUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productio
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"
-//let lastYearsartistUrlpointer = "lastYearsartistUrl"
 let scheduleUrlpointer = "scheduleUrl";
-//let lastYearscheduleUrlpointer = "lastYearsScheduleUrl";
 
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
@@ -286,7 +284,8 @@ func getPointerUrlData(keyValue: String) -> String {
 
     var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
-    
+
+    print ("Files were Done setting 2 \(pointerIndex)")
     if (dataString.isEmpty == true){
         print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
         let httpData = getUrlData(urlString: defaultStorageUrl)

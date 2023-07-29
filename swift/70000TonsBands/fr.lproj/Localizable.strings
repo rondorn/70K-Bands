@@ -58,12 +58,12 @@
 
 
 "Use Last Years Data"="Utilisez les informations de l'an dernier";
-"LastYearsFeatureExplication"="Activation 'utilisation dernières années information »va charger le calendrier de spectacle à partir de l'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.";
+"LastYearsFeatureExplication"="";
 
 
 "restarTitle" = "Redémarrage Nécessaire";
-"restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données";
-
+"restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
+"yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";
 
 "officialWebSiteLinkHelp" = "Vous emmenant sur le site officiel";
 "WikipediaLinkHelp" = "Recherche sur Wikipedia";
