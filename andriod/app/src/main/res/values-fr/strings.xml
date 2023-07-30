@@ -36,11 +36,14 @@
     <string name="unofficalEventLable">Croisière organisée</string>
 
     <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
-    <string name="LastYearsFeatureExplication">Activation \'utilisation dernières années information\' va charger le calendrier de spectacle à partir de l\'année dernière, mais utiliser un Jeu-Dim simulé montre calendrier en utilisant votre semaine en cours. Ceci est prévu pour démonstration et tests des fonctionnalités de planification.</string>
+    <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Préférence avancée.\nNe modifiez pas à moins de savoir ce que vous faites!</string>
 
-    <string name="restarTitle">Redémarrage Nécessaire</string>
-    <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.\nCe changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
+    <string name="restartTitle">Redémarrage Nécessaire</string>
+    <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.ner.</string>
+    <string name="yearChangeAborted">Aucune connexion Internet n\'est disponible, ne peut PAS changer d\'année pour le momentä</string>
+
+
     <string name="importMessage">Ce changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 
     <string name="showAttendedFilterTrueHelp">N`affichez que les événements auxquels vous avez participé. Les autres filtres ne s`appliqueront pas</string>

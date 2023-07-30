@@ -36,11 +36,12 @@
     <string name="unofficalEventLable">Organizado pelos Tripulantes</string>
 
     <string name="UseLastYearsData">Use as Informações dos Últimos Anos</string>
-    <string name="LastYearsFeatureExplication">Ativando \'Usar Dados dos Últimos Anos\' irá carregar a programação do evento do ano passado, mas usar um simulado que mostra programação usando sua semana atual. Este destina-se a demonstração e teste das características de programação.</string>
+    <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Preferência Avançada\nNão modifique a menos que você saiba o que está fazendo!</string>
 
-    <string name="restarTitle">Necessário Reiniciar</string>
-    <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.\nEssa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados</string>
+    <string name="restartTitle">Necessário Reiniciar</string>
+    <string name="restartMessage">NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.</string>
+    <string name="yearChangeAborted">Nenhuma conexão com a Internet está disponível, NÃO pode mudar de ano neste momento</string>
 
     <string name="importMessage">Essa alteração requer a reinicialização do aplicativo.\n70K Bands fechará agora. Reinicie para ver novos dados</string>
 

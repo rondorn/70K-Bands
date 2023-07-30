@@ -501,7 +501,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         return
     }
     
-    print ("bands[indexRow] = \(bands[indexRow])")
+    //print ("bands[indexRow] = \(bands[indexRow])")
 
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
     let timeIndex = getTimeFromSortable(bands[indexRow], sortBy: sortBy);

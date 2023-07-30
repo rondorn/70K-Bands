@@ -3,6 +3,7 @@ package com.Bands70k;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -274,21 +275,22 @@ public class CustomerDescriptionHandler {
             StrictMode.setThreadPolicy(policy);
 
             Log.d("AsyncTask", "Downloading NoteData for all bands in background");
-            if (staticVariables.notesLoaded == false) {
-                staticVariables.notesLoaded = true;
-                getDescriptionMapFile();
-                descriptionMapData = descriptionHandler.getDescriptionMap();
-
-                Log.d("AsyncTask", "Downloading NoteData for " + descriptionMapData);
-                if (descriptionMapData != null) {
-                    for (String bandName : descriptionMapData.keySet()) {
-                        Log.d("AsyncTask", "Downloading NoteData for  -1 " + bandName);
-                        descriptionHandler.loadNoteFromURL(bandName);
-                    }
-                    staticVariables.notesLoaded = false;
-                }
+            while (staticVariables.loadingNotes == true) {
+                SystemClock.sleep(2000);
             }
 
+            staticVariables.notesLoaded = true;
+            getDescriptionMapFile();
+            descriptionMapData = descriptionHandler.getDescriptionMap();
+
+            Log.d("AsyncTask", "Downloading NoteData for " + descriptionMapData);
+            if (descriptionMapData != null) {
+                for (String bandName : descriptionMapData.keySet()) {
+                    Log.d("AsyncTask", "Downloading NoteData for  -1 " + bandName);
+                    descriptionHandler.loadNoteFromURL(bandName);
+                }
+                staticVariables.notesLoaded = false;
+            }
 
             return result;
 

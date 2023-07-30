@@ -3,9 +3,11 @@ package com.Bands70k;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -16,6 +18,7 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.EditText;
 import android.widget.TextView;
+import androidx.core.app.NavUtils;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -32,7 +35,10 @@ import java.util.zip.ZipInputStream;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static android.app.PendingIntent.getActivity;
+import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
+import static com.Bands70k.staticVariables.listState;
+import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
 
 /**
@@ -331,12 +337,39 @@ public class preferenceLayout  extends Activity {
         userIdentifier.setGravity(Gravity.CENTER);
     }
 
+    private void abortLastYearOperation(){
+
+        AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
+
+        // Setting Dialog Title
+        restartDialog.setTitle(getResources().getString(R.string.restartTitle));
+
+        // Setting Dialog Message
+        restartDialog.setMessage(getResources().getString(R.string.yearChangeAborted));
+
+        // Setting Icon to Dialog
+        restartDialog.setIcon(R.drawable.alert_icon);
+
+        // Setting Positive "Yes" Btn
+        restartDialog.setPositiveButton(getResources().getString(R.string.Ok),new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                if (lastYearsData.isChecked()){
+                    lastYearsData.setChecked(false);
+                } else {
+                    lastYearsData.setChecked(true);
+                }
+            }
+        });
+        // Showing Alert Dialog
+        restartDialog.show();
+    }
+
     private void buildRebootDialog(){
 
         AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
         // Setting Dialog Title
-        restartDialog.setTitle("Confirm Restart");
+        restartDialog.setTitle(getResources().getString(R.string.restartTitle));
 
         // Setting Dialog Message
         restartDialog.setMessage(getResources().getString(R.string.restartMessage));
@@ -348,9 +381,18 @@ public class preferenceLayout  extends Activity {
         restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        // Write your code here to execute after dialog
+                        Log.d("preferenceLayout", "Testing network connection");
+                        if (OnlineStatus.testInternetAvailableSynchronous() == false){
+                            Log.d("preferenceLayout", "Testing network connection, failed");
+                            abortLastYearOperation();
+                            return;
+                        }
+                        Log.d("preferenceLayout", "Testing network connection, passed");
+                        staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
                         staticVariables.preferences.resetMainFilters();
                         staticVariables.preferences.saveData();
+                        staticVariables.artistURL = null;
+                        staticVariables.eventYear = 0;
 
                         //delete band file
                         Log.d("preferenceLayout", "Deleting band file");
@@ -370,12 +412,15 @@ public class preferenceLayout  extends Activity {
 
                         BandInfo bandInfo = new BandInfo();
                         ArrayList<String> bandList  = bandInfo.DownloadBandFile();
+                        staticVariablesInitialize();
 
-                        finish();
+                        bandInfo.DownloadBandFile();
 
-                        finishAffinity();
-                        System.exit(0);
+                        mainListHandler listHandler = new mainListHandler();
+                        staticVariables.updatelistHandlerCache(listHandler);
+                        listState = null;
 
+                        staticVariables.refreshActivated = true;
                     }
                 });
         // Setting Negative "NO" Btn
@@ -673,8 +718,12 @@ public class preferenceLayout  extends Activity {
         staticVariables.preferences.setScheduleUrl(scheduleUrl.getText().toString());
         staticVariables.preferences.setPointerUrl(pointerUrl.getText().toString());
         staticVariables.preferences.saveData();
+
+        SystemClock.sleep(70);
         setResult(RESULT_OK, null);
         finish();
+        NavUtils.navigateUpTo(this, new Intent(this,
+                showBands.class));
 
     }
 
