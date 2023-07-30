@@ -35,11 +35,13 @@
     <string name="unofficalEventLable">Cruiser Organized</string>
 
     <string name="UseLastYearsData">Use Last Years Data</string>
-    <string name="LastYearsFeatureExplication">Activating \'Use Last Years Data\' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.</string>
+    <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Advanced Preference.\nDo not modify unless you know what your doing!</string>
 
-    <string name="restarTitle">Restart Required</string>
-    <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
+    <string name="restartTitle">Restart Required</string>
+    <string name="restartMessage">DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.</string>
+    <string name="yearChangeAborted">No internet connection is available, can NOT switch years at this time</string>
+
 
     <string name="importMessage">This change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
 

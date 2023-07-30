@@ -37,11 +37,12 @@
     <string name="unofficalEventLable">Kanssaristeilijöiden järjestämät</string>
 
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
-    <string name="LastYearsFeatureExplication">\'Käytä viime vuoden tietoja\'-valinta lataa viime vuoden aikataulun ja simuloi kyseisen artistikattauksen, sovittaen sen tämän viikon torstaista sunnuntaihin. Tämä on tarkoitettu aikataulutusominaisuuksien esittelyä ja testausta varten.</string>
+    <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
 
-    <string name="restarTitle">Uudelleenkäynnistys tarvitaan</string>
-    <string name="restartMessage">"ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.\nTämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
+    <string name="restartTitle">Uudelleenkäynnistys tarvitaan</string>
+    <string name="restartMessage">"ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.</string>
+    <string name="yearChangeAborted">Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä</string>
 
     <string name="importMessage">Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 

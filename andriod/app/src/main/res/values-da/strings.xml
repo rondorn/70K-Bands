@@ -36,13 +36,13 @@
     <string name="unofficalEventLable">Cruiser Organiseret</string>
 
     <string name="UseLastYearsData">Brug sidste Ârs data</string>
-    <string name="LastYearsFeatureExplication">Aktivering \'Brug Last Years oplysninger\' vil indlæse showet tidsplan fra sidste år, men bruger en simuleret Thurs-Sun viser tidsplan ved hjælp af din aktuelle uge. Dette er beregnet til demonstration og test af de planlægningsfunktioner.</string>
-    <string name="AdvancedPreferences">Avanceret præference.\nModificer ikke, medmindre du ved, hvad du gør!</string>
+    <string name="LastYearsFeatureExplication"/>
 
-    <string name="restarTitle">Genstart Påkrævet</string>
-    <string name="restartMessage">Gør ikke dette på krydstogt.\nInternetforbindelse krævet.\nDenne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
-
+    <string name="restartTitle">Genstart Påkrævet</string>
+    <string name="restartMessage">Gør ikke dette på krydstogt.\nInternetforbindelse krævet.</string>
+    <string name="yearChangeAborted">Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt</string>
     <string name="importMessage">Denne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+
 
     <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
