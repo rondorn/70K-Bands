@@ -149,9 +149,6 @@ public class staticVariables {
 
     public static String webHelpMessage = "";
 
-    public static List<String> sortableBandNamesCache = new ArrayList<String>();
-    public static Boolean sortableBandNamesLock = false;
-
     public static Boolean schedulePresent = false;
     public static Boolean notesLoaded = false;
 
@@ -225,16 +222,6 @@ public class staticVariables {
     public static Boolean isTestingEnv = false;
 
     public static bandListView adapterCache;
-
-    public static synchronized void updateAdapterCache(bandListView adapter) {
-        Log.d("adapterCache", "updating cache");
-        staticVariables.adapterCache = adapter;
-        Log.d("adapterCache", "done updating cache");
-    }
-
-    public static synchronized bandListView getAdapterCache() {
-        return staticVariables.adapterCache;
-    }
 
     public static mainListHandler listHandlerCache;
 
@@ -490,7 +477,7 @@ public class staticVariables {
 
     }
 
-    private static void lookupUrls(){
+    public static void lookupUrls(){
 
         String pointerUrl = staticVariables.defaultUrls;
         if (preferences.getPointerUrl().equals("Testing")){
