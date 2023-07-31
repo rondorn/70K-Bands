@@ -154,6 +154,8 @@ let sawAllStatus = "sawAll";
 let sawSomeStatus = "sawSome";
 let sawNoneStatus = "sawNone";
 
+var eventYearArray = [String]();
+
 //alert topics
 let subscriptionTopic = "global"
 let subscriptionTopicTest = "Testing20221127-1"
@@ -175,13 +177,13 @@ var artistUrlDefault = ""
 var scheduleUrlDefault = ""
 
 let defaultPrefsValue = "Default";
-let lastYearSetting = "lastYear"
+
 let testingSetting = "Testing"
 
 var userCountry = ""
 
 var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
-let defaultStorageUrlTest = "https://www.dropbox.com/s/ruknei80s1qtdvb/productionPointer2023Test.txt?raw=1"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 let artistUrlpointer = "artistUrl"
@@ -279,7 +281,7 @@ func getPointerUrlData(keyValue: String) -> String {
             print ("getPointerUrlData: got cached URL data of = \(dataString) for \(keyValue)")
         }
     }
-    print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) - \(lastYearSetting)")
+    print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
     
 
     var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
@@ -333,6 +335,13 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
     
     if (valueArray.isEmpty == false && valueArray.count >= 3){
         let currentIndex = valueArray[0]
+        
+        if (currentIndex != "Default" && currentIndex != "lastYear"){
+            if (eventYearArray.contains(currentIndex) == false){
+                eventYearArray.append(currentIndex)
+            }
+        }
+        
         if (currentIndex == pointerIndex){
             let currentKey = valueArray[1]
             let currentValue = valueArray[2]

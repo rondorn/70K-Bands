@@ -54,16 +54,6 @@
 "Listening Party"="l'album Listening Evénements";
 "Unofficial Events"="Croisière organisée";
 
-//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
-
-
-"Use Last Years Data"="Utilisez les informations de l'an dernier";
-"LastYearsFeatureExplication"="";
-
-
-"restarTitle" = "Redémarrage Nécessaire";
-"restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
-"yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";
 
 "officialWebSiteLinkHelp" = "Vous emmenant sur le site officiel";
 "WikipediaLinkHelp" = "Recherche sur Wikipedia";
@@ -108,7 +98,16 @@
 "waiting_for_data" = "En attente de chargement des données, veuillez patienter....";
 "data_filter_issue" = "Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données";
 
-
+"SelectYearLabel"="Sélectionnez l'année à afficher";
+"restarTitle" = "Redémarrage Nécessaire";
+"restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
+"yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";
+"eventOrBandPrompt" = "Voulez-vous voir une liste de groupes ou une liste d'événements ?";
+"bandListButton" = "Liste des groupes";
+"eventListButton" = "Liste des événements";
+"changeYearDialogBoxTitle" = "Modification de l'année de l'événement";
+//this represents the current year in the choice menu
+"Current" = "Actuel";
 
 
 

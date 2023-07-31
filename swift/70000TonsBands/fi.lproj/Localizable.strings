@@ -55,13 +55,6 @@
 "Listening Party"="Levyn kuuntelutapahtumat";
 "Unofficial Events"="Kanssaristeilijöiden järjestämät tapahtumat";
 
-
-"LastYearsFeatureExplication"="'";
-
-"restarTitle" = "Vaatii uudelleenkäynnistyksen";
-"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
-"yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
-
 "officialWebSiteLinkHelp" = "Ohjataan viralliselle sivustolle";
 "WikipediaLinkHelp" = "Etsitään Wikipediasta";
 "YouTubeLinkHelp" = "Etsitään virallisia videoita YouTubesta";
@@ -106,4 +99,16 @@
 
 "waiting_for_data" = "Ladataan tietoja, odota hetki....";
 "data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
+
+"SelectYearLabel"="Valitse Näytettävä vuosi";
+
+"restarTitle" = "Vaatii uudelleenkäynnistyksen";
+"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
+"yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
+"eventOrBandPrompt" = "Haluatko nähdä luettelon bändeistä vai tapahtumista?";
+"bandListButton" = "Bändiluettelo";
+"eventListButton" = "Tapahtumaluettelo";
+"changeYearDialogBoxTitle" = "Tapahtumavuoden vaihtaminen";
+//this represents the current year in the choice menu
+"Current" = "Nykyinen";
 
