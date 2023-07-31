@@ -55,16 +55,6 @@
 "Listening Party"="Album-Vorstellung";
 "Unofficial Events"="Cruiser-organisiert";
 
-
-"Use Last Years Data"="Vorjährige Daten verwenden";
-
-"LastYearsFeatureExplication"="";
-
-"restarTitle" = "Neustart erforderlich";
-"restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.";
-"yearChangeAborted" = "Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich";
-
-
 "officialWebSiteLinkHelp" = "Weiterleitung zur Band-Website";
 "WikipediaLinkHelp" = "Band auf Wikipedia";
 "YouTubeLinkHelp" = "Band auf YouTube";
@@ -80,9 +70,6 @@
 "showTypeFilterHeader" = "Ereignistyp anzeigen/ausblenden";
 "showHideExpiredLabel" = "Vergangene Ereignisse anzeigen/ausblenden";
 "hideExpiredEvents" = "Vergangene Ereignisse ausblenden";
-
-
-
 
 "AlertPreferences" = "Benachrichtigungseinstellungen";
 
@@ -109,3 +96,16 @@
 
 "waiting_for_data" = "Warten auf das Laden der Daten, bitte etwas Geduld ....";
 "data_filter_issue" = "Filter liefern keine Daten; bitte Filter entfernen, um Daten anzuzeigen";
+
+
+"SelectYearLabel"="Wählen Sie das anzuzeigende Jahr aus";
+"restarTitle" = "Neustart erforderlich";
+"restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.";
+"yearChangeAborted" = "Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich";
+"eventOrBandPrompt" = "Möchten Sie eine Liste von Bands oder eine Liste von Veranstaltungen anzeigen?";
+"bandListButton" = "Bandliste";
+"eventListButton" = "Veranstaltungsliste";
+"changeYearDialogBoxTitle" = "Das Veranstaltungsjahr ändern";
+//this represents the current year in the choice menu
+"Current" = "Aktuell";
+

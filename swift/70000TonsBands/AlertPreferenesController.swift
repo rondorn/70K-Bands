@@ -67,6 +67,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var okPrompt = String();
     var cancelPrompt = String();
     var yearChangeAborted = String();
+    var eventOrBandPrompt = String();
+    var bandListButton = String()
+    var eventListButton = String()
     
     var showSpecialValue = Bool()
     var showMandGValue = Bool()
@@ -81,6 +84,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var showUnofficalEvents = Bool()
     var hideExpireScheduleData = Bool()
     var promptForAttended = Bool()
+    
+    var eventYearChangeAttempt = "Current";
+    var changeYearDialogBoxTitle = String();
     
     @IBOutlet weak var VenuePoolLabel: UILabel!
     @IBOutlet weak var VenueTheaterLabel: UILabel!
@@ -133,8 +139,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var AlertForClinic: UISwitch!
     @IBOutlet weak var AlertForListeningEvent: UISwitch!
     @IBOutlet weak var MinBeforeAlert: UITextField!
-    @IBOutlet weak var UseLastYearsData: UISwitch!
-    
+
     @IBOutlet weak var alertForUnofficalEvents: UISwitch!
     
     //labels
@@ -146,19 +151,22 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var alertForSpecialLable: UILabel!
     @IBOutlet weak var alertForMandGLable: UILabel!
     @IBOutlet weak var alertForClinicsLable: UILabel!
-    @IBOutlet weak var useLastYearsLable: UILabel!
+
     @IBOutlet weak var alertForListeningLable: UILabel!
     
+    @IBOutlet weak var selectYearLable: UILabel!
     @IBOutlet weak var userIDLabel: UILabel!
     
     @IBOutlet weak var alertForUnofficalEventsLable: UILabel!
     
-    @IBOutlet weak var lastYearsDetailsLable: UITextView!
+    @IBOutlet weak var selectEventYear: UIButton!
+    @IBOutlet weak var SelectEventYearMenu: UIMenu!
     
     @IBOutlet var scrollView: UIScrollView!
     @IBOutlet var controlView: UIControl!
     
     var dataHandle = dataHandler()
+    var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -177,7 +185,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Do any additional setup after loading the view, typically from a nib.
         setExistingValues()
         setLocalizedLables()
-        
+
+        buildEventYearMenu(currentYear: currentYearSetting)
         disableAlertButtonsIfNeeded()
         self.navigationItem.title = "Preferences - Build:" + versionInformation
     }
@@ -198,6 +207,49 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         masterView.quickRefresh()
     }
     
+    func buildEventYearMenu(currentYear: String){
+        // Set up the pop-up button items
+        var actionArray = [UIAction]()
+        print ("Looping through event years")
+        for eventElement in eventYearArray {
+            var yearChange = eventElement;
+            if (yearChange.isYearValue == false){
+                yearChange = NSLocalizedString("Current", comment: "")
+            }
+            
+            print ("Looping through event years, on \(eventElement)")
+            let actionItem = UIAction(title: yearChange) { [weak self] _ in
+                self?.eventYearDidChange(year: yearChange)
+            }
+
+            print ("eventElement = \(yearChange) - pointerIndex = \(currentYear)")
+            
+            if (eventElement == currentYear){
+                actionItem.state = UIAction.State.on
+            }
+            actionArray.append(actionItem)
+        }
+        
+        // Create a UIMenu with the action
+        let menu = UIMenu(title: "", children: actionArray)
+        
+        selectEventYear.menu = menu
+
+    }
+    
+    func eventYearDidChange(year: String){
+        print("Selected index \(year)")
+        
+        var yearChange = year;
+        
+        if (yearChange.isYearValue == false){
+            yearChange = "Current"
+        }
+        
+        eventYearChangeAttempt = yearChange
+        UseLastYearsDataAction()
+    }
+    
     func setLocalizedLables (){
         
         alertPreferenceHeader.text = NSLocalizedString("AlertPreferences", comment: "")
@@ -213,15 +265,16 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
         alertForUnofficalEventsLable.text = NSLocalizedString("Alert For Unofficial Events", comment: "")
         
-        useLastYearsLable.text = NSLocalizedString("Use Last Years Data", comment: "")
-        lastYearsDetailsLable.text = NSLocalizedString("LastYearsFeatureExplication", comment: "")
-        
         restartAlertTitle = NSLocalizedString("restarTitle", comment: "")
         restartAlertText = NSLocalizedString("restartMessage", comment: "")
+        changeYearDialogBoxTitle = NSLocalizedString("changeYearDialogBoxTitle", comment: "")
         
         okPrompt = NSLocalizedString("Ok", comment: "")
         cancelPrompt = NSLocalizedString("Cancel", comment: "")
         yearChangeAborted = NSLocalizedString("yearChangeAborted", comment: "")
+        eventOrBandPrompt = NSLocalizedString("eventOrBandPrompt", comment: "")
+        bandListButton = NSLocalizedString("bandListButton", comment: "")
+        eventListButton = NSLocalizedString("eventListButton", comment: "")
         
         showHideVenues.text =  NSLocalizedString("venueFilterHeader", comment: "")
         VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "")
@@ -250,6 +303,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
         PromptForAttendedSwitchLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
+        
+        selectYearLable.text = NSLocalizedString("SelectYearLabel", comment: "")
         
         var uidString = "Unknown"
         if (UIDevice.current.identifierForVendor != nil){
@@ -293,12 +348,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         self.MinBeforeAlert.delegate = self
         
-        if (defaults.string(forKey: "scheduleUrl") == lastYearSetting){
-            UseLastYearsData.isOn = true
-        } else {
-            UseLastYearsData.isOn = false
-        }
-        print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) - \(lastYearSetting) - in AlertPrefs")
+        print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) in AlertPrefs")
         
         showSpecialValue = defaults.bool(forKey: "showSpecial")
         showMandGValue = defaults.bool(forKey: "showMandG")
@@ -508,7 +558,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         print ("Files were in UseLastYearsDataAction")
         
-        let alertController = UIAlertController(title: restartAlertTitle, message: restartAlertText, preferredStyle: .alert)
+        let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: restartAlertText, preferredStyle: .alert)
         
         // Create the actions
         let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
@@ -517,7 +567,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
         let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
             UIAlertAction in
-            self.lastYearWarningRejected()
+            self.buildEventYearMenu(currentYear: self.currentYearSetting)
         }
         
         // Add the actions
@@ -529,16 +579,43 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     func networkDownWarning(){
-        let alertController = UIAlertController(title: restartAlertTitle, message: yearChangeAborted, preferredStyle: .alert)
+        let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: yearChangeAborted, preferredStyle: .alert)
         
         // Create the actions
         let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
             UIAlertAction in
+            self.buildEventYearMenu(currentYear: self.currentYearSetting)
             return
         }
 
         // Add the actions
         alertController.addAction(okAction)
+        
+        // Present the controller
+        self.present(alertController, animated: true, completion: nil)
+    }
+ 
+    func eventsOrBandsPrompt(){
+
+        let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
+        
+        // Create the actions
+        let bandAction = UIAlertAction(title:bandListButton, style: UIAlertAction.Style.default) {
+            UIAlertAction in
+            self.HideExpiredSwitch.isOn = true
+            defaults.setValue(true, forKey: "hideExpireScheduleData")
+        }
+        // Add the actions
+        alertController.addAction(bandAction)
+        
+        let eventAction = UIAlertAction(title:eventListButton, style: UIAlertAction.Style.default) {
+            UIAlertAction in
+            self.HideExpiredSwitch.isOn = false
+            defaults.setValue(false, forKey: "hideExpireScheduleData")
+        }
+        // Add the actions
+        alertController.addAction(eventAction)
+
         
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
@@ -551,28 +628,22 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         internetAvailble = netTest.isInternetAvailableSynchronous()
         if (internetAvailble == false){
             print("No internet connection is available, can NOT switch years at this time")
-
-            if (UseLastYearsData.isOn == true){
-                UseLastYearsData.setOn(false, animated: true)
-            } else {
-                UseLastYearsData.setOn(true, animated: true)
-            }
+            
             networkDownWarning()
             return()
         }
         print ("Files were Ok, Pressed")
-        if (UseLastYearsData.isOn == true){
-            print ("Files were Seeing last years data")
-            defaults.setValue(lastYearSetting, forKey: "artistUrl")
-            defaults.setValue(lastYearSetting, forKey: "scheduleUrl")
-            defaults.setValue(true, forKey: "hideExpireScheduleData")
-            
-        } else {
-            print ("Files were Seeing this years data")
-            defaults.setValue(defaultPrefsValue, forKey: "artistUrl")
-            defaults.setValue(defaultPrefsValue, forKey: "scheduleUrl")
-            defaults.setValue(true, forKey: "hideExpireScheduleData")
+        
 
+        print ("Files were Seeing last years data \(eventYearChangeAttempt)")
+        defaults.setValue(eventYearChangeAttempt, forKey: "artistUrl")
+        defaults.setValue(eventYearChangeAttempt, forKey: "scheduleUrl")
+
+        if (eventYearChangeAttempt.isYearValue == false){
+            HideExpiredSwitch.isOn = true
+            defaults.setValue(true, forKey: "hideExpireScheduleData")
+        } else {
+            eventsOrBandsPrompt();
         }
         
         cacheVariables.storePointerData = [String:String]()
@@ -610,17 +681,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
-  
-        //exit(0)
-    }
-    
-    func lastYearWarningRejected(){
 
-        if (UseLastYearsData.isOn == true){
-            UseLastYearsData.isOn = false
-            
-        } else {
-            UseLastYearsData.isOn = true
-        }
+    }
+
+}
+
+extension String {
+    var isYearValue: Bool {
+        return self.range(
+            of: "^\\d\\d\\d\\d$", options: .regularExpression) != nil
     }
 }

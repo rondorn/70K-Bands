@@ -52,16 +52,6 @@
 "Listening Party"="PrÊsentation af nyt Album";
 "Unofficial Events"="Cruiser Organiseret";
 
-"Use Last Years Data"="Brug sidste Ârs data";
-"LastYearsFeatureExplication"="";
-
-
-
-"restarTitle" = "Genstart pÂkrÊvet";
-"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
-"yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
-
-
 "officialWebSiteLinkHelp" = "Tager dig til den officielle hjemmeside";
 "WikipediaLinkHelp" = "Søgning på Wikipedia";
 "YouTubeLinkHelp" = "Søgning på YouTube til officielle videoer";
@@ -104,3 +94,14 @@
 
 "waiting_for_data" = "Venter på, at data indlæses. Standby...";
 "data_filter_issue" = "Alle data filtreres fra. Fjern filtre for at se data";
+
+"SelectYearLabel"="Vælg det år, der skal vises";
+"restarTitle" = "Genstart pÂkrÊvet";
+"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
+"yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
+"eventOrBandPrompt" = "Vil du se en liste over bands eller en liste over begivenheder?";
+"bandListButton" = "Band Liste";
+"eventListButton" = "Begivenhedsliste";
+"changeYearDialogBoxTitle" = "Ændring af begivenhedsåret";
+//this represents the current year in the choice menu
+"Current" = "Nuværende";

@@ -713,6 +713,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("titleButtonTitle:" + String(describing: titleButton.title))
         titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString        
         
+        var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
+        if (currentYearSetting != "Current" && currentYearSetting != "Default"){
+            titleButton.title = "70,000 Tons (" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+        }
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){

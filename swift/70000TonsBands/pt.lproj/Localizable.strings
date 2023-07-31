@@ -55,12 +55,6 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Organizado pelos Tripulantes";
 
-"LastYearsFeatureExplication"="";
-
-"restarTitle" = "Necessário Reiniciar";
-"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.";
-"yearChangeAborted" = "Nenhuma conexão com a Internet está disponível, NÃO pode mudar de ano neste momento";
-
 "officialWebSiteLinkHelp" = "Levando você para o Site Oficial";
 "WikipediaLinkHelp" = "Pesquisando na Wikipedia";
 "YouTubeLinkHelp" = "Pesquisando no YouTube por vídeos oficiais";
@@ -103,3 +97,15 @@
 
 "waiting_for_data" = "Aguardando o carregamento dos dados, por favor aguarde....";
 "data_filter_issue" = "Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados";
+
+"SelectYearLabel"="Selecione o ano para exibir";
+
+"restarTitle" = "Necessário Reiniciar";
+"restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.";
+"yearChangeAborted" = "Nenhuma conexão com a Internet está disponível, NÃO pode mudar de ano neste momento";
+"eventOrBandPrompt" = "Você quer ver uma lista de bandas ou uma lista de eventos?";
+"bandListButton" = "lista de bandas";
+"eventListButton" = "Lista de evento";
+"changeYearDialogBoxTitle" = "Mudando o ano do evento";
+//this represents the current year in the choice menu
+"Current" = "Atual";
