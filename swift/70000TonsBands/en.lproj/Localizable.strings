@@ -42,7 +42,6 @@
 "Alert For Clinics"="Alert For Clinics";
 "Alert For Album Listening Events"="Alert For Album Listening Events";
 "Alert For Unofficial Events"="Alert For Cruiser Organized Events";
-"Use Last Years Data"="Use Last Years Data";
 
 "ShowHideEvents"="Show/Hide Expired";
 "HideExpiredEvents"="Hide Expired Events";
@@ -53,11 +52,7 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Cruiser Organized";
 
-"LastYearsFeatureExplication"="";
 
-"restarTitle" = "Restart Required";
-"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
-"yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
 
 "officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
@@ -103,5 +98,15 @@
 "waiting_for_data" = "Waiting for data to load, please standby....";
 "data_filter_issue" = "All data is being filtered out, please remove filters to view data";
 
+"SelectYearLabel"="Select The Year To Display";
+"restarTitle" = "Restart Required";
+"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
+"yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
+"eventOrBandPrompt" = "Do you want to view a list of bands, or a list of events?";
+"bandListButton" = "Band List";
+"eventListButton" = "Event List";
+"changeYearDialogBoxTitle" = "Changing The Event Year";
+//this represents the current year in the choice menu
+"Current" = "Current";
 
 
