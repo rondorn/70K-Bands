@@ -168,7 +168,8 @@ let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
-let versionInfoFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
+let versionInfoFile = getDocumentsDirectory().appendingPathComponent("versionInfoFile")
+let eventYearsInfoFile = getDocumentsDirectory().appendingPathComponent("eventYearsInfoFile")
 
 var eventYear:Int = 0
 
@@ -341,6 +342,9 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
                 eventYearArray.append(currentIndex)
             }
         }
+        
+        let variableStoreHandle = variableStore();
+        variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
         
         if (currentIndex == pointerIndex){
             let currentKey = valueArray[1]

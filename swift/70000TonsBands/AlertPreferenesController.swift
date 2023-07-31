@@ -208,6 +208,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     func buildEventYearMenu(currentYear: String){
+        
+        //only used when race condition is hit, this should not be used under most circustances. This should be updated every year for when it is used
+        var eventYearArrayTemp = ["Current", "2023", "2020", "2019", "2018"];
+
+        if (eventYearArray == nil || eventYearArray.isEmpty == true){
+            let variableStoreHandle = variableStore();
+            eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? eventYearArrayTemp
+        }
         // Set up the pop-up button items
         var actionArray = [UIAction]()
         print ("Looping through event years")
