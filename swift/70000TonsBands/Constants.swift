@@ -169,7 +169,7 @@ let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descrip
 
 let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
 let versionInfoFile = getDocumentsDirectory().appendingPathComponent("versionInfoFile")
-let eventYearsInfoFile = getDocumentsDirectory().appendingPathComponent("eventYearsInfoFile")
+let eventYearsInfoFile = "eventYearsInfoFile"
 
 var eventYear:Int = 0
 
@@ -343,8 +343,10 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
             }
         }
         
+        print ("eventYearsInfoFile: file is saving");
         let variableStoreHandle = variableStore();
         variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+        print ("eventYearsInfoFile: file is saved \(eventYearArray)");
         
         if (currentIndex == pointerIndex){
             let currentKey = valueArray[1]
