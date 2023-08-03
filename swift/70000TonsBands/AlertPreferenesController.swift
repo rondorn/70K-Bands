@@ -189,6 +189,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         buildEventYearMenu(currentYear: currentYearSetting)
         disableAlertButtonsIfNeeded()
         self.navigationItem.title = "Preferences - Build:" + versionInformation
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(self.lastYearWarningAccepted), name: NSNotification.Name(rawValue: "ChangeYearTesting"), object: nil)
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -272,7 +274,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
         alertForUnofficalEventsLable.text = NSLocalizedString("Alert For Unofficial Events", comment: "")
         
-        restartAlertTitle = NSLocalizedString("restarTitle", comment: "")
+        restartAlertTitle = NSLocalizedString("restartTitle", comment: "")
         restartAlertText = NSLocalizedString("restartMessage", comment: "")
         changeYearDialogBoxTitle = NSLocalizedString("changeYearDialogBoxTitle", comment: "")
         
@@ -570,7 +572,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Create the actions
         let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
             UIAlertAction in
-            self.lastYearWarningAccepted()
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "ChangeYearTesting"), object: nil)
+            //self.lastYearWarningAccepted()
         }
         let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
             UIAlertAction in
@@ -601,7 +604,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
     }
- 
+
     func eventsOrBandsPrompt(){
 
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
@@ -628,11 +631,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.present(alertController, animated: true, completion: nil)
     }
     
-    func lastYearWarningAccepted(){
-        
+    @objc func lastYearWarningAccepted(){
+    
         let netTest = NetworkTesting()
+        internetAvailble = netTest.forgroundNetworkTest(callingGui: self)
         
-        internetAvailble = netTest.isInternetAvailableSynchronous()
         if (internetAvailble == false){
             print("No internet connection is available, can NOT switch years at this time")
             
@@ -688,6 +691,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
 
     }
 

@@ -37,13 +37,8 @@
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Erweiterte Einstellungen.\nÄndern Sie nicht, wenn Sie nicht wissen, was Sie tun!</string>
-    <string name="yearChangeAborted">Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich</string>
-
-    <string name="restartTitle">Neustart erforderlich</string>
-    <string name="restartMessage">NICHT WÄHREND DER KREUZFAHRT AUSFÜHREN. INTERENTVERBINDUNG BENÖTIGT.</string>
 
     <string name="importMessage">Diese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
-
 
     <string name="showAttendedFilterTrueHelp">Zeige nur Ereignisse, an denen du teilgenommen hast. Andere Filter werden nicht angewendet</string>
     <string name="showAttendedFilterFalseHelp">Zeigen Sie Bands und Shows nach Filtern</string>
@@ -96,4 +91,16 @@
 
     <string name="waiting_for_data">Warten auf das Laden der Daten, bitte Standby....</string>
     <string name="data_filter_issue">Alle Daten werden herausgefiltert, bitte entfernen Sie die Filter, um die Daten anzuzeigen</string>
+
+    <string name="SelectYearLabel">Wählen Sie das anzuzeigende Jahr aus</string>
+    <string name="restartTitle">Neustart erforderlich</string>
+    <string name="restartMessage">NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.</string>
+    <string name="yearChangeAborted">Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich</string>
+    <string name="eventOrBandPrompt">Möchten Sie eine Liste von Bands oder eine Liste von Veranstaltungen anzeigen?</string>
+    <string name="bandListButton">Bandliste</string>
+    <string name="eventListButton">Veranstaltungsliste</string>
+    <string name="changeYearDialogBoxTitle">Das Veranstaltungsjahr ändern</string>
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Aktuell</string>
+
 </resources>

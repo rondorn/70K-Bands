@@ -105,7 +105,7 @@
 "data_filter_issue" = "Todos los datos se están filtrando, elimine los filtros para ver los datos";
 
 "SelectYearLabel"="Seleccione el año para mostrar";
-"restarTitle" = "Es Necesario Reiniciar";
+"restartTitle" = "Es Necesario Reiniciar";
 "restartMessage" = "NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.";
 "yearChangeAborted" = "No hay conexión a Internet disponible, NO se puede cambiar de año en este momento";
 "eventOrBandPrompt" = "¿Quieres ver una lista de bandas o una lista de eventos?";

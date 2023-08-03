@@ -102,7 +102,7 @@
 
 "SelectYearLabel"="Valitse Näytettävä vuosi";
 
-"restarTitle" = "Vaatii uudelleenkäynnistyksen";
+"restartTitle" = "Vaatii uudelleenkäynnistyksen";
 "restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
 "yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
 "eventOrBandPrompt" = "Haluatko nähdä luettelon bändeistä vai tapahtumista?";

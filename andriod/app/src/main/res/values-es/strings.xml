@@ -40,11 +40,6 @@
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Preferencia avanzada\n¡No lo modifique a menos que sepa lo que está haciendo!</string>
 
-    <string name="restartTitle">Es Necesario Reiniciar</string>
-    <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
-    <string name="yearChangeAborted">No hay conexión a Internet disponible, NO se puede cambiar de año en este momento</string>
-
-
     <string name="importMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
@@ -98,4 +93,15 @@
 
     <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera....</string>
     <string name="data_filter_issue">Todos los datos se están filtrando, elimine los filtros para ver los datos</string>
+
+    <string name="SelectYearLabel">Seleccione el año para mostrar</string>
+    <string name="restartTitle">Es Necesario Reiniciar</string>
+    <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
+    <string name="yearChangeAborted">No hay conexión a Internet disponible, NO se puede cambiar de año en este momento</string>
+    <string name="eventOrBandPrompt">¿Quieres ver una lista de bandas o una lista de eventos?</string>
+    <string name="bandListButton">Lista de bandas</string>
+    <string name="eventListButton">Lista de eventos</string>
+    <string name="changeYearDialogBoxTitle">Cambiar el año del evento</string>
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Actual</string>
 </resources>

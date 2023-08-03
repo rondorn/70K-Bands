@@ -450,9 +450,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
-            updateCountLable()
             setShowOnlyAttenedFilterStatus()
             isPerformingQuickLoad = false
+            updateCountLable()
             self.tableView.reloadData()
         }
     }
@@ -529,13 +529,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.bandNameHandle.readBandFile()
                 self.dataHandle.getCachedData()
                 self.ensureCorrectSorting()
-                self.updateCountLable()
                 self.refreshAlerts()
                 self.setShowOnlyAttenedFilterStatus()
+                self.updateCountLable()
                 self.tableView.reloadData()
                 print ("DONE Refreshing data in backgroud 1");
                 refreshDataLock = false;
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+                
+                print ("Counts: bandCounter = \(bandCounter)")
+                print ("Counts: eventCounter = \(eventCounter)")
+                print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
+
             }
             //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
@@ -693,29 +698,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var lableCounterString = String();
         var labeleCounter = Int()
-
-        print ("eventCount = \(eventCount) and unofficalEventCount = \(unofficalEventCount)")
-        if eventCount == 0 {
-            labeleCounter = bandsByName.count
-            lableCounterString = " bands";
         
-        } else if eventCount == unofficalEventCount {
-            labeleCounter = bandsByName.count - unofficalEventCount
-            lableCounterString = " bands";
-            
+        if (eventCounter != eventCounterUnoffical && eventCounter > 0){
+            labeleCounter = eventCounter
+            lableCounterString = " events"
         } else {
-            labeleCounter = eventCount
-            lableCounterString = " events";
+            labeleCounter = bandCounter
+            lableCounterString = " bands"
         }
-        print ("labeleCounter:" + String(labeleCounter))
-        print ("lableCounterString:" + lableCounterString)
-        
-        print ("titleButtonTitle:" + String(describing: titleButton.title))
-        titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString        
-        
+
         var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
         if (currentYearSetting != "Current" && currentYearSetting != "Default"){
             titleButton.title = "70,000 Tons (" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+        } else {
+            titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString
         }
     }
     
@@ -962,6 +958,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 detailMenuChoices(cellDataText: cellDataText, bandName: bandName, segue: segue, indexPath: indexPath)
             }
         }
+        updateCountLable()
         tableView.reloadData()
     }
     
@@ -1153,6 +1150,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
         ensureCorrectSorting()
         dataHandle.writeFiltersFile()
+        updateCountLable()
         self.tableView.reloadData()
         
     }

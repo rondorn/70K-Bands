@@ -38,12 +38,7 @@
     <string name="UseLastYearsData">Brug sidste Ârs data</string>
     <string name="LastYearsFeatureExplication"/>
 
-    <string name="restartTitle">Genstart Påkrævet</string>
-    <string name="restartMessage">Gør ikke dette på krydstogt.\nInternetforbindelse krævet.</string>
-    <string name="yearChangeAborted">Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt</string>
     <string name="importMessage">Denne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
-
-
     <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 
@@ -95,4 +90,15 @@
 
     <string name="waiting_for_data">Venter på, at data indlæses. Standby...</string>
     <string name="data_filter_issue">Alle data filtreres fra. Fjern filtre for at se data</string>
+
+    <string name="SelectYearLabel">Vælg det år, der skal vises</string>
+    <string name="restarTitle">Genstart pÂkrÊvet</string>
+    <string name="restartMessage">GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.</string>
+    <string name="yearChangeAborted">Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt</string>
+    <string name="eventOrBandPrompt">DVil du se en liste over bands eller en liste over begivenheder?</string>
+    <string name="bandListButton">Band Liste</string>
+    <string name="eventListButton">Begivenhedsliste</string>
+    <string name="changeYearDialogBoxTitle">Ændring af begivenhedsåret</string>
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Nuværende</string>
 </resources>

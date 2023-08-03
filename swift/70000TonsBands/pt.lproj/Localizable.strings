@@ -100,7 +100,7 @@
 
 "SelectYearLabel"="Selecione o ano para exibir";
 
-"restarTitle" = "Necessário Reiniciar";
+"restartTitle" = "Necessário Reiniciar";
 "restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.";
 "yearChangeAborted" = "Nenhuma conexão com a Internet está disponível, NÃO pode mudar de ano neste momento";
 "eventOrBandPrompt" = "Você quer ver uma lista de bandas ou uma lista de eventos?";

@@ -99,7 +99,7 @@
 
 
 "SelectYearLabel"="Wählen Sie das anzuzeigende Jahr aus";
-"restarTitle" = "Neustart erforderlich";
+"restartTitle" = "Neustart erforderlich";
 "restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.";
 "yearChangeAborted" = "Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich";
 "eventOrBandPrompt" = "Möchten Sie eine Liste von Bands oder eine Liste von Veranstaltungen anzeigen?";

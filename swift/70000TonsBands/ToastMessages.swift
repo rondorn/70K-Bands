@@ -43,9 +43,6 @@ class ToastMessages : UILabel {
     
     public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
-        //width: UIScreen.main.bounds.width - 2
-        print ("ToastMessage = \(cellLocation) - \(text)")
-        
         var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
         
         if (placeHigh == true){

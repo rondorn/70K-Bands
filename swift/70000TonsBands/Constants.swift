@@ -35,6 +35,11 @@ var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 let countryFile = directoryPath.appendingPathComponent("countryFile")
 
+var bandCounter = 0
+var eventCounter = 0
+var eventCounterUnoffical = 0
+
+
 var currentBandList = [String]()
 
 var downloadingAllComments = false

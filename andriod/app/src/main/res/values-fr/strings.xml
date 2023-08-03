@@ -39,11 +39,6 @@
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Préférence avancée.\nNe modifiez pas à moins de savoir ce que vous faites!</string>
 
-    <string name="restartTitle">Redémarrage Nécessaire</string>
-    <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.ner.</string>
-    <string name="yearChangeAborted">Aucune connexion Internet n\'est disponible, ne peut PAS changer d\'année pour le momentä</string>
-
-
     <string name="importMessage">Ce changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 
     <string name="showAttendedFilterTrueHelp">N`affichez que les événements auxquels vous avez participé. Les autres filtres ne s`appliqueront pas</string>
@@ -96,4 +91,15 @@
 
     <string name="waiting_for_data">En attente de chargement des données, veuillez patienter....</string>
     <string name="data_filter_issue">Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données</string>
+
+    <string name="SelectYearLabel">Sélectionnez l'année à afficher</string>
+    <string name="restartTitle">Redémarrage Nécessaire</string>
+    <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.</string>
+    <string name="yearChangeAborted">Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment</string>
+    <string name="eventOrBandPrompt">Voulez-vous voir une liste de groupes ou une liste d'événements ?</string>
+    <string name="bandListButton">Liste des groupes</string>
+    <string name="eventListButton">Liste des événements</string>
+    <string name="changeYearDialogBoxTitle">Modification de l'année de l'événement</string>
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Actuel</string>
 </resources>
