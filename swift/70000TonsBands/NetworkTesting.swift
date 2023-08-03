@@ -9,10 +9,13 @@
 import Foundation
 import Network
 import SystemConfiguration
+import UIKit
 
 open class NetworkTesting {
     
     var internetCurrentlyTesting = false
+    var testResults = false
+    var haveresults = false
     
     init(){
     }
@@ -144,6 +147,21 @@ open class NetworkTesting {
         let isReachable = flags.contains(.reachable)
         let needsConnection = flags.contains(.connectionRequired)
         return (isReachable && !needsConnection)
+    }
+    
+    func forgroundNetworkTest(callingGui: UIViewController)->Bool {
+        self.testResults = false
+
+        let semaphore = DispatchSemaphore(value: 0)
+
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            self.testResults = self.isInternetAvailableSynchronous()
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+        
+        return testResults
     }
 
 }

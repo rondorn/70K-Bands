@@ -106,6 +106,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     }
     
     print ("Locking object with newAllBands")
+    eventCounter = 0
+    eventCounterUnoffical = 0
     
     print ("sortedBy = \(sortedBy)")
     schedule.buildTimeSortedSchedulingData();
@@ -122,6 +124,11 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(bandName + ":" + String(timeIndex));
                                 presentCheck.append(bandName);
+                                let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
+                                eventCounter = eventCounter + 1
+                                if (event == unofficalEventType){
+                                    eventCounterUnoffical = eventCounterUnoffical + 1
+                                }
                             }
                         }
                     }
@@ -149,7 +156,10 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
                                 let indexText = bandName + ";" + location + ";" + event + ";" + startTime
                                 timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
-                                
+                                eventCounter = eventCounter + 1
+                                if (event == unofficalEventType){
+                                    eventCounterUnoffical = eventCounterUnoffical + 1
+                                }
                             }
                         }
                     }
@@ -168,7 +178,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         newAllBands.sort();
         bandCount = newAllBands.count;
         eventCount = 0;
-
+        bandCounter = allBands.count
         return newAllBands
     }
 
@@ -181,12 +191,14 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     
     if (schedule.getTimeSortedSchedulingData().count > 2){
         //add any bands without shows to the bottom of the list
+        bandCounter = 0
         for bandName in allBands {
             if (presentCheck.contains(bandName) == false){
                 if (applyFilters(bandName: bandName,timeIndex: 0, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                     print("Adding!! bandName  " + bandName)
                     newAllBands.append(bandName);
                     presentCheck.append(bandName);
+                    bandCounter = bandCounter + 1
                 }
             }
         }
@@ -564,7 +576,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
-        
+     
         locationColor.backgroundColor = getVenueColor(venue: location);
         
         indexText += ";" + location + ";" + event + ";" + startTime
@@ -642,6 +654,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         bandNameNoSchedule.text = bandName
         bandNameNoSchedule.isHidden = false  
         bandNameView.isHidden = true
+
     }
     
     indexForCell.text = indexText;
