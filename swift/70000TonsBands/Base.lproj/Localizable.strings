@@ -98,7 +98,7 @@
 
 "SelectYearLabel"="Select The Year To Display";
 
-"restarTitle" = "Restart Required";
+"restartTitle" = "Restart Required";
 "restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
 "yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
 "eventOrBandPrompt" = "Do you want to view a list of bands, or a list of events?";

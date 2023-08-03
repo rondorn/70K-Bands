@@ -96,7 +96,7 @@
 "data_filter_issue" = "Alle data filtreres fra. Fjern filtre for at se data";
 
 "SelectYearLabel"="Vælg det år, der skal vises";
-"restarTitle" = "Genstart pÂkrÊvet";
+"restartTitle" = "Genstart pÂkrÊvet";
 "restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
 "yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
 "eventOrBandPrompt" = "Vil du se en liste over bands eller en liste over begivenheder?";
