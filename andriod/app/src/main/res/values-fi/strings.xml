@@ -40,10 +40,6 @@
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
 
-    <string name="restartTitle">Uudelleenkäynnistys tarvitaan</string>
-    <string name="restartMessage">"ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.</string>
-    <string name="yearChangeAborted">Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä</string>
-
     <string name="importMessage">Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 
     <string name="showAttendedFilterTrueHelp">Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä</string>
@@ -96,4 +92,16 @@
 
     <string name="waiting_for_data">Ladataan tietoja, odota hetki....</string>
     <string name="data_filter_issue">Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja</string>
+
+    <string name="SelectYearLabel">Valitse Näytettävä vuosi</string>
+    <string name="restartTitle">Vaatii uudelleenkäynnistyksen</string>
+    <string name="restartMessage">ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.</string>
+    <string name="yearChangeAborted">Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä</string>
+    <string name="eventOrBandPrompt">Haluatko nähdä luettelon bändeistä vai tapahtumista?</string>
+    <string name="bandListButton">Bändiluettelo</string>
+    <string name="eventListButton">Tapahtumaluettelo</string>
+    <string name="changeYearDialogBoxTitle">Tapahtumavuoden vaihtaminen</string>
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Nykyinen</string>
+
 </resources>
