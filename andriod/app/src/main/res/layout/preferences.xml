@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
@@ -810,23 +811,23 @@
                 android:layout_height="match_parent">
 
                 <TextView
+                    android:id="@+id/selectYearLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/UseLastYearsData"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
                     android:layout_column="9"
-                    android:layout_marginLeft="10dp" />
+                    android:paddingTop="4pt"
+                    android:text="@string/UseLastYearsData"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default" />
 
-                <Switch
-                    android:id="@+id/useLastYearsData"
+                <Button
+                    android:id="@+id/eventYearButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
+                    android:text="Current"
+                    tools:layout_gravity="left" />
+
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"

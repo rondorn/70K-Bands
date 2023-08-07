@@ -93,6 +93,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         dataHandle.readFiltersFile()
         setFilterButtons()
 
+        
+        //do an initial load of iCloud data on launch
+        let showsAttendedHandle = ShowsAttended()
+        let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: false)
+        iCloudHandle.readCloudAttendedData(attendedHandle: showsAttendedHandle)
+        
         refreshData()
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
@@ -924,6 +931,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
     
     }
+    
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")

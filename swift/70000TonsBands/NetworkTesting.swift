@@ -99,7 +99,7 @@ open class NetworkTesting {
                 task.resume()
                 while (wait == true){
                     print ("Internet Found Waiting")
-                    sleep(1);
+                    usleep(200);
                 }
                 
                 if (returnState == false){

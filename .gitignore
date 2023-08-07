@@ -1,0 +1,6 @@
+*.d
+*.dia
+*.o
+*.swiftdeps
+*.xcbkptlist
+*.xcuserstate

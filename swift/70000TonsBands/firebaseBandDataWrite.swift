@@ -10,7 +10,7 @@ import Foundation
 import Firebase
 
 
-class filebaseBandDataWrite {
+class firebaseBandDataWrite {
     
     var ref: DatabaseReference!
     var bandCompareFile = "bandCompare.data"
@@ -44,6 +44,11 @@ class filebaseBandDataWrite {
             self.firebaseBandAttendedArray = self.loadCompareFile()
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+            print ("writeSingleRecord: uid = \(uid) = eventYear = \(eventYear) - bandName - \(bandName)")
+            //exit if things look wrong
+            if (bandName == nil || bandName.isEmpty == true){
+                return
+            }
             self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
                 "bandName": bandName,
                 "ranking": ranking,
@@ -57,6 +62,7 @@ class filebaseBandDataWrite {
                         
                         self.firebaseBandAttendedArray[bandName] = ranking
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
+                        
 
                     }
                 }
