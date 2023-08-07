@@ -320,21 +320,25 @@ public class mainListHandler {
     public String getSizeDisplay(){
 
         String displayText = "";
+        String yearDisplay = "";
 
+        if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
+            yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
+        }
         if (numberOfBands != 0) {
-            displayText = "70,000 Tons " + numberOfBands + " bands";
+            displayText = "70,000 Tons" + yearDisplay + " " + numberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
-            displayText = "70,000 Tons " + altNumberOfBands + " bands";
+            displayText = "70,000 Tons" + yearDisplay + " " + altNumberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
-            displayText = "70,000 Tons " + numberOfEvents + " events";
+            displayText = "70,000 Tons" + yearDisplay + " " + numberOfEvents + " events";
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
         } else {
-            displayText = "70,000 Tons 0 bands";
+            displayText = "70,000 Tons" + yearDisplay + " 0 bands";
             staticVariables.staticBandCount = 0;
         }
 
@@ -363,7 +367,14 @@ public class mainListHandler {
             if (!rankStore.getRankForBand(bandName).equals("")) {
                 line += " - ";
             }
-            if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
+            if (BandInfo.scheduleRecords == null){
+                return("");
+            }
+            if (BandInfo.scheduleRecords.get(bandName) == null){
+                return("");
+            }
+
+            if (BandInfo.scheduleRecords.get(bandName) != null && BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
 
                 String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                 String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();

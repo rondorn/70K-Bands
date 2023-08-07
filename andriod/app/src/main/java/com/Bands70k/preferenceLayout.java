@@ -11,13 +11,18 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.core.app.NavUtils;
 
 import java.io.BufferedInputStream;
@@ -37,6 +42,7 @@ import static android.app.ActivityManager.isRunningInTestHarness;
 import static android.app.PendingIntent.getActivity;
 import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
+import static com.Bands70k.staticVariables.eventYearArray;
 import static com.Bands70k.staticVariables.listState;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
@@ -81,6 +87,8 @@ public class preferenceLayout  extends Activity {
     private EditText pointerUrl;
     private String versionString = "";
 
+    private Button eventYearButton;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);
@@ -95,11 +103,11 @@ public class preferenceLayout  extends Activity {
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             versionString = pInfo.versionName;
-        } catch (Exception error){
+        } catch (Exception error) {
             //do nothing
         }
 
-        dataImportButton = (Button)findViewById(R.id.ImportDataBackup);
+        dataImportButton = (Button) findViewById(R.id.ImportDataBackup);
         dataImportButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -107,6 +115,7 @@ public class preferenceLayout  extends Activity {
                 dataImportFunc();
             }
         });
+        eventYearButton();
 
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
@@ -114,7 +123,44 @@ public class preferenceLayout  extends Activity {
 
     }
 
-    private void  dataImportFunc(){
+    private void eventYearButton() {
+
+        eventYearButton.setText(String.valueOf(staticVariables.preferences.getEventYearToLoad()));
+        //popup menu
+        final PopupMenu popupMenu = new PopupMenu(this, eventYearButton);
+
+        //add menu items in popup menu
+        int arrayCounter = 0;
+        for (String eventYear : eventYearArray) {
+            popupMenu.getMenu().add(Menu.NONE, arrayCounter, arrayCounter, eventYear);
+            arrayCounter = arrayCounter + 1;
+        }
+
+        //handle menu item clicks
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                //get id of the clicked item
+                String selectedEventYear = String.valueOf(menuItem.getTitle());
+                //handle clicks
+                buildRebootDialog();
+                eventYearButton.setText(selectedEventYear);
+                return true;
+            }
+        });
+
+
+        //handle button click, show popup menu
+        eventYearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                popupMenu.show();
+            }
+        });
+    }
+
+
+    private void dataImportFunc() {
 
         TextView titleView = new TextView(context);
         titleView.setText("Provide the URL to the Backup File");
@@ -134,8 +180,8 @@ public class preferenceLayout  extends Activity {
         builder.setView(customLayout);
 
 
-        Button importButton  = (Button) customLayout.findViewById(R.id.Import);
-        Button cancelButton  = (Button) customLayout.findViewById(R.id.Cancel);
+        Button importButton = (Button) customLayout.findViewById(R.id.Import);
+        Button cancelButton = (Button) customLayout.findViewById(R.id.Cancel);
         final TextView importUrl = (TextView) customLayout.findViewById(R.id.pointerUrl);
 
         // create and show the alert dialog
@@ -154,7 +200,7 @@ public class preferenceLayout  extends Activity {
 
                 dialog.dismiss();
                 String downloadUrl = importUrl.getText().toString();
-                System.out.println("in DownloadBandFile " +  isRunningInTestHarness());
+                System.out.println("in DownloadBandFile " + isRunningInTestHarness());
                 if (OnlineStatus.isOnline() == true) {
                     System.out.println("downloading backup File from " + downloadUrl);
                     try {
@@ -162,7 +208,7 @@ public class preferenceLayout  extends Activity {
                         if (downloadUrl.contains("dropbox") == true) {
                             downloadUrl = downloadUrl.replaceAll("dl=0", "dl=1");
 
-                        //Google Drive link fix
+                            //Google Drive link fix
                         } else if (downloadUrl.contains("https://drive.google.com/file/d/") == true) {
                             System.out.println("parsing download link 1 " + downloadUrl);
                             downloadUrl = downloadUrl.replaceAll("https://drive.google.com/file/d/", "");
@@ -174,7 +220,7 @@ public class preferenceLayout  extends Activity {
                             downloadUrl = "https://drive.google.com/uc?export=download&id=" + downloadUrl;
                             System.out.println("parsing download link 4 " + downloadUrl);
 
-                        } else if (downloadUrl.contains("https://onedrive.live.com/embed?") == true){
+                        } else if (downloadUrl.contains("https://onedrive.live.com/embed?") == true) {
                             downloadUrl = downloadUrl.replaceAll("https://onedrive.live.com/embed?", "https://onedrive.live.com/download?");
                             System.out.println("parsing download link 4 " + downloadUrl);
                         }
@@ -206,7 +252,7 @@ public class preferenceLayout  extends Activity {
                 }
 
                 File backupFile = new File(FileHandler70k.backupFileTemp.toURI());
-                if (backupFile.exists()){
+                if (backupFile.exists()) {
                     AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
                     // Setting Dialog Title
@@ -230,7 +276,7 @@ public class preferenceLayout  extends Activity {
                                     finishAffinity();
                                     System.exit(0);
                                 }
-                    });
+                            });
 
                     // Showing Alert Dialog
                     restartDialog.show();
@@ -245,12 +291,10 @@ public class preferenceLayout  extends Activity {
 
     }
 
-    private boolean unpackZip(String path, String zipname)
-    {
+    private boolean unpackZip(String path, String zipname) {
         InputStream is;
         ZipInputStream zis;
-        try
-        {
+        try {
             String filename;
             is = new FileInputStream(zipname);
             zis = new ZipInputStream(new BufferedInputStream(is));
@@ -258,8 +302,7 @@ public class preferenceLayout  extends Activity {
             byte[] buffer = new byte[1024];
             int count;
 
-            while ((ze = zis.getNextEntry()) != null)
-            {
+            while ((ze = zis.getNextEntry()) != null) {
                 filename = ze.getName();
 
                 // Need to create directories if not exists, or
@@ -272,8 +315,7 @@ public class preferenceLayout  extends Activity {
 
                 FileOutputStream fout = new FileOutputStream(path + filename);
 
-                while ((count = zis.read(buffer)) != -1)
-                {
+                while ((count = zis.read(buffer)) != -1) {
                     fout.write(buffer, 0, count);
                 }
 
@@ -282,11 +324,9 @@ public class preferenceLayout  extends Activity {
             }
 
             zis.close();
-        }
-        catch(IOException e)
-        {
-            Log.e("General Exception", "Something went wrong " +e.getMessage());
-            HelpMessageHandler.showMessage("Something went wrong " +e.getMessage());
+        } catch (IOException e) {
+            Log.e("General Exception", "Something went wrong " + e.getMessage());
+            HelpMessageHandler.showMessage("Something went wrong " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -294,40 +334,40 @@ public class preferenceLayout  extends Activity {
         return true;
     }
 
-    private void setLabels(){
-        TextView poolVenueLable = (TextView)findViewById(R.id.poolVenueLable);
+    private void setLabels() {
+        TextView poolVenueLable = (TextView) findViewById(R.id.poolVenueLable);
         poolVenueLable.setText(getResources().getString(R.string.PoolVenue));
         poolVenueLable.setTextColor(Color.parseColor(staticVariables.poolVenueColor));
 
-        TextView theaterVenueLable = (TextView)findViewById(R.id.theaterVenueLable);
+        TextView theaterVenueLable = (TextView) findViewById(R.id.theaterVenueLable);
         theaterVenueLable.setText(getResources().getString(R.string.TheaterVenue));
         theaterVenueLable.setTextColor(Color.parseColor(staticVariables.theaterVenueColor));
 
-        TextView rinkVenueLable = (TextView)findViewById(R.id.rinkVenueLable);
+        TextView rinkVenueLable = (TextView) findViewById(R.id.rinkVenueLable);
         rinkVenueLable.setText(getResources().getString(R.string.RinkVenue));
         rinkVenueLable.setTextColor(Color.parseColor(staticVariables.rinkVenueColor));
 
-        TextView loungeVenueLable = (TextView)findViewById(R.id.loungeVenueLable);
+        TextView loungeVenueLable = (TextView) findViewById(R.id.loungeVenueLable);
         loungeVenueLable.setText(getResources().getString(R.string.LoungeVenue));
         loungeVenueLable.setTextColor(Color.parseColor(staticVariables.loungeVenueColor));
 
-        TextView otherVenueLable = (TextView)findViewById(R.id.otherVenueLable);
+        TextView otherVenueLable = (TextView) findViewById(R.id.otherVenueLable);
         otherVenueLable.setText(getResources().getString(R.string.OtherVenue));
         otherVenueLable.setTextColor(Color.parseColor(staticVariables.unknownVenueColor));
 
-        TextView specialEventLable = (TextView)findViewById(R.id.specialEventLable);
+        TextView specialEventLable = (TextView) findViewById(R.id.specialEventLable);
         specialEventLable.setText(getResources().getString(R.string.SpecialEvents));
 
-        TextView meetAndGreetEventLable = (TextView)findViewById(R.id.meetAndGreetEventLable);
+        TextView meetAndGreetEventLable = (TextView) findViewById(R.id.meetAndGreetEventLable);
         meetAndGreetEventLable.setText(getResources().getString(R.string.MeetAndGreet));
 
-        TextView clinicEventLable = (TextView)findViewById(R.id.clinicEventLable);
+        TextView clinicEventLable = (TextView) findViewById(R.id.clinicEventLable);
         clinicEventLable.setText(getResources().getString(R.string.ClinicEvents));
 
-        TextView albumListeningEventLable = (TextView)findViewById(R.id.albumListeningEventLable);
+        TextView albumListeningEventLable = (TextView) findViewById(R.id.albumListeningEventLable);
         albumListeningEventLable.setText(getResources().getString(R.string.AlbumListeningEvents));
 
-        TextView unofficalEventLable = (TextView)findViewById(R.id.unofficalEventLable);
+        TextView unofficalEventLable = (TextView) findViewById(R.id.unofficalEventLable);
         unofficalEventLable.setText(getResources().getString(R.string.unofficalEventLable));
 
         TextView userIdentifier = (TextView) findViewById(R.id.userIdentifier);
@@ -335,9 +375,14 @@ public class preferenceLayout  extends Activity {
         userIdentifier.setTextColor(Color.WHITE);
         userIdentifier.setBackgroundColor(Color.parseColor("#505050"));
         userIdentifier.setGravity(Gravity.CENTER);
+
+        TextView selectYearLabel = (TextView) findViewById(R.id.selectYearLabel);
+        selectYearLabel.setText(getResources().getString(R.string.SelectYearLabel));
+
+        eventYearButton = findViewById(R.id.eventYearButton);
     }
 
-    private void abortLastYearOperation(){
+    private void abortLastYearOperation() {
 
         AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
@@ -351,15 +396,43 @@ public class preferenceLayout  extends Activity {
         restartDialog.setIcon(R.drawable.alert_icon);
 
         // Setting Positive "Yes" Btn
-        restartDialog.setPositiveButton(getResources().getString(R.string.Ok),new DialogInterface.OnClickListener() {
+        restartDialog.setPositiveButton(getResources().getString(R.string.Ok), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                if (lastYearsData.isChecked()){
-                    lastYearsData.setChecked(false);
-                } else {
-                    lastYearsData.setChecked(true);
-                }
+                eventYearButton.setText(String.valueOf(staticVariables.preferences.getEventYearToLoad()));
             }
         });
+        // Showing Alert Dialog
+        restartDialog.show();
+    }
+
+    private void bandListOrScheduleDialog() {
+        AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
+
+        // Setting Dialog Title
+        restartDialog.setTitle(getResources().getString(R.string.SelectYearLabel));
+
+        // Setting Dialog Message
+        restartDialog.setMessage(getResources().getString(R.string.eventOrBandPrompt));
+
+        // Setting Icon to Dialog
+        restartDialog.setIcon(R.drawable.alert_icon);
+
+        // Setting Positive "Yes" Btn
+        restartDialog.setNegativeButton(getResources().getString(R.string.bandListButton),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        staticVariables.preferences.setHideExpiredEvents(true);
+                        onBackPressed();
+                    }
+                });
+        restartDialog.setPositiveButton(getResources().getString(R.string.eventListButton),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        staticVariables.preferences.setHideExpiredEvents(false);
+                        onBackPressed();
+                    }
+                });
+
         // Showing Alert Dialog
         restartDialog.show();
     }
@@ -369,7 +442,7 @@ public class preferenceLayout  extends Activity {
         AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
         // Setting Dialog Title
-        restartDialog.setTitle(getResources().getString(R.string.restartTitle));
+        restartDialog.setTitle(getResources().getString(R.string.SelectYearLabel));
 
         // Setting Dialog Message
         restartDialog.setMessage(getResources().getString(R.string.restartMessage));
@@ -387,8 +460,14 @@ public class preferenceLayout  extends Activity {
                             abortLastYearOperation();
                             return;
                         }
+
+                        if (String.valueOf(eventYearButton.getText()).equals("Current") == false) {
+                            bandListOrScheduleDialog();
+                        }
+
                         Log.d("preferenceLayout", "Testing network connection, passed");
-                        staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
+                        //staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
+                        staticVariables.preferences.setEventYearToLoad(String.valueOf(eventYearButton.getText()));
                         staticVariables.preferences.resetMainFilters();
                         staticVariables.preferences.saveData();
                         staticVariables.artistURL = null;
@@ -421,18 +500,19 @@ public class preferenceLayout  extends Activity {
                         listState = null;
 
                         staticVariables.refreshActivated = true;
+
+                        if (String.valueOf(eventYearButton.getText()).equals("Current") == true) {
+                            bandListOrScheduleDialog();
+                            onBackPressed();
+                        }
+
                     }
                 });
         // Setting Negative "NO" Btn
         restartDialog.setNegativeButton(getResources().getString(R.string.Cancel),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        if (lastYearsData.isChecked() == true) {
-                            lastYearsData.setChecked(false);
-                        } else {
-                            lastYearsData.setChecked(true);
-                        }
-                        staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
+                        staticVariables.preferences.setEventYearToLoad(String.valueOf(eventYearButton.getText()));
                     }
                 });
 
@@ -563,7 +643,7 @@ public class preferenceLayout  extends Activity {
                 staticVariables.preferences.setAlertForUnofficalEvents(alertUnofficalEvents.isChecked());
             }
         });
-
+        /*
         lastYearsData = (Switch)findViewById(R.id.useLastYearsData);
         lastYearsData.setChecked(staticVariables.preferences.getUseLastYearsData());
         lastYearsData.setOnClickListener(new View.OnClickListener() {
@@ -574,7 +654,7 @@ public class preferenceLayout  extends Activity {
                 buildRebootDialog();
             }
         });
-
+        */
         alertMin = (EditText)findViewById(R.id.minBeforeEvent);
         alertMin.setText(staticVariables.preferences.getMinBeforeToAlert().toString());
 

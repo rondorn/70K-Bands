@@ -170,7 +170,7 @@ class dataHandler {
         }
         
         writeFile()
-        let firebaseBandData = filebaseBandDataWrite()
+        let firebaseBandData = firebaseBandDataWrite()
         let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
         firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
         iCloudHandle.writeiCloudPriorityData(bandPriorityStorage: bandPriorityStorage)

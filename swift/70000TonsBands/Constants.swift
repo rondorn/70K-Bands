@@ -38,7 +38,8 @@ let countryFile = directoryPath.appendingPathComponent("countryFile")
 var bandCounter = 0
 var eventCounter = 0
 var eventCounterUnoffical = 0
-
+var iCloudDataisLoading = false;
+var iCloudDataisSaving = false;
 
 var currentBandList = [String]()
 

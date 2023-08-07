@@ -34,7 +34,7 @@ open class ShowsAttended {
             loadShowsAttended()
         }
         
-        iCloudHandle.readCloudAttendedData(attendedHandle: self);
+        //iCloudHandle.readCloudAttendedData(attendedHandle: self);
     }
     
     func setShowsAttended(attendedData: [String : String]){
@@ -115,7 +115,7 @@ open class ShowsAttended {
                 }
             }
             
-            iCloudHandle.readCloudAttendedData(attendedHandle: self)
+            //iCloudHandle.readCloudAttendedData(attendedHandle: self)
             
         } catch {
             print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")

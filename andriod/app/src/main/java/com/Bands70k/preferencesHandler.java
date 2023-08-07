@@ -55,6 +55,8 @@ public class preferencesHandler {
     private String scheduleUrl = "Default";
     private String descriptionMapUrl = "Default";
 
+    private String eventYearToLoad = "Current";
+
     private String pointerUrl = "Default";
 
     private Boolean sortByTime = true;
@@ -196,6 +198,10 @@ public class preferencesHandler {
 
                         case "promptForAttendedStatus":
                             setPromptForAttendedStatus(Boolean.valueOf(RowData[1]));
+
+                        case "eventYearToLoad":
+                            setEventYearToLoad(String.valueOf(RowData[1]));
+
                     }
                 }
             } catch (Exception error) {
@@ -254,6 +260,7 @@ public class preferencesHandler {
         dataString += "sortByTime," + sortByTime.toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
+        dataString += "eventYearToLoad," + eventYearToLoad.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
     }
@@ -380,6 +387,8 @@ public class preferencesHandler {
     }
     public Boolean getPromptForAttendedStatus() { return this.promptForAttendedStatus;}
 
+    public String getEventYearToLoad() { return this.eventYearToLoad;}
+
     public Boolean getShowWillAttend() { return this.showWillAttend;}
 
     public void setShowPoolShows(Boolean showPoolShows) {
@@ -430,6 +439,10 @@ public class preferencesHandler {
     }
     public void setPromptForAttendedStatus(Boolean value) {
         this.promptForAttendedStatus = value;
+    }
+
+    public void setEventYearToLoad(String value) {
+        this.eventYearToLoad = value;
     }
 
     public void setShowWillAttend(Boolean showWillAttendValue) {

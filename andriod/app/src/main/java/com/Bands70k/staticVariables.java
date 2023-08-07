@@ -81,6 +81,7 @@ public class staticVariables {
     public static Map<String, String> showNotesMap = new HashMap<String, String>();
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
     public static Map<String, String> descriptionMapModData = new HashMap<String, String>();
+    public static List<String> eventYearArray = new ArrayList<String>();
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
@@ -488,11 +489,18 @@ public class staticVariables {
 
         if (OnlineStatus.isOnline() == true) {
             try {
-                String eventYearIndex = "Default";
+                String eventYearIndex = "Current";
 
-                if (preferences.getUseLastYearsData() == true){
-                    eventYearIndex = "lastYear";
+                if (preferences.getEventYearToLoad() == null || preferences.getEventYearToLoad().isEmpty() == false){
+                    eventYearIndex = preferences.getEventYearToLoad();
                 }
+
+                if (eventYearIndex.equals("true") || eventYearIndex.equals("false")){
+                    eventYearIndex = "Current";
+                    preferences.setEventYearToLoad("Current");
+                }
+
+                Log.d("pointerUrl", "eventYearIndex equals " + eventYearIndex);
                 String data = "";
                 String line;
 
@@ -507,7 +515,7 @@ public class staticVariables {
                 Log.d("defaultUrls", data);
 
                 String[] records = data.split("\\n");
-
+                Log.d("defaultUrls", "eventYearIndex is " + eventYearIndex);
                 Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
                 Log.d("defaultUrls",downloadUrls.toString());
                 artistURL = downloadUrls.get("artistUrl");
@@ -515,14 +523,14 @@ public class staticVariables {
                 descriptionMap = downloadUrls.get("descriptionMap");
                 eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
 
-                Log.d("defaultUrls", "artistURL = " + artistURL);
-                Log.d("defaultUrls", "scheduleURL = " + scheduleURL);
-                Log.d("defaultUrls", "descriptionMap = " + descriptionMap);
-                Log.d("defaultUrls", "eventYearRaw = " + eventYearRaw);
+                Log.d("pointerUrl", "artistURL = " + artistURL);
+                Log.d("pointerUrl", "scheduleURL = " + scheduleURL);
+                Log.d("pointerUrl", "descriptionMap = " + descriptionMap);
+                Log.d("pointerUrl", "eventYearRaw = " + eventYearRaw);
             } catch (Exception error) {
-                Log.d("Error", error.getMessage());
-                Log.d("Error", String.valueOf(error.getCause()));
-                Log.d("Error", String.valueOf(error.getStackTrace()));
+                Log.d("pointerUrl Error", error.getMessage());
+                Log.d("pointerUrl Error", String.valueOf(error.getCause()));
+                Log.d("pointerUrl Error", String.valueOf(error.getStackTrace()));
             }
         }
     }
@@ -534,10 +542,20 @@ public class staticVariables {
             String[] recordData = record.split("::");
             Log.d("defaultUrls", "record = " + record);
             if (recordData.length >= 3) {
-                Log.d("defaultUrls", "adding data  = " + recordData[0] + "-" + eventYearIndex + "-" + recordData[1] + "=" + recordData[2]);
-                if (eventYearIndex.equals(recordData[0])) {
-                    Log.d("defaultUrls", "REALLY adding data  = " + recordData[1] + "=" + recordData[2]);
-                    downloadUrls.put(recordData[1], recordData[2]);
+                String recordIndex = recordData[0];
+                String keyName = recordData[1];
+                String vaueData = recordData[2];
+
+                if (recordIndex.equals("Default") == false && recordIndex.equals("lastYear") == false){
+                    if (eventYearArray.contains(recordIndex) == false){
+                        eventYearArray.add(recordIndex);
+                    }
+                }
+                Log.d("defaultUrls", "adding data  = " + recordIndex + "-" + eventYearIndex + "-" + keyName + "=" + vaueData);
+
+                if (eventYearIndex.equals(recordIndex)) {
+                    Log.d("defaultUrls", "REALLY adding data  = " + keyName + "=" + vaueData);
+                    downloadUrls.put(keyName, vaueData);
                 }
             }
         }
