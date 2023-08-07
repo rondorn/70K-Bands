@@ -291,21 +291,21 @@ open class scheduleHandler {
         
         var returnValue = ""
 
-        print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
+        //print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
         //print (schedulingData[bandName] as Any)
         if (schedulingData[bandName] != nil && variable.isEmpty == false){
-            print ("schedule value lookup. loop 1")
+            //print ("schedule value lookup. loop 1")
             if (schedulingData[bandName]![index]?.isEmpty == false){
-                print ("schedule value lookup. loop 2")
+                //print ("schedule value lookup. loop 2")
 
                 if (schedulingData[bandName]![index]![variable]?.isEmpty == false){
-                    print ("schedule value lookup. loop 3")
-                    print ("schedule value lookup. Returning " + schedulingData[bandName]![index]![variable]!)
+                    //print ("schedule value lookup. loop 3")
+                    //print ("schedule value lookup. Returning " + schedulingData[bandName]![index]![variable]!)
                     returnValue = schedulingData[bandName]![index]![variable]!
                 }
             }
         }
-        print ("schedule value lookup. Returning nothing for " + variable + " - " + bandName)
+        //print ("schedule value lookup. Returning nothing for " + variable + " - " + bandName)
         
         return returnValue
     }

@@ -48,8 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
-        //icloud code
-        // Register for notification of iCloud key-value changes
+        // Register for notification of iCloud key-value changes, but do an intial load
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
                                                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
@@ -284,7 +283,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func reportData(){
         
         internetAvailble = isInternetAvailable();
-        let bandWrite  = filebaseBandDataWrite();
+        let bandWrite  = firebaseBandDataWrite();
         bandWrite.writeData(dataHandle: dataHandle);
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
@@ -316,8 +315,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
         
+        let showsAttendedHandle = ShowsAttended()
         let iCloudHandle = iCloudDataHandler()
         iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: false)
+        iCloudHandle.readCloudAttendedData(attendedHandle: showsAttendedHandle)
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

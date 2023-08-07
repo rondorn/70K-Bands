@@ -213,8 +213,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
         if (eventYearArray == nil || eventYearArray.isEmpty == true){
             let variableStoreHandle = variableStore();
-            print ("eventYearsInfoFile: file is loading");
-            eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile)!
+            print ("eventYearsInfoFile: file is loading \(eventYearsInfoFile)");
+            eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? ["Current"]
+            
             print ("eventYearsInfoFile: file is loaded \(eventYearArray)");
         }
         // Set up the pop-up button items
@@ -614,6 +615,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             UIAlertAction in
             self.HideExpiredSwitch.isOn = true
             defaults.setValue(true, forKey: "hideExpireScheduleData")
+            self.navigationController?.popViewController(animated: true)
+            self.dismiss(animated: true, completion: nil)
         }
         // Add the actions
         alertController.addAction(bandAction)
@@ -622,6 +625,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             UIAlertAction in
             self.HideExpiredSwitch.isOn = false
             defaults.setValue(false, forKey: "hideExpireScheduleData")
+            self.navigationController?.popViewController(animated: true)
+            self.dismiss(animated: true, completion: nil)
         }
         // Add the actions
         alertController.addAction(eventAction)
@@ -692,6 +697,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        
+        
+
+        if (eventYearChangeAttempt.isYearValue == false){
+            self.navigationController?.popViewController(animated: true)
+            self.dismiss(animated: true, completion: nil)
+        }
 
     }
 

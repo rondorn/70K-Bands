@@ -84,6 +84,10 @@ public class scheduleHandler {
     }
 
     public String getShowNotes() {
+
+        if (showNotes == null){
+            showNotes = "";
+        }
         return showNotes;
     }
 

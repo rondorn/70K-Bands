@@ -1724,7 +1724,7 @@ public class showBands extends Activity {
         }
     }
 
-    class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
+      class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
 
         ArrayList<String> result;
 

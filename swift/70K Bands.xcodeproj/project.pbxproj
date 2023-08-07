@@ -88,8 +88,8 @@
 		11D05AB0291C571D00D5B002 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
 		11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
 		11D4844622418A9E00910878 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
-		11D4844B2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
-		11D4844C2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */; };
+		11D4844B2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */; };
+		11D4844C2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */; };
 		11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
 		11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
@@ -196,7 +196,7 @@
 		11D05AAB291C505200D5B002 /* countries.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = countries.txt; sourceTree = "<group>"; };
 		11D05AAC291C545000D5B002 /* countryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = countryHandler.swift; sourceTree = "<group>"; };
 		11D4844422418A9E00910878 /* firebaseUserWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseUserWrite.swift; sourceTree = "<group>"; };
-		11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = filebaseBandDataWrite.swift; sourceTree = "<group>"; };
+		11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseBandDataWrite.swift; sourceTree = "<group>"; };
 		11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseEventDataWrite.swift; sourceTree = "<group>"; };
 		11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = dataHandler.swift; sourceTree = "<group>"; };
 		11DCE9B31A856EE600A25FB8 /* mainListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mainListController.swift; sourceTree = "<group>"; };
@@ -317,7 +317,7 @@
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
-				11D4844A2241DA0C00910878 /* filebaseBandDataWrite.swift */,
+				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
@@ -713,7 +713,7 @@
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
 				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
-				11D4844B2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */,
+				11D4844B2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortMenuController.swift in Sources */,
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
@@ -756,7 +756,7 @@
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
-				11D4844C2241DA0C00910878 /* filebaseBandDataWrite.swift in Sources */,
+				11D4844C2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
@@ -1004,7 +1004,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20230803001;
+				CURRENT_PROJECT_VERSION = 20230806003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1032,7 +1032,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20230803001;
+				MARKETING_VERSION = 20230806003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1083,7 +1083,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20230803001;
+				CURRENT_PROJECT_VERSION = 20230806003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1111,7 +1111,7 @@
 					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20230803001;
+				MARKETING_VERSION = 20230806003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
