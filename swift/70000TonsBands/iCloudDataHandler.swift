@@ -57,7 +57,7 @@ class iCloudDataHandler {
                 var dataString: String = ""
                 
                 var counter = 0;
-                if showsAttendedData != nil || showsAttendedData.isEmpty == false{
+                if showsAttendedData != nil && showsAttendedData.isEmpty == false{
                     for (index, attended) in showsAttendedData {
                         dataString = dataString + index + "!" + attended + ";"
                         print ("Adding icloud \(index) ATTENDED write '\(attended)'")

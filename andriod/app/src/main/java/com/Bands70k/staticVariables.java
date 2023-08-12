@@ -115,6 +115,7 @@ public class staticVariables {
     public final static String rinkVenueColor = "#FF0000";
     public final static String unknownVenueColor = "#A9A9A9";
 
+    public static String eventYearIndex = "Current";
     //schedule file header rows
     public final static String schedBandRow = "Band";
     public final static String schedLocationRow = "Location";
@@ -489,7 +490,6 @@ public class staticVariables {
 
         if (OnlineStatus.isOnline() == true) {
             try {
-                String eventYearIndex = "Current";
 
                 if (preferences.getEventYearToLoad() == null || preferences.getEventYearToLoad().isEmpty() == false){
                     eventYearIndex = preferences.getEventYearToLoad();

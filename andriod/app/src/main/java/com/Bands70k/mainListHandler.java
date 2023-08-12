@@ -356,7 +356,7 @@ public class mainListHandler {
     }
 
     private String buildLines(Long timeIndex,String bandName){
-
+        //attendedHandler.loadShowsAttended();
         String line = null;
 
         String eventYear = String.valueOf(staticVariables.eventYear);
