@@ -1265,7 +1265,7 @@ public class showBands extends Activity {
         }
 
         Integer counter = 0;
-
+        attendedHandler.loadShowsAttended();
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         for (String bandIndex : scheduleSortedBandNames) {
 
@@ -1309,7 +1309,7 @@ public class showBands extends Activity {
                         String eventType = scheduleHandle.getShowType();
                         String day = scheduleHandle.getShowDay();
                         String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
-
+                        Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
                         if (day.contains("Day")) {
                             day = " " + day.replaceAll("Day", "");
                         }

@@ -1,12 +1,9 @@
 package com.Bands70k;
 
-import android.app.Activity;
+
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -16,24 +13,16 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.ImageView;
-
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.Bands70k.staticVariables.context;
-import static java.lang.Thread.sleep;
 
 public class bandListView extends ArrayAdapter<bandListItem> {
 
-    protected LayoutInflater inflater;
-    protected int layout;
-    private List<bandListItem> bandInfoList = new ArrayList<bandListItem>();
-
+    final List<bandListItem> bandInfoList = new ArrayList<>();
 
     static class bandListHolder{
         ImageView rankImage;
@@ -47,15 +36,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         TextView day;
         TextView startTime;
         TextView endTime;
-        TextView dayLable;
+        TextView dayLabel;
         TextView bandNameNoSchedule;
 
         TextView bottomSpacer;
 
-    }
-
-    public void setBandInfoList(List<bandListItem> bandInfoList){
-        this.bandInfoList = bandInfoList;
     }
 
     public bandListView(Context context, int textViewResourceId) {
@@ -82,20 +67,20 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             row = inflater.inflate(R.layout.bandlist70k, parent, false);
             viewHolder = new bandListHolder();
-            viewHolder.rankImage = (ImageView) row.findViewById(R.id.rankingInCell);
-            viewHolder.eventTypeImage = (ImageView) row.findViewById(R.id.eventTypeInCell);
-            viewHolder.attendedImage = (ImageView) row.findViewById(R.id.attendedInCell);
-            viewHolder.bandName = (TextView) row.findViewById(R.id.bandNameInCell);
-            viewHolder.location = (TextView) row.findViewById(R.id.locationInCell);
-            viewHolder.locationColor = (TextView) row.findViewById(R.id.locationColorInCell);
-            viewHolder.day = (TextView) row.findViewById(R.id.dayInCell);
-            viewHolder.startTime = (TextView) row.findViewById(R.id.startTimeInCell);
-            viewHolder.endTime = (TextView) row.findViewById(R.id.endTimeInCell);
-            viewHolder.dayLable = (TextView) row.findViewById(R.id.dayLabelInCell);
+            viewHolder.rankImage = row.findViewById(R.id.rankingInCell);
+            viewHolder.eventTypeImage = row.findViewById(R.id.eventTypeInCell);
+            viewHolder.attendedImage = row.findViewById(R.id.attendedInCell);
+            viewHolder.bandName = row.findViewById(R.id.bandNameInCell);
+            viewHolder.location = row.findViewById(R.id.locationInCell);
+            viewHolder.locationColor = row.findViewById(R.id.locationColorInCell);
+            viewHolder.day = row.findViewById(R.id.dayInCell);
+            viewHolder.startTime = row.findViewById(R.id.startTimeInCell);
+            viewHolder.endTime = row.findViewById(R.id.endTimeInCell);
+            viewHolder.dayLabel =  row.findViewById(R.id.dayLabelInCell);
 
-            viewHolder.bottomSpacer = (TextView) row.findViewById(R.id.bottomSpacer);
-            viewHolder.rankImageNoSchedule = (ImageView) row.findViewById(R.id.rankingInCellnoSchedule);
-            viewHolder.bandNameNoSchedule = (TextView) row.findViewById(R.id.bandNameInCellNoSchedule);
+            viewHolder.bottomSpacer =  row.findViewById(R.id.bottomSpacer);
+            viewHolder.rankImageNoSchedule = row.findViewById(R.id.rankingInCellnoSchedule);
+            viewHolder.bandNameNoSchedule =  row.findViewById(R.id.bandNameInCellNoSchedule);
 
             row.setTag(viewHolder);
         } else {
@@ -117,7 +102,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.day.setVisibility(View.INVISIBLE);
             viewHolder.startTime.setVisibility(View.INVISIBLE);
             viewHolder.endTime.setVisibility(View.INVISIBLE);
-            viewHolder.dayLable.setVisibility(View.INVISIBLE);
+            viewHolder.dayLabel.setVisibility(View.INVISIBLE);
 
             viewHolder.rankImage.setVisibility(View.INVISIBLE);
             viewHolder.bandName.setVisibility(View.INVISIBLE);
@@ -145,7 +130,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.day.setVisibility(View.VISIBLE);
             viewHolder.startTime.setVisibility(View.VISIBLE);
             viewHolder.endTime.setVisibility(View.VISIBLE);
-            viewHolder.dayLable.setVisibility(View.VISIBLE);
+            viewHolder.dayLabel.setVisibility(View.VISIBLE);
             viewHolder.bottomSpacer.setVisibility(View.VISIBLE);
             viewHolder.rankImage.setVisibility(View.VISIBLE);
             viewHolder.bandName.setVisibility(View.VISIBLE);
@@ -157,7 +142,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);
             } else {
 
-                Log.d("bandListView", "ranking image is " + String.valueOf(bandData.getRankImg()));
+                Log.d("bandListView", "ranking image is " + bandData.getRankImg());
                 if (bandData.getRankImg() != 50000000) {
                     viewHolder.rankImage.setImageResource(bandData.getRankImg());
                 } else {
@@ -205,7 +190,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
         if (getScreenWidth(context) <= 480){
             viewHolder.day.setWidth(35);
-            viewHolder.dayLable.setWidth(35);
+            viewHolder.dayLabel.setWidth(35);
 
         }
         return row;
@@ -220,7 +205,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         display.getMetrics(metrics);
         int width = metrics.widthPixels;
 
-        Log.d("screenWidth", "Screen Width is " + String.valueOf(width));
+        Log.d("screenWidth", "Screen Width is " + width);
         return width;
     }
 }

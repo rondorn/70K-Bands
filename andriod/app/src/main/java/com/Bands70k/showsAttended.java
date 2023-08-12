@@ -29,6 +29,7 @@ public class showsAttended {
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
 
         if (showsAttendedHash.size() > 0) {
+            Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
             Log.d("Save showsAttendedHash", showsAttendedHash.toString());
             try {
 
@@ -43,8 +44,8 @@ public class showsAttended {
                 file.close();
 
             } catch (Exception error) {
-                Log.e("Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
-                Log.e("Error", "Unable to save attended tracking data " + error.fillInStackTrace());
+                Log.e("ShowsAttended Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
+                Log.e("ShowsAttended Error", "Unable to save attended tracking data " + error.fillInStackTrace());
             }
         }
     }
@@ -54,6 +55,7 @@ public class showsAttended {
         Map<String, String> showsAttendedHash = new HashMap<String, String>();
 
         try {
+            Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
             // Reading the object from a file
             FileInputStream file = new FileInputStream(showsAttendedFile);
             ObjectInputStream in = new ObjectInputStream(file);
@@ -67,7 +69,7 @@ public class showsAttended {
             showsAttendedHash = convertToNewFormat(showsAttendedHash);
 
         } catch (Exception error) {
-            Log.e("Error", "Unable to load alert tracking data " + error.getMessage());
+            Log.e("ShowsAttended Error", "Unable to load alert tracking data " + error.getMessage());
         }
         
         return showsAttendedHash;
@@ -217,6 +219,7 @@ public class showsAttended {
 
     public String getShowAttendedIcon(String band, String location, String startTime, String eventType, String eventYear) {
 
+        Log.d("showAttended", "getting icon for index " + band + "-" + location + "-" + startTime + "-" + eventYear);
         String icon = "";
 
         String value = getShowAttendedStatus(band,location,startTime,eventType, eventYear);
@@ -231,7 +234,7 @@ public class showsAttended {
             icon = staticVariables.sawNoneIcon;
         }
 
-        //Log.d("showAttended", "value is  " + band + " " + value + " icon is " + icon);
+        Log.d("showAttended", "getting icon for index " + band + "-" + location + "-" + startTime + "-" + eventYear + " got - " + icon);
 
         return icon;
     }

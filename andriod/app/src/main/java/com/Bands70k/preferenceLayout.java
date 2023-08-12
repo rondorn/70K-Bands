@@ -45,6 +45,7 @@ import static com.Bands70k.staticVariables.context;
 import static com.Bands70k.staticVariables.eventYearArray;
 import static com.Bands70k.staticVariables.listState;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
+import static java.lang.Thread.sleep;
 
 
 /**
@@ -472,6 +473,8 @@ public class preferenceLayout  extends Activity {
                         staticVariables.preferences.saveData();
                         staticVariables.artistURL = null;
                         staticVariables.eventYear = 0;
+                        staticVariables.eventYearIndex = String.valueOf(eventYearButton.getText());
+                        staticVariables.lookupUrls();
 
                         //delete band file
                         Log.d("preferenceLayout", "Deleting band file");
@@ -483,6 +486,7 @@ public class preferenceLayout  extends Activity {
                         File fileSchedule = FileHandler70k.schedule;
                         fileSchedule.delete();
 
+
                         //erase existing alerts
                         Log.d("preferenceLayout", "Erasing alerts");
 
@@ -490,16 +494,26 @@ public class preferenceLayout  extends Activity {
                         alerts.clearAlerts();
 
                         BandInfo bandInfo = new BandInfo();
+                        bandInfo.getDownloadtUrls();
+                        bandInfo.DownloadBandFile();
+                        try {
+                            sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                         ArrayList<String> bandList  = bandInfo.DownloadBandFile();
                         staticVariablesInitialize();
 
-                        bandInfo.DownloadBandFile();
+
 
                         mainListHandler listHandler = new mainListHandler();
                         staticVariables.updatelistHandlerCache(listHandler);
                         listState = null;
+                        showsAttended showsAttendedHandle = new showsAttended();
+                        showsAttendedHandle.loadShowsAttended();
 
                         staticVariables.refreshActivated = true;
+
 
                         if (String.valueOf(eventYearButton.getText()).equals("Current") == true) {
                             bandListOrScheduleDialog();

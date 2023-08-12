@@ -48,9 +48,11 @@ public class FireBaseBandDataWrite {
                     bandData.put("year", eventYear);
 
                     Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString());
-
-                    mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
-
+                    try {
+                        mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
+                    } catch (Exception error){
+                        Log.e("FireBaseBandDataWrite", "Writing band data Failed" + error.toString());
+                    }
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }
