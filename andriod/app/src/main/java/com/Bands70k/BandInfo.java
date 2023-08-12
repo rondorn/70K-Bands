@@ -269,32 +269,33 @@ public class BandInfo {
 
         try {
             File file = FileHandler70k.bandInfo;
+            if (file.exists()) {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String line;
 
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
+                while ((line = br.readLine()) != null) {
+                    Log.d("RawBandLine", line);
+                    try {
+                        String[] RowData = line.split(",");
+                        Map<String, String> bandDetails = new HashMap<String, String>();
 
-            while ((line = br.readLine()) != null) {
-                Log.d("RawBandLine", line);
-                try {
-                    String[] RowData = line.split(",");
-                    Map<String, String> bandDetails = new HashMap<String, String>();
+                        bandDetails = addToBandDetails("officalSite", RowData, 1, bandDetails);
+                        bandDetails = addToBandDetails("imageUrl", RowData, 2, bandDetails);
+                        bandDetails = addToBandDetails("youtube", RowData, 3, bandDetails);
+                        bandDetails = addToBandDetails("metalArchives", RowData, 4, bandDetails);
+                        bandDetails = addToBandDetails("wikipedia", RowData, 5, bandDetails);
 
-                    bandDetails = addToBandDetails("officalSite", RowData, 1, bandDetails);
-                    bandDetails = addToBandDetails("imageUrl", RowData, 2, bandDetails);
-                    bandDetails = addToBandDetails("youtube", RowData, 3, bandDetails);
-                    bandDetails = addToBandDetails("metalArchives", RowData, 4, bandDetails);
-                    bandDetails = addToBandDetails("wikipedia", RowData, 5, bandDetails);
+                        bandDetails = addToBandDetails("country", RowData, 6, bandDetails);
+                        bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
+                        bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
 
-                    bandDetails = addToBandDetails("country", RowData,6, bandDetails);
-                    bandDetails = addToBandDetails("genre", RowData,7, bandDetails);
-                    bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
-
-                    if (!RowData[0].contains("bandName")) {
-                        bandData.put(RowData[0], bandDetails);
-                        bandNames.add(RowData[0]);
+                        if (!RowData[0].contains("bandName")) {
+                            bandData.put(RowData[0], bandDetails);
+                            bandNames.add(RowData[0]);
+                        }
+                    } catch (Exception error) {
+                        Log.d("error", "Encountered an unknown error" + error.getMessage());
                     }
-                } catch (Exception error){
-                    Log.d("error", "Encountered an unknown error" + error.getMessage());
                 }
             }
 

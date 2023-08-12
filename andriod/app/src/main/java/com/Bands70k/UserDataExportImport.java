@@ -28,6 +28,10 @@ public class UserDataExportImport {
                 String fileName = files[i].getName();
                 if (fileName.contains("cachedImages")) {
                     Log.d("", "byPassing cache image Dir");
+
+                } else if (fileName.equals("userExport.zip") == true){
+                    Log.d("", "byPassing cprevious backup");
+
                 } else {
                     Log.d("", "Adding file: " + fileName);
                     byte[] buffer = new byte[1024];
