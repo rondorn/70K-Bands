@@ -799,6 +799,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
             let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         }
     }
     
@@ -1234,7 +1235,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let message = attendedHandle.setShowsAttendedStatus(empty,status: status);
         
         ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
-
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         showFullSchedule ()
     }
     
