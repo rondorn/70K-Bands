@@ -14,7 +14,6 @@ class dataHandler {
     
     var bandPriorityStorage = [String:Int]()
     var readInWrite = false;
-    let iCloudHandle = iCloudDataHandler()
     
     init(){
         getCachedData()
@@ -37,13 +36,7 @@ class dataHandler {
             UserDefaults.standard.synchronize()
             var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
             iCloudIndicator = iCloudIndicator?.uppercased()
-            if (iCloudIndicator == "YES" || iCloudIndicator == "YES "){
-                print ("iCloudIndicator is true, loading iCloud data")
-                iCloudHandle.readCloudAPriorityData(dataHandle: self)
-                usleep(50000)
-            } else {
-                print ("iCloudIndicator is false, NOT loading iCloud data  \(iCloudIndicator)")
-            }
+
             print ("Done Loading bandName Data cache")
         }
     }
@@ -159,8 +152,9 @@ class dataHandler {
     func addPriorityData (_ bandname:String, priority: Int){
         
         print ("addPriorityData for \(bandname) = \(priority)")
-        bandPriorityStorage[bandname] = priority
 
+        bandPriorityStorage[bandname] = priority
+        
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
@@ -170,11 +164,16 @@ class dataHandler {
         }
         
         writeFile()
-        let firebaseBandData = firebaseBandDataWrite()
-        let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
-        firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
-        iCloudHandle.writeiCloudPriorityData(bandPriorityStorage: bandPriorityStorage)
-
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.writeAPriorityRecord(bandName: bandname, priority: priority)
+            
+            let firebaseBandData = firebaseBandDataWrite()
+            let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
+            firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
+            NSUbiquitousKeyValueStore.default.synchronize()
+        }
     }
     
     func clearCachedData(){
@@ -199,8 +198,11 @@ class dataHandler {
 
     func writeFile(){
         
+        while (bandPriorityStorage == nil){
+            usleep(300)
+        }
         //do not write empty datasets
-        if (bandPriorityStorage.isEmpty){
+        if (bandPriorityStorage == nil || bandPriorityStorage.isEmpty){
             return
         }
         

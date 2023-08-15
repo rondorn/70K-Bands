@@ -7,7 +7,9 @@
 //
 
 import Foundation
+import UIKit
 
+let uidString = UIDevice.current.identifierForVendor!.uuidString;
 
 class iCloudDataHandler {
     
@@ -29,189 +31,181 @@ class iCloudDataHandler {
         return status
     }
     
-    func readCloudData (dataHandle: dataHandler, sleepToCatchUp: Bool){
+    func writeAllPriorityData(){
         
-        if (checkForIcloud() == false){
-            return
-        }
-                    
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            let attendedHandle = ShowsAttended()
+        if (internetAvailble == true && checkForIcloud() == true){
+            let priorityHandler = dataHandler()
+            priorityHandler.refreshData()
+            let priorityData = priorityHandler.getPriorityData()
             
-            self.readCloudAPriorityData(dataHandle: dataHandle)
-            self.readCloudAttendedData(attendedHandle: attendedHandle)
-        }
-        
-    }
-    
-    func writeiCloudAttendedData (attendedHandle: ShowsAttended){
-        //sleep(11);
-        if (checkForIcloud() == false || iCloudDataisLoading == true){
-            return
-        }
-        
-        if (internetAvailble == true){
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                iCloudDataisSaving = true
-                let showsAttendedData = attendedHandle.getShowsAttended()
-                var dataString: String = ""
-                
-                var counter = 0;
-                if showsAttendedData != nil && showsAttendedData.isEmpty == false{
-                    for (index, attended) in showsAttendedData {
-                        dataString = dataString + index + "!" + attended + ";"
-                        print ("Adding icloud \(index) ATTENDED write '\(attended)'")
-                        counter += 1
-                    }
-                    
-                    if (counter >= 1){
-                        print ("iCloud writing attended data \(dataString)")
-                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "attendedData")
-                        NSUbiquitousKeyValueStore.default.synchronize()
-                    }
+            if (priorityData != nil && priorityData.count > 0){
+                for (bandName, priority) in priorityData {
+                    writeAPriorityRecord(bandName: bandName, priority: priority)
                 }
-                iCloudDataisSaving = false
+                NSUbiquitousKeyValueStore.default.synchronize()
             }
         }
     }
     
-    func readCloudAttendedData (attendedHandle: ShowsAttended){
-        
-        if (checkForIcloud() == false || iCloudDataisSaving == true){
-            return
-        }
+    func writeAPriorityRecord(bandName: String, priority: Int){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            iCloudDataisLoading = true
-            sleep(2)
-            
-            print ("iCloud: reading iCloudAttended Data")
-            let showsAttendedData = attendedHandle.getShowsAttended()
-            print ("iCloud: showsAttendedData is \(showsAttendedData)")
-            NSUbiquitousKeyValueStore.default.synchronize()
-            var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
-            
-            if valueTemp.isEmpty == true {
-                self.writeiCloudAttendedData(attendedHandle: attendedHandle)
-                valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "attendedData") ?? "")
-            }
-            
-            //if we have no data, lets bail
-            if valueTemp.isEmpty == true {
-                return
-                iCloudDataisLoading = false
-            }
-            
-            print ("Value pairs are \(valueTemp)")
-            let splitOutput = valueTemp.components(separatedBy: ";")
-            for record in splitOutput {
-                if (record.isEmpty == false){
-                    print ("iCloud: Reading from iCloud \(record)")
-                    var varValue = record.components(separatedBy: "!");
-                    var index = varValue[0];
-                    var status = varValue[1];
-                    if (index == "attended"){
-                        index = varValue[1]
-                        status = varValue[2]
-                    }
-                    
-                    print ("iCloud: Exiting is for \(index) is \(showsAttendedData[index]) new is \(status)")
-                    if status.isEmpty == true {
-                        status = "Unknown"
-                    }
-                    //if showsAttendedData.keys.contains(index) == true {
-                        //if showsAttendedData[index] != status {
-                            print ("iCloud: Adding status of \(status) to \(index)")
-                            attendedHandle.changeShowAttendedStatus(index: index, status: status)
-                        //}
-                    //}
-                }
-            }
+            var dataString = String(priority) + ":" + UIDevice.current.identifierForVendor!.uuidString
+            print ("iCloud: writeAPriorityRecord \(bandName) - \(dataString)")
+            NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
         }
-        iCloudDataisLoading = false
     }
+    
 
-    func writeiCloudPriorityData (bandPriorityStorage: [String:Int]){
-        if (checkForIcloud() == false || iCloudDataisLoading == true){
-            print ("Not Adding icloud \(iCloudDataisLoading) - \(checkForIcloud())")
-            return
-        }
-        
-        if (internetAvailble == true){
+    func writeAllScheduleData(){
+        print ("iCloud: writeAScheduleRecord writeAll ScheduleRecord  1 = START")
+        if (checkForIcloud() == true){
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                iCloudDataisSaving = true
-                var dataString: String = ""
+                let attendedHandle = ShowsAttended()
+                attendedHandle.loadShowsAttended()
+                let showsAttendedArray = attendedHandle.getShowsAttended();
                 
-                var counter = 0;
-                if (bandPriorityStorage.isEmpty == false){
-                    for (band, priority) in bandPriorityStorage {
-                        print ("iCloud adding data  \(band)!\(priority)")
-                        dataString = dataString + band + "!" + String(priority) + ";"
-                        print ("Adding icloud \(band) write '\(priority)'")
-                        counter += 1
-                    }
-                    
-                    print ("iCloud priority write counter is \(counter)")
-                    if (counter >= 1){
-                        print ("iCloud writing Priority data \(dataString)")
-                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandPriorities")
+                let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+                print ("iCloud: writeAScheduleRecord writeAll ScheduleRecord 2 = \(uid)")
+                if (uid.isEmpty == false){
+                    print ("iCloud: writeAScheduleRecord writeAll ScheduleRecord 3")
+                    if (showsAttendedArray != nil && showsAttendedArray.isEmpty == false){
+                        for eventIndex in showsAttendedArray {
+                            self.writeAScheduleRecord(eventIndex: eventIndex.key, status: eventIndex.value)
+                        }
                         NSUbiquitousKeyValueStore.default.synchronize()
                     }
                 }
-                iCloudDataisSaving = false
             }
         }
     }
     
-    func readCloudAPriorityData (dataHandle: dataHandler){
+    func writeAScheduleRecord(eventIndex: String, status: String){
         
-        if (checkForIcloud() == false || iCloudDataisSaving == true){
-            return
-        }
-        
-        if (internetAvailble == true){
+        var dataString = status + ":" + UIDevice.current.identifierForVendor!.uuidString
+        print ("iCloud: writeAScheduleRecord Storing eventNamex:\(eventIndex) - \(dataString)")
+        NSUbiquitousKeyValueStore.default.set(dataString, forKey: "eventName:" + eventIndex)
+    
+    }
+    
+    func readAllPriorityData(){
+        print ("iCloud: readAllPriorityData called")
+        if ( iCloudDataisLoading == false){
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 iCloudDataisLoading = true;
-                sleep(2)
+                let bandNameHandle = bandNamesHandler()
+                let bandNames = bandNameHandle.getBandNames()
                 
-                //do a short sleep to ensure that any write has a chance to happen and avoid a race condition
-                //sleep(10)
-                print ("reading iCloudPriority Data")
-                let priorityData = dataHandle.getPriorityData()
+                let priorityHandler = dataHandler()
+                priorityHandler.refreshData()
                 
-                NSUbiquitousKeyValueStore.default.synchronize()
-                var valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities") ?? "")
-                
-                if valueTemp.isEmpty == true {
-                    self.writeiCloudPriorityData(bandPriorityStorage: dataHandle.getPriorityData())
-                    valueTemp = String(NSUbiquitousKeyValueStore.default.string(forKey: "bandPriorities") ?? "")
+                for bandName in bandNames{
+                    self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
                 }
-                
-                //if we have no data, lets bail
-                if valueTemp.isEmpty == true {
-                    return
-                    iCloudDataisLoading = false
+                iCloudDataisLoading = false;
+            }
+        }
+    }
+    
+    func readAPriorityRecord(bandName: String, priorityHandler: dataHandler){
+        
+        print ("iCloud: readAPriorityRecord trying to read \(bandName)")
+        let index = "bandName:" + bandName
+        let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: index) ?? "0")
+        let currentUid = UIDevice.current.identifierForVendor!.uuidString
+        if (tempValue != nil && tempValue.isEmpty == false){
+            let tempData = tempValue.split(separator: ":")
+            if (tempData.isEmpty == false && tempData.count == 2){
+                let newPriority = tempData[0]
+                let uidValue = tempData[1]
+                let currentPriroity = priorityHandler.getPriorityData(bandName)
+                print ("iCloud: before readAPriorityRecord adding \(bandName) - \(newPriority) - \(uidValue) - \(currentUid)")
+                if (uidValue != currentUid || currentPriroity == 0){
+                    print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newPriority) - \(uidValue) - \(currentUid)")
+                    priorityHandler.addPriorityData(bandName, priority: Int(newPriority) ?? 0)
                 }
-                
-                print ("Value pairs are \(valueTemp)")
-                let splitOutput = valueTemp.components(separatedBy: ";")
-                for record in splitOutput {
-                    if (record.isEmpty == false){
-                        print ("Reading from iCloud \(record)")
-                        var varValue = record.components(separatedBy: "!");
-                        var index = varValue[0];
-                        var status = varValue[1];
-                        if (index == "attended"){
-                            index = varValue[1]
-                            status = varValue[2]
-                        }
-                        print ("Exiting is for \(index) is \(priorityData[index]) new is \(status)")
-                        if priorityData[index] != Int(status) {
-                            dataHandle.addPriorityData(index,priority: Int(status) ?? 0)
+            }
+        }
+    }
+    
+    func readAllScheduleData(){
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            
+            let scheduleHandle = scheduleHandler()
+            scheduleHandle.buildTimeSortedSchedulingData();
+            
+            let bandNameHandle = bandNamesHandler()
+            let bandNames = bandNameHandle.getBandNames()
+            
+            let attendedHandle = ShowsAttended()
+            attendedHandle.loadShowsAttended()
+            
+            let priorityHandler = dataHandler()
+            priorityHandler.refreshData()
+            
+            let scheduleData = scheduleHandle.getBandSortedSchedulingData()
+
+            if (scheduleData.count > 0){
+                for bandName in scheduleData.keys {
+                    if (scheduleData.isEmpty == false){
+                        for timeIndex in scheduleData[bandName]!.keys {
+                            if scheduleData[bandName] != nil {
+                                if (scheduleData[bandName]![timeIndex] != nil){
+                                    if (scheduleData[bandName]![timeIndex]![locationField] != nil){
+                                        let location = scheduleData[bandName]![timeIndex]![locationField]!
+                                        let startTime = scheduleData[bandName]![timeIndex]![startTimeField]!
+                                        let eventType = scheduleData[bandName]![timeIndex]![typeField]!
+                                        
+                                        self.readAScheduleRecord(bandName: bandName,location: location,startTime: startTime,eventType: eventType, attendedHandle: attendedHandle, bandNames: bandNames)
+                                    }
+                                }
+                            }
                         }
                     }
+                    if (bandNames.contains(bandName) == false){
+                        self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
+                    }
                 }
-                iCloudDataisLoading = false
+            }
+        }
+    }
+    
+    func readAScheduleRecord(bandName: String,
+                             location: String,
+                             startTime: String,
+                             eventType:String,
+                             attendedHandle: ShowsAttended,
+                             bandNames: [String]){
+        
+        //Sat - Metal Beach Bash:Clevelander Bar:18:00:Cruiser Organized:2024 - sawAll:A8878716-7FAD-4E4B-9C91-0B64853E02C2
+        
+        let eventYearString = String(eventYear)
+        
+        print ("iCloud: readAScheduleRecord 1 trying to read \(bandName)-\(startTime)")
+        var eventIndex = "eventName:" + bandName + ":"
+        eventIndex = eventIndex + location + ":"
+        eventIndex = eventIndex + startTime + ":"
+        eventIndex = eventIndex + eventType + ":"
+        eventIndex = eventIndex + eventYearString
+        
+
+        let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: eventIndex) ?? "0")
+        let currentUid = UIDevice.current.identifierForVendor!.uuidString
+        print ("iCloud: readAScheduleRecord 2 trying to read \(tempValue)-\(eventIndex)")
+        if (tempValue != nil && tempValue.isEmpty == false && eventIndex != "0"){
+            let tempData = tempValue.split(separator: ":")
+            if (tempData.isEmpty == false && tempData.count == 2){
+                let newAttended = String(tempData[0])
+                let uidValue = tempData[1]
+                print ("iCloud: readAScheduleRecord 4 trying to read \(newAttended)-\(uidValue)")
+                let currentAttended = attendedHandle.getShowAttendedStatusUserFriendly(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+                
+                print ("iCloud: before readAPriorityRecord adding \(bandName) - \(newAttended) - \(uidValue) - \(currentAttended)")
+                if (uidValue != currentUid || currentAttended == nil){
+                    print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newAttended) - \(uidValue) - \(currentUid)")
+                    attendedHandle.addShowsAttendedWithStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: newAttended)
+                }
             }
         }
     }
