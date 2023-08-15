@@ -294,6 +294,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
+        
+        let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.writeAllPriorityData()
+        iCloudHandle.writeAllScheduleData();
+        
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
         reportData()
@@ -315,10 +320,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
         
-        let showsAttendedHandle = ShowsAttended()
+        //let showsAttendedHandle = ShowsAttended()
         let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: false)
-        iCloudHandle.readCloudAttendedData(attendedHandle: showsAttendedHandle)
+        iCloudHandle.readAllPriorityData()
+        iCloudHandle.readAllScheduleData()
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

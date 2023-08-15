@@ -96,9 +96,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: false)
-        iCloudHandle.readCloudAttendedData(attendedHandle: showsAttendedHandle)
         
         refreshData()
         
@@ -133,6 +130,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        
+        let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+        iCloudHandle.readAllScheduleData()
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -526,10 +527,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             currentBandList = self.bands
             self.bandsByName = self.bands
             
-            let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readCloudData(dataHandle: dataHandle, sleepToCatchUp: true)
-            
-            
             DispatchQueue.main.async{
                 print ("Refreshing data in backgroud");
 
@@ -547,8 +544,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
-
+                
+                let iCloudHandle = iCloudDataHandler()
+                iCloudHandle.readAllPriorityData()
+                iCloudHandle.readAllScheduleData()
+            
             }
+            
             //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
         //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)

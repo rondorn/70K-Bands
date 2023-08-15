@@ -56,8 +56,6 @@ open class ShowsAttended {
             } catch {
                 print ("Error, unable to save showsAtteneded Data \(error.localizedDescription)")
             }
-            
-            iCloudHandle.writeiCloudAttendedData(attendedHandle: self)
         }
     }
 
@@ -132,6 +130,7 @@ open class ShowsAttended {
         staticLastModifiedDate.async(flags: .barrier) {
             cacheVariables.lastModifiedDate = Date()
         }
+        
     }
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
@@ -187,6 +186,12 @@ open class ShowsAttended {
         }
         
         saveShowsAttended()
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
+            NSUbiquitousKeyValueStore.default.synchronize()
+        }
     }
     
     func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{
