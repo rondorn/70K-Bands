@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
 
 
-    compileSdkVersion 31
+    compileSdkVersion 33
     //buildToolsVersion '27.0.3'
 
     compileOptions {
@@ -13,10 +13,10 @@ android {
 
     defaultConfig {
         applicationId "com.Bands70k"
-        minSdkVersion 19
-        targetSdkVersion 31
-        versionCode 302308122
-        versionName "302308122"
+        minSdkVersion 26
+        targetSdkVersion 33
+        versionCode 302308183
+        versionName "302308183"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
