@@ -925,7 +925,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             }
             
             if (sender.isEnabled == true && sendToUrl.isEmpty == false){
-                splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
                 setUrl(sendToUrl)
             }
         }

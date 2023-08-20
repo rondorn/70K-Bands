@@ -65,7 +65,7 @@ class iCloudDataHandler {
                 attendedHandle.loadShowsAttended()
                 let showsAttendedArray = attendedHandle.getShowsAttended();
                 
-                let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+                let uid = (UIDevice.current.identifierForVendor?.uuidString) ?? ""
                 print ("iCloud: writeAScheduleRecord writeAll ScheduleRecord 2 = \(uid)")
                 if (uid.isEmpty == false){
                     print ("iCloud: writeAScheduleRecord writeAll ScheduleRecord 3")

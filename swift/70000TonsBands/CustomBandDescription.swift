@@ -324,7 +324,7 @@ open class CustomBandDescription {
                 csvData = try! CSV(csvStringToParse: csvDataString)
                 
                 for lineData in csvData.rows {
-                    if (lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
+                    if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
                         print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
                         bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
                         bandDescriptionUrlDate[(lineData[bandField]) ?? ""] = lineData[urlDateField]

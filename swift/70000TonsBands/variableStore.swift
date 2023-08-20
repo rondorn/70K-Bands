@@ -9,6 +9,7 @@
 import Foundation
 
 class variableStore {
+    
     // Function to store the [String: String] variable to the file system
     func storeDataToDisk(data: [String: String], fileName: String) {
         do {
