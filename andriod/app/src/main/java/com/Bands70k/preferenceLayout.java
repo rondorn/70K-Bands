@@ -424,6 +424,7 @@ public class preferenceLayout  extends Activity {
                     public void onClick(DialogInterface dialog, int which) {
                         staticVariables.preferences.setHideExpiredEvents(true);
                         onBackPressed();
+                        finish();
                     }
                 });
         restartDialog.setPositiveButton(getResources().getString(R.string.eventListButton),
@@ -431,6 +432,7 @@ public class preferenceLayout  extends Activity {
                     public void onClick(DialogInterface dialog, int which) {
                         staticVariables.preferences.setHideExpiredEvents(false);
                         onBackPressed();
+                        finish();
                     }
                 });
 
@@ -561,6 +563,15 @@ public class preferenceLayout  extends Activity {
     }
 
     private void setValues(){
+
+        //if this code is called before the main thread initialized the values...wait
+        while (staticVariables.preferences == null){
+            try {
+                sleep(200);
+            } catch (Exception error){
+                //do nothing
+            }
+        }
 
         mustSee = (Switch)findViewById(R.id.mustSeecheckBox);
         mustSee.setChecked(staticVariables.preferences.getMustSeeAlert());
