@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">70K Bands</string>
     <string name="must">Must</string>
@@ -104,6 +105,8 @@
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Current</string>
 
+    <string name="backupPrompt">Paste in the URL to the userExport.zip stored on DropBox or other similar service</string>
+    <string name="importButtonName">Import</string>
 </resources>
 
 

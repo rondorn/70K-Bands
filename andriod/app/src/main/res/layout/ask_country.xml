@@ -2,17 +2,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="fill_horizontal"
     android:layout_centerHorizontal="true"
+    android:layout_gravity="fill_horizontal"
+    android:background="#505050"
     android:foregroundGravity="center_vertical|center_horizontal"
     android:orientation="vertical"
     android:paddingLeft="20dp"
-    android:paddingRight="20dp"
     android:paddingTop="20dp"
+    android:paddingRight="20dp"
     android:paddingBottom="20dp"
-    android:theme="@style/AppTheme"
-    android:background="#505050"
-    >
+    android:theme="@style/AppTheme">
 
     <EditText
         android:id="@+id/CountryLabel"
@@ -22,14 +21,15 @@
         android:inputType="textPersonName"
         android:minHeight="48dp"
         android:text="Name"
-        android:textColor="#90CAF9" />
+        android:textColor="@android:color/white" />
 
     <AutoCompleteTextView
         android:id="@+id/CountryList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="48dp"
-        android:text="AutoCompleteTextView" />
+        android:text="AutoCompleteTextView"
+        android:textColor="@android:color/white" />
 
     <Button
         android:id="@+id/ok_button"

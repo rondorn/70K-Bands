@@ -209,6 +209,7 @@ public class showBands extends Activity {
         // Registering BroadcastReceiver
         registerReceiver();
 
+
         if (staticVariables.attendedHandler == null) {
             staticVariables.attendedHandler = new showsAttended();
         }
@@ -276,11 +277,12 @@ public class showBands extends Activity {
         setupButtonFilters();
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
-        Log.d("startup", "show init start - 9");
+        Log.d("DisplayListData", "show init start - 9");
 
         BandInfo bandInfo = new BandInfo();
         bandInfo.DownloadBandFile();
-        refreshData();
+        //
+        // refreshData();
 
         FirbaseAsyncUserWrite userDataWriteAsync = new FirbaseAsyncUserWrite();
         userDataWriteAsync.execute();
@@ -1295,6 +1297,9 @@ public class showBands extends Activity {
                             Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
                         }
                     }
+                    if (BandInfo.scheduleRecords.get(bandName) == null){
+                        return;
+                    }
                     if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false) {
                         return;
                     }
@@ -1731,16 +1736,16 @@ public class showBands extends Activity {
         @Override
         protected void onPreExecute() {
 
-            Log.d("Refresh", "Refresh Stage = Pre-Start");
+            Log.d("DisplayListData", "Refresh Stage = Pre-Start");
             super.onPreExecute();
             if (staticVariables.loadingBands == false) {
 
-                Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 1");
+                Log.d("DisplayListData", "onPreExecuteRefresh - 1");
                 staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
                 refreshData();
                 staticVariables.loadingBands = false;
-                Log.d("onPreExecuteRefresh", "onPreExecuteRefresh - 2");
+                Log.d("DisplayListData", "onPreExecuteRefresh - 2");
 
             }
             Log.d("Refresh", "Refresh Stage = Pre-Stop");
@@ -1808,7 +1813,7 @@ public class showBands extends Activity {
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 5");
 
 
-                Log.d("Refresh", "Refresh Stage = Post-Stop");
+                Log.d("DisplayListData", "Refresh Stage = Post-Stop");
             //}
         }
     }
