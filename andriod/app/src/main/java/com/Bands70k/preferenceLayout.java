@@ -175,7 +175,6 @@ public class preferenceLayout  extends Activity {
         // create an alert builder
         final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
         builder.setCustomTitle(titleView);
-
         // set the custom layout
         final View customLayout = getLayoutInflater().inflate(R.layout.import_prompt, null);
         builder.setView(customLayout);
@@ -184,6 +183,9 @@ public class preferenceLayout  extends Activity {
         Button importButton = (Button) customLayout.findViewById(R.id.Import);
         Button cancelButton = (Button) customLayout.findViewById(R.id.Cancel);
         final TextView importUrl = (TextView) customLayout.findViewById(R.id.pointerUrl);
+        importUrl.setTextColor(Color.WHITE);
+        importUrl.setHighlightColor(Color.BLACK);
+        importUrl.setBackgroundColor(Color.parseColor("#A8A8A8"));
 
         // create and show the alert dialog
         final AlertDialog dialog = builder.create();
@@ -457,6 +459,7 @@ public class preferenceLayout  extends Activity {
         restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        HelpMessageHandler.showMessage("Waiting for data to load......");
                         Log.d("preferenceLayout", "Testing network connection");
                         if (OnlineStatus.testInternetAvailableSynchronous() == false){
                             Log.d("preferenceLayout", "Testing network connection, failed");
@@ -498,21 +501,30 @@ public class preferenceLayout  extends Activity {
                         BandInfo bandInfo = new BandInfo();
                         bandInfo.getDownloadtUrls();
                         bandInfo.DownloadBandFile();
+
+                        scheduleInfo scheduleData = new scheduleInfo();
+                        scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+
+                        staticVariablesInitialize();
                         try {
-                            sleep(1000);
+                            Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
+                            while (FileHandler70k.schedule.exists() == false){
+                                Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " waiting");
+                                sleep(500);
+                                bandInfo.getDownloadtUrls();
+                                scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+                            }
+                            Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
+                            Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
+                            while (FileHandler70k.bandInfo.exists() == false){
+                                sleep(500);
+                                bandInfo.getDownloadtUrls();
+                                bandInfo.DownloadBandFile();
+                            }
+                            Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        ArrayList<String> bandList  = bandInfo.DownloadBandFile();
-                        staticVariablesInitialize();
-
-
-
-                        mainListHandler listHandler = new mainListHandler();
-                        staticVariables.updatelistHandlerCache(listHandler);
-                        listState = null;
-                        showsAttended showsAttendedHandle = new showsAttended();
-                        showsAttendedHandle.loadShowsAttended();
 
                         staticVariables.refreshActivated = true;
 
@@ -668,18 +680,7 @@ public class preferenceLayout  extends Activity {
                 staticVariables.preferences.setAlertForUnofficalEvents(alertUnofficalEvents.isChecked());
             }
         });
-        /*
-        lastYearsData = (Switch)findViewById(R.id.useLastYearsData);
-        lastYearsData.setChecked(staticVariables.preferences.getUseLastYearsData());
-        lastYearsData.setOnClickListener(new View.OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
-                buildRebootDialog();
-            }
-        });
-        */
         alertMin = (EditText)findViewById(R.id.minBeforeEvent);
         alertMin.setText(staticVariables.preferences.getMinBeforeToAlert().toString());
 

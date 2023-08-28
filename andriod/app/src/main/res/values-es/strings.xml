@@ -104,4 +104,7 @@
     <string name="changeYearDialogBoxTitle">Cambiar el año del evento</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Actual</string>
+
+    <string name="backupPrompt">Pegue la URL del archivo userExport.zip almacenado en DropBox u otro servicio similar.</string>
+    <string name="importButtonName">Importación</string>
 </resources>
