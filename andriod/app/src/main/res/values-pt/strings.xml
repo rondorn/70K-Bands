@@ -103,4 +103,6 @@
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Atual</string>
 
+    <string name="backupPrompt">Cole o URL do userExport.zip armazenado no DropBox ou outro serviço semelhante</string>
+    <string name="importButtonName">Importação</string>
 </resources>

@@ -104,4 +104,6 @@
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Nykyinen</string>
 
+    <string name="backupPrompt">Liitä URL-osoite userExport.zip-tiedostoon, joka on tallennettu DropBoxiin tai muuhun vastaavaan palveluun</string>
+    <string name="importButtonName">Tuoda</string>
 </resources>

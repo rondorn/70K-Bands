@@ -28,9 +28,11 @@ public class scheduleInfo {
         Log.d("ScheduleLine", "DownloadScheduleFile - 1");
         //Log.d("bandUrlIs", scheduleUrl);
 
-        if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) ||  staticVariables.inUnitTests == true) {
+        if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper())
+                ||  staticVariables.inUnitTests == true
+                || FileHandler70k.schedule.exists() == false) {
             try {
-                Log.d("ScheduleLine", "DownloadScheduleFile - 2");
+                Log.d("ScheduleLine", "DownloadScheduleFile - 2 URL=" + scheduleUrl);
                 URL u = new URL(scheduleUrl);
                 InputStream is = u.openStream();
 

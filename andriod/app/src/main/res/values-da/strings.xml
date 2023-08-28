@@ -101,4 +101,7 @@
     <string name="changeYearDialogBoxTitle">Ændring af begivenhedsåret</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Nuværende</string>
+
+    <string name="backupPrompt">Indsæt URL\'en til userExport.zip, der er gemt på DropBox eller anden lignende tjeneste</string>
+    <string name="importButtonName">Betyde</string>
 </resources>

@@ -81,13 +81,14 @@ public class mainListHandler {
                             }
                         }
                     } else {
+                        Log.d("scheduleInfo", "Sort alphbetically, bandname is " + bandName);
                         if ((timeIndex + 3600000) > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
                                 bandPresent.add(bandName);
                                 numberOfEvents++;
-                                Log.d("countInfo", "eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
+                                Log.d("countInfo", "bandName is " + bandName + " eventType is  " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType());
                                 if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEvent) ||
                                         BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType().equals(staticVariables.unofficalEventOld)){
                                     numberOfUnofficalEvents = numberOfUnofficalEvents + 1;
@@ -358,7 +359,7 @@ public class mainListHandler {
     private String buildLines(Long timeIndex,String bandName){
         //attendedHandler.loadShowsAttended();
         String line = null;
-
+        Log.d(TAG, "buildLines - timeIndex = " + String.valueOf(timeIndex) + " bandName of " +  bandName);
         String eventYear = String.valueOf(staticVariables.eventYear);
         if (timeIndex > 0){
             String rankIcon = rankStore.getRankForBand(bandName);
@@ -447,7 +448,9 @@ public class mainListHandler {
             return false;
         }
         // only got here if we didn't return false
-
+        if (value.length() < 10){
+            return false;
+        }
         Log.d("mainListHandler", "long of " + value + " is true");
         return true;
     }

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
+import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
 /**
  * Created by rdorn on 7/25/15.
@@ -226,8 +227,15 @@ public class BandInfo {
         getDownloadtUrls();
 
         System.out.println("in DownloadBandFile " +  isRunningInTestHarness());
-        if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) ||  staticVariables.inUnitTests == true) {
-            System.out.println("inside DownloadBandFile");
+        if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper())
+                ||  staticVariables.inUnitTests == true
+                || FileHandler70k.bandInfo.exists() == false) {
+
+            if (downloadUrls.get("artistUrl") == null){
+                staticVariablesInitialize();
+                getDownloadtUrls();
+            }
+            System.out.println("inside DownloadBandFile " + downloadUrls.get("artistUrl"));
             try {
                 URL u = new URL(downloadUrls.get("artistUrl"));
                 InputStream is = u.openStream();
