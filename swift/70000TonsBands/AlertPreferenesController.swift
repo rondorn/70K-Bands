@@ -189,8 +189,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         buildEventYearMenu(currentYear: currentYearSetting)
         disableAlertButtonsIfNeeded()
         self.navigationItem.title = "Preferences - Build:" + versionInformation
+
+        NotificationCenter.default.addObserver(self, selector: #selector(self.displayWaitingMessage), name: NSNotification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.eventsOrBandsPrompt), name: NSNotification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(self.lastYearWarningAccepted), name: NSNotification.Name(rawValue: "ChangeYearTesting"), object: nil)
+        
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -573,8 +576,25 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Create the actions
         let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
             UIAlertAction in
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "ChangeYearTesting"), object: nil)
-            //self.lastYearWarningAccepted()
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
+            
+            Task{
+                        
+                await self.lastYearWarningAccepted()
+                
+                await DispatchQueue.global(qos: DispatchQoS.QoSClass.default).sync {
+                    if (self.eventYearChangeAttempt.isYearValue == false){
+                        self.HideExpiredSwitch.isOn = true
+                        defaults.setValue(true, forKey: "hideExpireScheduleData")
+                        self.navigationController?.popViewController(animated: true)
+                        self.dismiss(animated: true, completion: nil)
+                    } else {
+                        NotificationCenter.default.post(name: Notification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
+                    }
+                }
+                
+            }
+
         }
         let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
             UIAlertAction in
@@ -587,6 +607,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
+    }
+    
+    @objc func displayWaitingMessage(){
+        let waitingMessage = NSLocalizedString("waiting_for_data", comment: "")
+        ToastMessages(waitingMessage).show(self, cellLocation: self.view.frame, placeHigh: false)
     }
     
     func networkDownWarning(){
@@ -606,7 +631,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.present(alertController, animated: true, completion: nil)
     }
 
-    func eventsOrBandsPrompt(){
+    @objc func eventsOrBandsPrompt(){
 
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
         
@@ -635,9 +660,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
     }
+
     
-    @objc func lastYearWarningAccepted(){
-    
+    func lastYearWarningAccepted() async{
+        
         let netTest = NetworkTesting()
         internetAvailble = netTest.forgroundNetworkTest(callingGui: self)
         
@@ -653,13 +679,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
         defaults.setValue(eventYearChangeAttempt, forKey: "artistUrl")
         defaults.setValue(eventYearChangeAttempt, forKey: "scheduleUrl")
-
-        if (eventYearChangeAttempt.isYearValue == false){
-            HideExpiredSwitch.isOn = true
-            defaults.setValue(true, forKey: "hideExpireScheduleData")
-        } else {
-            eventsOrBandsPrompt();
-        }
         
         cacheVariables.storePointerData = [String:String]()
         var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
@@ -673,12 +692,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             print ("Files were not removed..why?");
             //guess there was no file to delete
         }
-        
+
         setMustSeeOn(true);
         setMightSeeOn(true);
         setWontSeeOn(true);
         setUnknownSeeOn(true);
-        
+
         dataHandle.writeFiltersFile();
         
         //clear all existing notifications
@@ -697,14 +716,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        
-        
-
-        if (eventYearChangeAttempt.isYearValue == false){
-            self.navigationController?.popViewController(animated: true)
-            self.dismiss(animated: true, completion: nil)
-        }
-
     }
 
 }
