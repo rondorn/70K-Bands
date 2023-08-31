@@ -134,6 +134,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readAllPriorityData()
         iCloudHandle.readAllScheduleData()
+        
+        //change the notch area to all black
+        navigationController?.view.backgroundColor = .black
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -719,6 +722,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
         if (currentYearSetting != "Current" && currentYearSetting != "Default"){
             titleButton.title = "70,000 Tons (" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            
         } else {
             titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString
         }

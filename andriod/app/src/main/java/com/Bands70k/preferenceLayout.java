@@ -307,7 +307,12 @@ public class preferenceLayout  extends Activity {
 
             while ((ze = zis.getNextEntry()) != null) {
                 filename = ze.getName();
-
+                String DIR = "";
+                File filePath = new File(DIR, filename);
+                String canonicalPath = filePath.getCanonicalPath();
+                if (!canonicalPath.startsWith(DIR)) {
+                    return false;
+                }
                 // Need to create directories if not exists, or
                 // it will generate an Exception...
                 if (ze.isDirectory()) {
@@ -459,7 +464,10 @@ public class preferenceLayout  extends Activity {
         restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        HelpMessageHandler.showMessage("Waiting for data to load......");
+
+                        String waitText = getResources().getString(R.string.waiting_for_data);
+                        HelpMessageHandler.showMessage(waitText);
+
                         Log.d("preferenceLayout", "Testing network connection");
                         if (OnlineStatus.testInternetAvailableSynchronous() == false){
                             Log.d("preferenceLayout", "Testing network connection, failed");
