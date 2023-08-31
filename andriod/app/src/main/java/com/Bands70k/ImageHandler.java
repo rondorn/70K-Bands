@@ -134,9 +134,9 @@ public class ImageHandler {
             this.bandName = bandNameTmp;
 
             bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
-            Log.e("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
+            Log.d("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
             if (bandImageFile.exists() == false) {
-                Log.e("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
+                Log.d("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
                 this.getRemoteImage();
             }
         }
@@ -144,9 +144,9 @@ public class ImageHandler {
         for (String bandNameTmp : bandList){
             this.bandName = bandNameTmp;
             bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
-            Log.e("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
+            Log.d("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
             if (bandImageFile.exists() == false) {
-                Log.e("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
+                Log.d("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
                 this.getRemoteImage();
             }
         }
