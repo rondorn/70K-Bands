@@ -83,7 +83,7 @@
 
     <string name="visitBands">Verknüpfungen</string>
     <string name="country">Land</string>
-    <string name="genre">Geschlecht</string>
+    <string name="genre">Stil</string>
 
     <string name="verify_country">Bestätigen Sie Ihr Land</string>
     <string name="correct_if_needed">Korrigieren Sie bei Bedarf Ihr Land</string>
