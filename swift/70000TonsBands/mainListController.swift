@@ -643,16 +643,16 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             var locationString = "  " + location
             var venueString = NSMutableAttributedString(string: locationString)
             var locationColor = getVenueColor(venue: location)
-            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location:0,length:1))
+            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
             venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location:1,length: location.count))
+            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
             venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
 
             var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
             var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
-            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location:0,length:1))
+            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
             locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
+            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
             locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
             
             bandNameView.attributedText = venueString
@@ -667,9 +667,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             var locationString = "  " + locationText
             var myMutableString = NSMutableAttributedString(string: locationString)
             var locationColor = getVenueColor(venue: location)
-            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location: 0,length:1))
+            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0,length:1))
             myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 19), range: NSRange(location:1,length: locationText.count))
+            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: locationText.count))
             myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
 
             bandNameView.backgroundColor = UIColor.black;
