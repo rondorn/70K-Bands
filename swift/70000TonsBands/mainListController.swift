@@ -28,6 +28,7 @@ var bandCount = Int();
 var eventCount = Int();
 
 var previousBandName = String();
+var firstBandName = String();
 
 var totalUpcomingEvents = Int()
 
@@ -638,7 +639,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             previousBandName = "Unknown"
         }
         print ("Checking if bandname \(bandName) matched previous bandname \(previousBandName) - index for cell \(indexRow)")
-        if (bandName == previousBandName && sortBy == "name"){
+        if (bandName == previousBandName || (bandName == firstBandName && indexRow != 0) && sortBy == "name"){
             
             var locationString = "  " + location
             var venueString = NSMutableAttributedString(string: locationString)
@@ -730,6 +731,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     }
     
     previousBandName = bandName
+    if (firstBandName.isEmpty == true){
+        firstBandName  = bandName;
+    }
 }
 
 
