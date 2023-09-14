@@ -4,3 +4,4 @@
 *.swiftdeps
 *.xcbkptlist
 *.xcuserstate
+*.swiftconstvalues
