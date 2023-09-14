@@ -27,6 +27,8 @@ var sortedBy = String();
 var bandCount = Int();
 var eventCount = Int();
 
+var previousBandName = String();
+
 var totalUpcomingEvents = Int()
 
 var scheduleIndexByCall : [String:[String:String]] = [String:[String:String]]();
@@ -557,7 +559,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     cell.backgroundColor = UIColor.black;
     cell.textLabel?.textColor = UIColor.white
     
+    var displayBandName = bandName;
+    
     if (timeIndex > 1){
+        
         
         hasScheduleData = true
         
@@ -569,16 +574,15 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         attendedView.isHidden = false
         locationColor.isHidden = false
         eventTypeImageView.isHidden = false
-
+        
         let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
         let day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
         let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
         let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
-     
-        locationColor.backgroundColor = getVenueColor(venue: location);
         
+                
         indexText += ";" + location + ";" + event + ";" + startTime
         
         if (listOfVenues.contains(location) == false){
@@ -631,13 +635,40 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         dayView.text = dayText
         dayLabelView.text = "Day"
-        locationView.text = locationText
+        
+        if (bandName == previousBandName && sortBy == "name"){
+            
+            var locationString = "  " + location
+            var myMutableString = NSMutableAttributedString(string: locationString, attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 16)])
+            var locationColor = getVenueColor(venue: location)
+            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 20), range: NSRange(location:0,length:1))
+            myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+            myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: (locationString.count - 1)))
+            
+            bandNameView.attributedText = myMutableString
+            bandNameView.isHidden = false;
+            bandNameNoSchedule.text = bandName
+            
+            locationView.text = venueLocation[location] ?? ""
+            bandNameNoSchedule.isHidden = true
+ 
+        } else {
+            bandNameView.backgroundColor = UIColor.black;
+            locationView.text = locationText
+            bandNameView.isHidden = false
+            bandNameNoSchedule.isHidden = true
+            bandNameNoSchedule.text = ""
+            locationColor.isHidden = false
+        }
+        
+    
+        locationColor.backgroundColor = getVenueColor(venue: location);
         startTimeView.text = startTimeText
         endTimeView.text = endTimeText
         
         rankLocationSchedule = true
-        bandNameView.isHidden = false
-        bandNameNoSchedule.isHidden = true
+        //bandNameView.isHidden = false
+        //bandNameNoSchedule.isHidden = true
         
     } else {
         rankLocationSchedule = false
@@ -661,7 +692,11 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     
     print ("Cell text for \(bandName) ranking is \(dataHandle.getPriorityData(bandName))")
     rankGraphic = UIImageView(image:UIImage(named: getPriorityGraphic(dataHandle.getPriorityData(bandName))))
-
+    
+    if (timeIndex > 1 && sortBy == "name" && bandName == previousBandName){
+        rankGraphic.image = nil
+    }
+    
     if (rankGraphic.image != nil){
         if (rankLocationSchedule == true){
             rankImageView.isHidden = false
@@ -677,6 +712,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         rankImageView.isHidden = true
         rankImageViewNoSchedule.isHidden = true
     }
+    
+    previousBandName = bandName
 }
 
 
