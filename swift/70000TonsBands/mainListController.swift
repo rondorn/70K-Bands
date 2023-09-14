@@ -542,8 +542,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     let endTimeView = cell.viewWithTag(8) as! UILabel
     let dayLabelView = cell.viewWithTag(9) as! UILabel
     let dayView = cell.viewWithTag(10) as! UILabel
-    let locationColor = cell.viewWithTag(12) as! UILabel
-    let bandNameNoSchedule = cell.viewWithTag(13) as! UILabel
+    let bandNameNoSchedule = cell.viewWithTag(12) as! UILabel
     
     indexForCell.isHidden = true
     bandNameView.textColor = UIColor.white
@@ -572,7 +571,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         dayView.isHidden = false
         dayLabelView.isHidden = false
         attendedView.isHidden = false
-        locationColor.isHidden = false
         eventTypeImageView.isHidden = false
         
         let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
@@ -639,30 +637,45 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         if (bandName == previousBandName && sortBy == "name"){
             
             var locationString = "  " + location
-            var myMutableString = NSMutableAttributedString(string: locationString, attributes: [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: 16)])
+            var venueString = NSMutableAttributedString(string: locationString)
             var locationColor = getVenueColor(venue: location)
-            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 20), range: NSRange(location:0,length:1))
-            myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: (locationString.count - 1)))
+            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 22), range: NSRange(location:1,length:1))
+            venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
+            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
+            venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
             
-            bandNameView.attributedText = myMutableString
+            var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
+            var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 20), range: NSRange(location:1,length:1))
+            locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
+            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 18), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
+            locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
+            
+            bandNameView.attributedText = venueString
             bandNameView.isHidden = false;
             bandNameNoSchedule.text = bandName
+            locationView.attributedText = locationOfVenueString
             
-            locationView.text = venueLocation[location] ?? ""
             bandNameNoSchedule.isHidden = true
  
         } else {
+
+            var locationString = "  " + locationText
+            var myMutableString = NSMutableAttributedString(string: locationString)
+            var locationColor = getVenueColor(venue: location)
+            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 20), range: NSRange(location: 1,length:1))
+            myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
+            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 18), range: NSRange(location:1,length: locationText.count))
+            myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
+
             bandNameView.backgroundColor = UIColor.black;
-            locationView.text = locationText
+            locationView.attributedText = myMutableString
             bandNameView.isHidden = false
             bandNameNoSchedule.isHidden = true
             bandNameNoSchedule.text = ""
-            locationColor.isHidden = false
         }
         
     
-        locationColor.backgroundColor = getVenueColor(venue: location);
         startTimeView.text = startTimeText
         endTimeView.text = endTimeText
         
@@ -680,7 +693,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         dayView.isHidden = true
         dayLabelView.isHidden = true
         attendedView.isHidden = true
-        locationColor.isHidden = true
         eventTypeImageView.isHidden = true
         bandNameNoSchedule.text = bandName
         bandNameNoSchedule.isHidden = false  

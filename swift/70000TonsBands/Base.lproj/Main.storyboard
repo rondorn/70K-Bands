@@ -988,46 +988,45 @@
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="2" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="7qk-jP-ZS8" userLabel="bandName">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="2" contentMode="scaleAspectFit" ambiguous="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="7qk-jP-ZS8" userLabel="bandName">
                                             <rect key="frame" x="4" y="3" width="345" height="32"/>
                                             <edgeInsets key="layoutMargins" top="8" left="0.0" bottom="8" right="8"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="18"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
-                                        <label hidden="YES" autoresizesSubviews="NO" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="13" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="Vge-Sy-EtH" userLabel="bandNameNoSchedule">
-                                            <rect key="frame" x="4" y="0.0" width="345" height="58"/>
+                                        <label hidden="YES" autoresizesSubviews="NO" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="12" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="Vge-Sy-EtH" userLabel="bandNameNoSchedule">
+                                            <rect key="frame" x="4" y="0.0" width="345" height="33"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <edgeInsets key="layoutMargins" top="8" left="0.0" bottom="8" right="8"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="25"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
                                         <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="3" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="170" translatesAutoresizingMaskIntoConstraints="NO" id="RXb-Rv-NQH" userLabel="Location">
-                                            <rect key="frame" x="10" y="35" width="209" height="23"/>
-                                            <constraints>
-                                                <constraint firstAttribute="height" constant="23" id="zsP-Up-r6v"/>
-                                            </constraints>
+                                            <rect key="frame" x="4" y="35" width="215" height="23"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="16"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
                                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" tag="4" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="hHw-8X-kFT" userLabel="eventTypeImage">
-                                            <rect key="frame" x="230" y="32" width="22" height="25"/>
+                                            <rect key="frame" x="230" y="32" width="22" height="0.0"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="22" id="WwA-tP-256"/>
                                             </constraints>
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                         </imageView>
                                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" tag="5" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ciy-RN-FLS" userLabel="rankImageSchedule">
-                                            <rect key="frame" x="255" y="32" width="22" height="25"/>
+                                            <rect key="frame" x="255" y="32" width="22" height="0.0"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="22" id="xqc-wz-q6e"/>
                                             </constraints>
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                         </imageView>
                                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" tag="6" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="DiJ-4V-0sN" userLabel="attendedImage">
-                                            <rect key="frame" x="280" y="32" width="22" height="25"/>
+                                            <rect key="frame" x="280" y="32" width="22" height="0.0"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="22" id="HzY-zK-V0L"/>
                                             </constraints>
@@ -1040,7 +1039,7 @@
                                             </constraints>
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                         </imageView>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="14" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="170" translatesAutoresizingMaskIntoConstraints="NO" id="DFI-ck-Zrz" userLabel="startTime">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="14" contentMode="scaleAspectFit" ambiguous="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="170" translatesAutoresizingMaskIntoConstraints="NO" id="DFI-ck-Zrz" userLabel="startTime">
                                             <rect key="frame" x="310" y="6" width="68" height="26"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="68" id="F4s-0y-eOh"/>
@@ -1051,7 +1050,7 @@
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
                                         <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="8" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="170" translatesAutoresizingMaskIntoConstraints="NO" id="lcn-Dy-3kK" userLabel="endTime">
-                                            <rect key="frame" x="310" y="32" width="68" height="25"/>
+                                            <rect key="frame" x="310" y="32" width="68" height="0.0"/>
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="21"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -1069,68 +1068,42 @@
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="10" contentMode="scaleAspectFit" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" adjustsFontForContentSizeCategory="YES" preferredMaxLayoutWidth="20" translatesAutoresizingMaskIntoConstraints="NO" id="PCU-mO-3Ph" userLabel="Day">
-                                            <rect key="frame" x="380" y="29" width="30" height="28"/>
+                                            <rect key="frame" x="380" y="29" width="30" height="3"/>
                                             <color key="backgroundColor" white="0.33333333329999998" alpha="1" colorSpace="calibratedWhite"/>
                                             <edgeInsets key="layoutMargins" top="0.0" left="0.0" bottom="0.0" right="0.0"/>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="20"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
-                                        <label autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.75" tag="12" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="spacer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PbL-Em-oIR" userLabel="locationColor">
-                                            <rect key="frame" x="4" y="34" width="5" height="23"/>
-                                            <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                            <color key="tintColor" systemColor="darkTextColor"/>
-                                            <constraints>
-                                                <constraint firstAttribute="width" constant="5" id="NNT-Fl-7PN"/>
-                                            </constraints>
-                                            <edgeInsets key="layoutMargins" top="0.0" left="0.0" bottom="0.0" right="0.0"/>
-                                            <fontDescription key="fontDescription" type="system" pointSize="2"/>
-                                            <color key="textColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                            <nil key="highlightedColor"/>
-                                            <color key="shadowColor" white="0.33333333329999998" alpha="1" colorSpace="calibratedWhite"/>
-                                            <size key="shadowOffset" width="0.0" height="0.0"/>
-                                        </label>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="ciy-RN-FLS" firstAttribute="leading" secondItem="hHw-8X-kFT" secondAttribute="trailing" constant="3" id="1rP-hs-BCZ"/>
                                         <constraint firstAttribute="trailingMargin" secondItem="gin-Bv-NjO" secondAttribute="trailing" constant="-16" id="3kA-lt-ixg"/>
-                                        <constraint firstItem="PbL-Em-oIR" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="23" id="4Lf-bD-7A3"/>
                                         <constraint firstItem="DiJ-4V-0sN" firstAttribute="top" secondItem="lcn-Dy-3kK" secondAttribute="top" id="4fs-j8-aA5"/>
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="trailing" secondItem="lcn-Dy-3kK" secondAttribute="trailing" id="6fX-ZP-3L1"/>
-                                        <constraint firstItem="Vge-Sy-EtH" firstAttribute="bottom" secondItem="RXb-Rv-NQH" secondAttribute="bottom" id="8zP-cO-eK3"/>
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="baseline" secondItem="gin-Bv-NjO" secondAttribute="baseline" id="9LU-GX-scO"/>
-                                        <constraint firstItem="Vge-Sy-EtH" firstAttribute="trailing" secondItem="7qk-jP-ZS8" secondAttribute="trailing" id="BQz-qc-otn"/>
                                         <constraint firstItem="lcn-Dy-3kK" firstAttribute="top" secondItem="DFI-ck-Zrz" secondAttribute="bottom" id="Bht-TE-Ze7"/>
                                         <constraint firstItem="lcn-Dy-3kK" firstAttribute="bottom" secondItem="PCU-mO-3Ph" secondAttribute="bottom" id="Bxa-uZ-JfR"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="leading" secondItem="PbL-Em-oIR" secondAttribute="trailing" constant="1" id="C3O-oC-n1e"/>
                                         <constraint firstItem="DiJ-4V-0sN" firstAttribute="bottom" secondItem="lcn-Dy-3kK" secondAttribute="bottom" id="ED0-On-1cK"/>
                                         <constraint firstItem="7qk-jP-ZS8" firstAttribute="leading" secondItem="37f-cq-3Eg" secondAttribute="leadingMargin" constant="-16" id="Ebr-XW-FZi"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="top" secondItem="Arm-wq-HPj" secondAttribute="top" id="Fl8-eY-Be5"/>
                                         <constraint firstItem="vEg-TZ-HRF" firstAttribute="centerY" secondItem="Arm-wq-HPj" secondAttribute="centerY" id="H4T-ET-e83"/>
                                         <constraint firstItem="DiJ-4V-0sN" firstAttribute="leading" secondItem="ciy-RN-FLS" secondAttribute="trailing" constant="3" id="HUj-Hc-8yX"/>
                                         <constraint firstItem="hHw-8X-kFT" firstAttribute="bottom" secondItem="ciy-RN-FLS" secondAttribute="bottom" id="Hko-7J-Zvs"/>
-                                        <constraint firstItem="Vge-Sy-EtH" firstAttribute="leading" secondItem="7qk-jP-ZS8" secondAttribute="leading" id="IWk-aY-e2j"/>
                                         <constraint firstItem="7qk-jP-ZS8" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="-8" id="Ij6-Kv-GaY"/>
                                         <constraint firstItem="ciy-RN-FLS" firstAttribute="top" secondItem="DiJ-4V-0sN" secondAttribute="top" id="JhA-kX-FqM"/>
                                         <constraint firstItem="ciy-RN-FLS" firstAttribute="bottom" secondItem="DiJ-4V-0sN" secondAttribute="bottom" id="K62-hn-xpV"/>
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="leading" secondItem="lcn-Dy-3kK" secondAttribute="leading" id="OKt-3K-zXM"/>
                                         <constraint firstAttribute="trailingMargin" secondItem="vEg-TZ-HRF" secondAttribute="trailing" constant="-6" id="Pzs-Qh-pAZ"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="leading" secondItem="DFI-ck-Zrz" secondAttribute="trailing" constant="2" id="QX1-BT-83Y"/>
-                                        <constraint firstItem="Vge-Sy-EtH" firstAttribute="baseline" secondItem="PCU-mO-3Ph" secondAttribute="baseline" id="U4e-NM-sqX"/>
                                         <constraint firstItem="vEg-TZ-HRF" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="-3" id="VbJ-Jz-bZu"/>
                                         <constraint firstItem="7qk-jP-ZS8" firstAttribute="centerY" secondItem="DFI-ck-Zrz" secondAttribute="centerY" id="W9m-OI-T2w"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="leading" secondItem="PCU-mO-3Ph" secondAttribute="leading" id="Wb0-lM-yZF"/>
-                                        <constraint firstItem="PbL-Em-oIR" firstAttribute="bottom" secondItem="hHw-8X-kFT" secondAttribute="bottom" id="a7p-kQ-E6i"/>
                                         <constraint firstItem="PCU-mO-3Ph" firstAttribute="top" secondItem="gin-Bv-NjO" secondAttribute="bottom" id="cyN-94-tlB"/>
                                         <constraint firstItem="lcn-Dy-3kK" firstAttribute="leading" secondItem="DiJ-4V-0sN" secondAttribute="trailing" constant="8" id="fbz-of-xFs"/>
                                         <constraint firstItem="hHw-8X-kFT" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="21" id="hCs-I6-jF6"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="top" secondItem="7qk-jP-ZS8" secondAttribute="bottom" id="j3M-pA-aQm"/>
-                                        <constraint firstItem="7qk-jP-ZS8" firstAttribute="leading" secondItem="PbL-Em-oIR" secondAttribute="leading" id="nOs-8O-ttW"/>
-                                        <constraint firstItem="hHw-8X-kFT" firstAttribute="leading" secondItem="RXb-Rv-NQH" secondAttribute="trailing" constant="11" id="sMP-DV-vV3"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="bottom" secondItem="Arm-wq-HPj" secondAttribute="bottom" id="sqa-ny-Cb7"/>
                                         <constraint firstItem="vEg-TZ-HRF" firstAttribute="leading" secondItem="7qk-jP-ZS8" secondAttribute="trailing" constant="21" id="xVI-bg-hto"/>
                                         <constraint firstItem="hHw-8X-kFT" firstAttribute="top" secondItem="ciy-RN-FLS" secondAttribute="top" id="xdW-MJ-hu6"/>
-                                        <constraint firstItem="Vge-Sy-EtH" firstAttribute="top" secondItem="Arm-wq-HPj" secondAttribute="top" id="yDu-nW-BqL"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="trailing" secondItem="PCU-mO-3Ph" secondAttribute="trailing" id="yho-rP-QQI"/>
                                     </constraints>
                                 </tableViewCellContentView>
@@ -1278,7 +1251,7 @@
                     <color key="barTintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                 </toolbar>
             </objects>
-            <point key="canvasLocation" x="708.75" y="-630.63380281690138"/>
+            <point key="canvasLocation" x="708.69565217391312" y="-630.80357142857144"/>
         </scene>
         <!--Preferences-->
         <scene sceneID="89O-T8-JUh">
@@ -2002,7 +1975,7 @@
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGrayColor">
-            <color red="0.5568627451" green="0.5568627451" blue="0.57647058819999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.55686274509803924" green="0.55686274509803924" blue="0.57647058823529407" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
