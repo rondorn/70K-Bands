@@ -962,7 +962,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
                 let cell = self.tableView.cellForRow(at: indexPath)
                 let bandNameView = cell!.viewWithTag(2) as! UILabel
-                let bandNameNoSchedule = cell!.viewWithTag(13) as! UILabel
+                let bandNameNoSchedule = cell!.viewWithTag(12) as! UILabel
                 
                 let cellDataView = cell!.viewWithTag(1) as! UILabel
                 let cellDataText = cellDataView.text ?? "";
