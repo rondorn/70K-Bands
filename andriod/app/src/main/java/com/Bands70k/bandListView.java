@@ -3,9 +3,13 @@ package com.Bands70k;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,11 +22,18 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
 
 public class bandListView extends ArrayAdapter<bandListItem> {
 
     final List<bandListItem> bandInfoList = new ArrayList<>();
+    public static String previousBandName = "";
+    public static String scrollingDirection = "Down";
+
+    public static String firstBandName = "";
+
+    public static Integer previousPosition = 1;
 
     static class bandListHolder{
         ImageView rankImage;
@@ -40,7 +51,6 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         TextView bandNameNoSchedule;
 
         TextView bottomSpacer;
-
     }
 
     public bandListView(Context context, int textViewResourceId) {
@@ -60,6 +70,16 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
+        if (position == 0 && previousPosition == 1) {
+            previousBandName = "Unknown";
+        }
+
+        if (position > previousPosition){
+            scrollingDirection = "Down";
+        } else {
+            scrollingDirection = "Up";
+        }
 
         View row = convertView;
         bandListHolder viewHolder;
@@ -81,16 +101,19 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.bottomSpacer =  row.findViewById(R.id.bottomSpacer);
             viewHolder.rankImageNoSchedule = row.findViewById(R.id.rankingInCellnoSchedule);
             viewHolder.bandNameNoSchedule =  row.findViewById(R.id.bandNameInCellNoSchedule);
-
             row.setTag(viewHolder);
         } else {
             viewHolder = (bandListHolder)row.getTag();
         }
 
         bandListItem bandData = getItem(position);
+        String currentBandName = bandData.getBandName();
+        if (firstBandName.isEmpty() == true){
+            firstBandName = currentBandName;
+        }
 
-        //Log.d("displayingList", "working on bandName " + bandData.getBandName() + " position " + String.valueOf(position));
-        Log.d("displayingList", "working on bandName " + bandData.getBandName() + " color " + bandData.getLocationColor());
+        Log.d("displayingList", "Working on position " + String.valueOf(position) + " previousPosition " + String.valueOf(previousPosition) + " " + currentBandName + " Scrolling is " + scrollingDirection);
+        Log.d("displayingList", "working on bandName " + currentBandName + " color " + bandData.getLocationColor());
 
         if (bandData.getLocation() == null){
 
@@ -112,7 +135,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
 
             viewHolder.rankImageNoSchedule.setImageResource(bandData.getRankImg());
-            viewHolder.bandNameNoSchedule.setText(bandData.getBandName());
+            viewHolder.bandNameNoSchedule.setText(currentBandName);
 
             viewHolder.bottomSpacer.setVisibility(View.INVISIBLE);
 
@@ -177,7 +200,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
             }
 
-            viewHolder.bandName.setText(bandData.getBandName());
+            viewHolder.bandName.setText(currentBandName);
             viewHolder.day.setText(bandData.getDay());
             viewHolder.startTime.setText(bandData.getStartTime());
             viewHolder.endTime.setText(bandData.getEndTime());
@@ -185,16 +208,60 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.bandName.setTextSize(23);
             }
 
+            if (previousBandName.equals(currentBandName) == true || (firstBandName.equals(currentBandName) == true && position != 0)){
+
+                String fullLocation = bandData.getLocation();
+                String venueOnly = "";
+                String locationOnly = "";
+
+                for (String venue : staticVariables.venueLocation.keySet()){
+                    String findVenueString = venue + " " + staticVariables.venueLocation.get(venue);
+                    if (findVenueString.equals(fullLocation)){
+                        venueOnly = venue;
+                        locationOnly = staticVariables.venueLocation.get(venue);
+                    }
+                }
+                if (venueOnly.isEmpty()){
+                    venueOnly =  fullLocation;
+                    locationOnly = "";
+                }
+                // Define the text to have a colored background
+                String locationWithColor = " " + venueOnly;
+                int startIndex = 0;
+                int endIndex = 1;
+
+                SpannableString spannableString = new SpannableString(locationWithColor);
+
+                // Set the background color for the specific portion of text
+                int backgroundColor = Color.parseColor(locationColorChoice); // Replace with your desired color
+                BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(backgroundColor);
+                spannableString.setSpan(backgroundColorSpan, startIndex, endIndex, 0);
+
+                viewHolder.bandName.setText(spannableString);
+                viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                viewHolder.bandName.setTypeface(null, Typeface.NORMAL);
+                viewHolder.bandName.setTextColor(Color.parseColor("#D3D3D3"));
+
+                viewHolder.rankImage.setVisibility(View.INVISIBLE);
+
+                viewHolder.location.setText(locationOnly);
+            } else {
+                viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
+                viewHolder.bandName.setTypeface(null, Typeface.BOLD);
+                viewHolder.bandName.setTextColor(Color.parseColor("#FFFFFF"));
+            }
         }
 
+        previousBandName = currentBandName;
+        previousPosition = position;
 
         if (getScreenWidth(context) <= 480){
             viewHolder.day.setWidth(35);
             viewHolder.dayLabel.setWidth(35);
 
         }
-        return row;
 
+        return row;
     }
 
     private static Integer getScreenWidth(Context context)
