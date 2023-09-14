@@ -647,19 +647,19 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
             venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
             venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
-
+            bandNameView.attributedText = venueString
+            bandNameView.isHidden = false;
+            
             var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
             var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
             locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
             locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
             locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
             locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
-            
-            bandNameView.attributedText = venueString
-            bandNameView.isHidden = false;
-            bandNameNoSchedule.text = bandName
             locationView.attributedText = locationOfVenueString
             
+            //setup bandname for use is access the details screen
+            bandNameNoSchedule.text = bandName
             bandNameNoSchedule.isHidden = true
  
         } else {
