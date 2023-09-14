@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -17,7 +17,6 @@
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
-		114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
 		114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
 		115213292A69E23C0017DD9F /* variableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115213282A69E23C0017DD9F /* variableStore.swift */; };
@@ -575,7 +574,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				114CC0721C79204100CF5BF1 /* Main.storyboard in Resources */,
 				115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
@@ -1011,11 +1009,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
-					"$(PROJECT_DIR)/Pods/GoogleUtilities/Frameworks",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = 70000TonsBands/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "70K Bands";
@@ -1029,12 +1023,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/lib/**",
-					"$(PROJECT_DIR)/lib/CommLibiOS",
-					"$(PROJECT_DIR)/lib/libav-11.4/lib",
-					"$(PROJECT_DIR)/lib/MediaLibiOS3x",
-					"$(PROJECT_DIR)/lib/speex-1.2rc2/lib",
-					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 20230831002;
@@ -1111,12 +1099,6 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/lib/**",
-					"$(PROJECT_DIR)/lib/CommLibiOS",
-					"$(PROJECT_DIR)/lib/libav-11.4/lib",
-					"$(PROJECT_DIR)/lib/MediaLibiOS3x",
-					"$(PROJECT_DIR)/lib/speex-1.2rc2/lib",
-					"$(PROJECT_DIR)/lib/x264/lib",
 					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 20230831002;
