@@ -281,8 +281,6 @@ public class showBands extends Activity {
 
         BandInfo bandInfo = new BandInfo();
         bandInfo.DownloadBandFile();
-        //
-        // refreshData();
 
         FirbaseAsyncUserWrite userDataWriteAsync = new FirbaseAsyncUserWrite();
         userDataWriteAsync.execute();
@@ -1723,6 +1721,15 @@ public class showBands extends Activity {
                 sortButton.setBackground(getResources().getDrawable(staticVariables.graphicTimeSort));
                 staticVariables.preferences.setSortByTime(false);
             }
+            if (listHandler.numberOfUnofficalEvents == listHandler.numberOfEvents){
+                sortButton.setEnabled(false);
+                sortButton.setVisibility(View.INVISIBLE);
+                staticVariables.preferences.setSortByTime(true);
+            } else {
+                sortButton.setEnabled(true);
+                sortButton.setVisibility(View.VISIBLE);
+            }
+
         } else {
             sortButton.setEnabled(false);
             sortButton.setVisibility(View.INVISIBLE);
