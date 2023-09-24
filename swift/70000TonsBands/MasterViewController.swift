@@ -446,6 +446,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             mainTableView.separatorColor = UIColor.lightGray
             
         }
+
         bands =  [String]()
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
@@ -714,9 +715,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (eventCounter != eventCounterUnoffical && eventCounter > 0){
             labeleCounter = eventCounter
             lableCounterString = " events"
+            scheduleButton.isHidden = false
         } else {
             labeleCounter = bandCounter
             lableCounterString = " bands"
+            scheduleButton.isHidden = true
+            sortedBy = "time"
         }
 
         var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"

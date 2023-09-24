@@ -31,8 +31,6 @@ public class bandListView extends ArrayAdapter<bandListItem> {
     public static String previousBandName = "";
     public static String scrollingDirection = "Down";
 
-    public static String firstBandName = "";
-
     public static Integer previousPosition = 1;
 
     static class bandListHolder{
@@ -71,6 +69,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
+        String nextBand = "Unknown";
+
         if (position == 0 && previousPosition == 1) {
             previousBandName = "Unknown";
         }
@@ -79,6 +79,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             scrollingDirection = "Down";
         } else {
             scrollingDirection = "Up";
+
         }
 
         View row = convertView;
@@ -108,9 +109,6 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
         bandListItem bandData = getItem(position);
         String currentBandName = bandData.getBandName();
-        if (firstBandName.isEmpty() == true){
-            firstBandName = currentBandName;
-        }
 
         Log.d("displayingList", "Working on position " + String.valueOf(position) + " previousPosition " + String.valueOf(previousPosition) + " " + currentBandName + " Scrolling is " + scrollingDirection);
         Log.d("displayingList", "working on bandName " + currentBandName + " color " + bandData.getLocationColor());
@@ -208,48 +206,31 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.bandName.setTextSize(23);
             }
 
-            if (previousBandName.equals(currentBandName) == true || (firstBandName.equals(currentBandName) == true && position != 0)){
-
-                String fullLocation = bandData.getLocation();
-                String venueOnly = "";
-                String locationOnly = "";
-
-                for (String venue : staticVariables.venueLocation.keySet()){
-                    String findVenueString = venue + " " + staticVariables.venueLocation.get(venue);
-                    if (findVenueString.equals(fullLocation)){
-                        venueOnly = venue;
-                        locationOnly = staticVariables.venueLocation.get(venue);
-                    }
-                }
-                if (venueOnly.isEmpty()){
-                    venueOnly =  fullLocation;
-                    locationOnly = "";
-                }
-                // Define the text to have a colored background
-                String locationWithColor = " " + venueOnly;
-                int startIndex = 0;
-                int endIndex = 1;
-
-                SpannableString spannableString = new SpannableString(locationWithColor);
-
-                // Set the background color for the specific portion of text
-                int backgroundColor = Color.parseColor(locationColorChoice); // Replace with your desired color
-                BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(backgroundColor);
-                spannableString.setSpan(backgroundColorSpan, startIndex, endIndex, 0);
-
-                viewHolder.bandName.setText(spannableString);
-                viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-                viewHolder.bandName.setTypeface(null, Typeface.NORMAL);
-                viewHolder.bandName.setTextColor(Color.parseColor("#D3D3D3"));
-
-                viewHolder.rankImage.setVisibility(View.INVISIBLE);
-
-                viewHolder.location.setText(locationOnly);
-            } else {
-                viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
-                viewHolder.bandName.setTypeface(null, Typeface.BOLD);
-                viewHolder.bandName.setTextColor(Color.parseColor("#FFFFFF"));
+            try {
+                bandListItem bandDataNext = getItem(position - 1);
+                nextBand = bandDataNext.getBandName();
+            } catch (Exception error){
+                nextBand = "Unknown";
             }
+
+            if (previousBandName.equals(currentBandName) == true  && scrollingDirection == "Down" && position != 0){
+
+                Log.d("bandListViewSortName", "1 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
+
+            } else if (scrollingDirection == "Down") {
+                Log.d("bandListViewSortName", "2 full current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                getCellScheduleValueFullInfo(viewHolder);
+
+            } else if (nextBand.equals(currentBandName) == false  || position == 0) {
+                Log.d("bandListViewSortName", "3 full current band is " + currentBandName + " = " + nextBand + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                getCellScheduleValueFullInfo(viewHolder);
+
+            } else {
+                Log.d("bandListViewSortName", "4 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
+            }
+
         }
 
         previousBandName = currentBandName;
@@ -262,6 +243,50 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         }
 
         return row;
+    }
+
+    private void getCellScheduleValuePartialInfo(bandListHolder viewHolder, bandListItem bandData, String locationColorChoice){
+        String fullLocation = bandData.getLocation();
+        String venueOnly = "";
+        String locationOnly = "";
+
+        for (String venue : staticVariables.venueLocation.keySet()){
+            String findVenueString = venue + " " + staticVariables.venueLocation.get(venue);
+            if (findVenueString.equals(fullLocation)){
+                venueOnly = venue;
+                locationOnly = staticVariables.venueLocation.get(venue);
+            }
+        }
+        if (venueOnly.isEmpty()){
+            venueOnly =  fullLocation;
+            locationOnly = "";
+        }
+        // Define the text to have a colored background
+        String locationWithColor = " " + venueOnly;
+        int startIndex = 0;
+        int endIndex = 1;
+
+        SpannableString spannableString = new SpannableString(locationWithColor);
+
+        // Set the background color for the specific portion of text
+        int backgroundColor = Color.parseColor(locationColorChoice); // Replace with your desired color
+        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(backgroundColor);
+        spannableString.setSpan(backgroundColorSpan, startIndex, endIndex, 0);
+
+        viewHolder.bandName.setText(spannableString);
+        viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        viewHolder.bandName.setTypeface(null, Typeface.NORMAL);
+        viewHolder.bandName.setTextColor(Color.parseColor("#D3D3D3"));
+
+        viewHolder.rankImage.setVisibility(View.INVISIBLE);
+
+        viewHolder.location.setText(locationOnly);
+    }
+
+    private void getCellScheduleValueFullInfo(bandListHolder viewHolder){
+        viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
+        viewHolder.bandName.setTypeface(null, Typeface.BOLD);
+        viewHolder.bandName.setTextColor(Color.parseColor("#FFFFFF"));
     }
 
     private static Integer getScreenWidth(Context context)
