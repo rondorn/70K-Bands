@@ -28,7 +28,10 @@ var bandCount = Int();
 var eventCount = Int();
 
 var previousBandName = String();
+var nextBandName = String();
 var firstBandName = String();
+var scrollDirection = "Down";
+var previousIndexRow = Int();
 
 var totalUpcomingEvents = Int()
 
@@ -518,9 +521,24 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     print ("bands = \(bands)")
     print ("indexRow = \(indexRow)")
     
-    //print ("bands[indexRow] = \(bands[indexRow])")
+    print ("count is \(bands.count) - \(indexRow)")
 
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
+    
+    if (indexRow >= 1){
+        previousBandName = getNameFromSortable(bands[indexRow - 1], sortedBy: sortBy);
+    }
+    if (indexRow <= (bands.count - 2)){
+        nextBandName = getNameFromSortable(bands[indexRow + 1], sortedBy: sortBy);
+    }
+    if (indexRow > previousIndexRow){
+        scrollDirection = "Down"
+    } else {
+        scrollDirection = "Up"
+    }
+
+    previousIndexRow = indexRow
+    
     let timeIndex = getTimeFromSortable(bands[indexRow], sortBy: sortBy);
     
     //var bandText = String()
@@ -637,47 +655,29 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         if (indexRow == 0){
             previousBandName = "Unknown"
+            nextBandName = "Unknown"
         }
-        print ("Checking if bandname \(bandName) matched previous bandname \(previousBandName) - index for cell \(indexRow)")
-        if (bandName == previousBandName || (bandName == firstBandName && indexRow != 0) && sortBy == "name"){
+        //1st entry Checking if bandname Abysmal Dawn matched previous bandname Abysmal Dawn - All Star Jam index for cell 2 - Up
+        if ((bandName == previousBandName  && scrollDirection == "Down" && indexRow != 0) && sortBy == "name"){
             
-            var locationString = "  " + location
-            var venueString = NSMutableAttributedString(string: locationString)
-            var locationColor = getVenueColor(venue: location)
-            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-            venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
-            venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
-            bandNameView.attributedText = venueString
-            bandNameView.isHidden = false;
-            
-            var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
-            var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
-            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-            locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
-            locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
-            locationView.attributedText = locationOfVenueString
-            
-            //setup bandname for use is access the details screen
-            bandNameNoSchedule.text = bandName
-            bandNameNoSchedule.isHidden = true
+            print ("Partial Info 1 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
  
+        } else if (scrollDirection == "Down"){
+            print ("Full Info 2 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+            getCellScheduleValueFullInfo(bandName: bandName, location: location, locationText: locationText,bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
+            
+        }else if ((bandName != previousBandName || indexRow == 0) && sortBy == "name"){
+            print ("Full Info 3 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+            getCellScheduleValueFullInfo(bandName: bandName, location: location, locationText: locationText,bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
+ 
+        } else if (sortBy == "name"){
+            print ("Partial Info 4 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
+            
         } else {
-
-            var locationString = "  " + locationText
-            var myMutableString = NSMutableAttributedString(string: locationString)
-            var locationColor = getVenueColor(venue: location)
-            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0,length:1))
-            myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-            myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: locationText.count))
-            myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
-
-            bandNameView.backgroundColor = UIColor.black;
-            locationView.attributedText = myMutableString
-            bandNameView.isHidden = false
-            bandNameNoSchedule.isHidden = true
-            bandNameNoSchedule.text = ""
+            print ("Full Info 5 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+            getCellScheduleValueFullInfo(bandName: bandName, location: location, locationText: locationText,bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
         }
         
     
@@ -737,4 +737,46 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 }
 
 
+func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel){
 
+    //print ("not 1st entry Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+    var locationString = "  " + location
+    var venueString = NSMutableAttributedString(string: locationString)
+    var locationColor = getVenueColor(venue: location)
+    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
+    venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
+    bandNameView.attributedText = venueString
+    bandNameView.isHidden = false;
+    
+    var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
+    var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
+    locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
+    locationView.attributedText = locationOfVenueString
+    
+    //setup bandname for use is access the details screen
+    bandNameNoSchedule.text = bandName
+    bandNameNoSchedule.isHidden = true
+}
+
+func getCellScheduleValueFullInfo(bandName: String, location: String, locationText: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel){
+
+    var locationString = "  " + locationText
+    var myMutableString = NSMutableAttributedString(string: locationString)
+    var locationColor = getVenueColor(venue: location)
+    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0,length:1))
+    myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: locationText.count))
+    myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
+
+    bandNameView.backgroundColor = UIColor.black;
+    locationView.attributedText = myMutableString
+    bandNameView.isHidden = false
+    bandNameNoSchedule.isHidden = true
+    bandNameNoSchedule.text = ""
+    
+}

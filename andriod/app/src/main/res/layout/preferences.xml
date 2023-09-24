@@ -805,6 +805,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
+                <TextView
+                    android:id="@+id/selectYearLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_column="9"
+                    android:paddingTop="4pt"
+                    android:text="@string/UseLastYearsData"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/common_google_signin_btn_text_dark_default" />
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <Button
+                    android:id="@+id/eventYearButton"
+                    android:layout_width="40pt"
+                    android:layout_height="25pt"
+                    android:layout_column="9"
+                    android:text="Current" />
+
+
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
@@ -816,38 +838,20 @@
                     android:layout_height="wrap_content"
                     android:layout_column="9"
                     android:paddingTop="4pt"
-                    android:text="@string/UseLastYearsData"
+                    android:text="@string/importButtonName"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textColor="@color/common_google_signin_btn_text_dark_default" />
-
-                <Button
-                    android:id="@+id/eventYearButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:text="Current"
-                    tools:layout_gravity="left" />
-
             </TableRow>
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
+
                 <Button
                     android:id="@+id/ImportDataBackup"
-                    android:layout_height="30pt"
-                    android:layout_width="90pt"
+                    android:layout_width="40pt"
+                    android:layout_height="25pt"
                     android:layout_column="9"
                     android:text="@string/ImportDataBackup" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text=""
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:layout_column="27"
-                    android:layout_gravity="left"
-                    android:layout_marginLeft="10dp" />
 
 
             </TableRow>
