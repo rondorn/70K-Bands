@@ -34,45 +34,36 @@ class localNoticationHandler {
     
     func willAddToNotifications(_ bandName: String, eventType :String, startTime: String, location:String) -> Bool{
         
-        let defaults = UserDefaults.standard
-        let mustSeeAlert = defaults.bool(forKey: "mustSeeAlert")
-        let mightSeeAlert = defaults.bool(forKey: "mightSeeAlert")
-        let onlyAlertForAttended = defaults.bool(forKey: "onlyAlertForAttended")
-        
-        let alertForShows = defaults.bool(forKey: "alertForShows")
-        let alertForSpecial = defaults.bool(forKey: "alertForSpecial")
-        let alertForMandG = defaults.bool(forKey: "alertForMandG")
-        let alertForClinics = defaults.bool(forKey: "alertForClinics")
-        let alertForListening = defaults.bool(forKey: "alertForListening")
-        let alertForUnoffical = defaults.bool(forKey: "alertForUnofficalEvents")
-        
+        let mustSeeAlert = getMustSeeAlertValue()
+        let mightSeeAlert = getMightSeeAlertValue()
+
         print ("Checking for alert for bands " + bandName + " ... ", terminator: "")
         
         var alertStatus = false
         
         let attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
         
-        if (onlyAlertForAttended == true){
+        if (getOnlyAlertForAttendedValue() == true){
             if (attendedStatus != sawNoneStatus){
                 alertStatus = true
             }
         } else {
-            if (eventType == specialEventType && alertForSpecial == true){
+            if (eventType == specialEventType && getAlertForSpecialValue() == true){
                 alertStatus = true
             }
-            if (eventType == showType && alertForShows == true){
+            if (eventType == showType && getAlertForShowsValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == listeningPartyType && alertForListening == true){
+            if (eventType == listeningPartyType && getAlertForSpecialValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == meetAndGreetype && alertForMandG == true){
+            if (eventType == meetAndGreetype && getAlertForMandGValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == clinicType && alertForClinics == true){
+            if (eventType == clinicType && getAlertForSpecialValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && alertForUnoffical == true){
+            if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && getAlertForUnofficalEventsValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
                 print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
@@ -226,7 +217,7 @@ class localNoticationHandler {
             
             alertTracker.append(message)
             
-            let minBeforeAlert = -defaults.integer(forKey: "minBeforeAlert")
+            let minBeforeAlert = getMinBeforeAlertValue()
             
             let alertTime = (Calendar.current as NSCalendar).date(
                 byAdding: .minute,

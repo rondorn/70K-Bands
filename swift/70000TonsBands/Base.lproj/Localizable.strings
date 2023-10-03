@@ -52,7 +52,7 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Cruiser Organized";
 
-"officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
+"officialWebSiteLinkHelp" = "Taking you to the Official Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
 "YouTubeLinkHelp" = "Searching YouTube for offical videos";
 "MetalArchiveLinkHelp" = "Searching Metal Archives";
@@ -108,3 +108,88 @@
 //this represents the current year in the choice menu
 "Current" = "Current";
 
+
+//new section for the filter menu control
+"Clear Filters" = "Clear Filters"; //menu choice
+"Band Ranking Filters" = "Band Ranking Filters"; //menu header
+"Show Only Flagged As Attended" = "Show Only Flagged As Attended"; //help text
+"Sorting Options" = "Sorting Options"; //menu header
+"Event Type Filters" = "Event Type Filters"; //menu header
+"Venue Filters" = "Venue Filters"; //menu header
+
+"Can not hide all venues" = "Can not hide all venues"; //help text
+"Can not hide all status" = "Can not hide all status"; //help text
+"Clear All Filters" = "Clear All Filters"; //menu choice
+"Show All Events" = "Show All Events"; //menu choice
+"Show Flaged Events Only" = "Show Flaged Events Only"; //menu choice
+"Show Only Events Flagged As Attending" = "Show Only Events Flagged As Attending"; //help text
+
+//venue filters
+"Show Pool Events" = "Show Pool Events"; //menu choice
+"Hide Pool Events" = "Hide Pool Events"; //menu choice
+"Pool Venue Filter On" = "Pool Venue Filter On"; //help text
+"Pool Venue Filter Off" = "Pool Venue Filter Off"; //help text
+
+"Show Lounge Events" = "Show Lounge Events"; //menu choice
+"Hide Lounge Events" = "Hide Lounge Events"; //menu choice
+"Lounge Venue Filter On" = "Lounge Venue Filter On"; //help text
+"Lounge Venue Filter Off" = "Lounge Venue Filter Off"; //help text
+
+"Show Theater Events" = "Show Theater Events"; //menu choice
+"Hide Theater Events" = "Hide Theater Events"; //menu choice
+"Theater Venue Filter On" = "Theater Venue Filter On"; //help text
+"Theater Venue Filter Off" = "Theater Venue Filter Off"; //help text
+
+"Show Rink Events" = "Show Rink Events"; //menu choice
+"Hide Rink Events" = "Hide Rink Events"; //menu choice
+"Rink Venue Filter On" = "Rink Venue Filter On"; //help text
+"Rink Venue Filter Off" = "Rink Venue Filter Off"; //help text
+
+"Show Other Events" = "Show Other Events"; //menu choice
+"Hide Other Events" = "Hide Other Events"; //menu choice
+"Other Venue Filter On" = "Other Venue Filter On"; //help text
+"Other Venue Filter Off" = "Other Venue Filter Off"; //help text
+
+//event filter
+"Show Meet & Greet Events" = "Show Meet & Greet Events"; //menu choice
+"Hide Meet & Greet Events" = "Hide Meet & Greet Events"; //menu choice
+"Meet and Greet Event Filter On" = "Meet and Greet Event Filter On"; //help text
+"Meet and Greet Event Filter Off" = "Meet and Greet Event Filter Off"; //help text
+
+"Show Unofficial Events" = "Show Unofficial Events"; //menu choice
+"Hide Unofficial Events" = "Hide Unofficial Events"; //menu choice
+"Unofficial Event Filter On" = "Unofficial Event Filter On"; //help text
+"Unofficial Event Filter Off" = "Unofficial Event Filter Off"; //help text
+ 
+"Show Special Events" = "Show Special Events"; //menu choice
+"Hide Special Events" = "Hide Special Events"; //menu choice
+"Special Event Filter On" = "Special Event Filter On"; //help text
+"Special Event Filter On" = "Special Event Filter On"; //help text
+
+//sorting
+"Sort By Name" = "Sort By Name"; //menu choice
+"Sort By Time" = "Sort By Time"; //menu choice
+
+//band preference filter
+"Show Must See Items" = "Show Must See Items"; //menu choice
+"Hide Must See Items" = "Hide Must See Items"; //menu choice
+"Must See Filter On" = "Must See Filter On"; //help text
+"Must See Filter Off" = "Must See Filter Off"; //help text
+
+"Show Might See Items" = "Show Might See Items"; //menu choice
+"Hide Might See Items" = "Hide Might See Items"; //menu choice
+"Might See Filter On" = "Might See Filter On"; //help text
+"Might See Filter Off" = "Might See Filter Off"; //help text
+
+"Show Wont See Items" = "Show Wont See Items"; //menu choice
+"Hide Wont See Items" = "Hide Wont See Items"; //menu choice
+"Wont See Filter On" = "Wont See Filter On"; //help text
+"Wont See Filter Off" = "Wont See Filter Off"; //help text
+
+"Show Unknown Items" = "Show Unknown Items"; //menu choice
+"Hide Unknown Items" = "Hide Unknown Items"; //menu choice
+"Unknown Filter On" = "Unknown Filter On"; //help text
+"Unknown Filter Off" = "Unknown Filter Off"; //help text
+
+"Filtering" = "Filtering"; //filtering indicator near counts
+"Filters" = "Filters"; //menu name

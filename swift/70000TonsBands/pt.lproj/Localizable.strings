@@ -109,3 +109,88 @@
 "changeYearDialogBoxTitle" = "Mudando o ano do evento";
 //this represents the current year in the choice menu
 "Current" = "Atual";
+
+//new section for the filter menu control
+"Clear Filters" = "Limpar filtros";
+"Band Ranking Filters" = "Filtros de classificação de banda";
+"Show Only Flagged As Attended" = "Mostrar apenas sinalizado como atendido";
+"Sorting Options" = "Opções de classificação";
+"Event Type Filters" = "Filtros de tipo de evento";
+"Venue Filters" = "Filtros de local";
+
+"Can not hide all venues" = "Não é possível ocultar todos os locais";
+"Can not hide all status" = "Não é possível ocultar todos os status";
+"Clear All Filters" = "Limpar todos os filtros";
+"Show All Events" = "Mostrar todos os eventos";
+"Show Flaged Events Only" = "Mostrar apenas eventos sinalizados";
+"Show Only Events Flagged As Attending" = "Mostrar apenas eventos sinalizados como participantes";
+
+//venue filters
+"Show Pool Events" = "Mostrar eventos de piscina";
+"Hide Pool Events" = "Ocultar eventos de pool";
+"Pool Venue Filter On" = "Filtro do local da piscina ativado";
+"Pool Venue Filter Off" = "Filtro do local da piscina desativado";
+
+"Show Lounge Events" = "Mostrar eventos no salão";
+"Hide Lounge Events" = "Ocultar eventos do lounge";
+"Lounge Venue Filter On" = "Filtro de lounge ativado";
+"Lounge Venue Filter Off" = "Filtro de lounge desativado";
+
+"Show Theater Events" = "Mostrar eventos de teatro";
+"Hide Theater Events" = "Ocultar eventos teatrais";
+"Theater Venue Filter On" = "Filtro de local de teatro ativado";
+"Theater Venue Filter Off" = "Filtro de local de teatro desativado";
+
+"Show Rink Events" = "Mostrar eventos de pista";
+"Hide Rink Events" = "Ocultar eventos de pista";
+"Rink Venue Filter On" = "Filtro de pista de patinação ativado";
+"Rink Venue Filter Off" = "Filtro do local do rinque desativado";
+
+"Show Other Events" = "Mostrar outros eventos";
+"Hide Other Events" = "Ocultar outros eventos";
+"Other Venue Filter On" = "Filtro de outro local ativado";
+"Other Venue Filter Off" = "Filtro de outro local desativado";
+
+//event filter
+"Show Meet & Greet Events" = "Mostrar eventos Meet & Greet";
+"Hide Meet & Greet Events" = "Ocultar eventos Meet & Greet";
+"Meet and Greet Event Filter On" = "Filtro de eventos Meet and Greet ativado";
+"Meet and Greet Event Filter Off" = "Filtro de eventos Meet and Greet desativado";
+
+"Show Unofficial Events" = "Mostrar eventos não oficiais";
+"Hide Unofficial Events" = "Ocultar eventos não oficiais";
+"Unofficial Event Filter On" = "Filtro de eventos não oficiais ativado";
+"Unofficial Event Filter Off" = "Filtro de eventos não oficiais desativado";
+
+"Show Special Events" = "Mostrar eventos especiais";
+"Hide Special Events" = "Ocultar eventos especiais";
+"Special Event Filter On" = "Filtro de eventos especiais ativado";
+"Special Event Filter Off" = "Filtro de eventos especiais desativado";
+
+//sorting
+"Sort By Name" = "Classificar por nome";
+"Sort By Time" = "Classificar por hora";
+
+//band preference filter
+"Show Must See Items" = "Mostrar itens imperdíveis";
+"Hide Must See Items" = "Ocultar itens imperdíveis";
+"Must See Filter On" = "Filtro obrigatório ativado";
+"Must See Filter Off" = "Filtro imperdível desativado";
+
+"Show Might See Items" = "Mostrar pode ver itens";
+"Hide Might See Items" = "Ocultar itens que podem ver";
+"Might See Filter On" = "Pode ver o filtro ativado";
+"Might See Filter Off" = "Pode ver o filtro desativado";
+
+"Show Wont See Items" = "Mostrar não ver itens";
+"Hide Wont See Items" = "Ocultar itens que não verão";
+"Wont See Filter On" = "Não vejo o filtro ativado";
+"Wont See Filter Off" = "Não vejo o filtro desativado";
+
+"Show Unknown Items" = "Mostrar itens desconhecidos";
+"Hide Unknown Items" = "Ocultar itens desconhecidos";
+"Unknown Filter On" = "Filtro desconhecido ativado";
+"Unknown Filter Off" = "Filtro desconhecido desativado";
+
+"Filtering" = "Filtragem";
+"Filters" = "Filtros";

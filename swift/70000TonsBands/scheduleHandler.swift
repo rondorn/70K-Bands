@@ -12,7 +12,6 @@ open class scheduleHandler {
     
     var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
-    var scheduleReleased = false
 
     init() {
         print ("Loading schedule Data")
@@ -97,9 +96,8 @@ open class scheduleHandler {
                     
                     print("Adding index for band " + lineData[bandField]! + " ")
                     print (dateIndex)
-                    
+                    scheduleReleased = true
                     if (schedulingData[lineData[bandField]!] == nil){
-                        scheduleReleased = true
                         self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
         
                     }
@@ -181,14 +179,13 @@ open class scheduleHandler {
         var scheduleUrl = "";
         
         print ("working with scheduleFile " + scheduleFile)
-        print ("defaults is \(defaults)")
-
+        
         if (scheduleUrl.isEmpty == true){
             scheduleUrl = defaultPrefsValue
         }
     
         print ("Downloading Schedule URL " + scheduleUrl);
-        scheduleUrl = getPointerUrlData(keyValue: scheduleUrlpointer)
+        scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
 
         print("scheduleUrl = " + scheduleUrl)
         
@@ -322,7 +319,7 @@ open class scheduleHandler {
         }
     
         print ("schedulingDataByTime is")
-        print (schedulingDataByTime);
+        //print (schedulingDataByTime);
 
           }
     
