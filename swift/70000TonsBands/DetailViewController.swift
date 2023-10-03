@@ -176,7 +176,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             disableButtonsIfNeeded()
             disableLinksWithEmptyData();
             
-            if (defaults.bool(forKey: "notesFontSizeLarge") == true){
+            if (getNotesFontSizeLargeValue() == true){
                 customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
             }
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)

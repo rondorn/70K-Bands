@@ -178,8 +178,6 @@ class iCloudDataHandler {
                              attendedHandle: ShowsAttended,
                              bandNames: [String]){
         
-        //Sat - Metal Beach Bash:Clevelander Bar:18:00:Cruiser Organized:2024 - sawAll:A8878716-7FAD-4E4B-9C91-0B64853E02C2
-        
         let eventYearString = String(eventYear)
         
         print ("iCloud: readAScheduleRecord 1 trying to read \(bandName)-\(startTime)")

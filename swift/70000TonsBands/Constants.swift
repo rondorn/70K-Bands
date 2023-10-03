@@ -40,6 +40,7 @@ var eventCounter = 0
 var eventCounterUnoffical = 0
 var iCloudDataisLoading = false;
 var iCloudDataisSaving = false;
+var numberOfFilteredRecords = 0;
 
 var currentBandList = [String]()
 
@@ -188,53 +189,26 @@ let defaultPrefsValue = "Default";
 let testingSetting = "Testing"
 
 var userCountry = ""
-
+var didNotFindMarkedEventsCount = 0
 var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
-
-let artistUrlpointer = "artistUrl"
-let scheduleUrlpointer = "scheduleUrl";
-
-let mustSeeAlertDefault = "YES"
-let mightSeeAlertDefault = "YES"
-
-let onlyAlertForAttendedDefault = "NO"
-
-let minBeforeAlertDefault = "10"
-let alertForShowsDefault = "YES"
-let alertForSpecialDefault = "YES"
-let alertForUnofficalDefault = "YES"
-let alertForMandGDefault = "NO"
-let alertForClinicsDefault = "NO"
-let alertForListeningDefault = "NO"
-let validateScheduleFileDefault = "NO"
-
-let showSpecialDefault = "YES"
-let showMandGDefault = "YES"
-let showClinicsDefault = "YES"
-let showListeningDefault = "YES"
-let iCloudActiveDefault = "YES"
-let notesFontSizeLargeDefault = "NO"
-let showPoolShowsDefault = "YES"
-let showTheaterShowsDefault = "YES"
-let showRinkShowsDefault = "YES"
-let showLoungeShowsDefault = "YES"
-let showOtherShowsDefault = "YES"
-let showUnofficalEventsDefault = "YES"
-var hideExpireScheduleDataDefault = "YES";
-var promptForAttendedDefault = "YES";
 
 var internetAvailble = isInternetAvailable();
 
 var hasScheduleData = false;
 
-let defaults = UserDefaults.standard
 var byPassCsvDownloadCheck = false
-var listOfVenues = [String]()
+//var listOfVenues = [String]()
+var scheduleReleased = false
+
+var filterMenuNeedsUpdating = false;
 
 var filteredBandCount = 0
 var unfilteredBandCount = 0
+var unfilteredEventCount = 0
+var unfilteredCruiserEventCount = 0
+var unfilteredCurrentEventCount = 0
 
 var masterView: MasterViewController!
 
@@ -268,7 +242,7 @@ func getDocumentsDirectory() -> NSString {
 }
 
 func getPointerUrlData(keyValue: String) -> String {
-    
+
     var dataString = String()
     
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
@@ -288,10 +262,10 @@ func getPointerUrlData(keyValue: String) -> String {
             print ("getPointerUrlData: got cached URL data of = \(dataString) for \(keyValue)")
         }
     }
-    print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
+    //print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
     
 
-    var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
+    var pointerIndex = getScheduleUrl()
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
 
     print ("Files were Done setting 2 \(pointerIndex)")
@@ -376,6 +350,7 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
 
 func setupDefaults() {
     
+    /*
     //register Application Defaults
     let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,
@@ -391,15 +366,15 @@ func setupDefaults() {
                     "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
                     "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
                     "hideExpireScheduleData": hideExpireScheduleDataDefault, "promptForAttended": promptForAttendedDefault,
-                    "iCloud": iCloudActiveDefault, "notesFontSizeLarge" : notesFontSizeLargeDefault]
+                    "iCloud": iCloudActiveDefault, "notesFontSizeLarge" : notesFontSizeLargeDefault,
+                    "showOnlyWillAttened": showOnlyWillAttenedDefault, "mustSeeOn": mustSeeOnDefault,
+                    "mightSeeOn": mightSeeOnDefault, "wontSeeOn": wontSeeOnDefault, "unknownSeeOn": unknownSeeOnDefault]
     
-    UserDefaults.standard.register(defaults: defaults)
-    
+    */
     setupVenueLocations()
     
-    print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
+    //print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
     
-
     print ("Trying to get the year  \(eventYear)")
     eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
 
@@ -409,12 +384,15 @@ func setupDefaults() {
 }
 
 func setupCurrentYearUrls() {
-    
+        
     let filePath = defaultUrlConverFlagUrl.path
     if(FileManager.default.fileExists(atPath: filePath)){
         print ("setupCurrentYearUrls: Followup run of setupCurrentYearUrls routine")
-        artistUrlDefault = UserDefaults.standard.string(forKey: "artistUrl") ?? defaultPrefsValue
-        scheduleUrlDefault = UserDefaults.standard.string(forKey: "scheduleUrl") ?? defaultPrefsValue
+        artistUrlDefault = getArtistUrl()
+        scheduleUrlDefault = getScheduleUrl()
+        
+        print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
+        print ("setupCurrentYearUrls: scheduleUrlDefault is \(scheduleUrlDefault)")
     } else {
         print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine")
        artistUrlDefault = defaultPrefsValue
@@ -425,17 +403,18 @@ func setupCurrentYearUrls() {
         }
         catch {print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine Failed!")}
     }
-    
+    /*
     print ("setupCurrentYearUrls: artistUrlDefault \(artistUrlDefault) - \(defaultPrefsValue)")
     if (artistUrlDefault == defaultPrefsValue){
-        UserDefaults.standard.set(defaultPrefsValue, forKey: "artistUrl")
+        //setArtistUrl(defaultPrefsValue)
     }
     
     print ("setupCurrentYearUrls: scheduleUrlDefault \(scheduleUrlDefault) - \(defaultPrefsValue)")
-    if (scheduleUrlDefault == defaultPrefsValue){
-        UserDefaults.standard.set(defaultPrefsValue, forKey: "scheduleUrl")
-    }
+    //if (scheduleUrlDefault == defaultPrefsValue){
+        //setScheduleUrl(defaultPrefsValue)
+    //}
     print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
+    */
     
 }
 

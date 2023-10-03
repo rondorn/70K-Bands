@@ -105,3 +105,88 @@
 "changeYearDialogBoxTitle" = "Ændring af begivenhedsåret";
 //this represents the current year in the choice menu
 "Current" = "Nuværende";
+
+//new section for the filter menu control
+"Clear Filters" = "Ryd filtre";
+"Band Ranking Filters" = "Båndrangeringsfiltre";
+"Show Only Flagged As Attended" = "Vis kun markeret som deltog";
+"Sorting Options" = "Sorteringsmuligheder";
+"Event Type Filters" = "Hændelsestypefiltre";
+"Venue Filters" = "Lokale filtre";
+
+"Can not hide all venues" = "Can not hide all venues";
+"Can not hide all status" = "Kan ikke skjule al status";
+"Clear All Filters" = "Clear All Filters";
+"Show All Events" = "Vis alle begivenheder";
+"Show Flaged Events Only" = "Vis kun markerede begivenheder";
+"Show Only Events Flagged As Attending" = "Vis kun begivenheder, der er markeret som tilstedeværende";
+
+//venue filters
+"Show Pool Events" = "Vis poolbegivenheder";
+"Hide Pool Events" = "Skjul poolbegivenheder";
+"Pool Venue Filter On" = "Pool Venue Filter On";
+"Pool Venue Filter Off" = "Pool Venue Filter Off";
+
+"Show Lounge Events" = "Vis Lounge-begivenheder";
+"Hide Lounge Events" = "Skjul Lounge-begivenheder";
+"Lounge Venue Filter On" = "Lounge Venue Filter On";
+"Lounge Venue Filter Off" = "Lounge Venue Filter Off";
+
+"Show Theater Events" = "Vis teaterbegivenheder";
+"Hide Theater Events" = "Skjul teaterbegivenheder";
+"Theater Venue Filter On" = "Teaterstedsfilter til";
+"Theater Venue Filter Off" = "Teaterstedsfilter fra";
+
+"Show Rink Events" = "Vis Rink-begivenheder";
+"Hide Rink Events" = "Skjul Rink-begivenheder";
+"Rink Venue Filter On" = "Rink Venue Filter On";
+"Rink Venue Filter Off" = "Rink Venue Filter Off";
+
+"Show Other Events" = "Vis andre begivenheder";
+"Hide Other Events" = "Skjul andre begivenheder";
+"Other Venue Filter On" = "Andet spillestedsfilter til";
+"Other Venue Filter Off" = "Andet spillestedsfilter fra";
+
+//event filter
+"Show Meet & Greet Events" = "Vis Meet & Greet-begivenheder";
+"Hide Meet & Greet Events" = "Skjul Meet & Greet-begivenheder";
+"Meet and Greet Event Filter On" = "Mød og hils begivenhedsfilter til";
+"Meet and Greet Event Filter Off" = "Mød og hils begivenhedsfilter fra";
+
+"Show Unofficial Events" = "Vis uofficielle begivenheder";
+"Hide Unofficial Events" = "Skjul uofficielle begivenheder";
+"Unofficial Event Filter On" = "Uofficielt hændelsesfilter er slået til";
+"Unofficial Event Filter Off" = "Uofficielt hændelsesfilter fra";
+
+"Show Special Events" = "Vis særlige begivenheder";
+"Hide Special Events" = "Skjul særlige begivenheder";
+"Special Event Filter On" = "Specielt hændelsesfilter til";
+"Special Event Filter Off" = "Specialhændelsesfilter fra";
+
+//sorting
+"Sort By Name" = "Sorter efter navn";
+"Sort By Time" = "Sorter efter tid";
+
+//band preference filter
+"Show Must See Items" = "Vis varer, der skal ses";
+"Hide Must See Items" = "Skjul varer, du skal se";
+"Must See Filter On" = "Skal se filter på";
+"Must See Filter Off" = "Skal se filter fra";
+
+"Show Might See Items" = "Vis måske genstande";
+"Hide Might See Items" = "Skjul muligvis genstande";
+"Might See Filter On" = "Kan se filter slået til";
+"Might See Filter Off" = "Måske se filter fra";
+
+"Show Wont See Items" = "Vis ikke se varer";
+"Hide Wont See Items" = "Skjul genstande, der ikke kan ses";
+"Wont See Filter On" = "Vil ikke se filter på";
+"Wont See Filter Off" = "Vil ikke se filter fra";
+
+"Show Unknown Items" = "Vis ukendte genstande";
+"Hide Unknown Items" = "Skjul ukendte genstande";
+"Unknown Filter On" = "Ukendt filter til";
+"Unknown Filter Off" = "Ukendt filter fra";
+
+"Filtering" = "Filtrering";
+"Filters" = "Filtre";

@@ -46,22 +46,6 @@ fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 
 class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
-    var mustSeeAlertValue = Bool()
-    var mightSeeAlertValue = Bool()
-    var onlyAlertForAttendedValue = Bool()
-    
-    var alertForShowsValue = Bool()
-    var alertForSpecialValue = Bool()
-    var alertForMandGValue = Bool()
-    var alertForClinicsValue = Bool()
-    var alertForListeningValue = Bool()
-    
-    var alertForUnofficalEventsValue = Bool()
-    
-    var minBeforeAlertValue = Double()
-    var notesFontSizeLargeValue = Bool()
-    
-    var minBeforeAlertLabel = String()
     var restartAlertTitle = String();
     var restartAlertText = String();
     var okPrompt = String();
@@ -71,53 +55,16 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var bandListButton = String()
     var eventListButton = String()
     
-    var showSpecialValue = Bool()
-    var showMandGValue = Bool()
-    var showClinicsValue = Bool()
-    var showListeningValue = Bool()
-    
-    var showPoolShows = Bool()
-    var showTheaterShows = Bool()
-    var showRinkShows = Bool()
-    var showLoungeShows = Bool()
-    var showOtherShows = Bool()
-    var showUnofficalEvents = Bool()
     var hideExpireScheduleData = Bool()
     var promptForAttended = Bool()
     
     var eventYearChangeAttempt = "Current";
     var changeYearDialogBoxTitle = String();
     
-    @IBOutlet weak var VenuePoolLabel: UILabel!
-    @IBOutlet weak var VenueTheaterLabel: UILabel!
-    @IBOutlet weak var VenueRinkLabel: UILabel!
-    @IBOutlet weak var VenueLoungeLabel: UILabel!
-    @IBOutlet weak var VenueOtherLabel: UILabel!
-    
     
     @IBOutlet weak var DetailScreenSection: UILabel!
     @IBOutlet weak var NotesFontSizeLargeLabel: UILabel!
     @IBOutlet weak var NotesFontSizeLargeSwitch: UISwitch!
-    
-    @IBOutlet weak var showHideVenues: UILabel!
-    @IBOutlet weak var VenuePoolSwitch: UISwitch!
-    @IBOutlet weak var VenueTheaterSwitch: UISwitch!
-    @IBOutlet weak var VenueRinkSwitch: UISwitch!
-    @IBOutlet weak var VenueLoungeSwitch: UISwitch!
-    @IBOutlet weak var VenueOtherSwitch: UISwitch!
-    
-    @IBOutlet weak var showHideEventType: UILabel!
-    @IBOutlet weak var EventSpecialLabel: UILabel!
-    @IBOutlet weak var EventMeetAndGreetLabel: UILabel!
-    @IBOutlet weak var EventClinicLabel: UILabel!
-    @IBOutlet weak var EventListeningPartyLabel: UILabel!
-    @IBOutlet weak var EventCruiseOrganizedLabel: UILabel!
-    
-    @IBOutlet weak var EventSpecialSwitch: UISwitch!
-    @IBOutlet weak var EventMeetAndGreetSwitch: UISwitch!
-    @IBOutlet weak var EventClinicSwitch: UISwitch!
-    @IBOutlet weak var EventListeningPartySwitch: UISwitch!
-    @IBOutlet weak var EventCruiserOrganizedSwitch: UISwitch!
     
     @IBOutlet weak var HideExpiredLabel: UILabel!
     @IBOutlet weak var HideExpiredSwitchLabel: UILabel!
@@ -166,11 +113,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBOutlet var controlView: UIControl!
     
     var dataHandle = dataHandler()
-    var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
+    var currentYearSetting = getScheduleUrl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        filterMenuNeedsUpdating = true
         let screenSize: CGRect = UIScreen.main.bounds
         var screenHeight = screenSize.height
         let screenWidth = screenSize.width
@@ -203,7 +151,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         
-        print ("sendLocalAlert! Running new code");
         //reset alerts
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
@@ -289,26 +236,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         bandListButton = NSLocalizedString("bandListButton", comment: "")
         eventListButton = NSLocalizedString("eventListButton", comment: "")
         
-        showHideVenues.text =  NSLocalizedString("venueFilterHeader", comment: "")
-        VenuePoolLabel.text = NSLocalizedString("PoolVenue", comment: "")
-        VenueTheaterLabel.text = NSLocalizedString("TheaterVenue", comment: "")
-        VenueRinkLabel.text = NSLocalizedString("RinkVenue", comment: "")
-        VenueLoungeLabel.text = NSLocalizedString("LoungeVenue", comment: "")
-        VenueOtherLabel.text = NSLocalizedString("OtherVenue", comment: "")
-        
-        VenuePoolLabel.textColor = getVenueColor(venue: venuePoolKey)
-        VenueTheaterLabel.textColor = getVenueColor(venue: venueTheaterKey)
-        VenueRinkLabel.textColor = getVenueColor(venue: venueRinkKey)
-        VenueLoungeLabel.textColor = getVenueColor(venue: venueLoungeKey)
-        VenueOtherLabel.textColor = getVenueColor(venue: "other")
-        
-        showHideEventType.text = NSLocalizedString("showTypeFilterHeader", comment: "")
-        EventSpecialLabel.text = NSLocalizedString(specialEventType, comment: "")
-        EventMeetAndGreetLabel.text = NSLocalizedString(meetAndGreetype, comment: "")
-        EventClinicLabel.text = NSLocalizedString(clinicType, comment: "")
-        EventListeningPartyLabel.text = NSLocalizedString(listeningPartyType, comment: "")
-        EventCruiseOrganizedLabel.text =  NSLocalizedString(unofficalEventType, comment: "")
-        
         NotesFontSizeLargeLabel.text = NSLocalizedString("NoteFontSize", comment: "")
         
         HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
@@ -331,66 +258,26 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     func setExistingValues (){
         
-        mustSeeAlertValue = defaults.bool(forKey: "mustSeeAlert")
-        mightSeeAlertValue = defaults.bool(forKey: "mightSeeAlert")
-        onlyAlertForAttendedValue = defaults.bool(forKey: "onlyAlertForAttended")
+        AlertOnMustSee.isOn = getMustSeeAlertValue()
+        AlertOnMightSee.isOn = getMightSeeAlertValue()
+        AlertOnlyForAttended.isOn = getOnlyAlertForAttendedValue()
         
-        alertForShowsValue = defaults.bool(forKey: "alertForShows")
-        alertForSpecialValue = defaults.bool(forKey: "alertForSpecial")
-        alertForMandGValue = defaults.bool(forKey: "alertForMandG")
-        alertForClinicsValue = defaults.bool(forKey: "alertForClinics")
-        alertForListeningValue = defaults.bool(forKey: "alertForListening")
-        notesFontSizeLargeValue = defaults.bool(forKey: "notesFontSizeLarge")
+        print ("Setting MinBeforeAlert as " + String(getMinBeforeAlertValue()))
+        MinBeforeAlert.text = String(getMinBeforeAlertValue())
+
+        AlertForShows.isOn = getAlertForShowsValue()
+        AlertForSpecialEvents.isOn = getAlertForSpecialValue()
+        AlertForMeetAndGreets.isOn = getAlertForMandGValue()
+        alertForUnofficalEvents.isOn = getAlertForUnofficalEventsValue()
         
-        alertForUnofficalEventsValue = defaults.bool(forKey: "alertForUnofficalEvents")
-        
-        minBeforeAlertValue = Double(defaults.integer(forKey: "minBeforeAlert"))
-        
-        AlertOnMustSee.isOn = mustSeeAlertValue
-        AlertOnMightSee.isOn = mightSeeAlertValue
-        AlertOnlyForAttended.isOn = onlyAlertForAttendedValue
-        
-        MinBeforeAlert.text = String(format: "%.0f", minBeforeAlertValue)
-        AlertForShows.isOn = alertForShowsValue
-        AlertForSpecialEvents.isOn = alertForSpecialValue
-        AlertForMeetAndGreets.isOn = alertForMandGValue
-        AlertForClinic.isOn = alertForClinicsValue
-        AlertForListeningEvent.isOn = alertForListeningValue
-        alertForUnofficalEvents.isOn = alertForUnofficalEventsValue
-        NotesFontSizeLargeSwitch.isOn = notesFontSizeLargeValue
+        NotesFontSizeLargeSwitch.isOn = getNotesFontSizeLargeValue()
         
         self.MinBeforeAlert.delegate = self
         
-        print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl")) in AlertPrefs")
+        print ("getPointerUrlData: lastYear setting is \(getScheduleUrl()) in AlertPrefs")
         
-        showSpecialValue = defaults.bool(forKey: "showSpecial")
-        showMandGValue = defaults.bool(forKey: "showMandG")
-        showClinicsValue = defaults.bool(forKey: "showClinics")
-        showListeningValue = defaults.bool(forKey: "showListening")
-        
-        showPoolShows = defaults.bool(forKey: "showPoolShows")
-        showTheaterShows = defaults.bool(forKey: "showTheaterShows")
-        showRinkShows = defaults.bool(forKey: "showRinkShows")
-        showLoungeShows = defaults.bool(forKey: "showLoungeShows")
-        showOtherShows = defaults.bool(forKey: "showOtherShows")
-        showUnofficalEvents = defaults.bool(forKey: "showUnofficalEvents")
-        hideExpireScheduleData = defaults.bool(forKey: "hideExpireScheduleData")
-        promptForAttended = defaults.bool(forKey: "promptForAttended")
-        
-        
-        EventSpecialSwitch.isOn = showSpecialValue;
-        EventMeetAndGreetSwitch.isOn = showMandGValue;
-        EventClinicSwitch.isOn = showClinicsValue;
-        EventListeningPartySwitch.isOn = showListeningValue;
-        
-        VenuePoolSwitch.isOn = showPoolShows;
-        VenueTheaterSwitch.isOn = showTheaterShows;
-        VenueRinkSwitch.isOn = showRinkShows;
-        VenueLoungeSwitch.isOn = showLoungeShows;
-        VenueOtherSwitch.isOn = showOtherShows;
-        EventCruiserOrganizedSwitch.isOn = showUnofficalEvents
-        HideExpiredSwitch.isOn = hideExpireScheduleData
-        PromptForAttendedSwitch.isOn = promptForAttended
+        HideExpiredSwitch.isOn = getHideExpireScheduleData()
+        PromptForAttendedSwitch.isOn = getPromptForAttended()
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -440,13 +327,19 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    @IBAction func MinBeforeAlertEndAction() {
+        print ("MinBeforeAlert ENDING text is \(MinBeforeAlert.text)")
+    }
     
     @IBAction func MinBeforeAlertAction() {
         
+        print ("MinBeforeAlert text is \(MinBeforeAlert.text)")
         let minBeforeAlertTemp = Int(MinBeforeAlert.text!)
         
+        print ("MinBeforeAlert is \(minBeforeAlertTemp)")
         if (minBeforeAlertTemp >= 0 && minBeforeAlertTemp <= 60){
-            defaults.set(minBeforeAlertTemp!, forKey: "minBeforeAlert")
+            setMinBeforeAlertValue(Int(minBeforeAlertTemp ??  10))
+
             MinBeforeAlert.resignFirstResponder()
             
             let localNotification = localNoticationHandler()
@@ -455,10 +348,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         } else {
             
             MinBeforeAlert.resignFirstResponder()
-            MinBeforeAlert.text = String(format: "%.0f", minBeforeAlertValue)
+            MinBeforeAlert.text = String(format: "%.0f", getMinBeforeAlertValue())
             let alert = UIAlertView()
             alert.title = "Number Provided Is Invalid"
-            alert.message =  "Number Provided Is Invalid\nMust be a value between 0 and 60"
+            alert.message =  ("Number Provided \(minBeforeAlertTemp) is Invalid\nMust be a value between 0 and 60")
             alert.addButton(withTitle: okPrompt)
             alert.show()
         }
@@ -466,15 +359,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func MustSeeChange() {
-        defaults.set(AlertOnMustSee.isOn, forKey: "mustSeeAlert")
+        setMustSeeAlertValue(AlertOnMustSee.isOn)
     }
     
     @IBAction func MightSeeChange() {
-        defaults.set(AlertOnMightSee.isOn, forKey: "mightSeeAlert")
+        setMightSeeAlertValue(AlertOnMightSee.isOn)
     }
     
     @IBAction func AlertOnlyForAttendedChange() {
-        defaults.set(AlertOnlyForAttended.isOn, forKey: "onlyAlertForAttended")
+        setOnlyAlertForAttendedValue(AlertOnlyForAttended.isOn)
         disableAlertButtonsIfNeeded()
         
         var helpMessage = "";
@@ -488,23 +381,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func AlertForShowsChange() {
-        defaults.set(AlertForShows.isOn, forKey: "alertForShows")
+        setAlertForShowsValue(AlertForShows.isOn)
     }
     
     @IBAction func AlertForSpecialEventChange() {
-        defaults.set(AlertForSpecialEvents.isOn, forKey: "alertForSpecial")
+        setAlertForSpecialValue(AlertForSpecialEvents.isOn)
     }
     
     @IBAction func AlertForMeetAndGreetChange() {
-        defaults.set(AlertForMeetAndGreets.isOn, forKey: "alertForMandG")
-    }
-    
-    @IBAction func AlertForClinicChange() {
-        defaults.set(AlertForClinic.isOn, forKey: "alertForClinics")
-    }
-    
-    @IBAction func AlertForListeningEventChange() {
-        defaults.set(AlertForListeningEvent.isOn, forKey: "alertForListening")
+        setAlertForMandGValue(AlertForMeetAndGreets.isOn)
     }
     
     @IBAction func backgroundTap (_ sender: UIControl){
@@ -512,59 +397,20 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
     
     @IBAction func alertForUnofficalEventChange(_ sender: Any) {
-        defaults.set(alertForUnofficalEvents.isOn, forKey: "alertForUnofficalEvents")
-    }
-    
-    @IBAction func venuePool(_ sender: Any) {
-        defaults.set(VenuePoolSwitch.isOn, forKey: "showPoolShows")
-    }
-    
-    @IBAction func venueTheater(_ sender: Any) {
-        defaults.set(VenueTheaterSwitch.isOn, forKey: "showTheaterShows")
-    }
-    
-    @IBAction func venueRink(_ sender: Any) {
-        defaults.set(VenueRinkSwitch.isOn, forKey: "showRinkShows")
-    }
-    
-    @IBAction func venueLounge(_ sender: Any) {
-        defaults.set(VenueLoungeSwitch.isOn, forKey: "showLoungeShows")
-    }
-    
-    @IBAction func venueOther(_ sender: Any) {
-        defaults.set(VenueOtherSwitch.isOn, forKey: "showOtherShows")
-    }
-    
-    @IBAction func eventSpecial(_ sender: Any) {
-        defaults.set(EventSpecialSwitch.isOn, forKey: "showSpecial")
-    }
-    
-    @IBAction func eventMeetAndGreet(_ sender: Any) {
-        defaults.set(EventMeetAndGreetSwitch.isOn, forKey: "showMandG")
-    }
-    
-    @IBAction func eventClinic(_ sender: Any) {
-        defaults.set(EventClinicSwitch.isOn, forKey: "showClinics")
-    }
-    
-    @IBAction func eventListeningParty(_ sender: Any) {
-        defaults.set(EventListeningPartySwitch.isOn, forKey: "showListening")
-    }
-    
-    @IBAction func eventCruiseOrganized(_ sender: Any) {
-        defaults.set(EventCruiserOrganizedSwitch.isOn, forKey: "showUnofficalEvents")
+        setAlertForUnofficalEventsValue(alertForUnofficalEvents.isOn)
     }
     
     @IBAction func hideExpired(_ sender: Any) {
-        defaults.set(HideExpiredSwitch.isOn, forKey: "hideExpireScheduleData")
+        setHideExpireScheduleData(HideExpiredSwitch.isOn)
+        print ("Loading showExpired Writing \(HideExpiredSwitch.isOn) to hideExpireScheduleDataBoolean")
     }
     
     @IBAction func promptForAttended(_ sender: Any) {
-        defaults.set(PromptForAttendedSwitch.isOn, forKey: "promptForAttended")
+        setPromptForAttended(PromptForAttendedSwitch.isOn)
     }
     
     @IBAction func notesFontSizeLarge(_ sender: Any) {
-        defaults.set(NotesFontSizeLargeSwitch.isOn, forKey: "notesFontSizeLarge")
+        setNotesFontSizeLargeValue(NotesFontSizeLargeSwitch.isOn)
     }
     
     @IBAction func UseLastYearsDataAction() {
@@ -585,7 +431,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 await DispatchQueue.global(qos: DispatchQoS.QoSClass.default).sync {
                     if (self.eventYearChangeAttempt.isYearValue == false){
                         self.HideExpiredSwitch.isOn = true
-                        defaults.setValue(true, forKey: "hideExpireScheduleData")
+                        setHideExpireScheduleData(true)
                         self.navigationController?.popViewController(animated: true)
                         self.dismiss(animated: true, completion: nil)
                     } else {
@@ -639,7 +485,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let bandAction = UIAlertAction(title:bandListButton, style: UIAlertAction.Style.default) {
             UIAlertAction in
             self.HideExpiredSwitch.isOn = true
-            defaults.setValue(true, forKey: "hideExpireScheduleData")
+            setHideExpireScheduleData(true)
             self.navigationController?.popViewController(animated: true)
             self.dismiss(animated: true, completion: nil)
         }
@@ -649,7 +495,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let eventAction = UIAlertAction(title:eventListButton, style: UIAlertAction.Style.default) {
             UIAlertAction in
             self.HideExpiredSwitch.isOn = false
-            defaults.setValue(false, forKey: "hideExpireScheduleData")
+            setHideExpireScheduleData(false)
             self.navigationController?.popViewController(animated: true)
             self.dismiss(animated: true, completion: nil)
         }
@@ -677,11 +523,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
 
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
-        defaults.setValue(eventYearChangeAttempt, forKey: "artistUrl")
-        defaults.setValue(eventYearChangeAttempt, forKey: "scheduleUrl")
+        
+        setArtistUrl(eventYearChangeAttempt)
+        setScheduleUrl(eventYearChangeAttempt)
         
         cacheVariables.storePointerData = [String:String]()
-        var pointerIndex = defaults.string(forKey: "scheduleUrl") ?? "Default"
+        var pointerIndex = getScheduleUrl()
+        
         print ("Files were Done setting \(pointerIndex)")
         do {
             try  FileManager.default.removeItem(atPath: scheduleFile)
@@ -698,8 +546,6 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setWontSeeOn(true);
         setUnknownSeeOn(true);
 
-        dataHandle.writeFiltersFile();
-        
         //clear all existing notifications
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications();

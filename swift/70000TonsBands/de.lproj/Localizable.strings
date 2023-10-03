@@ -109,3 +109,87 @@
 //this represents the current year in the choice menu
 "Current" = "Aktuell";
 
+//new section for the filter menu control
+"Clear Filters" = "Filter löschen";
+"Band Ranking Filters" = "Band-Ranking-Filter";
+"Show Only Flagged As Attended" = "Nur als besucht gekennzeichnet anzeigen";
+"Sorting Options" = "Sortieroptionen";
+"Event Type Filters" = "Ereignistypfilter";
+"Venue Filters" = "Veranstaltungsortfilter";
+
+"Can not hide all venues" = "Es können nicht alle Veranstaltungsorte ausgeblendet werden";
+"Can not hide all statuses" = "Es können nicht alle Status ausgeblendet werden";
+"Clear All Filters" = "Alle Filter löschen";
+"Show All Events" = "Alle Ereignisse anzeigen";
+"Show Flaged Events Only" = "Nur gekennzeichnete Ereignisse anzeigen";
+"Show Only Events Flagged As Attending" = "Nur Veranstaltungen anzeigen, die als „teilnehmend“ gekennzeichnet sind";
+
+//venue filters
+"Show Pool Events" = "Pool-Events anzeigen";
+"Hide Pool Events" = "Pool-Events ausblenden";
+"Pool Venue Filter On" = "Pool-Veranstaltungsortfilter aktiviert";
+"Pool Venue Filter Off" = "Pool-Veranstaltungsortfilter aus";
+
+"Show Lounge Events" = "Show-Lounge-Events";
+"Hide Lounge Events" = "Lounge-Events ausblenden";
+"Lounge Venue Filter On" = "Filter „Lounge-Veranstaltungsort“ aktiviert";
+"Lounge Venue Filter Off" = "Lounge-Veranstaltungsortfilter aus";
+
+"Show Theater Events" = "Showtheaterveranstaltungen";
+"Hide Theater Events" = "Theaterveranstaltungen ausblenden";
+"Theater Venue Filter On" = "Theater-Veranstaltungsortfilter aktiviert";
+"Theater Venue Filter Off" = "Theater-Veranstaltungsortfilter aus";
+
+"Show Rink Events" = "Eisbahnveranstaltungen anzeigen";
+"Hide Rink Events" = "Eisbahnereignisse ausblenden";
+"Rink Venue Filter On" = "Filter für Eisbahn-Veranstaltungsort aktiviert";
+"Rink Venue Filter Off" = "Eisbahn-Veranstaltungsortfilter aus";
+
+"Show Other Events" = "Andere Ereignisse anzeigen";
+"Hide Other Events" = "Andere Ereignisse ausblenden";
+"Other Venue Filter On" = "Filter „Anderer Veranstaltungsort“ aktiviert";
+"Other Venue Filter Off" = "Anderer Veranstaltungsortfilter aus";
+
+//event filter
+"Show Meet & Greet Events" = "Meet & Greet-Events anzeigen";
+"Hide Meet & Greet Events" = "Meet & Greet-Events ausblenden";
+"Meet and Greet Event Filter On" = "Filter für Meet-and-Greet-Events aktiviert";
+"Meet and Greet Event Filter Off" = "Filter für Meet-and-Greet-Events deaktiviert";
+
+"Show Unofficial Events" = "Inoffizielle Ereignisse anzeigen";
+"Hide Unofficial Events" = "Inoffizielle Ereignisse ausblenden";
+"Unofficial Event Filter On" = "Inoffizieller Ereignisfilter aktiviert";
+"Unofficial Event Filter Off" = "Inoffizieller Ereignisfilter deaktiviert";
+
+"Show Special Events" = "Sonderveranstaltungen anzeigen";
+"Hide Special Events" = "Besondere Ereignisse ausblenden";
+"Special Event Filter On" = "Filter für besondere Ereignisse aktiviert";
+"Special Event Filter Off" = "Filter für besondere Ereignisse deaktiviert";
+
+//sorting
+"Sort By Name" = "Nach Name sortieren";
+"Sort By Time" = "Nach Zeit sortieren";
+
+//band preference filter
+"Show Must See Items" = "Unverzichtbare Elemente anzeigen";
+"Hide Must See Items" = "Unbedingt sichtbare Elemente ausblenden";
+"Must See Filter On" = "Filter muss aktiviert sein";
+"Must See Filter Off" = "Muss „Filter aus“ sehen";
+
+"Show Might See Items" = "Möglicherweise angezeigte Artikel anzeigen";
+"Hide Might See Items" = "Möglicherweise sichtbare Elemente ausblenden";
+"Might See Filter On" = "Möglicherweise wird Filter aktiviert angezeigt";
+"Might See Filter Off" = "Möglicherweise wird Filter deaktiviert angezeigt";
+
+"Show Wont See Items" = "Artikel werden angezeigt, aber nicht angezeigt";
+"Hide Wont See Items" = "Elemente ausblenden, nicht sehen";
+"Wont See Filter On" = "Filter wird nicht angezeigt";
+"Wont See Filter Off" = "Filter aus wird nicht angezeigt";
+
+"Show Unknown Items" = "Unbekannte Elemente anzeigen";
+"Hide Unknown Items" = "Unbekannte Elemente anzeigen";
+"Unknown Filter On" = "Unbekannter Filter aktiviert";
+"Unknown Filter Off" = "Unbekannter Filter aus";
+
+"Filtering" = "Filtern";
+"Filters" = "Filter";

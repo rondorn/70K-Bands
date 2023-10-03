@@ -18,20 +18,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleButton: UINavigationItem!
 
     @IBOutlet weak var preferenceButton: UIBarButtonItem!
-    @IBOutlet weak var mustSeeButton: UIButton!
-    @IBOutlet weak var mightSeeButton: UIButton!
-    @IBOutlet weak var willNotSeeButton: UIButton!
-    @IBOutlet weak var wontSeeButton: UIButton!
-    @IBOutlet weak var unknownButton: UIButton!
-    
-    @IBOutlet weak var willAttendButton: UIButton!
-    
+    @IBOutlet weak var filterMenuButton: UIButton!
+
     @IBOutlet weak var Undefined: UIButton!
 
     @IBOutlet weak var shareButton: UIBarButtonItem!
     
     @IBOutlet weak var contentController: UIView!
-    @IBOutlet weak var scheduleButton: UIButton!
+    //@IBOutlet weak var scheduleButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
@@ -41,6 +35,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let bandNameHandle = bandNamesHandler()
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
+    
+    var filterTextNeeded = true;
     
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
@@ -54,6 +50,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var bandsByName = [String]()
     var reloadTableBool = true
     
+    var menuRefreshOverRide = false
+    var filtersOnText = ""
+    
     var bandDescriptions = CustomBandDescription()
     
     @IBOutlet weak var titleLabel: UINavigationItem!
@@ -63,6 +62,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        dataHandle.readFiltersFile()
         getCountry()
         
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
@@ -87,12 +87,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshControl.tintColor = UIColor.red;
         self.refreshControl = refreshControl
         
-        scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+        //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
         mainTableView.separatorColor = UIColor.lightGray
-        
-        dataHandle.readFiltersFile()
-        setFilterButtons()
-
         
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
@@ -105,12 +101,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
-        
-        if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
-        } else {
-            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
-        }
         
         
         refreshDisplayAfterWake();
@@ -137,6 +127,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
+        createrFilterMenu(controller: self);
+        
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -144,6 +136,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Refresh done, so updating the display in main 3")
         if (Thread.isMainThread == true){
             refreshFromCache()
+            if (filterMenuNeedsUpdating == true){
+                createrFilterMenu(controller: self);
+                filterMenuNeedsUpdating = false;
+            }
         }
     }
     
@@ -159,7 +155,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         
         // Reload Data here
-       self.tableView.reloadData()
+        if (isMenuVisible(controller:self) == false){
+            self.tableView.reloadData()
+        } else {
+            refreshAfterMenuIsGone(controller: self)
+        }
 
     }
     
@@ -314,6 +314,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         super.viewWillAppear(animated)
         isLoadingBandData = false
         quickRefresh()
+        dataHandle.writeFiltersFile()
         refreshDisplayAfterWake();
     }
 
@@ -358,32 +359,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             refreshData()
     }
     
-    func setFilterButtons(){
-        
-        print ("Status of getWontSeeOn = \(getWontSeeOn())")
-        if (getMustSeeOn() == false || getShowOnlyWillAttened() == true){
-            mustSeeButton.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
-        }
-        if (getMightSeeOn() == false || getShowOnlyWillAttened() == true){
-            mightSeeButton.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
-        }
-        if (getWontSeeOn() == false || getShowOnlyWillAttened() == true){
-            wontSeeButton.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
-        }
-        if (getUnknownSeeOn() == false || getShowOnlyWillAttened() == true){
-            unknownButton.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
-        }
-        
-        if (getShowOnlyWillAttened() == true){
-            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
-        } else {
-            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
-        }
-        
-        scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-        mainTableView.separatorColor = UIColor.lightGray
-
-    }
     
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
@@ -414,35 +389,28 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
         bandsByName = bands
         attendedHandle.getCachedData()
-        setShowOnlyAttenedFilterStatus()
+
     }
     
     func ensureCorrectSorting(){
         
         if (eventCount == 0){
             print("Schedule is empty, stay hidden")
-            self.scheduleButton.isHidden = true;
-            willAttendButton.isHidden = true;
+            //self.scheduleButton.isHidden = true;
+            //willAttendButton.isHidden = true;
             mainTableView.separatorColor = UIColor.black
-            setShowOnlyWillAttened(false);
-            resetFilterIcons();
-            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State())
-            //self.scheduleButton.setTitle(getScheduleIcon(), for: UIControl.State())
+            //print ("setting showOnlyWillAttened value of false = 1")
+            //setShowOnlyWillAttened(false);
             
         } else if (sortedBy == "name"){
             print("Sort By is Name, Show")
-            self.scheduleButton.isHidden = false;
-            willAttendButton.isHidden = false;
-            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
+            //self.scheduleButton.isHidden = false;
+            //willAttendButton.isHidden = false;
+            //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
             mainTableView.separatorColor = UIColor.lightGray
             
         } else {
             print("Sort By is Time, Show")
-            //self.sortBandsByTime()
-            self.scheduleButton.isHidden = false;
-            willAttendButton.isHidden = false;
-            scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
             mainTableView.separatorColor = UIColor.lightGray
             
         }
@@ -452,6 +420,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func quickRefresh(){
+
+        dataHandle.writeFiltersFile()
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
@@ -462,15 +432,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
-            setShowOnlyAttenedFilterStatus()
+ 
             isPerformingQuickLoad = false
             updateCountLable()
-            self.tableView.reloadData()
+            if (isMenuVisible(controller: self) == false){
+                self.tableView.reloadData()
+            } else {
+                refreshAfterMenuIsGone(controller: self)
+            }
+
         }
     }
     
     @objc func refreshData(){
         
+        print ("Redrawing the filter menu! Not")
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         //check if the timezonr has changes for whatever reason
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
@@ -538,10 +514,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.dataHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.refreshAlerts()
-                self.setShowOnlyAttenedFilterStatus()
+
                 self.updateCountLable()
-                self.tableView.reloadData()
-                print ("DONE Refreshing data in backgroud 1");
+                if isMenuVisible(controller: self) == false {
+                    self.tableView.reloadData()
+                    print ("DONE Refreshing data in backgroud 1");
+                } else {
+                    refreshAfterMenuIsGone(controller: self)
+                }
                 refreshDataLock = false;
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
                 
@@ -559,177 +539,99 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         print ("Done Refreshing data in backgroud 2");
-    } 
-    
-    
-    func setShowOnlyAttenedFilterStatus(){
-        
-        print ("attendingCount is \(attendingCount)")
-        if (attendingCount == 0){
-            willAttendButton.isHidden = true;
-            willAttendButton.isEnabled = false;
-            showOnlyWillAttened = false;
-            setShowOnlyWillAttened(false)
-            resetFilterIcons();
-        } else {
-            willAttendButton.isHidden = false;
-            willAttendButton.isEnabled = true;
-        }
     }
     
-    func resetFilterIcons(){
+    
+    
+    func setFilterTitleText(){
+        
+        filterTextNeeded = true
+        print ("Making final filtering call \(bandCounter) - \(unfilteredBandCount) - \(unfilteredCurrentEventCount) - \(unfilteredCruiserEventCount)")
+        if (bandCounter == unfilteredBandCount && unfilteredCurrentEventCount == unfilteredCruiserEventCount){
+            filterTextNeeded = false
+            print ("Making final filtering call 1");
+            
+        } else if (eventCounter == unfilteredEventCount  && getHideExpireScheduleData() == false ) {
+            filterTextNeeded = false
+            print ("Making final filtering call 2");
+        
+        } else if (bandCounter == unfilteredBandCount) {
+            filterTextNeeded = false
+            print ("Making final filtering call 3");
 
-        if (getMustSeeOn() == true){
-            mustSeeButton.setImage(getRankGuiIcons(rank: "must"), for: UIControl.State())
+        }  else if ((eventCounter == unfilteredCurrentEventCount && bandCounter == unfilteredBandCount) && getHideExpireScheduleData() == true ) {
+            filterTextNeeded = false
+            print ("Making final filtering call 4");
         }
-        mustSeeButton.isEnabled = true
         
-        if (getMightSeeOn() == true){
-            mightSeeButton.setImage(getRankGuiIcons(rank: "might"), for: UIControl.State())
+        if (getShowPoolShows() == true &&
+            getShowRinkShows() == true &&
+            getShowOtherShows() == true &&
+            getShowLoungeShows() == true &&
+            getShowTheaterShows() == true &&
+            getShowSpecialEvents() == true &&
+            getShowUnofficalEvents() == true &&
+            getShowOnlyWillAttened() == false &&
+            getShowMeetAndGreetEvents() == true &&
+            getMustSeeOn() == true &&
+            getMightSeeOn() == true &&
+            getWontSeeOn() == true &&
+            getUnknownSeeOn() == true){
+                filterTextNeeded = false
         }
-        mightSeeButton.isEnabled = true
         
-        if (getWontSeeOn() == true){
-            wontSeeButton.setImage(getRankGuiIcons(rank: "wont"), for: UIControl.State())
+        if (getShowUnofficalEvents() == false && unfilteredCruiserEventCount > 0){
+            filterTextNeeded = true
         }
-        wontSeeButton.isEnabled = true
         
-        if (getUnknownSeeOn() == true){
-            unknownButton.setImage(getRankGuiIcons(rank: "unknown"), for: UIControl.State())
-        }
-        unknownButton.isEnabled = true
-    }
-    
-    @IBAction func onlyShowAttendedFilter(_ sender: UIButton) {
         
-        if (getShowOnlyWillAttened() == false){
-            setShowOnlyWillAttened(true)
-            
-            willAttendButton.setImage(UIImage(named: "icon-seen"), for: UIControl.State())
-            
-            mustSeeButton.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
-            mustSeeButton.setTitleShadowColor(UIColor.white, for: .focused)
-            mustSeeButton.isEnabled = false
-            
-            mightSeeButton.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
-            mightSeeButton.isEnabled = false
-            
-            wontSeeButton.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
-            wontSeeButton.isEnabled = false
-            
-            unknownButton.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
-            unknownButton.isEnabled = false
-            
-            let message = NSLocalizedString("showAttendedFilterTrueHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false)
-            
+        print ("numberOfFilteredRecords is \(numberOfFilteredRecords)")
+        if (filterTextNeeded == true){
+            filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
         } else {
-            let message = NSLocalizedString("showAttendedFilterFalseHelp", comment: "")
-            ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
-            
-            setShowOnlyWillAttened(false)
-            willAttendButton.setImage(UIImage(named: "icon-seen-alt"), for: UIControl.State())
-            resetFilterIcons();
+            filtersOnText = ""
         }
-        
-        dataHandle.writeFiltersFile();
-        
-        bands =  [String]()
-        quickRefresh()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
-        
-        updateCountLable()
-        tableView.reloadData()
     }
     
-    @IBAction func filterContent(_ sender: UIButton) {
+    func decideIfScheduleMenuApplies()->Bool{
         
-        print ("sender.titleLabel is \(sender.tag) = \(getMustSeeIcon())")
-        if (sender.tag == mustSeeIconFilterTag){
-            
-            if (getMustSeeOn() == true){
-                setMustSeeOn(false)
-                sender.setTitle(mustSeeIcon, for: UIControl.State())
-                sender.setImage(getRankGuiIcons(rank: "mustAlt"), for: UIControl.State())
-            } else {
-                setMustSeeOn(true)
-                sender.setTitle(mustSeeIcon, for: UIControl.State())
-                sender.setImage(getRankGuiIcons(rank: "must"), for: UIControl.State())
-
-            }
-
-        } else if (sender.tag == mightSeeIconFilterTag){
-            if (getMightSeeOn() == true){
-                setMightSeeOn(false)
-                sender.setImage(getRankGuiIcons(rank: "mightAlt"), for: UIControl.State())
-            } else {
-                setMightSeeOn(true)
-                sender.setImage(getRankGuiIcons(rank: "might"), for: UIControl.State())
-            }
-            
-        } else if (sender.tag == wontSeeIconFilterTag){
-            if (getWontSeeOn() == true){
-                setWontSeeOn(false)
-                sender.setImage(getRankGuiIcons(rank: "wontAlt"), for: UIControl.State())
-            } else {
-                setWontSeeOn(true)
-                sender.backgroundColor = UIColor.clear
-                sender.setImage(getRankGuiIcons(rank: "wont"), for: UIControl.State())
-            }
-            
-        } else if (sender.tag == unknownIconFilterTag){
-            if (getUnknownSeeOn() == true){
-                setUnknownSeeOn(false)
-                sender.setImage(getRankGuiIcons(rank: "unknownAlt"), for: UIControl.State())
-            } else {
-                setUnknownSeeOn(true)
-                sender.setImage(getRankGuiIcons(rank: "unknown"), for: UIControl.State())
-            }
-            
-        } else {
-            bands =  [String]()
+        var showEventMenu = false
         
-            bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
-            updateCountLable()
-            tableView.reloadData()
-            return
+        if (scheduleReleased == true && (eventCount != unofficalEventCount || eventCount == 0)){
+            showEventMenu = true
+        }
+        if (unfilteredCurrentEventCount == 0 && getHideExpireScheduleData() == true || unfilteredEventCount == unfilteredCruiserEventCount){
+            showEventMenu = false
         }
         
-        dataHandle.writeFiltersFile()
-        print("Sorted  by is " + sortedBy)
-        bands =  [String]()
-        quickRefresh()
-        
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
-    
-        
-        updateCountLable()
-        tableView.reloadData()
+        print ("Show schedule choices = \(scheduleReleased) = \(eventCount) - \(unofficalEventCount) - \(unfilteredCurrentEventCount) = \(unfilteredEventCount) - \(unfilteredCruiserEventCount)")
+        return showEventMenu
     }
     
+  
     func updateCountLable(){
         
+        setFilterTitleText()
         var lableCounterString = String();
         var labeleCounter = Int()
         
         if (eventCounter != eventCounterUnoffical && eventCounter > 0){
             labeleCounter = eventCounter
-            lableCounterString = " events"
-            scheduleButton.isHidden = false
+            lableCounterString = " events " + filtersOnText
         } else {
             labeleCounter = bandCounter
-            lableCounterString = " bands"
-            scheduleButton.isHidden = true
+            lableCounterString = " bands " + filtersOnText
             sortedBy = "time"
         }
 
-        var currentYearSetting = defaults.string(forKey: "scheduleUrl") ?? "Current"
+        var currentYearSetting = getScheduleUrl()
         if (currentYearSetting != "Current" && currentYearSetting != "Default"){
-            titleButton.title = "70,000 Tons (" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
             
         } else {
-            titleButton.title = "70,000 Tons " + String(labeleCounter) + lableCounterString
+            titleButton.title = String(labeleCounter) + lableCounterString
         }
+        createrFilterMenu(controller: self);
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
@@ -753,7 +655,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let popoverMenuViewController = activityVC.popoverPresentationController
         popoverMenuViewController?.permittedArrowDirections = .any
 
-        popoverMenuViewController?.sourceView = unknownButton
+        //popoverMenuViewController?.sourceView = unknownButton
         popoverMenuViewController?.sourceRect = CGRect()
 
 
@@ -936,7 +838,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func configureCell(_ cell: UITableViewCell, atIndexPath indexPath: IndexPath) {
         
         setBands(bands)
-        setScheduleButton(scheduleButton.isHidden)
+        //setScheduleButton(scheduleButton.isHidden)
         
         
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
@@ -983,7 +885,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         updateCountLable()
-        tableView.reloadData()
+        if (isMenuVisible(controller: self) == false){
+            tableView.reloadData()
+        } else {
+            refreshAfterMenuIsGone(controller: self)
+        }
     }
     
     func detailShareChoices(){
@@ -1031,7 +937,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func detailMenuChoices(cellDataText :String, bandName :String, segue :UIStoryboardSegue, indexPath: IndexPath) {
            
            var cellData = cellDataText.split(separator: ";")
-           if (cellData.count == 4 && defaults.bool(forKey: "promptForAttended") == true){
+           if (cellData.count == 4 && getPromptForAttended() == true){
                
                 let cellBandName = String(cellData[0])
                 let cellLocation = String(cellData[1])
@@ -1075,7 +981,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
                 
                 let disablePrompt = UIAlertAction.init(title: NSLocalizedString("disableAttendedPrompt", comment: ""), style: .default) { _ in
-                    defaults.set(false, forKey: "promptForAttended")
+                    setPromptForAttended(false)
                 }
                 alert.addAction(disablePrompt)
             
@@ -1159,23 +1065,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         schedule.getCachedData()
     }
     
-    @IBAction func resortBands(_ sender: UIButton) {
+    func resortBands() {
         
         var message = "";
-        if (sortedBy == "name"){
-            sortedBy = "time"
+        if (sortedBy == "time"){
             message = NSLocalizedString("Sorting Chronologically", comment: "")
             
         } else {
             message = NSLocalizedString("Sorting Alphabetically", comment: "")
-            sortedBy = "name"
         }
         setSortedBy(sortedBy)
         ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
         ensureCorrectSorting()
-        dataHandle.writeFiltersFile()
         updateCountLable()
-        self.tableView.reloadData()
+        if (isMenuVisible(controller: self) == false){
+            self.tableView.reloadData()
+        } else {
+            refreshAfterMenuIsGone(controller: self)
+        }
         
     }
     

@@ -56,14 +56,8 @@ open class bandNamesHandler {
             
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("Loading bandName Data gatherData")
-            let defaults = UserDefaults.standard
-            
-            if (defaults.string(forKey: "artistUrl") == nil){
-                setupDefaults()
-            }
-            
-            print ("artistUrl!! = " + defaults.string(forKey: "artistUrl")!)
-            var artistUrl = getPointerUrlData(keyValue: artistUrlpointer) ?? "http://dropbox.com"
+
+            var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
             
             print ("Getting band data from " + artistUrl);
             let httpData = getUrlData(urlString: artistUrl)
@@ -130,7 +124,6 @@ open class bandNamesHandler {
             for lineData in csvData.rows {
 
                 if (lineData["bandName"]?.isEmpty == false){
-                
                     print ("Working on band " + lineData["bandName"]!)
             
                     let bandNameValue = lineData["bandName"]!

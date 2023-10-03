@@ -37,14 +37,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
-                     
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+    
         let splitViewController = self.window!.rootViewController as! UISplitViewController
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
+        setupDefaults()
+        
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
@@ -62,7 +64,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
         setupCurrentYearUrls()
         
-        setupDefaults()
+
 
        Messaging.messaging().delegate = self
 
@@ -152,7 +154,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         print("FCM - subscribed to " + subscriptionTopic)
         print("FCM - subscribed to " + subscriptionTopicTest)
-        if (defaults.bool(forKey: "alertForUnofficalEvents") == true){
+        if (getAlertForUnofficalEventsValue() == true){
             Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
             print("FCM - subscribed to " + subscriptionUnofficalTopic)
         } else {

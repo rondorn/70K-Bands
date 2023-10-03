@@ -112,3 +112,87 @@
 //this represents the current year in the choice menu
 "Current" = "Nykyinen";
 
+//new section for the filter menu control
+"Clear Filters" = "Tyhjennä suodattimet";
+"Band Ranking Filters" = "Band Ranking suodattimet";
+"Show Only Flagged As Attended" = "Näytä vain merkityt osallistujaksi";
+"Sorting Options" = "Lajitteluasetukset";
+"Event Type Filters" = "Tapahtumatyyppisuodattimet";
+"Venue Filters" = "Tapahtumapaikan suodattimet";
+
+"Can not hide all venues" = "Kaikkia paikkoja ei voi piilottaa";
+"Can not hide all status" = "Kaikkia tilaa ei voi piilottaa";
+"Clear All Filters" = "Tyhjennä kaikki suodattimet";
+"Show All Events" = "Näytä kaikki tapahtumat";
+"Show Flaged Events Only" = "Näytä vain merkityt tapahtumat";
+"Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, jotka on merkitty osallistuviksi";
+
+//venue filters
+"Show Pool Events" = "Näytä allastapahtumat";
+"Hide Pool Events" = "Piilota allastapahtumat";
+"Pool Venue Filter On" = "Allaspaikan suodatin päällä";
+"Pool Venue Filter Off" = "Allaspaikan suodatin pois päältä";
+
+"Show Lounge Events" = "Näytä Lounge-tapahtumat";
+"Hide Lounge Events" = "Piilota Lounge-tapahtumat";
+"Lounge Venue Filter On" = "Lounge-tilan suodatin päällä";
+"Lounge Venue Filter Off" = "Loungen suodatin pois päältä";
+
+"Show Theater Events" = "Näyttelyteatteritapahtumat";
+"Hide Theater Events" = "Piilota teatteritapahtumat";
+"Theater Venue Filter On" = "Teatteripaikkasuodatin päällä";
+"Theater Venue Filter Off" = "Teatteripaikkasuodatin pois päältä";
+
+"Show Rink Events" = "Näytä Rink-tapahtumat";
+"Hide Rink Events" = "Piilota Rink-tapahtumat";
+"Rink Venue Filter On" = "Rinkan paikkasuodatin päällä";
+"Rink Venue Filter Off" = "Kilpailupaikan suodatin pois päältä";
+
+"Show Other Events" = "Näytä muut tapahtumat";
+"Hide Other Events" = "Piilota muut tapahtumat";
+"Other Venue Filter On" = "Muu tapahtumapaikan suodatin päällä";
+"Other Venue Filter Off" = "Muun tapahtumapaikan suodatin pois päältä";
+
+//event filter
+"Show Meet & Greet Events" = "Näytä Meet & Greet -tapahtumat";
+"Hide Meet & Greet Events" = "Piilota Meet & Greet -tapahtumat";
+"Meet and Greet Event Filter On" = "Tapaa ja tervehdi -tapahtumasuodatin päällä";
+"Meet and Greet Event Filter Off" = "Tapaa ja tervehdi -tapahtumasuodatin pois päältä";
+
+"Show Unofficial Events" = "Näytä epäviralliset tapahtumat";
+"Hide Unofficial Events" = "Piilota epäviralliset tapahtumat";
+"Unofficial Event Filter On" = "Epävirallinen tapahtumasuodatin päällä";
+"Unofficial Event Filter Off" = "Epävirallinen tapahtumasuodatin pois päältä";
+
+"Show Special Events" = "Näytä erikoistapahtumat";
+"Hide Special Events" = "Piilota erikoistapahtumat";
+"Special Event Filter On" = "Erikoistapahtumasuodatin päällä";
+"Special Event Filter Off" = "Erikoistapahtumasuodatin pois päältä";
+
+//sorting
+"Sort By Name" = "Lajittele nimen mukaan";
+"Sort By Time" = "Lajittele ajan mukaan";
+
+//band preference filter
+"Show Must See Items" = "Näytä pakolliset kohteet";
+"Hide Must See Items" = "Piilota pakolliset kohteet";
+"Must See Filter On" = "Täytyy nähdä suodatin päällä";
+"Must See Filter Off" = "Must See -suodatin pois päältä";
+
+"Show Might See Items" = "Näytä Saattaa nähdä kohteita";
+"Hide Might See Items" = "Piilota Saattaa nähdä kohteet";
+"Might See Filter On" = "Saattaa nähdä Suodatin päällä";
+"Might See Filter Off" = "Saattaa nähdä Suodatin pois päältä";
+
+"Show Wont See Items" = "Näytä eivät näe kohteita";
+"Hide Wont See Items" = "Piilota näkemättömät kohteet";
+"Wont See Filter On" = "Suodatin ei näy päällä";
+"Wont See Filter Off" = "Suodatin ei näy";
+
+"Show Unknown Items" = "Näytä tuntemattomat kohteet";
+"Hide Unknown Items" = "Piilota tuntemattomat kohteet";
+"Unknown Filter On" = "Tuntematon suodatin päällä";
+"Unknown Filter Off" = "Tuntematon suodatin pois päältä";
+
+"Filtering" = "Suodatus";
+"Filters" = "Suodattimet";
