@@ -65,7 +65,7 @@ open class ShowsAttended {
         let bandNameHandle = bandNamesHandler()
         
         let allBands = bandNameHandle.getBandNames()
-        let artistUrl = defaults.string(forKey: "artistUrl")
+        let artistUrl = getScheduleUrl()
 
         var unuiqueSpecial = [String]()
         do {

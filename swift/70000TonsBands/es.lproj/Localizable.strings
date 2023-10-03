@@ -106,3 +106,89 @@
 "changeYearDialogBoxTitle" = "Cambiar el año del evento";
 //this represents the current year in the choice menu
 "Current" = "Actual";
+
+//new section for the filter menu control
+"Clear Filters" = "Borrar filtros"; //menu choice
+"Band Ranking Filters" = "Filtros de clasificación de bandas"; //menu header
+"Show Only Flagged As Attended" = "Mostrar solo marcado como asistido"; //help text
+"Sorting Options" = "Opciones de clasificación"; //menu header
+"Event Type Filters" = "Filtros de tipo de evento"; //menu header
+"Venue Filters" = "Filtros de lugar"; //menu header
+
+"Can not hide all venues" = "No se pueden ocultar todos los lugares"; //help text
+"Can not hide all statuses" = "No se pueden ocultar todos los estados"; //help text
+"Clear All Filters" = "Borrar todos los filtros"; //menu choice
+
+"Show All Events" = "Mostrar todos los eventos"; //menu choice
+"Show Flaged Events Only" = "Mostrar solo eventos marcados"; //menu choice
+"Show Only Events Flagged As Attending" = "Mostrar solo eventos marcados como asistentes"; //help text
+
+//venue filters
+"Show Pool Events" = "Mostrar eventos de piscina"; //menu choice
+"Hide Pool Events" = "Ocultar eventos de grupo"; //menu choice
+"Pool Venue Filter On" = "Filtro de lugar de piscina activado"; //help text
+"Pool Venue Filter Off" = "Filtro del lugar de la piscina desactivado"; //help text
+
+"Show Lounge Events" = "Eventos del salón de espectáculos"; //menu choice
+"Hide Lounge Events" = "Ocultar eventos del salón"; //menu choice
+"Lounge Venue Filter On" = "Filtro de sala VIP activado"; //help text
+"Lounge Venue Filter Off" = "Filtro de lugar lounge desactivado"; //help text
+
+"Show Theater Events" = "Mostrar eventos de teatro"; //menu choice
+"Hide Theater Events" = "Ocultar eventos teatrales"; //menu choice
+"Theater Venue Filter On" = "Filtro de sala de teatro activado"; //help text
+"Theater Venue Filter Off" = "Filtro de lugar de teatro desactivado"; //help text
+
+"Show Rink Events" = "Mostrar eventos de pista"; //menu choice
+"Hide Rink Events" = "Ocultar eventos de pista"; //menu choice
+"Rink Venue Filter On" = "Filtro de pista activado"; //help text
+"Rink Venue Filter Off" = "Filtro de lugar de pista desactivado"; //help text
+
+"Show Other Events" = "Mostrar otros eventos"; //menu choice
+"Hide Other Events" = "Ocultar otros eventos"; //menu choice
+"Other Venue Filter On" = "Otro lugar filtro activado"; //help text
+"Other Venue Filter Off" = "Otro lugar filtro desactivado"; //help text
+
+//event filter
+"Show Meet & Greet Events" = "Mostrar eventos de bienvenida y encuentro"; //menu choice
+"Hide Meet & Greet Events" = "Ocultar eventos de Meet & Greet"; //menu choice
+"Meet and Greet Event Filter On" = "Filtro de evento Meet and Greet activado"; //help text
+"Meet and Greet Event Filter Off" = "Filtro de eventos para conocer y saludar desactivado"; //help text
+
+"Show Unofficial Events" = "Mostrar eventos no oficiales"; //menu choice
+"Hide Unofficial Events" = "Ocultar eventos no oficiales"; //menu choice
+"Unofficial Event Filter On" = "Filtro de evento no oficial activado"; //help text
+"Unofficial Event Filter Off" = "Filtro de evento no oficial desactivado"; //help text
+
+"Show Special Events" = "Mostrar eventos especiales"; //menu choice
+"Hide Special Events" = "Ocultar eventos especiales"; //menu choice
+"Special Event Filter On" = "Filtro de eventos especiales activado"; //help text
+"Special Event Filter Off" = "Filtro de eventos especiales desactivado"; //help text
+
+//sorting
+"Sort By Name" = "Ordenar por nombre"; //menu  choice
+"Sort By Time" = "Ordenar por tiempo"; //menu choice
+ 
+//band preference filter
+"Show Must See Items" = "Mostrar artículos imprescindibles"; //menu choice
+"Hide Must See Items" = "Ocultar elementos imprescindibles"; //menu choice
+"Must See Filter On" = "Debe ver el filtro activado";
+"Must See Filter Off" = "Debe ver el filtro desactivado";
+
+"Show Might See Items" = "Mostrar podría ver elementos"; //menu choice
+"Hide Might See Items" = "Ocultar podría ver elementos"; //menu choice
+"Might See Filter On" = "Podría ver el filtro activado";
+"Might See Filter Off" = "Es posible que vea el filtro desactivado";
+
+"Show Wont See Items" = "Mostrar elementos que no se ven"; //menu choice
+"Hide Wont See Items" = "Ocultar elementos que no se ven"; //menu choice
+"Wont See Filter On" = "No veo el filtro activado";
+"Wont See Filter Off" = "No verá el filtro desactivado";
+
+"Show Unknown Items" = "Mostrar elementos desconocidos"; //menu choice
+"Hide Unknown Items" = "Ocultar elementos desconocidos"; //menu choice
+"Unknown Filter On" = "Filtro desconocido activado"; //help text
+"Unknown Filter Off" = "Filtro desconocido desactivado"; //help text
+
+"Filtering" = "Filtración"; //filtering indicator near counts
+"Filters" = "Filtros"; //menu name

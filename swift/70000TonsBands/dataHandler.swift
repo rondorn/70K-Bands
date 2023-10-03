@@ -33,7 +33,6 @@ class dataHandler {
                 self.refreshData()
             }
             
-            UserDefaults.standard.synchronize()
             var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
             iCloudIndicator = iCloudIndicator?.uppercased()
 
@@ -44,7 +43,7 @@ class dataHandler {
     func refreshData(){
         bandPriorityStorage = readFile(dateWinnerPassed: "")
     }
-    
+
     func writeFiltersFile(){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
@@ -56,9 +55,40 @@ class dataHandler {
             prefsString += "mightSeeOn:" + self.boolToString(getMightSeeOn()) + ";"
             prefsString += "wontSeeOn:" + self.boolToString(getWontSeeOn()) + ";"
             prefsString += "unknownSeeOn:" + self.boolToString(getUnknownSeeOn()) + ";"
-            prefsString += "showOnlyWillAttened:" + self.self.boolToString(getShowOnlyWillAttened()) + ";"
+            prefsString += "showOnlyWillAttened:" + self.boolToString(getShowOnlyWillAttened()) + ";"
             prefsString += "sortedBy:" + getSortedBy() + ";"
             prefsString += "currentTimeZone:" + localTimeZoneAbbreviation + ";"
+            prefsString += "hideExpireScheduleData:" + self.boolToString(getHideExpireScheduleData()) + ";"
+            
+            prefsString += "showTheaterShows:" + self.boolToString(getShowTheaterShows()) + ";"
+            prefsString += "showPoolShows:" + self.boolToString(getShowPoolShows()) + ";"
+            prefsString += "showRinkShows:" + self.boolToString(getShowRinkShows()) + ";"
+            prefsString += "showLoungeShows:" + self.boolToString(getShowLoungeShows()) + ";"
+            prefsString += "showOtherShows:" + self.boolToString(getShowOtherShows()) + ";"
+            prefsString += "showUnofficalEvents:" + self.boolToString(getShowUnofficalEvents()) + ";"
+            prefsString += "showSpecialEvents:" + self.boolToString(getShowSpecialEvents()) + ";"
+            prefsString += "showMeetAndGreetEvents:" + self.boolToString(getShowMeetAndGreetEvents()) + ";"
+
+            prefsString += "mustSeeAlertValue:" + self.boolToString(getMustSeeAlertValue()) + ";"
+            prefsString += "mightSeeAlertValue:" + self.boolToString(getMightSeeAlertValue()) + ";"
+            prefsString += "onlyAlertForAttendedValue:" + self.boolToString(getOnlyAlertForAttendedValue()) + ";"
+
+            prefsString += "alertForShowsValue:" + self.boolToString(getAlertForShowsValue()) + ";"
+            prefsString += "alertForSpecialValue:" + self.boolToString(getAlertForSpecialValue()) + ";"
+            prefsString += "alertForMandGValue:" + self.boolToString(getAlertForMandGValue()) + ";"
+            prefsString += "alertForUnofficalEventsValue:" + self.boolToString(getAlertForUnofficalEventsValue()) + ";"
+
+            prefsString += "notesFontSizeLargeValue:" + self.boolToString(getNotesFontSizeLargeValue()) + ";"
+            
+            prefsString += "minBeforeAlertValue:" + String(getMinBeforeAlertValue()) + ";"
+
+            prefsString += "promptForAttended:" + self.boolToString(getPromptForAttended()) + ";"
+            
+            prefsString += "sortedBy:" + getSortedBy() + ";"
+            
+            prefsString += "artistUrl:" + getArtistUrl() + ";"
+            prefsString += "scheduleUrl:" + getScheduleUrl() + ";"
+            
             print ("Wrote prefs " + prefsString)
             do {
                 try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
@@ -66,6 +96,7 @@ class dataHandler {
             } catch {
                 print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
             }
+            print ("Saving showOnlyWillAttened = \(getShowOnlyWillAttened())")
         }
     }
 
@@ -75,7 +106,12 @@ class dataHandler {
         var tempCurrentTimeZone = "";
         
         print ("Status of getWontSeeOn loading")
-        if let data = try? String(contentsOf: lastFilters, encoding: String.Encoding.utf8) {
+        if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
+            print ("lastFilters does not exist")
+            return()
+        }
+        
+        if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
             print ("Status of sortedBy loading 1 " + data)
             let dataArray = data.components(separatedBy: ";")
             for record in dataArray {
@@ -84,34 +120,101 @@ class dataHandler {
                 
                 switch valueArray[0] {
                     
-                    case "mustSeeOn":
-                        setMustSeeOn(stringToBool(valueArray[1]))
+                case "mustSeeOn":
+                    setMustSeeOn(stringToBool(valueArray[1]))
+                
+                case "mightSeeOn":
+                    setMightSeeOn(stringToBool(valueArray[1]))
+               
+                case "wontSeeOn":
+                    setWontSeeOn(stringToBool(valueArray[1]))
+                    print ("Status of getWontSeeOn load = \(valueArray[1])")
+                
+                case "unknownSeeOn":
+                    setUnknownSeeOn(stringToBool(valueArray[1]))
+                
+                case "showOnlyWillAttened":
+                    setShowOnlyWillAttened(stringToBool(valueArray[1]))
+                
+                case "currentTimeZone":
+                    tempCurrentTimeZone = valueArray[1]
+                
+                case "sortedBy":
+                    print ("activly Loading sortedBy = " + valueArray[1])
+                    setSortedBy(valueArray[1])
+                
+                case "hideExpireScheduleData":
+                    setHideExpireScheduleData(stringToBool(valueArray[1]))
+
+                case "showTheaterShows":
+                    setShowTheaterShows(stringToBool(valueArray[1]))
+                
+                case "showPoolShows":
+                    setShowPoolShows(stringToBool(valueArray[1]))
+
+                case "showRinkShows":
+                    setShowRinkShows(stringToBool(valueArray[1]))
+                
+                case "showLoungeShows":
+                    setShowLoungeShows(stringToBool(valueArray[1]))
+                
+                case "showOtherShows":
+                    setShowOtherShows(stringToBool(valueArray[1]))
+                
+                case "showUnofficalEvents":
+                    setShowUnofficalEvents(stringToBool(valueArray[1]))
+                
+                case "showSpecialEvents":
+                    setShowSpecialEvents(stringToBool(valueArray[1]))
+                
+                case "showMeetAndGreetEvents":
+                    setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+
+                case "mustSeeAlertValue":
+                    setMustSeeAlertValue(stringToBool(valueArray[1]))
                     
-                    case "mightSeeOn":
-                        setMightSeeOn(stringToBool(valueArray[1]))
-                   
-                    case "wontSeeOn":
-                        setWontSeeOn(stringToBool(valueArray[1]))
-                        print ("Status of getWontSeeOn load = \(valueArray[1])")
+                case "mightSeeAlertValue":
+                    setMightSeeAlertValue(stringToBool(valueArray[1]))
                     
-                    case "unknownSeeOn":
-                        setUnknownSeeOn(stringToBool(valueArray[1]))
+                case "onlyAlertForAttendedValue":
+                    setOnlyAlertForAttendedValue(stringToBool(valueArray[1]))
                     
-                    case "showOnlyWillAttened":
-                        setShowOnlyWillAttened(stringToBool(valueArray[1]))
+                case "alertForShowsValue":
+                    setAlertForShowsValue(stringToBool(valueArray[1]))
                     
-                    case "currentTimeZone":
-                        tempCurrentTimeZone = valueArray[1]
+                case "alertForSpecialValue":
+                    setAlertForSpecialValue(stringToBool(valueArray[1]))
                     
-                    case "sortedBy":
-                        print ("activly Loading sortedBy = " + valueArray[1])
-                        setSortedBy(valueArray[1])
+                case "alertForMandGValue":
+                    setAlertForMandGValue(stringToBool(valueArray[1]))
+                    
+                case "alertForUnofficalEventsValue":
+                    setAlertForUnofficalEventsValue(stringToBool(valueArray[1]))
+                    
+                case "notesFontSizeLargeValue":
+                    setNotesFontSizeLargeValue(stringToBool(valueArray[1]))
+                
+                case "promptForAttended":
+                    setPromptForAttended(stringToBool(valueArray[1]))
+                    
+                case "minBeforeAlertValue":
+                    setMinBeforeAlertValue(Int(valueArray[1]) ?? 10)
+                
+                case "sortedBy":
+                    setSortedBy(valueArray[1])
+                    
+                case "artistUrl":
+                    setArtistUrl(valueArray[1])
+                    
+                case "scheduleUrl":
+                    setScheduleUrl(valueArray[1])
                     
                     default:
                         print("Not sure why this would happen")
                 }
             }
-            print ("Loading sortedBy = " + getSortedBy())
+            print ("Loading setScheduleUrl = \(getScheduleUrl())")
+            print ("Loading mustSeeOn = \(getMustSeeOn())")
         }
         
         if (tempCurrentTimeZone != localTimeZoneAbbreviation){
@@ -121,8 +224,8 @@ class dataHandler {
             localNotification.addNotifications()
         }
     }
-
-
+    
+    
     func boolToString(_ value: Bool) -> String{
         
         var result = String()
@@ -185,7 +288,7 @@ class dataHandler {
         
         var priority = 0
         
-        print ("Retrieving priority data for " + bandname + ":", terminator: "")
+        print ("Retrieving priority data for " + bandname + ":", terminator: "\n")
         
         if (bandPriorityStorage[bandname] != nil){
             priority = bandPriorityStorage[bandname]!
