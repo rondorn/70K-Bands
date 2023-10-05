@@ -129,7 +129,7 @@ class iCloudDataHandler {
     }
     
     func readAllScheduleData(){
-        
+
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             
             let scheduleHandle = scheduleHandler()

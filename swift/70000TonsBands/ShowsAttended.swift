@@ -24,16 +24,14 @@ open class ShowsAttended {
         var staticCacheUsed = false
         
         staticAttended.sync() {
-            if (cacheVariables.attendedStaticCache.isEmpty == false){
+            if (cacheVariables.attendedStaticCache.isEmpty == true){
+                loadShowsAttended()
+            } else {
                 staticCacheUsed = true
                 showsAttendedArray = cacheVariables.attendedStaticCache
             }
         }
-        
-        if (staticCacheUsed == false){
-            loadShowsAttended()
-        }
-        
+
         //iCloudHandle.readCloudAttendedData(attendedHandle: self);
     }
     
@@ -52,9 +50,9 @@ open class ShowsAttended {
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
             
-                print ("saved showData \(showsAttendedArray)")
+                print ("Loading show attended data! saved showData \(showsAttendedArray)")
             } catch {
-                print ("Error, unable to save showsAtteneded Data \(error.localizedDescription)")
+                print ("Loading show attended data! Error, unable to save showsAtteneded Data \(error.localizedDescription)")
             }
         }
     }
@@ -70,53 +68,28 @@ open class ShowsAttended {
         var unuiqueSpecial = [String]()
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
+            //print ("Loading show attended data!! From json")
             showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
-        
+            print ("Loaded show attended data!! From json \(showsAttendedArray)")
             if (showsAttendedArray.count > 0){
                 for index in showsAttendedArray {
-                    
-                    let indexArray = index.key.split(separator: ":")
-                    
-                    let bandName = String(indexArray[0])
-                    let eventType = String(indexArray[4])
-
-                    if (indexArray.count == 5 && artistUrl == defaultPrefsValue){
-                        print ("converting data for index \(index.key)")
-                        var useEventYear = eventYear;
-                        if (allBands.contains(bandName) == false){
-                            print ("cleanup event data last years band \(bandName) and eventType is \(eventType) and \(unuiqueSpecial)")
-                            useEventYear = useEventYear - 1
-                            
-                            if ((eventType == specialEventType || eventType == unofficalEventType) && unuiqueSpecial.contains(bandName) == false){
-                                useEventYear = useEventYear + 1
-                                unuiqueSpecial.append(bandName)
-                            }
-                            
-                        }
-                        
-                        let newIndex = index.key + ":" + String(useEventYear)
-                        
-                        print ("cleanup event data chaning index from  \(index.key) to \(newIndex)")
-                        showsAttendedArray[newIndex] = index.value;
-                        
-                        showsAttendedArray.removeValue(forKey: index.key)
-                    }
- 
+                    print ("Loaded show attended data!! From \(index.key) - \(index.value)")
+                    showsAttendedArray[index.key] = index.value
                 }
             }
-            print ("cleanup event data loaded showData \(showsAttendedArray)")
+            print ("Loading show attended data! cleanup event data loaded showData \(showsAttendedArray)")
             
             staticAttended.async(flags: .barrier) {
-                for index in self.showsAttendedArray.keys {
-                    print ("Adding attended data \(index) and \(self.showsAttendedArray[index] ?? "")")
-                    cacheVariables.attendedStaticCache[index] = self.showsAttendedArray[index] ?? ""
+                for index in self.showsAttendedArray {
+
+                    cacheVariables.attendedStaticCache[index.key] = index.value ?? ""
                 }
             }
             
             //iCloudHandle.readCloudAttendedData(attendedHandle: self)
             
         } catch {
-            print ("Error, unable to load showsAtteneded Data \(error.localizedDescription)")
+            print ("Loaded show attended data!! Error, unable to load showsAtteneded Data \(error.localizedDescription)")
         }
     
     }
@@ -134,7 +107,7 @@ open class ShowsAttended {
     }
     
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
-        
+
         if (showsAttendedArray.count == 0){
             loadShowsAttended();
         }
@@ -146,7 +119,7 @@ open class ShowsAttended {
         
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         
-        print ("addShowsAttended 1 addAttended data index = '\(index)'")
+        print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
         
         if (showsAttendedArray.isEmpty == true || showsAttendedArray[index] == nil ||
@@ -175,7 +148,7 @@ open class ShowsAttended {
     
     func changeShowAttendedStatus(index: String, status:String){
         
-        print ("addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
+        print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
         showsAttendedArray[index] = status
         
         let firebaseEventWrite = firebaseEventDataWrite();
@@ -205,10 +178,11 @@ open class ShowsAttended {
         }
         
         let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue,eventYearString: eventYearString);
+        print ("Loading show attended getShowAttendedStatus for '\(band)' - \(location) - \(value)")
         
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         
-        print ("getShowAttendedIcon 2 Settings equals showsAttendedArray '\(index)' - \(value)")
+        print ("Loading show attended data! getShowAttendedIcon 2 Settings equals showsAttendedArray '\(index)' - \(value)")
         if (value == sawAllStatus){
             iconName = "icon-seen"
         
@@ -259,7 +233,7 @@ open class ShowsAttended {
         
         var value = ""
         
-        print ("getShowAttendedStatusCheck on show index = '\(index)' for status=\(showsAttendedArray[index] ?? "")")
+        print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(showsAttendedArray[index] ?? "")")
         
         if (showsAttendedArray[index] == sawAllStatus){
             value = sawAllStatus
