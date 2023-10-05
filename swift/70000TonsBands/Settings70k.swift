@@ -24,15 +24,16 @@ var showMeetAndGreetEvents = true
 var showOnlyWillAttened = false;
 var sortedBy = "time"
 
-//--------------new
 var mustSeeAlertValue = true
 var mightSeeAlertValue = true
 var onlyAlertForAttendedValue = false
 
 var alertForShowsValue = true
 var alertForSpecialValue = true
-var alertForMandGValue = true
+var alertForMandGValue = false
 var alertForUnofficalEventsValue = true
+var alertForClinicEvents = false
+var alertForListeningEvents = false
 
 var notesFontSizeLargeValue = false
 
@@ -79,6 +80,20 @@ func setNotesFontSizeLargeValue(_ value: Bool){
 }
 func getNotesFontSizeLargeValue()->Bool{
     return notesFontSizeLargeValue
+}
+
+func setAlertForListeningEvents(_ value: Bool){
+    alertForListeningEvents = value
+}
+func getAlertForListeningEvents()->Bool{
+    return alertForListeningEvents
+}
+
+func setAlertForClinicEvents(_ value: Bool){
+    alertForClinicEvents = value
+}
+func getAlertForClinicEvents()->Bool{
+    return alertForClinicEvents
 }
 
 func setAlertForUnofficalEventsValue(_ value: Bool){

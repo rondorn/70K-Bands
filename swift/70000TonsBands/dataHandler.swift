@@ -77,7 +77,9 @@ class dataHandler {
             prefsString += "alertForSpecialValue:" + self.boolToString(getAlertForSpecialValue()) + ";"
             prefsString += "alertForMandGValue:" + self.boolToString(getAlertForMandGValue()) + ";"
             prefsString += "alertForUnofficalEventsValue:" + self.boolToString(getAlertForUnofficalEventsValue()) + ";"
-
+            prefsString += "alertForClinicEvents:" + self.boolToString(getAlertForClinicEvents()) + ";"
+            prefsString += "alertForListeningEvents:" + self.boolToString(getAlertForListeningEvents()) + ";"
+            
             prefsString += "notesFontSizeLargeValue:" + self.boolToString(getNotesFontSizeLargeValue()) + ";"
             
             prefsString += "minBeforeAlertValue:" + String(getMinBeforeAlertValue()) + ";"
@@ -187,6 +189,12 @@ class dataHandler {
                     
                 case "alertForMandGValue":
                     setAlertForMandGValue(stringToBool(valueArray[1]))
+
+                case "alertForListeningEvents":
+                    setAlertForListeningEvents(stringToBool(valueArray[1]))
+                    
+                case "alertForClinicEvents":
+                    setAlertForClinicEvents(stringToBool(valueArray[1]))
                     
                 case "alertForUnofficalEventsValue":
                     setAlertForUnofficalEventsValue(stringToBool(valueArray[1]))

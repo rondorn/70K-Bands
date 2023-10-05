@@ -37,6 +37,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let iCloudDataHandle = iCloudDataHandler();
     
     var filterTextNeeded = true;
+    var viewableCell = UITableViewCell()
     
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
@@ -147,7 +148,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
       guard let userInfo = notification.userInfo else {return}
       if let fcmToken = userInfo["token"] as? String {
         let message = fcmToken
-        //ToastMessages(message).show(self, cellLocation: self.view.frame)
 
       }
     }
@@ -685,7 +685,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
+        
         self.configureCell(cell, atIndexPath: indexPath)
         return cell
     }
@@ -767,7 +767,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 let empty : UITextField = UITextField();
                 let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
-                
+                let visibleLocation = CGRect(origin: self.mainTableView.contentOffset, size: self.mainTableView.bounds.size)
                 ToastMessages(message).show(self, cellLocation: placementOfCell!,  placeHigh: false)
                 isLoadingBandData = false
                 self.quickRefresh()
@@ -838,11 +838,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func configureCell(_ cell: UITableViewCell, atIndexPath indexPath: IndexPath) {
         
         setBands(bands)
-        //setScheduleButton(scheduleButton.isHidden)
-        
-        
+        //viewableCell = cell
+        print ("Toast cell location - Current cell index is \(indexPath.row)")
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
-    
+        
     }
     
     
@@ -1075,7 +1074,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             message = NSLocalizedString("Sorting Alphabetically", comment: "")
         }
         setSortedBy(sortedBy)
-        ToastMessages(message).show(self, cellLocation: self.view.frame,  placeHigh: false)
+        
+        let visibleLocation = CGRect(origin: self.mainTableView.contentOffset, size: self.mainTableView.bounds.size)
+        ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: false)
         ensureCorrectSorting()
         updateCountLable()
         if (isMenuVisible(controller: self) == false){

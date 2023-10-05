@@ -113,86 +113,86 @@
 "Current" = "Nykyinen";
 
 //new section for the filter menu control
-"Clear Filters" = "Tyhjennä suodattimet";
-"Band Ranking Filters" = "Band Ranking suodattimet";
-"Show Only Flagged As Attended" = "Näytä vain merkityt osallistujaksi";
-"Sorting Options" = "Lajitteluasetukset";
-"Event Type Filters" = "Tapahtumatyyppisuodattimet";
-"Venue Filters" = "Tapahtumapaikan suodattimet";
+"Clear Filters" = "Tyhjennä suodattimet"; //menu choice
+"Band Ranking Filters" = "Band Ranking suodattimet"; //menu header
+"Show Only Flagged As Attended" = "Näytä vain merkityt osallistujaksi"; //menu header
+"Sorting Options" = "Lajitteluasetukset"; //menu header
+"Event Type Filters" = "Tapahtumatyyppisuodattimet"; //menu header
+"Venue Filters" = "Tapahtumapaikan suodattimet"; //menu header
 
-"Can not hide all venues" = "Kaikkia paikkoja ei voi piilottaa";
-"Can not hide all status" = "Kaikkia tilaa ei voi piilottaa";
-"Clear All Filters" = "Tyhjennä kaikki suodattimet";
-"Show All Events" = "Näytä kaikki tapahtumat";
-"Show Flaged Events Only" = "Näytä vain merkityt tapahtumat";
-"Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, jotka on merkitty osallistuviksi";
+"Can not hide all venues" = "Kaikkia paikkoja ei voi piilottaa"; //help text
+"Can not hide all status" = "Kaikkia tilaa ei voi piilottaa"; //help text
+"Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
+"Show All Events" = "Näytä kaikki tapahtumat"; //menu choice
+"Show Flaged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
+"Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, jotka on merkitty osallistuviksi"; //help text
 
 //venue filters
-"Show Pool Events" = "Näytä allastapahtumat";
-"Hide Pool Events" = "Piilota allastapahtumat";
-"Pool Venue Filter On" = "Allaspaikan suodatin päällä";
-"Pool Venue Filter Off" = "Allaspaikan suodatin pois päältä";
+"Show Pool Events" = "Näytä allastapahtumat"; //menu choice
+"Hide Pool Events" = "Piilota allastapahtumat"; //menu choice
+"Pool Venue Filter On" = "Allaspaikan suodatin päällä"; //help text
+"Pool Venue Filter Off" = "Allaspaikan suodatin pois päältä"; //help text
 
-"Show Lounge Events" = "Näytä Lounge-tapahtumat";
-"Hide Lounge Events" = "Piilota Lounge-tapahtumat";
-"Lounge Venue Filter On" = "Lounge-tilan suodatin päällä";
-"Lounge Venue Filter Off" = "Loungen suodatin pois päältä";
+"Show Lounge Events" = "Näytä Lounge-tapahtumat"; //menu choice
+"Hide Lounge Events" = "Piilota Lounge-tapahtumat"; //menu choice
+"Lounge Venue Filter On" = "Lounge-tilan suodatin päällä"; //help text
+"Lounge Venue Filter Off" = "Loungen suodatin pois päältä"; //help text
 
-"Show Theater Events" = "Näyttelyteatteritapahtumat";
-"Hide Theater Events" = "Piilota teatteritapahtumat";
-"Theater Venue Filter On" = "Teatteripaikkasuodatin päällä";
-"Theater Venue Filter Off" = "Teatteripaikkasuodatin pois päältä";
+"Show Theater Events" = "Näyttelyteatteritapahtumat"; //menu choice
+"Hide Theater Events" = "Piilota teatteritapahtumat"; //menu choice
+"Theater Venue Filter On" = "Teatteripaikkasuodatin päällä"; //help text
+"Theater Venue Filter Off" = "Teatteripaikkasuodatin pois päältä"; //help text
 
-"Show Rink Events" = "Näytä Rink-tapahtumat";
-"Hide Rink Events" = "Piilota Rink-tapahtumat";
-"Rink Venue Filter On" = "Rinkan paikkasuodatin päällä";
-"Rink Venue Filter Off" = "Kilpailupaikan suodatin pois päältä";
+"Show Rink Events" = "Näytä Rink-tapahtumat"; //menu choice
+"Hide Rink Events" = "Piilota Rink-tapahtumat"; //menu choice
+"Rink Venue Filter On" = "Rinkan paikkasuodatin päällä"; //help text
+"Rink Venue Filter Off" = "Kilpailupaikan suodatin pois päältä"; //help text
 
-"Show Other Events" = "Näytä muut tapahtumat";
-"Hide Other Events" = "Piilota muut tapahtumat";
-"Other Venue Filter On" = "Muu tapahtumapaikan suodatin päällä";
-"Other Venue Filter Off" = "Muun tapahtumapaikan suodatin pois päältä";
+"Show Other Events" = "Näytä muut tapahtumat"; //menu choice
+"Hide Other Events" = "Piilota muut tapahtumat"; //menu choice
+"Other Venue Filter On" = "Muu tapahtumapaikan suodatin päällä"; //help text
+"Other Venue Filter Off" = "Muun tapahtumapaikan suodatin pois päältä"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Näytä Meet & Greet -tapahtumat";
-"Hide Meet & Greet Events" = "Piilota Meet & Greet -tapahtumat";
-"Meet and Greet Event Filter On" = "Tapaa ja tervehdi -tapahtumasuodatin päällä";
-"Meet and Greet Event Filter Off" = "Tapaa ja tervehdi -tapahtumasuodatin pois päältä";
+"Show Meet & Greet Events" = "Näytä Meet & Greet -tapahtumat"; //menu choice
+"Hide Meet & Greet Events" = "Piilota Meet & Greet -tapahtumat"; //menu choice
+"Meet and Greet Event Filter On" = "Tapaa ja tervehdi -tapahtumasuodatin päällä"; //help text
+"Meet and Greet Event Filter Off" = "Tapaa ja tervehdi -tapahtumasuodatin pois päältä"; //help text
 
-"Show Unofficial Events" = "Näytä epäviralliset tapahtumat";
-"Hide Unofficial Events" = "Piilota epäviralliset tapahtumat";
-"Unofficial Event Filter On" = "Epävirallinen tapahtumasuodatin päällä";
-"Unofficial Event Filter Off" = "Epävirallinen tapahtumasuodatin pois päältä";
+"Show Unofficial Events" = "Näytä epäviralliset tapahtumat"; //menu choice
+"Hide Unofficial Events" = "Piilota epäviralliset tapahtumat"; //menu choice
+"Unofficial Event Filter On" = "Epävirallinen tapahtumasuodatin päällä"; //help text
+"Unofficial Event Filter Off" = "Epävirallinen tapahtumasuodatin pois päältä"; //help text
 
-"Show Special Events" = "Näytä erikoistapahtumat";
-"Hide Special Events" = "Piilota erikoistapahtumat";
-"Special Event Filter On" = "Erikoistapahtumasuodatin päällä";
-"Special Event Filter Off" = "Erikoistapahtumasuodatin pois päältä";
+"Show Special/Other Events" = "Näytä erikois-/muut tapahtumat"; //menu choice
+"Hide Special/Other Events" = "Piilota erityiset/muut tapahtumat"; //menu choice
+"Special/Other Event Filter On" = "Erikois-/muutapahtumasuodatin päällä"; //help text
+"Special/Other Event Filter Off" = "Erikois-/muutapahtumasuodatin pois päältä"; //help text
 
 //sorting
-"Sort By Name" = "Lajittele nimen mukaan";
-"Sort By Time" = "Lajittele ajan mukaan";
+"Sort By Name" = "Lajittele nimen mukaan"; //menu choice
+"Sort By Time" = "Lajittele ajan mukaan"; //menu choice
 
 //band preference filter
-"Show Must See Items" = "Näytä pakolliset kohteet";
-"Hide Must See Items" = "Piilota pakolliset kohteet";
-"Must See Filter On" = "Täytyy nähdä suodatin päällä";
-"Must See Filter Off" = "Must See -suodatin pois päältä";
+"Show Must See Items" = "Näytä pakolliset kohteet"; //menu choice
+"Hide Must See Items" = "Piilota pakolliset kohteet"; //menu choice
+"Must See Filter On" = "Täytyy nähdä suodatin päällä"; //help text
+"Must See Filter Off" = "Must See -suodatin pois päältä"; //help text
 
-"Show Might See Items" = "Näytä Saattaa nähdä kohteita";
-"Hide Might See Items" = "Piilota Saattaa nähdä kohteet";
-"Might See Filter On" = "Saattaa nähdä Suodatin päällä";
-"Might See Filter Off" = "Saattaa nähdä Suodatin pois päältä";
+"Show Might See Items" = "Näytä Saattaa nähdä kohteita"; //menu choice
+"Hide Might See Items" = "Piilota Saattaa nähdä kohteet"; //menu choice
+"Might See Filter On" = "Saattaa nähdä Suodatin päällä"; //help text
+"Might See Filter Off" = "Saattaa nähdä Suodatin pois päältä"; //help text
 
-"Show Wont See Items" = "Näytä eivät näe kohteita";
-"Hide Wont See Items" = "Piilota näkemättömät kohteet";
-"Wont See Filter On" = "Suodatin ei näy päällä";
-"Wont See Filter Off" = "Suodatin ei näy";
+"Show Wont See Items" = "Näytä eivät näe kohteita"; //menu choice
+"Hide Wont See Items" = "Piilota näkemättömät kohteet"; //menu choice
+"Wont See Filter On" = "Suodatin ei näy päällä"; //help text
+"Wont See Filter Off" = "Suodatin ei näy"; //help text
 
-"Show Unknown Items" = "Näytä tuntemattomat kohteet";
-"Hide Unknown Items" = "Piilota tuntemattomat kohteet";
-"Unknown Filter On" = "Tuntematon suodatin päällä";
-"Unknown Filter Off" = "Tuntematon suodatin pois päältä";
+"Show Unknown Items" = "Näytä tuntemattomat kohteet"; //menu choice
+"Hide Unknown Items" = "Piilota tuntemattomat kohteet"; //menu choice
+"Unknown Filter On" = "Tuntematon suodatin päällä"; //help text
+"Unknown Filter Off" = "Tuntematon suodatin pois päältä"; //help text
 
-"Filtering" = "Suodatus";
-"Filters" = "Suodattimet";
+"Filtering" = "Suodatus"; //filtering indicator near counts
+"Filters" = "Suodattimet"; //menu name
