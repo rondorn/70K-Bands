@@ -427,12 +427,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             isPerformingQuickLoad = true
 
             self.dataHandle.getCachedData()
-            self.attendedHandle.getCachedData()
-            
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
- 
+            self.attendedHandle.getCachedData()
             isPerformingQuickLoad = false
             updateCountLable()
             if (isMenuVisible(controller: self) == false){
@@ -484,10 +482,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
-                self.attendedHandle.loadShowsAttended()
-                
+                print ("Loading show attended data! From MasterViewController")
                 schedule.DownloadCsv()
-
+                
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                     let bandNotes = CustomBandDescription();
                     let imageHandle = imageHandler()
@@ -506,12 +503,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             currentBandList = self.bands
             self.bandsByName = self.bands
-            
+            self.attendedHandle.loadShowsAttended()
             DispatchQueue.main.async{
                 print ("Refreshing data in backgroud");
 
                 self.bandNameHandle.readBandFile()
                 self.dataHandle.getCachedData()
+                self.attendedHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.refreshAlerts()
 

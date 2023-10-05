@@ -23,7 +23,7 @@
 "Alert Only for Will Attend Events"="Alarm nur für zugesagte Events";
 
 "Only alert for shows you will attend"="Alarm nur für zugesagte Shows ";
-"Alert for shows according to your favorites selection"="Alarm für Shows nach deiner Favoritenauswahl";
+"Alert for shows according to your favorites selection"="Alarm für Shows aus deiner Favoritenauswahl";
 
 "showAttendedFilterTrueHelp"="Zeige nur Ereignisse an, an denen du teilnimmst. Andere Filter werden nicht angewendet";
 "showAttendedFilterFalseHelp"="Zeige Bands und Shows nach Filtern";
@@ -38,18 +38,18 @@
 "Part Of Event"="Teilweise Teilnahme";
 "None Of Event"="Keine Teilnahme";
 
-"Prompt For Attended Status"="Aufforderung zur Eingabe der Teilnahme ";
+"Prompt For Attended Status"="Aufforderung zur Eingabe der Teilnahme";
 "Go To Details"="Gehe zu Details";
 
 "Minutes Before Event to Alert"="Alarm X Minuten vor Event";
 "Alert For Shows"="Alarm für Shows";
-"Alert For Special Events"="Alarm für Special-Events";
+"Alert For Special Events"="Alarm für Besondere Veranstaltungen";
 "Alert For Meeting and Greet Events"="Alarm für Meet and Greet";
 "Alert For Clinics"="Alarm für Kurzworkshop ";
 "Alert For Album Listening Events"="Alarm für Album-Vorstellungen";
 "Alert For Unofficial Events"="Alarm für Cruiser-organisierte Veranstaltungen";
 
-"Special Event"="Besondere Events";
+"Special Event"="Besondere Veranstaltungen";
 "Meet and Greet"="Meet and Greet";
 "Clinic"="Kurzworkshop";
 "Listening Party"="Album-Vorstellung";
@@ -62,9 +62,9 @@
 
 "venueFilterHeader" = "Ort anzeigen/ausblenden";
 "PoolVenue" = "Poolbühne";
-"TheaterVenue" = "Theatre";
-"LoungeVenue" = "Lounge";
-"RinkVenue" = "Eishalle";
+"TheaterVenue" = "Royal Theater";
+"LoungeVenue" = "Star Lounge";
+"RinkVenue" = "Studio B Ice Rink";
 "OtherVenue" = "Anderer Ort";
 
 "showTypeFilterHeader" = "Ereignistyp anzeigen/ausblenden";
@@ -105,92 +105,93 @@
 "eventOrBandPrompt" = "Möchten Sie eine Liste von Bands oder eine Liste von Veranstaltungen anzeigen?";
 "bandListButton" = "Bandliste";
 "eventListButton" = "Veranstaltungsliste";
-"changeYearDialogBoxTitle" = "Das Veranstaltungsjahr ändern";
+"changeYearDialogBoxTitle" = "Veranstaltungsjahr ändern";
 //this represents the current year in the choice menu
 "Current" = "Aktuell";
 
 //new section for the filter menu control
 "Clear Filters" = "Filter löschen"; //menu choice
-"Band Ranking Filters" = "Band-Ranking-Filter"; //menu header
-"Show Only Flagged As Attended" = "Nur als besucht gekennzeichnet anzeigen"; //menu header
+"Band Ranking Filters" = "Band-Auswahl-Filter"; //menu header
+"Show Only Flagged As Attended" = "Nur als besucht markierte anzeigen"; //menu header
 "Sorting Options" = "Sortieroptionen"; //menu header
-"Event Type Filters" = "Ereignistypfilter"; //menu header
-"Venue Filters" = "Veranstaltungsortfilter"; //menu header
+"Event Type Filters" = "Filter nach Veranstaltungstyp"; //menu header
+"Venue Filters" = "Filter nach Veranstaltungsort"; //menu header
 
 "Can not hide all venues" = "Es können nicht alle Veranstaltungsorte ausgeblendet werden"; //help text
-"Can not hide all statuses" = "Es können nicht alle Status ausgeblendet werden"; //help text
+"Can not hide all statuses" = "Es können nicht alle Stati ausgeblendet werden"; //help text
 "Clear All Filters" = "Alle Filter löschen"; //menu choice
-"Show All Events" = "Alle Ereignisse anzeigen"; //menu choice
-"Show Flaged Events Only" = "Nur gekennzeichnete Ereignisse anzeigen"; //menu choice
-"Show Only Events Flagged As Attending" = "Nur Veranstaltungen anzeigen, die als „teilnehmend“ gekennzeichnet sind"; //help text
+"Show All Events" = "Alle Veranstaltungen anzeigen"; //menu choice
+"Show Flaged Events Only" = "Nur markierte Veranstaltungen anzeigen"; //menu choice
+"Show Only Events Flagged As Attending" = "Nur Veranstaltungen anzeigen, die mit Teilnahme markiert sind"; //help text
 
 //venue filters
-"Show Pool Events" = "Pool-Events anzeigen"; //menu choice
-"Hide Pool Events" = "Pool-Events ausblenden"; //menu choice
-"Pool Venue Filter On" = "Pool-Veranstaltungsortfilter aktiviert"; //help text
-"Pool Venue Filter Off" = "Pool-Veranstaltungsortfilter aus"; //help text
+"Show Pool Events" = "Veranstaltungen Poolbühne anzeigen"; //menu choice
+"Hide Pool Events" = "Veranstaltungen Poolbühne ausblenden"; //menu choice
+"Pool Venue Filter On" = "Filter „Pool-Veranstaltungen“ an"; //help text
+"Pool Venue Filter Off" = "Filter „Pool-Veranstaltungen“ aus"; //help text
 
-"Show Lounge Events" = "Show-Lounge-Events"; //menu choice
-"Hide Lounge Events" = "Lounge-Events ausblenden"; //menu choice
-"Lounge Venue Filter On" = "Filter „Lounge-Veranstaltungsort“ aktiviert"; //help text
-"Lounge Venue Filter Off" = "Lounge-Veranstaltungsortfilter aus"; //help text
+"Show Lounge Events" = "Veranstaltungen Star Lounge anzeigen"; //menu choice
+"Hide Lounge Events" = "Veranstaltungen Star Lounge ausblenden"; //menu choice
+"Lounge Venue Filter On" = "Filter „Lounge-Veranstaltungen“ an"; //help text
+"Lounge Venue Filter Off" = "Filter „Lounge-Veranstaltungen“  aus"; //help text
 
-"Show Theater Events" = "Showtheaterveranstaltungen"; //menu choice
-"Hide Theater Events" = "Theaterveranstaltungen ausblenden"; //menu choice
-"Theater Venue Filter On" = "Theater-Veranstaltungsortfilter aktiviert"; //help text
-"Theater Venue Filter Off" = "Theater-Veranstaltungsortfilter aus"; //help text
+"Show Theater Events" = "Veranstaltungen Royal Theater anzeigen"; //menu choice
+"Hide Theater Events" = "Veranstaltungen Royal Theater ausblenden"; //menu choice
+"Theater Venue Filter On" = "Filter „Theater-Veranstaltungen“ an"; //help text
+"Theater Venue Filter Off" = "Filter „Theater-Veranstaltungen“ aus"; //help text
 
-"Show Rink Events" = "Eisbahnveranstaltungen anzeigen"; //menu choice
-"Hide Rink Events" = "Eisbahnereignisse ausblenden"; //menu choice
-"Rink Venue Filter On" = "Filter für Eisbahn-Veranstaltungsort aktiviert"; //help text
-"Rink Venue Filter Off" = "Eisbahn-Veranstaltungsortfilter aus"; //help text
+"Show Rink Events" = "Veranstaltungen Studio B Ice Rink anzeigen"; //menu choice
+"Hide Rink Events" = "Veranstaltungen Studio B Ice Rink ausblenden"; //menu choice
+"Rink Venue Filter On" = "Filter „IceRink-Veranstaltungen“ an"; //help text
+"Rink Venue Filter Off" = "Filter „IceRink-Veranstaltungen“ aus"; //help text
 
-"Show Other Events" = "Andere Ereignisse anzeigen"; //menu choice
-"Hide Other Events" = "Andere Ereignisse ausblenden"; //menu choice
-"Other Venue Filter On" = "Filter „Anderer Veranstaltungsort“ aktiviert"; //help text
-"Other Venue Filter Off" = "Anderer Veranstaltungsortfilter aus"; //help text
+"Show Other Events" = "Veranstaltungen andere Orte anzeigen"; //menu choice
+"Hide Other Events" = "Veranstaltungen andere Orte ausblenden"; //menu choice
+"Other Venue Filter On" = "Filter „andere Orte“ an"; //help text
+"Other Venue Filter Off" = "Filter „andere Orte“ aus"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Meet & Greet-Events anzeigen"; //menu choice
-"Hide Meet & Greet Events" = "Meet & Greet-Events ausblenden"; //menu choice
-"Meet and Greet Event Filter On" = "Filter für Meet-and-Greet-Events aktiviert"; //help text
-"Meet and Greet Event Filter Off" = "Filter für Meet-and-Greet-Events deaktiviert"; //help text
+"Show Meet & Greet Events" = "Meet & Grees anzeigen"; //menu choice
+"Hide Meet & Greet Events" = "Meet & Greets ausblenden"; //menu choice
+"Meet and Greet Event Filter On" = "Filter für Meet-and-Greets an"; //help text
+"Meet and Greet Event Filter Off" = "Filter für Meet-and-Greets aus"; //help text
 
-"Show Unofficial Events" = "Inoffizielle Ereignisse anzeigen"; //menu choice
-"Hide Unofficial Events" = "Inoffizielle Ereignisse ausblenden"; //menu choice
-"Unofficial Event Filter On" = "Inoffizieller Ereignisfilter aktiviert"; //help text
-"Unofficial Event Filter Off" = "Inoffizieller Ereignisfilter deaktiviert"; //help text
+"Show Unofficial Events" = "Cruiser-organisierte Veranstaltungen anzeigen"; //menu choice
+"Hide Unofficial Events" = "Cruiser-organisierte Veranstaltungen ausblenden"; //menu choice
+"Unofficial Event Filter On" = "Filter für Cruiser-organisierte Veranstaltungen an"; //help text
+"Unofficial Event Filter Off" = "Filter für Cruiser-organisierte Veranstaltungen aus"; //help text
 
-"Show Special/Other Events" = "Spezielle/andere Ereignisse anzeigen"; //menu choice
-"Hide Special/Other Events" = "Besondere/andere Ereignisse ausblenden"; //menu choice
-"Special/Other Event Filter On" = "Filter für besondere/sonstige Ereignisse aktiviert"; //help text
-"Special/Other Event Filter Off" = "Filter für besondere/sonstige Ereignisse deaktiviert"; //help text
+"Show Special/Other Events" = "Besondere Veranstaltungen anzeigen"; //menu choice
+"Hide Special/Other Events" = "Besondere Veranstaltungen ausblenden"; //menu choice
+"Special/Other Event Filter On" = "Filter für Besondere Veranstaltungen an"; //help text
+"Special/Other Event Filter Off" = "Filter für Besondere Veranstaltungen aus"; //help text
 
 //sorting
 "Sort By Name" = "Nach Name sortieren"; //menu choice
 "Sort By Time" = "Nach Zeit sortieren"; //menu choice
 
 //band preference filter
-"Show Must See Items" = "Unverzichtbare Elemente anzeigen"; //menu choice
-"Hide Must See Items" = "Unbedingt sichtbare Elemente ausblenden"; //menu choice
-"Must See Filter On" = "Filter muss aktiviert sein"; //help text
-"Must See Filter Off" = "Muss „Filter aus“ sehen"; //help text
+"Show Must See Items" = "„Muss-Bands“ anzeigen"; //menu choice
+"Hide Must See Items" = "„Muss-Bands“ ausblenden"; //menu choice
+"Must See Filter On" = "Filter „Muss-Bands“ an"; //help text
+"Must See Filter Off" = "Filter „Muss-Bands“ aus"; //help text
 
-"Show Might See Items" = "Möglicherweise angezeigte Artikel anzeigen"; //menu choice
-"Hide Might See Items" = "Möglicherweise sichtbare Elemente ausblenden"; //menu choice
-"Might See Filter On" = "Möglicherweise wird Filter aktiviert angezeigt"; //help text
-"Might See Filter Off" = "Möglicherweise wird Filter deaktiviert angezeigt"; //help text
+"Show Might See Items" = "„Kann-Bands“ anzeigen"; //menu choice
+"Hide Might See Items" = "„Kann-Bands“ ausblenden"; //menu choice
+"Might See Filter On" = "Filter „Kann-Bands“ an"; //help text
+"Might See Filter Off" = "Filter „KAnn-Bands“ an"; //help text
 
-"Show Wont See Items" = "Artikel werden angezeigt, aber nicht angezeigt"; //menu choice
-"Hide Wont See Items" = "Elemente ausblenden, nicht sehen"; //menu choice
-"Wont See Filter On" = "Filter wird nicht angezeigt"; //help text
-"Wont See Filter Off" = "Filter aus wird nicht angezeigt"; //help text
+"Show Wont See Items" = "„Nein-Bands“ anzeigen"; //menu choice
+"Hide Wont See Items" = "„Nein-Bands“ ausblenden"; //menu choice
+"Wont See Filter On" = "Filter „Nein-Bands“ an"; //help text
+"Wont See Filter Off" = "Filter „Nein-Bands“ aus"; //help text
 
-"Show Unknown Items" = "Unbekannte Elemente anzeigen"; //menu choice
-"Hide Unknown Items" = "Unbekannte Elemente anzeigen"; //menu choice
-"Unknown Filter On" = "Unbekannter Filter aktiviert"; //help text
-"Unknown Filter Off" = "Unbekannter Filter aus"; //help text
+"Show Unknown Items" = "Unbekannte Bands anzeigen"; //menu choice
+"Hide Unknown Items" = "Unbekannte Bands ausblenden"; //menu choice
+"Unknown Filter On" = "Filter unbekannte Bands an"; //help text
+"Unknown Filter Off" = "Filter unbekannte Bands aus"; //help text
 
 "Filtering" = "Filtern"; //filtering indicator near counts
 "Filters" = "Filter"; //menu name
+
 
