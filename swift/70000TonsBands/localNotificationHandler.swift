@@ -54,13 +54,13 @@ class localNoticationHandler {
             if (eventType == showType && getAlertForShowsValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == listeningPartyType && getAlertForSpecialValue() == true){
+            if (eventType == listeningPartyType && getAlertForListeningEvents() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
             if (eventType == meetAndGreetype && getAlertForMandGValue() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
-            if (eventType == clinicType && getAlertForSpecialValue() == true){
+            if (eventType == clinicType && getAlertForClinicEvents() == true){
                 alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
             }
             if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && getAlertForUnofficalEventsValue() == true){

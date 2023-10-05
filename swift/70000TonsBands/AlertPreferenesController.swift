@@ -387,6 +387,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @IBAction func AlertForSpecialEventChange() {
         setAlertForSpecialValue(AlertForSpecialEvents.isOn)
     }
+
+    @IBAction func AlertForClinicChange() {
+        setAlertForClinicEvents(AlertForClinic.isOn)
+    }
+    
+    @IBAction func AlertForListeningEventChange() {
+        setAlertForListeningEvents(AlertForListeningEvent.isOn)
+    }
+    
     
     @IBAction func AlertForMeetAndGreetChange() {
         setAlertForMandGValue(AlertForMeetAndGreets.isOn)

@@ -161,10 +161,10 @@
 "Unofficial Event Filter On" = "Unofficial Event Filter On"; //help text
 "Unofficial Event Filter Off" = "Unofficial Event Filter Off"; //help text
  
-"Show Special Events" = "Show Special Events"; //menu choice
-"Hide Special Events" = "Hide Special Events"; //menu choice
-"Special Event Filter On" = "Special Event Filter On"; //help text
-"Special Event Filter On" = "Special Event Filter On"; //help text
+"Show Special/Other Events" = "Show Special/Other Events"; //menu choice
+"Hide Special/Other Events" = "Hide Special/Other Events"; //menu choice
+"Special/Other Event Filter On" = "Special/Other Event Filter On"; //help text
+"Special/Other Event Filter Off" = "Special/Other Event Filter Off"; //help text
 
 //sorting
 "Sort By Name" = "Sort By Name"; //menu choice

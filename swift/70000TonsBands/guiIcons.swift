@@ -32,7 +32,7 @@ let specialEventTypeIcon = "icon-all-star-jam";
 let mAndmEventTypeIcon = "icon-meet-and-greet";
 let listeningEventTypeIcon = "icon-all-star-jam";
 let clinicEventTypeIcon = "icon-clinc-v1";
-let unofficalEventTypeIcon = "icon-unspecified-event";
+let unofficalEventTypeIcon = "icon-Events-Unoffical";
 let karaokeEventTypeIcon = "icon-karaoke"
 let shipBoadEventTypeIcon = "icon-ship-event";
 

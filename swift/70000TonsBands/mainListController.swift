@@ -473,7 +473,7 @@ func venueFiltering(_ venue: String) -> Bool {
 func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, attendedHandle: ShowsAttended){
     
     var rankLocationSchedule = false
-    
+        
     //index is out of bounds. Don't allow this
     if (bands.count < indexRow || bands.count == 0){
         return

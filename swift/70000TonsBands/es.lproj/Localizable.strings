@@ -110,7 +110,7 @@
 //new section for the filter menu control
 "Clear Filters" = "Borrar filtros"; //menu choice
 "Band Ranking Filters" = "Filtros de clasificación de bandas"; //menu header
-"Show Only Flagged As Attended" = "Mostrar solo marcado como asistido"; //help text
+"Show Only Flagged As Attended" = "Mostrar solo marcado como asistido"; //menu header
 "Sorting Options" = "Opciones de clasificación"; //menu header
 "Event Type Filters" = "Filtros de tipo de evento"; //menu header
 "Venue Filters" = "Filtros de lugar"; //menu header
@@ -160,10 +160,10 @@
 "Unofficial Event Filter On" = "Filtro de evento no oficial activado"; //help text
 "Unofficial Event Filter Off" = "Filtro de evento no oficial desactivado"; //help text
 
-"Show Special Events" = "Mostrar eventos especiales"; //menu choice
-"Hide Special Events" = "Ocultar eventos especiales"; //menu choice
-"Special Event Filter On" = "Filtro de eventos especiales activado"; //help text
-"Special Event Filter Off" = "Filtro de eventos especiales desactivado"; //help text
+"Show Special/Other Events" = "Mostrar eventos especiales/otros"; //menu choice
+"Hide Special/Other Events" = "Ocultar eventos especiales/otros"; //menu choice
+"Special/Other Event Filter On" = "Filtro de evento especial/otro activado"; //help text
+"Special/Other Event Filter Off" = "Filtro de evento especial/otro desactivado"; //help text
 
 //sorting
 "Sort By Name" = "Ordenar por nombre"; //menu  choice
