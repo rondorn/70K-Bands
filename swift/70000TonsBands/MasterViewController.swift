@@ -63,7 +63,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        dataHandle.readFiltersFile()
+        readFiltersFile()
         getCountry()
         
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
@@ -314,7 +314,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         super.viewWillAppear(animated)
         isLoadingBandData = false
         quickRefresh()
-        dataHandle.writeFiltersFile()
+        writeFiltersFile()
         refreshDisplayAfterWake();
     }
 
@@ -421,7 +421,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func quickRefresh(){
 
-        dataHandle.writeFiltersFile()
+        writeFiltersFile()
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
