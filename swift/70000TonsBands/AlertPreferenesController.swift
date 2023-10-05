@@ -207,6 +207,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
         
         eventYearChangeAttempt = yearChange
+        
         UseLastYearsDataAction()
     }
     
@@ -535,7 +536,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         setArtistUrl(eventYearChangeAttempt)
         setScheduleUrl(eventYearChangeAttempt)
-        
+        writeFiltersFile()
         cacheVariables.storePointerData = [String:String]()
         var pointerIndex = getScheduleUrl()
         

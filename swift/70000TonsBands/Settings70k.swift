@@ -54,7 +54,6 @@ func getArtistUrl() -> String{
 }
 
 func setScheduleUrl(_ value: String){
-
     scheduleUrlPointer = value
 }
 func getScheduleUrl() -> String{

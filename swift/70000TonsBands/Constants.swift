@@ -287,6 +287,10 @@ func getPointerUrlData(keyValue: String) -> String {
         }
         
         if (keyValue == "eventYear"){
+            dataString = getArtistUrl();
+            if (dataString == "Current"){
+                dataString = pointerValues["Current"]?["eventYear"] ?? "2024"
+            }
             do {
                 if (dataString.count == 4){
                     try dataString.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
@@ -298,12 +302,11 @@ func getPointerUrlData(keyValue: String) -> String {
                 }
             } catch let error as NSError {
                 print ("getPointerUrlData: Encountered an error of creating file eventYear File " + error.debugDescription)
-                dataString = "2024" //provide a default year
             }
         }
 
     }
-    print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString)
+    print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString + " \(getArtistUrl())")
     
     return dataString
 }
@@ -371,6 +374,7 @@ func setupDefaults() {
                     "mightSeeOn": mightSeeOnDefault, "wontSeeOn": wontSeeOnDefault, "unknownSeeOn": unknownSeeOnDefault]
     
     */
+    readFiltersFile()
     setupVenueLocations()
     
     //print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
