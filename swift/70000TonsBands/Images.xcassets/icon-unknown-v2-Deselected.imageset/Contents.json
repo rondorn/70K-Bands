@@ -1,17 +1,15 @@
 {
   "images" : [
     {
-      "filename" : "Icon-Events-Official.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Icon-Events-Officialx2.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Icon-Events-Officialx3.png",
+      "filename" : "icon-unknown-v2-Deselected.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

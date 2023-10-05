@@ -17,7 +17,7 @@ class ToastMessages : UILabel {
     private let SHOW_TIME_SECONDS = TimeInterval(3)
     private let BACKGROUND_COLOR = UIColor.darkGray.withAlphaComponent(0.8).cgColor
     private let TEXT_COLOR = UIColor.white
-    private let ANIMATION_DURATION_SEC = 0.33
+    private let ANIMATION_DURATION_SEC = 0.13
     
     private static var queue: [ToastHolder] = []
     private static var showing: ToastMessages?
@@ -43,6 +43,8 @@ class ToastMessages : UILabel {
     
     public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
+        
+        print ("Toast cell location is \(cellLocation)")
         var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
         
         if (placeHigh == true){

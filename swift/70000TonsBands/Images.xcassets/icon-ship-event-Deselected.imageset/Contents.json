@@ -1,7 +1,6 @@
 {
   "images" : [
     {
-      "filename" : "Icon-Events-MeetAndGreet.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -10,6 +9,7 @@
       "scale" : "2x"
     },
     {
+      "filename" : "icon-ship-event-Deselected.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -111,86 +111,86 @@
 "Current" = "Atual";
 
 //new section for the filter menu control
-"Clear Filters" = "Limpar filtros";
-"Band Ranking Filters" = "Filtros de classificação de banda";
-"Show Only Flagged As Attended" = "Mostrar apenas sinalizado como atendido";
-"Sorting Options" = "Opções de classificação";
-"Event Type Filters" = "Filtros de tipo de evento";
-"Venue Filters" = "Filtros de local";
+"Clear Filters" = "Limpar filtros"; //menu choice
+"Band Ranking Filters" = "Filtros de classificação de banda"; //menu header
+"Show Only Flagged As Attended" = "Mostrar apenas sinalizado como atendido"; //menu header
+"Sorting Options" = "Opções de classificação"; //menu header
+"Event Type Filters" = "Filtros de tipo de evento"; //menu header
+"Venue Filters" = "Filtros de local"; //menu header
 
-"Can not hide all venues" = "Não é possível ocultar todos os locais";
-"Can not hide all status" = "Não é possível ocultar todos os status";
-"Clear All Filters" = "Limpar todos os filtros";
-"Show All Events" = "Mostrar todos os eventos";
-"Show Flaged Events Only" = "Mostrar apenas eventos sinalizados";
-"Show Only Events Flagged As Attending" = "Mostrar apenas eventos sinalizados como participantes";
+"Can not hide all venues" = "Não é possível ocultar todos os locais"; //help text
+"Can not hide all status" = "Não é possível ocultar todos os status"; //help text
+"Clear All Filters" = "Limpar todos os filtros";  //menu choice
+"Show All Events" = "Mostrar todos os eventos";  //menu choice
+"Show Flaged Events Only" = "Mostrar apenas eventos sinalizados";  //menu choice
+"Show Only Events Flagged As Attending" = "Mostrar apenas eventos sinalizados como participantes"; //help text
 
 //venue filters
-"Show Pool Events" = "Mostrar eventos de piscina";
-"Hide Pool Events" = "Ocultar eventos de pool";
-"Pool Venue Filter On" = "Filtro do local da piscina ativado";
-"Pool Venue Filter Off" = "Filtro do local da piscina desativado";
+"Show Pool Events" = "Mostrar eventos de piscina";  //menu choice
+"Hide Pool Events" = "Ocultar eventos de pool";  //menu choice
+"Pool Venue Filter On" = "Filtro do local da piscina ativado"; //help text
+"Pool Venue Filter Off" = "Filtro do local da piscina desativado"; //help text
 
-"Show Lounge Events" = "Mostrar eventos no salão";
-"Hide Lounge Events" = "Ocultar eventos do lounge";
-"Lounge Venue Filter On" = "Filtro de lounge ativado";
-"Lounge Venue Filter Off" = "Filtro de lounge desativado";
+"Show Lounge Events" = "Mostrar eventos no salão";  //menu choice
+"Hide Lounge Events" = "Ocultar eventos do lounge";  //menu choice
+"Lounge Venue Filter On" = "Filtro de lounge ativado"; //help text
+"Lounge Venue Filter Off" = "Filtro de lounge desativado"; //help text
 
-"Show Theater Events" = "Mostrar eventos de teatro";
-"Hide Theater Events" = "Ocultar eventos teatrais";
-"Theater Venue Filter On" = "Filtro de local de teatro ativado";
-"Theater Venue Filter Off" = "Filtro de local de teatro desativado";
+"Show Theater Events" = "Mostrar eventos de teatro";  //menu choice
+"Hide Theater Events" = "Ocultar eventos teatrais";  //menu choice
+"Theater Venue Filter On" = "Filtro de local de teatro ativado"; //help text
+"Theater Venue Filter Off" = "Filtro de local de teatro desativado"; //help text
 
-"Show Rink Events" = "Mostrar eventos de pista";
-"Hide Rink Events" = "Ocultar eventos de pista";
-"Rink Venue Filter On" = "Filtro de pista de patinação ativado";
-"Rink Venue Filter Off" = "Filtro do local do rinque desativado";
+"Show Rink Events" = "Mostrar eventos de pista";  //menu choice
+"Hide Rink Events" = "Ocultar eventos de pista";  //menu choice
+"Rink Venue Filter On" = "Filtro de pista de patinação ativado"; //help text
+"Rink Venue Filter Off" = "Filtro do local do rinque desativado"; //help text
 
-"Show Other Events" = "Mostrar outros eventos";
-"Hide Other Events" = "Ocultar outros eventos";
-"Other Venue Filter On" = "Filtro de outro local ativado";
-"Other Venue Filter Off" = "Filtro de outro local desativado";
+"Show Other Events" = "Mostrar outros eventos";  //menu choice
+"Hide Other Events" = "Ocultar outros eventos";  //menu choice
+"Other Venue Filter On" = "Filtro de outro local ativado"; //help text
+"Other Venue Filter Off" = "Filtro de outro local desativado"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Mostrar eventos Meet & Greet";
-"Hide Meet & Greet Events" = "Ocultar eventos Meet & Greet";
-"Meet and Greet Event Filter On" = "Filtro de eventos Meet and Greet ativado";
-"Meet and Greet Event Filter Off" = "Filtro de eventos Meet and Greet desativado";
+"Show Meet & Greet Events" = "Mostrar eventos Meet & Greet";  //menu choice
+"Hide Meet & Greet Events" = "Ocultar eventos Meet & Greet";  //menu choice
+"Meet and Greet Event Filter On" = "Filtro de eventos Meet and Greet ativado"; //help text
+"Meet and Greet Event Filter Off" = "Filtro de eventos Meet and Greet desativado"; //help text
 
-"Show Unofficial Events" = "Mostrar eventos não oficiais";
-"Hide Unofficial Events" = "Ocultar eventos não oficiais";
-"Unofficial Event Filter On" = "Filtro de eventos não oficiais ativado";
-"Unofficial Event Filter Off" = "Filtro de eventos não oficiais desativado";
+"Show Unofficial Events" = "Mostrar eventos não oficiais";  //menu choice
+"Hide Unofficial Events" = "Ocultar eventos não oficiais";  //menu choice
+"Unofficial Event Filter On" = "Filtro de eventos não oficiais ativado"; //help text
+"Unofficial Event Filter Off" = "Filtro de eventos não oficiais desativado"; //help text
 
-"Show Special Events" = "Mostrar eventos especiais";
-"Hide Special Events" = "Ocultar eventos especiais";
-"Special Event Filter On" = "Filtro de eventos especiais ativado";
-"Special Event Filter Off" = "Filtro de eventos especiais desativado";
+"Show Special/Other Events" = "Mostrar eventos especiais/outros"; //menu choice
+"Hide Special/Other Events" = "Ocultar eventos especiais/outros"; //menu choice
+"Special/Other Event Filter On" = "Filtro de eventos especiais/outros ativados"; //help text
+"Special/Other Event Filter Off" = "Filtro de eventos especiais/outros desativados"; //help text
 
 //sorting
-"Sort By Name" = "Classificar por nome";
-"Sort By Time" = "Classificar por hora";
+"Sort By Name" = "Classificar por nome";  //menu choice
+"Sort By Time" = "Classificar por hora";  //menu choice
 
 //band preference filter
-"Show Must See Items" = "Mostrar itens imperdíveis";
-"Hide Must See Items" = "Ocultar itens imperdíveis";
-"Must See Filter On" = "Filtro obrigatório ativado";
-"Must See Filter Off" = "Filtro imperdível desativado";
+"Show Must See Items" = "Mostrar itens imperdíveis";  //menu choice
+"Hide Must See Items" = "Ocultar itens imperdíveis";  //menu choice
+"Must See Filter On" = "Filtro obrigatório ativado"; //help text
+"Must See Filter Off" = "Filtro imperdível desativado"; //help text
 
-"Show Might See Items" = "Mostrar pode ver itens";
-"Hide Might See Items" = "Ocultar itens que podem ver";
-"Might See Filter On" = "Pode ver o filtro ativado";
-"Might See Filter Off" = "Pode ver o filtro desativado";
+"Show Might See Items" = "Mostrar pode ver itens";  //menu choice
+"Hide Might See Items" = "Ocultar itens que podem ver";  //menu choice
+"Might See Filter On" = "Pode ver o filtro ativado"; //help text
+"Might See Filter Off" = "Pode ver o filtro desativado"; //help text
 
-"Show Wont See Items" = "Mostrar não ver itens";
-"Hide Wont See Items" = "Ocultar itens que não verão";
-"Wont See Filter On" = "Não vejo o filtro ativado";
-"Wont See Filter Off" = "Não vejo o filtro desativado";
+"Show Wont See Items" = "Mostrar não ver itens";  //menu choice
+"Hide Wont See Items" = "Ocultar itens que não verão";  //menu choice
+"Wont See Filter On" = "Não vejo o filtro ativado"; //help text
+"Wont See Filter Off" = "Não vejo o filtro desativado"; //help text
 
-"Show Unknown Items" = "Mostrar itens desconhecidos";
-"Hide Unknown Items" = "Ocultar itens desconhecidos";
-"Unknown Filter On" = "Filtro desconhecido ativado";
-"Unknown Filter Off" = "Filtro desconhecido desativado";
+"Show Unknown Items" = "Mostrar itens desconhecidos";  //menu choice
+"Hide Unknown Items" = "Ocultar itens desconhecidos";  //menu choice
+"Unknown Filter On" = "Filtro desconhecido ativado"; //help text
+"Unknown Filter Off" = "Filtro desconhecido desativado"; //help text
 
-"Filtering" = "Filtragem";
-"Filters" = "Filtros";
+"Filtering" = "Filtragem"; //filtering indicator near counts
+"Filters" = "Filtros"; //menu name
