@@ -265,3 +265,219 @@ func setSortedBy(_ value: String){
 func getSortedBy() -> String{
     return sortedBy
 }
+
+func writeFiltersFile(){
+    
+    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        
+        var prefsString = String()
+        
+        print ("Status of getWontSeeOn save = \(getWontSeeOn())")
+        prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
+        prefsString += "mightSeeOn:" + boolToString(getMightSeeOn()) + ";"
+        prefsString += "wontSeeOn:" + boolToString(getWontSeeOn()) + ";"
+        prefsString += "unknownSeeOn:" + boolToString(getUnknownSeeOn()) + ";"
+        prefsString += "showOnlyWillAttened:" + boolToString(getShowOnlyWillAttened()) + ";"
+        prefsString += "sortedBy:" + getSortedBy() + ";"
+        prefsString += "currentTimeZone:" + localTimeZoneAbbreviation + ";"
+        prefsString += "hideExpireScheduleData:" + boolToString(getHideExpireScheduleData()) + ";"
+        
+        prefsString += "showTheaterShows:" + boolToString(getShowTheaterShows()) + ";"
+        prefsString += "showPoolShows:" + boolToString(getShowPoolShows()) + ";"
+        prefsString += "showRinkShows:" + boolToString(getShowRinkShows()) + ";"
+        prefsString += "showLoungeShows:" + boolToString(getShowLoungeShows()) + ";"
+        prefsString += "showOtherShows:" + boolToString(getShowOtherShows()) + ";"
+        prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
+        prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
+        prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
+
+        prefsString += "mustSeeAlertValue:" + boolToString(getMustSeeAlertValue()) + ";"
+        prefsString += "mightSeeAlertValue:" + boolToString(getMightSeeAlertValue()) + ";"
+        prefsString += "onlyAlertForAttendedValue:" + boolToString(getOnlyAlertForAttendedValue()) + ";"
+
+        prefsString += "alertForShowsValue:" + boolToString(getAlertForShowsValue()) + ";"
+        prefsString += "alertForSpecialValue:" + boolToString(getAlertForSpecialValue()) + ";"
+        prefsString += "alertForMandGValue:" + boolToString(getAlertForMandGValue()) + ";"
+        prefsString += "alertForUnofficalEventsValue:" + boolToString(getAlertForUnofficalEventsValue()) + ";"
+        prefsString += "alertForClinicEvents:" + boolToString(getAlertForClinicEvents()) + ";"
+        prefsString += "alertForListeningEvents:" + boolToString(getAlertForListeningEvents()) + ";"
+        
+        prefsString += "notesFontSizeLargeValue:" + boolToString(getNotesFontSizeLargeValue()) + ";"
+        
+        prefsString += "minBeforeAlertValue:" + String(getMinBeforeAlertValue()) + ";"
+
+        prefsString += "promptForAttended:" + boolToString(getPromptForAttended()) + ";"
+        
+        prefsString += "sortedBy:" + getSortedBy() + ";"
+        
+        prefsString += "artistUrl:" + getArtistUrl() + ";"
+        prefsString += "scheduleUrl:" + getScheduleUrl() + ";"
+        
+        print ("Wrote prefs " + prefsString)
+        do {
+            try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
+            print ("saved sortedBy = " + getSortedBy())
+        } catch {
+            print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
+        }
+        print ("Saving showOnlyWillAttened = \(getShowOnlyWillAttened())")
+    }
+}
+
+
+func readFiltersFile(){
+    
+    var tempCurrentTimeZone = "";
+    
+    print ("Status of getWontSeeOn loading")
+    if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
+        print ("lastFilters does not exist")
+        return()
+    }
+    
+    if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
+        print ("Status of sortedBy loading 1 " + data)
+        let dataArray = data.components(separatedBy: ";")
+        for record in dataArray {
+            print ("Status of getWontSeeOn loading loop")
+            var valueArray = record.components(separatedBy: ":")
+            
+            switch valueArray[0] {
+                
+            case "mustSeeOn":
+                setMustSeeOn(stringToBool(valueArray[1]))
+            
+            case "mightSeeOn":
+                setMightSeeOn(stringToBool(valueArray[1]))
+           
+            case "wontSeeOn":
+                setWontSeeOn(stringToBool(valueArray[1]))
+                print ("Status of getWontSeeOn load = \(valueArray[1])")
+            
+            case "unknownSeeOn":
+                setUnknownSeeOn(stringToBool(valueArray[1]))
+            
+            case "showOnlyWillAttened":
+                setShowOnlyWillAttened(stringToBool(valueArray[1]))
+            
+            case "currentTimeZone":
+                tempCurrentTimeZone = valueArray[1]
+            
+            case "sortedBy":
+                print ("activly Loading sortedBy = " + valueArray[1])
+                setSortedBy(valueArray[1])
+            
+            case "hideExpireScheduleData":
+                setHideExpireScheduleData(stringToBool(valueArray[1]))
+
+            case "showTheaterShows":
+                setShowTheaterShows(stringToBool(valueArray[1]))
+            
+            case "showPoolShows":
+                setShowPoolShows(stringToBool(valueArray[1]))
+
+            case "showRinkShows":
+                setShowRinkShows(stringToBool(valueArray[1]))
+            
+            case "showLoungeShows":
+                setShowLoungeShows(stringToBool(valueArray[1]))
+            
+            case "showOtherShows":
+                setShowOtherShows(stringToBool(valueArray[1]))
+            
+            case "showUnofficalEvents":
+                setShowUnofficalEvents(stringToBool(valueArray[1]))
+            
+            case "showSpecialEvents":
+                setShowSpecialEvents(stringToBool(valueArray[1]))
+            
+            case "showMeetAndGreetEvents":
+                setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+
+            case "mustSeeAlertValue":
+                setMustSeeAlertValue(stringToBool(valueArray[1]))
+                
+            case "mightSeeAlertValue":
+                setMightSeeAlertValue(stringToBool(valueArray[1]))
+                
+            case "onlyAlertForAttendedValue":
+                setOnlyAlertForAttendedValue(stringToBool(valueArray[1]))
+                
+            case "alertForShowsValue":
+                setAlertForShowsValue(stringToBool(valueArray[1]))
+                
+            case "alertForSpecialValue":
+                setAlertForSpecialValue(stringToBool(valueArray[1]))
+                
+            case "alertForMandGValue":
+                setAlertForMandGValue(stringToBool(valueArray[1]))
+
+            case "alertForListeningEvents":
+                setAlertForListeningEvents(stringToBool(valueArray[1]))
+                
+            case "alertForClinicEvents":
+                setAlertForClinicEvents(stringToBool(valueArray[1]))
+                
+            case "alertForUnofficalEventsValue":
+                setAlertForUnofficalEventsValue(stringToBool(valueArray[1]))
+                
+            case "notesFontSizeLargeValue":
+                setNotesFontSizeLargeValue(stringToBool(valueArray[1]))
+            
+            case "promptForAttended":
+                setPromptForAttended(stringToBool(valueArray[1]))
+                
+            case "minBeforeAlertValue":
+                setMinBeforeAlertValue(Int(valueArray[1]) ?? 10)
+            
+            case "sortedBy":
+                setSortedBy(valueArray[1])
+                
+            case "artistUrl":
+                setArtistUrl(valueArray[1])
+                
+            case "scheduleUrl":
+                setScheduleUrl(valueArray[1])
+                
+                default:
+                    print("Not sure why this would happen")
+            }
+        }
+        print ("Loading setScheduleUrl = \(getScheduleUrl())")
+        print ("Loading mustSeeOn = \(getMustSeeOn())")
+    }
+    
+    if (tempCurrentTimeZone != localTimeZoneAbbreviation){
+        alertTracker = [String]()
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        localNotification.addNotifications()
+    }
+}
+
+
+func boolToString(_ value: Bool) -> String{
+    
+    var result = String()
+    
+    if (value == true){
+        result = "true"
+    } else {
+        result = "false"
+    }
+    
+    return result
+}
+
+func stringToBool(_ value: String) -> Bool{
+    
+    var result = Bool()
+    
+    if (value == "true"){
+        result = true
+    } else {
+        result = false
+    }
+    
+    return result
+}
