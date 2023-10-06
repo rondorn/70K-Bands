@@ -787,7 +787,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         })
         
         
-        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -799,7 +799,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -811,7 +811,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -822,7 +822,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIcon)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
         
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]

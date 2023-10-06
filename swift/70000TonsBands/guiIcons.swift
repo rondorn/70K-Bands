@@ -9,32 +9,15 @@
 import Foundation
 import UIKit
 
-let mustSeeIcon = "icon-going-yes"
-let mightSeeIcon = "icon-going-maybe"
-let wontSeeIcon = "icon-going-no"
-let unknownIcon = "icon-unknown"
-
 let mustSeeIconFilterTag = 20
 let mightSeeIconFilterTag = 21
 let wontSeeIconFilterTag = 22
 let unknownIconFilterTag = 23
 
-let mustSeeIconAlt = "icon-going-yes-alt"
-let mightSeeIconAlt = "icon-going-maybe-alt"
-let wontSeeIconAlt = "icon-going-no-alt"
-let unknownIconAlt = "icon-unknown-v1-alt"
+let showTypeIcon = "";
 
 let scheduleIconSort = "icon-sort-time-decending"
 let bandIconSort = "icon-sort-az-decending"
-
-let showTypeIcon = "";
-let specialEventTypeIcon = "icon-all-star-jam";
-let mAndmEventTypeIcon = "icon-meet-and-greet";
-let listeningEventTypeIcon = "icon-all-star-jam";
-let clinicEventTypeIcon = "icon-clinc-v1";
-let unofficalEventTypeIcon = "icon-Events-Unoffical";
-let karaokeEventTypeIcon = "icon-karaoke"
-let shipBoadEventTypeIcon = "icon-ship-event";
 
 //shows attended
 let sawAllIcon = "icon-seen"
@@ -42,6 +25,61 @@ let sawSomeIcon = "icon-partially-seen"
 let sawNoneIcon = ""
 let attendedShowIcon = "icon-seen"
 let attendedShowIconAlt = "icon-seen-alt"
+
+let specialEventIconSmall = "icon-all-star-jam";
+let meetAndGreetIconSmall = "icon-meet-and-greet";
+let listeningEventTypeIconSmall = "icon-all-star-jam";
+let clinicEventIconSmall = "icon-clinc-v1";
+let unofficalEventIconSmall = "icon-Events-Unoffical";
+let karaokeIconSmall = "icon-karaoke"
+let shipBoadEventTypeIconSmall = "icon-ship-event";
+
+let specialEventTypeIcon = "All-Star-Jam-Select-wBox"
+let specialEventTypeIconAlt = "All-Star-Jam-DeSelect-wBox"
+
+let clinicEventTypeIcon = "Clinc-v2-Select-wBox"
+let clinicEventTypeIconAlt = "Clinc-v2-SDeelect-wBox"
+
+let unofficalEventTypeIcon = "Generic-Event-v1-Select-wBox"
+let unofficalEventTypeIconAlt = "Generic-Event-v1-DeSelect-wBox"
+
+let karaokeIcon = "Karaoke-Select-wBox"
+let karaokeIconAlt = "Karaoke-DeSelect-wBox"
+
+let meetAndGreetIcon = "Meet-And-Greet-full-Select-wBox"
+let meetAndGreetIconAlt = "Meet-And-Greet-full-DeSelect-wBox"
+
+let generalEvent = "Ship-Event-Select-wBox"
+let generalEventAlt = "Ship-Event-DeSelect-wBox"
+
+let mustSeeIconSmall = "icon-going-yes"
+let mightSeeIconSmall = "icon-going-maybe"
+let wontSeeIconSmall = "icon-going-no"
+let unknownIconSmall = "icon-unknown"
+
+let mustSeeIcon = "Going-Devil-Yeah-rev1-Select-wBox"
+let mustSeeIconAlt = "Going-Devil-Yeah-rev1-DeSelect-wBox"
+
+let mightSeeIcon = "Maybe-Devil-Meh-rev1-Select-wBox"
+let mightSeeIconAlt = "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+
+let wontSeeIcon = "No-way-Devil-Bah-rev2-Select-wBox"
+let wontSeeIconAlt = "No-way-Devil-Bah-rev2-DeSelect-wBox"
+
+let unknownIcon = "Unknown-v2-Select-wBox"
+let unknownIconAlt = "Unknown-v2-DeSelect-wBox"
+
+let iceRinkIcon = "Ice-Rink-Going-wBox"
+let iceRinkIconAlt = "Ice-Rink-NotGoing-wBox"
+ 
+let poolIcon = "Pool-Deck-Going-wBox"
+let poolIconAlt = "Pool-Deck-NotGoing-wBox"
+
+let theaterIcon = "Royal-Theater-Going-wBox"
+let theaterIconAlt = "Royal-Theater-NotGoing-wBox"
+
+let loungIcon = "Lounge-Going-wBox"
+let loungIconAlt = "Lounge-NotGoing-wBox"
 
 let poolVenue = "🏊"
 let theaterVenue = "🎭"
@@ -65,34 +103,34 @@ func getEventTypeIcon (eventType: String, eventName: String)->UIImage {
         graphicName = showTypeIcon
         
     case meetAndGreetype:
-        graphicName = mAndmEventTypeIcon
+        graphicName = meetAndGreetIconSmall
         
     case specialEventType:
         
         if (eventName == "All Star Jam"){
-            graphicName = specialEventTypeIcon
+            graphicName = specialEventIconSmall
             
         } else if (eventName.contains("Karaoke")){
-            graphicName = karaokeEventTypeIcon
+            graphicName = karaokeIconSmall
         
         } else {
-            graphicName = shipBoadEventTypeIcon;
+            graphicName = shipBoadEventTypeIconSmall;
         }
         
     case clinicType:
-        graphicName = clinicEventTypeIcon
+        graphicName = clinicEventIconSmall
 
     case listeningPartyType:
-        graphicName = listeningEventTypeIcon
+        graphicName = specialEventIconSmall
     
     case unofficalEventType:
-        graphicName = unofficalEventTypeIcon
+        graphicName = unofficalEventIconSmall
 
     case unofficalEventTypeOld:
-        graphicName = unofficalEventTypeIcon
+        graphicName = unofficalEventIconSmall
         
     case karaokeEventType:
-        graphicName = karaokeEventTypeIcon
+        graphicName = karaokeIconSmall
         
     default:
         graphicName = unknownVenue
