@@ -162,11 +162,11 @@ func createClearAllFilters(controller: MasterViewController)->[UIAction]{
 func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
     
     var attendedStatusFilterText = NSLocalizedString("Show All Events", comment: "")
-    var attendedStatusFilterIcon = "icon-seen-alt"
+    var attendedStatusFilterIcon = attendedShowIconAlt
     let attendedStatusValue = getShowOnlyWillAttened()
     if (attendedStatusValue == false){
         attendedStatusFilterText = NSLocalizedString("Show Flaged Events Only", comment: "")
-        attendedStatusFilterIcon = "icon-seen"
+        attendedStatusFilterIcon = attendedShowIcon
     }
     let attendedFilter = UIAction(title: attendedStatusFilterText, image: UIImage(named: attendedStatusFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -188,11 +188,11 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
 func venueChocies(controller: MasterViewController)->[UIAction]{
 
     var poolFilterText = NSLocalizedString("Show Pool Events", comment: "")
-    var poolFilterIcon = "Icon-Stage--Pooldeck-Visual DeSelect"
+    var poolFilterIcon = poolIconAlt
     let showPoolValue = getShowPoolShows()
     if (showPoolValue == true){
         poolFilterText = NSLocalizedString("Hide Pool Events", comment: "")
-        poolFilterIcon = "Icon-Stage--Pooldeck-Visual Select"
+        poolFilterIcon = poolIcon
     }
     let poolFilter = UIAction(title: poolFilterText, image: UIImage(named: poolFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -211,11 +211,11 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
     }
 
     var loungeFilterText = NSLocalizedString("Show Lounge Events", comment: "")
-    var loungeFilterIcon = "Icon-Stage--Lounge-Visual DeSelect"
+    var loungeFilterIcon = loungIconAlt
     let showLoungeValue = getShowLoungeShows()
     if (showLoungeValue == true){
         loungeFilterText = NSLocalizedString("Hide Lounge Events", comment: "")
-        loungeFilterIcon = "Icon-Stage--Lounge-Visual Select"
+        loungeFilterIcon = loungIcon
     }
     let loungeFilter = UIAction(title: loungeFilterText, image: UIImage(named: loungeFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -234,11 +234,11 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
     }
     
     var theaterFilterText = NSLocalizedString("Show Theater Events", comment: "")
-    var theaterFilterIcon = "Icon-Stage--RoyalTheater-Visual DeSelect"
+    var theaterFilterIcon = theaterIconAlt
     let showTheaterValue = getShowTheaterShows()
     if (showTheaterValue == true){
         theaterFilterText = NSLocalizedString("Hide Theater Events", comment: "")
-        theaterFilterIcon = "Icon-Stage--RoyalTheater-Visual Select"
+        theaterFilterIcon = theaterIcon
     }
     let theaterFilter = UIAction(title: theaterFilterText, image: UIImage(named: theaterFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -257,11 +257,11 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
     }
     
     var rinkFilterText = NSLocalizedString("Show Rink Events", comment: "")
-    var rinkFilterIcon = "Icon-Stage--IceRink-Visual DeSelect"
+    var rinkFilterIcon = iceRinkIconAlt
     let showRinkValue = getShowRinkShows()
     if (showRinkValue == true){
         rinkFilterText = NSLocalizedString("Hide Rink Events", comment: "")
-        rinkFilterIcon = "Icon-Stage--IceRink-Visual Select"
+        rinkFilterIcon = iceRinkIcon
     }
     let rinkFilter = UIAction(title: rinkFilterText, image: UIImage(named: rinkFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -280,11 +280,11 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
     }
 
     var otherFilterText = NSLocalizedString("Show Other Events", comment: "")
-    var otherFilterIcon = "icon-unknown-v2-Deselected"
+    var otherFilterIcon = unknownIconAlt
     let showOtherValue = getShowOtherShows()
     if (showOtherValue == true){
         otherFilterText = NSLocalizedString("Hide Other Events", comment: "")
-        otherFilterIcon = "icon-unknown-v2-Selected"
+        otherFilterIcon = unknownIcon
     }
     let otherFilter = UIAction(title: otherFilterText, image: UIImage(named: otherFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
@@ -313,10 +313,10 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
     
     if (controller.decideIfScheduleMenuApplies() == true){
         var currentMeetAndGreetFilterText = NSLocalizedString("Show Meet & Greet Events", comment: "")
-        var currentMeetAndGreetFilterIcon = "icon-meet-and-greet-Deselected"
+        var currentMeetAndGreetFilterIcon = meetAndGreetIconAlt
         let showMeetAndGreetValue = getShowMeetAndGreetEvents()
         if (showMeetAndGreetValue == true){
-            currentMeetAndGreetFilterIcon = "icon-meet-and-greet"
+            currentMeetAndGreetFilterIcon = meetAndGreetIcon
             currentMeetAndGreetFilterText = NSLocalizedString("Hide Meet & Greet Events", comment: "")
         }
         let meetAndGreet = UIAction(title: currentMeetAndGreetFilterText, image: UIImage(named: currentMeetAndGreetFilterIcon)) { _ in
@@ -334,10 +334,10 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
     }
     
     var cruiserOrganizedFilterText = NSLocalizedString("Show Unofficial Events", comment: "")
-    var cruiserOrganizedFilterIcon = "icon-Events-Unoffical-Deselected"
+    var cruiserOrganizedFilterIcon = unofficalEventTypeIconAlt
     let cruiserOrganizedValue = getShowUnofficalEvents()
     if (cruiserOrganizedValue == true){
-        cruiserOrganizedFilterIcon = "icon-Events-Unoffical"
+        cruiserOrganizedFilterIcon = unofficalEventTypeIcon
         cruiserOrganizedFilterText = NSLocalizedString("Hide Unofficial Events", comment: "")
     }
     let cruiserOrganizedEvents = UIAction(title: cruiserOrganizedFilterText, image: UIImage(named: cruiserOrganizedFilterIcon)) { _ in
@@ -355,10 +355,10 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
     
     if (controller.decideIfScheduleMenuApplies() == true){
         var specialFilterText = NSLocalizedString("Show Special/Other Events", comment: "")
-        var specialFilterIcon = "icon-all-star-jam-Deselected"
+        var specialFilterIcon = specialEventTypeIconAlt
         let specialEventValue = getShowSpecialEvents()
         if (specialEventValue == true){
-            specialFilterIcon = "icon-all-star-jam"
+            specialFilterIcon = specialEventTypeIcon
             specialFilterText = NSLocalizedString("Hide Special/Other Events", comment: "")
         }
         let specialEvents = UIAction(title: specialFilterText, image: UIImage(named: specialFilterIcon)) { _ in
