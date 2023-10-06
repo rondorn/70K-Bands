@@ -456,7 +456,11 @@ func setupVenueLocations(){
     venueLocation["Sports Bar"] = "Deck 4"
     venueLocation["Viking Crown"] = "Deck 14"
     venueLocation["Boleros Lounge"] = "Deck 4"
-    
+    venueLocation["Solarium"] = "Deck 11"
+    venueLocation["Ale And Anchor Pub"] = "Deck 5"
+    venueLocation["Ale & Anchor Pub"] = "Deck 5"
+    venueLocation["Bull And Bear Pub"] = "Deck 5"
+    venueLocation["Bull & Bear Pub"] = "Deck 5"
 }
 
 func isInternetAvailable() -> Bool {
