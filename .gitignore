@@ -5,3 +5,4 @@
 *.xcbkptlist
 *.xcuserstate
 *.swiftconstvalues
+*.hprof
