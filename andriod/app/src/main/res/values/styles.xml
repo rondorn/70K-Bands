@@ -2,7 +2,13 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+        <item name="android:textColor">@color/common_google_signin_btn_text_light</item>
+        <item name="android:itemBackground">@color/common_google_signin_btn_text_dark</item>       <!-- Customize your theme here. -->
+    </style>
+
+    <style name="FilterMenuTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:textColor">@color/common_google_signin_btn_text_light</item>
+        <item name="android:itemBackground">@color/common_google_signin_btn_text_dark</item>
     </style>
 
     <style name="AlertDialog" parent="Theme.AppCompat.Light.DarkActionBar">
