@@ -1,0 +1,44 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/mustMightFilterHeader"
+        android:checkable="false"
+        android:checked="false"
+        android:enabled="false"
+        android:title="Band Ranking Filters" />
+    <group android:id="@+id/bandRankingFilters" android:checkableBehavior="single">
+        <item
+            android:id="@+id/mustSeeFilter"
+            android:checkable="false"
+            android:icon="@drawable/icon_going_yes_small"
+            android:title="Hide Must See Items"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/mightSeeFilter"
+            android:checkable="false"
+            android:icon="@drawable/icon_going_maybe_small"
+            android:title="Hide Might See Items"
+            app:showAsAction="never" />
+    <item android:id="@+id/wontSeeFilter"
+        android:icon="@drawable/icon_going_no_small"
+        android:title="Hide Wont See Items"
+        app:showAsAction="never"/>
+    </group>
+    <item android:id="@+id/eventtypeFilterHeaders"
+        android:title="Event Type Filters"
+        android:enabled="false"/>
+    <group android:id="@+id/eventTypeFilters" android:checkableBehavior="single">
+        <item android:id="@+id/unofficalEventFilter"
+            android:icon="@drawable/icon_going_yes_small"
+            android:checkable="false"
+            android:title="Hide Must See Items" />
+        <item android:id="@+id/meetAndGreetFilter"
+            android:icon="@drawable/icon_going_maybe_small"
+            android:checkable="false"
+            android:title="Hide Might See Items" />
+        <item android:id="@+id/clinicFilter"
+            android:icon="@drawable/icon_going_no_small"
+            android:checkable="false"
+            android:title="Hide Wont See Items" />
+    </group>
+</menu>

@@ -64,91 +64,49 @@
         <View
             android:layout_width="0dp"
             android:layout_height="50dp"
-            android:layout_weight="1" />
+            android:layout_weight="0" />
 
         <ToggleButton
-            android:id="@+id/mustSeeFilter"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginLeft="1dp"
-            android:layout_marginTop="2dp"
-            android:background="@drawable/icon_going_yes"
-            android:text="MustSeeFilter"
-            android:textOff=""
-            android:textOn="" />
+            android:id="@+id/FilerMenu"
+            android:layout_width="150dp"
+            android:layout_height="45dp"
+            android:gravity="left|center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:background="@color/common_google_signin_btn_text_light_pressed"
+            android:text="Filters"
+            android:textStyle="bold"
+
+            android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
+            android:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:textOff="Filters"
+            android:textOn="Filters"
+            android:textSize="25sp" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
 
-        <ToggleButton
-            android:id="@+id/mightSeeFilter"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginTop="2dp"
-            android:background="@drawable/icon_going_maybe"
-            android:text="Might"
-            android:textOff=""
-            android:textOn="" />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
 
-        <ToggleButton
-            android:id="@+id/wontSeeFilter"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginTop="2dp"
-            android:background="@drawable/icon_going_no"
-            android:text="Wont"
-            android:textOff=""
-            android:textOn=""
-            />
-
         <View
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
 
-        <ToggleButton
-            android:id="@+id/unknownFilter"
-            android:layout_width="16dp"
-            android:layout_height="28dp"
-            android:layout_marginTop="2dp"
-            android:background="@drawable/icon_unknown"
-            android:text="Unknown"
-            android:textOff=""
-            android:textOn="" />
-
         <View
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1" />
-
-        <ToggleButton
-            android:layout_width="41dp"
-            android:layout_height="21dp"
-            android:text="willAttend"
-            android:id="@+id/willAttendFilter"
-            android:textOff=""
-            android:textOn=""
-            android:background="@drawable/icon_seen_alt"
-            android:layout_marginTop="2dp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <Button
-            android:id="@+id/sort"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginTop="2dp"
-            android:background="@drawable/icon_sort_az" />
 
         <View
             android:layout_width="0dp"
