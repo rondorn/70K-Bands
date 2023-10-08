@@ -1,5 +1,8 @@
 package com.Bands70k;
 
+import static android.app.ProgressDialog.show;
+import static android.view.View.inflate;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -22,15 +25,23 @@ import android.os.StrictMode;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import androidx.annotation.NonNull;
+
+//import androidx.appcompat.resources.Compatibility;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+//
+//import android.support.v7.app.AppCompatActivity;
+//import android.os.Bundle;
+//import android.support.v7.widget.PopupMenu;
+import android.view.MenuItem;
+
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,6 +53,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,10 +63,7 @@ import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
 import com.baoyz.swipemenulistview.SwipeMenuItem;
 import com.baoyz.swipemenulistview.SwipeMenuListView;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-//import com.google.firebase.iid.FirebaseInstanceId;
-//import com.google.firebase.iid.InstanceIdResult;
+
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.File;
@@ -85,7 +94,7 @@ public class showBands extends Activity {
 
     private BandInfo bandInfo;
     private CustomerDescriptionHandler bandNotes;
-    public Button sortButton;
+    public Button filterMenuButton;
     public Button willAttendFilterButton;
 
     public static Boolean inBackground = true;
@@ -757,6 +766,7 @@ public class showBands extends Activity {
             }
         });
 
+        /*
         sortButton = (Button) findViewById(R.id.sort);
         sortButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
@@ -786,12 +796,15 @@ public class showBands extends Activity {
                 finish();
             }
         });
+
+         */
     }
 
     ;
 
     private void setShowAttendedFilter() {
 
+        /*
         ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
 
         if (staticVariables.preferences.getShowWillAttend() == false) {
@@ -811,10 +824,13 @@ public class showBands extends Activity {
             setFilterDefaults();
         }
 
+         */
+
     }
 
     private void turnOffMustMightWont() {
-        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
+        /*
+        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
         mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
         mustFilterButton.setEnabled(false);
 
@@ -829,17 +845,20 @@ public class showBands extends Activity {
         ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
         unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
         unknownFilterButton.setEnabled(false);
+
+         */
     }
 
     private void setFilterDefaults() {
 
+        /*
         if (staticVariables.initializedSortButtons == false) {
 
             staticVariables.initializedSortButtons = true;
 
             Log.d(TAG, "1 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
-            ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
+            ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
             if (staticVariables.preferences.getShowMust() == true) {
                 mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
                 mustFilterButton.setChecked(false);
@@ -884,11 +903,12 @@ public class showBands extends Activity {
             }
 
             Log.d(TAG, "settingFilter for ShowWillAttend is " + staticVariables.preferences.getShowWillAttend());
-        }
+          }
+         */
     }
 
     private void setShowAttendedFilterButton() {
-
+        /*
         ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
 
         if (listHandler.numberOfEvents != 0 && staticVariables.showsIwillAttend != 0) {
@@ -914,6 +934,8 @@ public class showBands extends Activity {
             setupButtonFilters();
 
         }
+
+         */
     }
 
     @Override
@@ -952,8 +974,8 @@ public class showBands extends Activity {
     }
 
     public void setupButtonFilters() {
-
-        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.mustSeeFilter);
+        /*
+        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
         mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
 
         if (filterToogle.get(mustSeeIcon) == true) {
@@ -992,6 +1014,8 @@ public class showBands extends Activity {
             setUnknownFilterButton(unknownFilterButton, true);
         }
 
+
+         */
         staticVariables.preferences.saveData();
     }
 
@@ -1370,12 +1394,11 @@ public class showBands extends Activity {
                 bandListItem bandItem = new bandListItem(emptyDataMessage);
                 adapter.add(bandItem);
             }
-            setFilterButton();
 
             //swip stuff
             setupSwipeList();
 
-            setSortButton();
+            setUpFiltersButton();
 
             setShowAttendedFilterButton();
         }
@@ -1706,8 +1729,34 @@ public class showBands extends Activity {
         }
     }
 
-    public void setSortButton() {
+    public void setUpFiltersButton(){
 
+        filterMenuButton = (Button) findViewById(R.id.FilerMenu);
+        filterMenuButton.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View context) {
+                PopupMenu popup = new PopupMenu(context.getContext(), filterMenuButton);
+                popup.inflate(R.menu.filters_menu);
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    popup.setForceShowIcon(true);
+                }
+                popup.show();
+            }
+        });
+
+        //filterMenuButton.setOnClickListener(new Button.OnClickListener() {
+            //public void onClick(View context) {
+                //Toast.makeText(getApplicationContext(),
+                        //"Filter Stuff" + " ", Toast.LENGTH_SHORT).show();
+                //PopupMenu popup = new PopupMenu(context, filterMenuButton);
+                //popup.setOnMenuItemClickListener(context);
+                //popup.inflate(R.menu.filters_menu);
+                //popup.show();
+            //}
+       // });
+    }
+
+    public void setSortButton() {
+        /*
         sortButton = (Button) findViewById(R.id.sort);
 
         if (listHandler.numberOfEvents != 0) {
@@ -1734,6 +1783,8 @@ public class showBands extends Activity {
             sortButton.setEnabled(false);
             sortButton.setVisibility(View.INVISIBLE);
         }
+
+         */
     }
 
       class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
