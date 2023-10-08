@@ -12,7 +12,8 @@
             android:checkable="false"
             android:icon="@drawable/icon_going_yes_small"
             android:title="Hide Must See Items"
-            app:showAsAction="never" />
+            app:actionLayout="@layout/filter_choices_menu_layout"
+            app:showAsAction="always" />
         <item
             android:id="@+id/mightSeeFilter"
             android:checkable="false"
@@ -22,6 +23,7 @@
     <item android:id="@+id/wontSeeFilter"
         android:icon="@drawable/icon_going_no_small"
         android:title="Hide Wont See Items"
+        android:checkable="false"
         app:showAsAction="never"/>
     </group>
     <item android:id="@+id/eventtypeFilterHeaders"
