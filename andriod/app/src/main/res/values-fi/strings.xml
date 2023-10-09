@@ -106,4 +106,133 @@
 
     <string name="backupPrompt">Liitä URL-osoite userExport.zip-tiedostoon, joka on tallennettu DropBoxiin tai muuhun vastaavaan palveluun</string>
     <string name="importButtonName">Tuoda</string>
+
+    <!-- new section for the filter menu control -->
+    <string name="clear_filters">Tyhjennä suodattimet</string>
+    <!-- menu choice -->
+    <string name="band_ranking_filters">Kiinnostussuodattimet</string>
+    <!-- menu header -->
+    <string name="show_only_flagged_as_attended">Näytä vain kiinnostavat tapahtumat</string>
+    <!-- menu header -->
+    <string name="sorting_options">Lajitteluasetukset</string>
+    <!-- menu header -->
+    <string name="event_type_filters">Tapahtumatyyppisuodattimet</string>
+    <!-- menu header -->
+    <string name="venue_filters">Tapahtumapaikkasuodattimet</string>
+    <!-- menu header -->
+    <string name="can_not_hide_all_venues">Kaikkia tapahtumapaikkoja ei voi piilottaa</string>
+    <!-- help text -->
+    <!-- help text -->
+    <string name="can_not_hide_all_statuses">Kaikkia tiloja ei voi piilottaa</string>
+    <string name="clear_all_filters">Tyhjennä kaikki suodattimet</string>
+    <!-- menu choice -->
+    <string name="show_all_events">Näytä kaikki tapahtumat</string>
+    <!-- menu choice -->
+    <string name="show_flaged_events_only">Näytä vain merkityt tapahtumat</string>
+    <!-- menu choice -->
+    <string name="show_only_events_flagged_as_attending">Näytä vain tapahtumat, joihin aiot osallistua</string>
+    <!-- venue filters -->
+    <string name="show_pool_events">Näytä allastapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_pool_events">Piilota allastapahtumat</string>
+    <!-- menu choice -->
+    <string name="pool_venue_filter_on">Allaspaikan suodatin päällä</string>
+    <!-- help text -->
+    <string name="pool_venue_filter_off">Allaspaikan suodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_lounge_events">Näytä klubitapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_lounge_events">Piilota klubitapahtumat</string>
+    <!-- menu choice -->
+    <string name="lounge_venue_filter_on">Klubisuodatin päällä</string>
+    <!-- help text -->
+    <string name="lounge_venue_filter_off">Klubisuodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_theater_events">Teatteritapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_theater_events">Piilota teatteritapahtumat</string>
+    <!-- menu choice -->
+    <string name="theater_venue_filter_on">Teatterisuodatin päällä</string>
+    <!-- help text -->
+    <string name="theater_venue_filter_off">Teatterisuodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_rink_events">Näytä jäähallitapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_rink_events">Piilota jäähallitapahtumat</string>
+    <!-- menu choice -->
+    <string name="rink_venue_filter_on">Jäähallisuodatin päällä</string>
+    <!-- help text -->
+    <string name="rink_venue_filter_off">Jäähallisuodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_other_events">Näytä muut tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_other_events">Piilota muut tapahtumat</string>
+    <!-- menu choice -->
+    <string name="other_venue_filter_on">Muun tapahtumapaikan suodatin päällä</string>
+    <!-- help text -->
+    <string name="other_venue_filter_off">Muun tapahtumapaikan suodatin pois päältä</string>
+    <!-- event filter -->
+    <string name="show_meet_and_greet_events">Näytä artistitapaamiset</string>
+    <!-- menu choice -->
+    <string name="hide_meet_and_greet_events">Piilota artistitapaamiset</string>
+    <!-- menu choice -->
+    <string name="meet_and_greet_event_filter_on">Artistitapaamissuodatin päällä</string>
+    <!-- help text -->
+    <string name="meet_and_greet_event_filter_off">Artistitapaamissuodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_unofficial_events">Näytä epäviralliset tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_unofficial_events">Piilota epäviralliset tapahtumat</string>
+    <!-- menu choice -->
+    <string name="unofficial_event_filter_on">Epävirallinen tapahtumasuodatin päällä</string>
+    <!-- help text -->
+    <string name="unofficial_event_filter_off">Epävirallinen tapahtumasuodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_special_other_events">Näytä erikoistapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_special_other_events">Piilota erikoistapahtumat</string>
+    <!-- menu choice -->
+    <string name="special_other_event_filter_on">Erikoistapahtumasuodatin päällä</string>
+    <!-- help text -->
+    <string name="special_other_event_filter_off">Erikoistapahtumasuodatin pois päältä</string>
+    <!-- sorting -->
+    <string name="sort_by_name">Lajittele nimen mukaan</string>
+    <!-- menu choice -->
+    <string name="sort_by_time">Lajittele ajan mukaan</string>
+    <!-- band preference filter -->
+    <string name="show_must_see_items">Näytä Kyllä-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_must_see_items">Piilota Kyllä-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="must_see_filter_on">Kyllä-tapahtumien suodatin päällä</string>
+    <!-- help text -->
+    <string name="must_see_filter_off">Kyllä-tapahtumien suodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_might_see_items">Näytä Ehkä-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_might_see_items">Piilota Ehkä-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="might_see_filter_on">Ehkä-tapahtumien suodatin päällä</string>
+    <!-- help text -->
+    <string name="might_see_filter_off">Ehkä-tapahtumien suodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_wont_see_items">Näytä Ei-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hide_wont_see_items">Piilota Ei-tapahtumat</string>
+    <!-- menu choice -->
+    <string name="wont_see_filter_on">Ei-tapahtumien suodatin päällä</string>
+    <!-- help text -->
+    <string name="wont_see_filter_off">Ei-tapahtumien suodatin pois päältä</string>
+    <!-- help text -->
+    <string name="show_unknown_items">Näytä merkitsemättömät</string>
+    <!-- menu choice -->
+    <string name="hide_unknown_items">Piilota merkitsemättömät</string>
+    <!-- menu choice -->
+    <string name="unknown_filter_on">Merkitsemättömien suodatin päällä</string>
+    <!-- help text -->
+    <string name="unknown_filter_off">Merkitsemättömien suodatin pois päältä</string>
+    <!-- help text -->
+    <string name="Filtering">Suodatus</string>
+    <!-- filtering indicator near counts -->
+    <string name="Filters">Suodattimet</string>
 </resources>

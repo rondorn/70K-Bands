@@ -105,4 +105,133 @@
 
     <string name="backupPrompt">Collez l\'URL du fichier userExport.zip stocké sur DropBox ou un autre service similaire.</string>
     <string name="importButtonName">Importation</string>
+
+    <!-- new section for the filter menu control -->
+    <string name="clear_filters">Effacer les filtres</string>
+    <!-- menu choice -->
+    <string name="band_ranking_filters">Filtres de classement des bandes</string>
+    <!-- menu choice -->
+    <string name="show_only_flagged_as_attended">Afficher uniquement marqué comme étant présent</string>
+    <!-- help text -->
+    <string name="sorting_options">Options de tri</string>
+    <!-- menu header -->
+    <string name="event_type_filters">Filtres de types d\'événements</string>
+    <!-- menu header -->
+    <string name="venue_filters">Filtres de sites</string>
+    <!-- menu header -->
+    <string name="can_not_hide_all_venues">Impossible de masquer tous les lieux</string>
+    <!-- help text -->
+    <string name="can_not_hide_all_statuses">Impossible de masquer tous les statuts</string>
+    <!-- help text -->
+    <string name="clear_all_filters">Effacer tous les filtres</string>
+    <!-- menu choice -->
+    <string name="show_all_events">Afficher tous les événements</string>
+    <!-- menu choice -->
+    <string name="show_flaged_events_only">Afficher uniquement les événements marqués</string>
+    <!-- menu choice -->
+    <string name="show_only_events_flagged_as_attending">Afficher uniquement les événements marqués comme participants</string>
+    <!-- venue filters -->
+    <string name="show_pool_events">Afficher les événements de la piscine</string>
+    <!-- menu choice -->
+    <string name="hide_pool_events">Masquer les événements de la piscine</string>
+    <!-- menu choice -->
+    <string name="pool_venue_filter_on">Filtre de salle de piscine activé</string>
+    <!-- help text -->
+    <string name="pool_venue_filter_off">Filtre de salle de piscine désactivé</string>
+    <!-- help text -->
+    <string name="show_lounge_events">Événements du salon d’exposition</string>
+    <!-- menu choice -->
+    <string name="hide_lounge_events">Masquer les événements du salon</string>
+    <!-- menu choice -->
+    <string name="lounge_venue_filter_on">Filtre de salle de salon activé</string>
+    <!-- help text -->
+    <string name="lounge_venue_filter_off">Filtre de salle de salon désactivé</string>
+    <!-- help text -->
+    <string name="show_theater_events">Événements de théâtre</string>
+    <!-- menu choice -->
+    <string name="hide_theater_events">Masquer les événements du théâtre</string>
+    <!-- menu choice -->
+    <string name="theater_venue_filter_on">Filtre de salle de cinéma activé</string>
+    <!-- help text -->
+    <string name="theater_venue_filter_off">Filtre de salle de cinéma désactivé</string>
+    <!-- help text -->
+    <string name="show_rink_events">Afficher les événements de la patinoire</string>
+    <!-- menu choice -->
+    <string name="hide_rink_events">Masquer les événements de la patinoire</string>
+    <!-- menu choice -->
+    <string name="rink_venue_filter_on">Filtrer le site de la patinoire activé</string>
+    <!-- help text -->
+    <string name="rink_venue_filter_off">Filtre des sites de patinoire désactivé</string>
+    <!-- help text -->
+    <string name="show_other_events">Afficher d\'autres événements</string>
+    <!-- menu choice -->
+    <string name="hide_other_events">Masquer les autres événements</string>
+    <!-- menu choice -->
+    <string name="other_venue_filter_on">Filtre autre lieu activé</string>
+    <!-- help text -->
+    <string name="other_venue_filter_off">Filtre autre lieu désactivé</string>
+    <!-- event filter -->
+    <string name="show_meet_and_greet_events">Afficher les événements Meet &amp; Greet</string>
+    <!-- menu choice -->
+    <string name="hide_meet_and_greet_events">Masquer les événements Meet &amp; Greet</string>
+    <!-- menu choice -->
+    <string name="meet_and_greet_event_filter_on">Filtre d\'événement Meet and Greet activé</string>
+    <!-- help text -->
+    <string name="meet_and_greet_event_filter_off">Filtre d\'événement de rencontre et d\'accueil désactivé</string>
+    <!-- help text -->
+    <string name="show_unofficial_events">Afficher les événements non officiels</string>
+    <!-- menu choice -->
+    <string name="hide_unofficial_events">Masquer les événements non officiels</string>
+    <!-- menu choice -->
+    <string name="unofficial_event_filter_on">Filtre d\'événements non officiel activé</string>
+    <!-- help text -->
+    <string name="unofficial_event_filter_off">Filtre d\'événements non officiel désactivé</string>
+    <!-- help text -->
+    <string name="show_special_other_events">Afficher les événements spéciaux/autres</string>
+    <!-- menu choice -->
+    <string name="hide_special_other_events">Masquer les événements spéciaux/autres</string>
+    <!-- menu choice -->
+    <string name="special_other_event_filter_on">Filtre d\'événements spéciaux/autres activé</string>
+    <!-- help text -->
+    <string name="special_other_event_filter_off">Filtre d\'événements spéciaux/autres désactivé</string>
+    <!-- sorting -->
+    <string name="sort_by_name">Trier par nom</string>
+    <!-- menu choice -->
+    <string name="sort_by_time">Trier par heure</string>
+    <!-- band preference filter -->
+    <string name="show_must_see_items">Afficher les éléments incontournables</string>
+    <!-- menu choice -->
+    <string name="hide_must_see_items">Masquer les éléments incontournables</string>
+    <!-- menu choice -->
+    <string name="must_see_filter_on">Filtrer à voir absolument</string>
+    <!-- help text -->
+    <string name="must_see_filter_off">À voir absolument Filtre désactivé</string>
+    <!-- help text -->
+    <string name="show_might_see_items">Afficher les éléments susceptibles de voir</string>
+    <!-- menu choice -->
+    <string name="hide_might_see_items">Masquer les éléments susceptibles de voir</string>
+    <!-- menu choice -->
+    <string name="might_see_filter_on">Peut voir le filtre activé</string>
+    <!-- help text -->
+    <string name="might_see_filter_off">Pourrait voir le filtre désactivé</string>
+    <!-- help text -->
+    <string name="show_wont_see_items">Afficher les éléments que je ne verrai pas</string>
+    <!-- menu choice -->
+    <string name="hide_wont_see_items">Masquer les éléments que je ne verrai pas</string>
+    <!-- menu choice -->
+    <string name="wont_see_filter_on">Ne verra pas le filtre activé</string>
+    <!-- help text -->
+    <string name="wont_see_filter_off">Je ne verrai pas le filtre désactivé</string>
+    <!-- help text -->
+    <string name="show_unknown_items">Afficher les éléments inconnus</string>
+    <!-- menu choice -->
+    <string name="hide_unknown_items">Masquer les éléments inconnus</string>
+    <!-- menu choice -->
+    <string name="unknown_filter_on">Filtre inconnu activé</string>
+    <!-- help text -->
+    <string name="unknown_filter_off">Filtre inconnu désactivé</string>
+    <!-- help text -->
+    <string name="Filtering">Filtration</string>
+    <!-- filtering indicator near counts -->
+    <string name="Filters">Filtres</string>
 </resources>

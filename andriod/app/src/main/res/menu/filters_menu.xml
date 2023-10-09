@@ -1,46 +1,110 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".showBands">
+    <item
+        android:id="@+id/clearFilterHeader"
+        android:checkable="false"
+        android:checked="false"
+        android:enabled="false"
+        android:title="@string/clear_filters"
+        app:showAsAction="never" />
+    <group android:id="@+id/clearFiltersGroup">
+        <item
+            android:id="@+id/clearFilter"
+            android:checkable="false"
+            android:enabled="true"
+            android:title="@string/clear_all_filters"
+            app:showAsAction="never"/>
+    </group>
     <item
         android:id="@+id/mustMightFilterHeader"
         android:checkable="false"
         android:checked="false"
         android:enabled="false"
-        android:title="Band Ranking Filters" />
-    <group android:id="@+id/bandRankingFilters" android:checkableBehavior="single">
+        android:title="@string/band_ranking_filters"
+        app:showAsAction="always" />
+    <group android:id="@+id/bandRankingFiltersGroup">
         <item
             android:id="@+id/mustSeeFilter"
             android:checkable="false"
+            android:title="@string/hide_must_see_items"
             android:icon="@drawable/icon_going_yes_small"
-            android:title="Hide Must See Items"
-            app:actionLayout="@layout/filter_choices_menu_layout"
-            app:showAsAction="always" />
+            app:showAsAction="never"/>
         <item
             android:id="@+id/mightSeeFilter"
             android:checkable="false"
+            android:title="@string/hide_might_see_items"
             android:icon="@drawable/icon_going_maybe_small"
-            android:title="Hide Might See Items"
-            app:showAsAction="never" />
-    <item android:id="@+id/wontSeeFilter"
-        android:icon="@drawable/icon_going_no_small"
-        android:title="Hide Wont See Items"
-        android:checkable="false"
-        app:showAsAction="never"/>
-    </group>
-    <item android:id="@+id/eventtypeFilterHeaders"
-        android:title="Event Type Filters"
-        android:enabled="false"/>
-    <group android:id="@+id/eventTypeFilters" android:checkableBehavior="single">
-        <item android:id="@+id/unofficalEventFilter"
-            android:icon="@drawable/icon_going_yes_small"
-            android:checkable="false"
-            android:title="Hide Must See Items" />
-        <item android:id="@+id/meetAndGreetFilter"
-            android:icon="@drawable/icon_going_maybe_small"
-            android:checkable="false"
-            android:title="Hide Might See Items" />
-        <item android:id="@+id/clinicFilter"
+            app:showAsAction="never"/>
+        <item android:id="@+id/wontSeeFilter"
             android:icon="@drawable/icon_going_no_small"
+            android:title="@string/hide_wont_see_items"
             android:checkable="false"
-            android:title="Hide Wont See Items" />
+            app:showAsAction="never"/>
+        <item android:id="@+id/unknownSeeFilter"
+            android:icon="@drawable/icon_unknown_small"
+            android:title="@string/hide_unknown_items"
+            android:checkable="false"
+            app:showAsAction="never"/>
+    </group>
+    <item android:id="@+id/onlyAttendedFilterHeaders"
+        android:title="@string/show_only_flagged_as_attended"
+        android:enabled="false"/>
+    <group android:id="@+id/onlyAttendedFilterGroup">
+        <item android:id="@+id/onlyAttendedFilter"
+            android:checkable="false"
+            android:title="@string/show_only_events_flagged_as_attending"
+            android:icon="@drawable/icon_seen_small"/>
+    </group>
+    <item android:id="@+id/sortingHeaders"
+        android:title="@string/sorting_options"
+        android:enabled="false"/>
+    <group android:id="@+id/sortingChoiceGroup">
+        <item android:id="@+id/sortingChoice"
+            android:checkable="false"
+            android:title="@string/sort_by_name"
+            android:icon="@drawable/icon_sort_az"/>
+    </group>
+    <item android:id="@+id/eventFilterHeaders"
+        android:title="@string/showTypeFilterHeader"
+        android:enabled="false"/>
+    <group android:id="@+id/eventTypeGroup">
+        <item android:id="@+id/meetAndGreetFilter"
+            android:checkable="false"
+            android:title="@string/hide_meet_and_greet_events"
+            android:icon="@drawable/icon_meet_and_greet_small"/>
+        <item android:id="@+id/unofficalEventFilter"
+            android:checkable="false"
+            android:title="@string/hide_unofficial_events"
+            android:icon="@drawable/icon_unspecified_event_small"/>
+        <item android:id="@+id/specialEventFilter"
+            android:checkable="false"
+            android:title="@string/hide_special_other_events"
+            android:icon="@drawable/icon_all_star_jam_small"/>
+    </group>
+    <item android:id="@+id/venuFilterHeaders"
+        android:title="@string/venueFilterHeader"
+        android:enabled="false"/>
+    <group android:id="@+id/venuFilterGroup">
+        <item android:id="@+id/poolFilter"
+            android:title="@string/pool_venue_filter_on"
+            android:icon="@drawable/icon_pool"/>
+        <item android:id="@+id/loungFilter"
+            android:checkable="false"
+            android:title="@string/hide_lounge_events"
+            android:icon="@drawable/icon_lounge"/>
+        <item android:id="@+id/theaterFilter"
+            android:checkable="false"
+            android:title="@string/hide_theater_events"
+            android:icon="@drawable/icon_theater"/>
+        <item android:id="@+id/rinkFilter"
+            android:checkable="false"
+            android:title="@string/hide_rink_events"
+            android:icon="@drawable/ice_rink"/>
+        <item android:id="@+id/otherVenueFilter"
+            android:checkable="false"
+            android:title="@string/hide_other_events"
+            android:icon="@drawable/icon_unknown_small"/>
     </group>
 </menu>

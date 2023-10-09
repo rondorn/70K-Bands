@@ -107,6 +107,135 @@
 
     <string name="backupPrompt">Paste in the URL to the userExport.zip stored on DropBox or other similar service</string>
     <string name="importButtonName">Import</string>
+
+    <!-- new section for the filter menu control -->
+    <string name="clear_filters">Clear Filters</string>
+    <!-- menu choice -->
+    <string name="band_ranking_filters">Band Ranking Filters</string>
+    <!-- menu header -->
+    <string name="show_only_flagged_as_attended">Show Only Flagged As Attended</string>
+    <!-- help text -->
+    <string name="sorting_options">Sorting Options</string>
+    <!-- menu header -->
+    <string name="event_type_filters">Event Type Filters</string>
+    <!-- menu header -->
+    <string name="venue_filters">Venue Filters</string>
+    <!-- menu header -->
+    <string name="can_not_hide_all_venues">Can not hide all venues</string>
+    <!-- help text -->
+    <!-- help text -->
+    <string name="clear_all_filters">Clear All Filters</string>
+    <!-- menu choice -->
+    <string name="show_all_events">Show All Events</string>
+    <!-- menu choice -->
+    <string name="show_flaged_events_only">Show Flaged Events Only</string>
+    <!-- menu choice -->
+    <string name="show_only_events_flagged_as_attending">Show Only Events Flagged As Attending</string>
+    <!-- venue filters -->
+    <string name="show_pool_events">Show Pool Events</string>
+    <!-- menu choice -->
+    <string name="hide_pool_events">Hide Pool Events</string>
+    <!-- menu choice -->
+    <string name="pool_venue_filter_on">Pool Venue Filter On</string>
+    <!-- help text -->
+    <string name="pool_venue_filter_off">Pool Venue Filter Off</string>
+    <!-- help text -->
+    <string name="show_lounge_events">Show Lounge Events</string>
+    <!-- menu choice -->
+    <string name="hide_lounge_events">Hide Lounge Events</string>
+    <!-- menu choice -->
+    <string name="lounge_venue_filter_on">Lounge Venue Filter On</string>
+    <!-- help text -->
+    <string name="lounge_venue_filter_off">Lounge Venue Filter Off</string>
+    <!-- help text -->
+    <string name="show_theater_events">Show Theater Events</string>
+    <!-- menu choice -->
+    <string name="hide_theater_events">Hide Theater Events</string>
+    <!-- menu choice -->
+    <string name="theater_venue_filter_on">Theater Venue Filter On</string>
+    <!-- help text -->
+    <string name="theater_venue_filter_off">Theater Venue Filter Off</string>
+    <!-- help text -->
+    <string name="show_rink_events">Show Rink Events</string>
+    <!-- menu choice -->
+    <string name="hide_rink_events">Hide Rink Events</string>
+    <!-- menu choice -->
+    <string name="rink_venue_filter_on">Rink Venue Filter On</string>
+    <!-- help text -->
+    <string name="rink_venue_filter_off">Rink Venue Filter Off</string>
+    <!-- help text -->
+    <string name="show_other_events">Show Other Events</string>
+    <!-- menu choice -->
+    <string name="hide_other_events">Hide Other Events</string>
+    <!-- menu choice -->
+    <string name="other_venue_filter_on">Other Venue Filter On</string>
+    <!-- help text -->
+    <string name="other_venue_filter_off">Other Venue Filter Off</string>
+    <!-- event filter -->
+    <string name="show_meet_and_greet_events">Show Meet &amp; Greet Events</string>
+    <!-- menu choice -->
+    <string name="hide_meet_and_greet_events">Hide Meet &amp; Greet Events</string>
+    <!-- menu choice -->
+    <string name="meet_and_greet_event_filter_on">Meet and Greet Event Filter On</string>
+    <!-- help text -->
+    <string name="meet_and_greet_event_filter_off">Meet and Greet Event Filter Off</string>
+    <!-- help text -->
+    <string name="show_unofficial_events">Show Unofficial Events</string>
+    <!-- menu choice -->
+    <string name="hide_unofficial_events">Hide Unofficial Events</string>
+    <!-- menu choice -->
+    <string name="unofficial_event_filter_on">Unofficial Event Filter On</string>
+    <!-- help text -->
+    <string name="unofficial_event_filter_off">Unofficial Event Filter Off</string>
+    <!-- help text -->
+    <string name="show_special_other_events">Show Special/Other Events</string>
+    <!-- menu choice -->
+    <string name="hide_special_other_events">Hide Special/Other Events</string>
+    <!-- menu choice -->
+    <string name="special_other_event_filter_on">Special/Other Event Filter On</string>
+    <!-- help text -->
+    <string name="special_other_event_filter_off">Special/Other Event Filter Off</string>
+    <!-- sorting -->
+    <string name="sort_by_name">Sort By Name</string>
+    <!-- menu choice -->
+    <string name="sort_by_time">Sort By Time</string>
+    <!-- band preference filter -->
+    <string name="show_must_see_items">Show Must See Items</string>
+    <!-- menu choice -->
+    <string name="hide_must_see_items">Hide Must See Items</string>
+    <!-- menu choice -->
+    <string name="must_see_filter_on">Must See Filter On</string>
+    <!-- help text -->
+    <string name="must_see_filter_off">Must See Filter Off</string>
+    <!-- help text -->
+    <string name="show_might_see_items">Show Might See Items</string>
+    <!-- menu choice -->
+    <string name="hide_might_see_items">Hide Might See Items</string>
+    <!-- menu choice -->
+    <string name="might_see_filter_on">Might See Filter On</string>
+    <!-- help text -->
+    <string name="might_see_filter_off">Might See Filter Off</string>
+    <!-- help text -->
+    <string name="show_wont_see_items">Show Wont See Items</string>
+    <!-- menu choice -->
+    <string name="hide_wont_see_items">Hide Wont See Items</string>
+    <!-- menu choice -->
+    <string name="wont_see_filter_on">Wont See Filter On</string>
+    <!-- help text -->
+    <string name="wont_see_filter_off">Wont See Filter Off</string>
+    <!-- help text -->
+    <string name="show_unknown_items">Show Unknown Items</string>
+    <!-- menu choice -->
+    <string name="hide_unknown_items">Hide Unknown Items</string>
+    <!-- menu choice -->
+    <string name="unknown_filter_on">Unknown Filter On</string>
+    <!-- help text -->
+    <string name="unknown_filter_off">Unknown Filter Off</string>
+    <!-- help text -->
+    <string name="Filtering">Filtering</string>
+    <!-- filtering indicator near counts -->
+    <string name="Filters">Filters</string>
+    <string name="can_not_hide_all_statuses">Can not hide all status</string>
 </resources>
 
 
