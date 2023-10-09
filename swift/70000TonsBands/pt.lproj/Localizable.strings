@@ -119,7 +119,7 @@
 "Venue Filters" = "Filtros de local"; //menu header
 
 "Can not hide all venues" = "Não é possível ocultar todos os locais"; //help text
-"Can not hide all status" = "Não é possível ocultar todos os status"; //help text
+"Can not hide all statuses" = "Não é possível ocultar todos os status"; //help text
 "Clear All Filters" = "Limpar todos os filtros";  //menu choice
 "Show All Events" = "Mostrar todos os eventos";  //menu choice
 "Show Flaged Events Only" = "Mostrar apenas eventos sinalizados";  //menu choice

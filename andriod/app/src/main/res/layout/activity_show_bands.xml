@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#FF000000"
     android:id="@+id/showBandsView"
+    android:theme="@style/NavigationView"
     android:gravity="top">
 
     <LinearLayout
@@ -69,19 +70,19 @@
         <ToggleButton
             android:id="@+id/FilerMenu"
             android:layout_width="150dp"
-            android:layout_height="45dp"
-            android:gravity="left|center_vertical"
+            android:layout_height="31dp"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="10dp"
             android:background="@color/common_google_signin_btn_text_light_pressed"
+            android:gravity="left|center_vertical"
             android:text="Filters"
-            android:textStyle="bold"
-
             android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
+
             android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:textOff="Filters"
             android:textOn="Filters"
-            android:textSize="25sp" />
+            android:textSize="25sp"
+            android:textStyle="bold" />
 
         <View
             android:layout_width="0dp"

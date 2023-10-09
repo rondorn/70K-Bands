@@ -105,4 +105,133 @@
 
     <string name="backupPrompt">Fügen Sie die URL in die Datei userExport.zip ein, die auf DropBox oder einem anderen ähnlichen Dienst gespeichert ist</string>
     <string name="importButtonName">Import</string>
+
+    <!-- new section for the filter menu control -->
+    <string name="clear_filters">Filter löschen</string>
+    <!-- menu choice -->
+    <string name="band_ranking_filters">Band-Auswahl-Filter</string>
+    <!-- menu header -->
+    <string name="show_only_flagged_as_attended">Nur als besucht markierte anzeigen</string>
+    <!-- menu header -->
+    <string name="sorting_options">Sortieroptionen</string>
+    <!-- menu header -->
+    <string name="event_type_filters">Filter nach Veranstaltungstyp</string>
+    <!-- menu header -->
+    <string name="venue_filters">Filter nach Veranstaltungsort</string>
+    <!-- menu header -->
+    <string name="can_not_hide_all_venues">Es können nicht alle Veranstaltungsorte ausgeblendet werden</string>
+    <!-- help text -->
+    <string name="can_not_hide_all_statuses">Es können nicht alle Stati ausgeblendet werden</string>
+    <!-- help text -->
+    <string name="clear_all_filters">Alle Filter löschen</string>
+    <!-- menu choice -->
+    <string name="show_all_events">Alle Veranstaltungen anzeigen</string>
+    <!-- menu choice -->
+    <string name="show_flaged_events_only">Nur markierte Veranstaltungen anzeigen</string>
+    <!-- menu choice -->
+    <string name="show_only_events_flagged_as_attending">Nur Veranstaltungen anzeigen, die mit Teilnahme markiert sind</string>
+    <!-- venue filters -->
+    <string name="show_pool_events">Veranstaltungen Poolbühne anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_pool_events">Veranstaltungen Poolbühne ausblenden</string>
+    <!-- menu choice -->
+    <string name="pool_venue_filter_on">Filter „Pool-Veranstaltungen“ an</string>
+    <!-- help text -->
+    <string name="pool_venue_filter_off">Filter „Pool-Veranstaltungen“ aus</string>
+    <!-- help text -->
+    <string name="show_lounge_events">Veranstaltungen Star Lounge anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_lounge_events">Veranstaltungen Star Lounge ausblenden</string>
+    <!-- menu choice -->
+    <string name="lounge_venue_filter_on">Filter „Lounge-Veranstaltungen“ an</string>
+    <!-- help text -->
+    <string name="lounge_venue_filter_off">Filter „Lounge-Veranstaltungen“\u0020\u0020aus</string>
+    <!-- help text -->
+    <string name="show_theater_events">Veranstaltungen Royal Theater anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_theater_events">Veranstaltungen Royal Theater ausblenden</string>
+    <!-- menu choice -->
+    <string name="theater_venue_filter_on">Filter „Theater-Veranstaltungen“ an</string>
+    <!-- help text -->
+    <string name="theater_venue_filter_off">Filter „Theater-Veranstaltungen“ aus</string>
+    <!-- help text -->
+    <string name="show_rink_events">Veranstaltungen Studio B Ice Rink anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_rink_events">Veranstaltungen Studio B Ice Rink ausblenden</string>
+    <!-- menu choice -->
+    <string name="rink_venue_filter_on">Filter „IceRink-Veranstaltungen“ an</string>
+    <!-- help text -->
+    <string name="rink_venue_filter_off">Filter „IceRink-Veranstaltungen“ aus</string>
+    <!-- help text -->
+    <string name="show_other_events">Veranstaltungen andere Orte anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_other_events">Veranstaltungen andere Orte ausblenden</string>
+    <!-- menu choice -->
+    <string name="other_venue_filter_on">Filter „andere Orte“ an</string>
+    <!-- help text -->
+    <string name="other_venue_filter_off">Filter „andere Orte“ aus</string>
+    <!-- event filter -->
+    <string name="show_meet_and_greet_events">Meet &amp; Grees anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_meet_and_greet_events">Meet &amp; Greets ausblenden</string>
+    <!-- menu choice -->
+    <string name="meet_and_greet_event_filter_on">Filter für Meet-and-Greets an</string>
+    <!-- help text -->
+    <string name="meet_and_greet_event_filter_off">Filter für Meet-and-Greets aus</string>
+    <!-- help text -->
+    <string name="show_unofficial_events">Cruiser-organisierte Veranstaltungen anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_unofficial_events">Cruiser-organisierte Veranstaltungen ausblenden</string>
+    <!-- menu choice -->
+    <string name="unofficial_event_filter_on">Filter für Cruiser-organisierte Veranstaltungen an</string>
+    <!-- help text -->
+    <string name="unofficial_event_filter_off">Filter für Cruiser-organisierte Veranstaltungen aus</string>
+    <!-- help text -->
+    <string name="show_special_other_events">Besondere Veranstaltungen anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_special_other_events">Besondere Veranstaltungen ausblenden</string>
+    <!-- menu choice -->
+    <string name="special_other_event_filter_on">Filter für Besondere Veranstaltungen an</string>
+    <!-- help text -->
+    <string name="special_other_event_filter_off">Filter für Besondere Veranstaltungen aus</string>
+    <!-- sorting -->
+    <string name="sort_by_name">Nach Name sortieren</string>
+    <!-- menu choice -->
+    <string name="sort_by_time">Nach Zeit sortieren</string>
+    <!-- band preference filter -->
+    <string name="show_must_see_items">„Muss-Bands“ anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_must_see_items">„Muss-Bands“ ausblenden</string>
+    <!-- menu choice -->
+    <string name="must_see_filter_on">Filter „Muss-Bands“ an</string>
+    <!-- help text -->
+    <string name="must_see_filter_off">Filter „Muss-Bands“ aus</string>
+    <!-- help text -->
+    <string name="show_might_see_items">„Kann-Bands“ anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_might_see_items">„Kann-Bands“ ausblenden</string>
+    <!-- menu choice -->
+    <string name="might_see_filter_on">Filter „Kann-Bands“ an</string>
+    <!-- help text -->
+    <string name="might_see_filter_off">Filter „KAnn-Bands“ an</string>
+    <!-- help text -->
+    <string name="show_wont_see_items">„Nein-Bands“ anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_wont_see_items">„Nein-Bands“ ausblenden</string>
+    <!-- menu choice -->
+    <string name="wont_see_filter_on">Filter „Nein-Bands“ an</string>
+    <!-- help text -->
+    <string name="wont_see_filter_off">Filter „Nein-Bands“ aus</string>
+    <!-- help text -->
+    <string name="show_unknown_items">Unbekannte Bands anzeigen</string>
+    <!-- menu choice -->
+    <string name="hide_unknown_items">Unbekannte Bands ausblenden</string>
+    <!-- menu choice -->
+    <string name="unknown_filter_on">Filter unbekannte Bands an</string>
+    <!-- help text -->
+    <string name="unknown_filter_off">Filter unbekannte Bands aus</string>
+    <!-- help text -->
+    <string name="Filtering">Filtern</string>
+    <!-- filtering indicator near counts -->
+    <string name="Filters">Filter</string>
 </resources>

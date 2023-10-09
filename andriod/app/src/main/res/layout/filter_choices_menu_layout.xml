@@ -14,5 +14,6 @@
         android:gravity="center"
         android:padding="6dp"
         android:orientation="vertical"
+        android:textColor="@android:color/darker_gray"
         android:text="By Name" />
 </LinearLayout>
