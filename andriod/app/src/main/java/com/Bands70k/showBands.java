@@ -29,6 +29,7 @@ import android.preference.PreferenceManager;
 //import androidx.appcompat.resources.Compatibility;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.view.MenuCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -36,6 +37,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 //import android.support.v7.app.AppCompatActivity;
 //import android.os.Bundle;
 //import android.support.v7.widget.PopupMenu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import android.util.Log;
@@ -1098,8 +1100,14 @@ public class showBands extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_show_bands, menu);
+        //getMenuInflater().inflate(R.menu.menu_show_bands, menu);
+        //MenuCompat.setGroupDividerEnabled(menu, true);
+        //return true;
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.filters_menu, menu);
         return true;
     }
 
@@ -1398,7 +1406,8 @@ public class showBands extends Activity {
             //swip stuff
             setupSwipeList();
 
-            setUpFiltersButton();
+            FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
+            filterButtonHandle.setUpFiltersButton(this);
 
             setShowAttendedFilterButton();
         }
@@ -1408,6 +1417,7 @@ public class showBands extends Activity {
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
     }
+
 
 
     private void refreshData() {
@@ -1728,7 +1738,7 @@ public class showBands extends Activity {
             FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
         }
     }
-
+    /*
     public void setUpFiltersButton(){
 
         filterMenuButton = (Button) findViewById(R.id.FilerMenu);
@@ -1740,21 +1750,19 @@ public class showBands extends Activity {
                     popup.setForceShowIcon(true);
                 }
                 popup.show();
+
+                MenuItem item = popup.getMenu().getItem(0);
+                //item.getActionView().setBackgroundResource(R.drawable.default_text_color);
+
+                        //setBackgroundResource(R.color.common_google_signin_btn_text_dark_disabled);
+
+                Toast.makeText(getApplicationContext(),
+                        item.getTitle() + " ", Toast.LENGTH_SHORT).show();
             }
         });
 
-        //filterMenuButton.setOnClickListener(new Button.OnClickListener() {
-            //public void onClick(View context) {
-                //Toast.makeText(getApplicationContext(),
-                        //"Filter Stuff" + " ", Toast.LENGTH_SHORT).show();
-                //PopupMenu popup = new PopupMenu(context, filterMenuButton);
-                //popup.setOnMenuItemClickListener(context);
-                //popup.inflate(R.menu.filters_menu);
-                //popup.show();
-            //}
-       // });
     }
-
+    */
     public void setSortButton() {
         /*
         sortButton = (Button) findViewById(R.id.sort);

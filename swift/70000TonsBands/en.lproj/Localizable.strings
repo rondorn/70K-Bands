@@ -118,7 +118,7 @@
 "Venue Filters" = "Venue Filters"; //menu header
 
 "Can not hide all venues" = "Can not hide all venues"; //help text
-"Can not hide all status" = "Can not hide all status"; //help text
+"Can not hide all statuses" = "Can not hide all status"; //help text
 "Clear All Filters" = "Clear All Filters"; //menu choice
 "Show All Events" = "Show All Events"; //menu choice
 "Show Flaged Events Only" = "Show Flaged Events Only"; //menu choice
