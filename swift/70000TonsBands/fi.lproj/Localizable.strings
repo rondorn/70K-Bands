@@ -125,7 +125,7 @@
 "Can not hide all statuses" = "Kaikkia tiloja ei voi piilottaa"; //help text
 "Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
 "Show All Events" = "Näytä kaikki tapahtumat"; //menu choice
-"Show Flaged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
+"Show Flagged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
 "Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, joihin aiot osallistua"; //help text
 
 //venue filters

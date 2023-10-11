@@ -121,7 +121,7 @@
 "Can not hide all statuses" = "Can not hide all status"; //help text
 "Clear All Filters" = "Clear All Filters"; //menu choice
 "Show All Events" = "Show All Events"; //menu choice
-"Show Flaged Events Only" = "Show Flaged Events Only"; //menu choice
+"Show Flagged Events Only" = "Show Flagged Events Only"; //menu choice
 "Show Only Events Flagged As Attending" = "Show Only Events Flagged As Attending"; //help text
 
 //venue filters

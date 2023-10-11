@@ -53,6 +53,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -70,6 +71,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +85,9 @@ import static java.lang.Thread.sleep;
 public class showBands extends Activity {
 
     String notificationTag = "notificationTag";
+
+    private FrameLayout redCircle;
+    private TextView countTextView;
 
     public static String newRootDir = Environment.getExternalStorageDirectory().toString();
 
@@ -1098,19 +1103,6 @@ public class showBands extends Activity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.menu_show_bands, menu);
-        //MenuCompat.setGroupDividerEnabled(menu, true);
-        //return true;
-
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.filters_menu, menu);
-        return true;
-    }
-
     public void populateBandList() {
 
         bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
@@ -1407,6 +1399,7 @@ public class showBands extends Activity {
             setupSwipeList();
 
             FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
+            //filterButtonHandle.onCreate(null);
             filterButtonHandle.setUpFiltersButton(this);
 
             setShowAttendedFilterButton();

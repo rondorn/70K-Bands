@@ -165,7 +165,7 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
     var attendedStatusFilterIcon = attendedShowIconAlt
     let attendedStatusValue = getShowOnlyWillAttened()
     if (attendedStatusValue == false){
-        attendedStatusFilterText = NSLocalizedString("Show Flaged Events Only", comment: "")
+        attendedStatusFilterText = NSLocalizedString("Show Flagged Events Only", comment: "")
         attendedStatusFilterIcon = attendedShowIcon
     }
     let attendedFilter = UIAction(title: attendedStatusFilterText, image: UIImage(named: attendedStatusFilterIcon)) { _ in
@@ -187,6 +187,29 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
 
 func venueChocies(controller: MasterViewController)->[UIAction]{
 
+    var loungeFilterText = NSLocalizedString("Show Lounge Events", comment: "")
+    var loungeFilterIcon = loungIconAlt
+    let showLoungeValue = getShowLoungeShows()
+    if (showLoungeValue == true){
+        loungeFilterText = NSLocalizedString("Hide Lounge Events", comment: "")
+        loungeFilterIcon = loungIcon
+    }
+    let loungeFilter = UIAction(title: loungeFilterText, image: UIImage(named: loungeFilterIcon)) { _ in
+        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        if (showLoungeValue == true){
+            setShowLoungeShows(false)
+            if (blockTurningAllFiltersOn(controller: controller) == false){
+                ToastMessages(NSLocalizedString("Lounge Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            } else {
+                setShowLoungeShows(true)
+            }
+        } else {
+            setShowLoungeShows(true)
+            ToastMessages(NSLocalizedString("Lounge Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        }
+        refreshAfterMenuSelected(controller: controller)
+    }
+    
     var poolFilterText = NSLocalizedString("Show Pool Events", comment: "")
     var poolFilterIcon = poolIconAlt
     let showPoolValue = getShowPoolShows()
@@ -210,25 +233,25 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller)
     }
 
-    var loungeFilterText = NSLocalizedString("Show Lounge Events", comment: "")
-    var loungeFilterIcon = loungIconAlt
-    let showLoungeValue = getShowLoungeShows()
-    if (showLoungeValue == true){
-        loungeFilterText = NSLocalizedString("Hide Lounge Events", comment: "")
-        loungeFilterIcon = loungIcon
+    var rinkFilterText = NSLocalizedString("Show Rink Events", comment: "")
+    var rinkFilterIcon = iceRinkIconAlt
+    let showRinkValue = getShowRinkShows()
+    if (showRinkValue == true){
+        rinkFilterText = NSLocalizedString("Hide Rink Events", comment: "")
+        rinkFilterIcon = iceRinkIcon
     }
-    let loungeFilter = UIAction(title: loungeFilterText, image: UIImage(named: loungeFilterIcon)) { _ in
+    let rinkFilter = UIAction(title: rinkFilterText, image: UIImage(named: rinkFilterIcon)) { _ in
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
-        if (showLoungeValue == true){
-            setShowLoungeShows(false)
+        if (showRinkValue == true){
+            setShowRinkShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Lounge Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                ToastMessages(NSLocalizedString("Rink Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
             } else {
-                setShowLoungeShows(true)
+                setShowRinkShows(true)
             }
         } else {
-            setShowLoungeShows(true)
-            ToastMessages(NSLocalizedString("Lounge Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            setShowRinkShows(true)
+            ToastMessages(NSLocalizedString("Rink Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
         }
         refreshAfterMenuSelected(controller: controller)
     }
@@ -256,29 +279,6 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller)
     }
     
-    var rinkFilterText = NSLocalizedString("Show Rink Events", comment: "")
-    var rinkFilterIcon = iceRinkIconAlt
-    let showRinkValue = getShowRinkShows()
-    if (showRinkValue == true){
-        rinkFilterText = NSLocalizedString("Hide Rink Events", comment: "")
-        rinkFilterIcon = iceRinkIcon
-    }
-    let rinkFilter = UIAction(title: rinkFilterText, image: UIImage(named: rinkFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
-        if (showRinkValue == true){
-            setShowRinkShows(false)
-            if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Rink Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
-            } else {
-                setShowRinkShows(true)
-            }
-        } else {
-            setShowRinkShows(true)
-            ToastMessages(NSLocalizedString("Rink Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
-        }
-        refreshAfterMenuSelected(controller: controller)
-    }
-
     var otherFilterText = NSLocalizedString("Show Other Events", comment: "")
     var otherFilterIcon = unknownIconAlt
     let showOtherValue = getShowOtherShows()
@@ -302,7 +302,7 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller)
     }
     
-    let venueChoices = [poolFilter, loungeFilter, theaterFilter, rinkFilter, otherFilter]
+    let venueChoices = [poolFilter, loungeFilter, rinkFilter, theaterFilter, otherFilter]
     
     return venueChoices
 }
@@ -332,27 +332,7 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
         }
         eventTypeChoices.append(meetAndGreet)
     }
-    
-    var cruiserOrganizedFilterText = NSLocalizedString("Show Unofficial Events", comment: "")
-    var cruiserOrganizedFilterIcon = unofficalEventTypeIconAlt
-    let cruiserOrganizedValue = getShowUnofficalEvents()
-    if (cruiserOrganizedValue == true){
-        cruiserOrganizedFilterIcon = unofficalEventTypeIcon
-        cruiserOrganizedFilterText = NSLocalizedString("Hide Unofficial Events", comment: "")
-    }
-    let cruiserOrganizedEvents = UIAction(title: cruiserOrganizedFilterText, image: UIImage(named: cruiserOrganizedFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
-        if (cruiserOrganizedValue == true){
-            setShowUnofficalEvents(false)
-            ToastMessages(NSLocalizedString("Unofficial Event Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
-        } else {
-            setShowUnofficalEvents(true)
-            ToastMessages(NSLocalizedString("Unofficial Event Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
-        }
-        refreshAfterMenuSelected(controller: controller)
-    }
-    eventTypeChoices.append(cruiserOrganizedEvents)
-    
+
     if (controller.decideIfScheduleMenuApplies() == true){
         var specialFilterText = NSLocalizedString("Show Special/Other Events", comment: "")
         var specialFilterIcon = specialEventTypeIconAlt
@@ -374,6 +354,26 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
         }
         eventTypeChoices.append(specialEvents)
     }
+    
+    var cruiserOrganizedFilterText = NSLocalizedString("Show Unofficial Events", comment: "")
+    var cruiserOrganizedFilterIcon = unofficalEventTypeIconAlt
+    let cruiserOrganizedValue = getShowUnofficalEvents()
+    if (cruiserOrganizedValue == true){
+        cruiserOrganizedFilterIcon = unofficalEventTypeIcon
+        cruiserOrganizedFilterText = NSLocalizedString("Hide Unofficial Events", comment: "")
+    }
+    let cruiserOrganizedEvents = UIAction(title: cruiserOrganizedFilterText, image: UIImage(named: cruiserOrganizedFilterIcon)) { _ in
+        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        if (cruiserOrganizedValue == true){
+            setShowUnofficalEvents(false)
+            ToastMessages(NSLocalizedString("Unofficial Event Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        } else {
+            setShowUnofficalEvents(true)
+            ToastMessages(NSLocalizedString("Unofficial Event Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        }
+        refreshAfterMenuSelected(controller: controller)
+    }
+    eventTypeChoices.append(cruiserOrganizedEvents)
     
     return eventTypeChoices
     

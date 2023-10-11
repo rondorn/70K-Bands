@@ -121,7 +121,7 @@
 "Can not hide all statuses" = "Es können nicht alle Stati ausgeblendet werden"; //help text
 "Clear All Filters" = "Alle Filter löschen"; //menu choice
 "Show All Events" = "Alle Veranstaltungen anzeigen"; //menu choice
-"Show Flaged Events Only" = "Nur markierte Veranstaltungen anzeigen"; //menu choice
+"Show Flagged Events Only" = "Nur markierte Veranstaltungen anzeigen"; //menu choice
 "Show Only Events Flagged As Attending" = "Nur Veranstaltungen anzeigen, die mit Teilnahme markiert sind"; //help text
 
 //venue filters

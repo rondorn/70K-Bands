@@ -1,101 +1,141 @@
 package com.Bands70k;
 
+import static com.Bands70k.staticVariables.context;
+
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.PopupMenu;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.view.MenuCompat;
 
-public class FilterButtonHandler {
+import java.lang.reflect.Field;
 
+//public class FilterButtonHandler {
+public class FilterButtonHandler extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     public Button filterMenuButton;
 
     public void setUpFiltersButton(showBands showBands){
 
         filterMenuButton = (Button) showBands.findViewById(R.id.FilerMenu);
+
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View context) {
 
-                PopupMenu popup = new PopupMenu(context.getContext(), filterMenuButton);
-                popup.inflate(R.menu.filters_menu);
+                PopupWindow popupWindow = new PopupWindow(showBands);
+                LayoutInflater inflater = (LayoutInflater) staticVariables.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+                View view = inflater.inflate(R.layout.filter_choices_menu_layout, null);
+
+                popupWindow.setFocusable(true);
+                popupWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
+                popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+                popupWindow.setContentView(view);
+                //popupWindow.setBackgroundDrawable(null);
+
+                popupWindow.showAsDropDown(filterMenuButton, 0, 0);
+
+
+                //Drawable mustSeeFilerIcon = getDrawable(R.drawable.icon_going_yes);
+                //ImageView mustSeeFilerIconViewer = (ImageView) findViewById(R.id.mustSeeFilterIcon);
+
+                //mustSeeFilerIconViewer.setImageDrawable(mustSeeFilerIcon);
+
+                /*
+                PopupMenu popup = new PopupMenu(showBands, filterMenuButton);
+
+                popup.getMenuInflater().inflate(R.menu.filters_menu, popup.getMenu());
+
+                //popup.show();//showing popup menu
+
+                //popup.inflate(R.menu.filters_menu);
+
                 if (android.os.Build.VERSION.SDK_INT >= 29) {
                     popup.setForceShowIcon(true);
                 }
-
-                //popup.getMenu().add(Menu.NONE, 1, Menu.NONE, "test");
-                //popup.getMenu().add(Menu.NONE, 2, Menu.NONE, "test3");
-                //popup.setOnMenuItemClickListener(popup);
                 popup.show();
 
-                popup.show();
-                MenuCompat.setGroupDividerEnabled(popup.getMenu(), true);
+                Integer counter = 0;
+                Log.d("FilterpopupMenuChoice", "Starting Work on menu item" + popup.getMenu().getItem(counter) );
+                try {
+                    while (popup.getMenu().getItem(counter) != null) {
+                        MenuItem menu_item = popup.getMenu().getItem(counter);
+                        String optiontitle = String.valueOf(menu_item.getTitle());
+                        Log.d("FilterpopupMenuChoice", "Working on menu item" + optiontitle);
+                        onMenuItemClick(menu_item);
+                        SpannableString newMenuItemTitle = new SpannableString(menu_item.getTitle() + "\n       ");
+                        Drawable icon = menu_item.getIcon();
+                        if (icon != null) {
+                            icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+                            ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BASELINE);
+                            Integer startPoint = menu_item.getTitle().length() + 3;
+                            Integer endPoint = startPoint + 3;
+                            newMenuItemTitle.setSpan(span, startPoint, endPoint, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+                            Log.d("FilterpopupMenuChoice", "new menu title is " + newMenuItemTitle + " " + String.valueOf(startPoint) + " " + String.valueOf(endPoint));
 
-                MenuItem item = popup.getMenu().getItem(0);
-                //item.getActionView().setBackgroundResource(R.drawable.default_text_color);
+                            //menu_item.setTitle(newMenuItemTitle);
+                            //menu_item.setIcon(null);
 
-                //setBackgroundResource(R.color.common_google_signin_btn_text_dark_disabled);
+                        }
 
-                Toast.makeText(context.getContext(),
-                        item.getTitle() + " ", Toast.LENGTH_SHORT).show();
+                        counter = counter + 1;
+                    }
+                }catch (Exception error){
+                    Log.d("FilterpopupMenuChoice", "It blew up " + error.getMessage() + " " + error.getStackTrace());
+                }
+                */
+            }
 
 
-                //testMethod(showBands);
+        });
+    }
+
+
+    public void establishedChoiceListener(MenuItem menu_item){
+
+        menu_item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //FilterButtonHandler.onFilterMenuSelect(menu_item);
+                return true;
+            }
+        });
+    }
+    public void testMethod2(showBands showBands){
+
+            // Initialize the PopupMenu
+
+        filterMenuButton.setBackgroundColor(Color.BLACK);
+        filterMenuButton.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View context) {
+
             }
         });
 
     }
 
-    public void testMethod2(showBands showBands){
-        /*
-        final showBands.WindowManager windowManager = (WindowManager) mContext.getSystemService(
-                Context.WINDOW_SERVICE);
-        final Display display = windowManager.getDefaultDisplay();
-        final Point displaySize = new Point();
-
-        if (Build.VERSION.SDK_INT >= 17) {
-            display.getRealSize(displaySize);
-        } else if (Build.VERSION.SDK_INT >= 13) {
-            display.getSize(displaySize);
-        } else {
-            displaySize.set(display.getWidth(), display.getHeight());
-        }
-
-        final int smallestWidth = Math.min(displaySize.x, displaySize.y);
-        final int minSmallestWidthCascading = mContext.getResources().getDimensionPixelSize(
-                R.dimen.abc_cascading_menus_min_smallest_width);
-        final boolean enableCascadingSubmenus = smallestWidth >= minSmallestWidthCascading;
-
-        final MenuPopup popup;
-        if (enableCascadingSubmenus) {
-            popup = new CascadingMenuPopup(mContext, mAnchorView, mPopupStyleAttr,
-                    mPopupStyleRes, mOverflowOnly);
-        } else {
-            popup = new StandardMenuPopup(mContext, mMenu, mAnchorView, mPopupStyleAttr,
-                    mPopupStyleRes, mOverflowOnly);
-        }
-
-        // Assign immutable properties.
-        popup.addMenu(mMenu);
-        popup.setOnDismissListener(mInternalOnDismissListener);
-
-        // Assign mutable properties. These may be reassigned later.
-        popup.setAnchorView(mAnchorView);
-        popup.setCallback(mPresenterCallback);
-        popup.setForceShowIcon(mForceShowIcon);
-        popup.setGravity(mDropDownGravity);
-
-        return popup;
-        */
-
-    }
     public void testMethod(showBands showBands){
 
         filterMenuButton = (Button) showBands.findViewById(R.id.FilerMenu);
@@ -103,18 +143,35 @@ public class FilterButtonHandler {
 
         LayoutInflater mInflater = (LayoutInflater) showBands
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View layout = mInflater.inflate(R.layout.activity_show_bands, null); //popup row is item xml
+        View layout = mInflater.inflate(R.layout.filter_choices_menu_layout, null); //popup row is item xml
 
-        layout.measure(View.MeasureSpec.UNSPECIFIED,
-                View.MeasureSpec.UNSPECIFIED);
+        //layout.measure(View.MeasureSpec.UNSPECIFIED,
+        //        View.MeasureSpec.UNSPECIFIED);
         popup = new PopupWindow(layout, FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,true);
 
-        final TextView popupMenuitem = (TextView) layout.findViewById(R.id.FilerMenu);
+        //final TextView popupMenuitem = (TextView) layout.findViewById(R.id.FilerMenu);
         // set click on listner on item where you can close the popup by dismiss()
 
-        popup.showAsDropDown(filterMenuButton,5,5); // filtericon is button name , clicking
+        popup.showAsDropDown(filterMenuButton,0,0); // filtericon is button name , clicking
 
         //popup.dismiss();  // to close popup call this
+    }
+
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.mustSeeFilter:
+                Toast.makeText(context,
+                        "Must See Chosen", Toast.LENGTH_SHORT).show();
+            case R.id.mightSeeFilter:
+                Toast.makeText(context,
+                        "Might See Chosen", Toast.LENGTH_SHORT).show();
+            default:
+                //do nothing
+        }
+
+        return true;
     }
 }
