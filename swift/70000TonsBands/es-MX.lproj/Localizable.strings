@@ -128,7 +128,7 @@
 "Clear All Filters" = "Borrar todos los filtros"; //menu choice
 
 "Show All Events" = "Mostrar todos los eventos"; //menu choice
-"Show Flaged Events Only" = "Mostrar solo eventos marcados"; //menu choice
+"Show Flagged Events Only" = "Mostrar solo eventos marcados"; //menu choice
 "Show Only Events Flagged As Attending" = "Mostrar solo eventos marcados como asistentes"; //help text
 
 //venue filters
