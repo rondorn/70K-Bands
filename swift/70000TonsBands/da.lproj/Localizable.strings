@@ -118,7 +118,7 @@
 "Can not hide all statuses" = "Kan ikke skjule al status";
 "Clear All Filters" = "Clear All Filters";  //menu choice
 "Show All Events" = "Vis alle begivenheder";  //menu choice
-"Show Flaged Events Only" = "Vis kun markerede begivenheder";  //menu choice
+"Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
 "Show Only Events Flagged As Attending" = "Vis kun begivenheder, der er markeret som tilstedeværende"; //help text
 
 //venue filters
