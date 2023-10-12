@@ -92,6 +92,7 @@ public class mainListHandler {
                 }
             }
             Collections.sort(sortableBandNames);
+            Log.d("populateBandInfo", "BandList has this many enties " + String.valueOf(bandList.size()));
             for (String bandName : bandList){
                 if (staticVariables.preferences.getShowWillAttend() == false) {
                     if (bandPresent.contains(bandName) == false) {
@@ -327,18 +328,28 @@ public class mainListHandler {
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
         }
         if (numberOfBands != 0) {
+            staticVariables.showEventButtons = false;
+            staticVariables.showUnofficalEventButtons = false;
+
             displayText = yearDisplay + " " + numberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
+            staticVariables.showEventButtons = false;
+            staticVariables.showUnofficalEventButtons = true;
             displayText = yearDisplay + " " + altNumberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
+            staticVariables.showEventButtons = true;
+            staticVariables.showUnofficalEventButtons = true;
             displayText = yearDisplay + " " + numberOfEvents + " events" + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
         } else {
+            staticVariables.showEventButtons = false;
+            staticVariables.showUnofficalEventButtons = false;
+
             displayText = yearDisplay + " 0 bands";
             staticVariables.staticBandCount = 0;
         }

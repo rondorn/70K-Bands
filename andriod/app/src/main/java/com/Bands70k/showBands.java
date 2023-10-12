@@ -1,8 +1,5 @@
 package com.Bands70k;
 
-import static android.app.ProgressDialog.show;
-import static android.view.View.inflate;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,26 +23,17 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
-//import androidx.appcompat.resources.Compatibility;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.MenuCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-//
-//import android.support.v7.app.AppCompatActivity;
-//import android.os.Bundle;
-//import android.support.v7.widget.PopupMenu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -56,7 +44,6 @@ import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -71,7 +58,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,9 +71,6 @@ import static java.lang.Thread.sleep;
 public class showBands extends Activity {
 
     String notificationTag = "notificationTag";
-
-    private FrameLayout redCircle;
-    private TextView countTextView;
 
     public static String newRootDir = Environment.getExternalStorageDirectory().toString();
 
@@ -809,75 +792,6 @@ public class showBands extends Activity {
         return message;
     }
 
-    public void setupButtonFilters() {
-        /*
-        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
-        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
-
-        if (filterToogle.get(mustSeeIcon) == true) {
-            setMustFilterButton(mustFilterButton, false);
-
-        } else {
-            setMustFilterButton(mustFilterButton, true);
-        }
-
-        ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
-        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
-
-        if (filterToogle.get(mightSeeIcon) == true) {
-            setMightFilterButton(mightFilterButton, false);
-        } else {
-            setMightFilterButton(mightFilterButton, true);
-        }
-
-        ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
-        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
-
-        if (filterToogle.get(wontSeeIcon) == true) {
-            setWontFilterButton(wontFilterButton, false);
-
-        } else {
-            setWontFilterButton(wontFilterButton, true);
-        }
-
-        ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
-        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
-
-        if (filterToogle.get(unknownIcon) == true) {
-            setUnknownFilterButton(unknownFilterButton, false);
-
-        } else {
-            setUnknownFilterButton(unknownFilterButton, true);
-        }
-
-
-         */
-        staticVariables.preferences.saveData();
-    }
-
-    private void setMustFilterButton(ToggleButton filterButton, Boolean setTo) {
-        /*
-        if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
-            staticVariables.preferences.setshowMust(true);
-        } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
-            staticVariables.preferences.setshowMust(false);
-        }
-
-        filterButton.setChecked(setTo);
-        staticVariables.preferences.saveData();
-
-
-        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toogleDisplayFilter(mustSeeIcon);
-            }
-        });
-
-        */
-    }
-
     private void setMightFilterButton(ToggleButton filterButton, Boolean setTo) {
         if (setTo == false) {
             filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
@@ -1078,6 +992,7 @@ public class showBands extends Activity {
         if (bandNames.size() == 0) {
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
+                Log.d("populateBandInfo", "BandList has issues 1");
                 emptyDataMessage = getResources().getString(R.string.data_filter_issue);
             } else {
                 emptyDataMessage = getResources().getString(R.string.waiting_for_data);
@@ -1207,6 +1122,7 @@ public class showBands extends Activity {
             if (counter == 0) {
                 String emptyDataMessage = "";
                 if (unfilteredBandCount > 1) {
+                    Log.d("populateBandInfo", "BandList has issues 2");
                     emptyDataMessage = getResources().getString(R.string.data_filter_issue);
                 } else {
                     emptyDataMessage = getResources().getString(R.string.waiting_for_data);

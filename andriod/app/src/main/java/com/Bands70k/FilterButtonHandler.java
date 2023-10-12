@@ -12,6 +12,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,7 +64,31 @@ public class FilterButtonHandler  {
     }
 
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands){
-        showBands.refreshNewData();
+        showBands.refreshData();
         popupWindow.dismiss();
+    }
+
+    public static void hideMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
+
+        if (sectionType == "TextView") {
+            TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setVisibility(View.GONE);
+        }
+        if (sectionType == "LinearLayout") {
+            LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setVisibility(View.GONE);
+        }
+    }
+
+    public static void showMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
+
+        if (sectionType == "TextView") {
+            TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setVisibility(View.VISIBLE);
+        }
+        if (sectionType == "LinearLayout") {
+            LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setVisibility(View.VISIBLE);
+        }
     }
 }
