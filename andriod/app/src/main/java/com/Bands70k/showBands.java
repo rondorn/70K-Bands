@@ -298,6 +298,8 @@ public class showBands extends Activity {
         FirbaseAsyncUserWrite userDataWriteAsync = new FirbaseAsyncUserWrite();
         userDataWriteAsync.execute();
 
+        setupButtons();
+
         Log.d("startup", "show init start - 10");
 
     }
@@ -744,7 +746,7 @@ public class showBands extends Activity {
         }
     }
 
-    public void setupNoneFilterButtons() {
+    public void setupButtons() {
 
         ImageButton preferencesButton = (ImageButton) findViewById(R.id.preferences);
 
