@@ -422,6 +422,7 @@ public class preferencesHandler {
     }
 
     public void setshowMust(Boolean showMustValue) {
+        //Log.d("Settings", "Setting the showMust value to " + String.valueOf(showMustValue));
         this.showMust = showMustValue;
     }
     public void setshowMight(Boolean showMightValue) {

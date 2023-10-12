@@ -156,8 +156,6 @@ public class staticVariables {
 
     public static final String blueColor = "#5DADE2";
 
-    public static Map<String, Boolean> filterToogle = new HashMap<String, Boolean>();
-
     public static Boolean fileDownloaded = false;
 
     //public static Boolean sortBySchedule = true;
@@ -244,7 +242,7 @@ public class staticVariables {
         if (Build.HARDWARE.contains("golfdish") || preferences.getPointerUrl() == "Testing") {
             isTestingEnv = true;
         }
-
+        /*
         if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.mustSeeIcon, staticVariables.preferences.getShowMust());
         }
@@ -257,7 +255,7 @@ public class staticVariables {
         if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.unknownIcon, staticVariables.preferences.getShowUnknown());
         }
-
+        */
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             rinkVenueIcon = "\u26F8";
         }

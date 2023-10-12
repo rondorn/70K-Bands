@@ -411,26 +411,26 @@ public class mainListHandler {
         Log.d(TAG, "FILTERING - " + rankStore.getRankForBand(bandName) + " " + staticVariables.mustSeeIcon);
 
         if (rankStore.getRankForBand(bandName).equals(staticVariables.mustSeeIcon)){
-            if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == true){
+            if (staticVariables.preferences.getShowMust() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
 
         } else if (rankStore.getRankForBand(bandName).equals(staticVariables.mightSeeIcon)){
-            if (staticVariables.filterToogle.get(staticVariables.mightSeeIcon) == true){
+            if (staticVariables.preferences.getShowMight() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
         } else if (rankStore.getRankForBand(bandName).equals(staticVariables.wontSeeIcon)){
-            if (staticVariables.filterToogle.get(staticVariables.wontSeeIcon) == true){
+            if (staticVariables.preferences.getShowWont() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
         } else {
-            if (staticVariables.filterToogle.get(staticVariables.unknownIcon) == true) {
+            if (staticVariables.preferences.getShowUnknown() == true) {
                 returnValue = true;
             } else {
                 returnValue = false;
