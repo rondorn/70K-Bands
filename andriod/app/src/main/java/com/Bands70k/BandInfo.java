@@ -71,19 +71,19 @@ public class BandInfo {
             staticVariables.staticVariablesInitialize();
             Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.preferences.getShowMust());
 
-            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == false){
+            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == true){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getShowMight() == false){
+            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getShowMight() == true){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.preferences.getShowWont() == false){
+            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.preferences.getShowWont() == true){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.preferences.getShowUnknown() == false){
+            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.preferences.getShowUnknown() == true){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals("")  && staticVariables.preferences.getShowUnknown() == false){
+            } else if (bandRank.equals("")  && staticVariables.preferences.getShowUnknown() == true){
                 filteredBandNames.add(bandName);
             }
         }
