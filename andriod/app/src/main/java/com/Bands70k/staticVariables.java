@@ -185,6 +185,10 @@ public class staticVariables {
     public static Boolean loadingNotes = false;
     public static Boolean schedulingAlert = false;
 
+    public static Boolean showEventButtons = true;
+    public static Boolean showUnofficalEventButtons = true;
+
+
     public static Integer graphicMustSeeAlt = R.drawable.icon_going_yes_alt;
     public static Integer graphicMustSee = R.drawable.icon_going_yes;
     public static Integer graphicMustSeeSmall = R.drawable.icon_going_yes_small;
