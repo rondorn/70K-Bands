@@ -69,21 +69,21 @@ public class BandInfo {
             }
             staticVariables.unfilteredBandCount = staticVariables.unfilteredBandCount + 1;
             staticVariables.staticVariablesInitialize();
-            Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.filterToogle.get(staticVariables.mustSeeIcon));
+            Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.preferences.getShowMust());
 
-            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.filterToogle.get(staticVariables.mustSeeIcon)){
+            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == false){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.filterToogle.get(staticVariables.mightSeeIcon)){
+            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getShowMight() == false){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.filterToogle.get(staticVariables.wontSeeIcon)){
+            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.preferences.getShowWont() == false){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
+            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.preferences.getShowUnknown() == false){
                 filteredBandNames.add(bandName);
 
-            } else if (bandRank.equals("")  && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
+            } else if (bandRank.equals("")  && staticVariables.preferences.getShowUnknown() == false){
                 filteredBandNames.add(bandName);
             }
         }
@@ -102,19 +102,19 @@ public class BandInfo {
         for (String bandName: bandNames){
             String bandRank = rankStore.getRankForBand(bandName);
 
-            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.filterToogle.get(staticVariables.mustSeeIcon)){
+            if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
 
-            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.filterToogle.get(staticVariables.mightSeeIcon)){
+            } else if (bandRank.equals(staticVariables.mightSeeIcon) && staticVariables.preferences.getShowMight() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
 
-            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.filterToogle.get(staticVariables.wontSeeIcon)){
+            } else if (bandRank.equals(staticVariables.wontSeeIcon) && staticVariables.preferences.getShowWont() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
 
-            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
+            } else if (bandRank.equals(staticVariables.unknownIcon) && staticVariables.preferences.getShowUnknown() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
 
-            } else if (bandRank.equals("")  && staticVariables.filterToogle.get(staticVariables.unknownIcon)){
+            } else if (bandRank.equals("")  && staticVariables.preferences.getShowUnknown() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
             }
         }

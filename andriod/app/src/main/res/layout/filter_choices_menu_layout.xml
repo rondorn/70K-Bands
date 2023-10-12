@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content">
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
     android:layout_width="720px"
     android:layout_height="wrap_content"
     android:background="@android:color/black"
@@ -14,7 +14,7 @@
 
     <TextView
         android:id="@+id/clearFilterHeader"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:enabled="false"
@@ -31,14 +31,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:text="@string/clear_all_filters"
         android:textColor="@color/custom_colors"
-        android:textAppearance="?android:textAppearanceMedium" />
+        android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"/>
     <TextView
         android:id="@+id/bandRankingHeader"
         android:layout_width="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:layout_height="wrap_content"
         android:enabled="false"
         android:text="@string/band_ranking_filters"
@@ -49,103 +50,121 @@
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
+
     <LinearLayout
+        android:id="@+id/mustSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
+        android:clickable="true"
+        android:contextClickable="true"
         android:orientation="horizontal">
+
         <TextView
             android:id="@+id/mustSeeFilter"
-            android:clickable="true"
-            android:layout_marginTop="8dp"
-            android:layout_height="wrap_content"
             android:layout_width="230dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
-            android:textColor="@color/custom_colors"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
+            android:text="@string/hide_must_see_items"
             android:textAppearance="?android:textAppearanceMedium"
-            android:text="@string/hide_must_see_items" />
+        android:textStyle="bold"
+            android:textColor="@color/custom_colors" />
 
         <ImageView
             android:id="@+id/mustSeeFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_going_yes_small" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/mightSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
+        android:clickable="true"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/mightSeeFilter"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_might_see_items" />
 
         <ImageView
             android:id="@+id/mightSeeFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_going_maybe_small"/>
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/wontSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:clickable="true"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/wontSeeFilter"
-            android:clickable="true"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
+            android:clickable="false"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_wont_see_items" />
-
         <ImageView
             android:id="@+id/wontSeeFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_going_no_small" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/UnknownSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/unknownSeeFilter"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/hide_unknown_items" />
 
         <ImageView
             android:id="@+id/unknownSeeFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_unknown_small" />
     </LinearLayout>
     <TextView
         android:id="@+id/showOnlyAttendedHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:enabled="false"
         android:text="@string/show_only_flagged_as_attended"
         android:textAppearance="?android:textAppearanceSmall"
@@ -156,33 +175,37 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
     <LinearLayout
+        android:id="@+id/onlyShowAttendedAll"
+        android:clickable="true"
         android:layout_width="720px"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/onlyShowAttended"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/show_flaged_events_only"/>
 
         <ImageView
             android:id="@+id/onlyShowAttendedIcon"
+            android:clickable="false"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_seen_small" />
     </LinearLayout>
     <TextView
         android:id="@+id/sortOptionHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:enabled="false"
         android:text="@string/sort_by_name"
         android:textAppearance="?android:textAppearanceSmall"
@@ -193,33 +216,37 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
     <LinearLayout
+        android:id="@+id/sortOptionAll"
+        android:clickable="true"
         android:layout_width="720px"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/sortOption"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/sort_by_name" />
 
         <ImageView
             android:id="@+id/sortOptionIcon"
+            android:clickable="false"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_sort_az" />
     </LinearLayout>
     <TextView
         android:id="@+id/eventTypeHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:enabled="false"
         android:text="@string/event_type_filters"
         android:textAppearance="?android:textAppearanceSmall"
@@ -230,29 +257,35 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
     <LinearLayout
+        android:id="@+id/meetAndGreetFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/meetAndGreetFilter"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/hide_meet_and_greet_events" />
 
         <ImageView
             android:id="@+id/meetAndGreetFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_meet_and_greet_small" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/specialOtherEventFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
@@ -260,47 +293,55 @@
         <TextView
             android:id="@+id/specialOtherEventFilter"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
+            android:clickable="false"
             android:text="@string/hide_special_other_events" />
 
         <ImageView
             android:id="@+id/specialOtherEventFilterIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:clickable="false"
             android:src="@drawable/icon_all_star_jam_small" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/unofficalEventFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
-            android:id="@+id/unoficalEventFilter"
+            android:id="@+id/unofficalEventFilter"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:clickable="false"
+            android:layout_marginTop="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_unofficial_events" />
 
         <ImageView
-            android:id="@+id/unoficalEventFilterIcon"
+            android:id="@+id/unofficalEventFilterIcon"
+            android:clickable="false"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_unspecified_event" />
     </LinearLayout>
     <TextView
         android:id="@+id/locationFilterHeader"
         android:layout_width="330dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:enabled="false"
         android:text="@string/venueFilterHeader"
         android:textAppearance="?android:textAppearanceSmall"
@@ -311,114 +352,138 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
     <LinearLayout
+        android:id="@+id/loungVenueFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/loungVenueFilter"
+            android:clickable="false"
             android:layout_height="wrap_content"
             android:layout_width="220dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_lounge_events" />
 
         <ImageView
             android:id="@+id/loungVenueFilterIcon"
+            android:clickable="false"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_lounge" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/poolVenueFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/poolVenueFilter"
-            android:clickable="true"
+            android:clickable="false"
             android:layout_height="wrap_content"
             android:layout_width="220dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_pool_events" />
 
         <ImageView
             android:id="@+id/poolVenueFilterIcon"
+            android:clickable="false"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_pool" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/rinkVenueFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
+            android:clickable="false"
             android:id="@+id/rinkVenueFilter"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="220dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
             android:text="@string/hide_rink_events" />
 
         <ImageView
+            android:clickable="false"
             android:id="@+id/rinkVenueFilterIcon"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/ice_rink" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/theaterVenueFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/theaterVenueFilter"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="215dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/hide_theater_events" />
 
         <ImageView
             android:id="@+id/theaterVenueFilterIcon"
+            android:clickable="false"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_theater" />
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/otherVenueFilterAll"
+        android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@android:color/black"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/otherVenueFilter"
+            android:clickable="false"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_width="600px"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
             android:textAppearance="?android:textAppearanceMedium"
+        android:textStyle="bold"
             android:text="@string/hide_other_events" />
 
         <ImageView
             android:id="@+id/otherVenueFilterIcon"
+            android:clickable="false"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:src="@drawable/icon_unknown_small" />
     </LinearLayout>
 </LinearLayout>

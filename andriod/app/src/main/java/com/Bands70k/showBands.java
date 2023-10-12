@@ -287,10 +287,7 @@ public class showBands extends Activity {
         populateBandList();
         Log.d("startup", "show init start - 6");
         showNotification();
-        Log.d("startup", "show init start - 7");
-        setFilterDefaults();
-        Log.d("startup", "show init start - 8");
-        setupButtonFilters();
+
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
 
         Log.d("DisplayListData", "show init start - 9");
@@ -773,176 +770,6 @@ public class showBands extends Activity {
             }
         });
 
-        /*
-        sortButton = (Button) findViewById(R.id.sort);
-        sortButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-
-                setContentView(R.layout.activity_show_bands);
-
-                if (staticVariables.preferences.getSortByTime() == true) {
-                    HelpMessageHandler.showMessage(getString(R.string.SortingAlphabetically));
-                    staticVariables.preferences.setSortByTime(false);
-                } else {
-                    staticVariables.preferences.setSortByTime(true);
-                    HelpMessageHandler.showMessage(getString(R.string.SortingChronologically));
-                }
-                setSortButton();
-                Intent showBandList = new Intent(showBands.this, showBands.class);
-                startActivity(showBandList);
-                finish();
-            }
-        });
-
-        willAttendFilterButton = (Button) findViewById(R.id.willAttendFilter);
-        willAttendFilterButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-                setShowAttendedFilter();
-                Intent showBandList = new Intent(showBands.this, showBands.class);
-                startActivity(showBandList);
-                finish();
-            }
-        });
-
-         */
-    }
-
-    ;
-
-    private void setShowAttendedFilter() {
-
-        /*
-        ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
-
-        if (staticVariables.preferences.getShowWillAttend() == false) {
-            HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterTrueHelp));
-
-            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttended));
-            showAttendedFilterButton.setChecked(true);
-            staticVariables.preferences.setShowWillAttend(true);
-            turnOffMustMightWont();
-
-        } else {
-            HelpMessageHandler.showMessage(getString(R.string.showAttendedFilterFalseHelp));
-
-            showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttendedAlt));
-            showAttendedFilterButton.setChecked(false);
-            staticVariables.preferences.setShowWillAttend(false);
-            setFilterDefaults();
-        }
-
-         */
-
-    }
-
-    private void turnOffMustMightWont() {
-        /*
-        ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
-        mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
-        mustFilterButton.setEnabled(false);
-
-        ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
-        mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
-        mightFilterButton.setEnabled(false);
-
-        ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
-        wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
-        wontFilterButton.setEnabled(false);
-
-        ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
-        unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
-        unknownFilterButton.setEnabled(false);
-
-         */
-    }
-
-    private void setFilterDefaults() {
-
-        /*
-        if (staticVariables.initializedSortButtons == false) {
-
-            staticVariables.initializedSortButtons = true;
-
-            Log.d(TAG, "1 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
-
-            ToggleButton mustFilterButton = (ToggleButton) findViewById(R.id.FilerMenu);
-            if (staticVariables.preferences.getShowMust() == true) {
-                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
-                mustFilterButton.setChecked(false);
-                filterToogle.put(mustSeeIcon, true);
-            } else {
-                mustFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSeeAlt));
-                mustFilterButton.setChecked(true);
-                filterToogle.put(mustSeeIcon, false);
-            }
-
-            ToggleButton mightFilterButton = (ToggleButton) findViewById(R.id.mightSeeFilter);
-            if (staticVariables.preferences.getShowMight() == true) {
-                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
-                mightFilterButton.setChecked(false);
-                filterToogle.put(mightSeeIcon, true);
-            } else {
-                mightFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
-                mightFilterButton.setChecked(true);
-                filterToogle.put(mightSeeIcon, false);
-            }
-
-            ToggleButton wontFilterButton = (ToggleButton) findViewById(R.id.wontSeeFilter);
-            if (staticVariables.preferences.getShowWont() == true) {
-                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
-                wontFilterButton.setChecked(false);
-                filterToogle.put(wontSeeIcon, true);
-            } else {
-                wontFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
-                wontFilterButton.setChecked(true);
-                filterToogle.put(wontSeeIcon, false);
-            }
-
-            ToggleButton unknownFilterButton = (ToggleButton) findViewById(R.id.unknownFilter);
-            if (staticVariables.preferences.getShowUnknown() == true) {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
-                unknownFilterButton.setChecked(false);
-                filterToogle.put(unknownIcon, true);
-            } else {
-                unknownFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
-                unknownFilterButton.setChecked(true);
-                filterToogle.put(unknownIcon, false);
-            }
-
-            Log.d(TAG, "settingFilter for ShowWillAttend is " + staticVariables.preferences.getShowWillAttend());
-          }
-         */
-    }
-
-    private void setShowAttendedFilterButton() {
-        /*
-        ToggleButton showAttendedFilterButton = (ToggleButton) findViewById(R.id.willAttendFilter);
-
-        if (listHandler.numberOfEvents != 0 && staticVariables.showsIwillAttend != 0) {
-            showAttendedFilterButton.setEnabled(true);
-            showAttendedFilterButton.setClickable(true);
-            showAttendedFilterButton.setVisibility(View.VISIBLE);
-
-            if (staticVariables.preferences.getShowWillAttend() == true) {
-                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttended));
-                showAttendedFilterButton.setChecked(true);
-
-                turnOffMustMightWont();
-
-            } else {
-                showAttendedFilterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicAttendedAlt));
-                showAttendedFilterButton.setChecked(false);
-                staticVariables.preferences.setShowWillAttend(false);
-            }
-        } else {
-            showAttendedFilterButton.setEnabled(false);
-            showAttendedFilterButton.setClickable(false);
-            showAttendedFilterButton.setVisibility(View.INVISIBLE);
-            setupButtonFilters();
-
-        }
-
-         */
     }
 
     @Override
@@ -1027,6 +854,7 @@ public class showBands extends Activity {
     }
 
     private void setMustFilterButton(ToggleButton filterButton, Boolean setTo) {
+        /*
         if (setTo == false) {
             filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMustSee));
             staticVariables.preferences.setshowMust(true);
@@ -1045,7 +873,7 @@ public class showBands extends Activity {
             }
         });
 
-
+        */
     }
 
     private void setMightFilterButton(ToggleButton filterButton, Boolean setTo) {
@@ -1117,16 +945,6 @@ public class showBands extends Activity {
         setupSwipeList();
     }
 
-    private void setFilterButton() {
-
-        //if (listHandler.allUpcomingEvents == 0 || staticVariables.preferences.getShowWillAttend() == true) {
-        //    filterButton.setVisibility(View.INVISIBLE);
-        //} else {
-        //    if (staticVariables.preferences.getShowWillAttend() == false) {
-        //        filterButton.setVisibility(View.VISIBLE);
-        //    }
-        //}
-    }
 
     public void refreshNewData() {
 
@@ -1402,7 +1220,6 @@ public class showBands extends Activity {
             //filterButtonHandle.onCreate(null);
             filterButtonHandle.setUpFiltersButton(this);
 
-            setShowAttendedFilterButton();
         }
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
@@ -1413,7 +1230,7 @@ public class showBands extends Activity {
 
 
 
-    private void refreshData() {
+    public void refreshData() {
 
         Log.d("DisplayListData", "called from refreshData");
         displayBandData();
@@ -1433,11 +1250,11 @@ public class showBands extends Activity {
     public void toogleDisplayFilter(String value) {
 
         //Log.d("Value for displayFilter is ", "'" + value + "'");
-        if (filterToogle.get(value) == true) {
-            filterToogle.put(value, false);
-        } else {
-            filterToogle.put(value, true);
-        }
+        //if (filterToogle.get(value) == true) {
+        //    filterToogle.put(value, false);
+        //} else {
+        //    filterToogle.put(value, true);
+        //}
 
         Intent showBands = new Intent(com.Bands70k.showBands.this, com.Bands70k.showBands.class);
         startActivity(showBands);
@@ -1516,12 +1333,10 @@ public class showBands extends Activity {
         }
 
         Log.d(TAG, notificationTag + " In onResume - 5");
-        setupNoneFilterButtons();
-        //setupButtonFilters();
         registerReceiver();
 
         Log.d(TAG, notificationTag + " In onResume - 6");
-        //populateBandList();
+
         Log.d(TAG, notificationTag + " calling showNotification");
         showNotification();
 
@@ -1730,62 +1545,6 @@ public class showBands extends Activity {
             //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.unofficalAlertChannel);
             FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
         }
-    }
-    /*
-    public void setUpFiltersButton(){
-
-        filterMenuButton = (Button) findViewById(R.id.FilerMenu);
-        filterMenuButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View context) {
-                PopupMenu popup = new PopupMenu(context.getContext(), filterMenuButton);
-                popup.inflate(R.menu.filters_menu);
-                if (android.os.Build.VERSION.SDK_INT >= 29) {
-                    popup.setForceShowIcon(true);
-                }
-                popup.show();
-
-                MenuItem item = popup.getMenu().getItem(0);
-                //item.getActionView().setBackgroundResource(R.drawable.default_text_color);
-
-                        //setBackgroundResource(R.color.common_google_signin_btn_text_dark_disabled);
-
-                Toast.makeText(getApplicationContext(),
-                        item.getTitle() + " ", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-    }
-    */
-    public void setSortButton() {
-        /*
-        sortButton = (Button) findViewById(R.id.sort);
-
-        if (listHandler.numberOfEvents != 0) {
-            sortButton.setEnabled(true);
-            sortButton.setClickable(true);
-            sortButton.setVisibility(View.VISIBLE);
-            if (staticVariables.preferences.getSortByTime() == true) {
-                sortButton.setBackground(getResources().getDrawable(staticVariables.graphicAlphaSort));
-                staticVariables.preferences.setSortByTime(true);
-            } else {
-                sortButton.setBackground(getResources().getDrawable(staticVariables.graphicTimeSort));
-                staticVariables.preferences.setSortByTime(false);
-            }
-            if (listHandler.numberOfUnofficalEvents == listHandler.numberOfEvents){
-                sortButton.setEnabled(false);
-                sortButton.setVisibility(View.INVISIBLE);
-                staticVariables.preferences.setSortByTime(true);
-            } else {
-                sortButton.setEnabled(true);
-                sortButton.setVisibility(View.VISIBLE);
-            }
-
-        } else {
-            sortButton.setEnabled(false);
-            sortButton.setVisibility(View.INVISIBLE);
-        }
-
-         */
     }
 
       class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {

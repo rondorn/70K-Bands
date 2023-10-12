@@ -3,29 +3,15 @@ package com.Bands70k;
 import static com.Bands70k.staticVariables.context;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
-import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ImageSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.FrameLayout;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +22,7 @@ import java.lang.reflect.Field;
 //public class FilterButtonHandler {
 public class FilterButtonHandler  {
     public Button filterMenuButton;
+    private PopupWindow popupWindow;
 
     public void setUpFiltersButton(showBands showBands){
 
@@ -44,7 +31,7 @@ public class FilterButtonHandler  {
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View context) {
 
-                PopupWindow popupWindow = new PopupWindow(showBands);
+                popupWindow = new PopupWindow(showBands);
                 LayoutInflater inflater = (LayoutInflater) staticVariables.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
                 View view = inflater.inflate(R.layout.filter_choices_menu_layout, null);
@@ -55,8 +42,28 @@ public class FilterButtonHandler  {
                 popupWindow.setContentView(view);
 
                 popupWindow.showAsDropDown(filterMenuButton, 0, 0);
+
+                MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
+                mustMightHandle.setupMustMightFilters();
+                mustMightHandle.setupMustMightListener(showBands);
+
+                EventFilterHandler eventFilterHandle = new EventFilterHandler(popupWindow);
+                eventFilterHandle.setupEventTypeFilters();
+                eventFilterHandle.setupEventTypeListener(showBands);
+
+                VenueFilterHandler venueFilterHandle = new VenueFilterHandler(popupWindow);
+                venueFilterHandle.setupVenueFilters();
+                venueFilterHandle.setupVenueListener(showBands);
+
+                OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
+                otherFilterHandle.setupOtherFilters();
+                otherFilterHandle.setupEventTypeListener(showBands);
             }
         });
     }
 
+    public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands){
+        showBands.refreshNewData();
+        popupWindow.dismiss();
+    }
 }
