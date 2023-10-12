@@ -1,23 +1,16 @@
 package com.Bands70k;
 
-import android.util.ArraySet;
 import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+
 
 /**
  * Created by rdorn on 5/29/16.
@@ -318,28 +311,35 @@ public class mainListHandler {
         return timeIndex;
     }
 
-    public String getSizeDisplay(){
+    public String getSizeDisplay() {
 
         String displayText = "";
         String yearDisplay = "";
+
+        String filteringText = "";
+
+        Log.d("Setup header Text", String.valueOf(allUpcomingEvents) + " - " + String.valueOf(numberOfEvents));
+        if (Integer.valueOf(numberOfEvents) != 0 && Integer.valueOf(allUpcomingEvents) > Integer.valueOf(numberOfEvents)){
+            filteringText = " (" +   staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+        }
 
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
         }
         if (numberOfBands != 0) {
-            displayText = "70,000 Tons" + yearDisplay + " " + numberOfBands + " bands";
+            displayText = yearDisplay + " " + numberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
-            displayText = "70,000 Tons" + yearDisplay + " " + altNumberOfBands + " bands";
+            displayText = yearDisplay + " " + altNumberOfBands + " bands";
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
-            displayText = "70,000 Tons" + yearDisplay + " " + numberOfEvents + " events";
+            displayText = yearDisplay + " " + numberOfEvents + " events" + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
         } else {
-            displayText = "70,000 Tons" + yearDisplay + " 0 bands";
+            displayText = yearDisplay + " 0 bands";
             staticVariables.staticBandCount = 0;
         }
 
@@ -408,7 +408,6 @@ public class mainListHandler {
 
         Boolean returnValue = true;
 
-        Log.d(TAG, "FILTERING - " + rankStore.getRankForBand(bandName) + " " + staticVariables.mustSeeIcon);
 
         if (rankStore.getRankForBand(bandName).equals(staticVariables.mustSeeIcon)){
             if (staticVariables.preferences.getShowMust() == true){
@@ -437,6 +436,7 @@ public class mainListHandler {
             }
         }
 
+        Log.d(TAG, "FILTERING - " + rankStore.getRankForBand(bandName) + " " + staticVariables.mustSeeIcon + " " + String.valueOf(returnValue));
         return returnValue;
     }
 
