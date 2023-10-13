@@ -28,6 +28,8 @@ public class OtherFilterHandler {
              @Override
              public void onClick(View context) {
 
+                 String message = staticVariables.context.getResources().getString(R.string.clear_all_filters);
+
                  staticVariables.preferences.setShowAlbumListen(true);
                  staticVariables.preferences.setShowClinicEvents(true);
                  staticVariables.preferences.setShowMeetAndGreet(true);
@@ -49,7 +51,7 @@ public class OtherFilterHandler {
 
                  staticVariables.preferences.saveData();
                  setupOtherFilters();
-                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
              }
          });
 
@@ -58,14 +60,17 @@ public class OtherFilterHandler {
         onlyShowAttendedAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowWillAttend() == true) {
+                    message = staticVariables.context.getResources().getString(R.string.show_all_events);
                     staticVariables.preferences.setShowWillAttend(false);
                 } else {
+                    message = staticVariables.context.getResources().getString(R.string.show_only_events_flagged_as_attending);
                     staticVariables.preferences.setShowWillAttend(true);
                 }
                 staticVariables.preferences.saveData();
                 setupOtherFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -73,16 +78,17 @@ public class OtherFilterHandler {
         sortOptionAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getSortByTime() == true) {
                     staticVariables.preferences.setSortByTime(false);
-                    HelpMessageHandler.showMessage(staticVariables.context.getString(R.string.SortingAlphabetically));
+                    message = staticVariables.context.getString(R.string.SortingAlphabetically);
                 } else {
                     staticVariables.preferences.setSortByTime(true);
-                    HelpMessageHandler.showMessage(staticVariables.context.getString(R.string.SortingChronologically));
+                    message = staticVariables.context.getString(R.string.SortingChronologically);
                 }
                 staticVariables.preferences.saveData();
                 setupOtherFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
     }

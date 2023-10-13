@@ -63,7 +63,8 @@ public class FilterButtonHandler  {
         });
     }
 
-    public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands){
+    public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
+        HelpMessageHandler.showMessage(message);
         showBands.refreshData();
         popupWindow.dismiss();
     }

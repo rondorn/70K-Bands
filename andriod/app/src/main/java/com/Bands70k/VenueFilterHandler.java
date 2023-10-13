@@ -24,14 +24,17 @@ public class VenueFilterHandler {
         loungVenueFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowLoungeShows() == true) {
+                    message = staticVariables.context.getString(R.string.lounge_venue_filter_on);
                     staticVariables.preferences.setShowLoungeShows(false);
                 } else {
+                    message = staticVariables.context.getString(R.string.lounge_venue_filter_off);
                     staticVariables.preferences.setShowLoungeShows(true);
                 }
                 staticVariables.preferences.saveData();
                 setupVenueFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -39,14 +42,17 @@ public class VenueFilterHandler {
         poolVenueFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowPoolShows()== true) {
+                    message = staticVariables.context.getString(R.string.pool_venue_filter_on);
                     staticVariables.preferences.setShowPoolShows(false);
                 } else {
+                    message = staticVariables.context.getString(R.string.pool_venue_filter_off);
                     staticVariables.preferences.setShowPoolShows(true);
                 }
                 staticVariables.preferences.saveData();
                 setupVenueFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -54,14 +60,17 @@ public class VenueFilterHandler {
         rinkVenueFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowRinkShows()== true) {
+                    message = staticVariables.context.getString(R.string.rink_venue_filter_on);
                     staticVariables.preferences.setShowRinkShows(false);
                 } else {
+                    message = staticVariables.context.getString(R.string.rink_venue_filter_off);
                     staticVariables.preferences.setShowRinkShows(true);
                 }
                 staticVariables.preferences.saveData();
                 setupVenueFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -70,14 +79,17 @@ public class VenueFilterHandler {
         theaterVenueFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowTheaterShows()== true) {
+                    message = staticVariables.context.getString(R.string.theater_venue_filter_on);
                     staticVariables.preferences.setShowTheaterShows(false);
                 } else {
+                    message = staticVariables.context.getString(R.string.theater_venue_filter_off);
                     staticVariables.preferences.setShowTheaterShows(true);
                 }
                 staticVariables.preferences.saveData();
                 setupVenueFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -85,14 +97,17 @@ public class VenueFilterHandler {
         otherVenueFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowOtherShows() == true) {
+                    message = staticVariables.context.getString(R.string.other_venue_filter_on);
                     staticVariables.preferences.setShowOtherShows(false);
                 } else {
+                    message = staticVariables.context.getString(R.string.other_venue_filter_off);
                     staticVariables.preferences.setShowOtherShows(true);
                 }
                 staticVariables.preferences.saveData();
                 setupVenueFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
     }
