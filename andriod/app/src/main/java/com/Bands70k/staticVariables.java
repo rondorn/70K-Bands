@@ -11,6 +11,7 @@ import android.os.Parcelable;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
 
 
 import java.io.BufferedReader;
@@ -213,6 +214,8 @@ public class staticVariables {
     public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
     public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
     public static Integer graphicGeneralEvent = R.drawable.icon_ship_event;
+
+    public static View snackBarView;
 
     public static Integer currentListPosition = 0;
     public static List<String> currentListForDetails = new ArrayList<String>();

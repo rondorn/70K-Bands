@@ -26,8 +26,12 @@ public class VenueFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowLoungeShows() == true) {
-                    message = staticVariables.context.getString(R.string.lounge_venue_filter_on);
                     staticVariables.preferences.setShowLoungeShows(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setShowLoungeShows(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.lounge_venue_filter_on);
+                    }
                 } else {
                     message = staticVariables.context.getString(R.string.lounge_venue_filter_off);
                     staticVariables.preferences.setShowLoungeShows(true);
@@ -44,8 +48,12 @@ public class VenueFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowPoolShows()== true) {
-                    message = staticVariables.context.getString(R.string.pool_venue_filter_on);
                     staticVariables.preferences.setShowPoolShows(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setShowPoolShows(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.pool_venue_filter_on);
+                    }
                 } else {
                     message = staticVariables.context.getString(R.string.pool_venue_filter_off);
                     staticVariables.preferences.setShowPoolShows(true);
@@ -62,8 +70,12 @@ public class VenueFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowRinkShows()== true) {
-                    message = staticVariables.context.getString(R.string.rink_venue_filter_on);
                     staticVariables.preferences.setShowRinkShows(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setShowRinkShows(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.rink_venue_filter_on);
+                    }
                 } else {
                     message = staticVariables.context.getString(R.string.rink_venue_filter_off);
                     staticVariables.preferences.setShowRinkShows(true);
@@ -81,8 +93,12 @@ public class VenueFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowTheaterShows()== true) {
-                    message = staticVariables.context.getString(R.string.theater_venue_filter_on);
                     staticVariables.preferences.setShowTheaterShows(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setShowTheaterShows(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.theater_venue_filter_on);
+                    }
                 } else {
                     message = staticVariables.context.getString(R.string.theater_venue_filter_off);
                     staticVariables.preferences.setShowTheaterShows(true);
@@ -99,8 +115,12 @@ public class VenueFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowOtherShows() == true) {
-                    message = staticVariables.context.getString(R.string.other_venue_filter_on);
                     staticVariables.preferences.setShowOtherShows(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setShowOtherShows(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.other_venue_filter_on);
+                    }
                 } else {
                     message = staticVariables.context.getString(R.string.other_venue_filter_off);
                     staticVariables.preferences.setShowOtherShows(true);
