@@ -23,17 +23,17 @@ public class MustMightFilterHandler {
         mustFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
-                String status = "None";
+                String message = "";
                 if (staticVariables.preferences.getShowMust() == true) {
-                    status = "On";
+                    message = staticVariables.context.getString(R.string.must_see_filter_on);
                     staticVariables.preferences.setshowMust(false);
                 } else {
                     staticVariables.preferences.setshowMust(true);
-                    status = "Off";
+                    message = staticVariables.context.getString(R.string.must_see_filter_off);
                 }
                 staticVariables.preferences.saveData();
                 setupMustMightFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -41,17 +41,17 @@ public class MustMightFilterHandler {
         mightFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
-                String status = "None";
+                String message = "";
                 if (staticVariables.preferences.getShowMight() == true) {
-                    status = "On";
+                    message = staticVariables.context.getString(R.string.might_see_filter_on);
                     staticVariables.preferences.setshowMight(false);
                 } else {
                     staticVariables.preferences.setshowMight(true);
-                    status = "Off";
+                    message = staticVariables.context.getString(R.string.might_see_filter_off);
                 }
                 staticVariables.preferences.saveData();
                 setupMustMightFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -59,17 +59,17 @@ public class MustMightFilterHandler {
         wontFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
-                String status = "None";
+                String message = "";
                 if (staticVariables.preferences.getShowWont() == true) {
-                    status = "On";
+                    message = staticVariables.context.getString(R.string.wont_see_filter_on);
                     staticVariables.preferences.setshowWont(false);
                 } else {
                     staticVariables.preferences.setshowWont(true);
-                    status = "Off";
+                    message = staticVariables.context.getString(R.string.wont_see_filter_off);
                 }
                 staticVariables.preferences.saveData();
                 setupMustMightFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -78,17 +78,17 @@ public class MustMightFilterHandler {
         unknownFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
-                String status = "None";
+                String message = "";
                 if (staticVariables.preferences.getShowUnknown() == true) {
-                    status = "On";
+                    message = staticVariables.context.getString(R.string.unknown_filter_on);
                     staticVariables.preferences.setshowUnknown(false);
                 } else {
                     staticVariables.preferences.setshowUnknown(true);
-                    status = "Off";
+                    message = staticVariables.context.getString(R.string.unknown_filter_off);
                 }
                 staticVariables.preferences.saveData();
                 setupMustMightFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
     }

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.content.res.AppCompatResources;
 
@@ -24,14 +25,17 @@ public class EventFilterHandler {
         meetAndGreetFilterAll.setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View context) {
+                 String message = "";
                  if (staticVariables.preferences.getShowMeetAndGreet() == true) {
+                     message = staticVariables.context.getResources().getString(R.string.meet_and_greet_event_filter_on);
                      staticVariables.preferences.setShowMeetAndGreet(false);
                  } else {
+                     message = staticVariables.context.getResources().getString(R.string.meet_and_greet_event_filter_off);
                      staticVariables.preferences.setShowMeetAndGreet(true);
                  }
                  staticVariables.preferences.saveData();
                  setupEventTypeFilters();
-                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
              }
          });
 
@@ -40,14 +44,17 @@ public class EventFilterHandler {
         specialOtherEventFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowSpecialEvents() == true) {
+                    message = staticVariables.context.getResources().getString(R.string.special_other_event_filter_on);
                     staticVariables.preferences.setShowSpecialEvents(false);
                 } else {
+                    message = staticVariables.context.getResources().getString(R.string.special_other_event_filter_off);
                     staticVariables.preferences.setShowSpecialEvents(true);
                 }
                 staticVariables.preferences.saveData();
                 setupEventTypeFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
 
@@ -55,14 +62,17 @@ public class EventFilterHandler {
         unofficalEventFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {
+                String message = "";
                 if (staticVariables.preferences.getShowUnofficalEvents() == true) {
+                    message = staticVariables.context.getResources().getString(R.string.unofficial_event_filter_on);
                     staticVariables.preferences.setShowUnofficalEvents(false);
                 } else {
+                    message = staticVariables.context.getResources().getString(R.string.unofficial_event_filter_off);
                     staticVariables.preferences.setShowUnofficalEvents(true);
                 }
                 staticVariables.preferences.saveData();
                 setupEventTypeFilters();
-                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands);
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
     }
