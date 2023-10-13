@@ -67,6 +67,7 @@ public class BandInfo {
             if (bandName.isEmpty()){
                 continue;
             }
+
             staticVariables.unfilteredBandCount = staticVariables.unfilteredBandCount + 1;
             staticVariables.staticVariablesInitialize();
             Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.preferences.getShowMust());
