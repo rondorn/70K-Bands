@@ -25,8 +25,12 @@ public class MustMightFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowMust() == true) {
-                    message = staticVariables.context.getString(R.string.must_see_filter_on);
                     staticVariables.preferences.setshowMust(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setshowMust(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.must_see_filter_on);
+                    }
                 } else {
                     staticVariables.preferences.setshowMust(true);
                     message = staticVariables.context.getString(R.string.must_see_filter_off);
@@ -43,8 +47,12 @@ public class MustMightFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowMight() == true) {
-                    message = staticVariables.context.getString(R.string.might_see_filter_on);
                     staticVariables.preferences.setshowMight(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setshowMight(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.might_see_filter_on);
+                    }
                 } else {
                     staticVariables.preferences.setshowMight(true);
                     message = staticVariables.context.getString(R.string.might_see_filter_off);
@@ -61,8 +69,12 @@ public class MustMightFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowWont() == true) {
-                    message = staticVariables.context.getString(R.string.wont_see_filter_on);
                     staticVariables.preferences.setshowWont(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setshowWont(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.wont_see_filter_on);
+                    }
                 } else {
                     staticVariables.preferences.setshowWont(true);
                     message = staticVariables.context.getString(R.string.wont_see_filter_off);
@@ -80,8 +92,12 @@ public class MustMightFilterHandler {
             public void onClick(View context) {
                 String message = "";
                 if (staticVariables.preferences.getShowUnknown() == true) {
-                    message = staticVariables.context.getString(R.string.unknown_filter_on);
                     staticVariables.preferences.setshowUnknown(false);
+                    if (FilterButtonHandler.blockTurningAllFiltersOn() == true){
+                        staticVariables.preferences.setshowUnknown(true);
+                    } else {
+                        message = staticVariables.context.getString(R.string.unknown_filter_on);
+                    }
                 } else {
                     staticVariables.preferences.setshowUnknown(true);
                     message = staticVariables.context.getString(R.string.unknown_filter_off);

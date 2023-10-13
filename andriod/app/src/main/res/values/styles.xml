@@ -2,9 +2,9 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="android:textColor">@color/custom_colors</item>
+        <!--item name="android:textColor">@color/custom_colors</item>
         <item name="android:listDivider">@android:color/white</item>
-        <item name="android:background">@android:color/black</item>
+        <item name="android:background">@android:color/black</item-->
     </style>
 
     <style name="NavigationView"  parent="Base.Theme.AppCompat">

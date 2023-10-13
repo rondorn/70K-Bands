@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,20 +19,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.lang.reflect.Field;
 
 //public class FilterButtonHandler {
 public class FilterButtonHandler  {
     public Button filterMenuButton;
     private PopupWindow popupWindow;
-
+    private static View messageView;
     public void setUpFiltersButton(showBands showBands){
 
         filterMenuButton = (Button) showBands.findViewById(R.id.FilerMenu);
-
+        messageView = showBands.findViewById(R.id.showBandsView);
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View context) {
-
                 popupWindow = new PopupWindow(showBands);
                 LayoutInflater inflater = (LayoutInflater) staticVariables.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -64,7 +66,10 @@ public class FilterButtonHandler  {
     }
 
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
-        HelpMessageHandler.showMessage(message);
+
+        if (message.isEmpty() == false) {
+            HelpMessageHandler.showSnackMessage(message, messageView, R.id.FilerMenu);
+        }
         showBands.refreshData();
         popupWindow.dismiss();
     }
@@ -92,4 +97,28 @@ public class FilterButtonHandler  {
             menuSection.setVisibility(View.VISIBLE);
         }
     }
+
+    public static Boolean blockTurningAllFiltersOn(){
+
+        Boolean blockChange = false;
+        if (staticVariables.preferences.getShowPoolShows() == false &&
+                staticVariables.preferences.getShowRinkShows() == false &&
+                staticVariables.preferences.getShowOtherShows() == false &&
+                staticVariables.preferences.getShowLoungeShows() == false &&
+                staticVariables.preferences. getShowTheaterShows() == false){
+            blockChange = true;
+            HelpMessageHandler.showSnackMessage(context.getResources().getString(R.string.can_not_hide_all_venues), messageView, R.id.FilerMenu);
+        }
+
+        if (staticVariables.preferences.getShowMust() == false &&
+                staticVariables.preferences.getShowMight() == false &&
+                staticVariables.preferences.getShowWont() == false &&
+                staticVariables.preferences.getShowUnknown() == false ){
+            blockChange = true;
+            HelpMessageHandler.showSnackMessage(context.getResources().getString(R.string.can_not_hide_all_statuses), messageView, R.id.FilerMenu);
+        }
+
+        return blockChange;
+    }
+
 }
