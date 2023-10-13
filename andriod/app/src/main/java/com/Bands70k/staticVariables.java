@@ -187,7 +187,7 @@ public class staticVariables {
 
     public static Boolean showEventButtons = true;
     public static Boolean showUnofficalEventButtons = true;
-
+    public static Boolean filteringInPlace = false;
 
     public static Integer graphicMustSeeAlt = R.drawable.icon_going_yes_alt;
     public static Integer graphicMustSee = R.drawable.icon_going_yes;

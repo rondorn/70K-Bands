@@ -22,7 +22,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break1"
+        android:id="@+id/Brake1"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -46,7 +46,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break2"
+        android:id="@+id/Brake2"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -80,6 +80,11 @@
             android:clickable="false"
             android:src="@drawable/icon_going_yes_small" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/mustBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/mightSeeFilterAll"
         android:layout_width="wrap_content"
@@ -107,6 +112,11 @@
             android:clickable="false"
             android:src="@drawable/icon_going_maybe_small"/>
     </LinearLayout>
+    <TextView
+        android:id="@+id/mightBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/wontSeeFilterAll"
         android:layout_width="wrap_content"
@@ -133,6 +143,11 @@
             android:clickable="false"
             android:src="@drawable/icon_going_no_small" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/wontBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/UnknownSeeFilterAll"
         android:layout_width="wrap_content"
@@ -170,7 +185,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break3"
+        android:id="@+id/Brake3"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -211,7 +226,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break4"
+        android:id="@+id/Brake4"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -252,7 +267,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break5"
+        android:id="@+id/Brake5"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -283,6 +298,11 @@
             android:clickable="false"
             android:src="@drawable/icon_meet_and_greet_small" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/meetAndGreetBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/specialOtherEventFilterAll"
         android:clickable="true"
@@ -310,6 +330,11 @@
             android:clickable="false"
             android:src="@drawable/icon_all_star_jam_small" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/specialEventBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/unofficalEventFilterAll"
         android:clickable="true"
@@ -338,6 +363,11 @@
             android:src="@drawable/icon_unspecified_event" />
     </LinearLayout>
     <TextView
+        android:id="@+id/unofficalEventBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
+    <TextView
         android:id="@+id/locationFilterHeader"
         android:layout_width="330dp"
         android:layout_height="wrap_content"
@@ -347,7 +377,7 @@
         android:textAppearance="?android:textAppearanceSmall"
         android:textColor="@color/custom_colors" />
     <TextView
-        android:id="@+id/break6"
+        android:id="@+id/Brake6"
         android:layout_width="330dp"
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
@@ -378,6 +408,11 @@
             android:layout_marginTop="10dp"
             android:src="@drawable/icon_lounge" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/loungeVenueBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/poolVenueFilterAll"
         android:clickable="true"
@@ -405,6 +440,11 @@
             android:layout_marginTop="10dp"
             android:src="@drawable/icon_pool" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/poolVenueBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/rinkVenueFilterAll"
         android:clickable="true"
@@ -432,6 +472,11 @@
             android:layout_marginTop="10dp"
             android:src="@drawable/ice_rink" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/rinkVenueBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/theaterVenueFilterAll"
         android:clickable="true"
@@ -459,6 +504,11 @@
             android:layout_marginTop="10dp"
             android:src="@drawable/icon_theater" />
     </LinearLayout>
+    <TextView
+        android:id="@+id/theaterVenueBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
     <LinearLayout
         android:id="@+id/otherVenueFilterAll"
         android:clickable="true"
