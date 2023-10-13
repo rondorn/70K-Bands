@@ -65,7 +65,7 @@ func createrFilterMenu( controller: MasterViewController){
     controller.filterMenuButton.menu = menu
     controller.filterMenuButton.showsMenuAsPrimaryAction = true
     controller.filterMenuButton.overrideUserInterfaceStyle = .dark
-    controller.filterMenuButton.setTitleColor(UIColor.white, for: UIControl.State.normal)
+    controller.filterMenuButton.setTitleColor(UIColor.lightGray, for: UIControl.State.normal)
     controller.filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
     controller.filterMenuButton.titleLabel?.font = .systemFont(ofSize: 24.0, weight: .bold)
 }
