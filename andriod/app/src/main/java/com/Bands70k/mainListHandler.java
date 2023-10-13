@@ -5,11 +5,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import androidx.collection.ArraySet;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -55,6 +58,8 @@ public class mainListHandler {
 
         List<String> bandPresent = new ArrayList<String>();
         staticVariables.showsIwillAttend = 0;
+
+        Set<String> allBands = new ArraySet<>();
 
         if (BandInfo.scheduleRecords != null) {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
@@ -123,6 +128,7 @@ public class mainListHandler {
         bandCount.setText(this.getSizeDisplay());
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
+
 
         //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         return sortableBandNames;
@@ -314,15 +320,48 @@ public class mainListHandler {
 
     public String getSizeDisplay() {
 
+        staticVariables.filteringInPlace = false;
         String displayText = "";
         String yearDisplay = "";
 
         String filteringText = "";
 
-        Log.d("Setup header Text", String.valueOf(allUpcomingEvents) + " - " + String.valueOf(numberOfEvents));
-        if (Integer.valueOf(numberOfEvents) != 0 && Integer.valueOf(allUpcomingEvents) > Integer.valueOf(numberOfEvents)){
+        Log.d("Setup header Text Events", String.valueOf(numberOfUnofficalEvents) + " - " + String.valueOf(numberOfEvents));
+        Log.d("Setup header Text Events", String.valueOf(allUpcomingEvents) + " - " + String.valueOf(numberOfEvents));
+        Log.d("Setup header Text Bands", String.valueOf(staticVariables.unfilteredBandCount) + " - " + String.valueOf(numberOfBands) + " - " + String.valueOf(altNumberOfBands));
+        if ((Integer.valueOf(numberOfEvents) != 0 || numberOfUnofficalEvents != numberOfEvents) && Integer.valueOf(allUpcomingEvents) > Integer.valueOf(numberOfEvents)){
             filteringText = " (" +   staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+            staticVariables.filteringInPlace = true;
+            Log.d("Setup header Text Bands", "Filtering in place 1");
+        } else if (Integer.valueOf(numberOfEvents) == 0 && numberOfUnofficalEvents != numberOfEvents) {
+            if (numberOfBands < staticVariables.unfilteredBandCount) {
+                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+                staticVariables.filteringInPlace = true;
+                Log.d("Setup header Text Bands", "Filtering in place 2");
+            } else {
+                staticVariables.filteringInPlace = false;
+            }
+        } else if (Integer.valueOf(numberOfEvents) != 0 && numberOfUnofficalEvents == numberOfEvents) {
+            if (altNumberOfBands < staticVariables.unfilteredBandCount) {
+                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+                staticVariables.filteringInPlace = true;
+                Log.d("Setup header Text Bands", "Filtering in place 3");
+            } else {
+                staticVariables.filteringInPlace = false;
+            }
+        } else if (Integer.valueOf(numberOfEvents) == 0 && numberOfUnofficalEvents == numberOfEvents) {
+            if (altNumberOfBands < staticVariables.unfilteredBandCount) {
+                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+                staticVariables.filteringInPlace = true;
+                Log.d("Setup header Text Bands", "Filtering in place 4");
+            } else {
+                staticVariables.filteringInPlace = false;
+            }
+        } else {
+            staticVariables.filteringInPlace = false;
         }
+
+        Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace));
 
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
@@ -331,13 +370,13 @@ public class mainListHandler {
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = false;
 
-            displayText = yearDisplay + " " + numberOfBands + " bands";
+            displayText = yearDisplay + " " + numberOfBands + " bands" + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = true;
-            displayText = yearDisplay + " " + altNumberOfBands + " bands";
+            displayText = yearDisplay + " " + altNumberOfBands + " bands"+ filteringText;
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {

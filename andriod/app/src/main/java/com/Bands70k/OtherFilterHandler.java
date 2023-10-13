@@ -98,12 +98,12 @@ public class OtherFilterHandler {
 
         if (staticVariables.showEventButtons == true){
             FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break5, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break6, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
@@ -111,21 +111,21 @@ public class OtherFilterHandler {
             FilterButtonHandler.showMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
 
             FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break3, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
 
             FilterButtonHandler.showMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break4, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake4, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
 
         } else {
             FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break5, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break6, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
@@ -133,55 +133,36 @@ public class OtherFilterHandler {
             FilterButtonHandler.hideMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
 
             FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break3, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake3, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
 
             FilterButtonHandler.hideMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break4, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake4, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
         }
-        if (staticVariables.showUnofficalEventButtons == true){
+        //if (staticVariables.showUnofficalEventButtons == true){
             FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break5, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
-        } else {
-            FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break5, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
-        }
+        //} else {
+            //FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
+            //FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
+            //FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+        //}
 
         TextView clearFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.clearFilter);
         TextView clearFilterHeader = (TextView) popupWindow.getContentView().findViewById(R.id.clearFilterHeader);
-        TextView clearFilterbreak1 = (TextView) popupWindow.getContentView().findViewById(R.id.break1);
+        TextView clearFilterBrake1 = (TextView) popupWindow.getContentView().findViewById(R.id.Brake1);
 
-        if (staticVariables.preferences.getShowAlbumListen() == false ||
-            staticVariables.preferences.getShowClinicEvents() == false ||
-            staticVariables.preferences.getShowMeetAndGreet() == false ||
-            staticVariables.preferences.getShowSpecialEvents() == false ||
-            staticVariables.preferences.getShowUnofficalEvents() == false ||
-
-            staticVariables.preferences.getShowMust() == false ||
-            staticVariables.preferences.getShowMight() == false ||
-            staticVariables.preferences.getShowWont() == false ||
-            staticVariables.preferences.getShowUnknown() == false ||
-
-            staticVariables.preferences.getShowLoungeShows() == false ||
-            staticVariables.preferences.getShowPoolShows() == false ||
-            staticVariables.preferences.getShowRinkShows() == false ||
-            staticVariables.preferences.getShowOtherShows() == false ||
-            staticVariables.preferences.getShowMeetAndGreet() == false ||
-                staticVariables.preferences.getAlertOnlyForShowWillAttend() == true
-        ) {
-
-
+        if (staticVariables.filteringInPlace == true) {
             clearFilterText.setVisibility(View.VISIBLE);
             clearFilterHeader.setVisibility(View.VISIBLE);
-            clearFilterbreak1.setVisibility(View.VISIBLE);
+            clearFilterBrake1.setVisibility(View.VISIBLE);
 
         } else {
             clearFilterText.setVisibility(View.GONE);
             clearFilterHeader.setVisibility(View.GONE);
-            clearFilterbreak1.setVisibility(View.GONE);
+            clearFilterBrake1.setVisibility(View.GONE);
 
         }
 
@@ -197,18 +178,18 @@ public class OtherFilterHandler {
             onlyShowAttendedText.setText(R.string.show_only_flagged_as_attended);
 
             FilterButtonHandler.showMenuSection(R.id.bandRankingHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break2, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake2, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.mustSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.mightSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.wontSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.UnknownSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break5, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.break6, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
@@ -220,18 +201,18 @@ public class OtherFilterHandler {
             onlyShowAttendedText.setText(R.string.show_all_events);
 
             FilterButtonHandler.hideMenuSection(R.id.bandRankingHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break2, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake2, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.mustSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.mightSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.wontSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.UnknownSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break5, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.break6, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
