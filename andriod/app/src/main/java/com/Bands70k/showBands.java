@@ -345,7 +345,7 @@ public class showBands extends Activity {
                     if (countryMap.values().contains(country) == false) {
                         String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
                         countryChoice.setText(defaultCountry);
-                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid), findViewById(R.id.showBandsView));
                     }
                     Map<String, String> countryMapRev = new HashMap<String, String>();
                     for (String countryCode : countryMap.keySet()) {
@@ -360,7 +360,7 @@ public class showBands extends Activity {
                     } else {
                         String defaultCountry = countryMap.get(Locale.getDefault().getCountry());
                         countryChoice.setText(defaultCountry);
-                        HelpMessageHandler.showMessage(getString(R.string.country_invalid));
+                        HelpMessageHandler.showMessage(getString(R.string.country_invalid), findViewById(R.id.showBandsView));
                     }
                 }
             });
@@ -563,7 +563,7 @@ public class showBands extends Activity {
                         } else {
                             message = "No Show Is Associated With This Entry";
                         }
-                        HelpMessageHandler.showMessage(message);
+                        HelpMessageHandler.showMessage(message, findViewById(R.id.showBandsView));
                         break;
                 }
 
@@ -747,8 +747,6 @@ public class showBands extends Activity {
             public void onClick(View v) {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
-
-                //HelpMessageHandler.showMessage("Share Button Was Pressed!");
 
                 shareMenuPrompt();
 
