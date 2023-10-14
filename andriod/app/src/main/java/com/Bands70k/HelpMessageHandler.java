@@ -4,8 +4,11 @@ import static com.Bands70k.staticVariables.context;
 
 import android.view.Gravity;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
 public class HelpMessageHandler {
@@ -23,11 +26,16 @@ public class HelpMessageHandler {
         }
     }
 
-    public static void showSnackMessage(String message, View mainView, Integer anchoreView){
+    public static void showMessage(String message, View mainView){
 
-        Snackbar snackbar = Snackbar.make(mainView, message, Snackbar.LENGTH_SHORT);
-        snackbar.setAnchorView(anchoreView);
-        snackbar.show();
+        Snackbar snack = Snackbar.make(mainView, message, Snackbar.LENGTH_SHORT);
+        View view = snack.getView();
+        FrameLayout.LayoutParams params =(FrameLayout.LayoutParams)view.getLayoutParams();
+        params.gravity = Gravity.CENTER;
+        params.setMargins(50,10,50,10);
+        view.setLayoutParams(params);
+        snack.setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_FADE);
+        snack.show();
 
     }
 }
