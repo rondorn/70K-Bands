@@ -68,7 +68,7 @@ public class FilterButtonHandler  {
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
 
         if (message.isEmpty() == false) {
-            HelpMessageHandler.showSnackMessage(message, messageView, R.id.FilerMenu);
+            HelpMessageHandler.showMessage(message, messageView);
         }
         showBands.refreshData();
         popupWindow.dismiss();
@@ -107,7 +107,7 @@ public class FilterButtonHandler  {
                 staticVariables.preferences.getShowLoungeShows() == false &&
                 staticVariables.preferences. getShowTheaterShows() == false){
             blockChange = true;
-            HelpMessageHandler.showSnackMessage(context.getResources().getString(R.string.can_not_hide_all_venues), messageView, R.id.FilerMenu);
+            HelpMessageHandler.showMessage(context.getResources().getString(R.string.can_not_hide_all_venues), messageView);
         }
 
         if (staticVariables.preferences.getShowMust() == false &&
@@ -115,7 +115,7 @@ public class FilterButtonHandler  {
                 staticVariables.preferences.getShowWont() == false &&
                 staticVariables.preferences.getShowUnknown() == false ){
             blockChange = true;
-            HelpMessageHandler.showSnackMessage(context.getResources().getString(R.string.can_not_hide_all_statuses), messageView, R.id.FilerMenu);
+            HelpMessageHandler.showMessage(context.getResources().getString(R.string.can_not_hide_all_statuses), messageView);
         }
 
         return blockChange;
