@@ -89,6 +89,7 @@ func getAlertForListeningEvents()->Bool{
 }
 
 func setAlertForClinicEvents(_ value: Bool){
+    print("Setting alertForClinicEvents to be \(value)")
     alertForClinicEvents = value
 }
 func getAlertForClinicEvents()->Bool{
@@ -307,8 +308,6 @@ func writeFiltersFile(){
 
         prefsString += "promptForAttended:" + boolToString(getPromptForAttended()) + ";"
         
-        prefsString += "sortedBy:" + getSortedBy() + ";"
-        
         prefsString += "artistUrl:" + getArtistUrl() + ";"
         prefsString += "scheduleUrl:" + getScheduleUrl() + ";"
         
@@ -330,8 +329,8 @@ func readFiltersFile(){
     
     print ("Status of getWontSeeOn loading")
     if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
-        print ("lastFilters does not exist")
-        return()
+        establishDefaults()
+        writeFiltersFile()
     }
     
     if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
@@ -363,7 +362,6 @@ func readFiltersFile(){
                 tempCurrentTimeZone = valueArray[1]
             
             case "sortedBy":
-                print ("activly Loading sortedBy = " + valueArray[1])
                 setSortedBy(valueArray[1])
             
             case "hideExpireScheduleData":
@@ -428,10 +426,7 @@ func readFiltersFile(){
                 
             case "minBeforeAlertValue":
                 setMinBeforeAlertValue(Int(valueArray[1]) ?? 10)
-            
-            case "sortedBy":
-                setSortedBy(valueArray[1])
-                
+
             case "artistUrl":
                 setArtistUrl(valueArray[1])
                 
@@ -452,6 +447,36 @@ func readFiltersFile(){
         localNotification.clearNotifications()
         localNotification.addNotifications()
     }
+}
+
+func establishDefaults(){
+    setMustSeeOn(true)
+    setMightSeeOn(true)
+    setWontSeeOn(true)
+    setUnknownSeeOn(true)
+    setShowOnlyWillAttened(false)
+    setSortedBy("time")
+    setHideExpireScheduleData(true)
+    setShowTheaterShows(true)
+    setShowPoolShows(true)
+    setShowRinkShows(true)
+    setShowLoungeShows(true)
+    setShowOtherShows(true)
+    setShowUnofficalEvents(true)
+    setShowSpecialEvents(true)
+    setShowMeetAndGreetEvents(true)
+    setMustSeeAlertValue(true)
+    setMightSeeAlertValue(true)
+    setOnlyAlertForAttendedValue(false)
+    setAlertForShowsValue(true)
+    setAlertForSpecialValue(true)
+    setAlertForMandGValue(false)
+    setAlertForListeningEvents(false)
+    setAlertForClinicEvents(false)
+    setAlertForUnofficalEventsValue(true)
+    setNotesFontSizeLargeValue(false)
+    setPromptForAttended(true)
+    setMinBeforeAlertValue(10)
 }
 
 

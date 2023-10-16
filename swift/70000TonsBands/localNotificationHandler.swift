@@ -34,8 +34,6 @@ class localNoticationHandler {
     
     func willAddToNotifications(_ bandName: String, eventType :String, startTime: String, location:String) -> Bool{
         
-        let mustSeeAlert = getMustSeeAlertValue()
-        let mightSeeAlert = getMightSeeAlertValue()
 
         print ("Checking for alert for bands " + bandName + " ... ", terminator: "")
         
@@ -43,7 +41,9 @@ class localNoticationHandler {
         
         let attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
         
+        print ("Checking for alert for getOnlyAlertForAttendedValue \(getOnlyAlertForAttendedValue())")
         if (getOnlyAlertForAttendedValue() == true){
+            print ("Checking for alert for attendedStatus \(attendedStatus)")
             if (attendedStatus != sawNoneStatus){
                 alertStatus = true
             }
@@ -52,19 +52,19 @@ class localNoticationHandler {
                 alertStatus = true
             }
             if (eventType == showType && getAlertForShowsValue() == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
+                alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
             }
             if (eventType == listeningPartyType && getAlertForListeningEvents() == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
+                alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
             }
             if (eventType == meetAndGreetype && getAlertForMandGValue() == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
+                alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
             }
             if (eventType == clinicType && getAlertForClinicEvents() == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
+                alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
             }
             if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && getAlertForUnofficalEventsValue() == true){
-                alertStatus = checkBandPriority(bandName, mustSeeAlert: mustSeeAlert, mightSeeAlert: mightSeeAlert, attendedStatus:attendedStatus)
+                alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
                 print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
         }
@@ -72,19 +72,16 @@ class localNoticationHandler {
         return alertStatus
     }
     
-    func checkBandPriority (_ bandName: String, mustSeeAlert: Bool, mightSeeAlert: Bool, attendedStatus: String)->Bool{
+    func checkBandPriority (_ bandName: String, attendedStatus: String)->Bool{
         
-        if (mustSeeAlert == true && dataHandle.getPriorityData(bandName) == 1){
-            print("Ok")
+        if (getMustSeeAlertValue() == true && dataHandle.getPriorityData(bandName) == 1){
             return true
         }
-        if (mightSeeAlert == true && dataHandle.getPriorityData(bandName) == 2){
-            print("Ok")
+        if (getMightSeeAlertValue()  == true && dataHandle.getPriorityData(bandName) == 2){
             return true
         }
         
-        if (mustSeeAlert == true && attendedStatus != sawNoneStatus){
-            print("Ok")
+        if (getMustSeeAlertValue() == true && attendedStatus != sawNoneStatus){
             return true
         }
         
@@ -180,7 +177,7 @@ class localNoticationHandler {
                 for bandName in schedule.schedulingData{
                     for startTime in schedule.schedulingData[bandName.0]!{
                         let alertTime = NSDate(timeIntervalSince1970: startTime.0)
-                        print ("Date provided is \(alertTime)")
+                        //print ("Adding notificaiton \(bandName) Date provided is \(alertTime)")
                         if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                             
                             if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
@@ -193,13 +190,10 @@ class localNoticationHandler {
                                 if (addToNoticication == true){
                                     let compareResult = alertTime.compare(NSDate() as Date)
                                     if compareResult == ComparisonResult.orderedDescending {
-                                        
+                                        print ("Adding notificaiton \(alertTextMessage) for \(alertTime)")
                                         getAlertMessage(bandName.0, indexValue: alertTime as Date)
-                                        if #available(iOS 10.0, *) {
-                                            addNotification(message: alertTextMessage, showTime: alertTime)
-                                        } else {
-                                            // Fallback on earlier versions
-                                        }
+                                        addNotification(message: alertTextMessage, showTime: alertTime)
+
                                     }
                                 }
                             }
@@ -210,7 +204,6 @@ class localNoticationHandler {
         }
     }
     
-    @available(iOS 10.0, *)
     func addNotification(message: String, showTime: NSDate) {
         
         if (alertTracker.contains(message) == false){
@@ -221,7 +214,7 @@ class localNoticationHandler {
             
             let alertTime = (Calendar.current as NSCalendar).date(
                 byAdding: .minute,
-                value: minBeforeAlert,
+                value: -minBeforeAlert,
                 to: showTime as Date,
                 options: NSCalendar.Options(rawValue: 0))
             
@@ -242,19 +235,15 @@ class localNoticationHandler {
                 
                 UNUserNotificationCenter.current().add(request)
                 
-                print ("sendLocalAlert! Adding alert \(message) for alert at \(String(describing: alertTime))")
+                print ("sendLocalAlert! Adding alert \(message) for alert at \(alertTimeInSeconds) -n\(getMinBeforeAlertValue())")
             }
         }
         
     }
     
     func clearNotifications(){
-        if #available(iOS 10.0, *) {
-            print ("sendLocalAlert! clearing all alerts")
-            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        } else {
-            UIApplication.shared.cancelAllLocalNotifications()
-        };
+        print ("sendLocalAlert! clearing all alerts")
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         alertTracker = [String]()
     }
 }

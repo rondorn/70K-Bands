@@ -270,6 +270,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         AlertForSpecialEvents.isOn = getAlertForSpecialValue()
         AlertForMeetAndGreets.isOn = getAlertForMandGValue()
         alertForUnofficalEvents.isOn = getAlertForUnofficalEventsValue()
+        AlertForClinic.isOn = getAlertForClinicEvents()
+        AlertForListeningEvent.isOn = getAlertForListeningEvents()
         
         NotesFontSizeLargeSwitch.isOn = getNotesFontSizeLargeValue()
         
