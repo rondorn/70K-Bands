@@ -11,7 +11,6 @@ import Foundation
 import Foundation
 import UIKit
 
-
 func createrFilterMenu( controller: MasterViewController){
     
     if (isMenuVisible(controller: controller) == true){
@@ -22,12 +21,12 @@ func createrFilterMenu( controller: MasterViewController){
     scheduleHandler().populateSchedule()
     
     var activeFilterMenus = [UIMenu]();
-
+    
     if (controller.filterTextNeeded == true && getShowOnlyWillAttened() == false){
         let clearFilters = UIMenu(title: NSLocalizedString("Clear Filters", comment: ""), options: .displayInline, children: createClearAllFilters(controller: controller))
         activeFilterMenus.append(clearFilters)
     }
-
+    
     if (getShowOnlyWillAttened() == false){
         let bandRankFilters = UIMenu(title: NSLocalizedString("Band Ranking Filters", comment: ""), options: .displayInline, children: createMustMightChoices(controller: controller))
         activeFilterMenus.append(bandRankFilters)
@@ -59,10 +58,15 @@ func createrFilterMenu( controller: MasterViewController){
     }
     
     
-    
     let menu = UIMenu(title: "", children: activeFilterMenus)
-
+    
+    
+    //controller.filterMenuButton.addTarget(controller, action: #selector(controller.filterMenuClick), for:UIControl.Event.allEvents);
     controller.filterMenuButton.menu = menu
+    
+    
+    
+    //controller.filterMenuButton.setImage(chevronRight, for: UIControl.State.normal)
     controller.filterMenuButton.showsMenuAsPrimaryAction = true
     controller.filterMenuButton.overrideUserInterfaceStyle = .dark
     controller.filterMenuButton.setTitleColor(UIColor.lightGray, for: UIControl.State.normal)
@@ -102,7 +106,6 @@ func isMenuVisible(controller: MasterViewController) -> Bool {
     if (controller.menuRefreshOverRide == true){
         status = false
     }
-    
     print ("Menu current display is \(status)")
     return status
 }
@@ -127,6 +130,7 @@ func refreshAfterMenuSelected(controller: MasterViewController){
     controller.quickRefresh()
     createrFilterMenu(controller: controller);
     controller.menuRefreshOverRide = false
+    //controller.filterMenuButton.setImage(chevronRight, for: UIControl.State.normal)
 }
 
 func createClearAllFilters(controller: MasterViewController)->[UIAction]{
@@ -413,6 +417,7 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
         if (getMustSeeOn() == true){
             setMustSeeOn(false)
+            
             if (blockTurningAllFiltersOn(controller: controller) == false){
                 ToastMessages(NSLocalizedString("Must See Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
             } else {
@@ -496,3 +501,4 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
     
     return mustMightChoices
 }
+

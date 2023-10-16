@@ -129,7 +129,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
         createrFilterMenu(controller: self);
-        
+     
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -163,6 +163,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     }
     
+    @objc func filterMenuClick(_ sender: UIButton) {
+        print ("FilterMenuButon is \(sender.isSelected)")
+        if (sender.isHeld){
+            //sender.setImage(chevronDown, for: UIControl.State.normal)
+            
+        } else {
+            //sender.setImage(chevronRight, for: UIControl.State.normal)
+            //sender.showsMenuAsPrimaryAction = true
+        }
+    }
+
     func chooseCountry(){
         
         let countryHandle = countryHandler()
@@ -317,26 +328,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         writeFiltersFile()
         refreshDisplayAfterWake();
     }
+    
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
         self.tableView.contentOffset = CGPoint(x: 0, y: 0 - self.tableView.contentInset.top);
-    }
-    
-    @IBAction func menuButtonAction(_ sender: AnyObject) {
-        
-        let secondViewController = self.storyboard?.instantiateViewController(withIdentifier: "sortMenuNavigation")
-        let window = UIApplication.shared.windows[0] as UIWindow
-        UIView.transition(
-            from: window.rootViewController!.view,
-            to: secondViewController!.view,
-            duration: 0.65,
-            options: .transitionCrossDissolve,
-            completion: {
-                finished in window.rootViewController = secondViewController
-        })
+        sender.setImage(chevronRight, for: UIControl.State.normal)
         
     }
-    
+
     
     @objc func showReceivedMessage(_ notification: Notification) {
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
@@ -595,14 +594,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var showEventMenu = false
         
-        if (scheduleReleased == true && (eventCount != unofficalEventCount || eventCount == 0)){
+        if (scheduleReleased == true && (eventCount != unofficalEventCount && unfilteredEventCount > 0)){
             showEventMenu = true
         }
-        if (unfilteredCurrentEventCount == 0 && getHideExpireScheduleData() == true || unfilteredEventCount == unfilteredCruiserEventCount){
+        
+        if (unfilteredEventCount == 0 || unfilteredEventCount == unfilteredCruiserEventCount){
             showEventMenu = false
         }
         
-        print ("Show schedule choices = \(scheduleReleased) = \(eventCount) - \(unofficalEventCount) - \(unfilteredCurrentEventCount) = \(unfilteredEventCount) - \(unfilteredCruiserEventCount)")
+        if ((eventCount - unfilteredCruiserEventCount) == unfilteredEventCount){
+            showEventMenu = false
+        }
+        
+        print ("Show schedule choices = 1-\(scheduleReleased)  2-\(eventCount) 3-\(unofficalEventCount) 4-\(unfilteredCurrentEventCount) 5-\(unfilteredEventCount) 6-\(unfilteredCruiserEventCount) 7-\(showEventMenu)")
         return showEventMenu
     }
     
@@ -636,6 +640,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
         detailShareChoices()
     }
+    
     
     func sendSharedMessage(message: String){
         
@@ -1090,7 +1095,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
 
+
 }
+
 
 extension UITableViewRowAction {
     
