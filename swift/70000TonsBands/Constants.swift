@@ -124,6 +124,9 @@ var bandListIndexCache = 0
 //number of unoffical events
 var unofficalEventCount = 0
 
+let chevronRight = UIImage(systemName: "chevron.right")
+let chevronDown = UIImage(systemName: "chevron.down")
+
 //valid event types
 var showType = "Show"
 var meetAndGreetype = "Meet and Greet"
@@ -352,28 +355,7 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
 }
 
 func setupDefaults() {
-    
-    /*
-    //register Application Defaults
-    let defaults = ["artistUrl": artistUrlDefault,
-                    "scheduleUrl": scheduleUrlDefault,
-                    "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
-                    "onlyAlertForAttended": onlyAlertForAttendedDefault,
-                    "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
-                    "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
-                    "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
-                    "validateScheduleFile": validateScheduleFileDefault, "showSpecial": showSpecialDefault,
-                    "showMandG": showMandGDefault, "showClinics": showClinicsDefault,
-                    "showListening": showListeningDefault, "showPoolShows": showPoolShowsDefault,
-                    "showTheaterShows": showTheaterShowsDefault, "showRinkShows": showRinkShowsDefault,
-                    "showLoungeShows": showLoungeShowsDefault, "showOtherShows": showOtherShowsDefault,
-                    "alertForUnofficalEvents": alertForUnofficalDefault, "showUnofficalEvents" : showUnofficalEventsDefault,
-                    "hideExpireScheduleData": hideExpireScheduleDataDefault, "promptForAttended": promptForAttendedDefault,
-                    "iCloud": iCloudActiveDefault, "notesFontSizeLarge" : notesFontSizeLargeDefault,
-                    "showOnlyWillAttened": showOnlyWillAttenedDefault, "mustSeeOn": mustSeeOnDefault,
-                    "mightSeeOn": mightSeeOnDefault, "wontSeeOn": wontSeeOnDefault, "unknownSeeOn": unknownSeeOnDefault]
-    
-    */
+        
     readFiltersFile()
     setupVenueLocations()
     
@@ -488,3 +470,5 @@ struct cacheVariables {
     static var lastModifiedDate:Date? = nil;
 }
 
+
+ 

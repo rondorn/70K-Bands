@@ -24,6 +24,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.MenuCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -282,9 +283,17 @@ public class showBands extends Activity {
         userDataWriteAsync.execute();
 
         setupButtons();
-
+        checkForNotifcationPermMissions();
         Log.d("startup", "show init start - 10");
 
+    }
+
+    private void checkForNotifcationPermMissions() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(staticVariables.context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS},101);
+            }
+        }
     }
 
     private void getCountry() {
