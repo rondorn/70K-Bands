@@ -233,7 +233,7 @@ public class DetailHtmlGeneration {
         String htmlText = "";
         if (bandNote != "") {
             htmlText += "<br>";
-            htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:10px;font-size:4.0vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+            htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:11px;font-size:4.5vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
         }
 
         return htmlText;
