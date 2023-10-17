@@ -50,8 +50,10 @@ public class OtherFilterHandler {
                  staticVariables.preferences.setShowWillAttend(false);
 
                  staticVariables.preferences.saveData();
+
                  setupOtherFilters();
                  FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
+
              }
          });
 
@@ -71,6 +73,7 @@ public class OtherFilterHandler {
                 staticVariables.preferences.saveData();
                 setupOtherFilters();
                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
+
             }
         });
 

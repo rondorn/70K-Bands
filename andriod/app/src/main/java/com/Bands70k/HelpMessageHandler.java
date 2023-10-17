@@ -28,6 +28,8 @@ public class HelpMessageHandler {
 
     public static void showMessage(String message, View mainView){
 
+        //HelpMessageHandler.showMessage(message);
+
         Snackbar snack = Snackbar.make(mainView, message, Snackbar.LENGTH_SHORT);
         View view = snack.getView();
         FrameLayout.LayoutParams params =(FrameLayout.LayoutParams)view.getLayoutParams();
