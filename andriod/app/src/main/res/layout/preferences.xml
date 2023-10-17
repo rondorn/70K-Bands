@@ -115,7 +115,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/PromptForAttendedStatus"
             android:layout_marginLeft="10dp"
-            android:id="@+id/headerTextExpiredEvents"
+            android:id="@+id/headerTextPromptForAttended"
             android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:gravity="center_horizontal"
             android:textStyle="bold" />
