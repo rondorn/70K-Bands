@@ -61,17 +61,32 @@ public class FilterButtonHandler  {
                 OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
                 otherFilterHandle.setupOtherFilters();
                 otherFilterHandle.setupEventTypeListener(showBands);
+
             }
         });
     }
 
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
 
+        popupWindow.dismiss();
         if (message.isEmpty() == false) {
             HelpMessageHandler.showMessage(message, messageView);
         }
         showBands.refreshData();
-        popupWindow.dismiss();
+        /*
+        MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
+        mustMightHandle.setupMustMightFilters();
+
+        EventFilterHandler eventFilterHandle = new EventFilterHandler(popupWindow);
+        eventFilterHandle.setupEventTypeFilters();
+
+        VenueFilterHandler venueFilterHandle = new VenueFilterHandler(popupWindow);
+        venueFilterHandle.setupVenueFilters();
+
+        OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
+        otherFilterHandle.setupOtherFilters();
+        */
+
     }
 
     public static void hideMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){

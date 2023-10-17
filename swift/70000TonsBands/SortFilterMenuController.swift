@@ -65,19 +65,20 @@ func createrFilterMenu( controller: MasterViewController){
     controller.filterMenuButton.menu = menu
     
     
-    
-    //controller.filterMenuButton.setImage(chevronRight, for: UIControl.State.normal)
     controller.filterMenuButton.showsMenuAsPrimaryAction = true
     controller.filterMenuButton.overrideUserInterfaceStyle = .dark
     controller.filterMenuButton.setTitleColor(UIColor.lightGray, for: UIControl.State.normal)
     controller.filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
     controller.filterMenuButton.titleLabel?.font = .systemFont(ofSize: 24.0, weight: .bold)
+
 }
 
 func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
     
     var blockChange = false
+    
     let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+    
     if (getShowPoolShows() == false &&
         getShowRinkShows() == false &&
         getShowOtherShows() == false &&
@@ -111,7 +112,7 @@ func isMenuVisible(controller: MasterViewController) -> Bool {
 }
 
 func refreshAfterMenuIsGone(controller: MasterViewController){
-    
+    /*
     if #available(iOS 15, *) {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             print ("Working on a delayed refresh")
@@ -122,23 +123,34 @@ func refreshAfterMenuIsGone(controller: MasterViewController){
             print ("Working on a delayed refresh, Done")
         }
     }
+     */
 }
 
-func refreshAfterMenuSelected(controller: MasterViewController){
+func refreshAfterMenuSelected(controller: MasterViewController, message: String){
 
+    //DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+    //    let r = controller.filterMenuButton.gestureRecognizers![4]
+    //    r.touchesBegan([], with: UIEvent())
+    //}
+    
     controller.menuRefreshOverRide = true
     controller.quickRefresh()
     createrFilterMenu(controller: controller);
     controller.menuRefreshOverRide = false
-    //controller.filterMenuButton.setImage(chevronRight, for: UIControl.State.normal)
+    
+    if (message.isEmpty == false){
+        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
+    }
+    
 }
+
 
 func createClearAllFilters(controller: MasterViewController)->[UIAction]{
     
     var clearFilterText = NSLocalizedString("Clear All Filters", comment: "")
     var clearFilterIcon = ""
     let clearFilters = UIAction(title: clearFilterText, image: UIImage(named: clearFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
         
         setShowOnlyWillAttened(false)
         setShowPoolShows(true)
@@ -153,9 +165,8 @@ func createClearAllFilters(controller: MasterViewController)->[UIAction]{
         setMightSeeOn(true)
         setWontSeeOn(true)
         setUnknownSeeOn(true)
-        ToastMessages(clearFilterText).show(controller, cellLocation: visibleLocation, placeHigh: false)
-    
-        refreshAfterMenuSelected(controller: controller)
+
+        refreshAfterMenuSelected(controller: controller, message: clearFilterText)
     }
 
     let clearFilterChoices = [clearFilters]
@@ -165,6 +176,8 @@ func createClearAllFilters(controller: MasterViewController)->[UIAction]{
 
 func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
     
+    var message = "";
+    
     var attendedStatusFilterText = NSLocalizedString("Show All Events", comment: "")
     var attendedStatusFilterIcon = attendedShowIconAlt
     let attendedStatusValue = getShowOnlyWillAttened()
@@ -173,15 +186,14 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
         attendedStatusFilterIcon = attendedShowIcon
     }
     let attendedFilter = UIAction(title: attendedStatusFilterText, image: UIImage(named: attendedStatusFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
         if (attendedStatusValue == true){
             setShowOnlyWillAttened(false)
-            ToastMessages(attendedStatusFilterText).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Show All Events", comment: "")
         } else {
             setShowOnlyWillAttened(true)
-            ToastMessages(NSLocalizedString("Show Only Events Flagged As Attending", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Show Only Events Flagged As Attending", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
 
     let attendedChoices = [attendedFilter]
@@ -199,19 +211,19 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         loungeFilterIcon = loungIcon
     }
     let loungeFilter = UIAction(title: loungeFilterText, image: UIImage(named: loungeFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (showLoungeValue == true){
             setShowLoungeShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Lounge Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Lounge Venue Filter On", comment: "")
             } else {
                 setShowLoungeShows(true)
             }
         } else {
             setShowLoungeShows(true)
-            ToastMessages(NSLocalizedString("Lounge Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Lounge Venue Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     
     var poolFilterText = NSLocalizedString("Show Pool Events", comment: "")
@@ -222,19 +234,19 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         poolFilterIcon = poolIcon
     }
     let poolFilter = UIAction(title: poolFilterText, image: UIImage(named: poolFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (showPoolValue == true){
             setShowPoolShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Pool Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Pool Venue Filter On", comment: "")
             } else {
                 setShowPoolShows(true)
             }
         } else {
             setShowPoolShows(true)
-            ToastMessages(NSLocalizedString("Pool Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Pool Venue Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
 
     var rinkFilterText = NSLocalizedString("Show Rink Events", comment: "")
@@ -245,19 +257,19 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         rinkFilterIcon = iceRinkIcon
     }
     let rinkFilter = UIAction(title: rinkFilterText, image: UIImage(named: rinkFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (showRinkValue == true){
             setShowRinkShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Rink Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Rink Venue Filter On", comment: "")
             } else {
                 setShowRinkShows(true)
             }
         } else {
             setShowRinkShows(true)
-            ToastMessages(NSLocalizedString("Rink Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Rink Venue Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     
     var theaterFilterText = NSLocalizedString("Show Theater Events", comment: "")
@@ -268,19 +280,19 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         theaterFilterIcon = theaterIcon
     }
     let theaterFilter = UIAction(title: theaterFilterText, image: UIImage(named: theaterFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (showTheaterValue == true){
             setShowTheaterShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Theater Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Theater Venue Filter On", comment: "")
             } else {
                 setShowTheaterShows(true)
             }
         } else {
             setShowTheaterShows(true)
-            ToastMessages(NSLocalizedString("Theater Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Theater Venue Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message : message)
     }
     
     var otherFilterText = NSLocalizedString("Show Other Events", comment: "")
@@ -291,19 +303,19 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         otherFilterIcon = unknownIcon
     }
     let otherFilter = UIAction(title: otherFilterText, image: UIImage(named: otherFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (showOtherValue == true){
             setShowOtherShows(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Other Venue Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Other Venue Filter On", comment: "")
             } else {
                 setShowOtherShows(true)
             }
         } else {
             setShowOtherShows(true)
-            ToastMessages(NSLocalizedString("Other Venue Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Other Venue Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message : message)
     }
     
     let venueChoices = [poolFilter, loungeFilter, rinkFilter, theaterFilter, otherFilter]
@@ -324,15 +336,15 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
             currentMeetAndGreetFilterText = NSLocalizedString("Hide Meet & Greet Events", comment: "")
         }
         let meetAndGreet = UIAction(title: currentMeetAndGreetFilterText, image: UIImage(named: currentMeetAndGreetFilterIcon)) { _ in
-            let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+            var message = ""
             if (showMeetAndGreetValue == true){
                 setShowMeetAndGreetEvents(false)
-                ToastMessages(NSLocalizedString("Meet and Greet Event Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Meet and Greet Event Filter On", comment: "")
             } else {
                 setShowMeetAndGreetEvents(true)
-                ToastMessages(NSLocalizedString("Meet and Greet Event Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Meet and Greet Event Filter Off", comment: "")
             }
-            refreshAfterMenuSelected(controller: controller)
+            refreshAfterMenuSelected(controller: controller, message: message)
         }
         eventTypeChoices.append(meetAndGreet)
     }
@@ -346,15 +358,15 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
             specialFilterText = NSLocalizedString("Hide Special/Other Events", comment: "")
         }
         let specialEvents = UIAction(title: specialFilterText, image: UIImage(named: specialFilterIcon)) { _ in
-            let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+            var message = ""
             if (specialEventValue == true){
                 setShowSpecialEvents(false)
-                ToastMessages(NSLocalizedString("Special/Other Event Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Special/Other Event Filter On", comment: "")
             } else {
                 setShowSpecialEvents(true)
-                ToastMessages(NSLocalizedString("Special/Other Event Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Special/Other Event Filter Off", comment: "")
             }
-            refreshAfterMenuSelected(controller: controller)
+            refreshAfterMenuSelected(controller: controller, message: message)
         }
         eventTypeChoices.append(specialEvents)
     }
@@ -367,15 +379,15 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
         cruiserOrganizedFilterText = NSLocalizedString("Hide Unofficial Events", comment: "")
     }
     let cruiserOrganizedEvents = UIAction(title: cruiserOrganizedFilterText, image: UIImage(named: cruiserOrganizedFilterIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (cruiserOrganizedValue == true){
             setShowUnofficalEvents(false)
-            ToastMessages(NSLocalizedString("Unofficial Event Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Unofficial Event Filter On", comment: "")
         } else {
             setShowUnofficalEvents(true)
-            ToastMessages(NSLocalizedString("Unofficial Event Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Unofficial Event Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     eventTypeChoices.append(cruiserOrganizedEvents)
     
@@ -385,19 +397,25 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
 
 func createSortChoice(controller: MasterViewController)->[UIAction]{
     
+    var message = ""
     var sortDirectionIcon = bandIconSort
     var sortDirectionText = NSLocalizedString("Sort By Name", comment: "")
     var sortDirection = "name"
+    //let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
     if (sortedBy == "name"){
         sortDirectionIcon = scheduleIconSort
         sortDirection = "time"
         sortDirectionText = NSLocalizedString("Sort By Time", comment: "")
+        //message = NSLocalizedString("Sorting Chronologically", comment: "")
+        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
     }
     
     let sortChoice = UIAction(title: sortDirectionText, image: UIImage(named: sortDirectionIcon)) { _ in
         sortedBy = sortDirection
         controller.resortBands()
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: "")
+        //message = NSLocalizedString("Sorting Alphabetically", comment: "")
+        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
     }
     
     let sortChoices = [sortChoice]
@@ -414,20 +432,20 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         currentMustSeeText = NSLocalizedString("Hide Must See Items", comment: "")
     }
     let mustSee = UIAction(title: currentMustSeeText, image: UIImage(named: currentMustSeeIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (getMustSeeOn() == true){
             setMustSeeOn(false)
             
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Must See Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Must See Filter On", comment: "")
             } else {
                 setMustSeeOn(true)
             }
         } else {
             setMustSeeOn(true)
-            ToastMessages(NSLocalizedString("Must See Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Must See Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     
     var currentMightSeeIcon = mightSeeIconAlt
@@ -437,19 +455,20 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         currentMightSeeText = NSLocalizedString("Hide Might See Items", comment: "")
     }
     let mightSee = UIAction(title: currentMightSeeText, image: UIImage(named: currentMightSeeIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
+
         if (getMightSeeOn() == true){
             setMightSeeOn(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Might See Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Might See Filter On", comment: "")
             } else {
                 setMightSeeOn(true)
             }
         } else {
             setMightSeeOn(true)
-            ToastMessages(NSLocalizedString("Might See Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Might See Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
 
     var currentWontSeeIcon = wontSeeIconAlt
@@ -459,19 +478,19 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         currentWontSeeText = NSLocalizedString("Hide Wont See Items", comment: "")
     }
     let wontSee = UIAction(title: currentWontSeeText, image: UIImage(named: currentWontSeeIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
         if (getWontSeeOn() == true){
             setWontSeeOn(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Wont See Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Wont See Filter On", comment: "")
             } else {
                 setWontSeeOn(true)
             }
         } else {
             setWontSeeOn(true)
-            ToastMessages(NSLocalizedString("Wont See Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Wont See Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     
     
@@ -482,19 +501,20 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         currentUnknownSeeText = NSLocalizedString("Hide Unknown Items", comment: "")
     }
     let unknownSee = UIAction(title: currentUnknownSeeText, image: UIImage(named: currentUnknownSeeIcon)) { _ in
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+        var message = ""
+       
         if (getUnknownSeeOn() == true){
             setUnknownSeeOn(false)
             if (blockTurningAllFiltersOn(controller: controller) == false){
-                ToastMessages(NSLocalizedString("Unknown Filter On", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+                message = NSLocalizedString("Unknown Filter On", comment: "")
             } else {
                 setUnknownSeeOn(true)
             }
         } else {
             setUnknownSeeOn(true)
-            ToastMessages(NSLocalizedString("Unknown Filter Off", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+            message = NSLocalizedString("Unknown Filter Off", comment: "")
         }
-        refreshAfterMenuSelected(controller: controller)
+        refreshAfterMenuSelected(controller: controller, message: message)
     }
     
     let mustMightChoices = [mustSee, mightSee, wontSee, unknownSee]
