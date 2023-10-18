@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Ship-Event-DeSelect-wBox.png",
+      "filename" : "Ship-Event-DeSelect-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Ship-Event-DeSelect-wBox@2x.png",
+      "filename" : "Ship-Event-DeSelect-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Ship-Event-DeSelect-wBox@2x 1.png",
+      "filename" : "Ship-Event-DeSelect-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

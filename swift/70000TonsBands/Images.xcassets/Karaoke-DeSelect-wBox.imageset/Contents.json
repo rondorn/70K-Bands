@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Karaoke-DeSelect-wBox.png",
+      "filename" : "Karaoke-DeSelect-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Karaoke-DeSelect-wBox@2x.png",
+      "filename" : "Karaoke-DeSelect-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Karaoke-DeSelect-wBox@2x 1.png",
+      "filename" : "Karaoke-DeSelect-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

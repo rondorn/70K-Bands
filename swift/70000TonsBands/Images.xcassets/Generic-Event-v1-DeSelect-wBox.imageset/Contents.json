@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Generic-Event-v1-DeSelect-wBox.png",
+      "filename" : "Generic-Event-v1-DeSelect-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Generic-Event-v1-DeSelect-wBox@2x.png",
+      "filename" : "Generic-Event-v1-DeSelect-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Generic-Event-v1-DeSelect-wBox@2x 1.png",
+      "filename" : "Generic-Event-v1-DeSelect-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

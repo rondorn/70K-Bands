@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Ice-Rink-NotGoing-wBox.png",
+      "filename" : "Ice-Rink-NotGoing-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Ice-Rink-NotGoing-wBox@2x.png",
+      "filename" : "Ice-Rink-NotGoing-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Ice-Rink-NotGoing-wBox@2x 1.png",
+      "filename" : "Ice-Rink-NotGoing-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
