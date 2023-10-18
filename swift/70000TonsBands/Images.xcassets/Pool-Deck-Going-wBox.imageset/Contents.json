@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Pool-Deck-Going-wBox.png",
+      "filename" : "Pool-Deck-Going-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Pool-Deck-Going-wBox@2x.png",
+      "filename" : "Pool-Deck-Going-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Pool-Deck-Going-wBox@2x 1.png",
+      "filename" : "Pool-Deck-Going-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

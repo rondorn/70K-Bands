@@ -37,7 +37,7 @@ public class DetailHtmlGeneration {
                         "<div style='height:20px;font-size:130%;left:0;right:0;'>" +
                         "<center>" + bandName + "</center>" + "</div>" +
                         "<div style='width=100%;left:0;right:0;'>" +
-                        "<center><img " + imageSetup + " Id=bandLogo src='" + htmlImage + "'/></center></div>";
+                        "<center><img " + imageSetup + " Id=bandLogo style='max-width: 100%;max-height: 100%;' src='" + htmlImage + "'/></center></div>";
 
         Log.d("tileLogohtmlData", "tile Logo html Data is :" + htmlText);
 
