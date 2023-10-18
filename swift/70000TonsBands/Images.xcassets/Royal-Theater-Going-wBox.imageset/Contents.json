@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Royal-Theater-Going-wBox.png",
+      "filename" : "Royal-Theater-Going-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Royal-Theater-Going-wBox@2x.png",
+      "filename" : "Royal-Theater-Going-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Royal-Theater-Going-wBox@2x 1.png",
+      "filename" : "Royal-Theater-Going-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

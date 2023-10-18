@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Lounge-NotGoing-wBox.png",
+      "filename" : "Lounge-NotGoing-r2 2.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Lounge-NotGoing-wBox@2x.png",
+      "filename" : "Lounge-NotGoing-r2 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Lounge-NotGoing-wBox@2x 1.png",
+      "filename" : "Lounge-NotGoing-r2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

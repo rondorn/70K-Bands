@@ -979,7 +979,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label hidden="YES" opaque="NO" clearsContextBeforeDrawing="NO" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" text="Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" enabled="NO" adjustsFontForContentSizeCategory="YES" id="Arm-wq-HPj">
-                                            <rect key="frame" x="20" y="0.0" width="374" height="58"/>
+                                            <rect key="frame" x="8" y="0.0" width="398" height="58"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             <accessibility key="accessibilityConfiguration">
                                                 <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
@@ -1163,7 +1163,7 @@
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="Fwj-UL-GKT"/>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="Kpz-lg-bVW"/>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="U98-z7-yu5"/>
-                        <barButtonItem image="icon-share" width="60" style="plain" id="N41-zI-gGY">
+                        <barButtonItem image="icon-share" width="50" style="plain" id="N41-zI-gGY">
                             <inset key="landscapeImageInsets" minX="46" minY="0.0" maxX="40" maxY="0.0"/>
                             <inset key="largeContentSizeImageInsets" minX="0.0" minY="40" maxX="0.0" maxY="40"/>
                             <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -1662,7 +1662,7 @@
         <image name="icon-wiki" width="26.666666030883789" height="16.333333969116211"/>
         <image name="icon-www" width="26.666666030883789" height="26.666666030883789"/>
         <image name="icon-youtube" width="25.333333969116211" height="18.666666030883789"/>
-        <image name="line.horizontal.3.decrease" catalog="system" width="128" height="73"/>
+        <image name="line.horizontal.3.decrease" catalog="system" width="32" height="32"/>
         <systemColor name="darkTextColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
