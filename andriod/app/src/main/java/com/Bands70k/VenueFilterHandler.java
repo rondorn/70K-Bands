@@ -161,8 +161,8 @@ public class VenueFilterHandler {
 
         TextView rinkVenueFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.rinkVenueFilter);
         ImageView rinkVenueFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.rinkVenueFilterIcon);
-        Drawable rinkVenueFilterYes = AppCompatResources.getDrawable(context, R.drawable.ice_rink);
-        Drawable rinkVenueFilterNo = AppCompatResources.getDrawable(context, R.drawable.ice_rink_alt);
+        Drawable rinkVenueFilterYes = AppCompatResources.getDrawable(context, R.drawable.icon_rink);
+        Drawable rinkVenueFilterNo = AppCompatResources.getDrawable(context, R.drawable.icon_rink_alt);
         if (staticVariables.preferences.getShowRinkShows() == true) {
             rinkVenueFilterIcon.setImageDrawable(rinkVenueFilterYes);
             rinkVenueFilterText.setText(R.string.hide_rink_events);
