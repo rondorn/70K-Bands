@@ -76,6 +76,11 @@ public class OtherFilterHandler {
 
             }
         });
+        if (staticVariables.showsIwillAttend == 0){
+            onlyShowAttendedAll.setEnabled(false);
+            TextView onlyShowAttendedFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.onlyShowAttended);
+            onlyShowAttendedFilterText.setEnabled(false);
+        }
 
         LinearLayout sortOptionAll = (LinearLayout) popupWindow.getContentView().findViewById(R.id.sortOptionAll);
         sortOptionAll.setOnClickListener(new View.OnClickListener() {
@@ -158,15 +163,16 @@ public class OtherFilterHandler {
         TextView clearFilterBrake1 = (TextView) popupWindow.getContentView().findViewById(R.id.Brake1);
 
         if (staticVariables.filteringInPlace == true) {
-            clearFilterText.setVisibility(View.VISIBLE);
-            clearFilterHeader.setVisibility(View.VISIBLE);
-            clearFilterBrake1.setVisibility(View.VISIBLE);
+            //clearFilterText.setVisibility(View.VISIBLE);
+            //clearFilterHeader.setVisibility(View.VISIBLE);
+            //clearFilterBrake1.setVisibility(View.VISIBLE);
+            clearFilterText.setEnabled(true);
 
         } else {
-            clearFilterText.setVisibility(View.GONE);
-            clearFilterHeader.setVisibility(View.GONE);
-            clearFilterBrake1.setVisibility(View.GONE);
-
+            //clearFilterText.setVisibility(View.GONE);
+            //clearFilterHeader.setVisibility(View.GONE);
+            //clearFilterBrake1.setVisibility(View.GONE);
+            clearFilterText.setEnabled(false);
         }
 
 

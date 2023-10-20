@@ -22,10 +22,10 @@ func createrFilterMenu( controller: MasterViewController){
     
     var activeFilterMenus = [UIMenu]();
     
-    if (controller.filterTextNeeded == true && getShowOnlyWillAttened() == false){
+    //if (controller.filterTextNeeded == true && getShowOnlyWillAttened() == false){
         let clearFilters = UIMenu(title: NSLocalizedString("Clear Filters", comment: ""), options: .displayInline, children: createClearAllFilters(controller: controller))
         activeFilterMenus.append(clearFilters)
-    }
+    //}
     
     if (getShowOnlyWillAttened() == false){
         let bandRankFilters = UIMenu(title: NSLocalizedString("Band Ranking Filters", comment: ""), options: .displayInline, children: createMustMightChoices(controller: controller))
@@ -128,11 +128,6 @@ func refreshAfterMenuIsGone(controller: MasterViewController){
 
 func refreshAfterMenuSelected(controller: MasterViewController, message: String){
 
-    //DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-    //    let r = controller.filterMenuButton.gestureRecognizers![4]
-    //    r.touchesBegan([], with: UIEvent())
-    //}
-    
     controller.menuRefreshOverRide = true
     controller.quickRefresh()
     createrFilterMenu(controller: controller);
@@ -140,7 +135,7 @@ func refreshAfterMenuSelected(controller: MasterViewController, message: String)
     
     if (message.isEmpty == false){
         let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
-        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
     }
     
 }
@@ -168,7 +163,10 @@ func createClearAllFilters(controller: MasterViewController)->[UIAction]{
 
         refreshAfterMenuSelected(controller: controller, message: clearFilterText)
     }
-
+    
+    if (controller.filterTextNeeded == false){
+        clearFilters.attributes = .disabled
+    }
     let clearFilterChoices = [clearFilters]
     
     return clearFilterChoices
@@ -196,6 +194,10 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller, message: message)
     }
 
+    if (attendingCount == 0){
+        attendedFilter.attributes = .disabled
+    }
+    
     let attendedChoices = [attendedFilter]
     
     return attendedChoices
