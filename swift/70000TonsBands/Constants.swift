@@ -41,6 +41,7 @@ var eventCounterUnoffical = 0
 var iCloudDataisLoading = false;
 var iCloudDataisSaving = false;
 var numberOfFilteredRecords = 0;
+var readingBandFile = false;
 
 var currentBandList = [String]()
 
