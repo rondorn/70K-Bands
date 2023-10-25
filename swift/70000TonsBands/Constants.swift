@@ -43,6 +43,9 @@ var iCloudDataisSaving = false;
 var numberOfFilteredRecords = 0;
 var readingBandFile = false;
 
+
+var refreshAfterMenuIsGoneFlag = false
+
 var currentBandList = [String]()
 
 var downloadingAllComments = false
