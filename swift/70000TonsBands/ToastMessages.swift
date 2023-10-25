@@ -48,7 +48,7 @@ class ToastMessages : UILabel {
         var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
         
         if (placeHigh == true){
-            heightOffSet = 100
+            heightOffSet = 0
         }
         
         print ("heightOffSet is \(heightOffSet)")

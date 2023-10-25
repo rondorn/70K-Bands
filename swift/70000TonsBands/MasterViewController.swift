@@ -100,6 +100,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake), name: NSNotification.Name(rawValue: "RefreshDisplay"), object: nil)
         
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
@@ -418,27 +419,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
-    func quickRefresh(){
-
+    func quickRefresh_Pre(){
         writeFiltersFile()
         
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
-
+            
             self.dataHandle.getCachedData()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             self.bandsByName = self.bands
             ensureCorrectSorting()
             self.attendedHandle.getCachedData()
-            isPerformingQuickLoad = false
             updateCountLable()
-            if (isMenuVisible(controller: self) == false){
-                self.tableView.reloadData()
-            } else {
-                refreshAfterMenuIsGone(controller: self)
-            }
-
+            isPerformingQuickLoad = false
         }
+    }
+    
+    func quickRefresh(){
+        quickRefresh_Pre()
+        self.tableView.reloadData()
+    }
+    
+    @objc func refreshGUI(){
+        self.tableView.reloadData()
     }
     
     @objc func refreshData(){
