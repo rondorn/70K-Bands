@@ -12,20 +12,14 @@ import Foundation
 import UIKit
 
 func createrFilterMenu( controller: MasterViewController){
-    
-    if (isMenuVisible(controller: controller) == true){
-        return
-    }
-    
+        
     print ("Redrawing the filter menu! createrFilterMenu")
     scheduleHandler().populateSchedule()
-    
     var activeFilterMenus = [UIMenu]();
     
-    //if (controller.filterTextNeeded == true && getShowOnlyWillAttened() == false){
-        let clearFilters = UIMenu(title: NSLocalizedString("Clear Filters", comment: ""), options: .displayInline, children: createClearAllFilters(controller: controller))
-        activeFilterMenus.append(clearFilters)
-    //}
+    let clearFilters = UIMenu(title: NSLocalizedString("Clear Filters", comment: ""), options: .displayInline, children: createClearAllFilters(controller: controller))
+    activeFilterMenus.append(clearFilters)
+    
     
     if (getShowOnlyWillAttened() == false){
         let bandRankFilters = UIMenu(title: NSLocalizedString("Band Ranking Filters", comment: ""), options: .displayInline, children: createMustMightChoices(controller: controller))
@@ -60,17 +54,15 @@ func createrFilterMenu( controller: MasterViewController){
     
     let menu = UIMenu(title: "", children: activeFilterMenus)
     
-    
-    //controller.filterMenuButton.addTarget(controller, action: #selector(controller.filterMenuClick), for:UIControl.Event.allEvents);
     controller.filterMenuButton.menu = menu
     
-    
     controller.filterMenuButton.showsMenuAsPrimaryAction = true
+
     controller.filterMenuButton.overrideUserInterfaceStyle = .dark
     controller.filterMenuButton.setTitleColor(UIColor.lightGray, for: UIControl.State.normal)
     controller.filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
     controller.filterMenuButton.titleLabel?.font = .systemFont(ofSize: 24.0, weight: .bold)
-
+    
 }
 
 func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
@@ -85,7 +77,7 @@ func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
         getShowLoungeShows() == false &&
         getShowTheaterShows() == false){
         blockChange = true
-        ToastMessages(NSLocalizedString("Can not hide all venues", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        ToastMessages(NSLocalizedString("Can not hide all venues", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: true)
     }
     
     if (getMustSeeOn() == false &&
@@ -93,7 +85,7 @@ func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
         getWontSeeOn() == false &&
         getUnknownSeeOn() == false){
         blockChange = true
-        ToastMessages(NSLocalizedString("Can not hide all statuses", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        ToastMessages(NSLocalizedString("Can not hide all statuses", comment: "")).show(controller, cellLocation: visibleLocation, placeHigh: true)
     }
      
     return blockChange
@@ -112,30 +104,44 @@ func isMenuVisible(controller: MasterViewController) -> Bool {
 }
 
 func refreshAfterMenuIsGone(controller: MasterViewController){
-    /*
+    
     if #available(iOS 15, *) {
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            print ("Working on a delayed refresh")
-            while(controller.filterMenuButton.isHeld == true){
-                sleep(1)
+        if (refreshAfterMenuIsGoneFlag == false){
+            refreshAfterMenuIsGoneFlag = true
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                print ("Working on a delayed refresh")
+                while(controller.filterMenuButton.isHeld == true){
+                    usleep(100000)
+                }
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshGUI"), object: nil)
+                print ("Working on a delayed refresh, Done")
+                refreshAfterMenuIsGoneFlag = false
             }
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-            print ("Working on a delayed refresh, Done")
         }
     }
-     */
 }
 
 func refreshAfterMenuSelected(controller: MasterViewController, message: String){
-
+    
+    
     controller.menuRefreshOverRide = true
-    controller.quickRefresh()
-    createrFilterMenu(controller: controller);
+    writeFiltersFile()
+    
+    createrFilterMenu(controller: controller)
+    refreshAfterMenuIsGone(controller: controller)
+    controller.quickRefresh_Pre()
     controller.menuRefreshOverRide = false
     
     if (message.isEmpty == false){
-        let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
-        ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
+        var visibleLocation: CGRect
+        if #available(iOS 16.0, *) {
+            var location = controller.filterMenuButton.anchorPoint
+            visibleLocation = CGRect(origin: location, size: controller.mainTableView.bounds.size)
+        } else {
+            visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+
+        }
+        ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: true)
     }
     
 }
@@ -164,10 +170,22 @@ func createClearAllFilters(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller, message: clearFilterText)
     }
     
-    if (controller.filterTextNeeded == false){
-        clearFilters.attributes = .disabled
+    if #available(iOS 16.0, *) {
+    
+        if (controller.filterTextNeeded == false){
+            clearFilters.attributes = [.disabled, .keepsMenuPresented]
+        } else {
+            clearFilters.attributes = .keepsMenuPresented
+        }
+        
+    } else {
+        if (controller.filterTextNeeded == false){
+            clearFilters.attributes = [.disabled]
+        }
     }
+    
     let clearFilterChoices = [clearFilters]
+    
     
     return clearFilterChoices
 }
@@ -193,10 +211,19 @@ func createAttendedStatusChoices(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
-
-    if (attendingCount == 0){
-        attendedFilter.attributes = .disabled
+ 
+    if #available(iOS 16.0, *) {
+        if (attendingCount == 0){
+            attendedFilter.attributes = [.disabled, .keepsMenuPresented]
+        } else {
+            attendedFilter.attributes = [.keepsMenuPresented]
+        }
+    } else {
+        if (attendingCount == 0){
+            attendedFilter.attributes = .disabled
+        }
     }
+
     
     let attendedChoices = [attendedFilter]
     
@@ -227,6 +254,9 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
+    if #available(iOS 16.0, *) {
+        loungeFilter.attributes = .keepsMenuPresented
+    }
     
     var poolFilterText = NSLocalizedString("Show Pool Events", comment: "")
     var poolFilterIcon = poolIconAlt
@@ -250,7 +280,10 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
-
+    if #available(iOS 16.0, *) {
+        poolFilter.attributes = .keepsMenuPresented
+    }
+    
     var rinkFilterText = NSLocalizedString("Show Rink Events", comment: "")
     var rinkFilterIcon = iceRinkIconAlt
     let showRinkValue = getShowRinkShows()
@@ -273,6 +306,10 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
+    if #available(iOS 16.0, *) {
+        rinkFilter.attributes = .keepsMenuPresented
+    }
+    
     
     var theaterFilterText = NSLocalizedString("Show Theater Events", comment: "")
     var theaterFilterIcon = theaterIconAlt
@@ -296,6 +333,9 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message : message)
     }
+    if #available(iOS 16.0, *) {
+        theaterFilter.attributes = .keepsMenuPresented
+    }
     
     var otherFilterText = NSLocalizedString("Show Other Events", comment: "")
     var otherFilterIcon = unknownIconAlt
@@ -318,6 +358,9 @@ func venueChocies(controller: MasterViewController)->[UIAction]{
             message = NSLocalizedString("Other Venue Filter Off", comment: "")
         }
         refreshAfterMenuSelected(controller: controller, message : message)
+    }
+    if #available(iOS 16.0, *) {
+        otherFilter.attributes = .keepsMenuPresented
     }
     
     let venueChoices = [poolFilter, loungeFilter, rinkFilter, theaterFilter, otherFilter]
@@ -348,6 +391,9 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
             }
             refreshAfterMenuSelected(controller: controller, message: message)
         }
+        if #available(iOS 16.0, *) {
+            meetAndGreet.attributes = .keepsMenuPresented
+        }
         eventTypeChoices.append(meetAndGreet)
     }
 
@@ -370,6 +416,9 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
             }
             refreshAfterMenuSelected(controller: controller, message: message)
         }
+        if #available(iOS 16.0, *) {
+            specialEvents.attributes = .keepsMenuPresented
+        }
         eventTypeChoices.append(specialEvents)
     }
     
@@ -391,6 +440,9 @@ func eventTypeChoices(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
+    if #available(iOS 16.0, *) {
+        cruiserOrganizedEvents.attributes = .keepsMenuPresented
+    }
     eventTypeChoices.append(cruiserOrganizedEvents)
     
     return eventTypeChoices
@@ -403,21 +455,21 @@ func createSortChoice(controller: MasterViewController)->[UIAction]{
     var sortDirectionIcon = bandIconSort
     var sortDirectionText = NSLocalizedString("Sort By Name", comment: "")
     var sortDirection = "name"
-    //let visibleLocation = CGRect(origin: controller.mainTableView.contentOffset, size: controller.mainTableView.bounds.size)
+
     if (sortedBy == "name"){
         sortDirectionIcon = scheduleIconSort
         sortDirection = "time"
         sortDirectionText = NSLocalizedString("Sort By Time", comment: "")
-        //message = NSLocalizedString("Sorting Chronologically", comment: "")
-        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
     }
     
     let sortChoice = UIAction(title: sortDirectionText, image: UIImage(named: sortDirectionIcon)) { _ in
         sortedBy = sortDirection
         controller.resortBands()
         refreshAfterMenuSelected(controller: controller, message: "")
-        //message = NSLocalizedString("Sorting Alphabetically", comment: "")
-        //ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: false)
+    }
+    
+    if #available(iOS 16.0, *) {
+        sortChoice.attributes = .keepsMenuPresented
     }
     
     let sortChoices = [sortChoice]
@@ -450,6 +502,10 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         refreshAfterMenuSelected(controller: controller, message: message)
     }
     
+    if #available(iOS 16.0, *) {
+        mustSee.attributes = .keepsMenuPresented
+    }
+    
     var currentMightSeeIcon = mightSeeIconAlt
     var currentMightSeeText = NSLocalizedString("Show Might See Items", comment: "")
     if (getMightSeeOn() == true){
@@ -472,7 +528,10 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
-
+    if #available(iOS 16.0, *) {
+        mightSee.attributes = .keepsMenuPresented
+    }
+    
     var currentWontSeeIcon = wontSeeIconAlt
     var currentWontSeeText = NSLocalizedString("Show Wont See Items", comment: "")
     if (getWontSeeOn() == true){
@@ -494,7 +553,9 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
         }
         refreshAfterMenuSelected(controller: controller, message: message)
     }
-    
+    if #available(iOS 16.0, *) {
+        wontSee.attributes = .keepsMenuPresented
+    }
     
     var currentUnknownSeeIcon = unknownIconAlt
     var currentUnknownSeeText = NSLocalizedString("Show Unknown Items", comment: "")
@@ -517,6 +578,9 @@ func createMustMightChoices(controller: MasterViewController)->[UIAction]{
             message = NSLocalizedString("Unknown Filter Off", comment: "")
         }
         refreshAfterMenuSelected(controller: controller, message: message)
+    }
+    if #available(iOS 16.0, *) {
+        unknownSee.attributes = .keepsMenuPresented
     }
     
     let mustMightChoices = [mustSee, mightSee, wontSee, unknownSee]
