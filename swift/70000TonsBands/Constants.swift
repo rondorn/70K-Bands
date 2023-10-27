@@ -22,6 +22,8 @@ var PRIORITY = "priority";
 var ATTENDED = "attended";
 var NOTE = "note";
 
+var filterMenu:UIMenu  = UIMenu()
+
 var FCMnumber = "";
 var refreshDataCounter = 0;
 var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
@@ -45,6 +47,7 @@ var readingBandFile = false;
 
 
 var refreshAfterMenuIsGoneFlag = false
+var isFilterMenuVisible = false
 
 var currentBandList = [String]()
 
