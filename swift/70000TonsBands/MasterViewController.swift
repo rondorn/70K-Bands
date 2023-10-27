@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import Firebase
+import DropDown
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
@@ -38,6 +39,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var filterTextNeeded = true;
     var viewableCell = UITableViewCell()
+    
+    var filterMenu = DropDown();
     
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
@@ -102,6 +105,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.setIsMenuVisible), name: NSNotification.Name(rawValue: "isMenuVisible"), object: nil)
+        
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
         
@@ -159,7 +164,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isMenuVisible(controller:self) == false){
             self.tableView.reloadData()
         } else {
-            refreshAfterMenuIsGone(controller: self)
+            //refreshAfterMenuIsGone(controller: self)
         }
 
     }
@@ -325,8 +330,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
         isLoadingBandData = false
-        quickRefresh()
         writeFiltersFile()
+        quickRefresh()
         refreshDisplayAfterWake();
     }
     
@@ -360,9 +365,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     
+    @IBAction func filterMenuButtonPress(_ sender: Any) {
+        
+        if (filterMenuButton.isHeld == false){
+            createrFilterMenu(controller: self)
+            filterMenu.show()
+        } else {
+            filterMenu.hide()
+        }
+    }
+    
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
-
+        createrFilterMenu(controller: self)
     }
     
     @objc func refreshAlerts(){
@@ -444,6 +459,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.tableView.reloadData()
     }
     
+    @objc func setIsMenuVisible(){
+        isFilterMenuVisible = filterMenuButton.isHeld
+    }
+    
     @objc func refreshData(){
         
         print ("Redrawing the filter menu! Not")
@@ -520,7 +539,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.tableView.reloadData()
                     print ("DONE Refreshing data in backgroud 1");
                 } else {
-                    refreshAfterMenuIsGone(controller: self)
+                    //refreshAfterMenuIsGone(controller: self)
                 }
                 refreshDataLock = false;
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
@@ -636,7 +655,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             titleButton.title = String(labeleCounter) + lableCounterString
         }
-        createrFilterMenu(controller: self);
+        //createrFilterMenu(controller: self);
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
@@ -893,7 +912,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (isMenuVisible(controller: self) == false){
             tableView.reloadData()
         } else {
-            refreshAfterMenuIsGone(controller: self)
+            //refreshAfterMenuIsGone(controller: self)
         }
     }
     
@@ -1081,14 +1100,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         setSortedBy(sortedBy)
         
-        let visibleLocation = CGRect(origin: self.mainTableView.contentOffset, size: self.mainTableView.bounds.size)
-        ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: false)
+        let visibleLocation = CGRect(origin: self.filterMenuButton.anchorPoint, size: self.mainTableView.bounds.size)
+        ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: true)
         ensureCorrectSorting()
         updateCountLable()
         if (isMenuVisible(controller: self) == false){
             self.tableView.reloadData()
         } else {
-            refreshAfterMenuIsGone(controller: self)
+            //refreshAfterMenuIsGone(controller: self)
         }
         
     }
