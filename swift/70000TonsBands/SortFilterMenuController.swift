@@ -11,17 +11,12 @@ import Foundation
 import Foundation
 import UIKit
 
-var cellData = [String:CustomListEntry]();
-var controllingView: MasterViewController = MasterViewController()
-
 func createrFilterMenu( controller: MasterViewController){
     
-    controllingView = controller
+    controller.refreshData()
     controller.filterMenu = DropDown()
     controller.filterMenu.anchorView = controller.filterMenuButton
     controller.filterMenu.bottomOffset = CGPoint(x: -20, y:(controller.filterMenu.anchorView?.plainView.bounds.height)!)
-    
-    cellData = [String:CustomListEntry]();
     
     controller.filterMenu.dataSource = [
         "Clear Filters",
@@ -82,57 +77,41 @@ func setupAllEntries(controller: MasterViewController){
     
     controller.filterMenu.customCellConfiguration = { (index: Index, item: String, cell: DropDownCell) -> Void in
         guard var cell = cell as? CustomListEntry else { return }
-        cellData[item] = cell
-    
-        setupHeadersAndMisc(controller: controller, item: item)
-        setupFlaggedOnlylMenuChoices(controller: controller, item: item)
-        setupSortMenuChoices(controller: controller, item: item)
-        setupClearAllMenuChoices(controller: controller, item: item)
-        setupMustMightMenuChoices(controller: controller, item: item)
-        setupEventTypeMenuChoices(controller: controller, item: item)
-        setupVenueMenuChoices(controller: controller, item: item)
+
+        setupHeadersAndMisc(controller: controller, item: item, cellRow: cell)
+        setupFlaggedOnlylMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupSortMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupClearAllMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupMustMightMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupEventTypeMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupVenueMenuChoices(controller: controller, item: item, cellRow: cell)
     }
 }
 
-func setupHeadersAndMisc(controller: MasterViewController, item: String){
+func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
-    if (cellData.keys.contains("Clear Filters") && item == "Clear Filters"){
-        var cellRow = cellData["Clear Filters"]
-        setupCell(header: true, titleText: NSLocalizedString("Clear Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
+    if (item == "Clear Filters"){
+        setupCell(header: true, titleText: NSLocalizedString("Clear Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
-    }
- 
-    if (cellData.keys.contains("Location Header") && item == "Location Header"){
-        var cellRow = cellData["Location Header"]
-        setupCell(header: true, titleText: NSLocalizedString("Location Header", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
-    }
-    
-    if (cellData.keys.contains("Band Ranking Filters") && item == "Band Ranking Filters"){
-        var cellRow = cellData["Band Ranking Filters"]
-        setupCell(header: true, titleText: NSLocalizedString("Band Ranking Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
+    } else if (item == "Location Header"){
+        setupCell(header: true, titleText: NSLocalizedString("Location Header", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
-    }
-
-    if (cellData.keys.contains("Flagged Header") && item == "Flagged Header"){
-        var cellRow = cellData["Flagged Header"]
+    } else if (item == "Band Ranking Filters"){
+        setupCell(header: true, titleText: NSLocalizedString("Band Ranking Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+        
+    } else if (item == "Flagged Header"){
         if (eventCount > 0 && unofficalEventCount != eventCount){
-            setupCell(header: true, titleText: NSLocalizedString("Show Only Flagged As Attended", comment: "") , cellData: cellRow!, imageName: unknownIcon, disabled: false)
+            setupCell(header: true, titleText: NSLocalizedString("Show Only Flagged As Attended", comment: "") , cellData: cellRow, imageName: unknownIcon, disabled: false)
         }
-    }
-
-    if (cellData.keys.contains("Event Type Filters") && item == "Event Type Filters"){
-        var cellRow = cellData["Event Type Filters"]
-        setupCell(header: true, titleText: NSLocalizedString("Event Type Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
-    }
-
-    if (cellData.keys.contains("Sort Header") && item == "Sort Header"){
-        var cellRow = cellData["Sort Header"]
-        setupCell(header: true, titleText: NSLocalizedString("Sorting Options", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
-    }
-
-    if (cellData.keys.contains("Venue Filters") && item == "Venue Filters"){
-        var cellRow = cellData["Venue Filters"]
-        setupCell(header: true, titleText: NSLocalizedString("Venue Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
+        
+    } else if (item == "Event Type Filters"){
+        setupCell(header: true, titleText: NSLocalizedString("Event Type Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+        
+    } else if (item == "Sort Header"){
+        setupCell(header: true, titleText: NSLocalizedString("Sorting Options", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+        
+    } else if (item == "Venue Filters"){
+        setupCell(header: true, titleText: NSLocalizedString("Venue Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
     }
 }
 
@@ -162,14 +141,13 @@ func setupSortResponse(controller: MasterViewController, item: String){
     }
 }
 
-func setupSortMenuChoices(controller: MasterViewController, item: String){
+func setupSortMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
-    if (cellData.keys.contains("Sort By") && item == "Sort By"){
-        var cellRow = cellData["Sort By"]
+    if (item == "Sort By"){
         if (getSortedBy() == "name"){
-            setupCell(header: false, titleText: NSLocalizedString("Sort By Time", comment: "") , cellData: cellRow!, imageName: scheduleIconSort, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Sort By Time", comment: "") , cellData: cellRow, imageName: scheduleIconSort, disabled: false)
         } else {
-            setupCell(header: false, titleText: NSLocalizedString("Sort By Name", comment: "") , cellData: cellRow!, imageName: bandIconSort, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Sort By Name", comment: "") , cellData: cellRow, imageName: bandIconSort, disabled: false)
         }
     }
 }
@@ -192,18 +170,17 @@ func setupFlaggedOnlyResponse(controller: MasterViewController, item: String){
     }
 }
 
-func setupFlaggedOnlylMenuChoices(controller: MasterViewController, item: String){
+func setupFlaggedOnlylMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
-    if (cellData.keys.contains("Flagged Items") && item == "Flagged Items"){
-        var cellRow = cellData["Flagged Items"]
+    if (item == "Flagged Items"){
         if (getShowOnlyWillAttened() == false){
-            setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: ""), cellData: cellRow!, imageName: attendedShowIcon, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: ""), cellData: cellRow, imageName: attendedShowIcon, disabled: false)
         } else {
-            setupCell(header: false, titleText: NSLocalizedString("Show All Events", comment: "") , cellData: cellRow!, imageName: attendedShowIconAlt, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Show All Events", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: false)
         }
         if (attendingCount == 0){
-            cellRow = setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: "") , cellData: cellRow!, imageName: attendedShowIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
     }
 }
@@ -232,15 +209,13 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
     }
 }
 
-func setupClearAllMenuChoices(controller: MasterViewController, item: String){
+func setupClearAllMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
-    if (cellData.keys.contains("Clear All Filters") && item == "Clear All Filters"){
-        var cellRow = cellData["Clear All Filters"]
-
+    if (item == "Clear All Filters"){
         if (controller.filterTextNeeded == true){
-            setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         } else {
-            setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow!, imageName: "", disabled: true)
+            setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow, imageName: "", disabled: true)
         }
     }
     
@@ -322,80 +297,71 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
     }
 }
 
-func setupVenueMenuChoices(controller: MasterViewController, item: String){
+func setupVenueMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
     
-    if (cellData.keys.contains("Pool Venue") && item == "Pool Venue"){
-        var cellRow = cellData["Pool Venue"]
+    if (item == "Pool Venue"){
         var currentIcon = poolIconAlt
         var currentText = NSLocalizedString("Show Pool Events", comment: "")
         if (getShowPoolShows() == true){
             currentIcon = poolIcon
             currentText = NSLocalizedString("Hide Pool Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: poolIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: poolIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Lounge Venue") && item == "Lounge Venue"){
-        var cellRow = cellData["Lounge Venue"]
+        
+    } else if (item == "Lounge Venue"){
         var currentIcon = loungIconAlt
         var currentText = NSLocalizedString("Show Lounge Events", comment: "")
         if (getShowLoungeShows() == true){
             currentIcon = loungIcon
             currentText = NSLocalizedString("Hide Lounge Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: loungIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: loungIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Rink Venue") && item == "Rink Venue"){
-        var cellRow = cellData["Rink Venue"]
+        
+    } else if (item == "Rink Venue"){
         var currentIcon = iceRinkIconAlt
         var currentText = NSLocalizedString("Show Rink Events", comment: "")
         if (getShowRinkShows() == true){
             currentIcon = iceRinkIcon
             currentText = NSLocalizedString("Hide Rink Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: iceRinkIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: iceRinkIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Theater Venue") && item == "Theater Venue"){
-        var cellRow = cellData["Theater Venue"]
+        
+    } else if (item == "Theater Venue"){
         var currentIcon = theaterIconAlt
         var currentText = NSLocalizedString("Show Theater Events", comment: "")
         if (getShowTheaterShows() == true){
             currentIcon = theaterIcon
             currentText = NSLocalizedString("Hide Theater Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: theaterIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: theaterIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Other Venue") && item == "Other Venue"){
-        var cellRow = cellData["Other Venue"]
+        
+    } else if (item == "Other Venue"){
         var currentIcon = unknownIconAlt
         var currentText = NSLocalizedString("Show Other Events", comment: "")
         if (getShowOtherShows() == true){
             currentIcon = unknownIcon
             currentText = NSLocalizedString("Hide Other Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: unknownIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: unknownIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
     }
 }
@@ -460,65 +426,58 @@ func setupMustMightClickResponse(controller: MasterViewController, item: String)
     }
 }
 
-func setupMustMightMenuChoices(controller: MasterViewController, item: String){
+func setupMustMightMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
-    if (cellData.keys.contains("Must See Items") && item == "Must See Items"){
-        var cellRow = cellData["Must See Items"]
+    if (item == "Must See Items"){
         var currentMustSeeIcon = mustSeeIconAlt
         var currentMustSeeText = NSLocalizedString("Show Must See Items", comment: "")
         if (getMustSeeOn() == true){
             currentMustSeeIcon = mustSeeIcon
             currentMustSeeText = NSLocalizedString("Hide Must See Items", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentMustSeeText , cellData: cellRow!, imageName: currentMustSeeIcon, disabled: false)
+        setupCell(header: false, titleText: currentMustSeeText , cellData: cellRow, imageName: currentMustSeeIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentMustSeeText , cellData: cellRow!, imageName: mustSeeIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentMustSeeText , cellData: cellRow, imageName: mustSeeIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Might See Items") && item == "Might See Items"){
-        var cellRow = cellData["Might See Items"]
+        
+    } else if (item == "Might See Items"){
         var currentMightSeeIcon = mightSeeIconAlt
         var currentMightSeeText = NSLocalizedString("Show Might See Items", comment: "")
         if (getMightSeeOn() == true){
             currentMightSeeIcon = mightSeeIcon
             currentMightSeeText = NSLocalizedString("Hide Might See Items", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentMightSeeText , cellData: cellRow!, imageName: currentMightSeeIcon, disabled: false)
+        setupCell(header: false, titleText: currentMightSeeText , cellData: cellRow, imageName: currentMightSeeIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentMightSeeText , cellData: cellRow!, imageName: mightSeeIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentMightSeeText , cellData: cellRow, imageName: mightSeeIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Wont See Items") && item == "Wont See Items"){
-        var cellRow = cellData["Wont See Items"]
+        
+    } else if (item == "Wont See Items"){
         var currentWontSeeIcon = wontSeeIconAlt
         var currentWontSeeText = NSLocalizedString("Show Wont See Items", comment: "")
         if (getWontSeeOn() == true){
             currentWontSeeIcon = wontSeeIcon
             currentWontSeeText = NSLocalizedString("Hide Wont See Items", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentWontSeeText , cellData: cellRow!, imageName: currentWontSeeIcon, disabled: false)
+        setupCell(header: false, titleText: currentWontSeeText , cellData: cellRow, imageName: currentWontSeeIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentWontSeeText , cellData: cellRow!, imageName: wontSeeIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentWontSeeText , cellData: cellRow, imageName: wontSeeIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Unknown Items") && item == "Unknown Items"){
-        var cellRow = cellData["Unknown Items"]
+        
+    } else if (item == "Unknown Items"){
         var currentUnknownIcon = unknownIconAlt
         var currentUnknownText = NSLocalizedString("Show Unknown Items", comment: "")
         if (getUnknownSeeOn() == true){
             currentUnknownIcon = unknownIcon
             currentUnknownText = NSLocalizedString("Hide Unknown Items", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentUnknownText , cellData: cellRow!, imageName: currentUnknownIcon, disabled: false)
+        setupCell(header: false, titleText: currentUnknownText , cellData: cellRow, imageName: currentUnknownIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentUnknownText , cellData: cellRow!, imageName: unknownIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentUnknownText , cellData: cellRow, imageName: unknownIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
     }
 }
@@ -559,55 +518,50 @@ func setupEventTypeClickResponse(controller: MasterViewController, item: String)
     }
 }
 
-func setupEventTypeMenuChoices(controller: MasterViewController, item: String){
+func setupEventTypeMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
     
-    if (cellData.keys.contains("Meet and Greet Events") && item == "Meet and Greet Events"){
-        var cellRow = cellData["Meet and Greet Events"]
+    if (item == "Meet and Greet Events"){
         var currentIcon = meetAndGreetIconAlt
         var currentText = NSLocalizedString("Show Meet & Greet Events", comment: "")
         if (getShowMeetAndGreetEvents() == true){
             currentIcon = meetAndGreetIcon
             currentText = NSLocalizedString("Hide Meet & Greet Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: meetAndGreetIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: meetAndGreetIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Special Events") && item == "Special Events"){
-        var cellRow = cellData["Special Events"]
+        
+    } else if (item == "Special Events"){
         var currentIcon = specialEventTypeIconAlt
         var currentText = NSLocalizedString("Show Special/Other Events", comment: "")
         if (getShowSpecialEvents() == true){
             currentIcon = specialEventTypeIcon
             currentText = NSLocalizedString("Hide Special/Other Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: specialEventTypeIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: specialEventTypeIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
-    }
-    
-    if (cellData.keys.contains("Unoffical Events") && item == "Unoffical Events"){
-        var cellRow = cellData["Unoffical Events"]
+        
+    } else if (item == "Unoffical Events"){
         var currentIcon = unofficalEventTypeIconAlt
         var currentText = NSLocalizedString("Show Unofficial Events", comment: "")
         if (getShowUnofficalEvents() == true){
             currentIcon = unofficalEventTypeIcon
             currentText = NSLocalizedString("Hide Unofficial Events", comment: "")
         }
-        cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: currentIcon, disabled: false)
+        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
-            cellRow = setupCell(header: false, titleText: currentText , cellData: cellRow!, imageName: unofficalEventTypeIconAlt, disabled: true)
-            cellRow?.optionLabel.textColor = UIColor.darkGray
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: unofficalEventTypeIconAlt, disabled: true)
+            cellRow.optionLabel.textColor = UIColor.darkGray
         }
     }
 }
 
-func setupCell(header: Bool, titleText: String, cellData: CustomListEntry, imageName: String, disabled: Bool)->CustomListEntry{
+func setupCell(header: Bool, titleText: String, cellData: CustomListEntry, imageName: String, disabled: Bool){
     var newCell = cellData
     
     if (header == true){
@@ -636,8 +590,6 @@ func setupCell(header: Bool, titleText: String, cellData: CustomListEntry, image
             
         }
     }
-    
-    return newCell
 }
 
 func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{

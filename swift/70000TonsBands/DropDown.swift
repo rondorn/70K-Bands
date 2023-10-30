@@ -1095,20 +1095,6 @@ extension DropDown: UITableViewDataSource, UITableViewDelegate {
 
     public func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         cell.isSelected = selectedRowIndices.first{ $0 == (indexPath as NSIndexPath).row } != nil
-        
-        if (indexPath.row == 0){
-            if (touchedThebottom == true){
-                touchedThebottom = false
-                //print("We have reached the end of the top")
-                //controllingView.filterMenu.hide()
-                //createrFilterMenu(controller: controllingView)
-                //controllingView.filterMenu.show()
-            }
-        }
-        if indexPath.row + 1 == dataSource.count {
-            print("We have reached the end of the scroll")
-            touchedThebottom = true
-        }
     }
 
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
