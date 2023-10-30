@@ -9,7 +9,6 @@
 import UIKit
 import CoreData
 import Firebase
-import DropDown
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
     
@@ -54,7 +53,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var bandsByName = [String]()
     var reloadTableBool = true
     
-    var menuRefreshOverRide = false
     var filtersOnText = ""
     
     var bandDescriptions = CustomBandDescription()
@@ -134,7 +132,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
-        createrFilterMenu(controller: self);
+        //createrFilterMenu(controller: self);
      
     }
     
@@ -144,8 +142,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if (Thread.isMainThread == true){
             refreshFromCache()
             if (filterMenuNeedsUpdating == true){
-                createrFilterMenu(controller: self);
-                filterMenuNeedsUpdating = false;
+                //createrFilterMenu(controller: self);
+                //filterMenuNeedsUpdating = false;
             }
         }
     }
@@ -159,27 +157,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        
-        // Reload Data here
-        if (isMenuVisible(controller:self) == false){
-            self.tableView.reloadData()
-        } else {
-            //refreshAfterMenuIsGone(controller: self)
-        }
-
+        self.tableView.reloadData()
     }
     
-    @objc func filterMenuClick(_ sender: UIButton) {
-        print ("FilterMenuButon is \(sender.isSelected)")
-        if (sender.isHeld){
-            //sender.setImage(chevronDown, for: UIControl.State.normal)
-            
-        } else {
-            //sender.setImage(chevronRight, for: UIControl.State.normal)
-            //sender.showsMenuAsPrimaryAction = true
-        }
-    }
-
     func chooseCountry(){
         
         let countryHandle = countryHandler()
@@ -377,7 +357,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
-        createrFilterMenu(controller: self)
+        //createrFilterMenu(controller: self)
     }
     
     @objc func refreshAlerts(){
@@ -535,12 +515,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshAlerts()
 
                 self.updateCountLable()
-                if isMenuVisible(controller: self) == false {
-                    self.tableView.reloadData()
-                    print ("DONE Refreshing data in backgroud 1");
-                } else {
-                    //refreshAfterMenuIsGone(controller: self)
-                }
+
+                self.tableView.reloadData()
+                print ("DONE Refreshing data in backgroud 1");
+
                 refreshDataLock = false;
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
                 
@@ -909,11 +887,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         updateCountLable()
-        if (isMenuVisible(controller: self) == false){
-            tableView.reloadData()
-        } else {
-            //refreshAfterMenuIsGone(controller: self)
-        }
+
+        tableView.reloadData()
+
     }
     
     func detailShareChoices(){
@@ -1104,11 +1080,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: true)
         ensureCorrectSorting()
         updateCountLable()
-        if (isMenuVisible(controller: self) == false){
-            self.tableView.reloadData()
-        } else {
-            //refreshAfterMenuIsGone(controller: self)
-        }
+
+        self.tableView.reloadData()
+
         
     }
     
@@ -1143,5 +1117,4 @@ extension UITableViewRowAction {
         self.backgroundColor = UIColor.init(patternImage: actionImage)
     }
 }
-
 

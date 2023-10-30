@@ -1,10 +1,12 @@
 {
   "images" : [
     {
+      "filename" : "Icon-Stage--IceRink-Visual Select 4.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "Icon-Stage--IceRink-Visual Select 3.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
