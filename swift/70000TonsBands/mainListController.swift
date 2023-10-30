@@ -14,7 +14,6 @@ var bands = [String]() //main list of bands
 var scheduleButton = false;
 var hideScheduleButton = false;
 
-var hasAttendedEvents = false
 var attendingCount = 0;
 
 var bandCount = Int();

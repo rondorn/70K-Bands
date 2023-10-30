@@ -45,6 +45,7 @@ var iCloudDataisSaving = false;
 var numberOfFilteredRecords = 0;
 var readingBandFile = false;
 
+var touchedThebottom = false;
 
 var refreshAfterMenuIsGoneFlag = false
 var isFilterMenuVisible = false
