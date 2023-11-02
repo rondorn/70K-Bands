@@ -28,8 +28,9 @@ public class HelpMessageHandler {
 
     public static void showMessage(String message, View mainView){
 
-        //HelpMessageHandler.showMessage(message);
+        HelpMessageHandler.showMessage(message);
 
+        /*
         Snackbar snack = Snackbar.make(mainView, message, Snackbar.LENGTH_SHORT);
         View view = snack.getView();
         FrameLayout.LayoutParams params =(FrameLayout.LayoutParams)view.getLayoutParams();
@@ -38,6 +39,6 @@ public class HelpMessageHandler {
         view.setLayoutParams(params);
         snack.setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_FADE);
         snack.show();
-
+        */
     }
 }

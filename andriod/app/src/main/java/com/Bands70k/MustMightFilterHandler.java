@@ -86,7 +86,7 @@ public class MustMightFilterHandler {
         });
 
 
-        LinearLayout unknownFilterAll = (LinearLayout) popupWindow.getContentView().findViewById(R.id.UnknownSeeFilterAll);
+        LinearLayout unknownFilterAll = (LinearLayout) popupWindow.getContentView().findViewById(R.id.unknownSeeFilterAll);
         unknownFilterAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View context) {

@@ -68,12 +68,12 @@ public class FilterButtonHandler  {
 
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
 
-        popupWindow.dismiss();
+        //popupWindow.dismiss();
         if (message.isEmpty() == false) {
             HelpMessageHandler.showMessage(message, messageView);
         }
         showBands.refreshData();
-        /*
+
         MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
         mustMightHandle.setupMustMightFilters();
 
@@ -85,7 +85,6 @@ public class FilterButtonHandler  {
 
         OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
         otherFilterHandle.setupOtherFilters();
-        */
 
     }
 
@@ -98,6 +97,30 @@ public class FilterButtonHandler  {
         if (sectionType == "LinearLayout") {
             LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
             menuSection.setVisibility(View.GONE);
+        }
+    }
+
+    public static void disableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
+
+        if (sectionType == "TextView") {
+            TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setEnabled(false);
+        }
+        if (sectionType == "LinearLayout") {
+            LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setEnabled(false);
+        }
+    }
+
+    public static void enableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
+
+        if (sectionType == "TextView") {
+            TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setEnabled(true);
+        }
+        if (sectionType == "LinearLayout") {
+            LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
+            menuSection.setEnabled(true);
         }
     }
 

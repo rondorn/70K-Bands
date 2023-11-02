@@ -9,7 +9,7 @@
 <LinearLayout
     android:layout_width="720px"
     android:layout_height="wrap_content"
-    android:background="@android:color/black"
+    android:background="#323232"
     android:orientation="vertical">
 
     <TextView
@@ -58,7 +58,7 @@
         android:id="@+id/mustSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:clickable="true"
         android:contextClickable="true"
         android:orientation="horizontal">
@@ -94,7 +94,7 @@
         android:id="@+id/mightSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:clickable="true"
         android:orientation="horizontal">
         <TextView
@@ -102,7 +102,7 @@
             android:clickable="false"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-		android:layout_marginBottom="10dp"
+		    android:layout_marginBottom="10dp"
             android:layout_width="230dp"
             android:layout_marginStart="20dp"
             android:textColor="@color/custom_colors"
@@ -129,7 +129,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/wontSeeFilter"
@@ -158,13 +158,13 @@
         android:layout_height="0.25dp"
         android:background="@android:color/darker_gray"/>
     <LinearLayout
-        android:id="@+id/UnknownSeeFilterAll"
+        android:id="@+id/unknownSeeFilterAll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
 		android:layout_marginBottom="10dp"
         android:clickable="true"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/unknownSeeFilter"
@@ -206,7 +206,7 @@
         android:clickable="true"
         android:layout_width="720px"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/onlyShowAttended"
@@ -250,7 +250,7 @@
         android:clickable="true"
         android:layout_width="720px"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/sortOption"
@@ -294,7 +294,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/meetAndGreetFilter"
@@ -328,7 +328,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/specialOtherEventFilter"
@@ -362,7 +362,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/unofficalEventFilter"
@@ -413,7 +413,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
 		android:layout_marginBottom="10dp"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/loungVenueFilter"
@@ -446,7 +446,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
 		android:layout_marginBottom="10dp"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/poolVenueFilter"
@@ -477,7 +477,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:clickable="false"
@@ -511,7 +511,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/theaterVenueFilter"
@@ -545,7 +545,7 @@
         android:clickable="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="#323232"
         android:orientation="horizontal">
         <TextView
             android:id="@+id/otherVenueFilter"
