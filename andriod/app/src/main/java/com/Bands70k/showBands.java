@@ -799,61 +799,6 @@ public class showBands extends Activity {
         return message;
     }
 
-    private void setMightFilterButton(ToggleButton filterButton, Boolean setTo) {
-        if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSee));
-            staticVariables.preferences.setshowMight(true);
-        } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicMightSeeAlt));
-            staticVariables.preferences.setshowMight(false);
-        }
-        filterButton.setChecked(setTo);
-        staticVariables.preferences.saveData();
-
-        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toogleDisplayFilter(mightSeeIcon);
-            }
-        });
-    }
-
-    private void setWontFilterButton(ToggleButton filterButton, Boolean setTo) {
-        if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSee));
-            staticVariables.preferences.setshowWont(true);
-        } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicWontSeeAlt));
-            staticVariables.preferences.setshowWont(false);
-        }
-        filterButton.setChecked(setTo);
-        staticVariables.preferences.saveData();
-
-        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toogleDisplayFilter(wontSeeIcon);
-            }
-        });
-    }
-
-    private void setUnknownFilterButton(ToggleButton filterButton, Boolean setTo) {
-        if (setTo == false) {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSee));
-            staticVariables.preferences.setshowUnknown(true);
-        } else {
-            filterButton.setBackgroundDrawable(getResources().getDrawable(staticVariables.graphicUnknownSeeAlt));
-            staticVariables.preferences.setshowUnknown(false);
-        }
-        filterButton.setChecked(setTo);
-        staticVariables.preferences.saveData();
-
-        filterButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                toogleDisplayFilter(unknownIcon);
-            }
-        });
-    }
-
-
     public void populateBandList() {
 
         bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
@@ -1173,13 +1118,6 @@ public class showBands extends Activity {
 
 
     public void toogleDisplayFilter(String value) {
-
-        //Log.d("Value for displayFilter is ", "'" + value + "'");
-        //if (filterToogle.get(value) == true) {
-        //    filterToogle.put(value, false);
-        //} else {
-        //    filterToogle.put(value, true);
-        //}
 
         Intent showBands = new Intent(com.Bands70k.showBands.this, com.Bands70k.showBands.class);
         startActivity(showBands);

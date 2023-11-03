@@ -38,14 +38,14 @@ public class rankStore {
 
     public static Integer getRankImageForBand (String bandName){
 
-        Integer imageId = 50000000;
+        Integer imageId = R.drawable.icon_empty;
 
         String ranking = bandRankings.get(bandName);
 
         Log.d("ReturningRankOf ", "Returning Rank Of " + ranking + " for " + bandName);
 
         if (ranking == null){
-            imageId = 50000000;
+            imageId = R.drawable.icon_empty;
         } else {
 
             if (ranking.equals(staticVariables.mustSeeIcon)) {
@@ -58,7 +58,7 @@ public class rankStore {
                 imageId = staticVariables.graphicWontSee;
 
             } else {
-                imageId = 50000000;
+                imageId = R.drawable.icon_empty;
             }
         }
 
