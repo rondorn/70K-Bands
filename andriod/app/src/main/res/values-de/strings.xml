@@ -236,4 +236,8 @@
     <string name="Filters">Filter</string>
 
     <string name="Day">Tag</string>
+    <string name="Bands">Bands</string>
+    <string name="Events">Veranstaltungen</string>
+
+    <string name="UrlToBackupFile">Geben Sie die URL zur Sicherungsdatei an</string>
 </resources>
