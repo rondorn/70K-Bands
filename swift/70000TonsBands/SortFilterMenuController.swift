@@ -18,6 +18,8 @@ func createrFilterMenu( controller: MasterViewController){
     controller.filterMenu.anchorView = controller.filterMenuButton
     controller.filterMenu.bottomOffset = CGPoint(x: -20, y:(controller.filterMenu.anchorView?.plainView.bounds.height)!)
     
+    
+    
     controller.filterMenu.dataSource = [
         "Clear Filters",
         "Clear All Filters",
@@ -67,7 +69,9 @@ func createrFilterMenu( controller: MasterViewController){
     appearance.setupMaskedCorners([.layerMaxXMaxYCorner, .layerMinXMaxYCorner])
 
     controller.filterMenu.cellNib = UINib(nibName: "CustomListEntry", bundle: nil)
-        
+    
+    controller.filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
+    
     setupAllEntries(controller: controller)
     
     setupClickResponse(controller: controller)

@@ -74,6 +74,8 @@
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */; };
+		119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
+		119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
 		119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
@@ -112,8 +114,6 @@
 		11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
 		11E4EDAA2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
-		11E6F4172AEC6C47007C1387 /* CustomListEntry..swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E6F4122AEC6C47007C1387 /* CustomListEntry..swift */; };
-		11E6F4182AEC6C47007C1387 /* CustomListEntry..swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E6F4122AEC6C47007C1387 /* CustomListEntry..swift */; };
 		11E6F41B2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
 		11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
@@ -201,6 +201,7 @@
 		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
+		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
 		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
 		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -231,7 +232,6 @@
 		11DCE9BC1A86F9E000A25FB8 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = OnMyWayToDeath.wav; sourceTree = "<group>"; };
 		11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings70k.swift; sourceTree = "<group>"; };
-		11E6F4122AEC6C47007C1387 /* CustomListEntry..swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomListEntry..swift; sourceTree = "<group>"; };
 		11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CustomListEntry.xib; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
 		11F033191AB3A77F00AA29B8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -344,7 +344,7 @@
 				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
-				11E6F4122AEC6C47007C1387 /* CustomListEntry..swift */,
+				119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */,
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
@@ -763,6 +763,7 @@
 				11D4844B2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */,
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
+				119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
@@ -795,7 +796,6 @@
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
 				11E4EDAA2ACBAE5E0036D002 /* Settings70k.swift in Sources */,
 				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
-				11E6F4172AEC6C47007C1387 /* CustomListEntry..swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
@@ -812,6 +812,7 @@
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
 				11D4844C2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
+				119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
@@ -844,7 +845,6 @@
 				110924371F748D19002237AB /* CustomBandDescription.swift in Sources */,
 				11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */,
 				11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */,
-				11E6F4182AEC6C47007C1387 /* CustomListEntry..swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
@@ -1068,7 +1068,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20231030002;
+				CURRENT_PROJECT_VERSION = 20231205001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1089,7 +1089,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20231030002;
+				MARKETING_VERSION = 20231205001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1140,7 +1140,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20231030002;
+				CURRENT_PROJECT_VERSION = 20231205001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1165,7 +1165,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20231030002;
+				MARKETING_VERSION = 20231205001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

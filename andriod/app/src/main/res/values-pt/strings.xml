@@ -231,4 +231,6 @@
     <string name="Filtering">Filtragem</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtros</string>
+
+    <string name="Day">Dia</string>
 </resources>

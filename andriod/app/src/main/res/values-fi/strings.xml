@@ -235,4 +235,6 @@
     <string name="Filtering">Suodatus</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Suodattimet</string>
+
+    <string name="Day">Päivä</string>
 </resources>

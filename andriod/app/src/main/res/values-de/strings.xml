@@ -234,4 +234,6 @@
     <string name="Filtering">Filtern</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filter</string>
+
+    <string name="Day">Tag</string>
 </resources>
