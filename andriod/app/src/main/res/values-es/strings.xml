@@ -1,40 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- LocalizationStrings.strings
+        70K Bands
+        Created by Ron Dorn on 7/18/15.
+        Copyright (c) 2015 Ron Dorn. All rights reserved.
+        Translation provided by bodomdragon. Thank you kind sir!!! -->
+
     <string name="app_name">70K Bands</string>
+
+    <string name="must">Sí</string>
     <string name="might">Quizás</string>
     <string name="wont">No</string>
-    <string name="must">Sí</string>
-    <string name="unknown">Desconocido</string>
-
+    <string name="unknown">No lo sé</string>
     <string name="Ok">Sí</string>
     <string name="Cancel">No</string>
-
-
     <string name="AlertOnMustSeeBands">Alerta para bandas que quiero ver</string>
     <string name="AlertOnMightSeeBands">Alerta para bandas que quizás vea</string>
-
-    <string name="OnlyAlertForShowsYouWillAttend">Solo alerta para espectáculos a los que asistirá</string>
-    <string name="AlertForShowsAccordingToSelection">Alerta para mostrar de acuerdo a su selección de favoritos, y las configuraciones indicadas en esta pantalla</string>
-
-    <string name="MinutesBeforeEventtoAlert">Alerta antes del evento (minutos)</string>
-    <string name="AlertForShows">Alerta Para Conciertos</string>
-    <string name="AlertForSpecialEvents">Alerta Para Eventos Especiales</string>
-    <string name="AlertForUnoffical">Alerta para eventos organizados por cruceros</string>
-    <string name="AlertForMeetingandGreetEvents">Alerta para \'Meet and Greets\'</string>
-    <string name="AlertForClinics">Alerta para Clinics</string>
+    <string name="OnlyAlertForShowsYouWillAttend">Alertas solo para eventos a los que asistiré</string>
+    <string name="MinutesBeforeEventtoAlert">Minutos antes del evento para enviar alerta</string>
+    <string name="AlertForShows">Alerta para conciertos</string>
+    <string name="AlertForSpecialEvents">Alerta para eventos especiales</string>
+    <string name="AlertForMeetingandGreetEvents">Alerta para Meet and Greets</string>
+    <string name="AlertForClinics">Alerta para clinics</string>
     <string name="AlertForAlbumListeningEvents">Alerta para escuchas de álbums</string>
-
-    <string name="PoolVenue">Piscina</string>
-    <string name="TheaterVenue">Teatro</string>
-    <string name="LoungeVenue">Salón</string>
-    <string name="RinkVenue">Pista</string>
-    <string name="OtherVenue">Otra</string>
-
-    <string name="SpecialEvents">Eventos Especiales</string>
-    <string name="MeetAndGreet">Meeting and Greet</string>
-    <string name="ClinicEvents">Clinicas</string>
-    <string name="AlbumListeningEvents">Escuchas De álbums</string>
-    <string name="unofficalEventLable">Crucero organizado</string>
+    <string name="AlertForUnoffical">Alerta para eventos no oficiales</string>
 
     <string name="UseLastYearsData">Utilizar datos del año pasado</string>
     <string name="LastYearsFeatureExplication"/>
@@ -42,80 +31,78 @@
 
     <string name="importMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
-    <string name="alertOnlyForShowWillAttend">Alerta solo por Will Attend Events</string>
-
-    <string name="showAttendedFilterTrueHelp">Solo muestre los eventos a los que indica que asistirá. Otros filtros no se aplicarán</string>
-    <string name="showAttendedFilterFalseHelp">Mostrar bandas y shows de acuerdo a los filtros</string>
-
-    <string name="SortingChronologically">Ordenando cronológicamente</string>
-    <string name="SortingAlphabetically">Ordenando alfabéticamente</string>
-
-    <string name="AllOfEvent">Asistir a todo este evento</string>
-    <string name="PartOfEvent">Asistir a parte de este evento</string>
-    <string name="NoneOfEvent">No voy a ver este evento</string>
-
-    <string name="venueFilterHeader">Mostrar/Ocultar Lugar</string>
-    <string name="showTypeFilterHeader">Mostrar/Ocultar Tipo de Evento</string>
-    <string name="showHideExpiredLabel">Mostrar/Ocultar Eventos Vencidos</string>
-    <string name="hideExpiredEvents">Ocultar Eventos Vencidos</string>
-
-    <string name="AlertPreferences">Preferencias de Alerta</string>
-
-
-    <string name="officialWebSiteLinkHelp">Llevándote al sitio web oficial</string>
-    <string name="WikipediaLinkHelp">Buscando Wikipedia</string>
-    <string name="YouTubeLinkHelp">Buscando videos oficiales en YouTube</string>
-    <string name="MetalArchiveLinkHelp">Buscando archivos de metal</string>
-
-    <string name="PromptForAttendedStatus">Solicitar estado atendido</string>
-    <string name="GoToDetails">Ir a detalles</string>
-
-    <string name="disableAttendedPrompt">Deshabilitar este aviso</string>
-
-    <string name="EndofList">Fin de la lista</string>
-    <string name="AlreadyAtStart">Ya al inicio de la lista</string>
-    <string name="Next">Siguiente</string>
-    <string name="Previous">Previo</string>
-
     <string name="ImportDataBackup">Importar copia de seguridad de datos</string>
     <string name="ShareTitle">¿Qué es lo que deseas compartir?</string>
-    <string name="ShareBandChoices">Compartir opciones de bandas</string>
-    <string name="ShareShowChoices">Compartir Mostrar elección</string>
     <string name="ExportUserData">Exportar datos de usuario</string>
 
+    <string name="alertOnlyForShowWillAttend">Alertas solo para conciertos a los que asistirás</string>
+    <string name="AlertForShowsAccordingToSelection">Alertas para conciertos de acuerdo con tus favoritos</string>
+    <string name="showAttendedFilterTrueHelp">Solo muestra los eventos a los que asistiré. No se aplicarán otros filtros</string>
+    <string name="showAttendedFilterFalseHelp">Mostrar bandas y conciertos de acuerdo a los filtros</string>
+    <string name="SortingChronologically">Ordenar cronológicamente</string>
+    <string name="SortingAlphabetically">Ordenar alfabéticamente</string>
+    <string name="AllOfEvent">Asistir a todo este evento</string>
+    <string name="PartOfEvent">Asistir a parte de este evento</string>
+    <string name="NoneOfEvent">No voy a asistir a este evento</string>
+    <string name="PromptForAttendedStatus">Solicitar estado atendido</string>
+    <string name="GoToDetails">Ir a detalles</string>
+    <string name="SpecialEvents">Eventos especiales</string>
+    <string name="MeetAndGreet">Meet and Greets</string>
+    <string name="ClinicEvents">Clinics</string>
+    <string name="AlbumListeningEvents">Escuchas de álbums</string>
+    <string name="unofficalEventLable">Eventos no oficiales</string>
+    <string name="officialWebSiteLinkHelp">Llevándote al sitio web oficial</string>
+    <string name="WikipediaLinkHelp">Buscando en Wikipedia</string>
+    <string name="YouTubeLinkHelp">Buscando videos oficiales en YouTube</string>
+    <string name="MetalArchiveLinkHelp">Buscando archivos en Metal Archives</string>
+    <string name="PoolVenue">Cubierta</string>
+    <string name="TheaterVenue">Teatro</string>
+    <string name="LoungeVenue">Lounge</string>
+    <string name="RinkVenue">Pista de hielo</string>
+    <string name="OtherVenue">Otra</string>
+    <string name="venueFilterHeader">Mostrar/Ocultar escenario</string>
+    <string name="showTypeFilterHeader">Mostrar/Ocultar tipo de evento</string>
+    <string name="showHideExpiredLabel">Mostrar/Ocultar eventos</string>
+    <string name="hideExpiredEvents">Ocultar eventos caducados</string>
+    <string name="AlertPreferences">Preferencias de alertas</string>
+    <string name="disableAttendedPrompt">Deshabilitar este aviso</string>
+    <string name="EndofList">Fin de la lista</string>
+    <string name="AlreadyAtStart">Ya en el inicio de la lista</string>
+    <string name="Next">Siguiente</string>
+    <string name="Previous">Anterior</string>
+
+    <string name="ShareBandChoices">Compartir elecciones de bandas</string>
+    <string name="ShareShowChoices">Compartir elecciones de conciertos</string>
     <string name="visitBands">Enlaces</string>
     <string name="country">País</string>
     <string name="genre">Género</string>
-
     <string name="verify_country">Verifica tu país</string>
-    <string name="correct_if_needed">Corrija su país si es necesario</string>
-    <string name="country_invalid">El valor del país no se reconoce como válido</string>
-
-    <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera....</string>
-    <string name="data_filter_issue">Todos los datos se están filtrando, elimine los filtros para ver los datos</string>
-
-    <string name="SelectYearLabel">Seleccione el año para mostrar</string>
-    <string name="restartTitle">Es Necesario Reiniciar</string>
-    <string name="restartMessage">NO HAGA ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
+    <string name="correct_if_needed">Corrige tu país si es necesario</string>
+    <string name="country_invalid">Cambiar</string>
+    <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera...</string>
+    <string name="data_filter_issue">Todos los datos están filtrados, elimina los filtros para ver los datos</string>
+    <string name="SelectYearLabel">Selecciona el año para mostrar</string>
+    <string name="restartTitle">Es necesario reiniciar</string>
+    <string name="restartMessage">NO HAGAS ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
     <string name="yearChangeAborted">No hay conexión a Internet disponible, NO se puede cambiar de año en este momento</string>
     <string name="eventOrBandPrompt">¿Quieres ver una lista de bandas o una lista de eventos?</string>
     <string name="bandListButton">Lista de bandas</string>
     <string name="eventListButton">Lista de eventos</string>
     <string name="changeYearDialogBoxTitle">Cambiar el año del evento</string>
-    <!-- this represents the current year in the choice menu -->
-    <string name="Current">Actual</string>
 
     <string name="backupPrompt">Pegue la URL del archivo userExport.zip almacenado en DropBox u otro servicio similar.</string>
     <string name="importButtonName">Importación</string>
 
+    <!-- this represents the current year in the choice menu -->
+    <string name="Current">Actual</string>
     <!-- new section for the filter menu control -->
     <string name="clear_filters">Borrar filtros</string>
     <!-- menu choice -->
     <string name="band_ranking_filters">Filtros de clasificación de bandas</string>
     <!-- menu header -->
-    <string name="show_only_flagged_as_attended">Mostrar solo marcado como asistido</string>
+    <string name="show_only_flagged_as_attended">Mostrar solo marcados como asistidos</string>
     <!-- menu header -->
-    <string name="sorting_options">Opciones de clasificación</string>
+    <string name="sorting_options">Opciones de ordenación</string>
     <!-- menu header -->
     <string name="event_type_filters">Filtros de tipo de evento</string>
     <!-- menu header -->
@@ -133,53 +120,53 @@
     <!-- menu choice -->
     <string name="show_only_events_flagged_as_attending">Mostrar solo eventos marcados como asistentes</string>
     <!-- venue filters -->
-    <string name="show_pool_events">Mostrar eventos de piscina</string>
+    <string name="show_pool_events">Mostrar eventos en la cubierta</string>
     <!-- menu choice -->
-    <string name="hide_pool_events">Ocultar eventos de grupo</string>
+    <string name="hide_pool_events">Ocultar eventos en la cubierta</string>
     <!-- menu choice -->
-    <string name="pool_venue_filter_on">Filtro de lugar de piscina activado</string>
+    <string name="pool_venue_filter_on">Filtro de cubierta activado</string>
     <!-- help text -->
-    <string name="pool_venue_filter_off">Filtro del lugar de la piscina desactivado</string>
+    <string name="pool_venue_filter_off">Filtro del cubierta desactivado</string>
     <!-- help text -->
-    <string name="show_lounge_events">Eventos del salón de espectáculos</string>
+    <string name="show_lounge_events">Mostrar eventos en el lounge</string>
     <!-- menu choice -->
-    <string name="hide_lounge_events">Ocultar eventos del salón</string>
+    <string name="hide_lounge_events">Ocultar eventos en el lounge</string>
     <!-- menu choice -->
-    <string name="lounge_venue_filter_on">Filtro de sala VIP activado</string>
+    <string name="lounge_venue_filter_on">Filtro de sala lounge activado</string>
     <!-- help text -->
-    <string name="lounge_venue_filter_off">Filtro de lugar lounge desactivado</string>
+    <string name="lounge_venue_filter_off">Filtro de sala loung desactivado</string>
     <!-- help text -->
-    <string name="show_theater_events">Mostrar eventos de teatro</string>
+    <string name="show_theater_events">Mostrar eventos en el teatro</string>
     <!-- menu choice -->
-    <string name="hide_theater_events">Ocultar eventos teatrales</string>
+    <string name="hide_theater_events">Ocultar eventos en el teatro</string>
     <!-- menu choice -->
-    <string name="theater_venue_filter_on">Filtro de sala de teatro activado</string>
+    <string name="theater_venue_filter_on">Filtro de teatro activado</string>
     <!-- help text -->
-    <string name="theater_venue_filter_off">Filtro de lugar de teatro desactivado</string>
+    <string name="theater_venue_filter_off">Filtro de teatro desactivado</string>
     <!-- help text -->
-    <string name="show_rink_events">Mostrar eventos de pista</string>
+    <string name="show_rink_events">Mostrar eventos en la pista de hielo</string>
     <!-- menu choice -->
-    <string name="hide_rink_events">Ocultar eventos de pista</string>
+    <string name="hide_rink_events">Ocultar eventos en la pista de hielo</string>
     <!-- menu choice -->
-    <string name="rink_venue_filter_on">Filtro de pista activado</string>
+    <string name="rink_venue_filter_on">Filtro de pista de hielo activado</string>
     <!-- help text -->
-    <string name="rink_venue_filter_off">Filtro de lugar de pista desactivado</string>
+    <string name="rink_venue_filter_off">Filtro de pista de hielo desactivado</string>
     <!-- help text -->
     <string name="show_other_events">Mostrar otros eventos</string>
     <!-- menu choice -->
     <string name="hide_other_events">Ocultar otros eventos</string>
     <!-- menu choice -->
-    <string name="other_venue_filter_on">Otro lugar filtro activado</string>
+    <string name="other_venue_filter_on">Filtro de otros eventos activado</string>
     <!-- help text -->
-    <string name="other_venue_filter_off">Otro lugar filtro desactivado</string>
+    <string name="other_venue_filter_off">Filtro de otros eventos desactivado</string>
     <!-- event filter -->
-    <string name="show_meet_and_greet_events">Mostrar eventos de bienvenida y encuentro</string>
+    <string name="show_meet_and_greet_events">Mostrar eventos de Meet and Greet</string>
     <!-- menu choice -->
-    <string name="hide_meet_and_greet_events">Ocultar eventos de Meet &amp; Greet</string>
+    <string name="hide_meet_and_greet_events">Ocultar eventos de Meet and Greet</string>
     <!-- menu choice -->
-    <string name="meet_and_greet_event_filter_on">Filtro de evento Meet and Greet activado</string>
+    <string name="meet_and_greet_event_filter_on">Filtro de Meet and Greet activado</string>
     <!-- help text -->
-    <string name="meet_and_greet_event_filter_off">Filtro de eventos para conocer y saludar desactivado</string>
+    <string name="meet_and_greet_event_filter_off">Filtro de Meet and Greet desactivado</string>
     <!-- help text -->
     <string name="show_unofficial_events">Mostrar eventos no oficiales</string>
     <!-- menu choice -->
@@ -199,35 +186,37 @@
     <!-- sorting -->
     <string name="sort_by_name">Ordenar por nombre</string>
     <!-- menu  choice -->
-    <string name="sort_by_time">Ordenar por tiempo</string>
+    <string name="sort_by_time">Ordenar por fecha y hora</string>
     <!-- band preference filter -->
-    <string name="show_must_see_items">Mostrar artículos imprescindibles</string>
+    <string name="show_must_see_items">Mostrar eventos a los que asistiré</string>
     <!-- menu choice -->
-    <string name="hide_must_see_items">Ocultar elementos imprescindibles</string>
+    <string name="hide_must_see_items">Ocultar eventos a los que asistiré</string>
     <!-- menu choice -->
-    <string name="must_see_filter_on">Debe ver el filtro activado</string>
-    <string name="must_see_filter_off">Debe ver el filtro desactivado</string>
-    <string name="show_might_see_items">Mostrar podría ver elementos</string>
+    <string name="must_see_filter_on">Filtro de eventos a los que asistiré activado</string>
+    <string name="must_see_filter_off">Filtro de eventos a los que asistiré desactivado</string>
+    <string name="show_might_see_items">Mostrar eventos a los que tal vez asista</string>
     <!-- menu choice -->
-    <string name="hide_might_see_items">Ocultar podría ver elementos</string>
+    <string name="hide_might_see_items">Ocultar eventos a los que tal vez asista</string>
     <!-- menu choice -->
-    <string name="might_see_filter_on">Podría ver el filtro activado</string>
-    <string name="might_see_filter_off">Es posible que vea el filtro desactivado</string>
-    <string name="show_wont_see_items">Mostrar elementos que no se ven</string>
+    <string name="might_see_filter_on">Filtro de eventos a los que tal vez asista activado</string>
+    <string name="might_see_filter_off">Filtro de eventos a los que tal vez asista desactivado</string>
+    <string name="show_wont_see_items">Mostrar eventos a los que no asistiré</string>
     <!-- menu choice -->
-    <string name="hide_wont_see_items">Ocultar elementos que no se ven</string>
+    <string name="hide_wont_see_items">Ocultar eventos a los que no asistiré</string>
     <!-- menu choice -->
-    <string name="wont_see_filter_on">No veo el filtro activado</string>
-    <string name="wont_see_filter_off">No verá el filtro desactivado</string>
-    <string name="show_unknown_items">Mostrar elementos desconocidos</string>
+    <string name="wont_see_filter_on">Filtro de eventos a los que no asistiré activado</string>
+    <string name="wont_see_filter_off">Fltro de eventos a los que no asistiré desactivado</string>
+    <string name="show_unknown_items">Mostrar eventos a los que no sé si asistiré</string>
     <!-- menu choice -->
-    <string name="hide_unknown_items">Ocultar elementos desconocidos</string>
+    <string name="hide_unknown_items">Ocultar eventos a los que no sé si asistiré</string>
     <!-- menu choice -->
-    <string name="unknown_filter_on">Filtro desconocido activado</string>
+    <string name="unknown_filter_on">Filtro de eventos a los que no sé si asistiré activado</string>
     <!-- help text -->
-    <string name="unknown_filter_off">Filtro desconocido desactivado</string>
+    <string name="unknown_filter_off">Filtro de eventos a los que no sé si asistiré desactivado</string>
     <!-- help text -->
-    <string name="Filtering">Filtración</string>
+    <string name="Filtering">Filtrando</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtros</string>
+
+    <string name="Day">Dia</string>
 </resources>

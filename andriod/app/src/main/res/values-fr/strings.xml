@@ -234,4 +234,6 @@
     <string name="Filtering">Filtration</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtres</string>
+
+    <string name="Day">Jour</string>
 </resources>

@@ -236,6 +236,9 @@
     <!-- filtering indicator near counts -->
     <string name="Filters">Filters</string>
     <string name="can_not_hide_all_statuses">Can not hide all status</string>
+
+
+    <string name="Day">Day</string>
 </resources>
 
 

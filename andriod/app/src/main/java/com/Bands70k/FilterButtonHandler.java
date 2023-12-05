@@ -32,6 +32,9 @@ public class FilterButtonHandler  {
 
         filterMenuButton = (Button) showBands.findViewById(R.id.FilerMenu);
         messageView = showBands.findViewById(R.id.showBandsView);
+
+        filterMenuButton.setText(context.getResources().getString(R.string.Filters));
+
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View context) {
                 popupWindow = new PopupWindow(showBands);

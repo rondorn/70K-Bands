@@ -103,8 +103,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.setIsMenuVisible), name: NSNotification.Name(rawValue: "isMenuVisible"), object: nil)
-        
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
         
@@ -134,6 +132,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         navigationController?.view.backgroundColor = .black
         //createrFilterMenu(controller: self);
      
+        filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -438,11 +437,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func refreshGUI(){
         self.tableView.reloadData()
     }
-    
-    @objc func setIsMenuVisible(){
-        isFilterMenuVisible = filterMenuButton.isHeld
-    }
-    
+
     @objc func refreshData(){
         
         print ("Redrawing the filter menu! Not")

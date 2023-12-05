@@ -1070,7 +1070,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         endTimeView.text = endTimeText
         
         let dayLabelView = eventView.viewWithTag(8) as! UILabel
-        dayLabelView.text = "Day"
+        dayLabelView.text = NSLocalizedString("Day", comment: "")
         
         let dayView = eventView.viewWithTag(9) as! UILabel
         dayView.textColor = UIColor.white

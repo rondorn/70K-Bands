@@ -611,7 +611,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         }
         
         dayView.text = dayText
-        dayLabelView.text = "Day"
+        dayLabelView.text = NSLocalizedString("Day", comment: "")
         
         if (indexRow == 0){
             previousBandName = "Unknown"

@@ -232,4 +232,7 @@
     <string name="Filtering">Filtrering</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtre</string>
+
+    <string name="Day">Dag</string>
+
 </resources>

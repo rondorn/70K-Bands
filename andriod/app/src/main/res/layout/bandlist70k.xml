@@ -200,7 +200,7 @@
         android:width="50dp"
         android:gravity="center"
         android:textAlignment="gravity"
-        android:text="Day"
+        android:text="@string/Day"
         android:textColor="#ffffff"
         android:background="#838383"
         android:textSize="5pt"

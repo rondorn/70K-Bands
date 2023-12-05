@@ -135,7 +135,7 @@ public class DetailHtmlGeneration {
                         scheduleHtml += "<td width=7%></td>";
                     }
                     scheduleHtml += "<td width=20% style='background:black;font-size:14px;color:white;text-align:right'>" + startTime  + "&nbsp;</td>";
-                    scheduleHtml += "<td width=7% bgcolor=grey style='font-size:12px;color:white;text-align:center'>Day</td></tr>";
+                    scheduleHtml += "<td width=7% bgcolor=grey style='font-size:12px;color:white;text-align:center'>" + staticVariables.context.getString(R.string.Day) + "</td></tr>";
 
                     scheduleHtml += "<td width=2% bgcolor=" + locationColor + "><td>";
                     scheduleHtml += "<td width=64%><table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=100%>";
