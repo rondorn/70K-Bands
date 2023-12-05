@@ -35,7 +35,7 @@
     <string name="ShareTitle">¿Qué es lo que deseas compartir?</string>
     <string name="ExportUserData">Exportar datos de usuario</string>
 
-    <string name="alertOnlyForShowWillAttend">Alertas solo para conciertos a los que asistirás</string>
+    <string name="alertOnlyForShowWillAttend">Alertas solo para conciertos a los que asistiré</string>
     <string name="AlertForShowsAccordingToSelection">Alertas para conciertos de acuerdo con tus favoritos</string>
     <string name="showAttendedFilterTrueHelp">Solo muestra los eventos a los que asistiré. No se aplicarán otros filtros</string>
     <string name="showAttendedFilterFalseHelp">Mostrar bandas y conciertos de acuerdo a los filtros</string>
@@ -219,4 +219,8 @@
     <string name="Filters">Filtros</string>
 
     <string name="Day">Dia</string>
+    <string name="Bands">Bandas</string>
+    <string name="Events">Eventos</string>
+
+    <string name="UrlToBackupFile">Proporcione la URL al archivo de copia de seguridad</string>
 </resources>

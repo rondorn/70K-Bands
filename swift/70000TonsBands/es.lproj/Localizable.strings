@@ -30,7 +30,7 @@
 "ShowHideEvents"="Mostrar/Ocultar eventos";
 "HideExpiredEvents"="Ocultar eventos caducados";
 
-"Only alert for shows you will attend"="Alertas solo para conciertos a los que asistirás";
+"Only alert for shows you will attend"="Alertas solo para conciertos a los que asistiré";
 "Alert for shows according to your favorites selection"="Alertas para conciertos de acuerdo con tus favoritos";
 
 "showAttendedFilterTrueHelp"="Solo muestra los eventos a los que asistiré. No se aplicarán otros filtros";
@@ -194,3 +194,6 @@
 "Filters" = "Filtros"; //menu name
 
 "Day" = "Dia";
+
+"Bands" = "Bandas";
+"Events" = "Eventos";

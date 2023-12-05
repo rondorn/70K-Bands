@@ -182,7 +182,7 @@ public class preferenceLayout  extends Activity {
     private void dataImportFunc() {
 
         TextView titleView = new TextView(context);
-        titleView.setText("Provide the URL to the Backup File");
+        titleView.setText(getResources().getString(R.string.UrlToBackupFile));
         titleView.setPadding(20, 30, 20, 30);
         titleView.setTextSize(20F);
         titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);

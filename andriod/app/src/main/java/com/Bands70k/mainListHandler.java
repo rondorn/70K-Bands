@@ -370,19 +370,19 @@ public class mainListHandler {
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = false;
 
-            displayText = yearDisplay + " " + numberOfBands + " bands" + filteringText;
+            displayText = yearDisplay + " " + numberOfBands + " " + staticVariables.context.getString(R.string.Bands) + " " + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfBands);
 
         } else if (numberOfUnofficalEvents == numberOfEvents){
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = true;
-            displayText = yearDisplay + " " + altNumberOfBands + " bands"+ filteringText;
+            displayText = yearDisplay + " " + altNumberOfBands + " " + staticVariables.context.getString(R.string.Bands) +  filteringText;
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
             staticVariables.showEventButtons = true;
             staticVariables.showUnofficalEventButtons = true;
-            displayText = yearDisplay + " " + numberOfEvents + " events" + filteringText;
+            displayText = yearDisplay + " " + numberOfEvents + " " + staticVariables.context.getString(R.string.Events) + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
         } else {
