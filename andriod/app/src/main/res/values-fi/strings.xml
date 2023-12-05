@@ -237,4 +237,8 @@
     <string name="Filters">Suodattimet</string>
 
     <string name="Day">Päivä</string>
+    <string name="Bands">Bändit</string>
+    <string name="Events">Tapahtumat</string>
+
+    <string name="UrlToBackupFile">Anna varmuuskopiotiedoston URL-osoite</string>
 </resources>

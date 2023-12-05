@@ -614,10 +614,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if (eventCounter != eventCounterUnoffical && eventCounter > 0){
             labeleCounter = eventCounter
-            lableCounterString = " events " + filtersOnText
+            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
             labeleCounter = bandCounter
-            lableCounterString = " bands " + filtersOnText
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
             sortedBy = "time"
         }
 

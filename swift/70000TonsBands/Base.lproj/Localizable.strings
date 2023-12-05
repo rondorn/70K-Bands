@@ -52,7 +52,9 @@
 "Listening Party"="Listening Party";
 "Unofficial Events"="Cruiser Organized";
 
-"officialWebSiteLinkHelp" = "Taking you to the Official Web Site";
+
+
+"officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
 "YouTubeLinkHelp" = "Searching YouTube for offical videos";
 "MetalArchiveLinkHelp" = "Searching Metal Archives";
@@ -97,7 +99,6 @@
 "data_filter_issue" = "All data is being filtered out, please remove filters to view data";
 
 "SelectYearLabel"="Select The Year To Display";
-
 "restartTitle" = "Restart Required";
 "restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
 "yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
@@ -108,11 +109,10 @@
 //this represents the current year in the choice menu
 "Current" = "Current";
 
-
 //new section for the filter menu control
 "Clear Filters" = "Clear Filters"; //menu choice
 "Band Ranking Filters" = "Band Ranking Filters"; //menu header
-"Show Only Flagged As Attended" = "Show Only Flagged As Attended"; //help text
+"Show Only Flagged As Attended" = "Show Only Flagged As Attended"; //menu header
 "Sorting Options" = "Sorting Options"; //menu header
 "Event Type Filters" = "Event Type Filters"; //menu header
 "Venue Filters" = "Venue Filters"; //menu header
@@ -193,3 +193,9 @@
 
 "Filtering" = "Filtering"; //filtering indicator near counts
 "Filters" = "Filters"; //menu name
+
+"Day" = "Day";
+
+"Bands" = "Bands";
+"Events" = "Events";
+

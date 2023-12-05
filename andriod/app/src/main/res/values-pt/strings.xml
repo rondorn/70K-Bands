@@ -233,4 +233,8 @@
     <string name="Filters">Filtros</string>
 
     <string name="Day">Dia</string>
+    <string name="Bands">Bandas</string>
+    <string name="Events">Eventos</string>
+
+    <string name="UrlToBackupFile">Forneça o URL para o arquivo de backup</string>
 </resources>

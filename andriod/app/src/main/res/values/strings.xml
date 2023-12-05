@@ -239,7 +239,13 @@
 
 
     <string name="Day">Day</string>
+
+    <string name="Bands">Bands</string>
+    <string name="Events">Events</string>
+
+    <string name="UrlToBackupFile">Provide The URL To The Backup File</string>
 </resources>
+
 
 
 
