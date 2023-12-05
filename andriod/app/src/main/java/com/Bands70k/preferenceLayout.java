@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -81,6 +82,8 @@ public class preferenceLayout  extends Activity {
     private Switch lastYearsData;
     private Switch onlyForShowWillAttend;
 
+    private String eventYearText = "";
+    private String localCurrentEventYear = "";
     private EditText alertMin;
 
     private EditText bandsUrl;
@@ -126,14 +129,25 @@ public class preferenceLayout  extends Activity {
 
     private void eventYearButton() {
 
-        eventYearButton.setText(String.valueOf(staticVariables.preferences.getEventYearToLoad()));
+        eventYearText = staticVariables.preferences.getEventYearToLoad().toLowerCase();
+        localCurrentEventYear = getResources().getString(R.string.Current);
+
+        if (eventYearText.equals("current")){
+            eventYearText = localCurrentEventYear;
+        }
+
+        eventYearButton.setText(eventYearText);
         //popup menu
         final PopupMenu popupMenu = new PopupMenu(this, eventYearButton);
 
         //add menu items in popup menu
         int arrayCounter = 0;
         for (String eventYear : eventYearArray) {
-            popupMenu.getMenu().add(Menu.NONE, arrayCounter, arrayCounter, eventYear);
+            String eventYearTemp = eventYear.toLowerCase();
+            if (eventYearTemp.equals("current")){
+                eventYearTemp = localCurrentEventYear;
+            }
+            popupMenu.getMenu().add(Menu.NONE, arrayCounter, arrayCounter, eventYearTemp);
             arrayCounter = arrayCounter + 1;
         }
 
@@ -145,7 +159,11 @@ public class preferenceLayout  extends Activity {
                 String selectedEventYear = String.valueOf(menuItem.getTitle());
                 //handle clicks
                 buildRebootDialog();
-                eventYearButton.setText(selectedEventYear);
+                String eventYearValue = selectedEventYear;
+                if (selectedEventYear == localCurrentEventYear){
+                    eventYearValue = "Current";
+                }
+                eventYearButton.setText(eventYearValue);
                 return true;
             }
         });
@@ -430,6 +448,7 @@ public class preferenceLayout  extends Activity {
         restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        String localCurrentValue = getResources().getString(R.string.Current);
 
                         String waitText = getResources().getString(R.string.waiting_for_data);
                         HelpMessageHandler.showMessage(waitText);
@@ -441,7 +460,7 @@ public class preferenceLayout  extends Activity {
                             return;
                         }
 
-                        if (String.valueOf(eventYearButton.getText()).equals("Current") == false) {
+                        if (String.valueOf(eventYearButton.getText()).equals("Current") == false && String.valueOf(eventYearButton.getText()).equals(localCurrentValue) == false) {
                             bandListOrScheduleDialog();
                         }
 

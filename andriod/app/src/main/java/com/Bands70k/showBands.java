@@ -617,7 +617,7 @@ public class showBands extends Activity {
         na2.setVisibility(View.INVISIBLE);
 
         // add a button
-        builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.Cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -1309,7 +1309,7 @@ public class showBands extends Activity {
 
 
         // add a button
-        builder.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getText(R.string.Cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
