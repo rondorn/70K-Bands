@@ -32,6 +32,7 @@
 "Part Of Event"="Osallistun osaan tapahtumasta";
 "None Of Event"="En tule osallistumaan tähän tapahtumaan";
 
+"Prompt For Attended Status Header"="Kysy osallistumisesta";
 "Prompt For Attended Status"="Kysy osallistumisesta";
 "Go To Details"="Siirry lisätietoihin";
 

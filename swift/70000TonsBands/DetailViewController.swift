@@ -1049,7 +1049,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (eventType == showType){
             eventTypeText.text = " "
         } else {
-            eventTypeText.text = eventType
+            eventTypeText.text = convertEventTypeToLocalLanguage(eventType: eventType)
         }
     
             

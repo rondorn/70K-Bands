@@ -65,6 +65,7 @@
     <string name="YouTubeLinkHelp">YouTube nach offiziellen Videos durchsuchen</string>
     <string name="MetalArchiveLinkHelp">Durchsuchen von Metal-Archiven</string>
 
+    <string name="PromptForAttendedStatusHeader">Aufforderung zur Teilnahme am Status</string>
     <string name="PromptForAttendedStatus">Aufforderung zur Teilnahme am Status</string>
     <string name="GoToDetails">Gehe zu Details</string>
 

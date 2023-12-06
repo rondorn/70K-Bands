@@ -6,7 +6,7 @@
     <string name="wont">Wont</string>
     <string name="unknown">Unknown</string>
 
-    <string name="Ok">Ok</string>
+    <string name="Ok">OK</string>
     <string name="Cancel">Cancel</string>
 
     <string name="AlertOnMustSeeBands">Alert On Must See Bands</string>
@@ -61,11 +61,12 @@
 
     <string name="AlertPreferences">Alert Preferences</string>
 
-    <string name="officialWebSiteLinkHelp">Taking you to the Offical Web Site</string>
+    <string name="officialWebSiteLinkHelp">Taking you to the Official Web Site</string>
     <string name="WikipediaLinkHelp">Searching Wikipedia</string>
-    <string name="YouTubeLinkHelp">Searching YouTube for offical videos</string>
+    <string name="YouTubeLinkHelp">Searching YouTube for Official videos</string>
     <string name="MetalArchiveLinkHelp">Searching Metal Archives</string>
 
+    <string name="PromptForAttendedStatusHeader">Prompt For Attended Status</string>
     <string name="PromptForAttendedStatus">Prompt For Attended Status</string>
     <string name="GoToDetails">Go To Details</string>
 

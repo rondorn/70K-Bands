@@ -114,7 +114,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="left"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/PromptForAttendedStatus"
+            android:text="@string/PromptForAttendedStatusHeader"
             android:layout_marginLeft="10dp"
             android:id="@+id/headerTextPromptForAttended"
             android:textColor="@color/common_google_signin_btn_text_dark_default"

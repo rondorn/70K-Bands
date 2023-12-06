@@ -33,6 +33,7 @@
 "Part Of Event"="Participando de alguns desde evento";
 "None Of Event"="Eu não vou ver esse evento";
 
+"Prompt For Attended Status Header"="Aviso Para Status de Participantes";
 "Prompt For Attended Status"="Aviso Para Status de Participantes";
 "Go To Details"="Ir Para Detalhes";
 
@@ -195,6 +196,6 @@
 "Filtering" = "Filtragem"; //filtering indicator near counts
 "Filters" = "Filtros"; //menu name
 
-"Day" = "Dia";
+"Day" = "Día";
 "Bands" = "Bandas";
 "Events" = "Eventos";

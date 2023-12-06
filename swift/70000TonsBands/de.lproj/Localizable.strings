@@ -38,6 +38,7 @@
 "Part Of Event"="Teilweise Teilnahme";
 "None Of Event"="Keine Teilnahme";
 
+"Prompt For Attended Status Header"="Aufforderung zur Eingabe der Teilnahme";
 "Prompt For Attended Status"="Aufforderung zur Eingabe der Teilnahme";
 "Go To Details"="Gehe zu Details";
 

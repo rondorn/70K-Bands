@@ -65,6 +65,7 @@
     <string name="YouTubeLinkHelp">Recherche de vidéos officielles sur YouTube</string>
     <string name="MetalArchiveLinkHelp">Rechercher dans les archives métalliques</string>
 
+    <string name="PromptForAttendedStatusHeader">Demander le statut de présence</string>
     <string name="PromptForAttendedStatus">Demander le statut de présence</string>
     <string name="GoToDetails">Aller aux détails</string>
 

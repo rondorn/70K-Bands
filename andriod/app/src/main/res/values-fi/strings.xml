@@ -66,6 +66,7 @@
     <string name="YouTubeLinkHelp">Etsitään virallisia videoita YouTubesta</string>
     <string name="MetalArchiveLinkHelp">Etsitään Metal Archives-sivustolta</string>
 
+    <string name="PromptForAttendedStatusHeader">Kysy osallistumisesta</string>
     <string name="PromptForAttendedStatus">Kysy osallistumisesta</string>
     <string name="GoToDetails">Siirry lisätietoihin</string>
 

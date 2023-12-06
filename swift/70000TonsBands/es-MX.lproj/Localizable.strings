@@ -14,7 +14,7 @@
 "Unknown" = "No lo sé";
 
 "Ok"="Sí";
-"Cancel"="No";
+"Cancel"="Cancelar";
 
 "Alert On Must See Bands"="Alerta para bandas que quiero ver";
 "Alert On Might See Bands"="Alerta para bandas que quizás vea";
@@ -28,7 +28,7 @@
 "Alert For Unofficial Events"="Alerta para eventos no oficiales";
 
 "ShowHideEvents"="Mostrar/Ocultar eventos";
-"HideExpiredEvents"="Ocultar eventos caducados";
+"HideExpiredEvents"="Ocultar eventos pasados";
 
 "Only alert for shows you will attend"="Alertas solo para conciertos a los que asistiré";
 "Alert for shows according to your favorites selection"="Alertas para conciertos de acuerdo con tus favoritos";
@@ -43,14 +43,16 @@
 "Part Of Event"="Asistir a parte de este evento";
 "None Of Event"="No voy a asistir a este evento";
 
-"Prompt For Attended Status"="Asistencia a eventos";
+"Prompt For Attended Status Header"="Asistencia a eventos";
+"Prompt For Attended Status"="Indicar asistencia a eventos";
+
 "Go To Details"="Ir a detalles";
 
 "Special Event"="Eventos especiales";
 "Meet and Greet"="Meet and Greets";
 "Clinic"="Clinics";
 "Listening Party"="Escuchas de álbums";
-"Unofficial Events"="Eventos no oficiales";
+"Unofficial Events"="Organizado por fans";
 
 "officialWebSiteLinkHelp" = "Llevándote al sitio web oficial";
 "WikipediaLinkHelp" = "Buscando en Wikipedia";
@@ -193,7 +195,7 @@
 "Filtering" = "Filtrando"; //filtering indicator near counts
 "Filters" = "Filtros"; //menu name
 
-"Day" = "Dia";
+"Day" = "Día";
 
 "Bands" = "Bandas";
 "Events" = "Eventos";

@@ -242,7 +242,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
         HideExpiredSwitchLabel.text = NSLocalizedString("hideExpiredEvents", comment: "")
         
-        PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
+        PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status Header", comment: "")
         PromptForAttendedSwitchLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
         
         selectYearLable.text = NSLocalizedString("SelectYearLabel", comment: "")
