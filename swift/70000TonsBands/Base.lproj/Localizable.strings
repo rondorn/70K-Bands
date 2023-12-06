@@ -32,7 +32,9 @@
 "Part Of Event"="Attending some of this event";
 "None Of Event"="I will not see this event";
 
+"Prompt For Attended Status Header"="Prompt For Attended Status";
 "Prompt For Attended Status"="Prompt For Attended Status";
+
 "Go To Details"="Go To Details";
 
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
@@ -54,9 +56,9 @@
 
 
 
-"officialWebSiteLinkHelp" = "Taking you to the Offical Web Site";
+"officialWebSiteLinkHelp" = "Taking you to the official Web Site";
 "WikipediaLinkHelp" = "Searching Wikipedia";
-"YouTubeLinkHelp" = "Searching YouTube for offical videos";
+"YouTubeLinkHelp" = "Searching YouTube for official videos";
 "MetalArchiveLinkHelp" = "Searching Metal Archives";
 
 "PoolVenue" = "Pool";

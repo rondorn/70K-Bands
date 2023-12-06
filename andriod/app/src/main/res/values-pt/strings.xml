@@ -65,6 +65,7 @@
     <string name="YouTubeLinkHelp">Pesquisando no YouTube por vídeos oficiais</string>
     <string name="MetalArchiveLinkHelp">Pesquisando na Metal Archives</string>
 
+    <string name="PromptForAttendedStatusHeader">Aviso Para Status de Participantes</string>
     <string name="PromptForAttendedStatus">Aviso Para Status de Participantes</string>
     <string name="GoToDetails">Ir Para Detalhes</string>
 

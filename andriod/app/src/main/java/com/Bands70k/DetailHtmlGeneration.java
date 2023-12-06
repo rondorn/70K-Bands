@@ -139,7 +139,7 @@ public class DetailHtmlGeneration {
 
                     scheduleHtml += "<td width=2% bgcolor=" + locationColor + "><td>";
                     scheduleHtml += "<td width=64%><table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=100%>";
-                    scheduleHtml += "<tr><td style='background:black;font-size:11px;color:white;text-align:right'>" + eventType+  "&nbsp;</td></tr>";
+                    scheduleHtml += "<tr><td style='background:black;font-size:11px;color:white;text-align:right'>" + Utilities.convertEventTypeToLocalLanguage(eventType) +  "&nbsp;</td></tr>";
                     scheduleHtml += "<tr><td style='background:black;font-size:11px;color:white;text-align:left'>" + eventNote + "</td></tr></table>";
 
                     if (eventTypeImage.isEmpty() == false) {

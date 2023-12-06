@@ -453,6 +453,33 @@ func setupVenueLocations(){
     venueLocation["Bull & Bear Pub"] = "Deck 5"
 }
 
+func convertEventTypeToLocalLanguage(eventType: String)->String{
+    
+    var localEventType = eventType
+    
+    print ("Recieved an eventType of \(eventType)")
+    if eventType == "Cruiser Organized" {
+        localEventType = NSLocalizedString("Unofficial Events", comment: "")
+        
+    } else if eventType == "Listening Party" {
+        localEventType = NSLocalizedString(eventType, comment: "")
+    
+    } else if eventType == "Clinic"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    } else if eventType == "Meet and Greet"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    } else if eventType == "Special Event"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    }
+    
+    print ("Recieved an eventType and returned \(localEventType)")
+    return localEventType;
+    
+}
+
 func isInternetAvailable() -> Bool {
     
     var networkTesting = NetworkTesting()
