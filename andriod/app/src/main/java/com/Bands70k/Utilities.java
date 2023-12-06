@@ -42,4 +42,27 @@ public class Utilities {
         return newDateValue;
     }
 
+    public static String convertEventTypeToLocalLanguage(String eventType){
+
+        String localEventType = eventType;
+
+        if (eventType.equals("Cruiser Organized")) {
+            localEventType = staticVariables.context.getString(R.string.unofficalEventLable);
+
+        } else if (eventType.equals("Listening Party")) {
+            localEventType = staticVariables.context.getString(R.string.AlbumListeningEvents);
+
+        } else if (eventType.equals("Clinic")) {
+            localEventType = staticVariables.context.getString(R.string.ClinicEvents);
+
+        } else if (eventType.equals("Meet and Greet")) {
+            localEventType = staticVariables.context.getString(R.string.MeetAndGreet);
+
+        } else if (eventType.equals("Special Event")) {
+            localEventType = staticVariables.context.getString(R.string.SpecialEvents);
+        }
+
+        return localEventType;
+
+    }
 }

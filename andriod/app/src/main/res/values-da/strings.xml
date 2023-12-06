@@ -65,6 +65,7 @@
     <string name="YouTubeLinkHelp">Søgning på YouTube til officielle videoer</string>
     <string name="MetalArchiveLinkHelp">Søgning på metalarkivers</string>
 
+    <string name="PromptForAttendedStatusHeader">Spørg om deltaget status</string>
     <string name="PromptForAttendedStatus">Spørg om deltaget status</string>
     <string name="GoToDetails">Gå til detaljer</string>
 

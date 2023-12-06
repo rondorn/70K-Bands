@@ -13,7 +13,7 @@
     <string name="wont">No</string>
     <string name="unknown">No lo sé</string>
     <string name="Ok">Sí</string>
-    <string name="Cancel">No</string>
+    <string name="Cancel">Cancelar</string>
     <string name="AlertOnMustSeeBands">Alerta para bandas que quiero ver</string>
     <string name="AlertOnMightSeeBands">Alerta para bandas que quizás vea</string>
     <string name="OnlyAlertForShowsYouWillAttend">Alertas solo para eventos a los que asistiré</string>
@@ -44,13 +44,17 @@
     <string name="AllOfEvent">Asistir a todo este evento</string>
     <string name="PartOfEvent">Asistir a parte de este evento</string>
     <string name="NoneOfEvent">No voy a asistir a este evento</string>
-    <string name="PromptForAttendedStatus">Solicitar estado atendido</string>
+
+    <string name="PromptForAttendedStatusHeader">Asistencia a eventos</string>
+    <string name="PromptForAttendedStatus">Indicar asistencia a eventos</string>
+
+
     <string name="GoToDetails">Ir a detalles</string>
     <string name="SpecialEvents">Eventos especiales</string>
     <string name="MeetAndGreet">Meet and Greets</string>
     <string name="ClinicEvents">Clinics</string>
     <string name="AlbumListeningEvents">Escuchas de álbums</string>
-    <string name="unofficalEventLable">Eventos no oficiales</string>
+    <string name="unofficalEventLable">Organizado por fans</string>
     <string name="officialWebSiteLinkHelp">Llevándote al sitio web oficial</string>
     <string name="WikipediaLinkHelp">Buscando en Wikipedia</string>
     <string name="YouTubeLinkHelp">Buscando videos oficiales en YouTube</string>
@@ -63,7 +67,7 @@
     <string name="venueFilterHeader">Mostrar/Ocultar escenario</string>
     <string name="showTypeFilterHeader">Mostrar/Ocultar tipo de evento</string>
     <string name="showHideExpiredLabel">Mostrar/Ocultar eventos</string>
-    <string name="hideExpiredEvents">Ocultar eventos caducados</string>
+    <string name="hideExpiredEvents">Ocultar eventos pasados</string>
     <string name="AlertPreferences">Preferencias de alertas</string>
     <string name="disableAttendedPrompt">Deshabilitar este aviso</string>
     <string name="EndofList">Fin de la lista</string>
@@ -81,7 +85,7 @@
     <string name="country_invalid">Cambiar</string>
     <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera...</string>
     <string name="data_filter_issue">Todos los datos están filtrados, elimina los filtros para ver los datos</string>
-    <string name="SelectYearLabel">Selecciona el año para mostrar</string>
+    <string name="SelectYearLabel">Selecciona la edición para mostrar</string>
     <string name="restartTitle">Es necesario reiniciar</string>
     <string name="restartMessage">NO HAGAS ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
     <string name="yearChangeAborted">No hay conexión a Internet disponible, NO se puede cambiar de año en este momento</string>

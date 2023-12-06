@@ -32,6 +32,7 @@
 "Part Of Event"="Deltager nogle af denne begivenhed";
 "None Of Event"="Jeg vil ikke se denne begivenhed";
 
+"Prompt For Attended Status Header"="Spørg om deltaget status";
 "Prompt For Attended Status"="Spørg om deltaget status";
 "Go To Details"="Gå til detaljer";
 
