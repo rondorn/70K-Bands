@@ -415,7 +415,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 LastOnCruise.isHidden = true
 
             } else {
-                let lastOnCruiseLabel = "Last On Cruise:" //NSLocalizedString("genre", comment: "Genre")
+                let lastOnCruiseLabel = NSLocalizedString("Last On Cruise", comment: "Last On Cruise")
                 LastOnCruise.text = lastOnCruiseLabel + ":\t" + lastOnCruise
                 LastOnCruise.isHidden = false
                 allDetailsHidden = false
@@ -434,7 +434,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             if (allDetailsHidden == true){
                 extraData.isHidden = true
-                //notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 20
             } else {
                 extraData.isHidden = false
             }
