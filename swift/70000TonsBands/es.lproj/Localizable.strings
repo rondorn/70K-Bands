@@ -89,7 +89,8 @@
 "visitBands" = "Enlaces";
 "country" = "País";
 "genre" = "Género";
-
+"Last On Cruise" = "Última en crucero"; //list if years a band was previously on
+ 
 "verifyCountry" = "Verifica tu país";
 "correctCountryDescription" = "Corrige tu país si es necesario";
 "confirmCountry" = "Confirmar";

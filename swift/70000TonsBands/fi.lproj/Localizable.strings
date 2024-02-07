@@ -93,7 +93,7 @@
 "visitBands" = "Linkit";
 "country" = "Maa";
 "genre" = "Tyylilaji";
-
+"Last On Cruise" = "Viimeinen risteilyllä"; //list if years a band was previously on
 
 "verifyCountry" = "Vahvista maasi";
 "correctCountryDescription" = "Korjaa maasi tarvittaessa";

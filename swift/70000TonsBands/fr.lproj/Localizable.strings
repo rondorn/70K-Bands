@@ -92,6 +92,7 @@
 "visitBands" = "Liens";
 "country" = "Pays";
 "genre" = "Le Genre";
+"Last On Cruise" = "Dernier en croisière"; //list if years a band was previously on
 
 "verifyCountry" = "Vérifiez votre pays";
 "correctCountryDescription" = "Corrigez votre pays si nécessaire";

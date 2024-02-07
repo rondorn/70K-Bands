@@ -91,7 +91,7 @@
 "visitBands" = "Links";
 "country" = "Country";
 "genre" = "Genre";
-
+"Last On Cruise" = "Last On Cruise"; //list if years a band was previously on
 
 "verifyCountry" = "Verify Your Country";
 "correctCountryDescription" = "Correct Your Country If Needed";
@@ -201,3 +201,4 @@
 
 "Bands" = "Bands";
 "Events" = "Events";
+

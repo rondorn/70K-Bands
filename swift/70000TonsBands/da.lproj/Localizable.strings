@@ -88,6 +88,7 @@
 "visitBands" = "Links";
 "country" = "Land";
 "genre" = "Køn";
+"Last On Cruise" = "Sidst på krydstogt"; //list if years a band was previously on
 
 "verifyCountry" = "Bekræft dit land";
 "correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
