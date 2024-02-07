@@ -77,7 +77,6 @@ func getDateFormatter() -> DateFormatter {
     return dateFormatter
 }
 
-
 func monthDateRegionalFormatting(dateValue: String)->String{
     
     var newDateValue = dateValue

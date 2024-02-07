@@ -76,6 +76,7 @@
 "hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
 
 "AlertPreferences" = "Hälytysasetukset";
+"PreferenceHeader" = "70K Bands Asetukset";
 
 "disableAttendedPrompt" = "Poista tämä kehote käytöstä";
 

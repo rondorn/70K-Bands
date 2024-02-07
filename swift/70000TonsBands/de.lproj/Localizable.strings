@@ -73,6 +73,7 @@
 "hideExpiredEvents" = "Vergangene Ereignisse ausblenden";
 
 "AlertPreferences" = "Benachrichtigungseinstellungen";
+"PreferenceHeader" = "70K Bands Préférences";
 
 "disableAttendedPrompt" = "Deaktivieren Sie diese Eingabeaufforderung";
 

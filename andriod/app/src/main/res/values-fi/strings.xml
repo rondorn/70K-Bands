@@ -39,6 +39,7 @@
     <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
+    <string name="PreferenceHeader">70K Bands Asetukset</string>
 
     <string name="importMessage">Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 

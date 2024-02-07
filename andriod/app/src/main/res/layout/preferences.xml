@@ -28,7 +28,7 @@
             android:layout_gravity="center_horizontal"
             android:background="@color/common_google_signin_btn_text_dark_focused"
             android:gravity="center_horizontal"
-            android:text="70K Band Preferences"
+            android:text="@string/PreferenceHeader"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="@color/common_google_signin_btn_text_dark_default"
             android:textStyle="bold" />

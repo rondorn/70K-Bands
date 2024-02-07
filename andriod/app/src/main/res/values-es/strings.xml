@@ -28,7 +28,7 @@
     <string name="UseLastYearsData">Utilizar datos del año pasado</string>
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Preferencia avanzada\n¡No lo modifique a menos que sepa lo que está haciendo!</string>
-
+    <string name="PreferenceHeader">70K Bands Preferencias</string>
     <string name="importMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="ImportDataBackup">Importar copia de seguridad de datos</string>
@@ -222,7 +222,7 @@
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtros</string>
 
-    <string name="Day">Dia</string>
+    <string name="Day">Día</string>
     <string name="Bands">Bandas</string>
     <string name="Events">Eventos</string>
 

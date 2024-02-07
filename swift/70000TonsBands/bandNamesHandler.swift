@@ -160,6 +160,9 @@ open class bandNamesHandler {
                             if (lineData["noteworthy"] != nil){
                                 bandNames[bandNameValue]!["bandNoteWorthy"] = lineData["noteworthy"]!;
                             }
+                            if (lineData["priorYears"] != nil){
+                                bandNames[bandNameValue]!["priorYears"] = lineData["priorYears"]!;
+                            }
                         }
                     }
                 }
@@ -272,5 +275,8 @@ open class bandNamesHandler {
         
         return bandNames[band]?["bandNoteWorthy"] ?? ""
     }
-    
+
+    func getPriorYears (_ band: String) -> String {
+        return bandNames[band]?["priorYears"] ?? ""
+    }
 }

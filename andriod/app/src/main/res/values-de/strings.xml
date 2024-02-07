@@ -37,7 +37,6 @@
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Erweiterte Einstellungen.\nÄndern Sie nicht, wenn Sie nicht wissen, was Sie tun!</string>
-
     <string name="importMessage">Diese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
 
     <string name="showAttendedFilterTrueHelp">Zeige nur Ereignisse, an denen du teilgenommen hast. Andere Filter werden nicht angewendet</string>
@@ -59,6 +58,7 @@
     <string name="hideExpiredEvents">Ausblenden Abgelaufene Ereignissen</string>
 
     <string name="AlertPreferences">Benachrichtigungseinstellungen</string>
+    <string name="PreferenceHeader">70K Badns Präferenzen</string>
 
     <string name="officialWebSiteLinkHelp">Weiterleitung zur offiziellen Website</string>
     <string name="WikipediaLinkHelp">Wikipedia durchsuchen</string>
