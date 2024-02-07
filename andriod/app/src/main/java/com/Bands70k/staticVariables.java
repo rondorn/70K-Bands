@@ -145,7 +145,7 @@ public class staticVariables {
 
     public static String descriptionMap;
     public static Boolean checkingInternet = false;
-    public static String internetCheckCache = "Unknown";
+    public static String internetCheckCache = "false";
     public static Long internetCheckCacheDate = 0L;
 
     public static String userDataForCompareAndWriteBlock;
@@ -491,7 +491,7 @@ public class staticVariables {
             pointerUrl = staticVariables.defaultUrlTest;
         }
 
-        Log.d("pointerUrl", "pointerUrl equals " + pointerUrl);
+        Log.d("pointerUrl", "pointerUrl equals " + pointerUrl + " - OnlineStatus is " + OnlineStatus.isOnline());
 
         if (OnlineStatus.isOnline() == true) {
             try {

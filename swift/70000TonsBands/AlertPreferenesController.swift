@@ -136,7 +136,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
         buildEventYearMenu(currentYear: currentYearSetting)
         disableAlertButtonsIfNeeded()
-        self.navigationItem.title = "Preferences - Build:" + versionInformation
+        self.navigationItem.title = NSLocalizedString("PreferenceHeader", comment: "")
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayWaitingMessage), name: NSNotification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.eventsOrBandsPrompt), name: NSNotification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
@@ -253,7 +253,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 uidString = UIDevice.current.identifierForVendor!.uuidString
             }
         }
-        userIDLabel.text = "UserID: " + uidString
+        userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation
         userIDLabel.adjustsFontSizeToFitWidth = true
     }
     
