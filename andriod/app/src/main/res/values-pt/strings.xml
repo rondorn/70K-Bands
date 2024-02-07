@@ -59,6 +59,7 @@
     <string name="hideExpiredEvents">Ocultar Eventos Expirados</string>
 
     <string name="AlertPreferences">Preferências de Alerta</string>
+    <string name="PreferenceHeader">70K Bands Preferências</string>
 
     <string name="officialWebSiteLinkHelp">Levando você para o Site Oficial</string>
     <string name="WikipediaLinkHelp">Pesquisando na Wikipedia</string>
@@ -233,7 +234,7 @@
     <!-- filtering indicator near counts -->
     <string name="Filters">Filtros</string>
 
-    <string name="Day">Dia</string>
+    <string name="Day">Día</string>
     <string name="Bands">Bandas</string>
     <string name="Events">Eventos</string>
 

@@ -26,7 +26,7 @@ public class OnlineStatus {
         OnlineStatus statusCheckHandler = new OnlineStatus();
         Boolean onlineCheck = statusCheckHandler.isInternetAvailableTest();
 
-        Log.d("Internet Found", "Internet Found Checking Internet Done");
+        Log.d("Internet Found", "Internet Found Checking Internet Done - onlineCheck is " + onlineCheck);
         return onlineCheck;
     }
 
@@ -42,9 +42,9 @@ public class OnlineStatus {
             Log.d("Internet Found", "Internet Found Clearing cache");
             currentEpoc = System.currentTimeMillis() / 1000L;
             staticVariables.internetCheckCacheDate = currentEpoc + 15;
+
             staticVariables.internetCheckCache = "Unknown";
         }
-
         if (staticVariables.internetCheckCache.equals("Unknown") == false){
             if (staticVariables.internetCheckCache == "false") {
                 returnState = false;

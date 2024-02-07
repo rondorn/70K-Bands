@@ -526,7 +526,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     bandNameView.textColor = UIColor.white
     locationView.textColor = UIColor.lightGray
     startTimeView.textColor = UIColor.white
-    endTimeView.textColor = UIColor.darkGray
+    endTimeView.textColor = hexStringToUIColor(hex: "#797D7F")
     dayView.textColor = UIColor.white
     bandNameNoSchedule.textColor = UIColor.white
     

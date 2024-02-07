@@ -75,6 +75,7 @@
 "hideExpiredEvents" = "Masquer Événements Expirés";
 
 "AlertPreferences" = "Préférences d'alerte";
+"PreferenceHeader" = "70K Bands Préférences";
 
 "disableAttendedPrompt" = "Désactiver cette invite";
 

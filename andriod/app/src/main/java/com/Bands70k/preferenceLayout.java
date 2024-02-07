@@ -123,7 +123,8 @@ public class preferenceLayout  extends Activity {
 
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
-        headerText.setText("70K Bands Preferences\nBuild:" + versionString);
+
+        headerText.setText( getResources().getString(R.string.PreferenceHeader) + "\nBuild:" + versionString);
 
     }
 

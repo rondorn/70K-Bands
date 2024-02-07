@@ -38,6 +38,7 @@
     <string name="UseLastYearsData">Utilisez les informations de l\'an dernier</string>
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Préférence avancée.\nNe modifiez pas à moins de savoir ce que vous faites!</string>
+    <string name="PreferenceHeader">70K Bands Préférences</string>
 
     <string name="importMessage">Ce changement nécessite le redémarrage de l\'application. 70K Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 

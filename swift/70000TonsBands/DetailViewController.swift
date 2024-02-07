@@ -53,6 +53,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @IBOutlet weak var Country: UITextField!
     @IBOutlet weak var Genre: UITextField!
+    @IBOutlet weak var LastOnCruise: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
     
     @IBOutlet weak var EventView1: UIView!
@@ -221,6 +222,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         Country.isHidden = false
         Genre.isHidden = false
+        LastOnCruise.isHidden = false
         NoteWorthy.isHidden = false
         
         dataViewTopSpacingConstraint.constant = dataViewNumber
@@ -406,6 +408,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 Genre.isHidden = false
                 allDetailsHidden = false
             }
+ 
+            let lastOnCruise = bandNameHandle.getPriorYears(bandName)
+            if (lastOnCruise.isEmpty == true){
+                LastOnCruise.text = ""
+                LastOnCruise.isHidden = true
+
+            } else {
+                let lastOnCruiseLabel = "Last On Cruise:" //NSLocalizedString("genre", comment: "Genre")
+                LastOnCruise.text = lastOnCruiseLabel + ":\t" + lastOnCruise
+                LastOnCruise.isHidden = false
+                allDetailsHidden = false
+            }
             
             let bandNoteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
             if (bandNoteWorthy.isEmpty == true){
@@ -428,6 +442,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         } else if (UIDevice.current.userInterfaceIdiom == .phone) {
             Country.text = ""
             Genre.text = ""
+            LastOnCruise.text = ""
             NoteWorthy.text = ""
         }
         
@@ -437,6 +452,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             Country.text = ""
             Genre.text = ""
             NoteWorthy.text = ""
+            LastOnCruise.text = ""
             officialUrlButton.isHidden = true;
             wikipediaUrlButton.isHidden = true;
             youtubeUrlButton.isHidden = true;
@@ -1066,7 +1082,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let endTimeView = eventView.viewWithTag(7) as! UILabel
         let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let endTimeText = formatTimeValue(timeValue: endTime)
-        endTimeView.textColor = UIColor.darkGray
+        endTimeView.textColor = hexStringToUIColor(hex: "#797D7F")
         endTimeView.text = endTimeText
         
         let dayLabelView = eventView.viewWithTag(8) as! UILabel
