@@ -80,6 +80,10 @@
     <string name="visitBands">Enlaces</string>
     <string name="country">País</string>
     <string name="genre">Género</string>
+    <string name="LastOnCruise">Última en crucero</string> <!--list of years a band was previously on -->
+    <string name="Note">Nota</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
+
+
     <string name="verify_country">Verifica tu país</string>
     <string name="correct_if_needed">Corrige tu país si es necesario</string>
     <string name="country_invalid">Cambiar</string>

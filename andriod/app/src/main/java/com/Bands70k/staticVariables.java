@@ -156,6 +156,7 @@ public class staticVariables {
     public static Boolean notesLoaded = false;
 
     public static final String blueColor = "#5DADE2";
+    public static final String lightGrey = "#797D7F";
 
     public static Boolean fileDownloaded = false;
 

@@ -189,6 +189,16 @@ public class BandInfo {
         }
     }
 
+    public static String getPriorYears(String bandName){
+        if (getBandDetailsData(bandName, "priorYears") != null) {
+            String priorYears = getBandDetailsData(bandName, "priorYears");
+            priorYears = priorYears.replaceAll(" ", ", ");
+            return priorYears;
+
+        } else {
+            return " ";
+        }
+    }
     public static String getNote(String bandName){
         if (getBandDetailsData(bandName, "note") != null) {
             return getBandDetailsData(bandName, "note");
@@ -297,7 +307,7 @@ public class BandInfo {
                         bandDetails = addToBandDetails("country", RowData, 6, bandDetails);
                         bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
                         bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
-
+                        bandDetails = addToBandDetails("priorYears", RowData, 9, bandDetails);
                         if (!RowData[0].contains("bandName")) {
                             bandData.put(RowData[0], bandDetails);
                             bandNames.add(RowData[0]);

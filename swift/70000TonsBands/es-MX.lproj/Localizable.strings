@@ -90,7 +90,8 @@
 "visitBands" = "Enlaces";
 "country" = "País";
 "genre" = "Género";
-"Last On Cruise" = "Última en crucero"; //list if years a band was previously on
+"Last On Cruise" = "Última en crucero"; //list of years a band was previously on
+"Note" = "Nota";  //something of note, like doing an album premier or the real or fake version of Batushka
 
 "verifyCountry" = "Verifica tu país";
 "correctCountryDescription" = "Corrige tu país si es necesario";
