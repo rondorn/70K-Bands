@@ -385,6 +385,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             var allDetailsHidden = true
             let bandCountry = bandNameHandle.getBandCountry(bandName)
             print ("Band County is \(bandCountry)")
+            
+            
+            Country.textColor = UIColor.lightGray
+            Genre.textColor = UIColor.lightGray
+            LastOnCruise.textColor = UIColor.lightGray
+            NoteWorthy.textColor = UIColor.lightGray
+            
+            Country.font = UIFont.boldSystemFont(ofSize: 15)
+            Genre.font = UIFont.boldSystemFont(ofSize: 15)
+            LastOnCruise.font = UIFont.boldSystemFont(ofSize: 15)
+            NoteWorthy.font = UIFont.boldSystemFont(ofSize: 15)
+            
             if (bandCountry.isEmpty == true){
                 Country.text = "";
                 Country.isHidden = true
@@ -392,7 +404,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
             } else {
                 let countryLablel = NSLocalizedString("country", comment: "Country")
-                Country.text = countryLablel + ":\t" + bandCountry
+                Country.text = countryLablel + ":" + getTabs(label: countryLablel) + bandCountry
                 Country.isHidden = false
                 allDetailsHidden = false
             }
@@ -404,7 +416,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
             } else {
                 let genreLabel = NSLocalizedString("genre", comment: "Genre")
-                Genre.text = genreLabel + ":\t" + bandGenre
+                Genre.text = genreLabel + ":" + getTabs(label: genreLabel) + bandGenre
                 Genre.isHidden = false
                 allDetailsHidden = false
             }
@@ -416,7 +428,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
             } else {
                 let lastOnCruiseLabel = NSLocalizedString("Last On Cruise", comment: "Last On Cruise")
-                LastOnCruise.text = lastOnCruiseLabel + ":\t" + lastOnCruise
+                LastOnCruise.text = lastOnCruiseLabel + ":" + getTabs(label: lastOnCruiseLabel) + lastOnCruise
                 LastOnCruise.isHidden = false
                 allDetailsHidden = false
             }
@@ -427,7 +439,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 NoteWorthy.isHidden = true
 
             } else {
-                NoteWorthy.text = "Note:\t" + bandNoteWorthy
+                let noteWorthyLabel = NSLocalizedString("Note", comment: "Note")
+                NoteWorthy.text = noteWorthyLabel + ":" + getTabs(label: "Note") + bandNoteWorthy
                 NoteWorthy.isHidden = false
                 allDetailsHidden = false
             }
@@ -475,6 +488,27 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
     }
     
+    func getTabs(label: String)-> String {
+        
+        var tabs = ""
+        
+        if (label.count <= 5){
+            tabs = "\t\t\t\t"
+            
+        } else  if (label.count <= 10){
+            tabs = "\t\t\t"
+            
+        } else if (label.count <= 14){
+            tabs = "\t\t"
+            
+        } else {
+            tabs = "\t"
+        }
+        
+        return tabs
+        
+    }
+    
     func textViewDidBeginEditing(_ textView: UITextView) {
         print ("Editing of commentFile has begun")
         if (customNotesText.text == "Add your custom notes here"){
@@ -489,6 +523,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
         customNotesText.textColor = UIColor.white
         setNotesHeight()
+        if (bandNameHandle.getBandNoteWorthy(bandName).isEmpty == false){
+            customNotesText.text = "\n" + customNotesText.text
+        }
     }
     
     func saveComments(){
@@ -851,10 +888,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             bandSelected = nextBandName
             bandName = nextBandName
             
-            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false )
             print ("Starting animtion")
+            
             UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut, animations: {
     
+
                 var frameNotes = self.customNotesText.frame
                 frameNotes.origin.x += animationMovement
                 self.customNotesText.frame = frameNotes
@@ -911,6 +950,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             self.viewDidLoad()
             setButtonNames()
             self.viewWillAppear(true)
+            
         }
     }
  

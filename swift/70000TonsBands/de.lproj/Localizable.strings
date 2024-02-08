@@ -90,7 +90,8 @@
 "visitBands" = "Verknüpfungen";
 "country" = "Land";
 "genre" = "Stil";
-"Last On Cruise" = "Zuletzt auf Kreuzfahrt"; //list if years a band was previously on
+"Last On Cruise" = "Zuletzt auf Kreuzfahrt"; //list of years a band was previously on
+"Note" = "Notiz";  //something of note, like doing an album premier or the real or fake version of Batushka
 
 "verifyCountry" = "Bestätigen Sie Ihr Land";
 "correctCountryDescription" = "Korrigieren Sie bei Bedarf Ihr Land";

@@ -277,6 +277,11 @@ open class bandNamesHandler {
     }
 
     func getPriorYears (_ band: String) -> String {
-        return bandNames[band]?["priorYears"] ?? ""
+        
+        var previousYears = bandNames[band]?["priorYears"]
+        
+        previousYears = previousYears?.replacingOccurrences(of: " ", with: ", ")
+        
+        return previousYears ?? ""
     }
 }
