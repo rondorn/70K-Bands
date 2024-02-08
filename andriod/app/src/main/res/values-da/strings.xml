@@ -85,6 +85,8 @@
     <string name="visitBands">Links</string>
     <string name="country">Land</string>
     <string name="genre">Køn</string>
+    <string name="LastOnCruise">Sidst på krydstogt</string> <!--list of years a band was previously on -->
+    <string name="Note">Bemærk</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
 
     <string name="verify_country">Bekræft dit land</string>
     <string name="correct_if_needed">Ret dit land, hvis det er nødvendigt</string>

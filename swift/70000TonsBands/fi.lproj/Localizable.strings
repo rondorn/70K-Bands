@@ -93,7 +93,8 @@
 "visitBands" = "Linkit";
 "country" = "Maa";
 "genre" = "Tyylilaji";
-"Last On Cruise" = "Viimeinen risteilyllä"; //list if years a band was previously on
+"Last On Cruise" = "Viimeinen risteilyllä"; //list of years a band was previously on
+"Note" = "Huomautus";  //something of note, like doing an album premier or the real or fake version of Batushka
 
 "verifyCountry" = "Vahvista maasi";
 "correctCountryDescription" = "Korjaa maasi tarvittaessa";

@@ -43,7 +43,6 @@ class ToastMessages : UILabel {
     
     public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
-        
         print ("Toast cell location is \(cellLocation)")
         var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
         

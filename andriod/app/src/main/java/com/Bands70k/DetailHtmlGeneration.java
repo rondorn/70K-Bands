@@ -204,20 +204,32 @@ public class DetailHtmlGeneration {
 
             String countryLabel = staticVariables.context.getString(R.string.country);
             String genreLabel = staticVariables.context.getString(R.string.genre);
+            String previousYearsLabel = staticVariables.context.getString(R.string.LastOnCruise);
+            String notesLabel = staticVariables.context.getString(R.string.Note);
 
             htmlText += "<div style='width=100%; left:0;right:0;width=100%;'>" +
-                    "<ul style='overflow:hidden;font-size:14px;font-size:4.0vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
+                    "<ul style='overflow:hidden;font-size:14px;font-weight:bold;font-size:3.5vw;list-style-type:none;text-align:left;margin-left:-25px;color:white'>";
 
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>" + countryLabel + ":</li>";
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getCountry(bandName) + "</li>";
-
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>" + genreLabel + ":</li>";
-            htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getGenre(bandName) + "</li>";
-
-            if (BandInfo.getNote(bandName) != "") {
-                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:20%'>Misc:</li>";
-                htmlText += "<li style='color:" + staticVariables.blueColor + ";float:left;display:inline;width:80%'>" + BandInfo.getNote(bandName) + "</li>";
+            if (BandInfo.getCountry(bandName).isEmpty() == false) {
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:bold;display:inline;width:35%'>" + countryLabel + ":</li>";
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:normal;display:inline;width:65%'>" + BandInfo.getCountry(bandName) + "</li>";
             }
+
+            if (BandInfo.getGenre(bandName).isEmpty() == false) {
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:bold;display:inline;width:35%'>" + genreLabel + ":</li>";
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:normal;display:inline;width:65%'>" + BandInfo.getGenre(bandName) + "</li>";
+            }
+
+            if (BandInfo.getPriorYears(bandName).isEmpty() == false) {
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:bold;display:inline;width:35%'>" + previousYearsLabel + ":</li>";
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:normal;display:inline;width:65%'>" + BandInfo.getPriorYears(bandName) + "</li>";
+            }
+
+            if (BandInfo.getNote(bandName).isEmpty() == false) {
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:bold;display:inline;width:35%'>" + notesLabel + ":</li>";
+                htmlText += "<li style='color:" + staticVariables.lightGrey + ";float:left;font-weight:normal;display:inline;width:65%'>" + BandInfo.getNote(bandName) + "</li>";
+            }
+
             htmlText += "</ul></div>";
 
         }

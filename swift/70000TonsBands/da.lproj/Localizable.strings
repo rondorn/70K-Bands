@@ -88,7 +88,8 @@
 "visitBands" = "Links";
 "country" = "Land";
 "genre" = "Køn";
-"Last On Cruise" = "Sidst på krydstogt"; //list if years a band was previously on
+"Last On Cruise" = "Sidst på krydstogt"; //list of years a band was previously on
+"Note" = "Bemærk";  //something of note, like doing an album premier or the real or fake version of Batushka
 
 "verifyCountry" = "Bekræft dit land";
 "correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
