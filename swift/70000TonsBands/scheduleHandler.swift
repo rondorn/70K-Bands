@@ -253,10 +253,10 @@ open class scheduleHandler {
                         let currentTimePlusAnHour = currentTime - 3600
                         
                         print ("time comparison of scheduledate " + dateIndexTemp.description + " vs " + currentTimePlusAnHour.description)
-                        if dateIndexTemp > currentTimePlusAnHour{
+                        //if dateIndexTemp > currentTimePlusAnHour{
                             print("Returning dateIndex of " + dateIndexTemp.description )
                             return dateIndexTemp
-                        }
+                        //}
                     }
                 }
             }

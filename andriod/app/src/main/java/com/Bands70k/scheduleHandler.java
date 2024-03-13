@@ -44,6 +44,10 @@ public class scheduleHandler {
         return startTime.getTime();
     }
 
+    public Long getEpochEnd(){
+        return endTime.getTime();
+    }
+
     public void setShowLocation(String value){
         showLocation = value;
     }

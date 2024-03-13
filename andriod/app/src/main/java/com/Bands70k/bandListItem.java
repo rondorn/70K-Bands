@@ -13,6 +13,7 @@ public class bandListItem {
     private String startTime;
     private String endTime;
 
+    private String eventNote;
 
     public bandListItem(String bandName) {
         super();
@@ -31,6 +32,13 @@ public class bandListItem {
     }
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getEventNote() {
+        return eventNote;
+    }
+    public void setEventNote(String eventNote) {
+        this.eventNote = eventNote;
     }
 
     public String getLocationColor() {
