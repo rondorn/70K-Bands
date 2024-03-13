@@ -1022,6 +1022,8 @@ public class showBands extends Activity {
                         String endTime = scheduleHandle.getEndTimeString();
                         String eventType = scheduleHandle.getShowType();
                         String day = scheduleHandle.getShowDay();
+                        String note = scheduleHandle.getShowNotes();
+
                         String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
                         Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
                         if (day.contains("Day")) {
@@ -1041,6 +1043,9 @@ public class showBands extends Activity {
                         if (venueLocation.containsKey(location)) {
                             location += " " + venueLocation.get(location);
                         }
+
+                        Log.d("settingEvent", " for " + bandName + " note of " + note);
+                        bandItem.setEventNote(note);
 
                         Integer eventImage = iconResolve.getEventIcon(eventType, bandName);
 

@@ -219,12 +219,13 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
 
             } else if (scrollingDirection == "Down") {
+
                 Log.d("bandListViewSortName", "2 full current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
-                getCellScheduleValueFullInfo(viewHolder);
+                getCellScheduleValueFullInfo(viewHolder, bandData);
 
             } else if (nextBand.equals(currentBandName) == false  || position == 0) {
                 Log.d("bandListViewSortName", "3 full current band is " + currentBandName + " = " + nextBand + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
-                getCellScheduleValueFullInfo(viewHolder);
+                getCellScheduleValueFullInfo(viewHolder, bandData);
 
             } else {
                 Log.d("bandListViewSortName", "4 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
@@ -261,6 +262,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             venueOnly =  fullLocation;
             locationOnly = "";
         }
+
+        if (bandData.getEventNote().isEmpty() == false){
+            locationOnly = locationOnly + " " + bandData.getEventNote();
+        }
+
         // Define the text to have a colored background
         String locationWithColor = " " + venueOnly;
         int startIndex = 0;
@@ -283,7 +289,13 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         viewHolder.location.setText(locationOnly);
     }
 
-    private void getCellScheduleValueFullInfo(bandListHolder viewHolder){
+    private void getCellScheduleValueFullInfo(bandListHolder viewHolder, bandListItem bandData){
+
+        String eventNote = bandData.getEventNote();
+        if (eventNote != null && eventNote.isBlank() == false){
+            viewHolder.location.setText(bandData.getLocation() + " " + eventNote);
+        }
+
         viewHolder.bandName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
         viewHolder.bandName.setTypeface(null, Typeface.BOLD);
         viewHolder.bandName.setTextColor(Color.parseColor("#FFFFFF"));
