@@ -65,7 +65,11 @@ public class mainListHandler {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.preferences.getSortByTime() == true) {
-                        if ((timeIndex + 3600000) > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
+
+                        Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
+                        Log.d("scheduleInfo","Start time is " + String.valueOf(timeIndex) + " EndTime is " + String.valueOf(endTime));
+
+                        if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false){
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
@@ -80,7 +84,8 @@ public class mainListHandler {
                         }
                     } else {
                         Log.d("scheduleInfo", "Sort alphbetically, bandname is " + bandName);
-                        if ((timeIndex + 3600000) > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
+                        Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
+                        if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));

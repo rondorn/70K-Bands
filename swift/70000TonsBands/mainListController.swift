@@ -72,7 +72,9 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
                 unfilteredEventCount = unfilteredEventCount + 1
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
-                    if (timeIndex > Date().timeIntervalSince1970 - 3600  || getHideExpireScheduleData() == false){
+                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
+                    print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
+                    if (eventEndTime > Date().timeIntervalSince1970  || getHideExpireScheduleData() == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
@@ -99,7 +101,9 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
             if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
                 for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys)!{
                     unfilteredBandCount = unfilteredBandCount + 1
-                    if (timeIndex > Date().timeIntervalSince1970 - 3600 || getHideExpireScheduleData() == false){
+                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
+                    print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
+                    if (eventEndTime > Date().timeIntervalSince1970 || getHideExpireScheduleData() == false){
                         unfilteredCurrentEventCount = unfilteredCurrentEventCount + 1
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
@@ -557,15 +561,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
         let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
-        
+        let notes = schedule.getData(bandName, index:timeIndex, variable: notesField)
                 
         indexText += ";" + location + ";" + event + ";" + startTime
-        
-        //if (listOfVenues.contains(location) == false){
-        //    print ("Adding location " + location)
-        //    listOfVenues.append(location)
-        //}
-        
+                
         print(bandName + " displaying timeIndex of \(timeIndex) ")
         startTimeText = formatTimeValue(timeValue: startTime)
         endTimeText = formatTimeValue(timeValue: endTime)
@@ -573,6 +572,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         if (venueLocation[location] != nil){
             locationText += " " + venueLocation[location]!
+        }
+        if (notes.isEmpty == false && notes != " "){
+            locationText += " " + notes
         }
         
         scheduleText = bandName + ":" + startTimeText + ":" + locationText
@@ -621,7 +623,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         if ((bandName == previousBandName  && scrollDirection == "Down" && indexRow != 0) && sortBy == "name"){
             
             print ("Partial Info 1 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
-            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
+            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule, notes: notes)
  
         } else if (scrollDirection == "Down"){
             print ("Full Info 2 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
@@ -633,7 +635,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
  
         } else if (sortBy == "name"){
             print ("Partial Info 4 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
-            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule)
+            getCellScheduleValuePartialInfo(bandName: bandName, location: location, bandNameView: bandNameView, locationView: locationView, bandNameNoSchedule: bandNameNoSchedule, notes: notes)
             
         } else {
             print ("Full Info 5 Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
@@ -697,7 +699,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 }
 
 
-func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel){
+func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel, notes: String){
 
     //print ("not 1st entry Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
     var locationString = "  " + location
@@ -711,6 +713,10 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     bandNameView.isHidden = false;
     
     var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
+    if (notes.isEmpty == false && notes != " "){
+        locationOfVenue += " " + notes
+    }
+    
     var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
     locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
