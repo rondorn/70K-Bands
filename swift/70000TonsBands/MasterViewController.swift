@@ -1071,8 +1071,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         setSortedBy(sortedBy)
         
-        let visibleLocation = CGRect(origin: self.filterMenuButton.anchorPoint, size: self.mainTableView.bounds.size)
-        ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: true)
+        if #available(iOS 16.0, *) {
+            let visibleLocation = CGRect(origin: self.filterMenuButton.anchorPoint, size: self.mainTableView.bounds.size)
+            ToastMessages(message).show(self, cellLocation: visibleLocation,  placeHigh: true)
+        } else {
+            // Fallback on earlier versions
+        }
+        
         ensureCorrectSorting()
         updateCountLable()
 
