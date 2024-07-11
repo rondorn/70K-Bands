@@ -286,6 +286,8 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
 
     if (filteredBandCount == 0){
         filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
+    } else {
+        bandCounter = filteredBands.count
     }
     return filteredBands
 }
