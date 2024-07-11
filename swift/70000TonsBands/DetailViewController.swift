@@ -880,7 +880,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             } else {
                 message = NSLocalizedString("AlreadyAtStart", comment: "");
             }
-            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true )
+            ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false )
         } else {
             message = translatedDirection + "-" + nextBandName
         
