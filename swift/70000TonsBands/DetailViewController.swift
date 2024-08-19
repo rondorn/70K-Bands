@@ -29,6 +29,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var notesViewConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     
     var everyOtherFlag = true
+    var doNotSaveText = false
     
     @IBOutlet weak var vistLinksLable: UILabel!
     @IBOutlet weak var officialUrlButton: UIButton!
@@ -523,9 +524,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         customNotesText.text = bandNotes.getDescription(bandName: bandName)
         customNotesText.textColor = UIColor.white
         setNotesHeight()
+        
+        if (customNotesText.text.contains("!!!!https://")){
+            doNotSaveText = true
+            customNotesText.text = customNotesText.text.replacingOccurrences(of: "!!!!https://", with: "https://")
+            customNotesText.dataDetectorTypes = [.link]
+            customNotesText.isEditable = false
+            customNotesText.isSelectable = true
+            customNotesText.isUserInteractionEnabled = true
+        }
+        
         if (bandNameHandle.getBandNoteWorthy(bandName).isEmpty == false){
             customNotesText.text = "\n" + customNotesText.text
         }
+        
     }
     
     func saveComments(){
@@ -537,13 +549,15 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 print ("commentFile being deleted -- Default waiting message");
                 removeBadNote(commentFile: custCommentFile)
                 
+            } else if (doNotSaveText == true){
+                    print ("Description contains link, edit not available");
+                    
             } else if (customNotesText.text.count < 2){
                 print ("commentFile being deleted -- less then 2 characters");
                 removeBadNote(commentFile: custCommentFile)
                 
             } else if (bandNotes.custMatchesDefault(customNote: customNotesText.text, bandName: bandName) == true){
-                //print ("commentFile being deleted -- text appears to be default..ensure no cust descrip made");
-                //removeBadNote(commentFile: custCommentFile)
+                print ("Description has not changed");
                 
             } else {
                 print ("saving commentFile");
