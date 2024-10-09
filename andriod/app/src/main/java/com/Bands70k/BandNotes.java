@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.graphics.Color;
 import android.os.SystemClock;
 import android.text.format.Time;
 import android.util.Log;
@@ -42,6 +43,10 @@ public class BandNotes {
     public String getBandNote(){
         CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
         String bandNote = noteHandler.getDescription(bandName);
+
+        if (bandNote.contains("!!!!https://")){
+            bandNote = bandNote.replaceAll("!!!!https://([^\\s]+)", "<a  target='_blank' style='color: lightblue' href=https://$1>$1</a>");
+        }
 
         return bandNote;
 
