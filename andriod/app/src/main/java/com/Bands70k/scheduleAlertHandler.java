@@ -185,12 +185,15 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-                Log.d("SendLocalAlert", "Using setExactAndAllowWhileIdle with delay of " + String.valueOf(futureInMillis));
-                alarmManager.setExactAndAllowWhileIdle(ALARM_TYPE, futureInMillis, pendingIntent);
-
+                if (alarmManager.canScheduleExactAlarms()) {
+                    Log.d("SendLocalAlert", "Using setExactAndAllowWhileIdle with delay of " + String.valueOf(futureInMillis));
+                    alarmManager.setExactAndAllowWhileIdle(ALARM_TYPE, futureInMillis, pendingIntent);
+                }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                Log.d("SendLocalAlert", "Using AlarmManagerCompat.setExact with delay of " + String.valueOf(futureInMillis));
-                AlarmManagerCompat.setExact(alarmManager, ALARM_TYPE, futureInMillis, pendingIntent);
+                if (alarmManager.canScheduleExactAlarms()) {
+                    Log.d("SendLocalAlert", "Using AlarmManagerCompat.setExact with delay of " + String.valueOf(futureInMillis));
+                    AlarmManagerCompat.setExact(alarmManager, ALARM_TYPE, futureInMillis, pendingIntent);
+                }
 
             } else {
                 Log.d("SendLocalAlert", "Using AlarmManagerCompat.set with delay of " + String.valueOf(futureInMillis));

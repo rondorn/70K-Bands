@@ -253,7 +253,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 uidString = UIDevice.current.identifierForVendor!.uuidString
             }
         }
-        userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation
+        userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation + "\nVersion: "
+        userIDLabel.text = userIDLabel.text! + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String)
+        userIDLabel.numberOfLines = 2
         userIDLabel.adjustsFontSizeToFitWidth = true
     }
     
