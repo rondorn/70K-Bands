@@ -57,7 +57,7 @@
         android:height="30dp"
         android:text="Band Name"
         android:autoSizeMaxTextSize="20sp"
-        android:autoSizeMinTextSize="10sp"
+        android:autoSizeMinTextSize="7sp"
         android:autoSizeStepGranularity="2sp"
         android:autoSizeTextType="uniform"
         android:ellipsize="end"

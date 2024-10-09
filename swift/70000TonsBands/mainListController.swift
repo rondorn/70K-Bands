@@ -150,7 +150,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         //newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
-    if (schedule.getTimeSortedSchedulingData().count > 2){
+    if (schedule.getTimeSortedSchedulingData().count >= 3 ){
         //add any bands without shows to the bottom of the list
         bandCounter = 0
         unfilteredBandCount = 0

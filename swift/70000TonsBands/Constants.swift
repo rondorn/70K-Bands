@@ -203,6 +203,7 @@ var userCountry = ""
 var didNotFindMarkedEventsCount = 0
 var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 
 var internetAvailble = isInternetAvailable();

@@ -616,7 +616,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             labeleCounter = eventCounter
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
-            labeleCounter = bandCounter
+            labeleCounter = bandCounter - eventCounterUnoffical
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
             sortedBy = "time"
         }

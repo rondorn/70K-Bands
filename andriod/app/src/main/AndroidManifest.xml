@@ -9,8 +9,6 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <uses-permission android:name="com.google.android.c2dm.permission.REGISTER" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <application
         android:name="Bands70k"
         android:allowBackup="true"
@@ -18,7 +16,8 @@
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/splashScreenTheme" >
+        android:theme="@style/splashScreenTheme"
+        android:backupAgent="DataBackupRecovery">
         <activity
             android:name=".showBands"
             android:label="@string/app_name"
@@ -102,10 +101,19 @@
             android:exported="false">
         </service>
 
+        <!-- Register the BackupAgent -->
+        <service
+            android:name=".DataBackupRecovery"
+            android:permission="android.permission.BACKUP"
+            android:exported="true"/>
+
         <meta-data android:name="com.Bands70k"
             android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/new_bands_70k_icon" />
+        <meta-data
+            android:name="android.app.backup.BackupAgent"
+            android:value=".DataBackupRecovery" />
     </application>
 </manifest>
