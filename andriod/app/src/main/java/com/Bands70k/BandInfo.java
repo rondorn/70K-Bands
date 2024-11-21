@@ -103,12 +103,12 @@ public class BandInfo {
         for (String bandName: bandNames){
             String bandRank = rankStore.getRankForBand(bandName);
 
-            String backupValue = BackupDataStore.retrieveValue(staticVariables.context, bandName);
-            if (backupValue == null) {
-                BackupDataStore.storeKeyValuePair(staticVariables.context, bandName, bandRank);
-            } else {
-                bandRank = backupValue;
-            }
+            //String backupValue = BackupDataStore.retrieveValue(staticVariables.context, bandName);
+            //if (backupValue == null) {
+            //    BackupDataStore.storeKeyValuePair(staticVariables.context, bandName, bandRank);
+            //} else {
+            //    bandRank = backupValue;
+            //}
 
             if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == false){
                 rankedBandNames.add(bandRank + " " + bandName);
