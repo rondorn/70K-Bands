@@ -21,9 +21,11 @@ import androidx.core.app.NavUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 
 import android.webkit.WebSettings;
@@ -412,6 +414,17 @@ public class showBandDetails extends Activity {
 
     public void createDetailHTML () {
 
+        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+
+        boolean landscape = false;
+
+        if (rotation == 1 || rotation == 3){
+            landscape = true;
+        }
+
+        Log.d("rotation", "rotation is " + rotation);
+
         SetButtonColors();
 
         DisplayMetrics metrics = new DisplayMetrics();
@@ -438,9 +451,11 @@ public class showBandDetails extends Activity {
 
             htmlText += htmlGen.displayLinks(bandName, orientation);
 
-            htmlText += htmlGen.displayExtraData(bandName);
+            if (landscape == false) {
+                htmlText += htmlGen.displayExtraData(bandName);
 
-            htmlText += htmlGen.displayNotes(bandNote);
+                htmlText += htmlGen.displayNotes(bandNote);
+            }
 
             htmlText += htmlGen.displayMustMightWont(rankIconLocation,
                     unknownButtonColor,

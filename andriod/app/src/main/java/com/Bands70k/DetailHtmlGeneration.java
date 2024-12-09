@@ -178,7 +178,7 @@ public class DetailHtmlGeneration {
                 disable = "style='pointer-events:none;cursor:default;color:grey'";
             }
 
-            if (orientation == "portrait") {
+            //if (orientation == "portrait") {
                 String linkLabel = staticVariables.context.getString(R.string.visitBands);
                 Log.d("Officia;Link", "Link is " + BandInfo.getOfficalWebLink(bandName));
                 html = "<div style='width=100%; left:0;right:0;'>" +
@@ -189,7 +189,7 @@ public class DetailHtmlGeneration {
                         "<td width=15%><a " + disable + " href='" + BandInfo.getWikipediaWebLink(bandName) + "' onclick='link.webLinkClick(\"wikipedia\")'><img src=file:///android_res/drawable/icon_wiki.png height=17 width=27></a></td>" +
                         "<td width=15%><a " + disable + " href='" + BandInfo.getYouTubeWebLink(bandName) + "' onclick='link.webLinkClick(\"youTube\")'><img src=file:///android_res/drawable/icon_youtube.png height=19 width=27></a></td>" +
                         "</tr></table></center></div>";
-            }
+            //}
 
         }
 
