@@ -241,11 +241,22 @@ public class DetailHtmlGeneration {
 
         String notesHeight = String.valueOf(noteViewPercentage) + "%";
 
+        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+        int height = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        String fontSizeString = "4.5vw";
+
+        if (width > 1700 && height > 1700){
+            fontSizeString = "2.0vw";
+        }
+        Log.d("screenDimensions", "screenDimensions " + width + "-" + height);
+
         Log.d("notesHeight", "notesHeight equals " + notesHeight);
         String htmlText = "";
         if (bandNote != "") {
             htmlText += "<br>";
-            htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:11px;font-size:4.5vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+            //htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:11px;font-size:4.5vw' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
+            htmlText += "<div style='height:" + notesHeight + ";text-align:left;margin-left:10px;padding-bottom:20px;overflow:auto;width:95%;scroll;text-overflow:ellipsis;font-size:11px;font-size:" + fontSizeString + "' ondblclick='ok.performClick(\"Notes\");'>" + bandNote + "</div></center>";
         }
 
         return htmlText;
