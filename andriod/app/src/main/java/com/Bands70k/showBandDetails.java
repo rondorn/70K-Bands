@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
@@ -419,8 +420,18 @@ public class showBandDetails extends Activity {
 
         boolean landscape = false;
 
-        if (rotation == 1 || rotation == 3){
-            landscape = true;
+        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+        int height = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        String fontSize = "4.5vm";
+
+        if (width > 1700 && height > 1700) {
+            //do nothing
+
+        } else {
+            if (rotation == 1 || rotation == 3) {
+                landscape = true;
+            }
         }
 
         Log.d("rotation", "rotation is " + rotation);
