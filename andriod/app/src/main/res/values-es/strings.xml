@@ -231,4 +231,6 @@
     <string name="Events">Eventos</string>
 
     <string name="UrlToBackupFile">Proporcione la URL al archivo de copia de seguridad</string>
+
+    <string name="SearchCritiera">Criterios de búsqueda</string>
 </resources>

@@ -74,6 +74,9 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                 for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
                     var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
+                    if (timeIndex > eventEndTime){
+                        eventEndTime = eventEndTime + (3600*24)
+                    }
                     if (eventEndTime > Date().timeIntervalSince1970  || getHideExpireScheduleData() == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
@@ -103,6 +106,9 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     unfilteredBandCount = unfilteredBandCount + 1
                     var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
+                    if (timeIndex > eventEndTime){
+                        eventEndTime = eventEndTime + (3600*24)
+                    }
                     if (eventEndTime > Date().timeIntervalSince1970 || getHideExpireScheduleData() == false){
                         unfilteredCurrentEventCount = unfilteredCurrentEventCount + 1
                         totalUpcomingEvents += 1;
@@ -218,7 +224,7 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
     return include
 }
 
-func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String] {
+func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended, searchCriteria: String) -> [String] {
     
     let allBands = bandNameHandle.getBandNames()
 
@@ -249,10 +255,25 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
         if (getShowOnlyWillAttened() == true){
             filteredBands = newAllBands;
             
+            if (searchCriteria != ""){
+                var newFilteredBands = [String]()
+                for bandNameIndex in filteredBands {
+                    if (bandNameIndex.contains(searchCriteria) == true){
+                        newFilteredBands.append(bandNameIndex)
+                    }
+                }
+                filteredBands = newFilteredBands
+            }
+            
         } else {
             for bandNameIndex in newAllBands {
                 let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
                 
+                if (searchCriteria != ""){
+                    if (bandName.contains(searchCriteria) == false){
+                        continue
+                    }
+                }
                 switch dataHandle.getPriorityData(bandName) {
                 case 1:
                     if (getMustSeeOn() == true){
@@ -288,7 +309,10 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
         filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
     } else {
         bandCounter = filteredBands.count
+        listCount = filteredBands.count
     }
+    
+    print ("listCount is \(listCount) - 2")
     return filteredBands
 }
 
@@ -304,6 +328,9 @@ func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
     
     filteredBands.append(localMessage)
     
+    print ("listCount is \(listCount) - 1")
+    listCount = 0
+
     return filteredBands
 }
 

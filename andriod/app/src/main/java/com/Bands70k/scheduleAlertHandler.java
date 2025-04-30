@@ -166,20 +166,20 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content) {
 
-
-        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-        notificationIntent.putExtra(String.valueOf(delay), 1);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
-        notificationIntent.putExtra("messageText", content);
-        notificationIntent.setAction(content);
-
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-
-        long futureInMillis = SystemClock.elapsedRealtime() + delay;
-
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         try {
+            Intent notificationIntent = new Intent(context, NotificationPublisher.class);
+            notificationIntent.putExtra(String.valueOf(delay), 1);
+            notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
+            notificationIntent.putExtra("messageText", content);
+            notificationIntent.setAction(content);
+
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+            long futureInMillis = SystemClock.elapsedRealtime() + delay;
+
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
 
             int ALARM_TYPE = AlarmManager.ELAPSED_REALTIME_WAKEUP;
 
@@ -200,12 +200,11 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                 alarmManager.set(ALARM_TYPE, futureInMillis, pendingIntent);
             }
 
+            alarmStorageStringHash.put(unuiqueID, content);
 
         } catch (Exception error){
             Log.d("NotifLogs", "Encountered issue scheduling alert " + error.getMessage());
         }
-
-        alarmStorageStringHash.put(unuiqueID, content);
 
     }
 

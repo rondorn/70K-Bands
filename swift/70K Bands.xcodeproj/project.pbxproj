@@ -71,6 +71,8 @@
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
+		117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
+		117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */; };
@@ -199,6 +201,7 @@
 		1172A2341B5AB22100C28AB3 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2361B5AB29000C28AB3 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
+		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
 		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
@@ -363,6 +366,7 @@
 				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
+				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -597,6 +601,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
 				115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */,
 				110C07B21C99FB7A00F4C1D0 /* ApiKeys.plist in Resources */,
 				1107C6C629293100002CEF9D /* Main.storyboard in Resources */,
@@ -619,6 +624,7 @@
 				115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */,
 				11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
+				117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
 				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
 				115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */,
 				110E084F2AECB6E200075618 /* DropDownCell.xib in Resources */,
@@ -1072,7 +1078,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20241207001;
+				CURRENT_PROJECT_VERSION = 20250428003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1093,7 +1099,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20241207001;
+				MARKETING_VERSION = 20250428003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1123,15 +1129,15 @@
 				PRODUCT_NAME = "70K Bands";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SUPPRESS_WARNINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Debug;
@@ -1147,7 +1153,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20241207001;
+				CURRENT_PROJECT_VERSION = 20250428003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1172,7 +1178,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20241207001;
+				MARKETING_VERSION = 20250428003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1202,14 +1208,14 @@
 				PRODUCT_NAME = "70K Bands";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator xros xrsimulator";
 				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
 				SWIFT_SUPPRESS_WARNINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 1.0;
 			};
 			name = Release;

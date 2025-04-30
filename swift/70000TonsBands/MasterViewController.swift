@@ -9,8 +9,9 @@
 import UIKit
 import CoreData
 import Firebase
+import AVKit
 
-class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate {
+class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
     @IBOutlet var mainTableView: UITableView!
     @IBOutlet weak var mainToolBar: UIToolbar!
@@ -30,6 +31,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
     @IBOutlet weak var menuButton: UIBarButtonItem!
+    
+    @IBOutlet weak var bandSearch: UISearchBar!
     
     let schedule = scheduleHandler()
     let bandNameHandle = bandNamesHandler()
@@ -60,10 +63,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleLabel: UINavigationItem!
     
     var dataHandle = dataHandler()
-
+    
+    var videoURL = URL("")
+    var player = AVPlayer()
+    var playerLayer = AVPlayerLayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        bandSearch.placeholder = NSLocalizedString("SearchCriteria", comment: "")
+        //bandSearch.backgroundImage = UIImage(named: "70KSearch")!
+        //bandSearch.setImage(UIImage(named: "70KSearch")!, for: <#UISearchBar.Icon#>, state: UIControl.State.normal)
+        bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         getCountry()
         
@@ -85,7 +96,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                                          name: UserDefaults.didChangeNotification ,
                                                          object: nil)
         let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(MasterViewController.refreshData), for: UIControl.Event.valueChanged)
+        refreshControl.addTarget(self, action: #selector(MasterViewController.pullTorefreshData), for: UIControl.Event.valueChanged)
         refreshControl.tintColor = UIColor.red;
         self.refreshControl = refreshControl
         
@@ -133,11 +144,43 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //createrFilterMenu(controller: self);
      
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+        
+    }
+    
+    func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
+        print ("Filtering activated 4, Done")
+        searchBar.resignFirstResponder()
+        return true
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        print("Filtering activated 1")
+        searchBar.resignFirstResponder()
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        print("Filtering activated 2  \(searchBar.text) \(searchBar.text?.count)")
+        var searchText = searchBar.text!
+        if (searchText.isEmpty){
+            searchText = ""
+        }
+        
+        bands =  [String]()
+        bandsByName = [String]()
+        bandNameHandle.readBandFile()
+        schedule.getCachedData()
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: searchText)
+        bandsByName = bands
+        attendedHandle.getCachedData()
+        print("Filtering activated 3  \(searchText) \(searchText.count)")
+        self.quickRefresh()
+        
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
-        
-        print ("Refresh done, so updating the display in main 3")
+                print ("Refresh done, so updating the display in main 3")
         if (Thread.isMainThread == true){
             refreshFromCache()
             if (filterMenuNeedsUpdating == true){
@@ -157,6 +200,58 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         self.tableView.reloadData()
+    }
+    
+    func checkForEasterEgg(){
+        if (lastRefreshCount > 0){
+            
+            if (lastRefreshCount == 9){
+                triggerEasterEgg()
+                lastRefreshCount = 0
+                lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
+                
+            } else if (Int(Date().timeIntervalSince1970) > (lastRefreshEpicTime + 40)){
+                print ("Easter Egg triggered after more then 40 seconds")
+                lastRefreshCount = 1
+                lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
+                
+            } else {
+                lastRefreshCount = lastRefreshCount + 1;
+                print ("Easter Egg incrementing counter, on \(lastRefreshCount)")
+                
+            }
+            
+            
+            
+        } else {
+            lastRefreshCount = 1;
+            print ("Easter Egg incrementing counter, on \(lastRefreshCount)")
+            
+            lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
+        }
+    }
+    
+    func triggerEasterEgg(){
+    
+        videoURL = Bundle.main.url(forResource: "SNL-More_Cowbell", withExtension: "mov")
+        player = AVPlayer(url: videoURL!)
+        playerLayer = AVPlayerLayer(player: player)
+        
+        playerLayer.frame = self.view.bounds
+        self.view.layer.addSublayer(playerLayer)
+        player.play()
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
+            sleep(42)
+            finishedPlaying()
+        }
+    }
+    
+    func finishedPlaying() {
+        print ("Easter Egg, lets make this go away")
+        self.player.pause()
+        self.playerLayer.removeFromSuperlayer()
+        self.refreshData()
     }
     
     func chooseCountry(){
@@ -354,6 +449,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
         //createrFilterMenu(controller: self)
@@ -380,7 +476,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandsByName = [String]()
         bandNameHandle.readBandFile()
         schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
         bandsByName = bands
         attendedHandle.getCachedData()
 
@@ -410,7 +506,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
 
         bands =  [String]()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
     }
     
     func quickRefresh_Pre(){
@@ -420,7 +516,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             isPerformingQuickLoad = true
             
             self.dataHandle.getCachedData()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
             self.bandsByName = self.bands
             ensureCorrectSorting()
             self.attendedHandle.getCachedData()
@@ -429,7 +525,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    func quickRefresh(){
+    @objc func quickRefresh(){
         quickRefresh_Pre()
         self.tableView.reloadData()
     }
@@ -437,9 +533,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func refreshGUI(){
         self.tableView.reloadData()
     }
+    
 
+    @objc func OnOrientationChange(){
+        sleep(1)
+        quickRefresh_Pre()
+        self.tableView.reloadData()
+    }
+    
+    @objc func pullTorefreshData(){
+        checkForEasterEgg()
+        refreshData();
+    }
+    
     @objc func refreshData(){
-        
+                
         print ("Redrawing the filter menu! Not")
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         //check if the timezonr has changes for whatever reason
@@ -495,7 +603,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands =  [String]()
 
             schedule.populateSchedule()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle)
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: bandSearch.text ?? "")
             
             currentBandList = self.bands
             self.bandsByName = self.bands
@@ -583,6 +691,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             filtersOnText = ""
         }
+        
+        if (bandSearch.text?.isEmpty == false){
+            filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
+        }
     }
     
     func decideIfScheduleMenuApplies()->Bool{
@@ -612,11 +724,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var lableCounterString = String();
         var labeleCounter = Int()
         
-        if (eventCounter != eventCounterUnoffical && eventCounter > 0){
-            labeleCounter = eventCounter
+        
+        if (listCount != eventCounterUnoffical && listCount > 0){
+            labeleCounter = listCount
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
-            labeleCounter = bandCounter - eventCounterUnoffical
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
             sortedBy = "time"
         }
