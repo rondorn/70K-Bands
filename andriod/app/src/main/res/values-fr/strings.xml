@@ -245,4 +245,6 @@
     <string name="Events">Événements</string>
 
     <string name="UrlToBackupFile">Fournissez l\'URL du fichier de sauvegarde</string>
+
+    <string name="SearchCritiera">Critères de recherche</string>
 </resources>

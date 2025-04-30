@@ -137,7 +137,7 @@ Alternatively, disable signing in each target:
 
 ### Adding a New Firebase Pod
 
-Refer to [AddNewPod](AddNewPod.md) Markdown file for details.
+Refer to [AddNewPod](docs/AddNewPod.md) Markdown file for details.
 
 ### Managing Headers and Imports
 
@@ -153,7 +153,7 @@ GitHub Actions will verify that any code changes are done in a style-compliant
 way. Install `clang-format` and `mint`:
 
 ```console
-brew install clang-format@18
+brew install clang-format@19
 brew install mint
 ```
 
@@ -235,8 +235,10 @@ at **Project Settings > Cloud Messaging > [Your Firebase App]**.
 The iOS Simulator cannot register for remote notifications and will not receive push notifications.
 To receive push notifications, follow the steps above and run the app on a physical device.
 
-### Firebase Vertex AI
-The Firebase Vertex AI unit tests require mock response files, which can be downloaded by running `./scripts/update_vertexai_responses.sh`.
+### Vertex AI for Firebase
+
+See the [Vertex AI for Firebase README](FirebaseVertexAI#development) for
+instructions about building and testing the SDK.
 
 ## Building with Firebase on Apple platforms
 

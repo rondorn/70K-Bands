@@ -40,6 +40,7 @@ public class staticVariables {
     };
 
 
+
     public static Boolean initializedSortButtons = false;
     public final static String mustSeeIcon = "\uD83C\uDF7A";
     public final static String mightSeeIcon = "\u2714"; //2705 //2611 //2714
@@ -218,6 +219,9 @@ public class staticVariables {
 
     public static View snackBarView;
 
+    public static Integer lastRefreshEpicTime = 0;
+    public static Integer  lastRefreshCount = 0;
+
     public static Integer currentListPosition = 0;
     public static List<String> currentListForDetails = new ArrayList<String>();
 
@@ -232,6 +236,8 @@ public class staticVariables {
     public static bandListView adapterCache;
 
     public static mainListHandler listHandlerCache;
+
+    public static String searchCriteria = "";
 
     public static synchronized void updatelistHandlerCache(mainListHandler listHandler) {
         Log.d("listHandlerCache", "updating cache");

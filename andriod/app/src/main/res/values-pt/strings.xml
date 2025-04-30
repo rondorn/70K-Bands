@@ -241,4 +241,6 @@
     <string name="Events">Eventos</string>
 
     <string name="UrlToBackupFile">Forneça o URL para o arquivo de backup</string>
+
+    <string name="SearchCritiera">Critérios de pesquisa</string>
 </resources>

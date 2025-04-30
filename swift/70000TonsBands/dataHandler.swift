@@ -90,7 +90,7 @@ class dataHandler {
 
         return priority
     }
-
+    
     func writeFile(){
         
         while (bandPriorityStorage == nil){
@@ -111,6 +111,7 @@ class dataHandler {
         do {
             //try FileManager.default.removeItem(at: storageFile)
             try data.write(to: storageFile, atomically: false, encoding: String.Encoding.utf8)
+            writeLastPriorityDataWrite()
             print ("writing PRIORITIES - file WAS writte")
         } catch _ {
             print ("writing PRIORITIES - file was NOT writte")
@@ -148,4 +149,29 @@ class dataHandler {
         
         return bandPriorityStorage
     }
+    
+    func readLastPriorityDataWrite()-> Double{
+        
+        var lastPriorityDataWrite = Double(0)
+        
+        if let data = try? String(contentsOf: lastPriorityDataWriteFile, encoding: String.Encoding.utf8) {
+            lastPriorityDataWrite = Double(data)!
+        }
+        
+        return lastPriorityDataWrite
+    }
+    
+    func writeLastPriorityDataWrite(){
+        
+        let currentTime = String(Date().timeIntervalSince1970)
+       
+        do {
+            //try FileManager.default.removeItem(at: storageFile)
+            try currentTime.write(to:lastPriorityDataWriteFile, atomically: false, encoding: String.Encoding.utf8)
+            print ("writing PriorityData Date")
+        } catch _ {
+            print ("writing PriorityData Date, failed")
+        }
+    }
+
 }

@@ -241,4 +241,6 @@
     <string name="Events">Begivenheder</string>
 
     <string name="UrlToBackupFile">Angiv URL\'en til Backup-filen</string>
+
+    <string name="SearchCritiera">Søgekriterier</string>
 </resources>

@@ -37,6 +37,12 @@ var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
 let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
 let countryFile = directoryPath.appendingPathComponent("countryFile")
 
+let lastiCloudDataWriteFile = directoryPath.appendingPathComponent("iCloudDataWrite.txt")
+let lastPriorityDataWriteFile = directoryPath.appendingPathComponent("PriorityDataWrite.txt")
+let lastScheduleDataWriteFile = directoryPath.appendingPathComponent("ScheduleDataWrite.txt")
+
+var listCount = 0
+var noEntriesFlag = false
 var bandCounter = 0
 var eventCounter = 0
 var eventCounterUnoffical = 0
@@ -117,6 +123,9 @@ var imageUrlField = "ImageURL"
 
 var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
 var didVersionChange = false
+
+var lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
+var lastRefreshCount = 0
 
 //link containers
 var wikipediaLink = [String: String]()
@@ -203,6 +212,8 @@ var userCountry = ""
 var didNotFindMarkedEventsCount = 0
 var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+
+//var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
 let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
 

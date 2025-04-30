@@ -5,6 +5,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.SearchView;
 import androidx.collection.ArraySet;
 
 import java.util.ArrayList;
@@ -63,12 +64,24 @@ public class mainListHandler {
 
         if (BandInfo.scheduleRecords != null) {
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
+                if ( staticVariables.searchCriteria.isEmpty() == false) {
+                    Log.d("searchCriteria", "Doing lookup using " + staticVariables.searchCriteria);
+                    if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase()) == false) {
+                        Log.d("searchCriteria", "Skipping " + bandName);
+                        continue;
+                    } else {
+                        Log.d("searchCriteria", "Allowing " + bandName);
+                    }
+                }
+
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.preferences.getSortByTime() == true) {
 
                         Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
                         Log.d("scheduleInfo","Start time is " + String.valueOf(timeIndex) + " EndTime is " + String.valueOf(endTime));
-
+                        if (timeIndex > endTime){
+                            endTime = endTime + (3600000 * 24);
+                        }
                         if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false){
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
@@ -85,6 +98,9 @@ public class mainListHandler {
                     } else {
                         Log.d("scheduleInfo", "Sort alphbetically, bandname is " + bandName);
                         Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
+                        if (timeIndex > endTime){
+                            endTime = endTime + (3600000 * 24);
+                        }
                         if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
                             allUpcomingEvents++;
                             if (applyFilters(bandName, timeIndex) == true) {
@@ -104,6 +120,16 @@ public class mainListHandler {
             Collections.sort(sortableBandNames);
             Log.d("populateBandInfo", "BandList has this many enties " + String.valueOf(bandList.size()));
             for (String bandName : bandList){
+
+                if ( staticVariables.searchCriteria.isEmpty() == false) {
+                    Log.d("searchCriteria", "2 Doing lookup using " + staticVariables.searchCriteria);
+                    if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase()) == false) {
+                        Log.d("searchCriteria", "2 Skipping " + bandName);
+                        continue;
+                    } else {
+                        Log.d("searchCriteria", "2 Allowing " + bandName);
+                    }
+                }
                 if (staticVariables.preferences.getShowWillAttend() == false) {
                     if (bandPresent.contains(bandName) == false) {
                         sortableBandNames.add(bandName + ":");
@@ -134,6 +160,10 @@ public class mainListHandler {
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
 
+        if (sortableBandNames.size() == 0){
+            String emptyDataMessage = staticVariables.context.getResources().getString(R.string.data_filter_issue);
+            sortableBandNames.add(emptyDataMessage);
+        }
 
         //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         return sortableBandNames;
@@ -364,6 +394,10 @@ public class mainListHandler {
             }
         } else {
             staticVariables.filteringInPlace = false;
+        }
+
+        if (staticVariables.searchCriteria.isEmpty() == false){
+            filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
         }
 
         Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace));
