@@ -3,6 +3,7 @@ package com.Bands70k;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
@@ -10,9 +11,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -23,32 +29,33 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
+import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
-import androidx.core.view.MenuCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.util.DisplayMetrics;
 import android.view.MenuItem;
 
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
+import android.widget.VideoView;
 
 import com.baoyz.swipemenulistview.SwipeMenu;
 import com.baoyz.swipemenulistview.SwipeMenuCreator;
@@ -69,7 +76,7 @@ import static com.Bands70k.staticVariables.*;
 import static java.lang.Thread.sleep;
 
 
-public class showBands extends Activity {
+public class showBands extends Activity implements MediaPlayer.OnPreparedListener {
 
     String notificationTag = "notificationTag";
 
@@ -100,11 +107,15 @@ public class showBands extends Activity {
     private bandListView adapter;
     private ListView listView;
 
+    public SearchView searchCriteriaObject;
+
     private static Boolean recievedPermAnswer = false;
     private Boolean loadOnceStopper = false;
 
     private Boolean sharedZipFile = false;
     private File zipFile;
+
+    private Dialog dialog;
 
     // inside my class
     private static final String[] INITIAL_PERMS = {
@@ -238,12 +249,14 @@ public class showBands extends Activity {
             }
         });
 
+        handleSearch();
+
         bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
         bandNamesPullRefresh.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-
+                        checkForEasterEgg();
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -286,6 +299,119 @@ public class showBands extends Activity {
         checkForNotifcationPermMissions();
         Log.d("startup", "show init start - 10");
 
+        setSearchBarWidth();
+    }
+
+    public void checkForEasterEgg(){
+        if (lastRefreshCount > 0){
+
+            if (lastRefreshCount == 9){
+                triggerEasterEgg();
+                lastRefreshCount = 0;
+                lastRefreshEpicTime = (int)(System.currentTimeMillis()/1000);
+
+           } else if ((int)(System.currentTimeMillis()/1000) > (lastRefreshEpicTime + 40)){
+                Log.d("Easter Egg", "Easter Egg triggered after more then 40 seconds");
+                lastRefreshCount = 1;
+                lastRefreshEpicTime = (int)(System.currentTimeMillis()/1000);
+
+            } else {
+                lastRefreshCount = lastRefreshCount + 1;
+                Log.d("Easter Egg", "Easter Egg incrementing counter, on " + lastRefreshCount.toString());
+
+            }
+
+
+
+        } else {
+            lastRefreshCount = 1;
+            Log.d("Easter Egg", "Easter Egg incrementing counter, on  " + lastRefreshCount.toString());
+            lastRefreshEpicTime = (int)(System.currentTimeMillis()/1000);
+        }
+    }
+
+    public void triggerEasterEgg(){
+        Log.d("Easter Egg", "The easter egg has been triggered");
+
+        dialog = new Dialog(this,android.R.style.Theme_Translucent_NoTitleBar);
+        dialog.setContentView(R.layout.prompt_show_video);
+
+
+        VideoView mVideoView = (VideoView)dialog.findViewById(R.id.VideoView);
+
+        String path = ("android.resource://com.Bands70k/" +  R.raw.snl_more_cowbell);
+        mVideoView.setOnPreparedListener(this);
+        mVideoView.getHolder().setFixedSize(300, 400);
+        dialog.show();
+        mVideoView.setVideoPath(path);
+        mVideoView.requestFocus();
+        mVideoView.start();
+        mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                dialog.dismiss();
+            }
+        });
+
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Log.d("orientation", "orientation DONE!");
+        setSearchBarWidth();
+    }
+
+    private void setSearchBarWidth(){
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int screenWidth = displayMetrics.widthPixels;
+
+        // Set SearchView size based on screen width
+        float widthPercentage = 0.62f;  // 70% of screen width
+        int desiredWidth = (int) (screenWidth * widthPercentage);
+
+        Log.d("orientation", "orientation DONE! " + String.valueOf(desiredWidth));
+        // Find SearchView and update its layout params
+        searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
+        ViewGroup.LayoutParams layoutParams = searchCriteriaObject.getLayoutParams();
+        layoutParams.width = desiredWidth;
+
+        searchCriteriaObject.setLayoutParams(layoutParams);
+    }
+
+    private void handleSearch(){
+        searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
+        searchCriteriaObject.setQuery(searchCriteria, true);
+        searchCriteria = searchCriteriaObject.getQuery().toString();
+
+        searchCriteriaObject.setOnQueryTextListener(
+
+                new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        Log.d("searchCriteria", "onQueryTextChange - 1 " + searchCriteria);
+                        searchCriteria = searchCriteriaObject.getQuery().toString();
+                        searchCriteriaObject.clearFocus();
+                        listHandler.sortableBandNames = new ArrayList<String>();
+                        listHandler.sortableBandNames = listHandler.getSortableBandNames();
+                        refreshData();
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+
+                        searchCriteria = searchCriteriaObject.getQuery().toString();
+                        Log.d("searchCriteria", "onQueryTextChange - 2 " + searchCriteria);
+                        listHandler.sortableBandNames = new ArrayList<String>();
+                        listHandler.sortableBandNames = listHandler.getSortableBandNames();
+                        refreshData();
+                        return false;
+                    }
+                }
+
+        );
     }
 
     private void checkForNotifcationPermMissions() {
@@ -906,17 +1032,21 @@ public class showBands extends Activity {
     private Long getTimeIndexFromIndex(String index) {
 
         Long timeIndex = Long.valueOf(0);
+        try {
+            String[] indexSplit = index.split(":");
 
-        String[] indexSplit = index.split(":");
+            if (indexSplit.length == 2) {
 
-        if (indexSplit.length == 2) {
+                try {
+                    timeIndex = Long.valueOf(indexSplit[0]);
 
-            try {
-                timeIndex = Long.valueOf(indexSplit[0]);
-
-            } catch (NumberFormatException e) {
-                timeIndex = Long.valueOf(indexSplit[1]);
+                } catch (NumberFormatException e) {
+                    timeIndex = Long.valueOf(indexSplit[1]);
+                }
             }
+
+        } catch (Exception error){
+            Log.d("getTimeIndexFromIndex", error.getMessage());
         }
 
         return timeIndex;
@@ -945,11 +1075,12 @@ public class showBands extends Activity {
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
                 Log.d("populateBandInfo", "BandList has issues 1");
-                emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+                //emptyDataMessage = getResources().getString(R.string.data_filter_issue);
             } else {
                 emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+                bandNames.add(emptyDataMessage);
             }
-            bandNames.add(emptyDataMessage);
+
         }
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
@@ -1194,6 +1325,8 @@ public class showBands extends Activity {
             }
         });
 
+        handleSearch();
+
         Log.d(TAG, notificationTag + " In onResume - 4");
         if (listState != null) {
             Log.d("State Status", "restoring state during Resume");
@@ -1415,7 +1548,12 @@ public class showBands extends Activity {
         }
     }
 
-      class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+
+    }
+
+    class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
 
         ArrayList<String> result;
 

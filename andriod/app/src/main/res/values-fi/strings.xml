@@ -245,4 +245,6 @@
     <string name="Events">Tapahtumat</string>
 
     <string name="UrlToBackupFile">Anna varmuuskopiotiedoston URL-osoite</string>
+
+    <string name="SearchCritiera">Hakukriteerit</string>
 </resources>

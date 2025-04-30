@@ -56,25 +56,21 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="65dp"
         android:background="#FF000000">
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="0" />
 
         <Button
             android:id="@+id/FilerMenu"
-            android:layout_width="150dp"
+            android:layout_width="wrap_content"
             android:layout_height="31dp"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="10dp"
+            android:layout_marginRight="150dp"
             android:background="@color/common_google_signin_btn_text_light_pressed"
-            android:gravity="left|center_vertical"
+            android:gravity="left"
             android:text="Filters"
             android:textColor="#A2AAAD"
             android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
@@ -84,51 +80,27 @@
             android:textSize="25sp"
             android:textStyle="bold" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-        <View
-            android:layout_width="120dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchCriteria"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="100dp"
+            app:iconifiedByDefault="false"
+            app:queryHint="@string/SearchCritiera"
+            app:searchIcon="@drawable/search_icon" />
 
         <Button
             android:id="@+id/shareButton"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginTop="2dp"
+            android:gravity="right"
             android:background="@drawable/icon_share"
-            android:text="" />
+            android:text=""
+            android:layout_alignParentEnd="true"/>
+        />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1" />
-
-    </LinearLayout >
+    </RelativeLayout >
 
     <RelativeLayout
         android:id="@+id/listViewLayout"
@@ -136,7 +108,7 @@
         android:layout_height="fill_parent"
         android:layout_gravity="bottom"
         android:layout_marginLeft="10dp"
-        android:layout_marginTop="85dp"
+        android:layout_marginTop="110dp"
         android:layout_marginRight="5dp"
         android:background="#FF000000"
         android:orientation="horizontal">

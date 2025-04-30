@@ -43,6 +43,7 @@ class iCloudDataHandler {
                     writeAPriorityRecord(bandName: bandName, priority: priority)
                 }
                 NSUbiquitousKeyValueStore.default.synchronize()
+                writeLastiCloudDataWrite()
             }
         }
     }
@@ -50,7 +51,7 @@ class iCloudDataHandler {
     func writeAPriorityRecord(bandName: String, priority: Int){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            var dataString = String(priority) + ":" + UIDevice.current.identifierForVendor!.uuidString
+            var dataString = String(priority) + ":" + String(Date().timeIntervalSince1970)
             print ("iCloud: writeAPriorityRecord \(bandName) - \(dataString)")
             NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
         }
@@ -74,6 +75,7 @@ class iCloudDataHandler {
                             self.writeAScheduleRecord(eventIndex: eventIndex.key, status: eventIndex.value)
                         }
                         NSUbiquitousKeyValueStore.default.synchronize()
+                        self.writeLastiCloudDataWrite()
                     }
                 }
             }
@@ -85,6 +87,7 @@ class iCloudDataHandler {
         var dataString = status + ":" + UIDevice.current.identifierForVendor!.uuidString
         print ("iCloud: writeAScheduleRecord Storing eventNamex:\(eventIndex) - \(dataString)")
         NSUbiquitousKeyValueStore.default.set(dataString, forKey: "eventName:" + eventIndex)
+        writeLastiCloudDataWrite()
     
     }
     
@@ -121,8 +124,13 @@ class iCloudDataHandler {
                 let currentPriroity = priorityHandler.getPriorityData(bandName)
                 print ("iCloud: before readAPriorityRecord adding \(bandName) - \(newPriority) - \(uidValue) - \(currentUid)")
                 if (uidValue != currentUid || currentPriroity == 0){
-                    print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newPriority) - \(uidValue) - \(currentUid)")
-                    priorityHandler.addPriorityData(bandName, priority: Int(newPriority) ?? 0)
+                    var lastPriorityDataWrite = priorityHandler.readLastPriorityDataWrite()
+                    var lastiCloudDataWrite = readLastiCloudDataWrite()
+                    
+                    if (lastiCloudDataWrite > lastPriorityDataWrite){
+                        print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newPriority) - \(uidValue) - \(currentUid)")
+                        priorityHandler.addPriorityData(bandName, priority: Int(newPriority) ?? 0)
+                    }
                 }
             }
         }
@@ -187,6 +195,7 @@ class iCloudDataHandler {
         eventIndex = eventIndex + eventType + ":"
         eventIndex = eventIndex + eventYearString
         
+        
 
         let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: eventIndex) ?? "0")
         let currentUid = UIDevice.current.identifierForVendor!.uuidString
@@ -201,10 +210,47 @@ class iCloudDataHandler {
                 
                 print ("iCloud: before readAPriorityRecord adding \(bandName) - \(newAttended) - \(uidValue) - \(currentAttended)")
                 if (uidValue != currentUid || currentAttended == nil){
-                    print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newAttended) - \(uidValue) - \(currentUid)")
-                    attendedHandle.addShowsAttendedWithStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: newAttended)
+                    var lastScheduleDataWrite = attendedHandle.readLastScheduleDataWrite()
+                    var lastiCloudDataWrite = readLastiCloudDataWrite()
+                    
+                    if (lastiCloudDataWrite >= lastScheduleDataWrite){
+                        print ("iCloud data not read due to out of date data = false")
+                        print ("iCloud: after readAPriorityRecord adding \(bandName) - \(newAttended) - \(uidValue) - \(currentUid)")
+                        attendedHandle.addShowsAttendedWithStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: newAttended)
+                    } else {
+                        print ("iCloud data not read due to out of date data = true")
+                    }
                 }
             }
         }
     }
+    
+    func readLastiCloudDataWrite()-> Double{
+        
+        var lastiCloudDataWrite = Double(0)
+        
+        if let data = try? String(contentsOf: lastiCloudDataWriteFile, encoding: String.Encoding.utf8) {
+            if (data != nil){
+                lastiCloudDataWrite = Double(data) ?? 0
+            }
+        }
+        
+        return lastiCloudDataWrite
+    }
+    
+    func writeLastiCloudDataWrite(){
+        
+        let currentTime = String(Date().timeIntervalSince1970)
+        
+        if (isInternetAvailable() == true){
+            do {
+                //try FileManager.default.removeItem(at: storageFile)
+                try currentTime.write(to:lastiCloudDataWriteFile, atomically: false, encoding: String.Encoding.utf8)
+                print ("writing iCloudData Date")
+            } catch _ {
+                print ("writing iCloudData Date, failed")
+            }
+        }
+    }
+
 }

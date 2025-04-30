@@ -49,7 +49,7 @@ open class ShowsAttended {
             do {
                 let json = try JSONEncoder().encode(showsAttendedArray)
                 try json.write(to: showsAttended)
-            
+                writeLastScheduleDataWrite();
                 print ("Loading show attended data! saved showData \(showsAttendedArray)")
             } catch {
                 print ("Loading show attended data! Error, unable to save showsAtteneded Data \(error.localizedDescription)")
@@ -304,6 +304,30 @@ open class ShowsAttended {
         
         return textValue
         
+    }
+    
+    func readLastScheduleDataWrite()-> Double{
+        
+        var lastPriorityDataWrite = Double(0)
+        
+        if let data = try? String(contentsOf: lastScheduleDataWriteFile, encoding: String.Encoding.utf8) {
+            lastPriorityDataWrite = Double(data)!
+        }
+        
+        return lastPriorityDataWrite
+    }
+    
+    func writeLastScheduleDataWrite(){
+        
+        let currentTime = String(Date().timeIntervalSince1970)
+       
+        do {
+            //try FileManager.default.removeItem(at: storageFile)
+            try currentTime.write(to:lastScheduleDataWriteFile, atomically: false, encoding: String.Encoding.utf8)
+            print ("writing ScheduleData Date")
+        } catch _ {
+            print ("writing ScheduleData Date, failed")
+        }
     }
     
 }

@@ -249,6 +249,8 @@
     <string name="Events">Events</string>
 
     <string name="UrlToBackupFile">Provide The URL To The Backup File</string>
+
+    <string name="SearchCritiera">Search Criteria</string>
 </resources>
 
 
