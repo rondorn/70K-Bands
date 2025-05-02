@@ -29,6 +29,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -1248,7 +1250,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     @Override
     public void onBackPressed() {
-
+        if (dialog != null){
+            if (dialog.isShowing()){
+                dialog.dismiss();
+            }
+        }
         moveTaskToBack(true);
     }
 
@@ -1271,6 +1277,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     @Override
     public void onPause() {
+        if (dialog != null){
+            if (dialog.isShowing()){
+                dialog.dismiss();
+            }
+        }
         listState = bandNamesList.onSaveInstanceState();
         Log.d("Saving Data", "Saving state during Pause");
         super.onPause();
@@ -1301,7 +1312,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     @Override
     public void onResume() {
-
+        if (dialog != null){
+            if (dialog.isShowing()){
+                dialog.dismiss();
+            }
+        }
         Log.d(TAG, notificationTag + " In onResume - 1");
         super.onResume();
 

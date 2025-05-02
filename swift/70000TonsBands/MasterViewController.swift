@@ -110,7 +110,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
         
-        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake), name: NSNotification.Name(rawValue: "RefreshDisplay"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake2), name: NSNotification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
@@ -407,6 +407,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         writeFiltersFile()
         quickRefresh()
         refreshDisplayAfterWake();
+        
     }
     
 
@@ -449,6 +450,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    @objc func refreshDisplayAfterWake2(){
+        finishedPlaying()
+        self.refreshData()
+    }
     
     @objc func refreshDisplayAfterWake(){
         self.refreshData()
