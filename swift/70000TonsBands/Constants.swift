@@ -185,7 +185,7 @@ var eventYearArray = [String]();
 
 //alert topics
 let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing20240212"
+let subscriptionTopicTest = "Testing20250603"
 let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
