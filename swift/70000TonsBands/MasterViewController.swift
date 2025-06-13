@@ -147,22 +147,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //createrFilterMenu(controller: self);
      
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
-
-        if #available(iOS 26.0, *) {
-             preferenceButton.hidesSharedBackground = true
-             shareButton.hidesSharedBackground = true
-             filterButtonBar.hidesSharedBackground = true
-             searchButtonBar.hidesSharedBackground = true
-             titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
-         }
-         preferenceButton.customView?.backgroundColor = .black
-         filterMenuButton.backgroundColor = .black
-         shareButton.customView?.backgroundColor = .black
-         bandSearch.backgroundColor = .black
-         bandSearch.tintColor = .lightGray
-         bandSearch.barTintColor = .black
-         bandSearch.searchTextField.backgroundColor = .black
         
+        //these are needed for iOS 26 visual fixes
+        if #available(iOS 26.0, *) {
+            preferenceButton.hidesSharedBackground = true
+            shareButton.hidesSharedBackground = true
+            filterButtonBar.hidesSharedBackground = true
+            searchButtonBar.hidesSharedBackground = true
+            titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
+            
+            preferenceButton.customView?.backgroundColor = .black
+            filterMenuButton.backgroundColor = .black
+            shareButton.customView?.backgroundColor = .black
+            bandSearch.backgroundColor = .black
+            bandSearch.tintColor = .lightGray
+            bandSearch.barTintColor = .black
+            bandSearch.searchTextField.backgroundColor = .black
+            
+        }
         
          NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
@@ -917,7 +919,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
             }
         })
-        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
  
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -930,7 +932,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         })
         
         
-        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
         
         let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -942,7 +944,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
         
         let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -954,7 +956,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         })
         
-        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
         
         let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
@@ -965,7 +967,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.quickRefresh()
             
         })
-        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 58, cellWidth: 105)
+        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
         
         if (eventCount == 0){
             return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
