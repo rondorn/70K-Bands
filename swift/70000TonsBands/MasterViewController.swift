@@ -159,9 +159,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
          filterMenuButton.backgroundColor = .black
          shareButton.customView?.backgroundColor = .black
          bandSearch.backgroundColor = .black
-         bandSearch.tintColor = .white
-         bandSearch.barTintColor = .darkGray
-         bandSearch.searchTextField.backgroundColor = .darkGray
+         bandSearch.tintColor = .lightGray
+         bandSearch.barTintColor = .black
+         bandSearch.searchTextField.backgroundColor = .black
         
         
          NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
