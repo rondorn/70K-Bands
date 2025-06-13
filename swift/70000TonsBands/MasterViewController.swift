@@ -56,6 +56,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var bandsByName = [String]()
     var reloadTableBool = true
     
+    @IBOutlet weak var filterButtonBar: UIBarButtonItem!
+    @IBOutlet weak var searchButtonBar: UIBarButtonItem!
     var filtersOnText = ""
     
     var bandDescriptions = CustomBandDescription()
@@ -147,6 +149,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
+        if #available(iOS 26.0, *) {
+            //preferenceButton.hidesSharedBackground = true
+            //shareButton.hidesSharedBackground = true
+            //filterButtonBar.hidesSharedBackground = true
+            //searchButtonBar.hidesSharedBackground = true
+        }
+        preferenceButton.customView?.backgroundColor = .black
+        filterMenuButton.backgroundColor = .black
+        shareButton.customView?.backgroundColor = .black
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
