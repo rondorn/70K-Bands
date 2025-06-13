@@ -30,6 +30,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var filterButtonBar: UIBarButtonItem!
+    @IBOutlet weak var searchButtonBar: UIBarButtonItem!
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
     @IBOutlet weak var bandSearch: UISearchBar!
@@ -44,6 +46,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var filterMenu = DropDown();
     
+    @IBOutlet weak var titleButtonArea: UINavigationItem!
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
     var detailViewController: DetailViewController? = nil
@@ -144,8 +147,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //createrFilterMenu(controller: self);
      
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
+
+        if #available(iOS 26.0, *) {
+             preferenceButton.hidesSharedBackground = true
+             shareButton.hidesSharedBackground = true
+             filterButtonBar.hidesSharedBackground = true
+             searchButtonBar.hidesSharedBackground = true
+             titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
+         }
+         preferenceButton.customView?.backgroundColor = .black
+         filterMenuButton.backgroundColor = .black
+         shareButton.customView?.backgroundColor = .black
+         bandSearch.backgroundColor = .black
+         bandSearch.tintColor = .white
+         bandSearch.barTintColor = .darkGray
+         bandSearch.searchTextField.backgroundColor = .darkGray
         
-        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+        
+         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
     }
     
