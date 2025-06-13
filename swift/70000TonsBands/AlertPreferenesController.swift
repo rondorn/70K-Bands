@@ -124,7 +124,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let screenWidth = screenSize.width
         
         if (screenWidth < 350){
-            screenHeight = 1000;
+            screenHeight = 1200;
             scrollView.contentInset = UIEdgeInsets(top: 0, left: -25, bottom: 0, right: 0);
         }
         scrollView.contentSize = CGSize(width: 300,height: screenHeight);
@@ -140,8 +140,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayWaitingMessage), name: NSNotification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.eventsOrBandsPrompt), name: NSNotification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
-        
-        
+     
+
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -302,14 +302,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             AlertForListeningEvent.isEnabled = false;
             alertForUnofficalEvents.isEnabled = false;
             
-            mustSeeAlertLable.isEnabled = false
-            mightSeeAlertLable.isEnabled = false
-            alertForShowsLable.isEnabled = false
-            alertForSpecialLable.isEnabled = false
-            alertForMandGLable.isEnabled = false
-            alertForClinicsLable.isEnabled = false
-            alertForListeningLable.isEnabled = false
-            alertForUnofficalEventsLable.isEnabled = false
+            mustSeeAlertLable.textColor = .darkGray
+            mightSeeAlertLable.textColor = .darkGray
+            alertForShowsLable.textColor = .darkGray
+            alertForSpecialLable.textColor = .darkGray
+            alertForMandGLable.textColor = .darkGray
+            alertForClinicsLable.textColor = .darkGray
+            alertForListeningLable.textColor = .darkGray
+            alertForUnofficalEventsLable.textColor = .darkGray
             
         } else {
             AlertOnMustSee.isEnabled = true;
@@ -321,14 +321,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             AlertForListeningEvent.isEnabled = true;
             alertForUnofficalEvents.isEnabled = true;
             
-            mustSeeAlertLable.isEnabled = true
-            mightSeeAlertLable.isEnabled = true
-            alertForShowsLable.isEnabled = true
-            alertForSpecialLable.isEnabled = true
-            alertForMandGLable.isEnabled = true
-            alertForClinicsLable.isEnabled = true
-            alertForListeningLable.isEnabled = true
-            alertForUnofficalEventsLable.isEnabled = true
+            mustSeeAlertLable.textColor = .white
+            mightSeeAlertLable.textColor = .white
+            alertForShowsLable.textColor = .white
+            alertForSpecialLable.textColor = .white
+            alertForMandGLable.textColor = .white
+            alertForClinicsLable.textColor = .white
+            alertForListeningLable.textColor = .white
+            alertForUnofficalEventsLable.textColor = .white
         }
     }
     
