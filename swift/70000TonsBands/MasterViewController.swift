@@ -23,6 +23,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     @IBOutlet weak var Undefined: UIButton!
 
+    @IBOutlet weak var TitleButtonArea: UINavigationItem!
     @IBOutlet weak var shareButton: UIBarButtonItem!
     
     @IBOutlet weak var contentController: UIView!
@@ -150,14 +151,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         if #available(iOS 26.0, *) {
-            //preferenceButton.hidesSharedBackground = true
-            //shareButton.hidesSharedBackground = true
-            //filterButtonBar.hidesSharedBackground = true
-            //searchButtonBar.hidesSharedBackground = true
+            preferenceButton.hidesSharedBackground = true
+            shareButton.hidesSharedBackground = true
+            filterButtonBar.hidesSharedBackground = true
+            searchButtonBar.hidesSharedBackground = true
+            TitleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
         }
         preferenceButton.customView?.backgroundColor = .black
         filterMenuButton.backgroundColor = .black
         shareButton.customView?.backgroundColor = .black
+        
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
