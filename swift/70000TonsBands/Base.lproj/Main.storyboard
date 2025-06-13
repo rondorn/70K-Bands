@@ -930,6 +930,7 @@
                         <outlet property="priorityButtons" destination="lEP-z4-PfZ" id="xYf-aK-E8J"/>
                         <outlet property="returnToMaster" destination="mOI-FS-AaM" id="avt-Tx-1LA"/>
                         <outlet property="titleLable" destination="mOI-FS-AaM" id="UvY-R6-ti8"/>
+                        <outlet property="topNavView" destination="mOI-FS-AaM" id="lnK-Js-J06"/>
                         <outlet property="vistLinksLable" destination="7eU-qa-VIQ" id="zlU-Pc-bRg"/>
                         <outlet property="wikipediaUrlButton" destination="gni-Y6-ugV" id="Bpa-ix-0dm"/>
                         <outlet property="youtubeUrlButton" destination="KER-Ol-1XT" id="CjM-lb-2RE"/>

@@ -57,6 +57,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var LastOnCruise: UITextField!
     @IBOutlet weak var NoteWorthy: UITextField!
     
+    @IBOutlet weak var topNavView: UINavigationItem!
     @IBOutlet weak var EventView1: UIView!
     @IBOutlet weak var EventView2: UIView!
     @IBOutlet weak var EventView3: UIView!
@@ -189,6 +190,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
             loadComments()
             rotationChecking()
+            
+            if #available(iOS 26.0, *) {
+                topNavView.leftBarButtonItem?.hidesSharedBackground = true
+            }
+            
         }
         
     }
