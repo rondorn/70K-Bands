@@ -833,14 +833,15 @@
                             </imageView>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="1000" verticalHuggingPriority="1000" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" translatesAutoresizingMaskIntoConstraints="NO" id="lEP-z4-PfZ">
                                 <rect key="frame" x="29" y="857" width="376" height="32"/>
-                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <segments>
                                     <segment title="Unknown"/>
                                     <segment title="Might See"/>
                                     <segment title="Wont See"/>
                                     <segment title="Unknown"/>
                                 </segments>
-                                <color key="tintColor" systemColor="groupTableViewBackgroundColor"/>
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="selectedSegmentTintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <connections>
                                     <action selector="setBandPriority" destination="JEX-9P-axG" eventType="valueChanged" id="GMS-ho-9sB"/>
                                 </connections>
@@ -996,7 +997,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label hidden="YES" opaque="NO" clearsContextBeforeDrawing="NO" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" text="Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" enabled="NO" adjustsFontForContentSizeCategory="YES" id="Arm-wq-HPj">
-                                            <rect key="frame" x="8" y="0.0" width="398" height="58"/>
+                                            <rect key="frame" x="20" y="0.0" width="374" height="58"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             <accessibility key="accessibilityConfiguration">
                                                 <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
@@ -1173,7 +1174,7 @@
                     <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <items>
                         <barButtonItem style="plain" id="5va-1n-IZ8">
-                            <button key="customView" opaque="NO" tag="20" contentMode="scaleToFill" misplaced="YES" insetsLayoutMarginsFromSafeArea="NO" contentHorizontalAlignment="leading" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="vna-V9-U4m">
+                            <button key="customView" opaque="NO" tag="20" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" contentHorizontalAlignment="leading" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="vna-V9-U4m">
                                 <rect key="frame" x="20" y="7" width="87" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
@@ -1191,17 +1192,13 @@
                             </button>
                         </barButtonItem>
                         <barButtonItem style="plain" id="4Ec-Q2-92D">
-                            <searchBar key="customView" contentMode="scaleToFill" misplaced="YES" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
+                            <searchBar key="customView" contentMode="scaleToFill" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
                                 <rect key="frame" x="123" y="-8" width="121" height="60"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="barTintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="words" returnKeyType="done"/>
-                                <scopeButtonTitles>
-                                    <string>Title</string>
-                                    <string>Title</string>
-                                </scopeButtonTitles>
                                 <connections>
                                     <outlet property="delegate" destination="7bK-jq-Zjz" id="iJv-AF-FHt"/>
                                 </connections>
@@ -1718,9 +1715,6 @@
         <image name="line.horizontal.3.decrease" catalog="system" width="128" height="73"/>
         <systemColor name="darkTextColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-        <systemColor name="groupTableViewBackgroundColor">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGrayColor">
             <color red="0.55686274509803924" green="0.55686274509803924" blue="0.57647058823529407" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

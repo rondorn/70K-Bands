@@ -170,7 +170,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             print ("showFullSchedule");
             showFullSchedule()
-            setButtonNames()
+            
             
             print ("showBandDetails");
             showBandDetails()
@@ -190,6 +190,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
             loadComments()
             rotationChecking()
+            
+            setButtonNames()
             
             if #available(iOS 26.0, *) {
                 topNavView.leftBarButtonItem?.hidesSharedBackground = true
@@ -708,8 +710,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let fontColor = [NSAttributedString.Key.foregroundColor: UIColor.white, NSAttributedString.Key.font: font]
         priorityButtons.setTitleTextAttributes(fontColor, for: .normal)
         
-        let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
-        priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
+        print ("Setting band priority  from Details, selelcted should be black font and background light gray")
         
         print ("Setting priorityButtons for \(bandName) - bandPriorityStorage")
         if (bandPriorityStorage[bandName!] == nil){
@@ -721,6 +722,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             let priorityImageName = getPriorityGraphic(bandPriorityStorage[bandName!]!)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
             print ("Setting priorityButtons for \(bandName) - \(priorityImageName)")
+            let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
+            priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
+            priorityButtons.setTitleTextAttributes(fontColorSelected, for: .highlighted)
+            priorityButtons.selectedSegmentTintColor = UIColor.lightGray
         }
     }
     
@@ -867,11 +872,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     @IBAction func setBandPriority() {
         if (bandName != nil){
-            print ("Setting band priority  from Details")
+            
+            bandPriorityStorage[bandName!] = priorityButtons.selectedSegmentIndex
+            
+            print ("Setting band priority  from Details to \(bandPriorityStorage[bandName!])")
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
+        
             let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            
+            setButtonNames()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            
         }
     }
     
