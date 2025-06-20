@@ -86,6 +86,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
+        // Ensure back button always says "Back" when navigating from this view
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         //have a reference to this controller for external refreshes
         masterView = self;
         
@@ -429,6 +434,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewWillAppear(_ animated: Bool) {
         print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
+        
+        // Ensure back button always says "Back" when navigating from this view
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         isLoadingBandData = false
         writeFiltersFile()
         quickRefresh()
