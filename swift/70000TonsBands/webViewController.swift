@@ -35,9 +35,8 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         webDisplay.addSubview(activityIndicator)
         let url = getUrl()
         
-        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.primaryHidden
-    
-
+        updateSplitViewDisplayMode(for: view.bounds.size)
+        
         //self.webDisplay.allowsInlineMediaPlayback = true
         //self.webDisplay.mediaPlaybackAllowsAirPlay = true
         //self.webDisplay.mediaPlaybackRequiresUserAction = false
@@ -65,6 +64,23 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         webDisplay.addGestureRecognizer(swipeLeft)
         
         webDisplay.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { _ in
+            self.updateSplitViewDisplayMode(for: size)
+        }, completion: nil)
+    }
+
+    func updateSplitViewDisplayMode(for size: CGSize) {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            if size.width > size.height { // Landscape
+                splitViewController?.preferredDisplayMode = .allVisible
+            } else { // Portrait
+                splitViewController?.preferredDisplayMode = .primaryHidden
+            }
+        }
     }
     
     override func didReceiveMemoryWarning() {

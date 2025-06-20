@@ -1272,13 +1272,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.main.async {
             if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
                 setUrl(url)
-                
+
+                let backItem = UIBarButtonItem()
+                backItem.title = "Back"
+
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     if let splitViewController = self.splitViewController,
                        let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
+                        detailNavigationController.topViewController?.navigationItem.backBarButtonItem = backItem
                         detailNavigationController.pushViewController(webViewController, animated: true)
                     }
                 } else {
+                    self.navigationItem.backBarButtonItem = backItem
                     self.navigationController?.pushViewController(webViewController, animated: true)
                 }
             }
