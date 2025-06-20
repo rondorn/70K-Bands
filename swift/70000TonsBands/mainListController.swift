@@ -739,12 +739,15 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
     
-    // Location text (after the two spaces) - variable size font
+    // Location text (after the two spaces) - variable size font (12-16pt)
     if location.count > 0 {
-        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: location.count))
+        let locationTextSize = calculateOptimalFontSize(for: location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
+        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: location.count))
         venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
     }
     
+    // Disable font auto-sizing to preserve our 17pt marker
+    bandNameView.adjustsFontSizeToFitWidth = false
     bandNameView.attributedText = venueString
     bandNameView.isHidden = false;
     
@@ -759,12 +762,16 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
     
-    // Venue text (after the two spaces) - variable size font
+    // Venue text (after the two spaces) - variable size font (12-16pt)
     if locationOfVenue.count > 2 {
-        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: locationOfVenue.count - 2))
+        let venueText = String(locationOfVenue.dropFirst(2)) // Remove the two spaces
+        let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location:2,length: locationOfVenue.count - 2))
         locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationOfVenue.count - 2))
     }
 
+    // Disable font auto-sizing to preserve our 17pt marker
+    locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = locationOfVenueString
     
     //setup bandname for use is access the details screen
@@ -782,16 +789,55 @@ func getCellScheduleValueFullInfo(bandName: String, location: String, locationTe
     myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
     
-    // Location text (after the two spaces) - variable size font
+    // Location text (after the two spaces) - variable size font (12-16pt)
     if locationText.count > 0 {
-        myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: locationText.count))
+        let locationTextSize = calculateOptimalFontSize(for: locationText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+        myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: locationText.count))
         myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationText.count))
     }
 
     bandNameView.backgroundColor = UIColor.black;
+    // Disable font auto-sizing to preserve our 17pt marker
+    locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = myMutableString
     bandNameView.isHidden = false
     bandNameNoSchedule.isHidden = true
     bandNameNoSchedule.text = ""
     
+}
+
+func calculateOptimalFontSize(for text: String, in label: UILabel, markerWidth: CGFloat, maxSize: CGFloat, minSize: CGFloat) -> CGFloat {
+    // Use a consistent estimated width instead of relying on potentially inaccurate label bounds
+    // Most table view cells have similar widths, so use a reasonable estimate
+    let estimatedLabelWidth: CGFloat = 200 // Reasonable estimate for location text area
+    
+    // Calculate actual marker width (17pt font typically renders to about 8-10pt width for a space)
+    let actualMarkerWidth: CGFloat = 10
+    
+    // Calculate available width with minimal padding
+    let availableWidth = estimatedLabelWidth - actualMarkerWidth - 2
+    
+    // For very short text, always use maximum size
+    if text.count <= 8 { // Short location names like "Pool", "Theater"
+        return maxSize
+    }
+    
+    // For medium length text, use a size based on character count
+    if text.count <= 15 { // Medium names like "Theater Deck 3/4"
+        return maxSize - 1 // 15pt for medium length
+    }
+    
+    // Start with maximum font size and work down more granularly for longer text
+    for fontSize in stride(from: maxSize, through: minSize, by: -0.25) {
+        let font = UIFont.systemFont(ofSize: fontSize)
+        let textSize = text.size(withAttributes: [NSAttributedString.Key.font: font])
+        
+        // If text fits comfortably at this font size, use it
+        if textSize.width <= availableWidth * 0.9 { // Use 90% of available width for buffer
+            return fontSize
+        }
+    }
+    
+    // For very long text, return a reasonable minimum
+    return max(13, minSize) // Never go below 13pt for readability
 }
