@@ -50,12 +50,17 @@ class DetailViewController: UIViewController{
         
         readFile()
         
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
+        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
+            splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
+        }
         
-        if bandName == nil && bands.isEmpty == false {
-            var bands = getBandNames()
-            bandName = bands[0]
-            print("Providing default band of " + bandName)
+        // Only provide a default band on iPad, not on iPhone
+        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
+            if bandName == nil && bands.isEmpty == false {
+                var bands = getBandNames()
+                bandName = bands[0]
+                print("Providing default band of " + bandName)
+            }
         }
         
         if (bandName != nil) {

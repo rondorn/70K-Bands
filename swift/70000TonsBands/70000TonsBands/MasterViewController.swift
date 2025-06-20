@@ -77,7 +77,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         masterView = self;
         
         // Do any additional setup after loading the view, typically from a nib.
-        splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
+        if UIDevice.currentDevice().userInterfaceIdiom == .Pad {
+            splitViewController?.preferredDisplayMode = UISplitViewControllerDisplayMode.AllVisible
+        }
         
         blankScreenActivityIndicator.hidesWhenStopped = true
         

@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import Firebase
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate, GGLInstanceIDDelegate,GCMReceiverDelegate {
@@ -25,17 +26,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
-        let splitViewController = self.window!.rootViewController as! UISplitViewController
+
+        // Use the default window setup instead of manually creating one
+        guard let splitViewController = self.window?.rootViewController as? UISplitViewController else {
+            fatalError("Root view controller is not a UISplitViewController")
+        }
+
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
-        navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem()
+        // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
+        // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
-        let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
-        let controller = masterNavigationController.topViewController as! MasterViewController
-        controller.managedObjectContext = self.managedObjectContext
-    
+        setupDefaults()
         
-        //icloud code
+        FirebaseApp.configure()
+        
+        // Register for notification of iCloud key-value changes, but do an intial load
+        NSNotificationCenter.defaultCenter().addObserver(self,
+                                               selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
+                                               name: NSUbiquitousKeyValueStoreDidChangeExternallyNotification, object: NSUbiquitousKeyValueStore.defaultStore())
+        
+        // Start iCloud key-value updates
+        NSUbiquitousKeyValueStore.defaultStore().synchronize()
+
+        let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
+        let controller = masterNavigationController.viewControllers[0] as! MasterViewController
+        controller.managedObjectContext = self.managedObjectContext
+        
+        setupCurrentYearUrls()
+        
         // Register for notification of iCloud key-value changes
         NSNotificationCenter.defaultCenter().addObserver(self,
         selector: #selector(AppDelegate.iCloudKeysChanged(_:)),

@@ -126,26 +126,29 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
          //print ("bandName is 2 " + bandName)
         
-        if ((bandName == nil || bands.isEmpty == true) && bands.count > 0) {
-            bandName = bands[0]
-            print("Providing default band of " + bandName)
-            blockSwiping = false
-            
-        } else if (bandName == nil || bands.isEmpty == true){
-            bands = bandNameHandle.getBandNames()
-            if (bands.count > 0){
+        // Only provide a default band on iPad, not on iPhone
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            if ((bandName == nil || bands.isEmpty == true) && bands.count > 0) {
                 bandName = bands[0]
+                print("Providing default band of " + bandName)
+                blockSwiping = false
+                
+            } else if (bandName == nil || bands.isEmpty == true){
+                bands = bandNameHandle.getBandNames()
+                if (bands.count > 0){
+                    bandName = bands[0]
+                    blockSwiping = true
+                }
+            }
+            //catch all if we are still screwed
+            if (bandName == nil || bands.isEmpty == true){
+                bandName = "Waiting for Data"
                 blockSwiping = true
             }
         }
-        //catch all if we are still screwed
-        if (bandName == nil || bands.isEmpty == true){
-            bandName = "Waiting for Data"
-            blockSwiping = true
-        }
         
-        self.title = bandName
-        print ("bandName is 3 " + bandName)
+        self.title = bandName ?? ""
+        print ("bandName is 3 " + (bandName ?? "nil"))
         
         //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
@@ -324,7 +327,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     override func viewDidAppear(_ animated: Bool) {
         
-        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        }
         loadComments()
         super.viewDidAppear(animated)
                 
@@ -712,16 +717,23 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         print ("Setting band priority  from Details, selelcted should be black font and background light gray")
         
-        print ("Setting priorityButtons for \(bandName) - bandPriorityStorage")
-        if (bandPriorityStorage[bandName!] == nil){
-            bandPriorityStorage[bandName!] = 0
+        print ("Setting priorityButtons for \(bandName ?? "nil") - bandPriorityStorage")
+        
+        // Only proceed if bandName is not nil
+        guard let safeBandName = bandName else {
+            print("bandName is nil, skipping priority button setup")
+            return
         }
         
-        if (bandPriorityStorage[bandName!] != nil){
-            priorityButtons.selectedSegmentIndex = bandPriorityStorage[bandName!]!
-            let priorityImageName = getPriorityGraphic(bandPriorityStorage[bandName!]!)
+        if (bandPriorityStorage[safeBandName] == nil){
+            bandPriorityStorage[safeBandName] = 0
+        }
+        
+        if (bandPriorityStorage[safeBandName] != nil){
+            priorityButtons.selectedSegmentIndex = bandPriorityStorage[safeBandName]!
+            let priorityImageName = getPriorityGraphic(bandPriorityStorage[safeBandName]!)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
-            print ("Setting priorityButtons for \(bandName) - \(priorityImageName)")
+            print ("Setting priorityButtons for \(safeBandName) - \(priorityImageName)")
             let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
             priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
             priorityButtons.setTitleTextAttributes(fontColorSelected, for: .highlighted)
