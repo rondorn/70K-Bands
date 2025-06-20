@@ -45,7 +45,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let splitViewController = storyboard.instantiateInitialViewController() as! UISplitViewController
         self.window?.rootViewController = splitViewController
-        self.window?.makeKeyAndVisible()
+        
+        // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            self.window?.makeKeyAndVisible()
+        }
 
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
         // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
@@ -66,7 +70,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUbiquitousKeyValueStore.default.synchronize()
 
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
-        let controller = masterNavigationController.topViewController as! MasterViewController
+        let controller = masterNavigationController.viewControllers[0] as! MasterViewController
         controller.managedObjectContext = self.managedObjectContext
     
         setupCurrentYearUrls()
