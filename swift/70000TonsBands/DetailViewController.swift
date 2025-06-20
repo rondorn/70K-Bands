@@ -194,7 +194,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setButtonNames()
             
             if #available(iOS 26.0, *) {
-                topNavView.leftBarButtonItem?.hidesSharedBackground = true
+                //topNavView.leftBarButtonItem?.hidesSharedBackground = true
             }
             
         }

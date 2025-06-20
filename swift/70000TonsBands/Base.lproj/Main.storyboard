@@ -1663,7 +1663,7 @@
         <!--Web View Controller-->
         <scene sceneID="xNQ-TE-sbj">
             <objects>
-                <viewController automaticallyAdjustsScrollViewInsets="NO" id="ewv-Oo-aEW" customClass="WebViewController" customModule="_0K_Bands" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="StatsWebViewController" automaticallyAdjustsScrollViewInsets="NO" id="ewv-Oo-aEW" customClass="WebViewController" customModule="_0K_Bands" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="05m-V8-WPA"/>
                         <viewControllerLayoutGuide type="bottom" id="wmE-ZP-mH0"/>

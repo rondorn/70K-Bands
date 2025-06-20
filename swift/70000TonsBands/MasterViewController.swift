@@ -151,12 +151,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            preferenceButton.hidesSharedBackground = true
-            statsButton.hidesSharedBackground = true
-            shareButton.hidesSharedBackground = true
-            filterButtonBar.hidesSharedBackground = true
-            searchButtonBar.hidesSharedBackground = true
-            titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
+            //preferenceButton.hidesSharedBackground = true
+            //statsButton.hidesSharedBackground = true
+            //shareButton.hidesSharedBackground = true
+            //filterButtonBar.hidesSharedBackground = true
+            //searchButtonBar.hidesSharedBackground = true
+            //titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
             
             preferenceButton.customView?.backgroundColor = .black
             statsButton.customView?.backgroundColor = .black
@@ -1240,11 +1240,50 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
-        // a stats button was tapped, what should it do?
-        showAlert("Message received", message: "Stats button tapped")
-        print("Stats button tapped")
-    }
+        let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=uga1k1l5bkw9jh1ng9jhtry1o&raw=1"
+        let fileManager = FileManager.default
+        let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileUrl = documentsUrl.appendingPathComponent("stats.html")
 
+        if Reachability.isConnectedToNetwork() {
+            // Download the file
+            let task = URLSession.shared.dataTask(with: URL(string: statsUrl)!) { (data, response, error) in
+                if let data = data {
+                    do {
+                        try data.write(to: fileUrl)
+                        self.presentWebView(url: fileUrl.absoluteString)
+                    } catch {
+                        self.showAlert("Error", message: "Could not save stats file.")
+                    }
+                }
+            }
+            task.resume()
+        } else {
+            // Use the cached file
+            if fileManager.fileExists(atPath: fileUrl.path) {
+                presentWebView(url: fileUrl.absoluteString)
+            } else {
+                showAlert("Offline", message: "No cached stats file available. Please connect to the internet to download it.")
+            }
+        }
+    }
+    
+    func presentWebView(url: String) {
+        DispatchQueue.main.async {
+            if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
+                setUrl(url)
+                
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    if let splitViewController = self.splitViewController,
+                       let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
+                        detailNavigationController.pushViewController(webViewController, animated: true)
+                    }
+                } else {
+                    self.navigationController?.pushViewController(webViewController, animated: true)
+                }
+            }
+        }
+    }
 }
 
 

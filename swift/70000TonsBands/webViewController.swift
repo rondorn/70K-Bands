@@ -19,6 +19,16 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Style the navigation bar to match the rest of the app
+        if let navController = self.navigationController {
+            navController.navigationBar.barStyle = .blackTranslucent
+            navController.navigationBar.tintColor = .white
+            navController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+            navController.navigationBar.barTintColor = .black
+            navController.view.backgroundColor = .black
+        }
+        self.view.backgroundColor = .black
+        
         webDisplay.navigationDelegate = self
         
         webDisplay.allowsBackForwardNavigationGestures = true
