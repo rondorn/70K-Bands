@@ -49,6 +49,13 @@
             android:exported="true">
         </activity>
 
+        <activity
+            android:name=".WebViewActivity"
+            android:label="Report Dashboard"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:exported="true">
+        </activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.Bands70k"

@@ -129,7 +129,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         refreshDisplayAfterWake();
-        
+    
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(MasterViewController.showReceivedMessage(_:)),
                                                name: UserDefaults.didChangeNotification, object: nil)
@@ -1263,29 +1263,62 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
 
+        // First, show cached content immediately if it exists
+        if fileManager.fileExists(atPath: fileUrl.path) {
+            presentWebView(url: fileUrl.absoluteString)
+        }
+        
+        // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
-            // Download the file
             let task = URLSession.shared.dataTask(with: URL(string: statsUrl)!) { (data, response, error) in
                 if let data = data {
                     do {
                         try data.write(to: fileUrl)
-                        self.presentWebView(url: fileUrl.absoluteString)
+                        // If we already showed cached content, refresh the web view
+                        DispatchQueue.main.async {
+                            // Refresh the currently displayed web view if it exists
+                            if let currentWebViewController = self.getCurrentWebViewController() {
+                                let request = URLRequest(url: fileUrl)
+                                currentWebViewController.webDisplay.load(request)
+                            } else {
+                                // If no cached content was shown initially, present the web view now
+                                self.presentWebView(url: fileUrl.absoluteString)
+                            }
+                        }
                     } catch {
-                        self.presentNoDataView(message: "Could not save stats file.")
+                        // Only show error if we didn't already show cached content
+                        if !fileManager.fileExists(atPath: fileUrl.path) {
+                            self.presentNoDataView(message: "Could not save stats file.")
+                        }
                     }
                 } else {
-                    self.presentNoDataView(message: "Could not download stats data.")
+                    // Only show error if we didn't already show cached content
+                    if !fileManager.fileExists(atPath: fileUrl.path) {
+                        self.presentNoDataView(message: "Could not download stats data.")
+                    }
                 }
             }
             task.resume()
+        } else if !fileManager.fileExists(atPath: fileUrl.path) {
+            // Only show no data message if there's no cached file
+            presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
+        }
+    }
+    
+    // Helper function to get the current web view controller if it's displayed
+    func getCurrentWebViewController() -> WebViewController? {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            if let splitViewController = self.splitViewController,
+               let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController,
+               let webViewController = detailNavigationController.topViewController as? WebViewController {
+                return webViewController
+            }
         } else {
-            // Use the cached file
-            if fileManager.fileExists(atPath: fileUrl.path) {
-                presentWebView(url: fileUrl.absoluteString)
-            } else {
-                presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
+            if let webViewController = self.navigationController?.topViewController as? WebViewController {
+                return webViewController
             }
         }
+        return nil
     }
     
     func presentNoDataView(message: String) {

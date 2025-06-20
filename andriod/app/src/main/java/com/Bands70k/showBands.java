@@ -66,8 +66,12 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -890,6 +894,71 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         });
 
+        // Download Report Button
+        Button downloadReportButton = (Button) findViewById(R.id.downloadReportButton);
+        downloadReportButton.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                // Download report and display in WebView
+                String reportUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&raw=1";
+                
+                ReportDownloader downloader = new ReportDownloader(showBands.this);
+                
+                // First, check if we have cached content and display it immediately
+                String cachedFilePath = downloader.getCachedReportPath();
+                File cachedFile = new File(cachedFilePath);
+                
+                if (cachedFile.exists()) {
+                    // Show cached content immediately
+                    // Toast.makeText(showBands.this, "Loading cached report...", Toast.LENGTH_SHORT).show();
+                    try {
+                        String cachedContent = readCachedFile(cachedFilePath);
+                        Intent webViewIntent = new Intent(showBands.this, WebViewActivity.class);
+                        webViewIntent.putExtra("htmlContent", cachedContent);
+                        webViewIntent.putExtra("isRefreshing", true);
+                        webViewIntent.putExtra("refreshUrl", reportUrl);
+                        startActivity(webViewIntent);
+                        return; // Exit early, WebView will handle refresh
+                    } catch (Exception e) {
+                        // If reading cached file fails, continue with normal flow
+                        Log.e("showBands", "Error reading cached file: " + e.getMessage());
+                    }
+                }
+                
+                // No cached content or error reading it, show loading message
+                // Toast.makeText(showBands.this, "Loading report dashboard...", Toast.LENGTH_SHORT).show();
+                
+                downloader.downloadReport(reportUrl, new ReportDownloader.DownloadCallback() {
+                    @Override
+                    public void onDownloadComplete(String filePath, String htmlContent) {
+                        // Launch WebView activity with the HTML content
+                        Intent webViewIntent = new Intent(showBands.this, WebViewActivity.class);
+                        webViewIntent.putExtra("htmlContent", htmlContent);
+                        startActivity(webViewIntent);
+                    }
+                    
+                    @Override
+                    public void onDownloadError(String error) {
+                        // Fallback: Load URL directly in WebView
+                        // Toast.makeText(showBands.this, "Loading from web...", Toast.LENGTH_SHORT).show();
+                        Intent webViewIntent = new Intent(showBands.this, WebViewActivity.class);
+                        webViewIntent.putExtra("directUrl", reportUrl);
+                        startActivity(webViewIntent);
+                    }
+                });
+            }
+        });
+
+    }
+
+    private String readCachedFile(String filePath) throws IOException {
+        StringBuilder content = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new java.io.FileInputStream(filePath), "UTF-8"));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+        reader.close();
+        return content.toString();
     }
 
     @Override
