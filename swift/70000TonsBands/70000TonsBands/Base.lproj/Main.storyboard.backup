@@ -609,7 +609,7 @@
                             <rect key="frame" x="0.0" y="64" width="600" height="44"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                             <items>
-                                <barButtonItem id="5va-1n-IZ8">
+                                <barButtonItem style="plain" id="5va-1n-IZ8">
                                     <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenDisabled="NO" lineBreakMode="middleTruncation" id="vna-V9-U4m">
                                         <rect key="frame" x="20" y="3" width="60" height="38"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -622,8 +622,8 @@
                                         </connections>
                                     </button>
                                 </barButtonItem>
-                                <barButtonItem systemItem="flexibleSpace" id="jiI-qV-mcD"/>
-                                <barButtonItem id="U7v-VF-EaZ">
+                                <barButtonItem style="plain" systemItem="flexibleSpace" id="jiI-qV-mcD"/>
+                                <barButtonItem style="plain" id="U7v-VF-EaZ">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="l6d-Sy-0B5">
                                         <rect key="frame" x="127" y="3" width="60" height="38"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -636,8 +636,8 @@
                                         </connections>
                                     </button>
                                 </barButtonItem>
-                                <barButtonItem systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
-                                <barButtonItem id="WGm-Pk-oWK">
+                                <barButtonItem style="plain" systemItem="flexibleSpace" id="ave-Zw-Hbu"/>
+                                <barButtonItem style="plain" id="WGm-Pk-oWK">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="bMq-b8-r9b">
                                         <rect key="frame" x="234" y="3" width="60" height="38"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -650,8 +650,8 @@
                                         </connections>
                                     </button>
                                 </barButtonItem>
-                                <barButtonItem systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
-                                <barButtonItem id="VdB-M1-Pt3">
+                                <barButtonItem style="plain" systemItem="flexibleSpace" id="gAi-OF-ezJ"/>
+                                <barButtonItem style="plain" id="VdB-M1-Pt3">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="O3z-DP-F5g">
                                         <rect key="frame" x="340" y="3" width="60" height="38"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -664,8 +664,8 @@
                                         </connections>
                                     </button>
                                 </barButtonItem>
-                                <barButtonItem systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
-                                <barButtonItem id="5on-Su-FWN">
+                                <barButtonItem style="plain" systemItem="flexibleSpace" id="a4X-0q-Fq8"/>
+                                <barButtonItem style="plain" id="5on-Su-FWN">
                                     <button key="customView" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" reversesTitleShadowWhenHighlighted="YES" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" id="ZqH-lH-kF5">
                                         <rect key="frame" x="447" y="7" width="46" height="30"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -678,8 +678,8 @@
                                         </connections>
                                     </button>
                                 </barButtonItem>
-                                <barButtonItem systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
-                                <barButtonItem id="N41-zI-gGY">
+                                <barButtonItem style="plain" systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
+                                <barButtonItem style="plain" id="N41-zI-gGY">
                                     <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" reversesTitleShadowWhenHighlighted="YES" lineBreakMode="middleTruncation" id="qWy-ef-Y14">
                                         <rect key="frame" x="540" y="7" width="40" height="30"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -738,7 +738,7 @@
                                 <segue destination="NmW-NO-D53" kind="presentation" id="ZHl-C8-a0w"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" id="R14-lg-DDg">
+                        <barButtonItem key="rightBarButtonItem" style="plain" id="R14-lg-DDg">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" id="OLx-09-OVA">
                                 <rect key="frame" x="552" y="8" width="28" height="28"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
