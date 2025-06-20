@@ -30,12 +30,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var statsButton: UIBarButtonItem!
     @IBOutlet weak var filterButtonBar: UIBarButtonItem!
     @IBOutlet weak var searchButtonBar: UIBarButtonItem!
     @IBOutlet weak var menuButton: UIBarButtonItem!
     
     @IBOutlet weak var bandSearch: UISearchBar!
-    
+        
     let schedule = scheduleHandler()
     let bandNameHandle = bandNamesHandler()
     let attendedHandle = ShowsAttended()
@@ -151,12 +152,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
             preferenceButton.hidesSharedBackground = true
+            statsButton.hidesSharedBackground = true
             shareButton.hidesSharedBackground = true
             filterButtonBar.hidesSharedBackground = true
             searchButtonBar.hidesSharedBackground = true
             titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
             
             preferenceButton.customView?.backgroundColor = .black
+            statsButton.customView?.backgroundColor = .black
             filterMenuButton.backgroundColor = .black
             shareButton.customView?.backgroundColor = .black
             bandSearch.backgroundColor = .black
@@ -218,7 +221,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
       }
     }
-    
+
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         self.tableView.reloadData()
     }
@@ -1236,6 +1239,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
 
+    @objc @IBAction func statsButtonTapped(_ sender: Any) {
+        // a stats button was tapped, what should it do?
+        showAlert("Message received", message: "Stats button tapped")
+        print("Stats button tapped")
+    }
 
 }
 
