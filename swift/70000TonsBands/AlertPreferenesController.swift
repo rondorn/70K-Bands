@@ -118,6 +118,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Ensure back button always says "Back"
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         filterMenuNeedsUpdating = true
         let screenSize: CGRect = UIScreen.main.bounds
         var screenHeight = screenSize.height
@@ -146,6 +151,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Ensure back button always says "Back" when navigating from this view
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
     }
     
     override func viewWillDisappear(_ animated : Bool) {

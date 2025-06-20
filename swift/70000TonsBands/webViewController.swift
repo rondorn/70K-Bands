@@ -19,6 +19,11 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Ensure back button always says "Back"
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         // Style the navigation bar to match the rest of the app
         if let navController = self.navigationController {
             navController.navigationBar.barStyle = .blackTranslucent
