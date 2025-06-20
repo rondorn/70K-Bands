@@ -507,7 +507,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     var rankLocationSchedule = false
         
     //index is out of bounds. Don't allow this
-    if (bands.count < indexRow || bands.count == 0){
+    if (bands.count <= indexRow || bands.count == 0){
         return
     }
     print ("bands = \(bands)")
