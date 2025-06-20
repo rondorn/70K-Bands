@@ -100,6 +100,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         self.configureView()
         
+        // Ensure back button always says "Back"
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
@@ -330,6 +335,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if UIDevice.current.userInterfaceIdiom == .pad {
             splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         }
+        
+        // Ensure back button always says "Back" when navigating from this view
+        let backItem = UIBarButtonItem()
+        backItem.title = "Back"
+        self.navigationItem.backBarButtonItem = backItem
+        
         loadComments()
         super.viewDidAppear(animated)
                 
