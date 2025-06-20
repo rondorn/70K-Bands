@@ -1244,7 +1244,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
-        let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=uga1k1l5bkw9jh1ng9jhtry1o&raw=1"
+        
         let fileManager = FileManager.default
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
@@ -1257,8 +1257,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         try data.write(to: fileUrl)
                         self.presentWebView(url: fileUrl.absoluteString)
                     } catch {
-                        self.showAlert("Error", message: "Could not save stats file.")
+                        self.presentNoDataView(message: "Could not save stats file.")
                     }
+                } else {
+                    self.presentNoDataView(message: "Could not download stats data.")
                 }
             }
             task.resume()
@@ -1267,7 +1269,97 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if fileManager.fileExists(atPath: fileUrl.path) {
                 presentWebView(url: fileUrl.absoluteString)
             } else {
-                showAlert("Offline", message: "No cached stats file available. Please connect to the internet to download it.")
+                presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
+            }
+        }
+    }
+    
+    func presentNoDataView(message: String) {
+        DispatchQueue.main.async {
+            if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
+                // Create HTML content with app's color scheme
+                let htmlContent = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>No Stats Data</title>
+                    <style>
+                        body {
+                            background-color: #000000;
+                            color: #FFFFFF;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            margin: 0;
+                            text-align: center;
+                        }
+                        .container {
+                            padding: 40px;
+                            max-width: 400px;
+                        }
+                        .icon {
+                            font-size: 64px;
+                            margin-bottom: 20px;
+                            color: #797D7F;
+                        }
+                        .title {
+                            font-size: 24px;
+                            font-weight: bold;
+                            margin-bottom: 16px;
+                            color: #FFFFFF;
+                        }
+                        .message {
+                            font-size: 16px;
+                            line-height: 1.5;
+                            color: #CCCCCC;
+                            margin-bottom: 24px;
+                        }
+                        .subtitle {
+                            font-size: 14px;
+                            color: #797D7F;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="icon">📊</div>
+                        <div class="title">No Stats Data</div>
+                        <div class="message">\(message)</div>
+                        <div class="subtitle">Stats will be available when you're connected to the internet.</div>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                // Write the HTML content to a temporary file
+                let fileManager = FileManager.default
+                let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                let tempUrl = documentsUrl.appendingPathComponent("no_stats.html")
+                do {
+                    try htmlContent.write(to: tempUrl, atomically: true, encoding: .utf8)
+                    setUrl(tempUrl.absoluteString)
+                    
+                    let backItem = UIBarButtonItem()
+                    backItem.title = "Back"
+
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        if let splitViewController = self.splitViewController,
+                           let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
+                            detailNavigationController.topViewController?.navigationItem.backBarButtonItem = backItem
+                            detailNavigationController.pushViewController(webViewController, animated: true)
+                        }
+                    } else {
+                        self.navigationItem.backBarButtonItem = backItem
+                        self.navigationController?.pushViewController(webViewController, animated: true)
+                    }
+                } catch {
+                    // Fallback to basic alert if HTML creation fails
+                    self.showAlert("No Stats Data", message: message)
+                }
             }
         }
     }
