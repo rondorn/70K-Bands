@@ -734,30 +734,37 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     var locationString = "  " + location
     var venueString = NSMutableAttributedString(string: locationString)
     var locationColor = getVenueColor(venue: location)
+    
+    // First space - colored marker with fixed 17pt font
     venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    //venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: location.count))
-    venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
+    
+    // Location text (after the two spaces) - variable size font
+    if location.count > 0 {
+        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: location.count))
+        venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
+    }
+    
     bandNameView.attributedText = venueString
     bandNameView.isHidden = false;
     
-    var locationOfVenue = "  " + (venueLocation[location] ?? "") ?? ""
+    var locationOfVenue = "  " + (venueLocation[location] ?? "")
     if (notes.isEmpty == false && notes != " "){
         locationOfVenue += " " + notes
     }
     
     var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+    
+    // First space - colored marker with fixed 17pt font
     locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    //locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
-    locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: (locationOfVenue.count - 2)))
-
-    if (notes.isEmpty == false && notes != " "){
-        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-        //venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 14), range: NSRange(location:1,length: location.count))
-        //locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 14), range: NSRange(location:0,length:1))
-        //locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 14), range: NSRange(location:1,length: (locationOfVenue.count - 1)))
+    
+    // Venue text (after the two spaces) - variable size font
+    if locationOfVenue.count > 2 {
+        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: locationOfVenue.count - 2))
+        locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationOfVenue.count - 2))
     }
+
     locationView.attributedText = locationOfVenueString
     
     //setup bandname for use is access the details screen
@@ -770,10 +777,16 @@ func getCellScheduleValueFullInfo(bandName: String, location: String, locationTe
     var locationString = "  " + locationText
     var myMutableString = NSMutableAttributedString(string: locationString)
     var locationColor = getVenueColor(venue: location)
-    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0,length:1))
+    
+    // First space - colored marker with fixed 17pt font
+    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length: locationText.count))
-    myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
+    
+    // Location text (after the two spaces) - variable size font
+    if locationText.count > 0 {
+        myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: 14), range: NSRange(location:2,length: locationText.count))
+        myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationText.count))
+    }
 
     bandNameView.backgroundColor = UIColor.black;
     locationView.attributedText = myMutableString
