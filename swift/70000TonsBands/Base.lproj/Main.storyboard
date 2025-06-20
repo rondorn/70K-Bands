@@ -997,7 +997,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label hidden="YES" opaque="NO" clearsContextBeforeDrawing="NO" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" text="Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" adjustsLetterSpacingToFitWidth="YES" enabled="NO" adjustsFontForContentSizeCategory="YES" id="Arm-wq-HPj">
-                                            <rect key="frame" x="20" y="0.0" width="374" height="58"/>
+                                            <rect key="frame" x="20" y="0.0" width="386" height="58"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             <accessibility key="accessibilityConfiguration">
                                                 <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
@@ -1143,6 +1143,11 @@
                     <extendedEdge key="edgesForExtendedLayout"/>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="70,000 Tons" id="Zdf-7t-Un8">
+                        <barButtonItem key="leftBarButtonItem" image="70KSearch" style="plain" id="stats-button-mde" userLabel="Stats Item">
+                            <connections>
+                                <action selector="statsButtonTapped:" destination="7bK-jq-Zjz" id="stats-action-mde"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" image="icon-gear-alt-Raw" style="plain" id="R14-lg-DDg" userLabel="Setting Item">
                             <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
@@ -1162,6 +1167,7 @@
                         <outlet property="preferenceButton" destination="R14-lg-DDg" id="YUP-QP-xe7"/>
                         <outlet property="searchButtonBar" destination="4Ec-Q2-92D" id="KZP-NY-2I2"/>
                         <outlet property="shareButton" destination="N41-zI-gGY" id="2Zr-Hx-emM"/>
+                        <outlet property="statsButton" destination="stats-button-mde" id="NzV-5u-gkK"/>
                         <outlet property="titleButton" destination="Zdf-7t-Un8" id="sF7-Nd-23A"/>
                         <outlet property="titleButtonArea" destination="Zdf-7t-Un8" id="hr8-3Q-Q4V"/>
                         <outlet property="titleLabel" destination="Zdf-7t-Un8" id="3Do-2q-WbH"/>
