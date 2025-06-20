@@ -1199,7 +1199,7 @@
                         </barButtonItem>
                         <barButtonItem style="plain" id="4Ec-Q2-92D">
                             <searchBar key="customView" contentMode="scaleToFill" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
-                                <rect key="frame" x="123" y="-8" width="121" height="60"/>
+                                <rect key="frame" x="123" y="-8" width="200" height="60"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
