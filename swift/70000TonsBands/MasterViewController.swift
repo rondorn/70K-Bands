@@ -90,7 +90,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         masterView = self;
         
         // Do any additional setup after loading the view, typically from a nib.
-        splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        }
         
         blankScreenActivityIndicator.hidesWhenStopped = true
         
@@ -1004,7 +1006,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         self.splitViewController!.delegate = self;
         
-        self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        }
         
         self.extendedLayoutIncludesOpaqueBars = true
         
