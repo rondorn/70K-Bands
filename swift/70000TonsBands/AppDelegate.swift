@@ -40,9 +40,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
     
-        let splitViewController = self.window!.rootViewController as! UISplitViewController
+        // Manually create the window and set the root view controller from the storyboard.
+        self.window = UIWindow(frame: UIScreen.main.bounds)
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let splitViewController = storyboard.instantiateInitialViewController() as! UISplitViewController
+        self.window?.rootViewController = splitViewController
+        self.window?.makeKeyAndVisible()
+
         let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
-        navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
+        // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
+        // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
         splitViewController.delegate = self
 
         setupDefaults()
