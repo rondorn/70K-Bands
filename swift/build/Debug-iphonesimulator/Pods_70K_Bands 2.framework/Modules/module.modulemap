@@ -1,6 +1,0 @@
-framework module Pods_70K_Bands {
-  umbrella header "Pods-70K Bands-umbrella.h"
-
-  export *
-  module * { export * }
-}

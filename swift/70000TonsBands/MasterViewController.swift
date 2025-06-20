@@ -598,6 +598,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         refreshFromCache()
         
+        // Capture search text on main thread before entering background queue
+        let searchCriteria = bandSearch.text ?? ""
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             
             while (refreshDataLock == true){
@@ -634,7 +637,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bands =  [String]()
 
             schedule.populateSchedule()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: bandSearch.text ?? "")
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
             
             currentBandList = self.bands
             self.bandsByName = self.bands
