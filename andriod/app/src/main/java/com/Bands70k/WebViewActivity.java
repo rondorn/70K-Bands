@@ -9,7 +9,11 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.Toast;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class WebViewActivity extends Activity {
     
@@ -46,29 +50,28 @@ public class WebViewActivity extends Activity {
             }
         });
         
-        // Check for HTML content first, then fall back to direct URL
-        String htmlContent = getIntent().getStringExtra("htmlContent");
-        String directUrl = getIntent().getStringExtra("directUrl");
-        boolean isRefreshing = getIntent().getBooleanExtra("isRefreshing", false);
-        String refreshUrl = getIntent().getStringExtra("refreshUrl");
+        // Get the report URL and handle all loading logic internally
+        String reportUrl = getIntent().getStringExtra("reportUrl");
         
-        if (htmlContent != null && !htmlContent.isEmpty()) {
-            Log.d("WebViewActivity", "Loading cached HTML content");
-            // Load HTML content directly to avoid file:// security restrictions
-            webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
-            
-            // If this is a refresh scenario, start background refresh
-            if (isRefreshing && refreshUrl != null) {
-                startBackgroundRefresh(refreshUrl);
-            }
-        } else if (directUrl != null && !directUrl.isEmpty()) {
-            Log.d("WebViewActivity", "Loading URL directly: " + directUrl);
-            // Fallback: Load URL directly
-            webView.loadUrl(directUrl);
+        if (reportUrl != null && !reportUrl.isEmpty()) {
+            Log.d("WebViewActivity", "Starting internal loading for URL: " + reportUrl);
+            loadReportWithCaching(reportUrl);
         } else {
-            Log.e("WebViewActivity", "No content or URL provided");
-            Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();
-            finish();
+            // Fallback: Check for legacy intent extras
+            String htmlContent = getIntent().getStringExtra("htmlContent");
+            String directUrl = getIntent().getStringExtra("directUrl");
+            
+            if (htmlContent != null && !htmlContent.isEmpty()) {
+                Log.d("WebViewActivity", "Loading provided HTML content");
+                webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+            } else if (directUrl != null && !directUrl.isEmpty()) {
+                Log.d("WebViewActivity", "Loading URL directly: " + directUrl);
+                webView.loadUrl(directUrl);
+            } else {
+                Log.e("WebViewActivity", "No content or URL provided");
+                Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();
+                finish();
+            }
         }
     }
     
@@ -79,6 +82,56 @@ public class WebViewActivity extends Activity {
         } else {
             super.onBackPressed();
         }
+    }
+    
+    private void loadReportWithCaching(String url) {
+        ReportDownloader downloader = new ReportDownloader(this);
+        
+        // First, check if we have cached content and display it immediately
+        String cachedFilePath = downloader.getCachedReportPath();
+        File cachedFile = new File(cachedFilePath);
+        
+        if (cachedFile.exists()) {
+            // Load cached content immediately
+            Log.d("WebViewActivity", "Loading cached content immediately");
+            try {
+                String cachedContent = readCachedFileContent(cachedFilePath);
+                webView.loadDataWithBaseURL(null, cachedContent, "text/html", "UTF-8", null);
+                
+                // Start background refresh for fresh content
+                startBackgroundRefresh(url);
+                return;
+            } catch (Exception e) {
+                Log.e("WebViewActivity", "Error reading cached file: " + e.getMessage());
+                // Continue to download fresh content
+            }
+        }
+        
+        // No cached content available, download fresh content
+        Log.d("WebViewActivity", "No cached content, downloading fresh content");
+        downloader.downloadReport(url, new ReportDownloader.DownloadCallback() {
+            @Override
+            public void onDownloadComplete(String filePath, String htmlContent) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+                    }
+                });
+            }
+            
+            @Override
+            public void onDownloadError(String error) {
+                Log.e("WebViewActivity", "Download failed: " + error);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Fallback: Load URL directly
+                        webView.loadUrl(url);
+                    }
+                });
+            }
+        });
     }
     
     private void startBackgroundRefresh(String url) {
@@ -105,5 +158,16 @@ public class WebViewActivity extends Activity {
                 // Silently fail for background refresh - user already has cached content
             }
         });
+    }
+    
+    private String readCachedFileContent(String filePath) throws IOException {
+        StringBuilder content = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+        reader.close();
+        return content.toString();
     }
 } 
