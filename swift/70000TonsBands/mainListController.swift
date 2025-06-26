@@ -306,6 +306,7 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     filteredBandCount = filteredBands.count
 
     if (filteredBandCount == 0){
+        print ("handleEmptryList: Why is this being called 1")
         filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
     } else {
         bandCounter = filteredBands.count

@@ -13,12 +13,18 @@ open class ShowsAttended {
     let iCloudHandle = iCloudDataHandler()
     var showsAttendedArray = [String : String]();
     
+    /**
+     Initializes a new instance of ShowsAttended and loads cached data.
+     */
     init(){
         print ("Loading shows attended data")
         getCachedData()
     }
     
     
+    /**
+     Loads cached show attendance data, using a static cache if available.
+     */
     func getCachedData(){
         
         var staticCacheUsed = false
@@ -35,14 +41,25 @@ open class ShowsAttended {
         //iCloudHandle.readCloudAttendedData(attendedHandle: self);
     }
     
+    /**
+     Sets the showsAttendedArray to the provided attendedData.
+     - Parameter attendedData: A dictionary of attended data to set.
+     */
     func setShowsAttended(attendedData: [String : String]){
         showsAttendedArray = attendedData
     }
     
+    /**
+     Returns the current showsAttendedArray.
+     - Returns: A dictionary of show attendance data.
+     */
     func getShowsAttended()->[String : String]{
         return showsAttendedArray;
     }
     
+    /**
+     Saves the current showsAttendedArray to persistent storage.
+     */
     func saveShowsAttended(){
         
         if (showsAttendedArray.count > 0){
@@ -57,6 +74,9 @@ open class ShowsAttended {
         }
     }
 
+    /**
+     Loads show attendance data from persistent storage and updates the static cache.
+     */
     func loadShowsAttended(){
         
         //print ("Loading shows attended data 1")
@@ -94,6 +114,16 @@ open class ShowsAttended {
     
     }
     
+    /**
+     Adds or updates a show attended record with a specific status.
+     - Parameters:
+        - band: The band name.
+        - location: The event location.
+        - startTime: The event start time.
+        - eventType: The type of event.
+        - eventYearString: The event year as a string.
+        - status: The attendance status to set.
+     */
     func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String){
         
         let index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
@@ -106,6 +136,16 @@ open class ShowsAttended {
         
     }
     
+    /**
+     Adds or cycles the attendance status for a show and returns the new status.
+     - Parameters:
+        - band: The band name.
+        - location: The event location.
+        - startTime: The event start time.
+        - eventType: The type of event.
+        - eventYearString: The event year as a string.
+     - Returns: The new attendance status as a string.
+     */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
 
         if (showsAttendedArray.count == 0){
@@ -146,6 +186,12 @@ open class ShowsAttended {
         return value
     }
     
+    /**
+     Changes the attendance status for a specific show and updates caches and cloud storage.
+     - Parameters:
+        - index: The unique index for the show.
+        - status: The new attendance status.
+     */
     func changeShowAttendedStatus(index: String, status:String){
         
         print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
@@ -167,6 +213,16 @@ open class ShowsAttended {
         }
     }
     
+    /**
+     Returns the attendance icon for a specific show.
+     - Parameters:
+        - band: The band name.
+        - location: The event location.
+        - startTime: The event start time.
+        - eventType: The type of event.
+        - eventYearString: The event year as a string.
+     - Returns: The corresponding UIImage for the attendance status.
+     */
     func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{
         
         var iconName = String()
@@ -308,7 +364,7 @@ open class ShowsAttended {
     
     func readLastScheduleDataWrite()-> Double{
         
-        var lastPriorityDataWrite = Double(0)
+        var lastPriorityDataWrite = Double(32503680000)
         
         if let data = try? String(contentsOf: lastScheduleDataWriteFile, encoding: String.Encoding.utf8) {
             lastPriorityDataWrite = Double(data)!

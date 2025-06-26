@@ -35,6 +35,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     var bandDescriptions = CustomBandDescription()
     var dataHandle = dataHandler()
     
+    /**
+     Called when the application has finished launching. Sets up the main window, root view controller, and various app-wide settings.
+     - Parameter application: The singleton app object.
+     - Parameter launchOptions: A dictionary indicating the reason the app was launched (if any).
+     - Returns: true if the app launched successfully, false otherwise.
+     */
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:
         
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -58,6 +64,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         setupDefaults()
         
+        // Register default UserDefaults values including iCloud setting
+        let defaults = ["artistUrl": "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1",
+                        "scheduleUrl": "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1",
+                        "iCloud": "YES",
+                        "mustSeeAlert": "YES", 
+                        "mightSeeAlert": "YES",
+                        "minBeforeAlert": "10", 
+                        "alertForShows": "YES",
+                        "alertForSpecial": "YES", 
+                        "alertForMandG": "NO",
+                        "alertForClinics": "NO", 
+                        "alertForListening": "NO",
+                        "validateScheduleFile": "NO"]
+        UserDefaults.standard.register(defaults: defaults)
+        
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
@@ -68,6 +89,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Start iCloud key-value updates
         NSUbiquitousKeyValueStore.default.synchronize()
+        
+        // Test iCloud availability and log status
+        print("iCloud: Testing iCloud setup...")
+        let iCloudHandle = iCloudDataHandler()
+        let iCloudEnabled = iCloudHandle.checkForIcloud()
+        print("iCloud: iCloud enabled status: \(iCloudEnabled)")
+        
+        // Test if we can read from iCloud
+        let testValue = NSUbiquitousKeyValueStore.default.string(forKey: "testKey")
+        print("iCloud: Test read from iCloud (testKey): \(testValue ?? "nil")")
+        
+        // Set a test value to verify write capability
+        NSUbiquitousKeyValueStore.default.set("test-\(Date().timeIntervalSince1970)", forKey: "testKey")
+        NSUbiquitousKeyValueStore.default.synchronize()
+        print("iCloud: Test value written to iCloud")
 
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
         let controller = masterNavigationController.viewControllers[0] as! MasterViewController
@@ -87,10 +123,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         Messaging.messaging().delegate = self
 
-       printFCMToken()
-               
+        printFCMToken()
         
-
+        DispatchQueue.main.async{
+            let iCloudHandle = iCloudDataHandler()
+            
+            // IMPORTANT: Check for old iCloud data format and migrate if needed
+            // This must happen BEFORE reading iCloud data to prevent conflicts
+            iCloudHandle.detectAndMigrateOldPriorityData()
+            
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
+        }
         
         application.registerForRemoteNotifications()
         
@@ -104,6 +148,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
 
+    /**
+     Handles the receipt of a new Firebase Cloud Messaging registration token.
+     - Parameter messaging: The messaging instance.
+     - Parameter fcmToken: The new registration token.
+     */
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String) {
         print("FCM Firebase registration token: \(fcmToken)")
          
@@ -114,6 +163,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
 
+    /**
+     Displays a notification alert with the given message.
+     - Parameter message: The message to display in the alert.
+     */
     func displayNotification (message: String){
         
         //if (notificationDisplayed == false){
@@ -131,6 +184,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
     }
     
+    /**
+     Handles the refresh of the FCM token.
+     - Parameter notification: The notification object triggering the refresh.
+     */
     @objc func tokenRefreshNotification(_ notification: Notification) {
         //if let refreshedToken = InstanceID.instanceID().token() {
         //    print("InstanceID token: \(refreshedToken)")
@@ -142,6 +199,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     
+    /**
+     Prints the current FCM token to the console.
+     */
     func printFCMToken() {
         
         Messaging.messaging().token { token, error in
@@ -153,6 +213,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     // [END refresh_token]
     // [START connect_to_fcm]
+    /**
+     Connects to Firebase Cloud Messaging if a token is available.
+     */
     func connectToFcm() {
         // Won't connect since there is no token
         Messaging.messaging().token { token, error in
@@ -256,6 +319,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
+        
+        // Force iCloud synchronization when app becomes active
+        print("iCloud: App became active, forcing iCloud synchronization")
+        NSUbiquitousKeyValueStore.default.synchronize()
+        
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         let userDataHandle = userDataHandler()
@@ -310,7 +378,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         let iCloudHandle = iCloudDataHandler()
         iCloudHandle.writeAllPriorityData()
-        iCloudHandle.writeAllScheduleData();
+        //iCloudHandle.writeAllScheduleData();
         
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
@@ -329,14 +397,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
+        // Force iCloud synchronization when app enters foreground
+        print("iCloud: App entering foreground, forcing iCloud synchronization")
+        NSUbiquitousKeyValueStore.default.synchronize()
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
         
-        //let showsAttendedHandle = ShowsAttended()
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readAllPriorityData()
-        iCloudHandle.readAllScheduleData()
+        print("iCloud: *** EXTERNAL CHANGE DETECTED *** Starting iCloud data sync")
+        print("iCloud: Notification received: \(notification)")
+        print("iCloud: Notification name: \(notification.name)")
+        print("iCloud: Notification object: \(String(describing: notification.object))")
+        print("iCloud: Notification userInfo: \(String(describing: notification.userInfo))")
+        
+        // Check what specific keys changed if available
+        if let changeReason = notification.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? NSNumber {
+            let reason = changeReason.intValue
+            switch reason {
+            case NSUbiquitousKeyValueStoreServerChange:
+                print("iCloud: Change reason: Server change (data changed on another device)")
+            case NSUbiquitousKeyValueStoreInitialSyncChange:
+                print("iCloud: Change reason: Initial sync")
+            case NSUbiquitousKeyValueStoreQuotaViolationChange:
+                print("iCloud: Change reason: Quota violation")
+            case NSUbiquitousKeyValueStoreAccountChange:
+                print("iCloud: Change reason: Account change")
+            default:
+                print("iCloud: Change reason: Unknown (\(reason))")
+            }
+        }
+        
+        if let changedKeys = notification.userInfo?[NSUbiquitousKeyValueStoreChangedKeysKey] as? [String] {
+            print("iCloud: Changed keys: \(changedKeys)")
+        }
+        
+        DispatchQueue.main.async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
+            
+            // Refresh the UI after loading new data
+            print("iCloud: Sending GUI refresh")
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "iCloudRefresh"), object: nil)
+            
+            print("iCloud: External change processing completed")
+        }
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

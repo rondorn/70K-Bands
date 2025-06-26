@@ -17,10 +17,16 @@ class localNoticationHandler {
     let attendedHandle = ShowsAttended()
     var dataHandle = dataHandler()
     
+    /**
+     Initializes a new instance of localNoticationHandler.
+     */
     init(){
 
     }
 
+    /**
+     Refreshes alerts by asynchronously adding notifications, depending on iOS version.
+     */
     func refreshAlerts(){
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             if #available(iOS 10.0, *) {
@@ -32,6 +38,15 @@ class localNoticationHandler {
         }
     }
     
+    /**
+     Determines if an event should be added to notifications based on band, event type, and user preferences.
+     - Parameters:
+        - bandName: The name of the band.
+        - eventType: The type of event.
+        - startTime: The start time of the event.
+        - location: The location of the event.
+     - Returns: true if the event should be added to notifications, false otherwise.
+     */
     func willAddToNotifications(_ bandName: String, eventType :String, startTime: String, location:String) -> Bool{
         
 
@@ -72,6 +87,13 @@ class localNoticationHandler {
         return alertStatus
     }
     
+    /**
+     Checks if a band should trigger an alert based on priority and attendance status.
+     - Parameters:
+        - bandName: The name of the band.
+        - attendedStatus: The attendance status for the band.
+     - Returns: true if the band should trigger an alert, false otherwise.
+     */
     func checkBandPriority (_ bandName: String, attendedStatus: String)->Bool{
         
         if (getMustSeeAlertValue() == true && dataHandle.getPriorityData(bandName) == 1){
@@ -88,6 +110,12 @@ class localNoticationHandler {
         return false
     }
     
+    /**
+     Sets the alert message for a given event name and date, based on event type.
+     - Parameters:
+        - name: The name of the event or band.
+        - indexValue: The date of the event.
+     */
     func getAlertMessage(_ name:String, indexValue: Date){
         
         let eventType = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: "Type")
@@ -118,6 +146,12 @@ class localNoticationHandler {
         }
     }
     
+    /**
+     Sets the alert message for a show event.
+     - Parameters:
+        - name: The name of the band.
+        - indexValue: The date of the event.
+     */
     func showMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -126,6 +160,12 @@ class localNoticationHandler {
         alertTextMessage = name + " will be playing the " + locationName + " at " + formatTimeValue(timeValue: startingTime)
     }
     
+    /**
+     Sets the alert message for a special event.
+     - Parameters:
+        - name: The name of the event.
+        - indexValue: The date of the event.
+     */
     func specialEventMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -134,6 +174,12 @@ class localNoticationHandler {
         alertTextMessage = "Special event '" + name + "' is taking place at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
 
+    /**
+     Sets the alert message for an unofficial event.
+     - Parameters:
+        - name: The name of the event.
+        - indexValue: The date of the event.
+     */
     func unofficalEventMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -142,6 +188,12 @@ class localNoticationHandler {
         alertTextMessage = "Unoffical event '" + name + "' is taking place at " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
+    /**
+     Sets the alert message for a meet and greet event.
+     - Parameters:
+        - name: The name of the band.
+        - indexValue: The date of the event.
+     */
     func meetingAndGreetMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -150,6 +202,12 @@ class localNoticationHandler {
         alertTextMessage = name + " is holding a Meet and Greet at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
+    /**
+     Sets the alert message for a listening party event.
+     - Parameters:
+        - name: The name of the band.
+        - indexValue: The date of the event.
+     */
     func listeningPartyMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -158,6 +216,12 @@ class localNoticationHandler {
         alertTextMessage = name + " is holding a new album listening party at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
+    /**
+     Sets the alert message for a clinic event.
+     - Parameters:
+        - name: The name of the band.
+        - indexValue: The date of the event.
+     */
     func clinicMessage(_ name:String, indexValue: Date){
         
         let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
@@ -167,6 +231,9 @@ class localNoticationHandler {
         alertTextMessage = note + " from " + name + " is holding a clinic at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
+    /**
+     Adds notifications for all eligible events in the schedule.
+     */
     func addNotifications(){
         
         print ("Locking object with schedule.schedulingData")
