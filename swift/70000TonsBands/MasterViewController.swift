@@ -147,9 +147,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         
         let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readAllPriorityData()
-        iCloudHandle.readAllScheduleData()
-        
+
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
         //createrFilterMenu(controller: self);
@@ -178,6 +176,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
          NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
+        NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
+    }
+    
+    @objc func bandNamesCacheReadyHandler() {
+        print("Band names cache is ready, refreshing band list.")
+        self.refreshData()
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
@@ -210,14 +214,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
     }
     
+    @objc func iCloudRefresh() {
+        refreshData()
+    }
+    
     @objc func refreshMainDisplayAfterRefresh() {
-                print ("Refresh done, so updating the display in main 3")
+        print ("Refresh done, so updating the display in main 3")
         if (Thread.isMainThread == true){
             refreshFromCache()
-            if (filterMenuNeedsUpdating == true){
-                //createrFilterMenu(controller: self);
-                //filterMenuNeedsUpdating = false;
-            }
         }
     }
     
@@ -585,6 +589,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func pullTorefreshData(){
         checkForEasterEgg()
+        
+        print ("iCloud: pull to refresh, load in new iCloud data")
+        let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.readAllPriorityData()
+        iCloudHandle.readAllScheduleData()
         refreshData();
     }
     
@@ -675,8 +684,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
                 
                 let iCloudHandle = iCloudDataHandler()
-                iCloudHandle.readAllPriorityData()
-                iCloudHandle.readAllScheduleData()
+                //iCloudHandle.readAllPriorityData()
+                //iCloudHandle.readAllScheduleData()
             
             }
             

@@ -22,14 +22,24 @@ class showAttendenceReport {
     var isReportEmpty = false
     var indexMap = [String]()
     
+    /**
+     Initializes a new instance of showAttendenceReport.
+     */
     init(){
 
     }
     
+    /**
+     Returns whether the report is empty.
+     - Returns: true if the report is empty, false otherwise.
+     */
     func getIsReportEmpty()->Bool {
         return isReportEmpty
     }
     
+    /**
+     Assembles the attendance report by processing attended shows and events.
+     */
     func assembleReport (){
         
         schedule.buildTimeSortedSchedulingData();
@@ -113,6 +123,13 @@ class showAttendenceReport {
 
     }
     
+    /**
+     Adds a plural 's' to the event type if the count is 2 or more (except for unofficial events).
+     - Parameters:
+        - count: The number of events.
+        - eventType: The type of event.
+     - Returns: A string with the appropriate pluralization.
+     */
     func addPlural(count : Int, eventType: String)->String{
         
         var message = "";
@@ -125,6 +142,11 @@ class showAttendenceReport {
         return message
     }
         
+    /**
+     Builds a report message for the specified type.
+     - Parameter type: The type of report to build (e.g., "MustMight", "Events").
+     - Returns: The formatted report message as a string.
+     */
     func buildMessage(type: String)->String{
         
         var message = ""

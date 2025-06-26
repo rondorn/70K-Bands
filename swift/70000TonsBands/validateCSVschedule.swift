@@ -29,12 +29,18 @@ class validateCSVSchedule {
     var dateFormatter = DateFormatter();
     var sortedDates = [Date]()
     
+    /**
+     Initializes the validateCSVSchedule class and sets up the date formatter.
+     */
     init(){
         dateFormatter.dateFormat = "M-d-yy"
         dateFormatter.timeZone = TimeZone.current
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     }
     
+    /**
+     Validates the schedule file by checking for expected fields, types, band names, dates, and time fields. Shows summary and error alerts.
+     */
     func validateSchedule(){
         
         let defaults = UserDefaults.standard
@@ -90,6 +96,12 @@ class validateCSVSchedule {
         }
     }
         
+    /**
+     Validates the time field in the CSV data for correct format.
+     - Parameters:
+        - csvData: The CSV data to validate.
+        - fieldName: The name of the time field to validate.
+     */
     func validateTimeField(_ csvData: CSV, fieldName: String){
         
         var count = 1;
@@ -112,6 +124,10 @@ class validateCSVSchedule {
 
     }
     
+    /**
+     Validates the day field in the CSV data and counts events per day.
+     - Parameter csvData: The CSV data to validate.
+     */
     func validateDayField(_ csvData: CSV){
         
         var count = 1;
@@ -170,6 +186,10 @@ class validateCSVSchedule {
     
     }
 
+    /**
+     Verifies that all dates in the CSV data are sane and counts events per date.
+     - Parameter csvData: The CSV data to check.
+     */
     func verifySaneDates (_ csvData: CSV){
         
         for lineData in csvData.rows {
@@ -194,6 +214,10 @@ class validateCSVSchedule {
 
     }
     
+    /**
+     Verifies that all expected fields exist in the CSV data.
+     - Parameter csvData: The CSV data to check.
+     */
     func verifyExpectedFieldsExists(_ csvData: CSV){
         for lineData in csvData.rows {
             if (lineData[bandField] == nil){

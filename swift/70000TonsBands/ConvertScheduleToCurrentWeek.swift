@@ -12,7 +12,9 @@ var newCsvString:String = "Band,Location,Date,Day,Start Time,End Time,Type,Notes
 
 class ConvertScheduleToCurrentWeek {
     
-    
+    /**
+     Converts the schedule CSV file to use the current week's dates and writes the result to file.
+     */
     func convertScheduleCSV (){
         
          if let csvDataString = String(contentsOfFile: scheduleFile, encoding: NSUTF8StringEncoding, error: nil) {
@@ -70,6 +72,11 @@ class ConvertScheduleToCurrentWeek {
         }
     }
     
+    /**
+     Extracts the hour component from a start time string.
+     - Parameter startTime: The start time string (e.g., "8:00 AM").
+     - Returns: The hour as a string.
+     */
     func getHourFromString(startTime: String) -> String{
         
         var hourSpilt = startTime.componentsSeparatedByString(":")
@@ -80,6 +87,11 @@ class ConvertScheduleToCurrentWeek {
     
     }
     
+    /**
+     Extracts the AM/PM component from a start time string.
+     - Parameter startTime: The start time string (e.g., "8:00 AM").
+     - Returns: The AM/PM string.
+     */
     func getAmPmFromString(startTime: String) -> String{
         
         var amPmSplit = startTime.componentsSeparatedByString(" ")
@@ -89,6 +101,14 @@ class ConvertScheduleToCurrentWeek {
         return amPm
     }
     
+    /**
+     Writes a new CSV line with the provided data and appends it to the output string.
+     - Parameters:
+        - csvLine: The dictionary representing a CSV row.
+        - newDate: The new date string.
+        - startTime: The start time string.
+        - endTime: The end time string.
+     */
     func writeNewCsv(csvLine: Dictionary<String, String>, newDate: String, startTime: String, endTime: String){
         
         newCsvString += csvLine[bandField]! + ","
@@ -101,6 +121,11 @@ class ConvertScheduleToCurrentWeek {
         newCsvString += csvLine[notesField]! + "\n"
     }
     
+    /**
+     Returns the NSDate for the given day of the week, advancing from today until the correct day is found.
+     - Parameter dayOfWeek: The day of the week as a string (e.g., "Mon").
+     - Returns: The NSDate corresponding to the next occurrence of the given day.
+     */
     func getDateForDayOfWeek(dayOfWeek: String) -> NSDate{
         
         var dateForDay = NSDate()
@@ -127,6 +152,11 @@ class ConvertScheduleToCurrentWeek {
         
     }
     
+    /**
+     Returns the weekday number for a given NSDate.
+     - Parameter dateValue: The NSDate to check.
+     - Returns: The weekday number (1 = Sunday, 2 = Monday, ...).
+     */
     func getDayOfWeek(dateValue: NSDate) -> Int {
         
         let myCalendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian);
@@ -138,7 +168,11 @@ class ConvertScheduleToCurrentWeek {
         
     }
     
-    
+    /**
+     Returns the weekday number for a given day name string.
+     - Parameter dayOfWeek: The day of the week as a string (e.g., "Mon").
+     - Returns: The weekday number (1 = Sunday, 2 = Monday, ...).
+     */
     func getDayNumFromDayName(dayOfWeek: String) -> Int{
         
         var dayNumber = Int()
@@ -175,7 +209,11 @@ class ConvertScheduleToCurrentWeek {
         
     }
     
-    
+    /**
+     Adds one day to the given NSDate and returns the new date.
+     - Parameter dateValue: The NSDate to increment.
+     - Returns: The new NSDate one day later.
+     */
     func addDay(dateValue: NSDate) -> NSDate {
         
         print ("Old Date " )
