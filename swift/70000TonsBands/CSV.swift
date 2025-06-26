@@ -36,6 +36,11 @@ open class CSV {
     open var columns = Dictionary<String, [String]>()
     var delimiter = CharacterSet(charactersIn: ",")
     
+    /**
+     Initializes a CSV object by parsing the provided CSV string.
+     - Parameter csvStringToParse: The CSV data as a string to parse.
+     - Throws: An error if parsing fails.
+     */
     public init(csvStringToParse: String) throws {
         
         if (csvStringToParse.isEmpty == false){
@@ -54,10 +59,20 @@ open class CSV {
         }
     }
     
+    /**
+     Parses the header row from the provided lines.
+     - Parameter lines: The lines of the CSV file.
+     - Returns: An array of header strings.
+     */
     func parseHeaders(fromLines lines: [String]) -> [String] {
         return lines[0].components(separatedBy: self.delimiter)
     }
     
+    /**
+     Parses the data rows from the provided lines.
+     - Parameter lines: The lines of the CSV file.
+     - Returns: An array of dictionaries representing each row.
+     */
     func parseRows(fromLines lines: [String]) -> [Dictionary<String, String>] {
         var rows: [Dictionary<String, String>] = []
         
@@ -80,6 +95,11 @@ open class CSV {
         return rows
     }
     
+    /**
+     Parses the columns from the provided lines.
+     - Parameter lines: The lines of the CSV file.
+     - Returns: A dictionary mapping header names to arrays of column values.
+     */
     func parseColumns(fromLines lines: [String]) -> Dictionary<String, [String]> {
         var columns = Dictionary<String, [String]>()
         

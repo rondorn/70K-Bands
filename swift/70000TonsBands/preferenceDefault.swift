@@ -11,6 +11,7 @@ import Foundation
 
 let artistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
 let scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
+let iCloudDefault = "YES"
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"
 let minBeforeAlertDefault = "10"
@@ -25,12 +26,13 @@ func setDefaults(){
     
     let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,
+                    "iCloud": iCloudDefault,
                     "mustSeeAlert": mustSeeAlertDefault, "mightSeeAlert": mightSeeAlertDefault,
                     "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
                     "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
                     "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
                     "validateScheduleFile": validateScheduleFileDefault]
 
-    NSUserDefaults.standardUserDefaults().registerDefaults(defaults)
+    UserDefaults.standard.register(defaults: defaults)
 }
 

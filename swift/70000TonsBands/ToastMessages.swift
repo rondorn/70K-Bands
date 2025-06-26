@@ -23,6 +23,10 @@ class ToastMessages : UILabel {
     private static var showing: ToastMessages?
     private static var cellLocationStore: CGRect = CGRect();
     
+    /**
+     Initializes a ToastMessages label with the given text.
+     - Parameter text: The message to display in the toast.
+     */
     init(_ text: String) {
         super.init(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
         
@@ -35,12 +39,25 @@ class ToastMessages : UILabel {
 
     }
     
+    /**
+     Shows the toast message in the given parent view controller, using the last stored cell location.
+     - Parameters:
+        - parent: The parent UIViewController to display the toast in.
+        - placeHigh: Whether to place the toast high on the screen.
+     */
     public func show(_ parent: UIViewController, placeHigh: Bool) {
         
         show(parent,cellLocation: ToastMessages.cellLocationStore, placeHigh: placeHigh)
     }
     
     
+    /**
+     Shows the toast message in the given parent view controller at a specific cell location.
+     - Parameters:
+        - parent: The parent UIViewController to display the toast in.
+        - cellLocation: The CGRect specifying where to display the toast.
+        - placeHigh: Whether to place the toast high on the screen.
+     */
     public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
         print ("Toast cell location is \(cellLocation)")
@@ -74,6 +91,9 @@ class ToastMessages : UILabel {
 
     }
     
+    /**
+     Handles the timeout for the toast message, fading it out and removing it from the view.
+     */
     @objc func onTimeout() {
         UIView.animate(withDuration: ANIMATION_DURATION_SEC, animations: {
             self.alpha = 0
@@ -88,10 +108,17 @@ class ToastMessages : UILabel {
         })
     }
     
+    /**
+     Required initializer (not supported for this class).
+     - Parameter aDecoder: The NSCoder instance.
+     */
     required init?(coder aDecoder: NSCoder) {
         fatalError("this initializer is not supported")
     }
     
+    /**
+     Helper class to hold a toast and its parent view controller for queueing.
+     */
     private class ToastHolder {
         let toast: ToastMessages
         let parent: UIViewController

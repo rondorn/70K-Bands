@@ -518,5 +518,9 @@ struct cacheVariables {
     static var lastModifiedDate:Date? = nil;
 }
 
+extension Notification.Name {
+    static let bandNamesCacheReady = Notification.Name("BandNamesCacheReady")
+}
+
 
  

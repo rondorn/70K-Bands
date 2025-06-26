@@ -13,6 +13,7 @@ import CloudKit
 class dataHandler {
     
     var bandPriorityStorage = [String:Int]()
+    var bandPriorityTimestamps = [String:Double]()
     var readInWrite = false;
     
     init(){
@@ -48,7 +49,9 @@ class dataHandler {
         
         print ("addPriorityData for \(bandname) = \(priority)")
 
+        let timestamp = Date().timeIntervalSince1970
         bandPriorityStorage[bandname] = priority
+        bandPriorityTimestamps[bandname] = timestamp
         
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
@@ -57,9 +60,7 @@ class dataHandler {
         staticLastModifiedDate.async(flags: .barrier) {
             cacheVariables.lastModifiedDate = Date()
         }
-        
-        writeFile()
-        
+                
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAPriorityRecord(bandName: bandname, priority: priority)
@@ -68,7 +69,9 @@ class dataHandler {
             let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
             firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
             NSUbiquitousKeyValueStore.default.synchronize()
+            self.writeFile()
         }
+        
     }
     
     func clearCachedData(){
@@ -76,6 +79,7 @@ class dataHandler {
             cacheVariables.bandPriorityStorageCache = [String:Int]()
         }
     }
+    
     func getPriorityData (_ bandname:String) -> Int {
         
         var priority = 0
@@ -91,30 +95,57 @@ class dataHandler {
         return priority
     }
     
-    func writeFile(){
+    func getPriorityLastChange (_ bandname:String) -> Double {
         
-        while (bandPriorityStorage == nil){
-            usleep(300)
+        var timestamp = 0.0
+        
+        print ("Retrieving priority timestamp for " + bandname + ":", terminator: "\n")
+        
+        if (bandPriorityTimestamps[bandname] != nil){
+            timestamp = bandPriorityTimestamps[bandname]!
+            print("Reading timestamp " + bandname + ":" + String(timestamp))
         }
-        //do not write empty datasets
-        if (bandPriorityStorage == nil || bandPriorityStorage.isEmpty){
+        
+
+        return timestamp
+    }
+    
+    func writeFile(){
+        // Create thread-safe copies of the data with initial empty values
+        var localPriorityStorage: [String: Int] = [:]
+        var localPriorityTimestamps: [String: Double] = [:]
+        var shouldWrite = false
+        
+        staticData.sync {
+            // Skip if empty
+            if !bandPriorityStorage.isEmpty {
+                // Make thread-safe copies
+                localPriorityStorage = bandPriorityStorage
+                localPriorityTimestamps = bandPriorityTimestamps
+                shouldWrite = true
+            }
+        }
+        
+        // Return early if no data to write
+        if !shouldWrite {
             return
         }
         
         var data: String = ""
-
-        for (index, element) in bandPriorityStorage{
-            print ("writing PRIORITIES \(index) - \(element)")
-            data = data + index + ":" + String(element) + "\n"
+        
+        // Work with the local copies
+        for (bandName, priority) in localPriorityStorage {
+            let timestamp = localPriorityTimestamps[bandName] ?? Date().timeIntervalSince1970
+            print("writing PRIORITIES \(bandName) - \(priority):\(timestamp)")
+            data = data + bandName + ":" + String(priority) + ":" + String(format: "%.0f", timestamp) + "\n"
         }
-
+        
+        // Write the data
         do {
-            //try FileManager.default.removeItem(at: storageFile)
-            try data.write(to: storageFile, atomically: false, encoding: String.Encoding.utf8)
-            writeLastPriorityDataWrite()
-            print ("writing PRIORITIES - file WAS writte")
-        } catch _ {
-            print ("writing PRIORITIES - file was NOT writte")
+            try data.write(to: storageFile, atomically: true, encoding: .utf8)
+            print("Successfully wrote priority data to file")
+        } catch {
+            print("Error writing priority data to file: \(error.localizedDescription)")
         }
     }
     
@@ -133,14 +164,40 @@ class dataHandler {
                 let dataArray = data.components(separatedBy: "\n")
                 for record in dataArray {
                     var element = record.components(separatedBy: ":")
-                    if element.count == 2 {
+                    
+                    // Handle new format: bandName:priority:timestamp (3 parts)
+                    if element.count == 3 {
+                        var priorityString = element[1]
+                        var timestampString = element[2]
+                        
+                        priorityString = priorityString.replacingOccurrences(of: "\n", with: "", options: NSString.CompareOptions.literal, range: nil)
+                        timestampString = timestampString.replacingOccurrences(of: "\n", with: "", options: NSString.CompareOptions.literal, range: nil)
+                        
+                        let priority = Int(priorityString) ?? 0
+                        let timestamp = Double(timestampString) ?? 0.0
+                        
+                        print ("reading PRIORITIES \(element[0]) - \(priorityString):\(timestampString)")
+                        
+                        bandPriorityStorage[element[0]] = priority
+                        bandPriorityTimestamps[element[0]] = timestamp
+                        
+                        staticData.async(flags: .barrier) {
+                            cacheVariables.bandPriorityStorageCache[element[0]] = priority
+                        }
+                    }
+                    // Handle old format: bandName:priority (2 parts) for backward compatibility
+                    else if element.count == 2 {
                         var priorityString = element[1];
-                        print ("reading PRIORITIES \(element[0]) - \(priorityString)")
+                        print ("reading PRIORITIES (old format) \(element[0]) - \(priorityString)")
                          priorityString = priorityString.replacingOccurrences(of: "\n", with: "", options: NSString.CompareOptions.literal, range: nil)
                         
-                        bandPriorityStorage[element[0]] = Int(priorityString)
+                        let priority = Int(priorityString) ?? 0
+                        
+                        bandPriorityStorage[element[0]] = priority
+                        bandPriorityTimestamps[element[0]] = 0.0  // Default timestamp for old data
+                        
                         staticData.async(flags: .barrier) {
-                            cacheVariables.bandPriorityStorageCache[element[0]] = Int(priorityString)
+                            cacheVariables.bandPriorityStorageCache[element[0]] = priority
                         }
                     }
                 }
@@ -148,30 +205,6 @@ class dataHandler {
         }
         
         return bandPriorityStorage
-    }
-    
-    func readLastPriorityDataWrite()-> Double{
-        
-        var lastPriorityDataWrite = Double(0)
-        
-        if let data = try? String(contentsOf: lastPriorityDataWriteFile, encoding: String.Encoding.utf8) {
-            lastPriorityDataWrite = Double(data)!
-        }
-        
-        return lastPriorityDataWrite
-    }
-    
-    func writeLastPriorityDataWrite(){
-        
-        let currentTime = String(Date().timeIntervalSince1970)
-       
-        do {
-            //try FileManager.default.removeItem(at: storageFile)
-            try currentTime.write(to:lastPriorityDataWriteFile, atomically: false, encoding: String.Encoding.utf8)
-            print ("writing PriorityData Date")
-        } catch _ {
-            print ("writing PriorityData Date, failed")
-        }
     }
 
 }

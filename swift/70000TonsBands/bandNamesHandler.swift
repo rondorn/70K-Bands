@@ -18,47 +18,31 @@ open class bandNamesHandler {
         getCachedData()
     }
     
-    func getCachedData(){
-        
+    func getCachedData(completion: (() -> Void)? = nil){
         print ("Loading bandName Data cache")
-        
-        let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
-        
         staticBandName.sync() {
             if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
-                
                 print ("Loading bandName Data cache, from cache")
                 bandNames = cacheVariables.bandNamesStaticCache
                 bandNamesArray = cacheVariables.bandNamesArrayStaticCache
-            
-            } else if (currentQueueLabel == "com.apple.main-thread"){
-                print ("Loading bandName Data cache, from disk")
-                readBandFile()
-                populateCache()
-                
+                completion?()
             } else {
-                print ("Loading bandName Data cache, from dropbox")
-                gatherData()
+                print ("Loading bandName Data cache, from disk or dropbox")
+                gatherData(completion: completion)
             }
         }
-        
         print ("Done Loading bandName Data cache")
-        
     }
     
     func clearCachedData(){
         cacheVariables.bandNamesStaticCache = [String :[String : String]]()
     }
     
-    func gatherData() {
-
+    func gatherData(completion: (() -> Void)? = nil) {
         if isInternetAvailable() == true {
-            
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("Loading bandName Data gatherData")
-
             var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-            
             print ("Getting band data from " + artistUrl);
             let httpData = getUrlData(urlString: artistUrl)
             print ("Getting band data of " + httpData);
@@ -69,22 +53,23 @@ open class bandNamesHandler {
             }
         }
         readBandFile()
-        populateCache()
+        populateCache(completion: completion)
     }
 
-    func populateCache(){
+    func populateCache(completion: (() -> Void)? = nil){
         print ("Starting population of acheVariables.bandNamesStaticCache")
         staticBandName.async(flags: .barrier) {
-            //print ("Populating using \(self.bandNames.keys) acheVariables.bandNamesStaticCache")
-            
             cacheVariables.bandNamesStaticCache =  [String :[String : String]]()
             cacheVariables.bandNamesArrayStaticCache = [String]()
             for bandName in self.bandNames.keys {
                 cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
                 cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
-                
                 print ("Adding Data to cacheVariables.bandNamesStaticCache = \(String(describing: cacheVariables.bandNamesStaticCache[bandName]))")
                 cacheVariables.bandNamesArrayStaticCache.append(bandName)
+            }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .bandNamesCacheReady, object: nil)
+                completion?()
             }
         }
     }
