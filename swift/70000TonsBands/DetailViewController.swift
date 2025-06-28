@@ -95,6 +95,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
     }
     
+    /// Called after the controller's view is loaded into memory. Sets up the UI and loads band details.
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -1040,18 +1041,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
     }
     
+    /// Configures the view with the current detail item and updates the UI accordingly.
     func configureView() {
-        
-        bandName = self.detailItem?.description
-        
         // Update the user interface for the detail item.
         if let detail: AnyObject = self.detailItem {
+            // Restore previous logic from setDetailItem
+            bandName = self.detailItem?.description
             if let label = self.titleLable {
                 print ("determining detail bandName \(detail) - \(label) - \(String(describing: detail.description))")
                 bandName = detail.description
                 label.title = bandName
             }
         }
+        // Additional UI updates can be added here if needed.
     }
     
     func showFullSchedule () {
@@ -1275,6 +1277,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 40
     }
     
+    /// Handles memory warnings by releasing any resources that can be recreated.
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.

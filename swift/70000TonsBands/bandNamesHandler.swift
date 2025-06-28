@@ -18,6 +18,7 @@ open class bandNamesHandler {
         getCachedData()
     }
     
+    /// Loads band name data from cache if available, otherwise loads from disk or Dropbox.
     func getCachedData(completion: (() -> Void)? = nil){
         print ("Loading bandName Data cache")
         staticBandName.sync() {
@@ -34,10 +35,13 @@ open class bandNamesHandler {
         print ("Done Loading bandName Data cache")
     }
     
+    /// Clears the static cache of band names.
     func clearCachedData(){
         cacheVariables.bandNamesStaticCache = [String :[String : String]]()
     }
     
+    /// Gathers band data from the internet if available, writes it to file, and populates the cache.
+    /// Calls completion handler when done.
     func gatherData(completion: (() -> Void)? = nil) {
         if isInternetAvailable() == true {
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
@@ -53,9 +57,16 @@ open class bandNamesHandler {
             }
         }
         readBandFile()
+        if bandNames.isEmpty && !cacheVariables.justLaunched {
+            print("Skipping cache population: bandNames is empty and app is not just launched.")
+            completion?()
+            return
+        }
         populateCache(completion: completion)
     }
 
+    /// Populates the static cache variables with the current bandNames dictionary.
+    /// Posts a notification when the cache is ready and calls the completion handler.
     func populateCache(completion: (() -> Void)? = nil){
         print ("Starting population of acheVariables.bandNamesStaticCache")
         staticBandName.async(flags: .barrier) {
@@ -74,6 +85,8 @@ open class bandNamesHandler {
         }
     }
     
+    /// Writes the provided HTTP data string to the band file on disk.
+    /// - Parameter httpData: The string data to write to file.
     func writeBandFile (_ httpData: String){
         
         print("write file " + bandFile);
@@ -89,6 +102,8 @@ open class bandNamesHandler {
     }
 
 
+    /// Reads the band file from disk and populates the bandNames and bandNamesArray dictionaries.
+    /// Handles parsing of CSV data and extraction of band properties.
     func readBandFile (){
         
         if (readingBandFile == false){
@@ -165,6 +180,8 @@ open class bandNamesHandler {
         }
     }
 
+    /// Returns a sorted array of all band names. Loads from cache if necessary.
+    /// - Returns: An array of band name strings.
     func getBandNames () -> [String] {
         
         bandNamesArray = [String]()
@@ -190,12 +207,18 @@ open class bandNamesHandler {
         return bandNamesArray
     }
 
+    /// Returns the image URL for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The image URL string.
     func getBandImageUrl(_ band: String) -> String {
         
         print ("Getting image for band \(band) will return \(String(describing: bandNames[band]))")
         return bandNames[band]?["bandImageUrl"] ?? ""
     }
 
+    /// Returns the official website URL for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The official website URL string.
     func getofficalPage (_ band: String) -> String {
         
         print ("Getting officalSite for band \(band) will return \(String(describing: bandNames[band]?["officalUrls"]))")
@@ -204,6 +227,9 @@ open class bandNamesHandler {
         
     }
 
+    /// Returns the Wikipedia page URL for a given band, localized to the user's language if possible.
+    /// - Parameter bandName: The name of the band.
+    /// - Returns: The Wikipedia URL string.
     func getWikipediaPage (_ bandName: String) -> String{
         
         var wikipediaUrl = bandNames[bandName]?["wikipediaLink"] ?? ""
@@ -224,6 +250,9 @@ open class bandNamesHandler {
         
     }
     
+    /// Returns the YouTube page URL for a given band, localized to the user's language if possible.
+    /// - Parameter bandName: The name of the band.
+    /// - Returns: The YouTube URL string.
     func getYouTubePage (_ bandName: String) -> String{
         
         var youTubeUrl = bandNames[bandName]?["youtubeLinks"] ?? ""
@@ -241,26 +270,41 @@ open class bandNamesHandler {
         
     }
     
+    /// Returns the Metal Archives URL for a given band, or an empty string if not found.
+    /// - Parameter bandName: The name of the band.
+    /// - Returns: The Metal Archives URL string.
     func getMetalArchives (_ bandName: String) -> String {
         
         return bandNames[bandName]?["metalArchiveLinks"] ?? ""
     }
     
+    /// Returns the country for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The country string.
     func getBandCountry (_ band: String) -> String {
         
         return bandNames[band]?["bandCountry"] ?? ""
     }
     
+    /// Returns the genre for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The genre string.
     func getBandGenre (_ band: String) -> String {
         
         return bandNames[band]?["bandGenre"] ?? ""
     }
 
+    /// Returns the 'noteworthy' field for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The noteworthy string.
     func getBandNoteWorthy (_ band: String) -> String {
         
         return bandNames[band]?["bandNoteWorthy"] ?? ""
     }
 
+    /// Returns a comma-separated string of prior years for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The prior years string.
     func getPriorYears (_ band: String) -> String {
         
         var previousYears = bandNames[band]?["priorYears"]

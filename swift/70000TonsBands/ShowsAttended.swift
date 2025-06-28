@@ -91,6 +91,21 @@ open class ShowsAttended {
             //print ("Loading show attended data!! From json")
             showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
             print ("Loaded show attended data!! From json \(showsAttendedArray)")
+            var needsMigration = false
+            let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
+            // Migrate old format (no timestamp) to new format
+            for (key, value) in showsAttendedArray {
+                let parts = value.split(separator: ":")
+                if parts.count == 1 {
+                    // Old format, add timestamp
+                    showsAttendedArray[key] = value + ":" + currentTimestamp
+                    needsMigration = true
+                }
+            }
+            if needsMigration {
+                print("Migrated old attendance data to new format with timestamps.")
+                saveShowsAttended()
+            }
             if (showsAttendedArray.count > 0){
                 for index in showsAttendedArray {
                     print ("Loaded show attended data!! From \(index.key) - \(index.value)")
@@ -99,6 +114,11 @@ open class ShowsAttended {
             }
             print ("Loading show attended data! cleanup event data loaded showData \(showsAttendedArray)")
             
+            // Prevent populating cache with empty data unless app just launched
+            if showsAttendedArray.isEmpty && !cacheVariables.justLaunched {
+                print("Skipping attended cache population: showsAttendedArray is empty and app is not just launched.")
+                return
+            }
             staticAttended.async(flags: .barrier) {
                 for index in self.showsAttendedArray {
 
@@ -115,7 +135,27 @@ open class ShowsAttended {
     }
     
     /**
-     Adds or updates a show attended record with a specific status.
+     Adds or updates a show attended record with a specific status and timestamp.
+     - Parameters:
+        - band: The band name.
+        - location: The event location.
+        - startTime: The event start time.
+        - eventType: The type of event.
+        - eventYearString: The event year as a string.
+        - status: The attendance status to set.
+        - newTime: The timestamp to use (Double, seconds since epoch).
+     */
+    func addShowsAttendedWithStatusAndTime(band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, newTime: Double) {
+        let index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
+        let timestamp = String(format: "%.0f", newTime)
+        changeShowAttendedStatus(index: index, status: status + ":" + timestamp)
+        staticLastModifiedDate.async(flags: .barrier) {
+            cacheVariables.lastModifiedDate = Date()
+        }
+    }
+
+    /**
+     Adds or updates a show attended record with a specific status (uses current time as timestamp).
      - Parameters:
         - band: The band name.
         - location: The event location.
@@ -125,15 +165,8 @@ open class ShowsAttended {
         - status: The attendance status to set.
      */
     func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String){
-        
-        let index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
-            
-        changeShowAttendedStatus(index: index, status: status)
-        
-        staticLastModifiedDate.async(flags: .barrier) {
-            cacheVariables.lastModifiedDate = Date()
-        }
-        
+        let now = Date().timeIntervalSince1970
+        addShowsAttendedWithStatusAndTime(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: status, newTime: now)
     }
     
     /**
@@ -147,42 +180,31 @@ open class ShowsAttended {
      - Returns: The new attendance status as a string.
      */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
-
         if (showsAttendedArray.count == 0){
             loadShowsAttended();
         }
-        
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
         }
-        
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
-        
-        if (showsAttendedArray.isEmpty == true || showsAttendedArray[index] == nil ||
-            showsAttendedArray[index] == sawNoneStatus){
-            
+        let currentStatus = getShowAttendedStatusRaw(index: index)
+        if (showsAttendedArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus){
             value = sawAllStatus
-         
-        } else if (showsAttendedArray[index] == sawAllStatus && eventType == showType ){
+        } else if (currentStatus == sawAllStatus && eventType == showType ){
             value = sawSomeStatus
-         
-        } else if (showsAttendedArray[index] == sawSomeStatus){
+        } else if (currentStatus == sawSomeStatus){
             value = sawNoneStatus;
-            
         } else {
             value = sawNoneStatus;
         }
-        
-        changeShowAttendedStatus(index: index, status: value)
-        
+        let timestamp = String(format: "%.0f", Date().timeIntervalSince1970)
+        changeShowAttendedStatus(index: index, status: value + ":" + timestamp)
         staticLastModifiedDate.async(flags: .barrier) {
             cacheVariables.lastModifiedDate = Date()
         }
-        
         return value
     }
     
@@ -193,19 +215,14 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
-        
         print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
         showsAttendedArray[index] = status
-        
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
-        
         staticAttended.async(flags: .barrier) {
             cacheVariables.attendedStaticCache[index] = status
         }
-        
         saveShowsAttended()
-        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
@@ -279,29 +296,21 @@ open class ShowsAttended {
     }
     
     func getShowAttendedStatus (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
-        
         var eventTypeVariable = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeVariable = unofficalEventType;
         }
-        
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
-        
+        let raw = getShowAttendedStatusRaw(index: index)
         var value = ""
-        
-        print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(showsAttendedArray[index] ?? "")")
-        
-        if (showsAttendedArray[index] == sawAllStatus){
+        print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(raw ?? "")")
+        if (raw == sawAllStatus){
             value = sawAllStatus
-            
-        } else if (showsAttendedArray[index] == sawSomeStatus){
+        } else if (raw == sawSomeStatus){
             value = sawSomeStatus
-            
         } else {
             value = sawNoneStatus;
-            
         }
-
         return value
     }
     
@@ -384,6 +393,32 @@ open class ShowsAttended {
         } catch _ {
             print ("writing ScheduleData Date, failed")
         }
+    }
+    
+    // Helper to get the raw status (without timestamp)
+    func getShowAttendedStatusRaw(index: String) -> String? {
+        guard let value = showsAttendedArray[index] else { return nil }
+        let parts = value.split(separator: ":")
+        return parts.first.map { String($0) }
+    }
+    
+    // New: Get the last change timestamp for a show
+    func getShowAttendedLastChange(index: String) -> Double {
+        guard let value = showsAttendedArray[index] else { return 0 }
+        let parts = value.split(separator: ":")
+        if parts.count == 2, let ts = Double(parts[1]) { return ts }
+        if parts.count == 3, let ts = Double(parts[2]) { return ts } // for iCloud format
+        return 0
+    }
+    
+    // Returns the last change timestamp for a show, given its parameters
+    func getShowAttendedStatusLastChange(band: String, location: String, startTime: String, eventType: String, eventYearString: String) -> Double {
+        var eventTypeValue = eventType
+        if eventType == unofficalEventTypeOld {
+            eventTypeValue = unofficalEventType
+        }
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
+        return getShowAttendedLastChange(index: index)
     }
     
 }
