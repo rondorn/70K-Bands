@@ -227,6 +227,10 @@ class showAttendenceReport {
         return message
     }
     
+    /**
+     Builds a report message for the 'MustMight' type, listing must-see and might-see bands.
+     - Returns: The formatted must/might report as a string.
+     */
     func buildMustMightReport()->String {
         
         var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
@@ -247,6 +251,12 @@ class showAttendenceReport {
          return intro
     }
     
+    /**
+     Updates the eventCounts dictionary with the count of events by type and attendance status.
+     - Parameters:
+        - eventType: The type of event.
+        - sawStatus: The attendance status for the event.
+     */
     func getEventTypeCounts (eventType:String, sawStatus: String){
         
         if (eventCounts[eventType] == nil){
@@ -260,6 +270,13 @@ class showAttendenceReport {
         }
     }
     
+    /**
+     Updates the bandCounts dictionary with the count of bands by event type and attendance status.
+     - Parameters:
+        - eventType: The type of event.
+        - bandName: The name of the band.
+        - sawStatus: The attendance status for the band.
+     */
     func getBandCounts (eventType:String, bandName:String, sawStatus: String){
         
         if (bandCounts[eventType] == nil){

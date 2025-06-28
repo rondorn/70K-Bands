@@ -61,10 +61,12 @@ class ToastMessages : UILabel {
     public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
         
         print ("Toast cell location is \(cellLocation)")
-        var heightOffSet:CGFloat = cellLocation.midY - (cellLocation.height/8);
+        var heightOffSet: CGFloat = cellLocation.midY - (cellLocation.height/8);
         
-        if (placeHigh == true){
-            heightOffSet = 0
+        if placeHigh == true {
+            // Ensure layout is up to date to get correct safeAreaInsets
+            parent.view.layoutIfNeeded()
+            heightOffSet = parent.view.safeAreaInsets.top + SIDE_MARGIN
         }
         
         print ("heightOffSet is \(heightOffSet)")

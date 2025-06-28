@@ -46,6 +46,10 @@ open class scheduleHandler {
                 populateSchedule()
             }
             
+            if schedulingData.isEmpty && !cacheVariables.justLaunched {
+                print("Skipping schedule cache population: schedulingData is empty and app is not just launched.")
+                return
+            }
             staticSchedule.sync {
                 cacheVariables.scheduleStaticCache = self.schedulingData
                 cacheVariables.scheduleTimeStaticCache = self.schedulingDataByTime

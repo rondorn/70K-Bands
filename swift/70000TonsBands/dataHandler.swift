@@ -20,6 +20,7 @@ class dataHandler {
         getCachedData()
     }
     
+    /// Refreshes the data by reloading from disk or cache.
     func getCachedData(){
     
         print ("Loading priority Data cache")
@@ -41,45 +42,56 @@ class dataHandler {
         }
     }
     
+    /// Refreshes the data by reloading from disk or cache.
     func refreshData(){
         bandPriorityStorage = readFile(dateWinnerPassed: "")
     }
 
-    func addPriorityData (_ bandname:String, priority: Int){
-        
-        print ("addPriorityData for \(bandname) = \(priority)")
-
-        let timestamp = Date().timeIntervalSince1970
+    /// Adds or updates the priority data for a band with a specific timestamp.
+    /// - Parameters:
+    ///   - bandName: The name of the band.
+    ///   - priority: The priority value to set.
+    ///   - timestamp: The timestamp of the update.
+    func addPriorityDataWithTimestamp(_ bandname: String, priority: Int, timestamp: Double) {
+        print ("addPriorityDataWithTimestamp for \(bandname) = \(priority) at \(timestamp)")
         bandPriorityStorage[bandname] = priority
         bandPriorityTimestamps[bandname] = timestamp
-        
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
-        
         staticLastModifiedDate.async(flags: .barrier) {
             cacheVariables.lastModifiedDate = Date()
         }
-                
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAPriorityRecord(bandName: bandname, priority: priority)
-            
             let firebaseBandData = firebaseBandDataWrite()
             let ranking = resolvePriorityNumber(priority: String(priority)) ?? "Unknown"
             firebaseBandData.writeSingleRecord(dataHandle: self, bandName: bandname, ranking: ranking)
             NSUbiquitousKeyValueStore.default.synchronize()
             self.writeFile()
         }
-        
+    }
+
+    /// Adds or updates the priority data for a band.
+    /// - Parameters:
+    ///   - bandName: The name of the band.
+    ///   - priority: The priority value to set.
+    func addPriorityData (_ bandname:String, priority: Int){
+        let timestamp = Date().timeIntervalSince1970
+        addPriorityDataWithTimestamp(bandname, priority: priority, timestamp: timestamp)
     }
     
+    /// Clears the cached data for priorities.
     func clearCachedData(){
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache = [String:Int]()
         }
     }
     
+    /// Returns the priority value for a specific band.
+    /// - Parameter bandName: The name of the band.
+    /// - Returns: The priority value for the band, or 0 if not found.
     func getPriorityData (_ bandname:String) -> Int {
         
         var priority = 0
@@ -95,6 +107,9 @@ class dataHandler {
         return priority
     }
     
+    /// Returns the last change timestamp for a band's priority data.
+    /// - Parameter bandName: The name of the band.
+    /// - Returns: The timestamp of the last change, or 0 if not found.
     func getPriorityLastChange (_ bandname:String) -> Double {
         
         var timestamp = 0.0
@@ -110,6 +125,7 @@ class dataHandler {
         return timestamp
     }
     
+    /// Writes the current priority data to disk.
     func writeFile(){
         // Create thread-safe copies of the data with initial empty values
         var localPriorityStorage: [String: Int] = [:]
@@ -149,11 +165,14 @@ class dataHandler {
         }
     }
     
+    /// Returns the priority data for all bands as a dictionary.
+    /// - Returns: A dictionary mapping band names to their priority values.
     func getPriorityData() -> [String:Int]{
         
         return bandPriorityStorage;
     }
 
+    /// Reads the priority data file from disk.
     func readFile(dateWinnerPassed : String) -> [String:Int]{
         
         print ("Load bandPriorityStorage data")

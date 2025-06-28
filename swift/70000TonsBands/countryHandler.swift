@@ -19,14 +19,19 @@ class countryHandler {
         
     }
     
+    /// Returns a dictionary mapping country short codes to their long names.
+    /// - Returns: A dictionary with country short codes as keys and long names as values.
     func getCountryShortLong()->[String:String]{
         return countryShortLong
     }
     
+    /// Returns a dictionary mapping country long names to their short codes.
+    /// - Returns: A dictionary with country long names as keys and short codes as values.
     func getCountryLongShort()->[String:String]{
         return countryLongShort
     }
     
+    /// Loads country data from the bundled file and populates the country dictionaries.
     func loadCountryData(){
         
         print("Loading Countries are!")

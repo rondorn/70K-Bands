@@ -174,7 +174,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
         
-         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
     }
@@ -682,16 +682,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
-                
-                let iCloudHandle = iCloudDataHandler()
-                //iCloudHandle.readAllPriorityData()
-                //iCloudHandle.readAllScheduleData()
-            
             }
             
             //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
-        //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         print ("Done Refreshing data in backgroud 2");
     }
     
