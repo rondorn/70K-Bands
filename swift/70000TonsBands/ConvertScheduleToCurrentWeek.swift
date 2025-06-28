@@ -14,6 +14,7 @@ class ConvertScheduleToCurrentWeek {
     
     /**
      Converts the schedule CSV file to use the current week's dates and writes the result to file.
+     Reads the CSV, updates dates to the current week, and writes the new CSV.
      */
     func convertScheduleCSV (){
         
@@ -90,7 +91,7 @@ class ConvertScheduleToCurrentWeek {
     /**
      Extracts the AM/PM component from a start time string.
      - Parameter startTime: The start time string (e.g., "8:00 AM").
-     - Returns: The AM/PM string.
+     - Returns: The AM/PM string ("AM" or "PM").
      */
     func getAmPmFromString(startTime: String) -> String{
         

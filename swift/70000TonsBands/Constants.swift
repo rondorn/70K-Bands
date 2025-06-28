@@ -46,8 +46,20 @@ var noEntriesFlag = false
 var bandCounter = 0
 var eventCounter = 0
 var eventCounterUnoffical = 0
-var iCloudDataisLoading = false;
-var iCloudDataisSaving = false;
+private var _iCloudDataisLoading = false
+private var _iCloudScheduleDataisLoading = false
+private let iCloudLoadingQueue = DispatchQueue(label: "com.yourapp.iCloudLoadingQueue")
+
+var iCloudDataisLoading: Bool {
+    get { iCloudLoadingQueue.sync { _iCloudDataisLoading } }
+    set { iCloudLoadingQueue.sync { _iCloudDataisLoading = newValue } }
+}
+
+var iCloudScheduleDataisLoading: Bool {
+    get { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading } }
+    set { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading = newValue } }
+}
+
 var numberOfFilteredRecords = 0;
 var readingBandFile = false;
 
@@ -239,6 +251,9 @@ var masterView: MasterViewController!
 var googleCloudID = "Nothing";
 var currentPointerKey = ""
 
+/// Resolves a priority string (e.g., "1", "2", "3") to a human-readable label ("Must", "Might", "Wont", or "Unknown").
+/// - Parameter priority: The priority value as a string.
+/// - Returns: A string representing the human-readable priority label.
 func resolvePriorityNumber (priority: String)->String {
 
     var result = ""
@@ -259,12 +274,18 @@ func resolvePriorityNumber (priority: String)->String {
     return result;
 }
 
+/// Returns the path to the app's documents directory as an NSString.
+/// - Returns: The documents directory path.
 func getDocumentsDirectory() -> NSString {
     let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
     let documentsDirectory = paths[0]
     return documentsDirectory as NSString
 }
 
+/// Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
+/// Handles special logic for the "eventYear" key.
+/// - Parameter keyValue: The key for which to retrieve pointer data.
+/// - Returns: The pointer data as a string, or an empty string if not found.
 func getPointerUrlData(keyValue: String) -> String {
 
     var dataString = String()
@@ -335,6 +356,12 @@ func getPointerUrlData(keyValue: String) -> String {
     return dataString
 }
 
+/// Parses a pointer data record and updates the pointer values dictionary and cache as needed.
+/// - Parameters:
+///   - pointData: The raw pointer data string (delimited by ::).
+///   - pointerValues: The current dictionary of pointer values.
+///   - pointerIndex: The index to match for updating values.
+/// - Returns: The updated pointer values dictionary.
 func readPointData(pointData:String, pointerValues: [String:[String:String]], pointerIndex: String)->[String:[String:String]]{
     
     var newPointValues = pointerValues
@@ -375,6 +402,7 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
     return newPointValues
 }
 
+/// Loads user defaults and venue locations, and sets the current event year from pointer data.
 func setupDefaults() {
         
     readFiltersFile()
@@ -390,6 +418,7 @@ func setupDefaults() {
     didVersionChangeFunction();
 }
 
+/// Sets up the current year URLs for artist and schedule data, writing a flag file if needed.
 func setupCurrentYearUrls() {
         
     let filePath = defaultUrlConverFlagUrl.path
@@ -425,6 +454,7 @@ func setupCurrentYearUrls() {
     
 }
 
+/// Checks if the app version has changed and updates version info on disk if needed.
 func didVersionChangeFunction(){
 
     var oldVersion = ""
@@ -450,6 +480,7 @@ func didVersionChangeFunction(){
 }
 
 
+/// Populates the venueLocation dictionary with mappings from venue names to deck locations.
 func setupVenueLocations(){
     
     venueLocation[poolVenueText] = "Deck 11"
@@ -466,6 +497,9 @@ func setupVenueLocations(){
     venueLocation["Bull & Bear Pub"] = "Deck 5"
 }
 
+/// Converts an event type string to a localized version for display.
+/// - Parameter eventType: The event type string to localize.
+/// - Returns: The localized event type string.
 func convertEventTypeToLocalLanguage(eventType: String)->String{
     
     var localEventType = eventType
@@ -493,6 +527,8 @@ func convertEventTypeToLocalLanguage(eventType: String)->String{
     
 }
 
+/// Checks if the device currently has internet access using the NetworkTesting utility.
+/// - Returns: True if internet is available, false otherwise.
 func isInternetAvailable() -> Bool {
     
     var networkTesting = NetworkTesting()
@@ -516,6 +552,7 @@ struct cacheVariables {
     static var bandDescriptionUrlCache = [String:String]()
     static var bandDescriptionUrlDateCache = [String:String]()
     static var lastModifiedDate:Date? = nil;
+    static var justLaunched: Bool = true
 }
 
 extension Notification.Name {

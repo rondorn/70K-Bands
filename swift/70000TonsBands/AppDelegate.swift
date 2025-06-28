@@ -82,16 +82,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
-        // Register for notification of iCloud key-value changes, but do an intial load
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
-                                               name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
-        
-        // Start iCloud key-value updates
-        NSUbiquitousKeyValueStore.default.synchronize()
-        
-        // Test iCloud availability and log status
-        print("iCloud: Testing iCloud setup...")
         let iCloudHandle = iCloudDataHandler()
         let iCloudEnabled = iCloudHandle.checkForIcloud()
         print("iCloud: iCloud enabled status: \(iCloudEnabled)")
@@ -105,6 +95,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUbiquitousKeyValueStore.default.synchronize()
         print("iCloud: Test value written to iCloud")
 
+        // Migrate iCloud data before registering for notifications
+        iCloudHandle.detectAndMigrateOldPriorityData()
+        iCloudHandle.detectAndMigrateOldScheduleData()
+
+        // Register for notification of iCloud key-value changes, but do an intial load
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
+                                               name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
+        
+        // Start iCloud key-value updates
+        NSUbiquitousKeyValueStore.default.synchronize()
+        
+        // Test iCloud availability and log status
+        print("iCloud: Testing iCloud setup...")
+        
         let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
         let controller = masterNavigationController.viewControllers[0] as! MasterViewController
         controller.managedObjectContext = self.managedObjectContext
@@ -130,8 +135,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // IMPORTANT: Check for old iCloud data format and migrate if needed
             // This must happen BEFORE reading iCloud data to prevent conflicts
-            iCloudHandle.detectAndMigrateOldPriorityData()
-            
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
         }
@@ -142,6 +145,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //generate user data
         print ("Firebase, calling ")
 
+        // Mark app as no longer just launched
+        cacheVariables.justLaunched = false
 
         return true
     
@@ -371,19 +376,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
-        
         let localNotication = localNoticationHandler()
         localNotication.clearNotifications()
         localNotication.addNotifications()
-        
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.writeAllPriorityData()
-        //iCloudHandle.writeAllScheduleData();
-        
+        DispatchQueue.global(qos: .background).async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.writeAllPriorityData()
+            iCloudHandle.writeAllScheduleData()
+        }
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
         reportData()
-        
     }
 
 
@@ -432,6 +435,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         
         DispatchQueue.main.async {
+            if iCloudDataisLoading || iCloudScheduleDataisLoading {
+                print("iCloud: Skipping iCloud data sync because a read operation is already in progress.")
+                return
+            }
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()

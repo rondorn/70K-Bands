@@ -45,6 +45,7 @@ open class CustomBandDescription {
         self.getDescriptionMap();
     }
     
+    /// Loads the band description map file from disk or cache.
     func getDescriptionMapFile(){
         
         if (isInternetAvailable() == false){
@@ -84,6 +85,7 @@ open class CustomBandDescription {
 }
     }
     
+    /// Loads all band descriptions from the description map file.
     func getAllDescriptions(){
         
         if (downloadingAllComments == false){
@@ -230,6 +232,9 @@ open class CustomBandDescription {
         }
     }
     
+    /// Returns the description for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The description string for the band.
     func getDescription(bandName: String) -> String {
         
         convertOldData(bandName: bandName)
@@ -355,6 +360,20 @@ open class CustomBandDescription {
         url = getPointerUrlData(keyValue: descriptionPointer)
         
         return url
+    }
+    
+    /// Returns the description URL for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The description URL string for the band.
+    func getDescriptionUrl(_ band: String) -> String {
+        return bandDescriptionUrl[band] ?? ""
+    }
+    
+    /// Returns the date of the description for a given band, or an empty string if not found.
+    /// - Parameter band: The name of the band.
+    /// - Returns: The date string for the band's description.
+    func getDescriptionDate(_ band: String) -> String {
+        return bandDescriptionUrlDate[band] ?? ""
     }
 }
 

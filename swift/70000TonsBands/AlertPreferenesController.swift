@@ -115,6 +115,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var dataHandle = dataHandler()
     var currentYearSetting = getScheduleUrl()
     
+    /// Called after the controller's view is loaded into memory. Sets up UI, observers, and initial values.
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -149,10 +150,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
     }
     
+    /// Specifies the preferred status bar style for this view controller.
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
     
+    /// Called just before the view appears. Ensures the back button is labeled correctly.
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -162,6 +165,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.navigationItem.backBarButtonItem = backItem
     }
     
+    /// Called just before the view disappears. Resets local notifications and refreshes the master view.
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         
@@ -173,6 +177,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         masterView.quickRefresh()
     }
     
+    /// Builds the event year menu for selecting different event years.
     func buildEventYearMenu(currentYear: String){
 
         if (eventYearArray == nil || eventYearArray.isEmpty == true){
@@ -211,6 +216,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
     }
     
+    /// Handles the event year change action and triggers the use of last year's data if needed.
     func eventYearDidChange(year: String){
         print("Selected index \(year)")
         
@@ -225,6 +231,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         UseLastYearsDataAction()
     }
     
+    /// Sets all localized labels and prompt strings for the UI.
     func setLocalizedLables (){
         
         alertPreferenceHeader.text = NSLocalizedString("AlertPreferences", comment: "")
@@ -273,6 +280,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         userIDLabel.adjustsFontSizeToFitWidth = true
     }
     
+    /// Sets the UI elements to reflect the current saved preference values.
     func setExistingValues (){
         
         AlertOnMustSee.isOn = getMustSeeAlertValue()
@@ -299,11 +307,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         PromptForAttendedSwitch.isOn = getPromptForAttended()
     }
     
+    /// UITextFieldDelegate method. Dismisses the keyboard when return is pressed.
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.view.endEditing(true);
         return false;
     }
     
+    /// Enables or disables alert-related buttons based on the 'AlertOnlyForAttended' switch.
     func disableAlertButtonsIfNeeded(){
         
         if (AlertOnlyForAttended.isOn == true){
@@ -346,10 +356,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    /// Called when editing ends in the 'MinBeforeAlert' text field. Used for debugging.
     @IBAction func MinBeforeAlertEndAction() {
         print ("MinBeforeAlert ENDING text is \(MinBeforeAlert.text)")
     }
     
+    /// Called when the 'MinBeforeAlert' value is changed. Validates and saves the value, or shows an error.
     @IBAction func MinBeforeAlertAction() {
         
         print ("MinBeforeAlert text is \(MinBeforeAlert.text)")
@@ -377,14 +389,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
     }
     
+    /// Called when the 'Must See' alert switch is toggled. Saves the new value.
     @IBAction func MustSeeChange() {
         setMustSeeAlertValue(AlertOnMustSee.isOn)
     }
     
+    /// Called when the 'Might See' alert switch is toggled. Saves the new value.
     @IBAction func MightSeeChange() {
         setMightSeeAlertValue(AlertOnMightSee.isOn)
     }
     
+    /// Called when the 'Alert Only For Attended' switch is toggled. Updates state and shows a help message.
     @IBAction func AlertOnlyForAttendedChange() {
         setOnlyAlertForAttendedValue(AlertOnlyForAttended.isOn)
         disableAlertButtonsIfNeeded()
@@ -399,48 +414,59 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         ToastMessages(helpMessage).show(self, cellLocation: self.view.frame, placeHigh: false)
     }
     
+    /// Called when the 'Alert For Shows' switch is toggled. Saves the new value.
     @IBAction func AlertForShowsChange() {
         setAlertForShowsValue(AlertForShows.isOn)
     }
     
+    /// Called when the 'Alert For Special Events' switch is toggled. Saves the new value.
     @IBAction func AlertForSpecialEventChange() {
         setAlertForSpecialValue(AlertForSpecialEvents.isOn)
     }
 
+    /// Called when the 'Alert For Clinic' switch is toggled. Saves the new value.
     @IBAction func AlertForClinicChange() {
         setAlertForClinicEvents(AlertForClinic.isOn)
     }
     
+    /// Called when the 'Alert For Listening Event' switch is toggled. Saves the new value.
     @IBAction func AlertForListeningEventChange() {
         setAlertForListeningEvents(AlertForListeningEvent.isOn)
     }
     
     
+    /// Called when the 'Alert For Meet And Greet' switch is toggled. Saves the new value.
     @IBAction func AlertForMeetAndGreetChange() {
         setAlertForMandGValue(AlertForMeetAndGreets.isOn)
     }
     
+    /// Dismisses the keyboard when the background is tapped.
     @IBAction func backgroundTap (_ sender: UIControl){
         MinBeforeAlert.resignFirstResponder()
     }
     
+    /// Called when the 'Alert For Unofficial Events' switch is toggled. Saves the new value.
     @IBAction func alertForUnofficalEventChange(_ sender: Any) {
         setAlertForUnofficalEventsValue(alertForUnofficalEvents.isOn)
     }
     
+    /// Called when the 'Hide Expired' switch is toggled. Saves the new value and logs the change.
     @IBAction func hideExpired(_ sender: Any) {
         setHideExpireScheduleData(HideExpiredSwitch.isOn)
         print ("Loading showExpired Writing \(HideExpiredSwitch.isOn) to hideExpireScheduleDataBoolean")
     }
     
+    /// Called when the 'Prompt For Attended' switch is toggled. Saves the new value.
     @IBAction func promptForAttended(_ sender: Any) {
         setPromptForAttended(PromptForAttendedSwitch.isOn)
     }
     
+    /// Called when the 'Notes Font Size Large' switch is toggled. Saves the new value.
     @IBAction func notesFontSizeLarge(_ sender: Any) {
         setNotesFontSizeLargeValue(NotesFontSizeLargeSwitch.isOn)
     }
     
+    /// Handles the action to use last year's data, showing a confirmation dialog and updating state as needed.
     @IBAction func UseLastYearsDataAction() {
         
         print ("Files were in UseLastYearsDataAction")
@@ -483,11 +509,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.present(alertController, animated: true, completion: nil)
     }
     
+    /// Displays a toast message indicating that the app is waiting for data.
     @objc func displayWaitingMessage(){
         let waitingMessage = NSLocalizedString("waiting_for_data", comment: "")
         ToastMessages(waitingMessage).show(self, cellLocation: self.view.frame, placeHigh: false)
     }
     
+    /// Shows a warning dialog if the network is down when attempting to change years.
     func networkDownWarning(){
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: yearChangeAborted, preferredStyle: .alert)
         
@@ -505,6 +533,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         self.present(alertController, animated: true, completion: nil)
     }
 
+    /// Prompts the user to choose between events or bands when changing years.
     @objc func eventsOrBandsPrompt(){
 
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
@@ -536,6 +565,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     }
 
     
+    /// Handles the acceptance of the last year warning, updates URLs, clears data, and refreshes the app state.
     func lastYearWarningAccepted() async{
         
         let netTest = NetworkTesting()
