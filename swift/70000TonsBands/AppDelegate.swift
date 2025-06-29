@@ -555,18 +555,16 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let userInfo = notification.request.content.userInfo
-        // Print message ID.
         if let messageID = userInfo[gcmMessageIDKey] {
             print("sendLocalAlert! Message ID: \(messageID)")
-
-            // Print full message.
             print("sendLocalAlert! 1 \(userInfo)")
-            
             extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
+            // Post notification for foreground push
+            NotificationCenter.default.post(name: Notification.Name("PushNotificationReceived"), object: nil)
             completionHandler([])
         } else {
-             Messaging.messaging().appDidReceiveMessage(userInfo)
-             completionHandler([.alert, .badge, .sound])
+            Messaging.messaging().appDidReceiveMessage(userInfo)
+            completionHandler([.alert, .badge, .sound])
         }
     }
 
