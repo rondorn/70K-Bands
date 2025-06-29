@@ -72,6 +72,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var player = AVPlayer()
     var playerLayer = AVPlayerLayer()
     
+    // --- ADDED: Timer and download state ---
+    var lastScheduleDownload: Date? = nil
+    var scheduleRefreshTimer: Timer? = nil
+    let scheduleDownloadInterval: TimeInterval = 5 * 60 // 5 minutes
+    let minDownloadInterval: TimeInterval = 60 // 1 minute
+    // --- END ADDED ---
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -117,7 +124,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
         
-        refreshData()
+        refreshData(isUserInitiated: false)
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
         
@@ -177,11 +184,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
+        
+        // --- ADDED: Start 5-min timer ---
+        startScheduleRefreshTimer()
+        // --- END ADDED ---
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
     
     @objc func bandNamesCacheReadyHandler() {
         print("Band names cache is ready, refreshing band list.")
-        self.refreshData()
+        self.refreshData(isUserInitiated: false)
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
@@ -215,7 +229,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func iCloudRefresh() {
-        refreshData()
+        refreshData(isUserInitiated: false)
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -286,7 +300,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Easter Egg, lets make this go away")
         self.player.pause()
         self.playerLayer.removeFromSuperlayer()
-        self.refreshData()
+        self.refreshData(isUserInitiated: false)
     }
     
     func chooseCountry(){
@@ -449,6 +463,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         quickRefresh()
         refreshDisplayAfterWake();
         
+        startScheduleRefreshTimer()
     }
     
 
@@ -477,7 +492,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             alert.addAction(dismissAction)
             self.present(alert, animated: true, completion: nil)
             isLoadingBandData = false
-            refreshData()
+            refreshData(isUserInitiated: false)
     }
     
     
@@ -493,11 +508,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        self.refreshData()
+        self.refreshData(isUserInitiated: false)
     }
     
     @objc func refreshDisplayAfterWake(){
-        self.refreshData()
+        self.refreshData(isUserInitiated: false)
         //createrFilterMenu(controller: self)
     }
     
@@ -594,97 +609,64 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let iCloudHandle = iCloudDataHandler()
         iCloudHandle.readAllPriorityData()
         iCloudHandle.readAllScheduleData()
-        refreshData();
+        refreshData(isUserInitiated: true);
     }
     
-    @objc func refreshData(){
-                
+    @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
         print ("Redrawing the filter menu! Not")
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
-        //check if the timezonr has changes for whatever reason
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
-        
         internetAvailble = isInternetAvailable();
-        print ("Refresh Internetavailable is  \(internetAvailble)");
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
-        
         } else {
-            //clear busy indicator after a 3 second delay
             DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
                 self.refreshControl?.endRefreshing();
             })
         }
-        
         refreshFromCache()
-        
-        // Capture search text on main thread before entering background queue
         let searchCriteria = bandSearch.text ?? ""
-        
+        let shouldDownload = shouldDownloadSchedule(force: forceDownload || isUserInitiated)
+        if shouldDownload && internetAvailble {
+            schedule.DownloadCsv()
+            lastScheduleDownload = Date()
+        }
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
-            
-            while (refreshDataLock == true){
-                sleep(1);
-            }
+            while (refreshDataLock == true){ sleep(1); }
             refreshDataLock = true;
-
             var offline = true
-
-            if Reachability.isConnectedToNetwork(){
-                offline = false;
-            }
-            
+            if Reachability.isConnectedToNetwork(){ offline = false; }
             let bandNameHandle = bandNamesHandler()
             let schedule = scheduleHandler()
-            if (offline == false){
+            if (offline == false && shouldDownload) {
                 cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 print ("Loading show attended data! From MasterViewController")
-                schedule.DownloadCsv()
-                
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                    let bandNotes = CustomBandDescription();
-                    let imageHandle = imageHandler()
-                    
-                    bandNotes.getDescriptionMapFile();
-                    bandNotes.getAllDescriptions()
-                    imageHandle.getAllImages(bandNameHandle: bandNameHandle)
-                }
-                
+                schedule.populateSchedule()
             }
             self.bandsByName = [String]()
             self.bands =  [String]()
-
-            schedule.populateSchedule()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
-            
             currentBandList = self.bands
             self.bandsByName = self.bands
             self.attendedHandle.loadShowsAttended()
             DispatchQueue.main.async{
                 print ("Refreshing data in backgroud");
-
                 self.bandNameHandle.readBandFile()
                 self.dataHandle.getCachedData()
                 self.attendedHandle.getCachedData()
                 self.ensureCorrectSorting()
                 self.refreshAlerts()
-
                 self.updateCountLable()
-
                 self.tableView.reloadData()
                 print ("DONE Refreshing data in backgroud 1");
-
                 refreshDataLock = false;
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
-                
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
             }
-            
-            //NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
         NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         print ("Done Refreshing data in backgroud 2");
@@ -1435,6 +1417,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
         }
+    }
+    
+    func startScheduleRefreshTimer() {
+        stopScheduleRefreshTimer()
+        scheduleRefreshTimer = Timer.scheduledTimer(withTimeInterval: scheduleDownloadInterval, repeats: true) { [weak self] _ in
+            self?.refreshData(isUserInitiated: false)
+        }
+    }
+    
+    func stopScheduleRefreshTimer() {
+        scheduleRefreshTimer?.invalidate()
+        scheduleRefreshTimer = nil
+    }
+    
+    func shouldDownloadSchedule(force: Bool = false) -> Bool {
+        let now = Date()
+        if force { return true }
+        if let last = lastScheduleDownload {
+            if now.timeIntervalSince(last) < minDownloadInterval {
+                return false
+            }
+        }
+        return true
+    }
+    
+    @objc func handlePushNotificationReceived() {
+        refreshData(isUserInitiated: false, forceDownload: true)
+    }
+    
+    @objc func handleAppWillEnterForeground() {
+        refreshData(isUserInitiated: false, forceDownload: true)
     }
 }
 

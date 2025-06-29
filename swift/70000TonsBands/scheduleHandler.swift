@@ -197,21 +197,59 @@ open class scheduleHandler {
         
         print("This will be making HTTP Calls for schedule " + httpData);
         
-        if (httpData.isEmpty == false){
+        let oldScheduleFile = scheduleFile + ".old"
+        var didRenameOld = false
+        // Rename existing file to .old
+        if FileManager.default.fileExists(atPath: scheduleFile) {
             do {
-                try FileManager.default.removeItem(atPath: scheduleFile)
-            
+                if FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    try FileManager.default.removeItem(atPath: oldScheduleFile)
+                }
+                try FileManager.default.moveItem(atPath: scheduleFile, toPath: oldScheduleFile)
+                didRenameOld = true
             } catch let error as NSError {
-                print ("Encountered an error removing old schedule file " + error.debugDescription)
+                print ("Encountered an error renaming old schedule file " + error.debugDescription)
                 isLoadingBandData = false
             }
+        }
+        
+        if (httpData.isEmpty == false){
             do {
                 try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
+                // If write succeeds, remove the .old file
+                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    try? FileManager.default.removeItem(atPath: oldScheduleFile)
+                }
             } catch let error as NSError {
                 print ("Encountered an error writing schedule file " + error.debugDescription)
                 isLoadingBandData = false
+                // Restore the old file if write fails
+                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    do {
+                        if FileManager.default.fileExists(atPath: scheduleFile) {
+                            try FileManager.default.removeItem(atPath: scheduleFile)
+                        }
+                        try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
+                        print("Restored old schedule file after failed download.")
+                    } catch let restoreError as NSError {
+                        print("Failed to restore old schedule file: " + restoreError.debugDescription)
+                    }
+                }
             }
-            
+        } else {
+            print ("No data downloaded for schedule file.")
+            // Restore the old file if no data was downloaded
+            if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                do {
+                    if FileManager.default.fileExists(atPath: scheduleFile) {
+                        try FileManager.default.removeItem(atPath: scheduleFile)
+                    }
+                    try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
+                    print("Restored old schedule file after empty download.")
+                } catch let restoreError as NSError {
+                    print("Failed to restore old schedule file: " + restoreError.debugDescription)
+                }
+            }
         }
     }
 
