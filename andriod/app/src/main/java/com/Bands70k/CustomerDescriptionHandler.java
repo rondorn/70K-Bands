@@ -23,6 +23,7 @@ import java.util.Map;
 
 
 /**
+ * Handles downloading, loading, and providing band description data for the app.
  * Created by rdorn on 9/25/17.
  */
 
@@ -30,10 +31,16 @@ public class CustomerDescriptionHandler {
 
     private Map<String, String> descriptionMapData = new HashMap<String,String>();
 
+    /**
+     * Constructs a CustomerDescriptionHandler and loads the description map.
+     */
     public CustomerDescriptionHandler(){
         descriptionMapData = this.getDescriptionMap();
     }
 
+    /**
+     * Downloads the description map file from the server if online.
+     */
     public void getDescriptionMapFile(){
 
         BandInfo bandInfo = new BandInfo();
@@ -73,6 +80,10 @@ public class CustomerDescriptionHandler {
         }
     }
 
+    /**
+     * Loads the description map from file or downloads it if not present.
+     * @return The map of band names to descriptions.
+     */
     public Map<String, String>  getDescriptionMap(){
         //only load data if it is not already populated
         if (descriptionMapData.isEmpty() == false){
@@ -108,12 +119,20 @@ public class CustomerDescriptionHandler {
         return descriptionMapData;
     }
 
+    /**
+     * Starts an async task to load all band descriptions.
+     */
     public void getAllDescriptions(){
 
         AsyncAllDescriptionLoader myNotesTask = new AsyncAllDescriptionLoader();
         myNotesTask.execute();
     }
 
+    /**
+     * Gets the description for a given band, loading from file or URL as needed.
+     * @param bandNameValue The name of the band.
+     * @return The band description string.
+     */
     public String getDescription (String bandNameValue){
 
 
@@ -168,6 +187,11 @@ public class CustomerDescriptionHandler {
         return bandNote;
     }
 
+    /**
+     * Removes special characters and replaces newlines with HTML breaks.
+     * @param text The text to clean.
+     * @return The cleaned text.
+     */
     private String removeSpecialCharsFromString(String text) {
         String fixedText = "";
         if (text != null) {
@@ -179,6 +203,10 @@ public class CustomerDescriptionHandler {
         return fixedText;
     }
 
+    /**
+     * Loads the note for a band from a remote URL if needed.
+     * @param bandName The name of the band.
+     */
     public void loadNoteFromURL(String bandName){
 
         BandNotes bandNoteHandler = new BandNotes(bandName);

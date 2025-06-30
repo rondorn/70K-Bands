@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by rdorn on 4/16/17.
+ * Handles reading, writing, and converting band notes for a specific band.
  */
 
 public class BandNotes {
@@ -24,6 +24,10 @@ public class BandNotes {
 
     private boolean noteIsBlank = false;
 
+    /**
+     * Constructs a BandNotes handler for the given band.
+     * @param bandValue The name of the band.
+     */
     public BandNotes(String bandValue){
 
         bandName = bandValue;
@@ -32,14 +36,26 @@ public class BandNotes {
         bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
     }
 
+    /**
+     * Checks if the band note file exists.
+     * @return True if the note file exists, false otherwise.
+     */
     public boolean fileExists(){
         return bandNoteFile.exists();
     }
 
+    /**
+     * Returns whether the note is blank.
+     * @return True if the note is blank, false otherwise.
+     */
     public boolean getNoteIsBlank(){
         return noteIsBlank;
     }
 
+    /**
+     * Gets the band note, converting URLs to clickable links.
+     * @return The band note as a string.
+     */
     public String getBandNote(){
         CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
         String bandNote = noteHandler.getDescription(bandName);
@@ -52,6 +68,9 @@ public class BandNotes {
 
     }
 
+    /**
+     * Converts an old band note file to the new format and saves it.
+     */
     public void convertOldBandNote() {
 
         String oldNoteText = "";
@@ -84,6 +103,11 @@ public class BandNotes {
 
     }
 
+    /**
+     * Strips whitespace and HTML tags for comparison.
+     * @param dataString The string to strip.
+     * @return The stripped string.
+     */
     private String stripDataForCompare(String dataString){
 
         String strippedDataString = "";
@@ -95,6 +119,10 @@ public class BandNotes {
         return strippedDataString;
     }
 
+    /**
+     * Gets the band note from the file, converting old notes if needed.
+     * @return The band note as a string.
+     */
     public String getBandNoteFromFile(){
 
         String note = "";
@@ -117,6 +145,10 @@ public class BandNotes {
         return note;
     }
 
+    /**
+     * Saves the default band note to the file.
+     * @param notesData The note data to save.
+     */
     public void saveDefaultBandNote(String notesData){
 
         Log.d("saveNote", "attempting to write message " + notesData);
@@ -148,6 +180,10 @@ public class BandNotes {
 
     }
 
+    /**
+     * Saves a custom band note to the file.
+     * @param notesData The custom note data to save.
+     */
     public void saveCustomBandNote(String notesData){
 
         Log.d("saveNote", "attempting to write message " + notesData);

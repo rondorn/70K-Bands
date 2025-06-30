@@ -6,9 +6,16 @@ import android.content.Context;
 import android.content.Intent;
 import androidx.legacy.content.WakefulBroadcastReceiver;
 
+/**
+ * BroadcastReceiver for handling GCM (Google Cloud Messaging) messages and starting the message handler service.
+ */
 public class GcmBroadcastReceiver extends WakefulBroadcastReceiver {
 
-
+    /**
+     * Called when a GCM message is received. Starts the GcmMessageHandler service and keeps the device awake.
+     * @param context The context in which the receiver is running.
+     * @param intent The intent being received.
+     */
     @Override
     public void onReceive(Context context, Intent intent) {
 

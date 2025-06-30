@@ -15,10 +15,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/**
+ * Activity for displaying HTML reports in a WebView, with caching and background refresh support.
+ */
 public class WebViewActivity extends Activity {
     
     private WebView webView;
     
+    /**
+     * Called when the activity is created. Sets up the WebView and loads the report.
+     * @param savedInstanceState The saved instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,6 +82,9 @@ public class WebViewActivity extends Activity {
         }
     }
     
+    /**
+     * Handles the back button press, navigating WebView history if possible.
+     */
     @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
@@ -84,6 +94,10 @@ public class WebViewActivity extends Activity {
         }
     }
     
+    /**
+     * Loads the report with caching and background refresh.
+     * @param url The URL of the report to load.
+     */
     private void loadReportWithCaching(String url) {
         ReportDownloader downloader = new ReportDownloader(this);
         
@@ -134,6 +148,10 @@ public class WebViewActivity extends Activity {
         });
     }
     
+    /**
+     * Starts a background refresh of the report content.
+     * @param url The URL to refresh from.
+     */
     private void startBackgroundRefresh(String url) {
         Log.d("WebViewActivity", "Starting background refresh for URL: " + url);
         
@@ -160,6 +178,12 @@ public class WebViewActivity extends Activity {
         });
     }
     
+    /**
+     * Reads the content of a cached file as a string.
+     * @param filePath The path to the cached file.
+     * @return The file content as a string.
+     * @throws IOException If reading fails.
+     */
     private String readCachedFileContent(String filePath) throws IOException {
         StringBuilder content = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));

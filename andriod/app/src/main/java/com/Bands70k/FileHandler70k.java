@@ -26,7 +26,7 @@ import java.util.Map;
 import static com.Bands70k.staticVariables.context;
 
 /**
- * Created by rdorn on 6/5/16.
+ * Handles file operations for the 70k Bands app, including reading, writing, and migrating files.
  */
 public class FileHandler70k {
 
@@ -63,11 +63,17 @@ public class FileHandler70k {
     public static final File alertStorageFile = new File(showBands.newRootDir + directoryName + "70kbandAlertStorage.data");
 
 
+    /**
+     * Constructor for FileHandler70k. Ensures required directories exist and migrates old files.
+     */
     public FileHandler70k(){
         check70KDirExists();
         this.moveOldFiles();
     }
 
+    /**
+     * Moves old files from legacy locations to the current directory structure.
+     */
     private static void moveOldFiles(){
 
         final File oldAlertData = new File(Environment.getExternalStorageDirectory() + "/70kAlertData.csv");
@@ -110,6 +116,9 @@ public class FileHandler70k {
     }
 
 
+    /**
+     * Checks and creates required directories and .nomedia files if they do not exist.
+     */
     private void check70KDirExists(){
 
         if(baseDirectory.exists() && baseDirectory.isDirectory()) {
@@ -163,6 +172,10 @@ public class FileHandler70k {
 
     }
 
+    /**
+     * Checks if the country file exists.
+     * @return True if the country file exists, false otherwise.
+     */
     public static Boolean doesCountryFileExist(){
 
         Boolean exists = false;
@@ -174,6 +187,11 @@ public class FileHandler70k {
         return exists;
     }
 
+    /**
+     * Saves string data to a file.
+     * @param data The data to save.
+     * @param fileHandle The file to write to.
+     */
     public static void saveData(String data, File fileHandle){
 
         Log.d("Save Data", data);
@@ -190,6 +208,11 @@ public class FileHandler70k {
 
     }
 
+    /**
+     * Loads string data from a file.
+     * @param fileHandle The file to read from.
+     * @return The loaded data as a string.
+     */
     public static String loadData(File fileHandle){
 
         String data = "";
@@ -209,6 +232,11 @@ public class FileHandler70k {
 
         return data;
     }
+    /**
+     * Serializes and writes an object to a file.
+     * @param object The object to write.
+     * @param fileHandle The file to write to.
+     */
     public static void writeObject (Object object, File fileHandle){
 
         ObjectOutput out = null;
@@ -223,6 +251,11 @@ public class FileHandler70k {
         }
     }
 
+    /**
+     * Reads a serialized Map<String, String> object from a file.
+     * @param fileHandle The file to read from.
+     * @return The deserialized map, or an empty map if an error occurs.
+     */
     public static Map<String,String> readObject(File fileHandle){
         ObjectInputStream input;
         Map<String, String> dataBundle = new HashMap<String, String>();
@@ -237,6 +270,11 @@ public class FileHandler70k {
         return dataBundle;
     }
 
+    /**
+     * Reads a serialized mainListHandler object from a file.
+     * @param fileHandle The file to read from.
+     * @return The deserialized mainListHandler object, or a new one if an error occurs.
+     */
     public static mainListHandler readmainListHandlerCache (File fileHandle){
 
         Log.d("loadingpopulateBandInfo", "From cached data");
@@ -255,6 +293,13 @@ public class FileHandler70k {
         return mainListHandle;
     }
 
+    /**
+     * Reads a serialized bandListView object from a file.
+     * @param fileHandle The file to read from.
+     * @param context The context.
+     * @param textViewResourceId The resource ID for the layout file.
+     * @return The deserialized bandListView object, or a new one if an error occurs.
+     */
     public static bandListView readBandListHandlerCache (File fileHandle, Context context, int textViewResourceId){
 
         Log.d("loadingBandInfo", "From cached data");
