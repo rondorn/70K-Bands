@@ -23,11 +23,18 @@ import android.widget.Toast;
 
 import java.lang.reflect.Field;
 
+/**
+ * Handles the filter menu button and related UI logic for filtering bands.
+ */
 //public class FilterButtonHandler {
 public class FilterButtonHandler  {
     public Button filterMenuButton;
     private PopupWindow popupWindow;
     private static View messageView;
+    /**
+     * Sets up the filter button and its click listener.
+     * @param showBands The main activity instance.
+     */
     public void setUpFiltersButton(showBands showBands){
 
         filterMenuButton = (Button) showBands.findViewById(R.id.FilerMenu);
@@ -69,6 +76,12 @@ public class FilterButtonHandler  {
         });
     }
 
+    /**
+     * Refreshes the filter UI and shows a message after a button click.
+     * @param popupWindow The popup window containing the filters.
+     * @param showBands The main activity instance.
+     * @param message The message to display.
+     */
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
 
         //popupWindow.dismiss();
@@ -91,6 +104,12 @@ public class FilterButtonHandler  {
 
     }
 
+    /**
+     * Hides a menu section by view type and ID.
+     * @param sectionName The resource ID of the section.
+     * @param sectionType The type of the section (TextView or LinearLayout).
+     * @param popupWindow The popup window containing the section.
+     */
     public static void hideMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
         if (sectionType == "TextView") {
@@ -103,6 +122,12 @@ public class FilterButtonHandler  {
         }
     }
 
+    /**
+     * Disables a menu section by view type and ID.
+     * @param sectionName The resource ID of the section.
+     * @param sectionType The type of the section (TextView or LinearLayout).
+     * @param popupWindow The popup window containing the section.
+     */
     public static void disableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
         if (sectionType == "TextView") {
@@ -115,6 +140,12 @@ public class FilterButtonHandler  {
         }
     }
 
+    /**
+     * Enables a menu section by view type and ID.
+     * @param sectionName The resource ID of the section.
+     * @param sectionType The type of the section (TextView or LinearLayout).
+     * @param popupWindow The popup window containing the section.
+     */
     public static void enableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
         if (sectionType == "TextView") {
@@ -127,6 +158,12 @@ public class FilterButtonHandler  {
         }
     }
 
+    /**
+     * Shows a menu section by view type and ID.
+     * @param sectionName The resource ID of the section.
+     * @param sectionType The type of the section (TextView or LinearLayout).
+     * @param popupWindow The popup window containing the section.
+     */
     public static void showMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
         if (sectionType == "TextView") {
@@ -139,6 +176,10 @@ public class FilterButtonHandler  {
         }
     }
 
+    /**
+     * Checks if all venue or status filters are off and blocks the change if so, showing a message.
+     * @return True if the change should be blocked, false otherwise.
+     */
     public static Boolean blockTurningAllFiltersOn(){
 
         Boolean blockChange = false;

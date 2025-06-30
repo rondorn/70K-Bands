@@ -25,6 +25,9 @@ import java.util.List;
 import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
 
+/**
+ * Custom ArrayAdapter for displaying a list of bands with detailed views and custom logic.
+ */
 public class bandListView extends ArrayAdapter<bandListItem> {
 
     final List<bandListItem> bandInfoList = new ArrayList<>();
@@ -33,6 +36,9 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
     public static Integer previousPosition = 1;
 
+    /**
+     * ViewHolder pattern for band list item views.
+     */
     static class bandListHolder{
         ImageView rankImage;
         ImageView eventTypeImage;
@@ -51,21 +57,42 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         TextView bottomSpacer;
     }
 
+    /**
+     * Constructor for bandListView.
+     * @param context The context.
+     * @param textViewResourceId The resource ID for the layout file.
+     */
     public bandListView(Context context, int textViewResourceId) {
         super(context, textViewResourceId);
     }
 
+    /**
+     * Gets the bandListItem at the specified index.
+     * @param index The index of the item.
+     * @return The bandListItem at the given index.
+     */
     @Override
     public bandListItem getItem(int index) {
         return this.bandInfoList.get(index);
     }
 
+    /**
+     * Adds a bandListItem to the adapter and internal list.
+     * @param object The bandListItem to add.
+     */
     @Override
     public void add(bandListItem object) {
         bandInfoList.add(object);
         super.add(object);
     }
 
+    /**
+     * Returns the view for a specific position in the list.
+     * @param position The position of the item.
+     * @param convertView The old view to reuse, if possible.
+     * @param parent The parent view group.
+     * @return The view corresponding to the data at the specified position.
+     */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
@@ -246,6 +273,12 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         return row;
     }
 
+    /**
+     * Sets partial schedule value info for a cell.
+     * @param viewHolder The view holder for the cell.
+     * @param bandData The band data for the cell.
+     * @param locationColorChoice The color for the location.
+     */
     private void getCellScheduleValuePartialInfo(bandListHolder viewHolder, bandListItem bandData, String locationColorChoice){
         String fullLocation = bandData.getLocation();
         String venueOnly = "";
@@ -289,6 +322,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         viewHolder.location.setText(locationOnly);
     }
 
+    /**
+     * Sets full schedule value info for a cell.
+     * @param viewHolder The view holder for the cell.
+     * @param bandData The band data for the cell.
+     */
     private void getCellScheduleValueFullInfo(bandListHolder viewHolder, bandListItem bandData){
 
         String eventNote = bandData.getEventNote();
@@ -301,6 +339,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         viewHolder.bandName.setTextColor(Color.parseColor("#FFFFFF"));
     }
 
+    /**
+     * Gets the screen width in pixels for the given context.
+     * @param context The context.
+     * @return The screen width in pixels.
+     */
     private static Integer getScreenWidth(Context context)
     {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);

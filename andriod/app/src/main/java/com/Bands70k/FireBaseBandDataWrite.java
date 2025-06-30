@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles writing band ranking data to Firebase and local cache.
+ */
 public class FireBaseBandDataWrite {
 
     private DatabaseReference mDatabase;
@@ -21,11 +24,17 @@ public class FireBaseBandDataWrite {
     private Map<String,String> bandRanks = new HashMap<>();
     private File bandRankCacheFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "bandRankCacheFile.data");
 
+    /**
+     * Constructs a FireBaseBandDataWrite and initializes the database reference.
+     */
     FireBaseBandDataWrite(){
             mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
 
+    /**
+     * Writes band ranking data to Firebase if data has changed.
+     */
     public void writeData(){
 
         Log.d("FireBaseBandDataWrite", "In write routine");
@@ -59,6 +68,9 @@ public class FireBaseBandDataWrite {
         }
     }
 
+    /**
+     * Builds the band ranking array from current band info and rankings.
+     */
     private void buildBandRankArray(){
 
         BandInfo bandInfoNames = new BandInfo();
@@ -87,6 +99,10 @@ public class FireBaseBandDataWrite {
 
     }
 
+    /**
+     * Checks if the band ranking data has changed since last write.
+     * @return True if data has changed, false otherwise.
+     */
     private Boolean checkIfDataHasChanged(){
 
         Boolean result = true;

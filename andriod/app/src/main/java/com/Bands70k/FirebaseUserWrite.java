@@ -18,15 +18,23 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * Handles writing user data to Firebase, including country, language, and version info.
+ */
 public class FirebaseUserWrite {
 
     private DatabaseReference mDatabase;
 
+    /**
+     * Constructs a FirebaseUserWrite and initializes the database reference.
+     */
     FirebaseUserWrite(){
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-
+    /**
+     * Writes user data to Firebase if data has changed.
+     */
     public void writeData(){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
@@ -90,6 +98,10 @@ public class FirebaseUserWrite {
         }
     }
 
+    /**
+     * Gets the current date string in UTC format.
+     * @return The current date string in UTC.
+     */
     private String getCurrentDateString(){
 
         Date date = new Date();

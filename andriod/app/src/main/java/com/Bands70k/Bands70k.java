@@ -14,12 +14,15 @@ import android.util.Log;
 import androidx.activity.EdgeToEdge;
 
 /**
- * Created by rdorn on 5/26/16.
+ * Application class for 70K Bands, provides global application context.
  */
 public class Bands70k extends Application {
 
     private static Context context;
 
+    /**
+     * Called when the application is created. Initializes context and online status.
+     */
     public void onCreate() {
 
         super.onCreate();
@@ -30,6 +33,10 @@ public class Bands70k extends Application {
 
     }
 
+    /**
+     * Gets the global application context.
+     * @return The application context.
+     */
     public static Context getAppContext() {
         return Bands70k.context;
     }

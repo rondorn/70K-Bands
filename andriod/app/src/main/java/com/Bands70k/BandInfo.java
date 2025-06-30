@@ -24,9 +24,8 @@ import static android.app.ActivityManager.isRunningInTestHarness;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
 /**
- * Created by rdorn on 7/25/15.
+ * Represents band information and provides methods to retrieve and manage band-related data.
  */
-
 public class BandInfo {
 
     private static Map<String, Map> bandData = new HashMap<String, Map>();
@@ -37,20 +36,35 @@ public class BandInfo {
 
     public Map<String,String> downloadUrls = new HashMap<String, String>();
 
+    /**
+     * Called to set up thread policy for network operations.
+     */
     public void onCreate() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
     }
 
+    /**
+     * Sets the selected band name.
+     * @param value The name of the selected band.
+     */
     public static void setSelectedBand(String value){
         selectedBand = value;
     }
 
+    /**
+     * Gets the currently selected band name.
+     * @return The name of the selected band.
+     */
     public static String getSelectedBand(){
         return selectedBand;
     }
     public FileHandler70k fileHandle = new FileHandler70k();
 
+    /**
+     * Returns a list of filtered band names based on user preferences.
+     * @return ArrayList of filtered band names.
+     */
     public ArrayList<String> getBandNames(){
 
 
@@ -92,6 +106,11 @@ public class BandInfo {
         return filteredBandNames;
     }
 
+    /**
+     * Returns a list of ranked band names based on user preferences.
+     * @param bandNames List of band names to rank.
+     * @return ArrayList of ranked band names.
+     */
     public ArrayList<String> getRankedBandNames(ArrayList<String> bandNames){
 
         Collections.sort(bandNames);
@@ -130,6 +149,11 @@ public class BandInfo {
         return rankedBandNames;
     }
 
+    /**
+     * Gets the official website link for a band.
+     * @param bandName The name of the band.
+     * @return The official website URL or blank if not available.
+     */
     public static String getOfficalWebLink(String bandName){
 
         if (getBandDetailsData(bandName, "officalSite") != null){
@@ -139,6 +163,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the image URL for a band.
+     * @param bandName The name of the band.
+     * @return The image URL or blank if not available.
+     */
     public static String getImageUrl(String bandName){
 
 
@@ -156,6 +185,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the Wikipedia link for a band.
+     * @param bandName The name of the band.
+     * @return The Wikipedia URL or blank if not available.
+     */
     public static String getWikipediaWebLink(String bandName){
         if (getBandDetailsData(bandName, "wikipedia") != null) {
             return getBandDetailsData(bandName, "wikipedia");
@@ -164,6 +198,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the YouTube link for a band.
+     * @param bandName The name of the band.
+     * @return The YouTube URL or blank if not available.
+     */
     public static String getYouTubeWebLink(String bandName){
         if (getBandDetailsData(bandName, "youtube") != null) {
             return getBandDetailsData(bandName, "youtube");
@@ -172,6 +211,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the Metal Archives link for a band.
+     * @param bandName The name of the band.
+     * @return The Metal Archives URL or blank if not available.
+     */
     public static String getMetalArchivesWebLink(String bandName){
         if (getBandDetailsData(bandName, "metalArchives") != null) {
             return getBandDetailsData(bandName, "metalArchives");
@@ -180,6 +224,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the country for a band.
+     * @param bandName The name of the band.
+     * @return The country or blank if not available.
+     */
     public static String getCountry(String bandName){
         if (getBandDetailsData(bandName, "country") != null) {
             return getBandDetailsData(bandName, "country");
@@ -188,6 +237,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the genre for a band.
+     * @param bandName The name of the band.
+     * @return The genre or blank if not available.
+     */
     public static String getGenre(String bandName){
         if (getBandDetailsData(bandName, "genre") != null) {
             return getBandDetailsData(bandName, "genre");
@@ -196,6 +250,11 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Gets the prior years for a band.
+     * @param bandName The name of the band.
+     * @return The prior years as a string or blank if not available.
+     */
     public static String getPriorYears(String bandName){
         if (getBandDetailsData(bandName, "priorYears") != null) {
             String priorYears = getBandDetailsData(bandName, "priorYears");
@@ -206,6 +265,11 @@ public class BandInfo {
             return " ";
         }
     }
+    /**
+     * Gets the note for a band.
+     * @param bandName The name of the band.
+     * @return The note or blank if not available.
+     */
     public static String getNote(String bandName){
         if (getBandDetailsData(bandName, "note") != null) {
             return getBandDetailsData(bandName, "note");
@@ -214,6 +278,12 @@ public class BandInfo {
         }
     }
 
+    /**
+     * Helper method to get band details data by key.
+     * @param bandName The name of the band.
+     * @param key The key to look up.
+     * @return The value for the key or blank if not available.
+     */
     private static String getBandDetailsData (String bandName, String key){
 
         String data = "";
@@ -232,6 +302,9 @@ public class BandInfo {
         return data;
     }
 
+    /**
+     * Populates the downloadUrls map with URLs for artist, schedule, and description map.
+     */
     public void getDownloadtUrls(){
 
         downloadUrls.put("artistUrl", staticVariables.artistURL);
@@ -240,6 +313,10 @@ public class BandInfo {
 
     }
 
+    /**
+     * Downloads the band file and parses it, also downloads the schedule file.
+     * @return ArrayList of band names.
+     */
     public ArrayList<String> DownloadBandFile(){
 
         getDownloadtUrls();
@@ -289,6 +366,10 @@ public class BandInfo {
         return bandNames;
     }
 
+    /**
+     * Parses the band CSV file and populates band data.
+     * @return ArrayList of band names.
+     */
     public ArrayList<String> ParseBandCSV(){
 
         ArrayList<String> bandNames = new ArrayList<String>();
@@ -335,6 +416,14 @@ public class BandInfo {
         return bandNames;
     }
 
+    /**
+     * Helper method to add a value to the band details map.
+     * @param variable The variable name.
+     * @param data The data array.
+     * @param index The index in the data array.
+     * @param bandDetails The band details map.
+     * @return The updated band details map.
+     */
     private Map<String, String> addToBandDetails(String variable, String[] data, Integer index, Map<String, String> bandDetails){
 
         String value = "";

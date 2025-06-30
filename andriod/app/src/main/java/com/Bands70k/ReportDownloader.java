@@ -17,21 +17,45 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * Handles downloading and caching of the report dashboard HTML file for the app.
+ */
 public class ReportDownloader {
     
     private static final String TAG = "ReportDownloader";
     private static final String REPORT_FILENAME = "report_dashboard.html";
     private Context context;
     
+    /**
+     * Callback interface for download completion or error.
+     */
     public interface DownloadCallback {
+        /**
+         * Called when the download is complete.
+         * @param filePath The path to the downloaded or cached file.
+         * @param htmlContent The HTML content of the report.
+         */
         void onDownloadComplete(String filePath, String htmlContent);
+        /**
+         * Called when there is an error during download or reading cached file.
+         * @param error The error message.
+         */
         void onDownloadError(String error);
     }
     
+    /**
+     * Constructs a ReportDownloader with the given context.
+     * @param context The application context.
+     */
     public ReportDownloader(Context context) {
         this.context = context;
     }
     
+    /**
+     * Downloads the report from the given URL or loads from cache if offline.
+     * @param url The URL to download the report from.
+     * @param callback The callback to notify on completion or error.
+     */
     public void downloadReport(String url, DownloadCallback callback) {
         if (isNetworkAvailable()) {
             new DownloadTask(callback).execute(url);
@@ -51,6 +75,12 @@ public class ReportDownloader {
         }
     }
     
+    /**
+     * Reads the content of a file as a string.
+     * @param filePath The path to the file.
+     * @return The file content as a string.
+     * @throws IOException If reading fails.
+     */
     private String readFileContent(String filePath) throws IOException {
         StringBuilder content = new StringBuilder();
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
@@ -62,10 +92,18 @@ public class ReportDownloader {
         return content.toString();
     }
     
+    /**
+     * Gets the path to the cached report file.
+     * @return The absolute path to the cached report file.
+     */
     public String getCachedReportPath() {
         return context.getFilesDir().getAbsolutePath() + File.separator + REPORT_FILENAME;
     }
     
+    /**
+     * Checks if network is available.
+     * @return True if network is available, false otherwise.
+     */
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = 
             (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -73,10 +111,17 @@ public class ReportDownloader {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
     
+    /**
+     * AsyncTask for downloading the report HTML content in the background.
+     */
     private class DownloadTask extends AsyncTask<String, Void, String> {
         private DownloadCallback callback;
         private String errorMessage;
         
+        /**
+         * Constructs a DownloadTask with the given callback.
+         * @param callback The callback to notify on completion or error.
+         */
         public DownloadTask(DownloadCallback callback) {
             this.callback = callback;
         }
@@ -120,6 +165,12 @@ public class ReportDownloader {
             }
         }
         
+        /**
+         * Downloads the HTML content from the given URL and saves it to cache.
+         * @param urlString The URL to download from.
+         * @return The file path to the saved HTML file.
+         * @throws IOException If download or save fails.
+         */
         private String downloadHtmlContent(String urlString) throws IOException {
             Log.d(TAG, "Downloading from URL: " + urlString);
             
@@ -158,6 +209,12 @@ public class ReportDownloader {
             }
         }
         
+        /**
+         * Reads an InputStream into a string.
+         * @param inputStream The input stream to read.
+         * @return The content as a string.
+         * @throws IOException If reading fails.
+         */
         private String readStream(InputStream inputStream) throws IOException {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuilder content = new StringBuilder();
@@ -171,6 +228,12 @@ public class ReportDownloader {
             return content.toString();
         }
         
+        /**
+         * Saves content to a file at the given path.
+         * @param content The content to save.
+         * @param filePath The file path to save to.
+         * @throws IOException If writing fails.
+         */
         private void saveToFile(String content, String filePath) throws IOException {
             try {
                 File file = new File(filePath);

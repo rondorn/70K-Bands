@@ -14,6 +14,9 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Handles writing attended event data to Firebase and local cache.
+ */
 public class FirebaseEventDataWrite {
 
 
@@ -21,11 +24,17 @@ public class FirebaseEventDataWrite {
     private File eventDataCacheFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "eventDataCacheFile.data");
 
 
+    /**
+     * Constructs a FirebaseEventDataWrite and initializes the database reference.
+     */
     FirebaseEventDataWrite(){
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
 
+    /**
+     * Writes attended event data to Firebase if data has changed.
+     */
     public void writeData(){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
@@ -82,6 +91,11 @@ public class FirebaseEventDataWrite {
     }
 
 
+    /**
+     * Checks if the attended event data has changed since last write.
+     * @param showsAttendedArray The map of attended events.
+     * @return True if data has changed, false otherwise.
+     */
     private Boolean checkIfDataHasChanged(Map<String, String> showsAttendedArray){
 
         Boolean result = true;
