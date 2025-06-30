@@ -174,7 +174,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         localNotification.clearNotifications()
         localNotification.addNotifications()
         
-        masterView.quickRefresh()
+        // Perform data loading in the background
+        DispatchQueue.global(qos: .background).async {
+            masterView.bandNameHandle.gatherData()
+            masterView.schedule.DownloadCsv()
+            masterView.schedule.populateSchedule()
+            
+            // Once done, refresh the GUI on the main thread
+            DispatchQueue.main.async {
+                masterView.refreshData(isUserInitiated: true)
+            }
+        }
     }
     
     /// Builds the event year menu for selecting different event years.
