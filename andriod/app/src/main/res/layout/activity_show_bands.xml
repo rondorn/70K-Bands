@@ -6,7 +6,8 @@
     android:background="#FF000000"
     android:id="@+id/showBandsView"
     android:theme="@style/NavigationView"
-    android:gravity="top">
+    android:gravity="top"
+    android:fitsSystemWindows="true">
 
     <!-- Download Report Button in upper left corner -->
     <Button
