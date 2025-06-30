@@ -546,7 +546,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
 
     func loadComments(){
-        customNotesText.text = bandNotes.getDescription(bandName: bandName)
+        let noteText = bandNotes.getDescription(bandName: bandName)
+        customNotesText.text = noteText
         customNotesText.textColor = UIColor.white
         setNotesHeight()
         
@@ -563,6 +564,27 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.text = "\n" + customNotesText.text
         }
         
+        // If no note data exists, but a note URL is available, download in background and update UI
+        if noteText.isEmpty || noteText.starts(with: "Comment text is not available yet") {
+            guard let safeBandName = bandName else { return }
+            let noteUrl = bandNotes.getDescriptionUrl(safeBandName)
+            if !noteUrl.isEmpty {
+                let currentBand = safeBandName
+                DispatchQueue.global(qos: .background).async {
+                    let downloadedNote = self.bandNotes.getDescriptionFromUrl(bandName: currentBand, descriptionUrl: noteUrl)
+                    DispatchQueue.main.async {
+                        // Only update if still showing the same band
+                        if self.bandName == currentBand {
+                            self.customNotesText.text = downloadedNote
+                            self.setNotesHeight()
+                            self.showBandDetails()
+                            self.customNotesText.setNeedsDisplay()
+                            self.customNotesText.layoutIfNeeded()
+                        }
+                    }
+                }
+            }
+        }
     }
     
     func saveComments(){

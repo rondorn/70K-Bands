@@ -137,6 +137,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // This must happen BEFORE reading iCloud data to prevent conflicts
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
+            
+            let notes = CustomBandDescription()
+            notes.getAllDescriptions()
         }
         
         application.registerForRemoteNotifications()
