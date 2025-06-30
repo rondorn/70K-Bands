@@ -11,9 +11,16 @@ import android.widget.Toast;
 //import com.google.android.material.snackbar.BaseTransientBottomBar;
 //import com.google.android.material.snackbar.Snackbar;
 
+/**
+ * Utility class for displaying help and toast messages to the user.
+ */
 public class HelpMessageHandler {
 
     private static Toast mytoast;
+    /**
+     * Shows a toast message centered on the screen.
+     * @param message The message to display.
+     */
     public static void showMessage(String message){
 
         if (mytoast != null) {
@@ -26,6 +33,11 @@ public class HelpMessageHandler {
         }
     }
 
+    /**
+     * Shows a toast message and (optionally) a snackbar on the provided view.
+     * @param message The message to display.
+     * @param mainView The main view to anchor the snackbar (currently unused).
+     */
     public static void showMessage(String message, View mainView){
 
         HelpMessageHandler.showMessage(message);

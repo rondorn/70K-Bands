@@ -32,7 +32,7 @@ import java.util.TimeZone;
 import static com.Bands70k.staticVariables.context;
 
 /**
- * Created by rdorn on 5/26/16.
+ * Handles scheduling and management of local notifications for band events.
  */
 public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<String>> {
 
@@ -41,6 +41,9 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     ArrayList<String> result;
 
+    /**
+     * Default constructor for scheduleAlertHandler. Sets up notification channels if needed.
+     */
     public scheduleAlertHandler(){
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -78,6 +81,9 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
 
     }
 
+    /**
+     * Schedules alerts for all upcoming events based on user preferences.
+     */
     public void scheduleAlerts(){
 
         if (staticVariables.schedulingAlert == false) {
@@ -148,6 +154,11 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         }
     }
 
+    /**
+     * Sends a local notification alert after a specified delay.
+     * @param alertMessage The message to display.
+     * @param delay The delay in seconds before the alert is shown.
+     */
     public void sendLocalAlert(String alertMessage, int delay){
 
         if (staticVariables.alertMessages.contains(alertMessage) == false) {
@@ -164,6 +175,13 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         }
     }
 
+    /**
+     * Schedules a notification with the given parameters.
+     * @param notification The notification to schedule.
+     * @param delay The delay in milliseconds before the notification is shown.
+     * @param unuiqueID The unique ID for the notification.
+     * @param content The content/message for the notification.
+     */
     public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content) {
 
         try {

@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Holds global static variables and utility methods for the 70K Bands app.
  * Created by rdorn on 8/1/15.
  */
 public class staticVariables {
@@ -239,16 +240,27 @@ public class staticVariables {
 
     public static String searchCriteria = "";
 
+    /**
+     * Updates the cached mainListHandler instance.
+     * @param listHandler The mainListHandler to cache.
+     */
     public static synchronized void updatelistHandlerCache(mainListHandler listHandler) {
         Log.d("listHandlerCache", "updating cache");
         staticVariables.listHandlerCache = listHandler;
         Log.d("listHandlerCache", "done updating cache");
     }
 
+    /**
+     * Gets the cached mainListHandler instance.
+     * @return The cached mainListHandler.
+     */
     public static synchronized mainListHandler getlistHandlerCache() {
         return staticVariables.listHandlerCache;
     }
 
+    /**
+     * Initializes static variables and preferences if not already loaded.
+     */
     public static void staticVariablesInitialize() {
 
         preferences.loadData();
@@ -303,6 +315,11 @@ public class staticVariables {
         setupVenueLocations();
     }
 
+    /**
+     * Checks if the given emoji can be displayed as a flag.
+     * @param emoji The emoji string.
+     * @return True if the emoji can be displayed, false otherwise.
+     */
     private static boolean canShowFlagEmoji(String emoji) {
         Paint paint = new Paint();
 
@@ -324,6 +341,9 @@ public class staticVariables {
         }
     }
 
+    /**
+     * Sets up the venue locations mapping.
+     */
     public static void setupVenueLocations() {
 
         venueLocation.put(poolVenueText, "Deck 11");
@@ -335,6 +355,10 @@ public class staticVariables {
         venueLocation.put("Boleros Lounge", "Deck 4");
     }
 
+    /**
+     * Verifies and requests storage permissions for the given activity.
+     * @param activity The activity to request permissions for.
+     */
     public static void verifyStoragePermissions(Activity activity){
 
         // Check if we have write permission
@@ -353,6 +377,11 @@ public class staticVariables {
 
     }
 
+    /**
+     * Gets the icon for a given event type.
+     * @param eventType The event type string.
+     * @return The icon string for the event type.
+     */
     public static String getEventTypeIcon (String eventType){
 
         String icon;
@@ -387,6 +416,11 @@ public class staticVariables {
         return icon;
     }
 
+    /**
+     * Gets the icon for a given venue.
+     * @param venue The venue string.
+     * @return The icon string for the venue.
+     */
     public static String getVenuIcon(String venue) {
 
         String icon = "";
@@ -407,6 +441,11 @@ public class staticVariables {
         return icon;
     }
 
+    /**
+     * Gets the color for a given venue.
+     * @param venue The venue string.
+     * @return The color string for the venue.
+     */
     public static String getVenueColor(String venue){
 
         String color = "";
@@ -430,6 +469,11 @@ public class staticVariables {
         return color;
     }
 
+    /**
+     * Gets the icon for a given rank name.
+     * @param rankName The rank name string.
+     * @return The icon string for the rank.
+     */
     public static String getRankIcon (String rankName){
 
         String icon = "";
@@ -451,6 +495,9 @@ public class staticVariables {
         return icon;
     }
 
+    /**
+     * Loads the event year from file and updates static variables.
+     */
     public static void getEventYear(){
 
         eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
@@ -466,6 +513,10 @@ public class staticVariables {
 
     }
 
+    /**
+     * Reads the event year from the event year file.
+     * @return The event year as an integer.
+     */
     private static Integer readEventYearFile(){
 
         String eventYearString = "";
@@ -484,6 +535,9 @@ public class staticVariables {
         return Integer.valueOf(eventYearString);
     }
 
+    /**
+     * Writes the current event year to the event year file.
+     */
     private static void writeEventYearFile(){
 
         FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
@@ -491,6 +545,9 @@ public class staticVariables {
 
     }
 
+    /**
+     * Looks up and sets URLs for artist and schedule data.
+     */
     public static void lookupUrls(){
 
         String pointerUrl = staticVariables.defaultUrls;
@@ -547,6 +604,12 @@ public class staticVariables {
         }
     }
 
+    /**
+     * Reads pointer data from records for a given event year index.
+     * @param records The pointer data records.
+     * @param eventYearIndex The event year index.
+     * @return A map of pointer data.
+     */
     private static Map<String, String> readPointData(String[] records, String eventYearIndex){
 
         Map<String, String> downloadUrls = new HashMap<String, String>();

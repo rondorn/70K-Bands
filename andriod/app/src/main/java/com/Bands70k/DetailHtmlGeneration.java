@@ -11,16 +11,28 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Generates HTML for displaying band details, schedules, and links in the app.
+ */
 public class DetailHtmlGeneration {
 
     private Integer noteViewPercentage = 54;
     private Integer noteViewPercentageDefault = 54;
     private Context mContext;
 
+    /**
+     * Constructor for DetailHtmlGeneration.
+     * @param context The application context.
+     */
     public DetailHtmlGeneration(Context context) {
         mContext = context;
     }
 
+    /**
+     * Sets up the HTML for the band title and logo.
+     * @param bandName The name of the band.
+     * @return The HTML string for the title and logo.
+     */
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
@@ -44,6 +56,12 @@ public class DetailHtmlGeneration {
         return htmlText;
 
     }
+    /**
+     * Determines the image boundary for the band logo.
+     * @param image The image URL.
+     * @param bandName The name of the band.
+     * @return The image boundary string for HTML.
+     */
     public String getImageBoundry(String image, String bandName){
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
@@ -83,6 +101,12 @@ public class DetailHtmlGeneration {
         return imageSetup;
     }
 
+    /**
+     * Generates the HTML for the band's schedule.
+     * @param bandName The name of the band.
+     * @param displayWidth The width for display.
+     * @return The HTML string for the schedule.
+     */
     public String displaySchedule(String bandName, int displayWidth){
 
         String scheduleHtml = "";
@@ -164,6 +188,12 @@ public class DetailHtmlGeneration {
         return scheduleHtml;
     }
 
+    /**
+     * Generates the HTML for the band's external links.
+     * @param bandName The name of the band.
+     * @param orientation The orientation (portrait or landscape).
+     * @return The HTML string for the links.
+     */
     public String displayLinks(String bandName, String orientation){
 
         String html = "";
@@ -197,6 +227,11 @@ public class DetailHtmlGeneration {
 
     }
 
+    /**
+     * Generates the HTML for extra band data.
+     * @param bandName The name of the band.
+     * @return The HTML string for extra data.
+     */
     public String displayExtraData(String bandName){
 
         String htmlText = "";

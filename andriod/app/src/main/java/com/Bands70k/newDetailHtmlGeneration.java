@@ -8,15 +8,27 @@ import android.util.Log;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Generates HTML for displaying band details, schedules, and links in the app (new version).
+ */
 public class newDetailHtmlGeneration {
 
     private static Integer noteViewPercentage = 65;
     private Context mContext;
 
+    /**
+     * Constructor for newDetailHtmlGeneration.
+     * @param context The application context.
+     */
     public newDetailHtmlGeneration(Context context) {
         mContext = context;
     }
 
+    /**
+     * Sets up the HTML for the band title and logo.
+     * @param bandName The name of the band.
+     * @return The HTML string for the title and logo.
+     */
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
@@ -39,6 +51,12 @@ public class newDetailHtmlGeneration {
 
     }
 
+    /**
+     * Generates the HTML for the band's schedule.
+     * @param bandName The name of the band.
+     * @param displayWidth The width for display.
+     * @return The HTML string for the schedule.
+     */
     public String displaySchedule(String bandName, int displayWidth){
 
         String scheduleHtml = "";
@@ -130,6 +148,12 @@ public class newDetailHtmlGeneration {
         return scheduleHtml;
     }
 
+    /**
+     * Generates the HTML for the band's external links.
+     * @param bandName The name of the band.
+     * @param orientation The orientation (portrait or landscape).
+     * @return The HTML string for the links.
+     */
     public String displayLinks(String bandName, String orientation){
 
         String html = "";
@@ -163,6 +187,11 @@ public class newDetailHtmlGeneration {
 
     }
 
+    /**
+     * Generates the HTML for extra band data.
+     * @param bandName The name of the band.
+     * @return The HTML string for extra data.
+     */
     public String displayExtraData(String bandName){
 
         String htmlText = "";
@@ -188,6 +217,11 @@ public class newDetailHtmlGeneration {
         return htmlText;
     }
 
+    /**
+     * Generates the HTML for displaying band notes.
+     * @param bandNote The note to display.
+     * @return The HTML string for the notes section.
+     */
     public String displayNotes(String bandNote){
 
         String notesHeight = String.valueOf(noteViewPercentage) + "%";
@@ -202,6 +236,15 @@ public class newDetailHtmlGeneration {
         return htmlText;
     }
 
+    /**
+     * Generates the HTML for the must/might/wont buttons and icons.
+     * @param rankIconLocation The location of the rank icon.
+     * @param unknownButtonColor The color for the unknown button.
+     * @param mustButtonColor The color for the must button.
+     * @param mightButtonColor The color for the might button.
+     * @param wontButtonColor The color for the wont button.
+     * @return The HTML string for the must/might/wont section.
+     */
     public String displayMustMightWont(String rankIconLocation,
                                               String unknownButtonColor,
                                               String mustButtonColor,

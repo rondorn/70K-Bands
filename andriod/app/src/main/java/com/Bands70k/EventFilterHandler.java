@@ -12,13 +12,25 @@ import android.widget.Toast;
 
 import androidx.appcompat.content.res.AppCompatResources;
 
+/**
+ * Handles event type filtering logic and UI for the filter menu.
+ */
 public class EventFilterHandler {
 
     private PopupWindow popupWindow;
 
+    /**
+     * Constructs an EventFilterHandler with the given popup window.
+     * @param value The popup window instance.
+     */
     public EventFilterHandler(PopupWindow value){
         popupWindow = value;
     }
+
+    /**
+     * Sets up event type filter listeners for the filter menu.
+     * @param showBands The main activity instance.
+     */
     public void setupEventTypeListener(showBands showBands){
 
         LinearLayout meetAndGreetFilterAll = (LinearLayout) popupWindow.getContentView().findViewById(R.id.meetAndGreetFilterAll);
@@ -78,6 +90,9 @@ public class EventFilterHandler {
     }
 
 
+    /**
+     * Updates the event type filter UI icons and text based on preferences.
+     */
     public void setupEventTypeFilters(){
 
         TextView meetAndGreetFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.meetAndGreetFilter);

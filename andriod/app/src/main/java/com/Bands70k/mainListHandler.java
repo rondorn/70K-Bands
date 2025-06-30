@@ -17,6 +17,7 @@ import java.util.Set;
 
 
 /**
+ * Handles the main list of bands, including sorting, filtering, and display logic.
  * Created by rdorn on 5/29/16.
  */
 public class mainListHandler {
@@ -36,8 +37,15 @@ public class mainListHandler {
 
     public Integer allUpcomingEvents = 0;
 
+    /**
+     * Default constructor for mainListHandler.
+     */
     public mainListHandler(){ }
 
+    /**
+     * Constructor for mainListHandler with showBands reference.
+     * @param showBandsValue The showBands activity instance.
+     */
     public mainListHandler(showBands showBandsValue){
         showBands = showBandsValue;
     }
@@ -46,12 +54,22 @@ public class mainListHandler {
 
     private Map<Integer,String> attendedListMap = new HashMap<Integer,String>();
 
+    /**
+     * Gets the list of sortable band names.
+     * @return The list of sortable band names.
+     */
     public List<String> getSortableBandNames(){
 
         return this.sortableBandNames;
     }
 
 
+    /**
+     * Populates band info and applies filters, returning the sorted list.
+     * @param bandInfo The BandInfo instance.
+     * @param bandList The list of band names.
+     * @return The sorted and filtered list of band names.
+     */
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
         Log.d("loadingpopulateBandInfo", "From live data");
@@ -169,6 +187,12 @@ public class mainListHandler {
         return sortableBandNames;
     }
 
+    /**
+     * Applies all filters to a band at a given time index.
+     * @param bandName The band name.
+     * @param timeIndex The time index.
+     * @return True if the band passes all filters, false otherwise.
+     */
     private boolean applyFilters(String bandName, Long timeIndex) {
 
         boolean status = true;

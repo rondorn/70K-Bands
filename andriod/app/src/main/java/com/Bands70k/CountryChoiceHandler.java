@@ -12,12 +12,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Handles loading and mapping of country codes for the app.
+ */
 public class CountryChoiceHandler {
 
     public CountryChoiceHandler(){
 
     }
 
+    /**
+     * Loads the list of countries from a raw resource file.
+     * @return A map of country codes to country names.
+     */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public static Map<String, String> loadCountriesList(){
 
