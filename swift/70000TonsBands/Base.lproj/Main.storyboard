@@ -1035,9 +1035,8 @@
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="2" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="8" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="7qk-jP-ZS8" userLabel="bandName">
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="2" contentMode="scaleAspectFit" ambiguous="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="8" preferredMaxLayoutWidth="100" translatesAutoresizingMaskIntoConstraints="NO" id="7qk-jP-ZS8" userLabel="bandName">
                                             <rect key="frame" x="4" y="3" width="345" height="32"/>
-                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <accessibility key="accessibilityConfiguration">
                                                 <accessibilityTraits key="traits" notEnabled="YES" updatesFrequently="YES" adjustable="YES"/>
                                             </accessibility>
@@ -1054,8 +1053,8 @@
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </label>
-                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="3" contentMode="scaleAspectFit" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RXb-Rv-NQH" userLabel="Location">
-                                            <rect key="frame" x="4" y="35" width="165" height="23"/>
+                                        <label opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" tag="3" contentMode="scaleAspectFit" ambiguous="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="7" adjustsFontForContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RXb-Rv-NQH" userLabel="Location">
+                                            <rect key="frame" x="4" y="35" width="0.0" height="23"/>
                                             <edgeInsets key="layoutMargins" top="8" left="0.0" bottom="8" right="8"/>
                                             <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -1118,6 +1117,10 @@
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="leading" secondItem="lcn-Dy-3kK" secondAttribute="leading" id="OKt-3K-zXM"/>
                                         <constraint firstAttribute="trailingMargin" secondItem="vEg-TZ-HRF" secondAttribute="trailing" constant="-6" id="Pzs-Qh-pAZ"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="leading" secondItem="DFI-ck-Zrz" secondAttribute="trailing" constant="2" id="QX1-BT-83Y"/>
+                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="leading" secondItem="37f-cq-3Eg" secondAttribute="leading" constant="4" id="RXb-leading"/>
+                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="width" relation="lessThanOrEqual" secondItem="37f-cq-3Eg" secondAttribute="width" multiplier="0.6" id="RXb-max-width"/>
+                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="top" secondItem="7qk-jP-ZS8" secondAttribute="bottom" constant="2" id="RXb-top"/>
+                                        <constraint firstItem="DFI-ck-Zrz" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="RXb-Rv-NQH" secondAttribute="trailing" constant="8" id="RXb-trailing"/>
                                         <constraint firstItem="vEg-TZ-HRF" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="-3" id="VbJ-Jz-bZu"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="leading" secondItem="PCU-mO-3Ph" secondAttribute="leading" id="Wb0-lM-yZF"/>
                                         <constraint firstItem="PCU-mO-3Ph" firstAttribute="top" secondItem="gin-Bv-NjO" secondAttribute="bottom" id="cyN-94-tlB"/>
@@ -1125,10 +1128,6 @@
                                         <constraint firstItem="hHw-8X-kFT" firstAttribute="top" secondItem="37f-cq-3Eg" secondAttribute="topMargin" constant="18" id="hCs-I6-jF6"/>
                                         <constraint firstItem="hHw-8X-kFT" firstAttribute="top" secondItem="ciy-RN-FLS" secondAttribute="top" id="xdW-MJ-hu6"/>
                                         <constraint firstItem="gin-Bv-NjO" firstAttribute="trailing" secondItem="PCU-mO-3Ph" secondAttribute="trailing" id="yho-rP-QQI"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="leading" secondItem="37f-cq-3Eg" secondAttribute="leading" constant="4" id="RXb-leading"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="top" secondItem="7qk-jP-ZS8" secondAttribute="bottom" constant="2" id="RXb-top"/>
-                                        <constraint firstItem="RXb-Rv-NQH" firstAttribute="width" relation="lessThanOrEqual" secondItem="37f-cq-3Eg" secondAttribute="width" multiplier="0.6" id="RXb-max-width"/>
-                                        <constraint firstItem="DFI-ck-Zrz" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="RXb-Rv-NQH" secondAttribute="trailing" constant="8" id="RXb-trailing"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -1146,7 +1145,7 @@
                     <extendedEdge key="edgesForExtendedLayout"/>
                     <toolbarItems/>
                     <navigationItem key="navigationItem" title="70,000 Tons" id="Zdf-7t-Un8">
-                        <barButtonItem key="leftBarButtonItem" image="70KSearch" id="stats-button-mde" userLabel="Stats Item">
+                        <barButtonItem key="leftBarButtonItem" title="Item" image="Stats v 4On Black" style="plain" id="stats-button-mde" userLabel="Stats Item">
                             <connections>
                                 <action selector="statsButtonTapped:" destination="7bK-jq-Zjz" id="stats-action-mde"/>
                             </connections>
@@ -1202,7 +1201,7 @@
                         </barButtonItem>
                         <barButtonItem id="4Ec-Q2-92D">
                             <searchBar key="customView" contentMode="scaleToFill" misplaced="YES" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
-                                <rect key="frame" x="103" y="0.0" width="196" height="44"/>
+                                <rect key="frame" x="103" y="0.0" width="121" height="44"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -1715,6 +1714,7 @@
     </inferredMetricsTieBreakers>
     <resources>
         <image name="70KSearch" width="25" height="25"/>
+        <image name="Stats v 4On Black" width="50" height="50.5"/>
         <image name="icon-gear-alt-Raw" width="26.666666030883789" height="28.333333969116211"/>
         <image name="icon-ma" width="26.666666030883789" height="23"/>
         <image name="icon-share" width="30.666666030883789" height="30"/>
@@ -1726,7 +1726,7 @@
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemGrayColor">
-            <color red="0.55686274509803924" green="0.55686274509803924" blue="0.57647058823529407" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.5568627451" green="0.5568627451" blue="0.57647058819999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
