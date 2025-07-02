@@ -1026,7 +1026,7 @@
                                             <edgeInsets key="layoutMargins" top="8" left="8" bottom="8" right="8"/>
                                         </imageView>
                                         <label hidden="YES" opaque="NO" clearsContextBeforeDrawing="NO" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" text="Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" enabled="NO" id="Arm-wq-HPj">
-                                            <rect key="frame" x="8" y="0.0" width="398" height="58"/>
+                                            <rect key="frame" x="20" y="0.0" width="374" height="58"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                             <accessibility key="accessibilityConfiguration">
                                                 <accessibilityTraits key="traits" staticText="YES" adjustable="YES"/>
@@ -1200,8 +1200,8 @@
                             </button>
                         </barButtonItem>
                         <barButtonItem id="4Ec-Q2-92D">
-                            <searchBar key="customView" contentMode="scaleToFill" misplaced="YES" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
-                                <rect key="frame" x="103" y="0.0" width="121" height="44"/>
+                            <searchBar key="customView" contentMode="scaleToFill" misplaced="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
+                                <rect key="frame" x="103" y="0.0" width="196" height="44"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>

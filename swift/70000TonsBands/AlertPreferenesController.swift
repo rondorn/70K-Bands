@@ -278,16 +278,14 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         selectYearLable.text = NSLocalizedString("SelectYearLabel", comment: "")
         
-        var uidString = "Unknown"
-        if (UIDevice.current.identifierForVendor != nil){
-            if (UIDevice.current.identifierForVendor != nil){
-                uidString = UIDevice.current.identifierForVendor!.uuidString
-            }
+        if let uidString = UIDevice.current.identifierForVendor?.uuidString {
+            userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation + "\nVersion: "
+            userIDLabel.text = userIDLabel.text! + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String)
+            userIDLabel.numberOfLines = 2
+            userIDLabel.adjustsFontSizeToFitWidth = true
+        } else {
+            print("AlertPreferenesController: ERROR - UIDevice identifierForVendor is nil, cannot set uidString")
         }
-        userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation + "\nVersion: "
-        userIDLabel.text = userIDLabel.text! + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String)
-        userIDLabel.numberOfLines = 2
-        userIDLabel.adjustsFontSizeToFitWidth = true
     }
     
     /// Sets the UI elements to reflect the current saved preference values.

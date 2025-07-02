@@ -89,7 +89,12 @@ open class ShowsAttended {
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
             //print ("Loading show attended data!! From json")
-            showsAttendedArray = (try JSONSerialization.jsonObject(with: data, options: []) as? [String : String])!
+            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String : String] {
+                showsAttendedArray = dict
+            } else {
+                print("ShowsAttended: ERROR - Unable to decode showsAttendedArray from JSON, data may be corrupted or in an unexpected format.")
+                showsAttendedArray = [:]
+            }
             print ("Loaded show attended data!! From json \(showsAttendedArray)")
             var needsMigration = false
             let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)

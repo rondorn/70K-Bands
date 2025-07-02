@@ -12,18 +12,18 @@
     <!-- Download Report Button in upper left corner -->
     <Button
         android:id="@+id/downloadReportButton"
-        android:layout_width="80dp"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_marginTop="20dp"
         android:layout_marginLeft="10dp"
-        android:text="📊 Stats"
-        android:textSize="12sp"
-        android:textColor="@android:color/white"
-        android:background="#FF404040"
-        android:contentDescription="View Report Dashboard"
-        android:visibility="gone" />
+        android:text=""
+        android:background="#000000"
+        android:textColor="#FFFFFF"
+        android:drawableLeft="@drawable/stats_icon"
+        android:drawablePadding="20dp"
+        android:contentDescription="View Report Dashboard" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -114,7 +114,8 @@
             android:gravity="right"
             android:background="@drawable/icon_share"
             android:text=""
-            android:layout_alignParentEnd="true"/>
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="10dp"/>
         />
 
     </RelativeLayout >

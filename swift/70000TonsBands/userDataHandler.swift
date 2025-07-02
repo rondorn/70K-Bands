@@ -22,10 +22,10 @@ class userDataHandler: NSObject {
         
         print ("Writing Firebase new userData 1")
         var uidString = "Unknown"
-        if (UIDevice.current.identifierForVendor != nil){
-            if (UIDevice.current.identifierForVendor != nil){
-                uidString = UIDevice.current.identifierForVendor!.uuidString
-            }
+        if let deviceUid = UIDevice.current.identifierForVendor?.uuidString {
+            uidString = deviceUid
+        } else {
+            print("userDataHandler: ERROR - UIDevice identifierForVendor is nil, cannot set uidString")
         }
         
         

@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-let uidString = UIDevice.current.identifierForVendor!.uuidString;
+let uidString: String? = UIDevice.current.identifierForVendor?.uuidString
 
 class iCloudDataHandler {
     
@@ -106,18 +106,20 @@ class iCloudDataHandler {
                 }
                 
                 // ENFORCE: Always use current device UID and timestamp from local data
-                let currentUid = UIDevice.current.identifierForVendor!.uuidString
-                let timestampString = String(format: "%.0f", timestamp) // Format to remove decimals
-                
-                // Use format: priority:uid:timestamp for better conflict resolution
-                let dataString = String(priority) + ":" + currentUid + ":" + timestampString
-                print("iCloudPriority: Writing priority record - bandName: \(bandName), priority: \(priority), uid: \(currentUid), timestamp: \(timestampString)")
-                print("iCloudPriority: Full dataString: \(dataString)")
-                
-                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
-                print("iCloudPriority: Priority record written for band: \(bandName)")
-                NSUbiquitousKeyValueStore.default.synchronize()
-
+                if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+                    let timestampString = String(format: "%.0f", timestamp) // Format to remove decimals
+                    
+                    // Use format: priority:uid:timestamp for better conflict resolution
+                    let dataString = String(priority) + ":" + currentUid + ":" + timestampString
+                    print("iCloudPriority: Writing priority record - bandName: \(bandName), priority: \(priority), uid: \(currentUid), timestamp: \(timestampString)")
+                    print("iCloudPriority: Full dataString: \(dataString)")
+                    
+                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
+                    print("iCloudPriority: Priority record written for band: \(bandName)")
+                    NSUbiquitousKeyValueStore.default.synchronize()
+                } else {
+                    print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot write priority record for band: \(bandName)")
+                }
             }
         }
     }
@@ -178,11 +180,15 @@ class iCloudDataHandler {
                 timestamp = String(format: "%.0f", Date().timeIntervalSince1970)
             }
             let statusOnly = String(statusParts[0])
-            let dataString = statusOnly + ":" + UIDevice.current.identifierForVendor!.uuidString + ":" + timestamp
-            print("iCloudSchedule: Writing schedule record - eventIndex: \(eventIndex), dataString: \(dataString)")
-            NSUbiquitousKeyValueStore.default.set(dataString, forKey: "eventName:" + eventIndex)
-            print("iCloudSchedule: Schedule record written for event: \(eventIndex)")
-            NSUbiquitousKeyValueStore.default.synchronize()
+            if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+                let dataString = statusOnly + ":" + currentUid + ":" + timestamp
+                print("iCloudSchedule: Writing schedule record - eventIndex: \(eventIndex), dataString: \(dataString)")
+                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "eventName:" + eventIndex)
+                print("iCloudSchedule: Schedule record written for event: \(eventIndex)")
+                NSUbiquitousKeyValueStore.default.synchronize()
+            } else {
+                print("iCloudSchedule: ERROR - UIDevice identifierForVendor is nil, cannot write schedule record for event: \(eventIndex)")
+            }
         }
     }
     
@@ -231,72 +237,74 @@ class iCloudDataHandler {
             
             let index = "bandName:" + bandName
             let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: index) ?? "0")
-            let currentUid = UIDevice.current.identifierForVendor!.uuidString
-            
-            print("iCloudPriority: Retrieved value from iCloud: \(tempValue) for key: \(index)")
-            
-            if (tempValue != nil && tempValue.isEmpty == false){
-                let tempData = tempValue.split(separator: ":")
+            if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+                print("iCloudPriority: Retrieved value from iCloud: \(tempValue) for key: \(index)")
                 
-                // Handle new format: priority:uid:timestamp (3 parts)
-                if (tempData.isEmpty == false && tempData.count == 3){
-                    let newPriority = tempData[0]
-                    let uidValue = String(tempData[1])
-                    let timestampValue = Double(tempData[2]) ?? 0
-                    let currentPriority = priorityHandler.getPriorityData(bandName)
+                if (tempValue != nil && tempValue.isEmpty == false){
+                    let tempData = tempValue.split(separator: ":")
                     
-                    print("iCloudPriority: Parsed priority data (new format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: \(timestampValue), currentPriority: \(currentPriority)")
-                    
-                    // RULE 1: Never overwrite local data if UID matches current device
-                    if (uidValue == currentUid){
-                        print("iCloudPriority: UID \(uidValue) matches current device (\(currentUid)), never overwriting local data for band: \(bandName)")
-                        return
-                    }
-                    
-                    // RULE 2: Only update if iCloud data is newer than local data
-                    let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
-                    
-                    print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
-                    
-                    if (localTimestamp > 0){
-                        // Only update if iCloud timestamp is NEWER (>) than local timestamp
-                        if (timestampValue > localTimestamp){
-                            print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
+                    // Handle new format: priority:uid:timestamp (3 parts)
+                    if (tempData.isEmpty == false && tempData.count == 3){
+                        let newPriority = tempData[0]
+                        let uidValue = String(tempData[1])
+                        let timestampValue = Double(tempData[2]) ?? 0
+                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        
+                        print("iCloudPriority: Parsed priority data (new format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: \(timestampValue), currentPriority: \(currentPriority)")
+                        
+                        // RULE 1: Never overwrite local data if UID matches current device
+                        if (uidValue == currentUid){
+                            print("iCloudPriority: UID \(uidValue) matches current device (\(currentUid)), never overwriting local data for band: \(bandName)")
+                            return
+                        }
+                        
+                        // RULE 2: Only update if iCloud data is newer than local data
+                        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                        
+                        print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
+                        
+                        if (localTimestamp > 0){
+                            // Only update if iCloud timestamp is NEWER (>) than local timestamp
+                            if (timestampValue > localTimestamp){
+                                print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
+                                priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                                print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
+                            } else {
+                                print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
+                            }
+                        } else {
+                            // No local timestamp exists, safe to update with iCloud data
+                            print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
                             priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
                             print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
-                        } else {
-                            print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
                         }
-                    } else {
-                        // No local timestamp exists, safe to update with iCloud data
-                        print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
+                    } else if (tempData.count == 2) {
+                        // Handle old format: priority:uid (no timestamp)
+                        let newPriority = tempData[0]
+                        let uidValue = String(tempData[1])
+                        let timestampValue = 0.0
+                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
+
+                        // Always update local data, since we can't compare timestamps
                         priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
-                        print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
+                        print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
+
+                        // Now update iCloud with the new format (priority:uid:currentTime)
+                        let now = Date().timeIntervalSince1970
+                        let dataString = String(newPriority) + ":" + currentUid + ":" + String(format: "%.0f", now)
+                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: index)
+                        NSUbiquitousKeyValueStore.default.synchronize()
+                        print("iCloudPriority: Migrated old format to new format for band: \(bandName)")
+                    } else {
+                        print("iCloudPriority: Invalid data format for band: \(bandName) - expected 3 parts (priority:uid:timestamp), got \(tempData.count) parts. Ignoring old format.")
                     }
-                } else if (tempData.count == 2) {
-                    // Handle old format: priority:uid (no timestamp)
-                    let newPriority = tempData[0]
-                    let uidValue = String(tempData[1])
-                    let timestampValue = 0.0
-                    let currentPriority = priorityHandler.getPriorityData(bandName)
-                    print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
-
-                    // Always update local data, since we can't compare timestamps
-                    priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
-                    print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
-
-                    // Now update iCloud with the new format (priority:uid:currentTime)
-                    let currentUid = UIDevice.current.identifierForVendor!.uuidString
-                    let now = Date().timeIntervalSince1970
-                    let dataString = String(newPriority) + ":" + currentUid + ":" + String(format: "%.0f", now)
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: index)
-                    NSUbiquitousKeyValueStore.default.synchronize()
-                    print("iCloudPriority: Migrated old format to new format for band: \(bandName)")
                 } else {
-                    print("iCloudPriority: Invalid data format for band: \(bandName) - expected 3 parts (priority:uid:timestamp), got \(tempData.count) parts. Ignoring old format.")
+                    print("iCloudPriority: No iCloud data found for band: \(bandName)")
                 }
             } else {
-                print("iCloudPriority: No iCloud data found for band: \(bandName)")
+                print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot compare UIDs for band: \(bandName)")
+                return
             }
             
             print("iCloudPriority: readAPriorityRecord completed for band: \(bandName)")
@@ -389,31 +397,35 @@ class iCloudDataHandler {
         eventIndex = eventIndex + eventType + ":"
         eventIndex = eventIndex + eventYearString
         print("iCloudSchedule: Constructed event index: \(eventIndex)")
-        let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: eventIndex) ?? "0")
-        let currentUid = UIDevice.current.identifierForVendor!.uuidString
-        print("iCloudSchedule: Retrieved value from iCloud: \(tempValue) for eventIndex: \(eventIndex)")
-        if (tempValue != nil && tempValue.isEmpty == false && eventIndex != "0"){
-            let tempData = tempValue.split(separator: ":")
-            if (tempData.isEmpty == false && tempData.count == 3){
-                let newAttended = String(tempData[0])
-                let uidValue = tempData[1]
-                let iCloudTimestamp = Double(tempData[2]) ?? 0
-                let localIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
-                let localTimestamp = attendedHandle.getShowAttendedLastChange(index: localIndex)
-                print("iCloudSchedule: Parsed attendance data \(bandName) - newAttended: \(newAttended), uidValue: \(uidValue), iCloudTimestamp: \(iCloudTimestamp), localTimestamp: \(localTimestamp)")
-                // Only update if iCloud timestamp is newer
-                if (iCloudTimestamp > localTimestamp){
-                    print("iCloudSchedule: iCloud data is newer (\(iCloudTimestamp) > \(localTimestamp)), updating local attendance")
-                    attendedHandle.addShowsAttendedWithStatusAndTime(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: newAttended, newTime: iCloudTimestamp)
-                    print("iCloudSchedule: Attendance updated for event: \(eventIndex) to: \(newAttended)")
+        if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+            let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: eventIndex) ?? "0")
+            print("iCloudSchedule: Retrieved value from iCloud: \(tempValue) for eventIndex: \(eventIndex)")
+            if (tempValue != nil && tempValue.isEmpty == false && eventIndex != "0"){
+                let tempData = tempValue.split(separator: ":")
+                if (tempData.isEmpty == false && tempData.count == 3){
+                    let newAttended = String(tempData[0])
+                    let uidValue = tempData[1]
+                    let iCloudTimestamp = Double(tempData[2]) ?? 0
+                    let localIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
+                    let localTimestamp = attendedHandle.getShowAttendedLastChange(index: localIndex)
+                    print("iCloudSchedule: Parsed attendance data \(bandName) - newAttended: \(newAttended), uidValue: \(uidValue), iCloudTimestamp: \(iCloudTimestamp), localTimestamp: \(localTimestamp)")
+                    // Only update if iCloud timestamp is newer
+                    if (iCloudTimestamp > localTimestamp){
+                        print("iCloudSchedule: iCloud data is newer (\(iCloudTimestamp) > \(localTimestamp)), updating local attendance")
+                        attendedHandle.addShowsAttendedWithStatusAndTime(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: newAttended, newTime: iCloudTimestamp)
+                        print("iCloudSchedule: Attendance updated for event: \(eventIndex) to: \(newAttended)")
+                    } else {
+                        print("iCloudSchedule: Local data is newer or equal (\(iCloudTimestamp) <= \(localTimestamp)), skipping update for event: \(eventIndex)")
+                    }
                 } else {
-                    print("iCloudSchedule: Local data is newer or equal (\(iCloudTimestamp) <= \(localTimestamp)), skipping update for event: \(eventIndex)")
+                    print("iCloudSchedule: Invalid or old data format for event: \(eventIndex). Skipping.")
                 }
             } else {
-                print("iCloudSchedule: Invalid or old data format for event: \(eventIndex). Skipping.")
+                print("iCloudSchedule: No iCloud data found for event: \(eventIndex)")
             }
         } else {
-            print("iCloudSchedule: No iCloud data found for event: \(eventIndex)")
+            print("iCloudSchedule: ERROR - UIDevice identifierForVendor is nil, cannot process event: \(eventIndex)")
+            return
         }
         print("iCloudSchedule: readAScheduleRecord completed for event: \(eventIndex)")
     }
