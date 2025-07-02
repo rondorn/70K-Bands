@@ -460,10 +460,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         isLoadingBandData = false
         writeFiltersFile()
-        quickRefresh()
-        refreshDisplayAfterWake();
-        
-        startScheduleRefreshTimer()
+        // Removed quickRefresh() and refreshDisplayAfterWake() to avoid unnecessary data refreshes
+        // Removed startScheduleRefreshTimer() to avoid restarting timer on every appearance
     }
     
 
