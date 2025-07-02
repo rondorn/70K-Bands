@@ -22,7 +22,8 @@
         android:textSize="12sp"
         android:textColor="@android:color/white"
         android:background="#FF404040"
-        android:contentDescription="View Report Dashboard" />
+        android:contentDescription="View Report Dashboard"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="wrap_content"

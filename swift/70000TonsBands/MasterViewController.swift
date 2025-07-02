@@ -755,8 +755,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var lableCounterString = String();
         var labeleCounter = Int()
         
-        
-        if (listCount != eventCounterUnoffical && listCount > 0){
+        print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
+        if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
