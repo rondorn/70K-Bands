@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 public class WebViewActivity extends Activity {
     
     private WebView webView;
+    private View waitingMessage;
     
     /**
      * Called when the activity is created. Sets up the WebView and loads the report.
@@ -32,6 +33,7 @@ public class WebViewActivity extends Activity {
         setContentView(R.layout.webview_activity);
         
         webView = findViewById(R.id.webView);
+        waitingMessage = findViewById(R.id.waitingMessage);
         
         // Configure WebView settings
         WebSettings webSettings = webView.getSettings();
@@ -87,10 +89,15 @@ public class WebViewActivity extends Activity {
      */
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
+        boolean isStatsPage = getIntent().getBooleanExtra("isStatsPage", false);
+        if (isStatsPage) {
+            finish();
         } else {
-            super.onBackPressed();
+            if (webView.canGoBack()) {
+                webView.goBack();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
     
@@ -111,7 +118,8 @@ public class WebViewActivity extends Activity {
             try {
                 String cachedContent = readCachedFileContent(cachedFilePath);
                 webView.loadDataWithBaseURL(null, cachedContent, "text/html", "UTF-8", null);
-                
+                webView.setVisibility(View.VISIBLE);
+                waitingMessage.setVisibility(View.GONE);
                 // Start background refresh for fresh content
                 startBackgroundRefresh(url);
                 return;
@@ -123,6 +131,8 @@ public class WebViewActivity extends Activity {
         
         // No cached content available, download fresh content
         Log.d("WebViewActivity", "No cached content, downloading fresh content");
+        webView.setVisibility(View.GONE);
+        waitingMessage.setVisibility(View.VISIBLE);
         downloader.downloadReport(url, new ReportDownloader.DownloadCallback() {
             @Override
             public void onDownloadComplete(String filePath, String htmlContent) {
@@ -130,6 +140,8 @@ public class WebViewActivity extends Activity {
                     @Override
                     public void run() {
                         webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+                        webView.setVisibility(View.VISIBLE);
+                        waitingMessage.setVisibility(View.GONE);
                     }
                 });
             }
@@ -142,6 +154,8 @@ public class WebViewActivity extends Activity {
                     public void run() {
                         // Fallback: Load URL directly
                         webView.loadUrl(url);
+                        webView.setVisibility(View.VISIBLE);
+                        waitingMessage.setVisibility(View.GONE);
                     }
                 });
             }

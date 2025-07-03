@@ -83,6 +83,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
         let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.purgeOldiCloudKeys()
         let iCloudEnabled = iCloudHandle.checkForIcloud()
         print("iCloud: iCloud enabled status: \(iCloudEnabled)")
         
@@ -442,9 +443,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("iCloud: Skipping iCloud data sync because a read operation is already in progress.")
                 return
             }
-            //let iCloudHandle = iCloudDataHandler()
-            //iCloudHandle.readAllPriorityData()
-            //iCloudHandle.readAllScheduleData()
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
             
             // Refresh the UI after loading new data
             print("iCloud: Sending GUI refresh")

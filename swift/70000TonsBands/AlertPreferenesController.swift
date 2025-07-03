@@ -176,6 +176,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         // Perform data loading in the background
         DispatchQueue.global(qos: .background).async {
+            //print ("Sync: Loading schedule data AlertController")
             masterView.bandNameHandle.gatherData()
             masterView.schedule.DownloadCsv()
             masterView.schedule.populateSchedule()
