@@ -28,8 +28,10 @@ open class bandNamesHandler {
                 bandNamesArray = cacheVariables.bandNamesArrayStaticCache
                 completion?()
             } else {
-                print ("Loading bandName Data cache, from disk or dropbox")
-                gatherData(completion: completion)
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                    print ("Loading bandName Data cache, from disk or dropbox")
+                    self.gatherData(completion: completion)
+                }
             }
         }
         print ("Done Loading bandName Data cache")

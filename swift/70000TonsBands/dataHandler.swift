@@ -44,7 +44,9 @@ class dataHandler {
     
     /// Refreshes the data by reloading from disk or cache.
     func refreshData(){
-        bandPriorityStorage = readFile(dateWinnerPassed: "")
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            self.bandPriorityStorage = self.readFile(dateWinnerPassed: "")
+        }
     }
 
     /// Adds or updates the priority data for a band with a specific timestamp.

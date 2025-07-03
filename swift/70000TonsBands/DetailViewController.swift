@@ -929,7 +929,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             setButtonNames()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-            
+            NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                masterView?.refreshData(isUserInitiated: true)
+            }
         }
     }
     
@@ -1370,6 +1373,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
         showFullSchedule ()
     }
     
