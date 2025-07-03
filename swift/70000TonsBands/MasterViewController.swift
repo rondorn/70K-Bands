@@ -79,6 +79,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let minDownloadInterval: TimeInterval = 60 // 1 minute
     // --- END ADDED ---
     
+    var lastRefreshDataRun: Date? = nil
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -191,6 +193,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
     }
     
     @objc func bandNamesCacheReadyHandler() {
@@ -219,13 +222,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
-        schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: searchText)
-        bandsByName = bands
-        attendedHandle.getCachedData()
-        print("Filtering activated 3  \(searchText) \(searchText.count)")
-        self.quickRefresh()
-        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.schedule.getCachedData()
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchText)
+                self.bandsByName = self.bands
+                self.attendedHandle.getCachedData()
+                print("Filtering activated 3  \(searchText) \(searchText.count)")
+                self.quickRefresh()
+            }
+        }
     }
     
     @objc func iCloudRefresh() {
@@ -460,6 +467,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         isLoadingBandData = false
         writeFiltersFile()
+        // Always refresh when returning from another view, bypassing the throttle
+        refreshData(isUserInitiated: true)
         // Removed quickRefresh() and refreshDisplayAfterWake() to avoid unnecessary data refreshes
         // Removed startScheduleRefreshTimer() to avoid restarting timer on every appearance
     }
@@ -528,17 +537,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func refreshFromCache (){
-        
         print ("RefreshFromCache called")
-        
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
-        schedule.getCachedData()
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
-        bandsByName = bands
-        attendedHandle.getCachedData()
-
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.schedule.getCachedData()
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
+                self.bandsByName = self.bands
+                self.attendedHandle.getCachedData()
+                self.tableView.reloadData()
+            }
+        }
     }
     
     func ensureCorrectSorting(){
@@ -604,13 +616,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         checkForEasterEgg()
         
         print ("iCloud: pull to refresh, load in new iCloud data")
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.readAllPriorityData()
-        iCloudHandle.readAllScheduleData()
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        }
         refreshData(isUserInitiated: true);
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
+        // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh)
+        let now = Date()
+        if !isUserInitiated {
+            if let lastRun = lastRefreshDataRun, now.timeIntervalSince(lastRun) < 60 {
+                print("refreshData throttled: Only one run per 60 seconds unless user-initiated.")
+                return
+            }
+        }
+        lastRefreshDataRun = now
         print ("Redrawing the filter menu! Not")
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
@@ -626,8 +651,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let searchCriteria = bandSearch.text ?? ""
         let shouldDownload = shouldDownloadSchedule(force: forceDownload || isUserInitiated)
         if shouldDownload && internetAvailble {
-            schedule.DownloadCsv()
-            lastScheduleDownload = Date()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                //print ("Async: Loading schedule data MasterViewController")
+                self?.schedule.DownloadCsv()
+                self?.lastScheduleDownload = Date()
+                self?.schedule.getCachedData()
+                DispatchQueue.main.async {
+                    // Refresh the UI here if needed
+                    self?.tableView.reloadData()
+                }
+            }
         }
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             while (refreshDataLock == true){ sleep(1); }
@@ -660,13 +693,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.tableView.reloadData()
                 print ("DONE Refreshing data in backgroud 1");
                 refreshDataLock = false;
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+                // NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
             }
         }
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         print ("Done Refreshing data in backgroud 2");
     }
     
@@ -1242,48 +1274,45 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
-        
         let fileManager = FileManager.default
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
 
-        // First, show cached content immediately if it exists
-        if fileManager.fileExists(atPath: fileUrl.path) {
-            presentWebView(url: fileUrl.absoluteString)
-        }
-        
+        // Always present the web view immediately
+        let fileExists = fileManager.fileExists(atPath: fileUrl.path)
+        presentWebView(url: fileUrl.absoluteString, isLoading: !fileExists)
+
         // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
             let task = URLSession.shared.dataTask(with: URL(string: statsUrl)!) { (data, response, error) in
                 if let data = data {
                     do {
                         try data.write(to: fileUrl)
-                        // If we already showed cached content, refresh the web view
+                        // Refresh the currently displayed web view if it exists
                         DispatchQueue.main.async {
-                            // Refresh the currently displayed web view if it exists
                             if let currentWebViewController = self.getCurrentWebViewController() {
                                 let request = URLRequest(url: fileUrl)
                                 currentWebViewController.webDisplay.load(request)
                             } else {
                                 // If no cached content was shown initially, present the web view now
-                                self.presentWebView(url: fileUrl.absoluteString)
+                                self.presentWebView(url: fileUrl.absoluteString, isLoading: false)
                             }
                         }
                     } catch {
                         // Only show error if we didn't already show cached content
-                        if !fileManager.fileExists(atPath: fileUrl.path) {
+                        if !fileExists {
                             self.presentNoDataView(message: "Could not save stats file.")
                         }
                     }
                 } else {
                     // Only show error if we didn't already show cached content
-                    if !fileManager.fileExists(atPath: fileUrl.path) {
+                    if !fileExists {
                         self.presentNoDataView(message: "Could not download stats data.")
                     }
                 }
             }
             task.resume()
-        } else if !fileManager.fileExists(atPath: fileUrl.path) {
+        } else if !fileExists {
             // Only show no data message if there's no cached file
             presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
         }
@@ -1395,13 +1424,78 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    func presentWebView(url: String) {
+    func presentWebView(url: String, isLoading: Bool = false) {
         DispatchQueue.main.async {
             if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
                 setUrl(url)
 
                 let backItem = UIBarButtonItem()
                 backItem.title = "Back"
+
+                if isLoading {
+                    // Show a loading HTML page
+                    let htmlContent = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset=\"UTF-8\">
+                        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                        <title>Loading Stats</title>
+                        <style>
+                            body {
+                                background-color: #000000;
+                                color: #FFFFFF;
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                                text-align: center;
+                            }
+                            .container {
+                                padding: 40px;
+                                max-width: 400px;
+                            }
+                            .icon {
+                                font-size: 64px;
+                                margin-bottom: 20px;
+                                color: #797D7F;
+                            }
+                            .title {
+                                font-size: 24px;
+                                font-weight: bold;
+                                margin-bottom: 16px;
+                                color: #FFFFFF;
+                            }
+                            .message {
+                                font-size: 16px;
+                                line-height: 1.5;
+                                color: #CCCCCC;
+                                margin-bottom: 24px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class=\"container\">
+                            <div class=\"icon\">⏳</div>
+                            <div class=\"title\">Loading Stats</div>
+                            <div class=\"message\">Please wait while stats are being downloaded...</div>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    let fileManager = FileManager.default
+                    let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                    let tempUrl = documentsUrl.appendingPathComponent("loading_stats.html")
+                    do {
+                        try htmlContent.write(to: tempUrl, atomically: true, encoding: .utf8)
+                        setUrl(tempUrl.absoluteString)
+                    } catch {
+                        // Fallback to basic alert if HTML creation fails
+                        self.showAlert("Loading Stats", message: "Please wait while stats are being downloaded...")
+                    }
+                }
 
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     if let splitViewController = self.splitViewController,
@@ -1445,7 +1539,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handleAppWillEnterForeground() {
-        refreshData(isUserInitiated: false, forceDownload: true)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.refreshData(isUserInitiated: false, forceDownload: true)
+            DispatchQueue.main.async {
+                self?.tableView.reloadData()
+            }
+        }
+    }
+    
+    @objc func detailDidUpdate() {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            self.tableView.reloadData()
+        }
     }
 }
 

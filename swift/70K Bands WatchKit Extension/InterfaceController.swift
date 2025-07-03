@@ -50,7 +50,7 @@ class InterfaceController: WKInterfaceController {
         UserDefaults.standard.register(defaults: defaultValues)
         
         //var scheduleUrl = defaults.stringForKey("scheduleUrl")
-
+        print ("Sync: Loading schedule data InterfaceController")
         bandNameHandle.gatherData()
         schedule.DownloadCsv()
         schedule.populateSchedule()

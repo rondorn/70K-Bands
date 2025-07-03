@@ -35,15 +35,20 @@ open class scheduleHandler {
                 schedulingData = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataCacheFile.path)
                     as! [String : [TimeInterval : [String : String]]]
             } else {
-                print ("Cache did not load, loading schedule data")
-                populateSchedule()
+                
+                DispatchQueue.main.async {
+                    print ("Cache did not load, loading schedule data")
+                    self.populateSchedule()
+                }
             }
             
             if ((FileManager.default.fileExists(atPath: schedulingDataByTimeCacheFile.path)) == true){
                 schedulingDataByTime = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
             } else {
-                print ("Cache did not load, loading schedule data")
-                populateSchedule()
+                DispatchQueue.main.async {
+                    print ("Cache did not load, loading schedule data")
+                    self.populateSchedule()
+                }
             }
             
             if schedulingData.isEmpty && !cacheVariables.justLaunched {
@@ -72,6 +77,7 @@ open class scheduleHandler {
     
         
         if (FileManager.default.fileExists(atPath: scheduleFile) == false){
+            //print ("Sync: Loading schedule data 1")
             DownloadCsv();
         }
         
@@ -182,7 +188,7 @@ open class scheduleHandler {
         
         var scheduleUrl = "";
         
-        print ("working with scheduleFile " + scheduleFile)
+        //print ("Sync: working with scheduleFile " + scheduleFile)
         
         if (scheduleUrl.isEmpty == true){
             scheduleUrl = defaultPrefsValue

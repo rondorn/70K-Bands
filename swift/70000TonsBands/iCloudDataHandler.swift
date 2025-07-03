@@ -53,6 +53,126 @@ class iCloudDataHandler {
         print("iCloudGeneral: checkForIcloud completed with status: \(status)")
         return status
     }
+
+    /// Reads all priority data from iCloud and syncs to local storage
+    /// Iterates through all bands and attempts to read their priority data from iCloud
+    func readAllPriorityData(){
+        print("iCloudPriority: Starting readAllPriorityData operation")
+        
+        if (checkForIcloud() == true){
+            print("iCloudPriority: iCloud data not currently loading, proceeding with read")
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                iCloudDataisLoading = true;
+                print("iCloudPriority: Set iCloudDataisLoading to true")
+                
+                let bandNameHandle = bandNamesHandler()
+                let bandNames = bandNameHandle.getBandNames()
+                
+                let priorityHandler = dataHandler()
+                priorityHandler.refreshData()
+                
+                print("iCloudPriority: Reading priority data for \(bandNames.count) bands")
+                
+                for bandName in bandNames{
+                    print("iCloudPriority: Processing priority read for band: \(bandName)")
+                    self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
+                }
+                
+                iCloudDataisLoading = false;
+                print("iCloudPriority: Set iCloudDataisLoading to false, read operation completed")
+            }
+        } else {
+            print("iCloudPriority: iCloud data currently loading, skipping read operation")
+        }
+        
+        print("iCloudPriority: readAllPriorityData operation completed")
+    }
+    
+    /// Reads a single priority record from iCloud for a specific band
+    /// - Parameters:
+    ///   - bandName: The name of the band to read
+    ///   - priorityHandler: The data handler for priority operations
+    func readAPriorityRecord(bandName: String, priorityHandler: dataHandler){
+        
+        if (checkForIcloud() == true){
+            print("iCloudPriority: Starting readAPriorityRecord for band: \(bandName)")
+            
+            let index = "bandName:" + bandName
+            //5 indicated no data was present in iCloud
+            let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: index) ?? "5")
+            if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+                print("iCloudPriority: Retrieved value from iCloud: \(tempValue) for key: \(index)")
+                
+                if (tempValue != nil && tempValue.isEmpty == false){
+                    let tempData = tempValue.split(separator: ":")
+                    
+                    // Handle new format: priority:uid:timestamp (3 parts)
+                    if (tempData.isEmpty == false && tempData.count == 3){
+                        let newPriority = tempData[0]
+                        let uidValue = String(tempData[1])
+                        let timestampValue = Double(tempData[2]) ?? 0
+                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        
+                        print("iCloudPriority: Parsed priority data (new format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: \(timestampValue), currentPriority: \(currentPriority)")
+                        
+                        // RULE 1: Never overwrite local data if UID matches current device
+                        if (uidValue == currentUid){
+                            print("iCloudPriority: UID \(uidValue) matches current device (\(currentUid)), never overwriting local data for band: \(bandName)")
+                            return
+                        }
+                        
+                        // RULE 2: Only update if iCloud data is newer than local data
+                        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                        
+                        print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
+                        
+                        if (localTimestamp > 0){
+                            // Only update if iCloud timestamp is NEWER (>) than local timestamp
+                            if (timestampValue > localTimestamp){
+                                print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
+                                priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                                print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
+                            } else {
+                                print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
+                            }
+                        } else {
+                            // No local timestamp exists, safe to update with iCloud data
+                            print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
+                            priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                            print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
+                        }
+                    } else if (tempData.count == 2) {
+                        // Handle old format: priority:uid (no timestamp)
+                        let newPriority = tempData[0]
+                        let uidValue = String(tempData[1])
+                        let timestampValue = 0.0
+                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
+
+                        // Always update local data, since we can't compare timestamps
+                        priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                        print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
+
+                        // Now update iCloud with the new format (priority:uid:currentTime)
+                        let now = Date().timeIntervalSince1970
+                        let dataString = String(newPriority) + ":" + currentUid + ":" + String(format: "%.0f", now)
+                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: index)
+                        NSUbiquitousKeyValueStore.default.synchronize()
+                        print("iCloudPriority: Migrated old format to new format for band: \(bandName)")
+                    } else {
+                        print("iCloudPriority: Invalid data format for band: \(bandName) - expected 3 parts (priority:uid:timestamp), got \(tempData.count) parts. Ignoring old format.")
+                    }
+                } else {
+                    print("iCloudPriority: No iCloud data found for band: \(bandName)")
+                }
+            } else {
+                print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot compare UIDs for band: \(bandName)")
+                return
+            }
+            
+            print("iCloudPriority: readAPriorityRecord completed for band: \(bandName)")
+        }
+    }
     
     /// Writes all priority data for bands to iCloud
     /// Iterates through all band priority data and syncs it to iCloud storage
@@ -68,14 +188,37 @@ class iCloudDataHandler {
             print("iCloudPriority: Retrieved priority data with \(priorityData.count ?? 0) entries")
             
             if (priorityData != nil && priorityData.count > 0){
-                print("iCloudPriority: Writing \(priorityData.count) priority records to iCloud")
+                print("iCloudPriority: Writing \(priorityData.count) priority records to iCloud (with timestamp check)")
                 for (bandName, priority) in priorityData {
                     print("iCloudPriority: Processing priority record for band: \(bandName)")
-                    writeAPriorityRecord(bandName: bandName, priority: priority)
+                    let index = "bandName:" + bandName
+                    let iCloudValue = NSUbiquitousKeyValueStore.default.string(forKey: index)
+                    var iCloudTimestamp: Double = 0
+                    if let iCloudValue = iCloudValue, !iCloudValue.isEmpty {
+                        let parts = iCloudValue.split(separator: ":")
+                        if parts.count == 3, let ts = Double(parts[2]) {
+                            iCloudTimestamp = ts
+                        } else {
+                            // Old format or invalid, treat as 0
+                            iCloudTimestamp = 0
+                        }
+                    }
+                    // Get the timestamp that would be written for this band
+                    var proposedTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                    if proposedTimestamp <= 0 {
+                        proposedTimestamp = Date().timeIntervalSince1970
+                    }
+                    print("iCloudPriority: Comparing proposedTimestamp \(proposedTimestamp) to iCloudTimestamp \(iCloudTimestamp) for band: \(bandName)")
+                    if proposedTimestamp > iCloudTimestamp {
+                        print("iCloudPriority: Proposed data is newer, writing to iCloud for band: \(bandName)")
+                        writeAPriorityRecord(bandName: bandName, priority: priority)
+                    } else {
+                        print("iCloudPriority: Skipping write for band: \(bandName) because iCloud data is newer or equal")
+                    }
                 }
                 NSUbiquitousKeyValueStore.default.synchronize()
                 //writeLastiCloudDataWrite()
-                print("iCloudPriority: All priority data written and synchronized")
+                print("iCloudPriority: All priority data written and synchronized (with timestamp check)")
             } else {
                 print("iCloudPriority: No priority data to write")
             }
@@ -191,126 +334,7 @@ class iCloudDataHandler {
             }
         }
     }
-    
-    /// Reads all priority data from iCloud and syncs to local storage
-    /// Iterates through all bands and attempts to read their priority data from iCloud
-    func readAllPriorityData(){
-        print("iCloudPriority: Starting readAllPriorityData operation")
         
-        if (checkForIcloud() == true){
-            print("iCloudPriority: iCloud data not currently loading, proceeding with read")
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                iCloudDataisLoading = true;
-                print("iCloudPriority: Set iCloudDataisLoading to true")
-                
-                let bandNameHandle = bandNamesHandler()
-                let bandNames = bandNameHandle.getBandNames()
-                
-                let priorityHandler = dataHandler()
-                priorityHandler.refreshData()
-                
-                print("iCloudPriority: Reading priority data for \(bandNames.count) bands")
-                
-                for bandName in bandNames{
-                    print("iCloudPriority: Processing priority read for band: \(bandName)")
-                    self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
-                }
-                
-                iCloudDataisLoading = false;
-                print("iCloudPriority: Set iCloudDataisLoading to false, read operation completed")
-            }
-        } else {
-            print("iCloudPriority: iCloud data currently loading, skipping read operation")
-        }
-        
-        print("iCloudPriority: readAllPriorityData operation completed")
-    }
-    
-    /// Reads a single priority record from iCloud for a specific band
-    /// - Parameters:
-    ///   - bandName: The name of the band to read
-    ///   - priorityHandler: The data handler for priority operations
-    func readAPriorityRecord(bandName: String, priorityHandler: dataHandler){
-        
-        if (checkForIcloud() == true){
-            print("iCloudPriority: Starting readAPriorityRecord for band: \(bandName)")
-            
-            let index = "bandName:" + bandName
-            let tempValue = String(NSUbiquitousKeyValueStore.default.string(forKey: index) ?? "0")
-            if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
-                print("iCloudPriority: Retrieved value from iCloud: \(tempValue) for key: \(index)")
-                
-                if (tempValue != nil && tempValue.isEmpty == false){
-                    let tempData = tempValue.split(separator: ":")
-                    
-                    // Handle new format: priority:uid:timestamp (3 parts)
-                    if (tempData.isEmpty == false && tempData.count == 3){
-                        let newPriority = tempData[0]
-                        let uidValue = String(tempData[1])
-                        let timestampValue = Double(tempData[2]) ?? 0
-                        let currentPriority = priorityHandler.getPriorityData(bandName)
-                        
-                        print("iCloudPriority: Parsed priority data (new format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: \(timestampValue), currentPriority: \(currentPriority)")
-                        
-                        // RULE 1: Never overwrite local data if UID matches current device
-                        if (uidValue == currentUid){
-                            print("iCloudPriority: UID \(uidValue) matches current device (\(currentUid)), never overwriting local data for band: \(bandName)")
-                            return
-                        }
-                        
-                        // RULE 2: Only update if iCloud data is newer than local data
-                        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
-                        
-                        print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
-                        
-                        if (localTimestamp > 0){
-                            // Only update if iCloud timestamp is NEWER (>) than local timestamp
-                            if (timestampValue > localTimestamp){
-                                print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
-                                priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
-                                print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
-                            } else {
-                                print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
-                            }
-                        } else {
-                            // No local timestamp exists, safe to update with iCloud data
-                            print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
-                            priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
-                            print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
-                        }
-                    } else if (tempData.count == 2) {
-                        // Handle old format: priority:uid (no timestamp)
-                        let newPriority = tempData[0]
-                        let uidValue = String(tempData[1])
-                        let timestampValue = 0.0
-                        let currentPriority = priorityHandler.getPriorityData(bandName)
-                        print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
-
-                        // Always update local data, since we can't compare timestamps
-                        priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
-                        print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
-
-                        // Now update iCloud with the new format (priority:uid:currentTime)
-                        let now = Date().timeIntervalSince1970
-                        let dataString = String(newPriority) + ":" + currentUid + ":" + String(format: "%.0f", now)
-                        NSUbiquitousKeyValueStore.default.set(dataString, forKey: index)
-                        NSUbiquitousKeyValueStore.default.synchronize()
-                        print("iCloudPriority: Migrated old format to new format for band: \(bandName)")
-                    } else {
-                        print("iCloudPriority: Invalid data format for band: \(bandName) - expected 3 parts (priority:uid:timestamp), got \(tempData.count) parts. Ignoring old format.")
-                    }
-                } else {
-                    print("iCloudPriority: No iCloud data found for band: \(bandName)")
-                }
-            } else {
-                print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot compare UIDs for band: \(bandName)")
-                return
-            }
-            
-            print("iCloudPriority: readAPriorityRecord completed for band: \(bandName)")
-        }
-    }
-    
     /// Reads all schedule/attendance data from iCloud
     /// Syncs all attended shows data from iCloud to local storage
     var iCloudScheduleDataisLoading = false;
@@ -434,6 +458,7 @@ class iCloudDataHandler {
     /// Checks for data that doesn't match the new format: {priority}:{uid}:{timestamp}
     /// If old format is detected, overwrites all iCloud data with current local data
     func detectAndMigrateOldPriorityData(){
+        /*
         print("iCloudPriority: Starting detectAndMigrateOldPriorityData operation")
         
         if (checkForIcloud() == true){
@@ -496,12 +521,14 @@ class iCloudDataHandler {
         }
         
         print("iCloudPriority: detectAndMigrateOldPriorityData operation completed")
+         */
     }
 
     /// Detects old iCloud schedule data format and migrates by overwriting with local data
     /// Checks for data that doesn't match the new format: {status}:{uid}:{timestamp}
     /// If old format is detected, overwrites all iCloud data with current local data
     func detectAndMigrateOldScheduleData(){
+        /*
         print("iCloudSchedule: Starting detectAndMigrateOldScheduleData operation")
         if (checkForIcloud() == true){
             print("iCloudSchedule: iCloud enabled, checking for old schedule data format")
@@ -547,6 +574,91 @@ class iCloudDataHandler {
             print("iCloudSchedule: iCloud disabled, skipping old schedule data detection")
         }
         print("iCloudSchedule: detectAndMigrateOldScheduleData operation completed")
+        */
+    }
+
+    /// Purges iCloud KVS keys older than 3 years, or keys without a timestamp (old format)
+    func purgeOldiCloudKeys() {
+        print("KVS: Starting purgeOldiCloudKeys")
+        let store = NSUbiquitousKeyValueStore.default
+        let threeYearsAgo = Date().timeIntervalSince1970 - (3 * 365 * 24 * 60 * 60)
+        let allEntries = store.dictionaryRepresentation
+        var purgedCount = 0
+        var keptCount = 0
+        let totalCount = allEntries.count
+        var keysToPurge: [String] = []
+        var timestampedKeys: [(key: String, timestamp: Double)] = []
+        var undatedKeys: [String] = []
+
+        // First pass: normal purge for old/invalid keys
+        for (key, value) in allEntries {
+            if let valueString = value as? String {
+                let parts = valueString.split(separator: ":")
+                if parts.count == 3, let timestamp = Double(parts[2]) {
+                    if timestamp < threeYearsAgo {
+                        print("Purging iCloud key '\(key)' (timestamp: \(timestamp))")
+                        store.removeObject(forKey: key)
+                        purgedCount += 1
+                    } else {
+                        keptCount += 1
+                        timestampedKeys.append((key, timestamp))
+                    }
+                } else {
+                    // Old format or invalid, purge it
+                    print("Purging iCloud key '\(key)' (no valid timestamp, parts: \(parts.count))")
+                    store.removeObject(forKey: key)
+                    purgedCount += 1
+                    undatedKeys.append(key)
+                }
+            } else {
+                keptCount += 1
+                undatedKeys.append(key)
+            }
+        }
+        store.synchronize()
+        print("KVS: Total keys detected: \(totalCount), Purged: \(purgedCount), Kept: \(keptCount)")
+
+        // Second pass: if still over 1000 keys, purge oldest 100
+        let postPurgeEntries = store.dictionaryRepresentation
+        let postPurgeCount = postPurgeEntries.count
+        if postPurgeCount > 1000 {
+            print("KVS: Over 1000 keys detected (\(postPurgeCount)). Purging oldest 100 keys.")
+            // Rebuild timestamped/undated lists from current store
+            var currentTimestamped: [(key: String, timestamp: Double)] = []
+            var currentUndated: [String] = []
+            for (key, value) in postPurgeEntries {
+                if let valueString = value as? String {
+                    let parts = valueString.split(separator: ":")
+                    if parts.count == 3, let timestamp = Double(parts[2]) {
+                        currentTimestamped.append((key, timestamp))
+                    } else {
+                        currentUndated.append(key)
+                    }
+                } else {
+                    currentUndated.append(key)
+                }
+            }
+            // Sort timestamped by oldest first
+            currentTimestamped.sort { $0.timestamp < $1.timestamp }
+            var keysPurgedThisRound: [String] = []
+            // Purge up to 100 oldest timestamped keys
+            for i in 0..<min(100, currentTimestamped.count) {
+                let key = currentTimestamped[i].key
+                store.removeObject(forKey: key)
+                keysPurgedThisRound.append(key)
+            }
+            // If fewer than 100 timestamped, fill with undated
+            if currentTimestamped.count < 100 {
+                let needed = 100 - currentTimestamped.count
+                for i in 0..<min(needed, currentUndated.count) {
+                    let key = currentUndated[i]
+                    store.removeObject(forKey: key)
+                    keysPurgedThisRound.append(key)
+                }
+            }
+            store.synchronize()
+            print("KVS: Purged \(keysPurgedThisRound.count) keys in oldest-100 pass. Keys: \(keysPurgedThisRound)")
+        }
     }
 
 }

@@ -5,6 +5,18 @@
     android:background="#FF000000"
     android:fitsSystemWindows="true">
 
+    <TextView
+        android:id="@+id/waitingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/waiting_for_data"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:layout_centerInParent="true"
+        android:background="#80000000"
+        android:padding="16dp"
+        android:visibility="visible" />
+
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"

@@ -903,6 +903,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 
                 Intent webViewIntent = new Intent(showBands.this, WebViewActivity.class);
                 webViewIntent.putExtra("reportUrl", reportUrl);
+                webViewIntent.putExtra("isStatsPage", true); // Add this line
                 startActivity(webViewIntent);
             }
         });

@@ -20,7 +20,7 @@ class loadingSchedule: XCTestCase {
     }
     
     func downloadCsvSchedule (){
-        
+        print ("Sync: Loading schedule data loadingSchedule")
         schedule.DownloadCsv()
         schedule.populateSchedule()
         
