@@ -165,21 +165,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            //preferenceButton.hidesSharedBackground = true
-            //statsButton.hidesSharedBackground = true
-            //shareButton.hidesSharedBackground = true
-            //filterButtonBar.hidesSharedBackground = true
-            //searchButtonBar.hidesSharedBackground = true
-            //titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
+            /*
+            preferenceButton.hidesSharedBackground = true
+            statsButton.hidesSharedBackground = true
+            shareButton.hidesSharedBackground = true
+            filterButtonBar.hidesSharedBackground = true
+            searchButtonBar.hidesSharedBackground = true
+            statsButton.hidesSharedBackground = true
+            titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
+            titleButtonArea.rightBarButtonItem?.hidesSharedBackground = true
+            */
             
             preferenceButton.customView?.backgroundColor = .black
-            statsButton.customView?.backgroundColor = .black
+            statsButton.customView?.backgroundColor = .white 
+            
             filterMenuButton.backgroundColor = .black
             shareButton.customView?.backgroundColor = .black
             bandSearch.backgroundColor = .black
             bandSearch.tintColor = .lightGray
             bandSearch.barTintColor = .black
             bandSearch.searchTextField.backgroundColor = .black
+
             
         }
         
@@ -226,7 +232,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self?.schedule.getCachedData()
             DispatchQueue.main.async {
                 guard let self = self else { return }
+                self.bands = []
                 self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchText)
+                // Deduplicate band names if no shows are present
+                if eventCount == 0 {
+                    self.bands = self.deduplicatePreservingOrder(self.bands)
+                }
                 self.bandsByName = self.bands
                 self.attendedHandle.getCachedData()
                 print("Filtering activated 3  \(searchText) \(searchText.count)")
@@ -545,7 +556,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self?.schedule.getCachedData()
             DispatchQueue.main.async {
                 guard let self = self else { return }
+                self.bands = []
                 self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
+                // Deduplicate band names if no shows are present
+                if eventCount == 0 {
+                    self.bands = self.deduplicatePreservingOrder(self.bands)
+                }
                 self.bandsByName = self.bands
                 self.attendedHandle.getCachedData()
                 self.tableView.reloadData()
@@ -578,6 +594,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         bands =  [String]()
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
+        // Deduplicate band names if no shows are present
+        if eventCount == 0 {
+            bands = self.deduplicatePreservingOrder(bands)
+        }
     }
     
     func quickRefresh_Pre(){
@@ -588,6 +608,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             self.dataHandle.getCachedData()
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
+            // Deduplicate band names if no shows are present
+            if eventCount == 0 {
+                self.bands = self.deduplicatePreservingOrder(self.bands)
+            }
             self.bandsByName = self.bands
             ensureCorrectSorting()
             self.attendedHandle.getCachedData()
@@ -677,8 +701,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 schedule.populateSchedule()
             }
             self.bandsByName = [String]()
-            self.bands =  [String]()
+            self.bands = []
             self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
+            // Deduplicate band names if no shows are present
+            if eventCount == 0 {
+                self.bands = self.deduplicatePreservingOrder(self.bands)
+            }
             currentBandList = self.bands
             self.bandsByName = self.bands
             self.attendedHandle.loadShowsAttended()
@@ -1551,6 +1579,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if UIDevice.current.userInterfaceIdiom == .pad {
             self.tableView.reloadData()
         }
+    }
+    
+    // Helper to deduplicate while preserving order
+    private func deduplicatePreservingOrder(_ array: [String]) -> [String] {
+        var seen = Set<String>()
+        return array.filter { seen.insert($0).inserted }
     }
 }
 
