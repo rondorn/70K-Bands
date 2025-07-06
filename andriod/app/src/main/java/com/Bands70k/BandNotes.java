@@ -128,18 +128,19 @@ public class BandNotes {
         String note = "";
 
         if (oldBandNoteFile.exists() == true){
+            Log.d("70K_NOTE_DEBUG", "Converting old band note for " + bandName);
             convertOldBandNote();
         }
 
         Map<String, String> notesData = FileHandler70k.readObject(bandNoteFile);
 
-        Log.d("getDescription","Loading note from file, notesData is  " + notesData);
+        Log.d("70K_NOTE_DEBUG","Loading note from file for band: " + bandName + ", notesData: " + notesData);
         if (notesData.containsKey("customDescription")){
             note = notesData.get("customDescription");
-
+            Log.d("70K_NOTE_DEBUG", "Returning customDescription for " + bandName + ": " + note);
         } else {
             note = notesData.get("defaultNote");
-
+            Log.d("70K_NOTE_DEBUG", "Returning defaultNote for " + bandName + ": " + note);
         }
 
         return note;
@@ -151,7 +152,7 @@ public class BandNotes {
      */
     public void saveDefaultBandNote(String notesData){
 
-        Log.d("saveNote", "attempting to write message " + notesData);
+        Log.d("70K_NOTE_DEBUG", "saveDefaultBandNote called for " + bandName + ", data: " + notesData);
 
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2 && bandCustNoteFile.exists() == false) {
@@ -159,7 +160,7 @@ public class BandNotes {
             notesData = notesData.replaceAll("\\n", "<br>");
             notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
 
-            Log.d("saveNote", "writing data to " + bandNoteFile + " - " + notesData);
+            Log.d("70K_NOTE_DEBUG", "Writing defaultNote to " + bandNoteFile + " - " + notesData);
 
             Time today = new Time(Time.getCurrentTimezone());
             today.setToNow();
@@ -173,8 +174,9 @@ public class BandNotes {
 
             File bandNoteDateFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + dateModified);
             FileHandler70k.saveData(dateModified, bandNoteDateFile);
-            Log.d("saveNote", "Data saved for " + bandNoteFile);
+            Log.d("70K_NOTE_DEBUG", "Default note data saved for " + bandNoteFile);
         } else {
+            Log.d("70K_NOTE_DEBUG", "Default note NOT saved (conditions not met) for " + bandName);
             bandNoteFile.delete();
         }
 
@@ -186,7 +188,7 @@ public class BandNotes {
      */
     public void saveCustomBandNote(String notesData){
 
-        Log.d("saveNote", "attempting to write message " + notesData);
+        Log.d("70K_NOTE_DEBUG", "saveCustomBandNote called for " + bandName + ", data: " + notesData);
 
         Map<String, String> defaultNotesData = FileHandler70k.readObject(bandNoteFile);
         String defaultNote = defaultNotesData.get("defaultNote");
@@ -199,7 +201,7 @@ public class BandNotes {
         String strippedDefaultNote = this.stripDataForCompare(defaultNote);
         String strippedCustomNote = this.stripDataForCompare(notesData);
 
-        Log.d("saveNote", "comparing " + strippedDefaultNote + " to " + strippedCustomNote);
+        Log.d("70K_NOTE_DEBUG", "Comparing defaultNote (stripped): '" + strippedDefaultNote + "' to customNote (stripped): '" + strippedCustomNote + "'");
 
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2 && strippedDefaultNote.equals(strippedCustomNote) == false) {
@@ -207,7 +209,7 @@ public class BandNotes {
             notesData = notesData.replaceAll("\\n", "<br>");
             notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
 
-            Log.d("saveNote", "writing data to " + bandNoteFile + " - " + notesData);
+            Log.d("70K_NOTE_DEBUG", "Writing customDescription to " + bandNoteFile + " and " + bandCustNoteFile + " - " + notesData);
 
             Time today = new Time(Time.getCurrentTimezone());
             today.setToNow();
@@ -221,9 +223,10 @@ public class BandNotes {
             FileHandler70k.writeObject(bandNameDataHash, bandNoteFile);
             FileHandler70k.writeObject(bandNameDataHash, bandCustNoteFile);
 
-            Log.d("saveNote", "Data saved for " + bandNoteFile);
+            Log.d("70K_NOTE_DEBUG", "Custom note data saved for " + bandNoteFile + " and " + bandCustNoteFile);
 
         } else {
+            Log.d("70K_NOTE_DEBUG", "Custom note NOT saved (conditions not met) for " + bandName);
             bandNoteFile.delete();
             bandCustNoteFile.delete();
         }
