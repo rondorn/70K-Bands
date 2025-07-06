@@ -135,55 +135,62 @@ public class CustomerDescriptionHandler {
      */
     public String getDescription (String bandNameValue){
 
-
-        Log.d("getDescription", "getDescription - 1 " + bandNameValue);
+        Log.d("70K_NOTE_DEBUG", "getDescription called for " + bandNameValue);
 
         String bandName = bandNameValue;
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
 
-        Log.d("getDescription", "1a descriptionMapData is " + descriptionMapData);
+        Log.d("70K_NOTE_DEBUG", "descriptionMapData: " + descriptionMapData);
+
+        BandNotes bandNoteHandler = new BandNotes(bandName);
+
+        // PATCH: Always check for a custom note, even if band is not in descriptionMapData
+        String customNote = bandNoteHandler.getBandNoteFromFile();
+        if (customNote != null && !customNote.trim().isEmpty()) {
+            Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
+            return customNote;
+        }
 
         if (descriptionMapData.containsKey(bandName) == false) {
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + bandName + ", returning default note");
             return bandNoteDefault;
         }
 
         if (descriptionMapData.keySet().size() == 0) {
             descriptionMapData = this.getDescriptionMap();
-            Log.d("getDescription", "getDescription - 2 " + bandNameValue);
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData was empty, reloaded for " + bandNameValue);
         }
-
-        BandNotes bandNoteHandler = new BandNotes(bandName);
 
         if (descriptionMapData.containsKey(bandName) == false) {
             descriptionMapData = new HashMap<String,String>();
             descriptionMapData = getDescriptionMap();
-            Log.d("getDescription", "getDescription - 3a " + descriptionMapData);
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing for " + bandName);
         } else {
-            Log.d("getDescription", "getDescription - 3b " + descriptionMapData.get(bandName));
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData present for " + bandName + ": " + descriptionMapData.get(bandName));
         }
 
         if (descriptionMapData.containsKey(bandName) == false){
-            Log.d("getDescription", "getDescription - 3 " + bandNameValue);
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing after reload for " + bandName);
             if (staticVariables.showNotesMap.containsKey(bandName) == true) {
                 if (staticVariables.showNotesMap.get(bandName).length() > 5) {
-                    Log.d("getDescription", "getDescription - 4 " + bandNameValue);
+                    Log.d("70K_NOTE_DEBUG", "showNotesMap entry found for " + bandName + ", loading note from URL");
                     loadNoteFromURL(bandName);
-                    Log.d("getDescription", "getDescription - 5 " + bandNameValue);
                     bandNote = bandNoteHandler.getBandNoteFromFile();
-                    Log.d("getDescription", "getDescription - 6 " + bandNameValue);
+                    Log.d("70K_NOTE_DEBUG", "Loaded note from file after URL for " + bandName + ": " + bandNote);
                     return bandNote;
                 }
             }
         }
 
+        Log.d("70K_NOTE_DEBUG", "Calling loadNoteFromURL for " + bandNameValue);
         loadNoteFromURL(bandNameValue);
-        Log.d("getDescription", "getDescription - 7 " + bandNameValue);
+        Log.d("70K_NOTE_DEBUG", "Called loadNoteFromURL for " + bandNameValue);
 
         bandNote = bandNoteHandler.getBandNoteFromFile();
         bandNote = removeSpecialCharsFromString(bandNote);
 
-        Log.d("getDescription", "getDescription - 8 " + bandNote);
+        Log.d("70K_NOTE_DEBUG", "Returning note for " + bandName + ": " + bandNote);
         return bandNote;
     }
 
@@ -212,6 +219,7 @@ public class CustomerDescriptionHandler {
         BandNotes bandNoteHandler = new BandNotes(bandName);
         File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
         if (oldBandNoteFile.exists() == true){
+            Log.d("70K_NOTE_DEBUG", "Converting old band note for " + bandName);
             bandNoteHandler.convertOldBandNote();
         }
 
@@ -219,14 +227,19 @@ public class CustomerDescriptionHandler {
 
             File changeFileFlag = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
             File bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
-            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false){
-                Log.d("getDescription", "getDescription, re-downloading default data due to change! " + bandName);
-
-            } else if (bandNoteHandler.fileExists() == true){
-                Log.d("getDescription", "getDescription, NOT re-downloading default data due to change! "+ bandName);
+            // PATCH: If a custom note exists, do NOT overwrite with default note from server
+            if (bandCustNoteFile.exists()) {
+                Log.d("70K_NOTE_DEBUG", "Custom note exists for " + bandName + ", skipping default note download and overwrite.");
                 return;
             }
-            Log.d("getDescription", "getDescription, NOT re-downloading default data due to change! "+ bandName);
+            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false){
+                Log.d("70K_NOTE_DEBUG", "getDescription, re-downloading default data due to change! " + bandName);
+
+            } else if (bandNoteHandler.fileExists() == true){
+                Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! "+ bandName);
+                return;
+            }
+            Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! "+ bandName);
             if (descriptionMapData.containsKey(bandName) == false) {
                 descriptionMapData = new HashMap<String,String>();
                 getDescriptionMapFile();
@@ -241,20 +254,21 @@ public class CustomerDescriptionHandler {
                     if (staticVariables.showNotesMap.containsKey(bandName) &&
                             staticVariables.showNotesMap.get(bandName).length() > 5) {
                         url = new URL(staticVariables.showNotesMap.get(bandName));
-                        Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                        Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
                     } else if (descriptionMapData.containsKey(bandName) == true) {
                         url = new URL(descriptionMapData.get(bandName));
-                        Log.d("descriptionMapFile!", "Looking up NoteData at URL " + url.toString());
+                        Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
                     } else {
-                        Log.d("descriptionMapFile!", "no description for bandName " + bandName);
+                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + bandName);
                         return;
                     }
 
                 } catch (Exception error) {
-                    Log.d("descriptionMapFile!", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
+                    Log.d("70K_NOTE_DEBUG", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
                     return;
                 }
             } else {
+                Log.d("70K_NOTE_DEBUG", "Not online, skipping download for " + bandName);
                 return;
             }
 
@@ -268,19 +282,18 @@ public class CustomerDescriptionHandler {
 
             bandNote = this.removeSpecialCharsFromString(bandNote);
 
-
-
+            Log.d("70K_NOTE_DEBUG", "Saving default note for " + bandName + ": " + bandNote);
             bandNoteHandler.saveDefaultBandNote(bandNote);
 
         } catch (MalformedURLException mue) {
-            Log.e("SYNC getUpdate", "descriptionMapFile malformed url error", mue);
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile malformed url error", mue);
         } catch (IOException ioe) {
-            Log.e("SYNC getUpdate", "descriptionMapFile io error", ioe);
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile io error", ioe);
         } catch (SecurityException se) {
-            Log.e("SYNC getUpdate", "descriptionMapFile security error", se);
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile security error", se);
 
         } catch (Exception generalError) {
-            Log.e("General Exception", "Downloading descriptionMapFile", generalError);
+            Log.e("70K_NOTE_DEBUG", "Downloading descriptionMapFile", generalError);
         }
     }
 
