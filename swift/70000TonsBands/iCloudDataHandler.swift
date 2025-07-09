@@ -80,6 +80,10 @@ class iCloudDataHandler {
                 
                 iCloudDataisLoading = false;
                 print("iCloudPriority: Set iCloudDataisLoading to false, read operation completed")
+                // Notify UI that iCloud data is ready
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+                }
             }
         } else {
             print("iCloudPriority: iCloud data currently loading, skipping read operation")
@@ -395,7 +399,13 @@ class iCloudDataHandler {
                 // Ensure local attended data is saved to disk for offline use
                 attendedHandle.saveShowsAttended()
                 self.iCloudScheduleDataisLoading = false;
+                // Notify UI that iCloud data is ready
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+                }
             }
+        } else {
+            print("iCloudSchedule: iCloud disabled, skipping schedule data read")
         }
     }
     

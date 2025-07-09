@@ -11,7 +11,19 @@ import CoreData
 open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
-    var showsAttendedArray = [String : String]();
+    // Thread-safe queue and backing store for showsAttendedArray
+    private let showsAttendedQueue = DispatchQueue(label: "com.yourapp.showsAttendedQueue", attributes: .concurrent)
+    private var _showsAttendedArray = [String : String]()
+    
+    // Thread-safe accessors
+    var showsAttendedArray: [String : String] {
+        get { showsAttendedQueue.sync { _showsAttendedArray } }
+        set { showsAttendedQueue.async(flags: .barrier) { self._showsAttendedArray = newValue } }
+    }
+    // Helper for mutation
+    private func mutateShowsAttendedArray(_ block: @escaping (inout [String: String]) -> Void) {
+        showsAttendedQueue.async(flags: .barrier) { block(&self._showsAttendedArray) }
+    }
     
     /**
      Initializes a new instance of ShowsAttended and loads cached data.
@@ -21,23 +33,19 @@ open class ShowsAttended {
         getCachedData()
     }
     
-    
     /**
      Loads cached show attendance data, using a static cache if available.
      */
     func getCachedData(){
-        
         var staticCacheUsed = false
-        
         staticAttended.sync() {
             if (cacheVariables.attendedStaticCache.isEmpty == true){
                 loadShowsAttended()
             } else {
                 staticCacheUsed = true
-                showsAttendedArray = cacheVariables.attendedStaticCache
+                self.showsAttendedArray = cacheVariables.attendedStaticCache
             }
         }
-
         //iCloudHandle.readCloudAttendedData(attendedHandle: self);
     }
     
@@ -46,64 +54,59 @@ open class ShowsAttended {
      - Parameter attendedData: A dictionary of attended data to set.
      */
     func setShowsAttended(attendedData: [String : String]){
-        showsAttendedArray = attendedData
+        self.showsAttendedArray = attendedData
     }
     
     /**
-     Returns the current showsAttendedArray.
+     Returns the current showsAttendedArray (copy).
      - Returns: A dictionary of show attendance data.
      */
     func getShowsAttended()->[String : String]{
-        return showsAttendedArray;
+        return showsAttendedQueue.sync { self._showsAttendedArray }
     }
     
     /**
      Saves the current showsAttendedArray to persistent storage.
      */
     func saveShowsAttended(){
-        
-        if (showsAttendedArray.count > 0){
+        let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+        if (currentArray.count > 0){
             do {
-                let json = try JSONEncoder().encode(showsAttendedArray)
+                let json = try JSONEncoder().encode(currentArray)
                 try json.write(to: showsAttended)
                 writeLastScheduleDataWrite();
-                print ("Loading show attended data! saved showData \(showsAttendedArray)")
+                print ("Loading show attended data! saved showData \(currentArray)")
             } catch {
                 print ("Loading show attended data! Error, unable to save showsAtteneded Data \(error.localizedDescription)")
             }
         }
     }
-
+    
     /**
      Loads show attendance data from persistent storage and updates the static cache.
      */
     func loadShowsAttended(){
-        
-        //print ("Loading shows attended data 1")
         let bandNameHandle = bandNamesHandler()
-        
         let allBands = bandNameHandle.getBandNames()
         let artistUrl = getScheduleUrl()
-
         var unuiqueSpecial = [String]()
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
-            //print ("Loading show attended data!! From json")
             if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String : String] {
-                showsAttendedArray = dict
+                self.showsAttendedArray = dict
             } else {
                 print("ShowsAttended: ERROR - Unable to decode showsAttendedArray from JSON, data may be corrupted or in an unexpected format.")
-                showsAttendedArray = [:]
+                self.showsAttendedArray = [:]
             }
-            print ("Loaded show attended data!! From json \(showsAttendedArray)")
+            print ("Loaded show attended data!! From json \(self.getShowsAttended())")
             var needsMigration = false
             let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
             // Migrate old format (no timestamp) to new format
-            for (key, value) in showsAttendedArray {
+            let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+            for (key, value) in currentArray {
                 let parts = value.split(separator: ":")
                 if parts.count == 1 {
-                    // Old format, add timestamp
-                    showsAttendedArray[key] = value + ":" + currentTimestamp
+                    mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
                     needsMigration = true
                 }
             }
@@ -111,32 +114,25 @@ open class ShowsAttended {
                 print("Migrated old attendance data to new format with timestamps.")
                 saveShowsAttended()
             }
-            if (showsAttendedArray.count > 0){
-                for index in showsAttendedArray {
-                    print ("Loaded show attended data!! From \(index.key) - \(index.value)")
-                    showsAttendedArray[index.key] = index.value
+            let afterMigrationArray = showsAttendedQueue.sync { self._showsAttendedArray }
+            if (afterMigrationArray.count > 0){
+                for index in afterMigrationArray {
+                    mutateShowsAttendedArray { arr in arr[index.key] = index.value }
                 }
             }
-            print ("Loading show attended data! cleanup event data loaded showData \(showsAttendedArray)")
-            
-            // Prevent populating cache with empty data unless app just launched
-            if showsAttendedArray.isEmpty && !cacheVariables.justLaunched {
+            print ("Loading show attended data! cleanup event data loaded showData \(self.getShowsAttended())")
+            if afterMigrationArray.isEmpty && !cacheVariables.justLaunched {
                 print("Skipping attended cache population: showsAttendedArray is empty and app is not just launched.")
                 return
             }
             staticAttended.async(flags: .barrier) {
-                for index in self.showsAttendedArray {
-
-                    cacheVariables.attendedStaticCache[index.key] = index.value ?? ""
+                for index in afterMigrationArray {
+                    cacheVariables.attendedStaticCache[index.key] = index.value
                 }
             }
-            
-            //iCloudHandle.readCloudAttendedData(attendedHandle: self)
-            
         } catch {
             print ("Loaded show attended data!! Error, unable to load showsAtteneded Data \(error.localizedDescription)")
         }
-    
     }
     
     /**
@@ -185,7 +181,8 @@ open class ShowsAttended {
      - Returns: The new attendance status as a string.
      */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
-        if (showsAttendedArray.count == 0){
+        let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+        if (currentArray.count == 0){
             loadShowsAttended();
         }
         var eventTypeValue = eventType;
@@ -196,7 +193,7 @@ open class ShowsAttended {
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
         let currentStatus = getShowAttendedStatusRaw(index: index)
-        if (showsAttendedArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus){
+        if (currentArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus){
             value = sawAllStatus
         } else if (currentStatus == sawAllStatus && eventType == showType ){
             value = sawSomeStatus
@@ -221,7 +218,7 @@ open class ShowsAttended {
      */
     func changeShowAttendedStatus(index: String, status:String){
         print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
-        showsAttendedArray[index] = status
+        mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
         staticAttended.async(flags: .barrier) {
@@ -402,18 +399,22 @@ open class ShowsAttended {
     
     // Helper to get the raw status (without timestamp)
     func getShowAttendedStatusRaw(index: String) -> String? {
-        guard let value = showsAttendedArray[index] else { return nil }
-        let parts = value.split(separator: ":")
-        return parts.first.map { String($0) }
+        return showsAttendedQueue.sync {
+            guard let value = self._showsAttendedArray[index] else { return nil }
+            let parts = value.split(separator: ":")
+            return parts.first.map { String($0) }
+        }
     }
     
     // New: Get the last change timestamp for a show
     func getShowAttendedLastChange(index: String) -> Double {
-        guard let value = showsAttendedArray[index] else { return 0 }
-        let parts = value.split(separator: ":")
-        if parts.count == 2, let ts = Double(parts[1]) { return ts }
-        if parts.count == 3, let ts = Double(parts[2]) { return ts } // for iCloud format
-        return 0
+        return showsAttendedQueue.sync {
+            guard let value = self._showsAttendedArray[index] else { return 0 }
+            let parts = value.split(separator: ":")
+            if parts.count == 2, let ts = Double(parts[1]) { return ts }
+            if parts.count == 3, let ts = Double(parts[2]) { return ts } // for iCloud format
+            return 0
+        }
     }
     
     // Returns the last change timestamp for a show, given its parameters
