@@ -10,6 +10,7 @@ import Foundation
 
 open class bandNamesHandler {
 
+    // These must only be accessed inside staticBandName queue
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
     
@@ -21,17 +22,26 @@ open class bandNamesHandler {
     /// Loads band name data from cache if available, otherwise loads from disk or Dropbox.
     func getCachedData(completion: (() -> Void)? = nil){
         print ("Loading bandName Data cache")
+        var needsGather = false
         staticBandName.sync() {
             if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
                 print ("Loading bandName Data cache, from cache")
-                bandNames = cacheVariables.bandNamesStaticCache
-                bandNamesArray = cacheVariables.bandNamesArrayStaticCache
+                // Write access: must use barrier
+                staticBandName.async(flags: .barrier) {
+                    self.bandNames = cacheVariables.bandNamesStaticCache
+                    self.bandNamesArray = cacheVariables.bandNamesArrayStaticCache
+                    DispatchQueue.main.async {
                 completion?()
+                    }
+                }
             } else {
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                needsGather = true
+            }
+        }
+        if needsGather {
+            DispatchQueue.global(qos: .default).async {
                     print ("Loading bandName Data cache, from disk or dropbox")
                     self.gatherData(completion: completion)
-                }
             }
         }
         print ("Done Loading bandName Data cache")
@@ -39,7 +49,9 @@ open class bandNamesHandler {
     
     /// Clears the static cache of band names.
     func clearCachedData(){
+        staticBandName.async(flags: .barrier) {
         cacheVariables.bandNamesStaticCache = [String :[String : String]]()
+        }
     }
     
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
@@ -59,7 +71,44 @@ open class bandNamesHandler {
             }
         }
         readBandFile()
-        if bandNames.isEmpty && !cacheVariables.justLaunched {
+        var isEmpty = false
+        staticBandName.sync {
+            isEmpty = self.bandNames.isEmpty
+        }
+        if isEmpty && cacheVariables.justLaunched {
+            print("Band file is empty and app is just launched. Retrying network fetch once more.")
+            if isInternetAvailable() == true {
+                eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+                let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
+                print ("Retrying: Getting band data from " + artistUrl);
+                let httpData = getUrlData(urlString: artistUrl)
+                if (httpData.isEmpty == false) {
+                    writeBandFile(httpData);
+                    readBandFile()
+                    staticBandName.sync {
+                        isEmpty = self.bandNames.isEmpty
+                    }
+                    if !isEmpty {
+                        print("Band data loaded successfully on retry, setting justLaunched to false.")
+                        cacheVariables.justLaunched = false
+                        populateCache(completion: completion)
+                        return
+                    }
+                } else {
+                    print("Retry failed: Internet is down or data is empty.")
+                }
+            } else {
+                print("Retry failed: No internet connection.")
+            }
+            print("No band data available after retry. Giving up and calling completion.")
+            completion?()
+            return
+        }
+        if !isEmpty {
+            print("Band data loaded successfully, setting justLaunched to false.")
+            cacheVariables.justLaunched = false
+        }
+        if isEmpty && !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")
             completion?()
             return
@@ -74,6 +123,7 @@ open class bandNamesHandler {
         staticBandName.async(flags: .barrier) {
             cacheVariables.bandNamesStaticCache =  [String :[String : String]]()
             cacheVariables.bandNamesArrayStaticCache = [String]()
+            // Read bandNames and bandNamesArray inside the queue
             for bandName in self.bandNames.keys {
                 cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
                 cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
@@ -103,77 +153,94 @@ open class bandNamesHandler {
         
     }
 
+    // Add at the top of the class (or where readingBandFile is declared):
+    private let readingBandFileQueue = DispatchQueue(label: "com.yourapp.readingBandFileQueue")
+    private var _readingBandFile: Bool = false
+    var readingBandFile: Bool {
+        get { return readingBandFileQueue.sync { _readingBandFile } }
+        set { readingBandFileQueue.sync { _readingBandFile = newValue } }
+    }
+
+    // Add a recursion/loop guard
+    // Change these from private static to static so they are accessible from MasterViewController
+    static var readBandFileCallCount = 0
+    static var lastReadBandFileCallTime: Date? = nil
 
     /// Reads the band file from disk and populates the bandNames and bandNamesArray dictionaries.
     /// Handles parsing of CSV data and extraction of band properties.
     func readBandFile (){
-        
-        if (readingBandFile == false){
+        let now = Date()
+        if let last = Self.lastReadBandFileCallTime, now.timeIntervalSince(last) < 2 {
+            Self.readBandFileCallCount += 1
+        } else {
+            Self.readBandFileCallCount = 1
+        }
+        Self.lastReadBandFileCallTime = now
+        print("readBandFile called ( Self.readBandFileCallCount) at \(now)")
+        if Self.readBandFileCallCount > 10 {
+            print("Aborting: readBandFile called too many times in a short period. Possible infinite loop.")
+            return
+        }
+        if readingBandFile == false{
             readingBandFile = true
             print ("Loading bandName Data readBandFile")
             print ("Reading content of file " + bandFile);
-            
             if let csvDataString = try? String(contentsOfFile: bandFile, encoding: String.Encoding.utf8) {
                 print("csvDataString has data", terminator: "");
-                
-                bandNames =  [String :[String : String]]()
-                bandNamesArray = [String]()
-                
-                //var unuiqueIndex = Dictionary<NSTimeInterval, Int>()
-                var csvData: CSV
-                
-                //var error: NSErrorPointer = nil
-                csvData = try! CSV(csvStringToParse: csvDataString)
-                
-                for lineData in csvData.rows {
-                    
-                    if (lineData["bandName"]?.isEmpty == false){
-                        print ("Working on band " + lineData["bandName"]!)
-                        
-                        let bandNameValue = lineData["bandName"]!
-                        
-                        bandNames[bandNameValue] = [String : String]()
-                        bandNames[bandNameValue]!["bandName"] = bandNameValue
-                        
-                        if (lineData.isEmpty == false){
-                            if (lineData["imageUrl"] != nil){
-                                bandNames[bandNameValue]!["bandImageUrl"] = "http://" + lineData["imageUrl"]!;
-                            }
-                            if (lineData["officalSite"] != nil){
-                                if (lineData["bandName"] != nil){
-                                    bandNames[bandNameValue]!["officalUrls"] = "http://" + lineData["officalSite"]!;
+                // Write access: must use barrier
+                staticBandName.async(flags: .barrier) {
+                    self.bandNames =  [String :[String : String]]()
+                    self.bandNamesArray = [String]()
+                    var csvData: CSV
+                    if let csvData = try? CSV(csvStringToParse: csvDataString) {
+                        for lineData in csvData.rows {
+                            if (lineData["bandName"]?.isEmpty == false){
+                                print ("Working on band " + lineData["bandName"]!)
+                                let bandNameValue = lineData["bandName"]!
+                                self.bandNames[bandNameValue] = [String : String]()
+                                self.bandNames[bandNameValue]! ["bandName"] = bandNameValue
+                                if (lineData.isEmpty == false){
+                                    if (lineData["imageUrl"] != nil){
+                                        self.bandNames[bandNameValue]! ["bandImageUrl"] = "http://" + lineData["imageUrl"]!;
+                                    }
+                                    if (lineData["officalSite"] != nil){
+                                        if (lineData["bandName"] != nil){
+                                            self.bandNames[bandNameValue]! ["officalUrls"] = "http://" + lineData["officalSite"]!;
+                                        }
+                                    }
+                                    if (lineData["wikipedia"] != nil){
+                                        self.bandNames[bandNameValue]! ["wikipediaLink"] = lineData["wikipedia"]!;
+                                    }
+                                    if (lineData["youtube"] != nil){
+                                        self.bandNames[bandNameValue]! ["youtubeLinks"] = lineData["youtube"]!;
+                                    }
+                                    if (lineData["metalArchives"] != nil){
+                                        self.bandNames[bandNameValue]! ["metalArchiveLinks"] = lineData["metalArchives"]!;
+                                    }
+                                    if (lineData["country"] != nil){
+                                        self.bandNames[bandNameValue]! ["bandCountry"] = lineData["country"]!;
+                                    }
+                                    if (lineData["genre"] != nil){
+                                        self.bandNames[bandNameValue]! ["bandGenre"] = lineData["genre"]!;
+                                    }
+                                    if (lineData["noteworthy"] != nil){
+                                        self.bandNames[bandNameValue]! ["bandNoteWorthy"] = lineData["noteworthy"]!;
+                                    }
+                                    if (lineData["priorYears"] != nil){
+                                        self.bandNames[bandNameValue]! ["priorYears"] = lineData["priorYears"]!;
+                                    }
                                 }
-                            }
-                            if (lineData["wikipedia"] != nil){
-                                bandNames[bandNameValue]!["wikipediaLink"] = lineData["wikipedia"]!;
-                            }
-                            if (lineData["youtube"] != nil){
-                                bandNames[bandNameValue]!["youtubeLinks"] = lineData["youtube"]!;
-                            }
-                            if (lineData["metalArchives"] != nil){
-                                bandNames[bandNameValue]!["metalArchiveLinks"] = lineData["metalArchives"]!;
-                            }
-                            if (lineData["country"] != nil){
-                                bandNames[bandNameValue]!["bandCountry"] = lineData["country"]!;
-                            }
-                            if (lineData["genre"] != nil){
-                                bandNames[bandNameValue]!["bandGenre"] = lineData["genre"]!;
-                            }
-                            if (lineData["noteworthy"] != nil){
-                                bandNames[bandNameValue]!["bandNoteWorthy"] = lineData["noteworthy"]!;
-                            }
-                            if (lineData["priorYears"] != nil){
-                                bandNames[bandNameValue]!["priorYears"] = lineData["priorYears"]!;
+                                self.bandNamesArray.append(bandNameValue)
                             }
                         }
+                    } else {
+                        print("Error: Failed to parse CSV data in readBandFile.")
                     }
                 }
-                
             } else {
                 print ("Could not read file for some reason");
                 do {
                     try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
-                    
                 } catch let error as NSError {
                     print ("Encountered an error on reading file" + error.debugDescription)
                 }
@@ -182,137 +249,150 @@ open class bandNamesHandler {
         }
     }
 
+    /// Force read the band file and populate cache, bypassing the recursion/loop guard
+    func forceReadBandFileAndPopulateCache(completion: (() -> Void)? = nil) {
+        self._readingBandFile = true
+        self.readBandFile()
+        self._readingBandFile = false
+        self.populateCache(completion: completion)
+    }
+
     /// Returns a sorted array of all band names. Loads from cache if necessary.
     /// - Returns: An array of band name strings.
     func getBandNames () -> [String] {
-        
-        bandNamesArray = [String]()
-        
-        print ("bandNames data is \(bandNames)")
-        if (bandNames.isEmpty == true){
-            getCachedData()
-        }
-        
-        if (bandNames.isEmpty == false){
-            if (bandNames.count >= 1){
-                for bandNameValue in bandNames.keys {
-                    bandNamesArray.append(bandNameValue)
-                }
-                bandNamesArray.sort();
+        var result: [String] = []
+        var needsCache = false
+        staticBandName.sync {
+            if self.bandNames.isEmpty {
+                needsCache = true
+            } else {
+                result = Array(self.bandNames.keys).sorted()
             }
-        } else {
-            print ("can not load data\n");
-            //getCachedData()
-            //bandNamesArray.append("Unable to load band data, unknown error")
         }
-        print ("bandNamesArray data is \(bandNamesArray)")
-        return bandNamesArray
+        if needsCache {
+            getCachedData()
+            // After loading, try again to get the result
+            staticBandName.sync {
+                result = Array(self.bandNames.keys).sorted()
+            }
+        }
+        print ("bandNamesArray data is \(result)")
+        return result
     }
 
     /// Returns the image URL for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The image URL string.
     func getBandImageUrl(_ band: String) -> String {
-        
-        print ("Getting image for band \(band) will return \(String(describing: bandNames[band]))")
-        return bandNames[band]?["bandImageUrl"] ?? ""
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["bandImageUrl"] ?? ""
+        }
+        print ("Getting image for band \(band) will return \(result)")
+        return result
     }
 
     /// Returns the official website URL for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The official website URL string.
     func getofficalPage (_ band: String) -> String {
-        
-        print ("Getting officalSite for band \(band) will return \(String(describing: bandNames[band]?["officalUrls"]))")
-        
-        return bandNames[band]?["officalUrls"] ?? ""
-        
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["officalUrls"] ?? ""
+        }
+        print ("Getting officalSite for band \(band) will return \(result)")
+        return result
     }
 
     /// Returns the Wikipedia page URL for a given band, localized to the user's language if possible.
     /// - Parameter bandName: The name of the band.
     /// - Returns: The Wikipedia URL string.
     func getWikipediaPage (_ bandName: String) -> String{
-        
-        var wikipediaUrl = bandNames[bandName]?["wikipediaLink"] ?? ""
-        
+        var wikipediaUrl = ""
+        staticBandName.sync {
+            wikipediaUrl = self.bandNames[bandName]?["wikipediaLink"] ?? ""
+        }
         if (wikipediaUrl.isEmpty == false){
-
             let language: String = Locale.current.languageCode!
-            
             print ("Language is " + language);
             if (language != "en"){
                 let replacement: String = language + ".wikipedia.org";
-                
                 wikipediaUrl = wikipediaUrl.replacingOccurrences(of: "en.wikipedia.org", with:replacement)
             }
         }
-        
         return (wikipediaUrl)
-        
     }
     
     /// Returns the YouTube page URL for a given band, localized to the user's language if possible.
     /// - Parameter bandName: The name of the band.
     /// - Returns: The YouTube URL string.
     func getYouTubePage (_ bandName: String) -> String{
-        
-        var youTubeUrl = bandNames[bandName]?["youtubeLinks"] ?? ""
-        
+        var youTubeUrl = ""
+        staticBandName.sync {
+            youTubeUrl = self.bandNames[bandName]?["youtubeLinks"] ?? ""
+        }
         if (youTubeUrl.isEmpty == false){
-
             let language: String = Locale.preferredLanguages[0]
-            
             if (language != "en"){
                 youTubeUrl = youTubeUrl + "&hl=" + language
             }
         }
-        
         return (youTubeUrl)
-        
     }
     
     /// Returns the Metal Archives URL for a given band, or an empty string if not found.
     /// - Parameter bandName: The name of the band.
     /// - Returns: The Metal Archives URL string.
     func getMetalArchives (_ bandName: String) -> String {
-        
-        return bandNames[bandName]?["metalArchiveLinks"] ?? ""
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[bandName]?["metalArchiveLinks"] ?? ""
+        }
+        return result
     }
     
     /// Returns the country for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The country string.
     func getBandCountry (_ band: String) -> String {
-        
-        return bandNames[band]?["bandCountry"] ?? ""
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["bandCountry"] ?? ""
+        }
+        return result
     }
     
     /// Returns the genre for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The genre string.
     func getBandGenre (_ band: String) -> String {
-        
-        return bandNames[band]?["bandGenre"] ?? ""
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["bandGenre"] ?? ""
+        }
+        return result
     }
 
     /// Returns the 'noteworthy' field for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The noteworthy string.
     func getBandNoteWorthy (_ band: String) -> String {
-        
-        return bandNames[band]?["bandNoteWorthy"] ?? ""
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["bandNoteWorthy"] ?? ""
+        }
+        return result
     }
 
     /// Returns a comma-separated string of prior years for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The prior years string.
     func getPriorYears (_ band: String) -> String {
-        
-        var previousYears = bandNames[band]?["priorYears"]
-        
+        var previousYears: String? = nil
+        staticBandName.sync {
+            previousYears = self.bandNames[band]?["priorYears"]
+        }
         previousYears = previousYears?.replacingOccurrences(of: " ", with: ", ")
-        
         return previousYears ?? ""
     }
 }

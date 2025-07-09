@@ -14,13 +14,12 @@ func HTTPsendRequest(_ request: URLRequest,
             with: request,
             completionHandler: {
                 data, response, error in
-                if error != nil {
-                    callback("", error!.localizedDescription)
-                } else {
-                  
-                    let stringVariable = String(data: data!, encoding: String.Encoding(rawValue: String.Encoding.ascii.rawValue))! as String
+                if let error = error {
+                    callback("", error.localizedDescription)
+                } else if let data = data, let stringVariable = String(data: data, encoding: .ascii) {
                     callback(stringVariable, nil)
-
+                } else {
+                    callback("", "Unknown error: data or string conversion failed")
                 }
         })
         task.resume()

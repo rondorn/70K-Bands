@@ -326,21 +326,22 @@ open class CustomBandDescription {
                 
                 var csvData: CSV
                 
-                csvData = try! CSV(csvStringToParse: csvDataString)
-                
-                for lineData in csvData.rows {
-                    if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                        print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
-                        bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
-                        bandDescriptionUrlDate[(lineData[bandField]) ?? ""] = lineData[urlDateField]
-                        bandDescriptionLock.async(flags: .barrier) {
-                            cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
-                            cacheVariables.bandDescriptionUrlDateCache[(lineData[bandField])!] = lineData[urlDateField]
+                if let csvData = try? CSV(csvStringToParse: csvDataString) {
+                    for lineData in csvData.rows {
+                        if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
+                            print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
+                            bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
+                            bandDescriptionUrlDate[(lineData[bandField]) ?? ""] = lineData[urlDateField]
+                            bandDescriptionLock.async(flags: .barrier) {
+                                cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
+                                cacheVariables.bandDescriptionUrlDateCache[(lineData[bandField])!] = lineData[urlDateField]
+                            }
+                        } else {
+                            print ("commentFile  Unable to parse descriptionMap line \(lineData)")
                         }
-                        
-                    } else {
-                        print ("commentFile  Unable to parse descriptionMap line \(lineData)")
                     }
+                } else {
+                    print("Error: Failed to parse CSV data in getDescriptionMap.")
                 }
             } else {
                 print ("commentFile Encountered an error could not open descriptionMap file")
