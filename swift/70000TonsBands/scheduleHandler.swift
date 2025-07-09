@@ -10,8 +10,42 @@ import Foundation
 
 open class scheduleHandler {
     
-    var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
-    var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
+    // Thread-safe queue for all scheduling data access
+    private let scheduleHandlerQueue = DispatchQueue(label: "com.yourapp.scheduleHandlerQueue", attributes: .concurrent)
+    
+    // Private backing stores
+    private var _schedulingData: [String : [TimeInterval : [String : String]]] = [:]
+    private var _schedulingDataByTime: [TimeInterval : [String : String]] = [:]
+    
+    // Thread-safe accessors
+    var schedulingData: [String : [TimeInterval : [String : String]]] {
+        get {
+            return scheduleHandlerQueue.sync { _schedulingData }
+        }
+        set {
+            scheduleHandlerQueue.async(flags: .barrier) { self._schedulingData = newValue }
+        }
+    }
+    var schedulingDataByTime: [TimeInterval : [String : String]] {
+        get {
+            return scheduleHandlerQueue.sync { _schedulingDataByTime }
+        }
+        set {
+            scheduleHandlerQueue.async(flags: .barrier) { self._schedulingDataByTime = newValue }
+        }
+    }
+    
+    // Helper for thread-safe mutation
+    private func mutateSchedulingData(_ block: @escaping (inout [String : [TimeInterval : [String : String]]]) -> Void) {
+        scheduleHandlerQueue.async(flags: .barrier) {
+            block(&self._schedulingData)
+        }
+    }
+    private func mutateSchedulingDataByTime(_ block: @escaping (inout [TimeInterval : [String : String]]) -> Void) {
+        scheduleHandlerQueue.async(flags: .barrier) {
+            block(&self._schedulingDataByTime)
+        }
+    }
 
     init() {
         print ("Loading schedule Data")
@@ -25,14 +59,15 @@ open class scheduleHandler {
         staticSchedule.sync {
             if (cacheVariables.scheduleStaticCache.isEmpty == false && cacheVariables.scheduleTimeStaticCache.isEmpty == false ){
                 staticCacheUsed = true
-                schedulingData = cacheVariables.scheduleStaticCache
-                schedulingDataByTime = cacheVariables.scheduleTimeStaticCache
+                // Make a deep copy to avoid mutating shared cache
+                self.schedulingData = cacheVariables.scheduleStaticCache.mapValues { $0.mapValues { $0 } }
+                self.schedulingDataByTime = cacheVariables.scheduleTimeStaticCache.mapValues { $0 }
             }
         }
         
         if (staticCacheUsed == false){
             if ((FileManager.default.fileExists(atPath: schedulingDataCacheFile.path)) == true){
-                schedulingData = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataCacheFile.path)
+                self.schedulingData = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataCacheFile.path)
                     as! [String : [TimeInterval : [String : String]]]
             } else {
                 
@@ -43,7 +78,7 @@ open class scheduleHandler {
             }
             
             if ((FileManager.default.fileExists(atPath: schedulingDataByTimeCacheFile.path)) == true){
-                schedulingDataByTime = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
+                self.schedulingDataByTime = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
             } else {
                 DispatchQueue.main.async {
                     print ("Cache did not load, loading schedule data")
@@ -51,7 +86,7 @@ open class scheduleHandler {
                 }
             }
             
-            if schedulingData.isEmpty && !cacheVariables.justLaunched {
+            if self.schedulingData.isEmpty && !cacheVariables.justLaunched {
                 print("Skipping schedule cache population: schedulingData is empty and app is not just launched.")
                 return
             }
@@ -64,7 +99,7 @@ open class scheduleHandler {
     }
     
     func clearCache(){
-        cacheVariables.scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+        self.schedulingData = [:]
     }
     
     func populateSchedule(){
@@ -72,8 +107,8 @@ open class scheduleHandler {
         print ("Loading schedule data 1")
         isLoadingSchedule = true;
         
-        self.schedulingData.removeAll();
-        self.schedulingDataByTime.removeAll();
+        self.schedulingData = [:]
+        self.schedulingDataByTime = [:]
     
         
         if (FileManager.default.fileExists(atPath: scheduleFile) == false){
@@ -313,9 +348,10 @@ open class scheduleHandler {
     }
     
     func setData (bandName:String, index:TimeInterval, variable:String, value:String){
-        if (variable.isEmpty == false && value.isEmpty == false && bandName.isEmpty == false && index.isZero == false){
-            if (isSchedulingDataPresent(schedulingData: schedulingData,bandName: bandName) == true){
-                self.schedulingData[bandName]?[index]?[variable] = value as String;
+        guard !variable.isEmpty, !value.isEmpty, !bandName.isEmpty, !index.isZero else { return }
+        mutateSchedulingData { schedulingData in
+            if self.isSchedulingDataPresent(schedulingData: schedulingData, bandName: bandName) {
+                schedulingData[bandName]?[index]?[variable] = value
             }
         }
     }
@@ -332,52 +368,46 @@ open class scheduleHandler {
         return results
     }
     
-    func getData(_ bandName:String, index:TimeInterval, variable:String) -> String{
-        
-        var returnValue = ""
-
-        //print ("schedule value lookup. Getting variable " + variable + " for " + bandName + " - " + index.description);
-        //print (schedulingData[bandName] as Any)
-        if (schedulingData[bandName] != nil && variable.isEmpty == false){
-            //print ("schedule value lookup. loop 1")
-            if (schedulingData[bandName]![index]?.isEmpty == false){
-                //print ("schedule value lookup. loop 2")
-
-                if (schedulingData[bandName]![index]![variable]?.isEmpty == false){
-                    //print ("schedule value lookup. loop 3")
-                    //print ("schedule value lookup. Returning " + schedulingData[bandName]![index]![variable]!)
-                    returnValue = schedulingData[bandName]![index]![variable]!
-                }
+    func getData(_ bandName: String, index: TimeInterval, variable: String) -> String {
+        guard !variable.isEmpty else { return "" }
+        return scheduleHandlerQueue.sync {
+            guard let bandDict = self._schedulingData[bandName] else {
+                print("getData: No entry for bandName \(bandName)")
+                return ""
             }
+            guard let timeDict = bandDict[index] else {
+                print("getData: No entry for index \(index) in band \(bandName)")
+                return ""
+            }
+            guard let value = timeDict[variable], !value.isEmpty else {
+                print("getData: No value for variable \(variable) in band \(bandName) at index \(index)")
+                return ""
+            }
+            return value
         }
-        //print ("schedule value lookup. Returning nothing for " + variable + " - " + bandName)
-        
-        return returnValue
     }
 
     func buildTimeSortedSchedulingData () {
-        
-        for bandName in schedulingData.keys {
-            if (schedulingData[bandName]?.isEmpty == false){
-                for timeIndex in (schedulingData[bandName]?.keys)!{
-                    print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
-                    self.schedulingDataByTime[timeIndex] = [bandName:bandName]
+        scheduleHandlerQueue.async(flags: .barrier) {
+            for bandName in self._schedulingData.keys {
+                if let bandSchedule = self._schedulingData[bandName], !bandSchedule.isEmpty {
+                    for timeIndex in bandSchedule.keys {
+                        print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
+                        self._schedulingDataByTime[timeIndex] = [bandName:bandName]
+                    }
                 }
             }
+            print ("schedulingDataByTime is")
         }
-    
-        print ("schedulingDataByTime is")
-        //print (schedulingDataByTime);
-
-          }
+    }
     
     func getTimeSortedSchedulingData () -> [TimeInterval : [String : String]] {
-        return schedulingDataByTime
+        return scheduleHandlerQueue.sync { self._schedulingDataByTime }
     }
     
     func getBandSortedSchedulingData () -> [String : [TimeInterval : [String : String]]] {
         
-        return schedulingData;
+        return scheduleHandlerQueue.sync { self._schedulingData }
     
     }
     

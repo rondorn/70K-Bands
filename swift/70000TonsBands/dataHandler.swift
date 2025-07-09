@@ -28,7 +28,9 @@ class dataHandler {
         staticData.sync() {
             if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
                 print ("Loading bandPriorityStorage from Data cache")
-                self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
+                staticData.async(flags: .barrier) {
+                    self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
+                }
                 print ("Loading bandPriorityStorage from Data cache, done")
             } else {
                 print ("Loading bandPriorityStorage Cache did not load, loading from file")
@@ -45,7 +47,10 @@ class dataHandler {
     /// Refreshes the data by reloading from disk or cache.
     func refreshData(){
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            self.bandPriorityStorage = self.readFile(dateWinnerPassed: "")
+            let fileData = self.readFile(dateWinnerPassed: "")
+            staticData.async(flags: .barrier) {
+                self.bandPriorityStorage = fileData
+            }
         }
     }
 
@@ -56,9 +61,9 @@ class dataHandler {
     ///   - timestamp: The timestamp of the update.
     func addPriorityDataWithTimestamp(_ bandname: String, priority: Int, timestamp: Double) {
         print ("addPriorityDataWithTimestamp for \(bandname) = \(priority) at \(timestamp)")
-        bandPriorityStorage[bandname] = priority
-        bandPriorityTimestamps[bandname] = timestamp
         staticData.async(flags: .barrier) {
+            self.bandPriorityStorage[bandname] = priority
+            self.bandPriorityTimestamps[bandname] = timestamp
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
         staticLastModifiedDate.async(flags: .barrier) {
@@ -94,18 +99,19 @@ class dataHandler {
     /// Returns the priority value for a specific band.
     /// - Parameter bandName: The name of the band.
     /// - Returns: The priority value for the band, or 0 if not found.
-    func getPriorityData (_ bandname:String) -> Int {
-        
-        var priority = 0
-        
-        print ("Retrieving priority data for " + bandname + ":", terminator: "\n")
-        
-        if (bandPriorityStorage[bandname] != nil){
-            priority = bandPriorityStorage[bandname]!
-            print("Reading data " + bandname + ":" + String(priority))
+    func getPriorityData(_ bandname: Any) -> Int {
+        print("DEBUG: getPriorityData called with value: \(bandname) (\(type(of: bandname)))")
+        guard let bandnameStr = bandname as? String else {
+            assertionFailure("getPriorityData called with non-String key: \(bandname) (\(type(of: bandname)))")
+            print("ERROR: getPriorityData called with non-String key: \(bandname) (\(type(of: bandname)))")
+            return 0
         }
-        
-
+        var priority = 0
+        staticData.sync {
+            if let value = bandPriorityStorage[bandnameStr] {
+                priority = value
+            }
+        }
         return priority
     }
     
@@ -113,17 +119,12 @@ class dataHandler {
     /// - Parameter bandName: The name of the band.
     /// - Returns: The timestamp of the last change, or 0 if not found.
     func getPriorityLastChange (_ bandname:String) -> Double {
-        
         var timestamp = 0.0
-        
-        print ("Retrieving priority timestamp for " + bandname + ":", terminator: "\n")
-        
-        if (bandPriorityTimestamps[bandname] != nil){
-            timestamp = bandPriorityTimestamps[bandname]!
-            print("Reading timestamp " + bandname + ":" + String(timestamp))
+        staticData.sync {
+            if let value = bandPriorityTimestamps[bandname] {
+                timestamp = value
+            }
         }
-        
-
         return timestamp
     }
     
@@ -178,9 +179,9 @@ class dataHandler {
     func readFile(dateWinnerPassed : String) -> [String:Int]{
         
         print ("Load bandPriorityStorage data")
-        bandPriorityStorage = [String:Int]()
+        var localBandPriorityStorage = [String:Int]()
         
-        if (bandPriorityStorage.count == 0){
+        if (localBandPriorityStorage.count == 0){
             if let data = try? String(contentsOf: storageFile, encoding: String.Encoding.utf8) {
                 let dataArray = data.components(separatedBy: "\n")
                 for record in dataArray {
@@ -199,9 +200,7 @@ class dataHandler {
                         
                         print ("reading PRIORITIES \(element[0]) - \(priorityString):\(timestampString)")
                         
-                        bandPriorityStorage[element[0]] = priority
-                        bandPriorityTimestamps[element[0]] = timestamp
-                        
+                        localBandPriorityStorage[element[0]] = priority
                         staticData.async(flags: .barrier) {
                             cacheVariables.bandPriorityStorageCache[element[0]] = priority
                         }
@@ -214,9 +213,7 @@ class dataHandler {
                         
                         let priority = Int(priorityString) ?? 0
                         
-                        bandPriorityStorage[element[0]] = priority
-                        bandPriorityTimestamps[element[0]] = 0.0  // Default timestamp for old data
-                        
+                        localBandPriorityStorage[element[0]] = priority
                         staticData.async(flags: .barrier) {
                             cacheVariables.bandPriorityStorageCache[element[0]] = priority
                         }
@@ -225,7 +222,7 @@ class dataHandler {
             }
         }
         
-        return bandPriorityStorage
+        return localBandPriorityStorage
     }
 
 }
