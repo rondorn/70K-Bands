@@ -807,36 +807,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
   
-    func updateCountLable(){
-        
+    func updateCountLable() {
         setFilterTitleText()
-        var lableCounterString = String();
-        var labeleCounter = Int()
-        
-        print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
-        if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
-            labeleCounter = listCount
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
-            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
+        let currentYearSetting = getScheduleUrl()
+        let yearText = (currentYearSetting != "Current" && currentYearSetting != "Default") ? "(\(currentYearSetting)) " : ""
+
+        // Determine if only 'Cruiser Organized' events are present
+        let onlyCruiserOrganized = (unfilteredEventCount > 0 && unfilteredEventCount == unfilteredCruiserEventCount)
+        // Determine if there are any non-'Cruiser Organized' events
+        let hasNonCruiserEvents = (eventCounter - eventCounterUnoffical) > 0
+
+        var labelCounter: Int
+        var labelCounterString: String
+
+        if hasNonCruiserEvents {
+            // Show Events
+            labelCounter = eventCounter
+            labelCounterString = " Events " + filtersOnText
         } else {
-            labeleCounter = listCount - eventCounterUnoffical
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            sortedBy = "time"
+            // Show Bands (either only Cruiser Organized events, or just bands)
+            labelCounter = bandCounter
+            labelCounterString = " Bands " + filtersOnText
         }
 
-        var currentYearSetting = getScheduleUrl()
-        if (currentYearSetting != "Current" && currentYearSetting != "Default"){
-            titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
-            
+        if yearText.isEmpty {
+            titleButton.title = "\(labelCounter)\(labelCounterString)"
         } else {
-            titleButton.title = String(labeleCounter) + lableCounterString
+            titleButton.title = "\(yearText)\(labelCounter)\(labelCounterString)"
         }
-        //createrFilterMenu(controller: self);
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
