@@ -576,58 +576,65 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     /// Handles the acceptance of the last year warning, updates URLs, clears data, and refreshes the app state.
     func lastYearWarningAccepted() async{
-        
         let netTest = NetworkTesting()
         internetAvailble = netTest.forgroundNetworkTest(callingGui: self)
-        
         if (internetAvailble == false){
             print("No internet connection is available, can NOT switch years at this time")
-            
             networkDownWarning()
             return()
         }
         print ("Files were Ok, Pressed")
-        
-
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
-        
+
+        // 1. Set URLs for the selected year (including 'Current')
         setArtistUrl(eventYearChangeAttempt)
         setScheduleUrl(eventYearChangeAttempt)
         writeFiltersFile()
         cacheVariables.storePointerData = [String:String]()
         var pointerIndex = getScheduleUrl()
-        
         print ("Files were Done setting \(pointerIndex)")
-        do {
-            try  FileManager.default.removeItem(atPath: scheduleFile)
-            try  FileManager.default.removeItem(atPath: bandFile)
 
+        // 2. Remove any old/cached files for schedule and bands
+        do {
+            if FileManager.default.fileExists(atPath: scheduleFile) {
+                try FileManager.default.removeItem(atPath: scheduleFile)
+            }
+            if FileManager.default.fileExists(atPath: bandFile) {
+                try FileManager.default.removeItem(atPath: bandFile)
+            }
             print ("Files were removed")
         } catch {
             print ("Files were not removed..why?");
             //guess there was no file to delete
         }
 
-        setMustSeeOn(true);
-        setMightSeeOn(true);
-        setWontSeeOn(true);
-        setUnknownSeeOn(true);
+        // 3. Reset all filter and display settings to defaults
+        setMustSeeOn(true)
+        setMightSeeOn(true)
+        setWontSeeOn(true)
+        setUnknownSeeOn(true)
+        establishDefaults() // extra: ensure all filter settings are default
 
-        //clear all existing notifications
+        // 4. Clear all existing notifications
         let localNotification = localNoticationHandler()
-        localNotification.clearNotifications();
+        localNotification.clearNotifications()
+
+        // 5. Force reload of pointer data for the current year
+        cacheVariables.storePointerData = [String:String]()
         eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
-        
+
+        // 6. Setup URLs and defaults for the current year
         setupCurrentYearUrls()
         setupDefaults()
-        
-        print ("Refreshing data in backgroud..not really..\(eventYear)")
+
+        // 7. Force reload of all band and schedule data for the current year
         var bandNamesHandle = bandNamesHandler()
         bandNamesHandle.gatherData()
-        
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")
+
+        // 8. Notify UI to refresh
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
     }
 
