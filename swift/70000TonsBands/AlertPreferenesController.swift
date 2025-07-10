@@ -61,6 +61,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var eventYearChangeAttempt = "Current";
     var changeYearDialogBoxTitle = String();
     
+    // Track the latest data load request
+    static var currentLoadRequestID: Int = 0
+    var myLoadRequestID: Int = 0
     
     @IBOutlet weak var DetailScreenSection: UILabel!
     @IBOutlet weak var NotesFontSizeLargeLabel: UILabel!
@@ -238,6 +241,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
         
         eventYearChangeAttempt = yearChange
+        // Increment the global request ID and store for this load
+        AlertPreferenesController.currentLoadRequestID += 1
+        myLoadRequestID = AlertPreferenesController.currentLoadRequestID
+        // Always purge caches and reload everything, even for 'Current' year
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        masterView.schedule.clearCache()
         
         UseLastYearsDataAction()
     }
@@ -483,14 +493,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: restartAlertText, preferredStyle: .alert)
         
         // Create the actions
-        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let okActionButton = UIAlertAction(title: okPrompt, style: .default) { _ in
             NotificationCenter.default.post(name: Notification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
-            
             Task{
-                        
                 await self.lastYearWarningAccepted()
-                
                 await DispatchQueue.global(qos: DispatchQoS.QoSClass.default).sync {
                     if (self.eventYearChangeAttempt.isYearValue == false){
                         self.HideExpiredSwitch.isOn = true
@@ -501,18 +507,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                         NotificationCenter.default.post(name: Notification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
                     }
                 }
-                
             }
-
         }
-        let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
-            UIAlertAction in
+        let cancelActionButton = UIAlertAction(title: cancelPrompt, style: .cancel) { _ in
             self.buildEventYearMenu(currentYear: self.currentYearSetting)
         }
         
         // Add the actions
-        alertController.addAction(okAction)
-        alertController.addAction(cancelAction)
+        alertController.addAction(okActionButton)
+        alertController.addAction(cancelActionButton)
         
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
@@ -529,8 +532,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: yearChangeAborted, preferredStyle: .alert)
         
         // Create the actions
-        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let okAction = UIAlertAction(title: okPrompt, style: .default) { _ in
             self.buildEventYearMenu(currentYear: self.currentYearSetting)
             return
         }
@@ -548,22 +550,74 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
         
         // Create the actions
-        let bandAction = UIAlertAction(title:bandListButton, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let bandAction = UIAlertAction(title:bandListButton, style: .default) { _ in
             self.HideExpiredSwitch.isOn = true
             setHideExpireScheduleData(true)
-            self.navigationController?.popViewController(animated: true)
-            self.dismiss(animated: true, completion: nil)
+            // Increment the global request ID and store for this load
+            AlertPreferenesController.currentLoadRequestID += 1
+            self.myLoadRequestID = AlertPreferenesController.currentLoadRequestID
+            // --- Begin: Ensure data is loaded and UI is refreshed before navigating away ---
+            DispatchQueue.global(qos: .userInitiated).async {
+                masterView.schedule.DownloadCsv()
+                masterView.schedule.populateSchedule()
+                let hasSchedule = !masterView.schedule.schedulingData.isEmpty
+                DispatchQueue.main.async {
+                    // Only update UI if this is the latest request
+                    if self.myLoadRequestID != AlertPreferenesController.currentLoadRequestID { return }
+                    if hasSchedule {
+                        masterView.refreshData(isUserInitiated: true)
+                        self.navigationController?.popViewController(animated: true)
+                        self.dismiss(animated: true, completion: nil)
+                    } else {
+                        let alert = UIAlertController(title: "Schedule Not Loaded", message: "Unable to load schedule data. Please check your internet connection and try again.", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "Retry", style: .default, handler: { _ in
+                            // Retry the same action
+                            self.presentingViewController?.dismiss(animated: false, completion: {
+                                self.present(self, animated: false, completion: nil)
+                            })
+                        }))
+                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                        self.present(alert, animated: true, completion: nil)
+                    }
+                }
+            }
+            // --- End ---
         }
         // Add the actions
         alertController.addAction(bandAction)
         
-        let eventAction = UIAlertAction(title:eventListButton, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let eventAction = UIAlertAction(title:eventListButton, style: .default) { _ in
             self.HideExpiredSwitch.isOn = false
             setHideExpireScheduleData(false)
-            self.navigationController?.popViewController(animated: true)
-            self.dismiss(animated: true, completion: nil)
+            // Increment the global request ID and store for this load
+            AlertPreferenesController.currentLoadRequestID += 1
+            self.myLoadRequestID = AlertPreferenesController.currentLoadRequestID
+            // --- Begin: Ensure schedule is loaded and UI is refreshed ---
+            DispatchQueue.global(qos: .userInitiated).async {
+                masterView.schedule.DownloadCsv()
+                masterView.schedule.populateSchedule()
+                let hasSchedule = !masterView.schedule.schedulingData.isEmpty
+                DispatchQueue.main.async {
+                    // Only update UI if this is the latest request
+                    if self.myLoadRequestID != AlertPreferenesController.currentLoadRequestID { return }
+                    if hasSchedule {
+                        masterView.refreshData(isUserInitiated: true)
+                        self.navigationController?.popViewController(animated: true)
+                        self.dismiss(animated: true, completion: nil)
+                    } else {
+                        let alert = UIAlertController(title: "Schedule Not Loaded", message: "Unable to load schedule data. Please check your internet connection and try again.", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "Retry", style: .default, handler: { _ in
+                            // Retry the same action
+                            self.presentingViewController?.dismiss(animated: false, completion: {
+                                self.present(self, animated: false, completion: nil)
+                            })
+                        }))
+                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                        self.present(alert, animated: true, completion: nil)
+                    }
+                }
+            }
+            // --- End ---
         }
         // Add the actions
         alertController.addAction(eventAction)
@@ -586,9 +640,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             networkDownWarning()
             return()
         }
-        print ("Files were Ok, Pressed")
+        // LOCK GUI: Disable user interaction until data is loaded
+        DispatchQueue.main.async {
+            self.view.isUserInteractionEnabled = false
+        }
+        print ("Files were in UseLastYearsDataAction")
         
-
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
         
         setArtistUrl(eventYearChangeAttempt)
@@ -622,13 +679,62 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setupDefaults()
         
         print ("Refreshing data in backgroud..not really..\(eventYear)")
-        var bandNamesHandle = bandNamesHandler()
-        bandNamesHandle.gatherData()
         
-        dataHandle = dataHandler()
-        dataHandle.clearCachedData()
-        dataHandle.readFile(dateWinnerPassed: "")
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        // --- Purge all caches before loading new data ---
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        masterView.schedule.clearCache()
+        // --- Refactored: Wait for both band and schedule data to load before proceeding ---
+        let group = DispatchGroup()
+        // Increment the global request ID and store for this load
+        AlertPreferenesController.currentLoadRequestID += 1
+        let thisLoadRequestID = AlertPreferenesController.currentLoadRequestID
+        
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let bandNamesHandle = bandNamesHandler()
+            bandNamesHandle.clearCachedData()
+            bandNamesHandle.gatherData {
+                group.leave()
+            }
+        }
+        
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let dataHandle = dataHandler()
+            dataHandle.clearCachedData()
+            dataHandle.readFile(dateWinnerPassed: "")
+            masterView.schedule.clearCache()
+            masterView.schedule.DownloadCsv()
+            masterView.schedule.populateSchedule()
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            // Only update UI if this is the latest request
+            if thisLoadRequestID != AlertPreferenesController.currentLoadRequestID { return }
+            // Now all data is loaded, allow user to proceed (refresh UI, dismiss waiting message, etc.)
+            // Ensure schedule is parsed before UI refresh
+            masterView.schedule.populateSchedule()
+            let hasSchedule = !masterView.schedule.schedulingData.isEmpty
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            // UNLOCK GUI: Re-enable user interaction
+            self.view.isUserInteractionEnabled = true
+            // Only now, navigate away if schedule is loaded
+            if hasSchedule {
+                self.navigationController?.popViewController(animated: true)
+                self.dismiss(animated: true, completion: nil)
+            } else {
+                let alert = UIAlertController(title: "Schedule Not Loaded", message: "Unable to load schedule data. Please check your internet connection and try again.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Retry", style: .default, handler: { _ in
+                    // Retry: re-run the year change
+                    Task { await self.lastYearWarningAccepted() }
+                }))
+                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                self.present(alert, animated: true, completion: nil)
+            }
+            // ... any other logic to allow user to proceed ...
+        }
     }
 
 }

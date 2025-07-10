@@ -138,16 +138,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         printFCMToken()
         
-        DispatchQueue.main.async{
+        // Remove the old DispatchQueue.main.async block and replace with background thread for iCloud data loading
+        DispatchQueue.global(qos: .background).async {
+            let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+            if isFirstLaunch {
+                UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+                UserDefaults.standard.synchronize()
+                print("First launch detected, waiting 20 seconds before loading iCloud data...")
+                Thread.sleep(forTimeInterval: 20.0)
+            }
             let iCloudHandle = iCloudDataHandler()
-            
             // IMPORTANT: Check for old iCloud data format and migrate if needed
             // This must happen BEFORE reading iCloud data to prevent conflicts
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
-            
             let notes = CustomBandDescription()
             notes.getAllDescriptions()
+            // Refresh the display on the main thread
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            }
         }
         
         application.registerForRemoteNotifications()
