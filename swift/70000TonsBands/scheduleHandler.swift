@@ -391,6 +391,142 @@ open class scheduleHandler {
         
         return date!
     }
+
+    private enum DataCollectionState {
+        case idle
+        case running
+        case queued
+        case eventYearOverridePending
+    }
+    private var state: DataCollectionState = .idle
+    private let dataCollectionQueue = DispatchQueue(label: "com.70kBands.scheduleHandler.dataCollectionQueue")
+    private var queuedRequest: (() -> Void)?
+    private var eventYearOverrideRequested: Bool = false
+    private var cancelRequested: Bool = false
+
+    /// Request a schedule data collection. If eventYearOverride is true, aborts all others and runs immediately.
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        dataCollectionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if eventYearOverride {
+                // Cancel everything and run this immediately
+                self.eventYearOverrideRequested = true
+                self.cancelRequested = true
+                self.queuedRequest = nil
+                if self.state == .running {
+                    self.state = .eventYearOverridePending
+                } else {
+                    self.state = .running
+                    self._startDataCollection(eventYearOverride: true, completion: completion)
+                }
+            } else {
+                if self.state == .idle {
+                    self.state = .running
+                    self._startDataCollection(eventYearOverride: false, completion: completion)
+                } else if self.state == .running && self.queuedRequest == nil {
+                    // Queue one more
+                    self.queuedRequest = { [weak self] in self?.requestDataCollection(eventYearOverride: false, completion: completion) }
+                    self.state = .queued
+                } else {
+                    // Already queued, ignore further requests
+                }
+            }
+        }
+    }
+
+    private func _startDataCollection(eventYearOverride: Bool, completion: (() -> Void)?) {
+        cancelRequested = false
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            self._downloadCsvWithCancellation(eventYearOverride: eventYearOverride, completion: completion)
+        }
+    }
+
+    private func _downloadCsvWithCancellation(eventYearOverride: Bool, completion: (() -> Void)?) {
+        var scheduleUrl = ""
+        if (scheduleUrl.isEmpty == true){
+            scheduleUrl = defaultPrefsValue
+        }
+        print ("Downloading Schedule URL " + scheduleUrl);
+        scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        print("scheduleUrl = " + scheduleUrl)
+        let httpData = getUrlData(urlString: scheduleUrl)
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        print("This will be making HTTP Calls for schedule " + httpData);
+        let oldScheduleFile = scheduleFile + ".old"
+        var didRenameOld = false
+        if FileManager.default.fileExists(atPath: scheduleFile) {
+            do {
+                if FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    try FileManager.default.removeItem(atPath: oldScheduleFile)
+                }
+                try FileManager.default.moveItem(atPath: scheduleFile, toPath: oldScheduleFile)
+                didRenameOld = true
+            } catch let error as NSError {
+                print ("Encountered an error renaming old schedule file " + error.debugDescription)
+                isLoadingBandData = false
+            }
+        }
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        if (httpData.isEmpty == false){
+            do {
+                try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
+                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    try? FileManager.default.removeItem(atPath: oldScheduleFile)
+                }
+            } catch let error as NSError {
+                print ("Encountered an error writing schedule file " + error.debugDescription)
+                isLoadingBandData = false
+                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    do {
+                        if FileManager.default.fileExists(atPath: scheduleFile) {
+                            try FileManager.default.removeItem(atPath: scheduleFile)
+                        }
+                        try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
+                        print("Restored old schedule file after failed download.")
+                    } catch let restoreError as NSError {
+                        print("Failed to restore old schedule file: " + restoreError.debugDescription)
+                    }
+                }
+            }
+        } else {
+            print ("No data downloaded for schedule file.")
+            if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                do {
+                    if FileManager.default.fileExists(atPath: scheduleFile) {
+                        try FileManager.default.removeItem(atPath: scheduleFile)
+                    }
+                    try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
+                    print("Restored old schedule file after empty download.")
+                } catch let restoreError as NSError {
+                    print("Failed to restore old schedule file: " + restoreError.debugDescription)
+                }
+            }
+        }
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        // Optionally, call populateSchedule or other post-processing here
+        self._dataCollectionDidFinish()
+        completion?()
+    }
+
+    private func _dataCollectionDidFinish() {
+        dataCollectionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.eventYearOverrideRequested {
+                self.eventYearOverrideRequested = false
+                self.cancelRequested = false
+                self.state = .idle
+                self.requestDataCollection(eventYearOverride: true)
+            } else if let next = self.queuedRequest {
+                self.queuedRequest = nil
+                self.state = .running
+                next()
+            } else {
+                self.state = .idle
+            }
+        }
+    }
 }
 
 

@@ -93,6 +93,11 @@ class iCloudDataHandler {
     ///   - bandName: The name of the band to read
     ///   - priorityHandler: The data handler for priority operations
     func readAPriorityRecord(bandName: String, priorityHandler: dataHandler){
+        // Defensive: Ensure bandName is a String
+        guard type(of: bandName) == String.self else {
+            print("ERROR: readAPriorityRecord called with non-String bandName: \(bandName) (type: \(type(of: bandName)))")
+            return
+        }
         
         if (checkForIcloud() == true){
             print("iCloudPriority: Starting readAPriorityRecord for band: \(bandName)")
@@ -122,7 +127,13 @@ class iCloudDataHandler {
                         }
                         
                         // RULE 2: Only update if iCloud data is newer than local data
-                        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                        let localTimestamp: Double
+                        do {
+                            localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                        } catch {
+                            print("ERROR: getPriorityLastChange failed for bandName: \(bandName)")
+                            return
+                        }
                         
                         print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
                         

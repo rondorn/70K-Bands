@@ -178,7 +178,33 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
 }
 
 func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended)-> Bool{
-    
+    // Defensive: Ensure correct types
+    guard type(of: bandName) == String.self else {
+        print("ERROR: applyFilters called with non-String bandName: \(bandName) (type: \(type(of: bandName)))")
+        return false
+    }
+    guard type(of: timeIndex) == Double.self else {
+        print("ERROR: applyFilters called with non-Double timeIndex: \(timeIndex) (type: \(type(of: timeIndex)))")
+        return false
+    }
+    // Special case: band with no events (timeIndex == 0)
+    if timeIndex == 0 {
+        // Only apply rank filtering
+        return rankFiltering(bandName, dataHandle: dataHandle)
+    }
+    // Defensive: Check for nil in bandDict and timeDict
+    guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
+        print("WARNING: No bandDict for bandName: \(bandName)")
+        return false
+    }
+    guard let timeDict = bandDict[timeIndex] else {
+        print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
+        return false
+    }
+    guard let typeValue = timeDict[typeField], !typeValue.isEmpty else {
+        print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
+        return false
+    }
     var include = false;
     
     if (timeIndex.isZero == false){
@@ -192,19 +218,13 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
             include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle);
         
         } else {
-            if (schedule.getBandSortedSchedulingData()[bandName]!.isEmpty == true ||
-            schedule.getBandSortedSchedulingData()[bandName]![timeIndex]!.isEmpty == true ||
-                schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!.isEmpty == true){
-                return false;
-            }
-            
-            let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
+            let eventType = typeValue
             if (eventType == unofficalEventType){
                 unfilteredCruiserEventCount = unfilteredCruiserEventCount + 1
             }
             if (eventTypeFiltering(eventType) == true){
                 if (schedule.getBandSortedSchedulingData().isEmpty == false){
-                    if (venueFiltering((schedule.getBandSortedSchedulingData()[bandName]![timeIndex]?[locationField])!) == true){
+                    if let locationValue = timeDict[locationField], venueFiltering(locationValue) == true {
                         if (rankFiltering(bandName, dataHandle: dataHandle) == true){
                             if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
                                 unofficalEventCount = unofficalEventCount + 1
