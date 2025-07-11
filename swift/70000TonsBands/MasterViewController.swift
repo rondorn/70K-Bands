@@ -81,6 +81,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var lastRefreshDataRun: Date? = nil
     
+    var easterEggTriggeredBySearch = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -220,11 +222,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         print("Filtering activated 2  \(searchBar.text) \(searchBar.text?.count)")
-        var searchText = searchBar.text!
-        if (searchText.isEmpty){
-            searchText = ""
+        let searchText = searchBar.text ?? ""
+        // Easter egg: Trigger on 'More Cow Bell' (case-insensitive, ignore whitespace)
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).localizedCaseInsensitiveCompare("More Cow Bell") == .orderedSame {
+            if !easterEggTriggeredBySearch {
+                easterEggTriggeredBySearch = true
+                triggerEasterEgg()
+            }
+        } else {
+            // Reset so user can trigger again if they retype
+            easterEggTriggeredBySearch = false
         }
-        
+        var searchTextForBands = searchText
+        if (searchTextForBands.isEmpty){
+            searchTextForBands = ""
+        }
         bands =  [String]()
         bandsByName = [String]()
         bandNameHandle.readBandFile()
@@ -233,14 +245,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.bands = []
-                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchText)
+                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchTextForBands)
                 // Deduplicate band names if no shows are present
                 if eventCount == 0 {
                     self.bands = self.deduplicatePreservingOrder(self.bands)
                 }
                 self.bandsByName = self.bands
                 self.attendedHandle.getCachedData()
-                print("Filtering activated 3  \(searchText) \(searchText.count)")
+                print("Filtering activated 3  \(searchTextForBands) \(searchTextForBands.count)")
                 self.quickRefresh()
             }
         }
@@ -1588,6 +1600,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func detailDidUpdate() {
         if UIDevice.current.userInterfaceIdiom == .pad {
             self.tableView.reloadData()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Stop and clear the easter egg video if playing
+        if player.timeControlStatus == .playing || player.timeControlStatus == .paused {
+            player.pause()
+            playerLayer.removeFromSuperlayer()
+        }
+    }
+    
+    // Stop easter egg video if a list entry is clicked
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if player.timeControlStatus == .playing || player.timeControlStatus == .paused {
+            player.pause()
+            playerLayer.removeFromSuperlayer()
         }
     }
     
