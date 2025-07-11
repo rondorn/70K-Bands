@@ -669,12 +669,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshData(isUserInitiated: true);
     }
     
-    @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
+    @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false, forceBandNameDownload: Bool = false) {
         // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh)
         let now = Date()
         if !isUserInitiated {
             if let lastRun = lastRefreshDataRun, now.timeIntervalSince(lastRun) < 60 {
                 print("refreshData throttled: Only one run per 60 seconds unless user-initiated.")
+                // But still force band name refresh if requested
+                if forceBandNameDownload {
+                    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                        let bandNameHandle = bandNamesHandler()
+                        bandNameHandle.gatherData()
+                        print("Forced band name refresh (throttled schedule)")
+                    }
+                }
                 return
             }
         }
@@ -712,7 +720,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if Reachability.isConnectedToNetwork(){ offline = false; }
             let bandNameHandle = bandNamesHandler()
             let schedule = scheduleHandler()
-            if (offline == false && shouldDownload) {
+            if (offline == false && (shouldDownload || forceBandNameDownload)) {
                 cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
@@ -1585,12 +1593,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        refreshData(isUserInitiated: false, forceDownload: true)
+        refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
     }
     
     @objc func handleAppWillEnterForeground() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.refreshData(isUserInitiated: false, forceDownload: true)
+            self?.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
             DispatchQueue.main.async {
                 self?.tableView.reloadData()
             }
