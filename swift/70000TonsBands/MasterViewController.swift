@@ -547,6 +547,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     }
     
+    /// Reloads the table view while preserving the current scroll position (unless called from pull-to-refresh)
+    func reloadTablePreservingScroll() {
+        let offset = self.tableView.contentOffset
+        self.tableView.reloadData()
+        self.tableView.setContentOffset(offset, animated: false)
+    }
+
     func refreshFromCache (){
         print ("RefreshFromCache called")
         bands =  [String]()
@@ -564,7 +571,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
                 self.bandsByName = self.bands
                 self.attendedHandle.getCachedData()
-                self.tableView.reloadData()
+                self.reloadTablePreservingScroll()
             }
         }
     }
@@ -622,18 +629,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func quickRefresh(){
         quickRefresh_Pre()
-        self.tableView.reloadData()
+        self.reloadTablePreservingScroll()
     }
     
     @objc func refreshGUI(){
-        self.tableView.reloadData()
+        self.reloadTablePreservingScroll()
     }
     
 
     @objc func OnOrientationChange(){
         sleep(1)
         quickRefresh_Pre()
-        self.tableView.reloadData()
+        self.reloadTablePreservingScroll()
     }
     
     @objc func pullTorefreshData(){
@@ -718,7 +725,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.ensureCorrectSorting()
                 self.refreshAlerts()
                 self.updateCountLable()
-                self.tableView.reloadData()
+                // Only preserve scroll if not a pull-to-refresh
+                if !isUserInitiated {
+                    self.reloadTablePreservingScroll()
+                } else {
+                    self.tableView.reloadData()
+                }
                 print ("DONE Refreshing data in backgroud 1");
                 refreshDataLock = false;
                 // NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
