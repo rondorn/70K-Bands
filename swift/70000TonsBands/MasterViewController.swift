@@ -205,8 +205,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func bandNamesCacheReadyHandler() {
-        print("Band names cache is ready, refreshing band list.")
-        self.refreshData(isUserInitiated: false)
+        // Called when band names are loaded (first launch or foreground)
+        DispatchQueue.global(qos: .background).async {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
+        }
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {

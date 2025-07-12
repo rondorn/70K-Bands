@@ -95,17 +95,16 @@ class dataHandler {
     /// - Parameter bandName: The name of the band.
     /// - Returns: The priority value for the band, or 0 if not found.
     func getPriorityData (_ bandname:String) -> Int {
-        
         var priority = 0
-        
-        print ("Retrieving priority data for " + bandname + ":", terminator: "\n")
-        
-        if (bandPriorityStorage[bandname] != nil){
-            priority = bandPriorityStorage[bandname]!
-            print("Reading data " + bandname + ":" + String(priority))
+        // Defensive: Convert to native Swift String
+        let key = String(describing: bandname)
+        print ("Retrieving priority data for " + key + ":", terminator: "\n")
+        staticData.sync {
+            if let value = bandPriorityStorage[key] {
+                priority = value
+                print("Reading data " + key + ":" + String(priority))
         }
-        
-
+        }
         return priority
     }
     
@@ -113,17 +112,16 @@ class dataHandler {
     /// - Parameter bandName: The name of the band.
     /// - Returns: The timestamp of the last change, or 0 if not found.
     func getPriorityLastChange (_ bandname:String) -> Double {
-        
         var timestamp = 0.0
-        
-        print ("Retrieving priority timestamp for " + bandname + ":", terminator: "\n")
-        
-        if (bandPriorityTimestamps[bandname] != nil){
-            timestamp = bandPriorityTimestamps[bandname]!
-            print("Reading timestamp " + bandname + ":" + String(timestamp))
+        // Defensive: Convert to native Swift String
+        let key = String(describing: bandname)
+        print ("Retrieving priority timestamp for " + key + ":", terminator: "\n")
+        staticData.sync {
+            if let value = bandPriorityTimestamps[key] {
+                timestamp = value
+                print("Reading timestamp " + key + ":" + String(timestamp))
         }
-        
-
+        }
         return timestamp
     }
     
