@@ -65,21 +65,37 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     print ("sortedBy = \(sortedBy)")
     schedule.buildTimeSortedSchedulingData();
     print (schedule.getTimeSortedSchedulingData());
+    if (schedule.getBandSortedSchedulingData().isEmpty) {
+        print("WARNING: Band sorted scheduling data is empty")
+        return allBands
+    }
     if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
         print ("Sorting by name!!!");
         for bandName in schedule.getBandSortedSchedulingData().keys {
             unfilteredBandCount = unfilteredBandCount + 1
+            guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
+                print("WARNING: No bandDict for bandName: \(bandName)")
+                continue
+            }
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
                 unfilteredEventCount = unfilteredEventCount + 1
-                for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
-                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
+                for timeIndex in bandDict.keys {
+                    guard let timeDict = bandDict[timeIndex] else {
+                        print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
+                        continue
+                    }
+                    guard let dateFieldValue = timeDict[dateField], let endTimeFieldValue = timeDict[endTimeField] else {
+                        print("WARNING: Missing dateField or endTimeField for bandName: \(bandName), timeIndex: \(timeIndex)")
+                        continue
+                    }
+                    var eventEndTime = schedule.getDateIndex(dateFieldValue, timeString: endTimeFieldValue, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
                         eventEndTime = eventEndTime + (3600*24)
                     }
                     if (eventEndTime > Date().timeIntervalSince1970  || getHideExpireScheduleData() == false){
                         totalUpcomingEvents += 1;
-                        if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
+                        if let typeValue = timeDict[typeField], !typeValue.isEmpty {
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(bandName + ":" + String(timeIndex));
                                 presentCheck.append(bandName);
@@ -89,6 +105,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                     eventCounterUnoffical = eventCounterUnoffical + 1
                                 }
                             }
+                        } else {
+                            print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
                         }
                     }
                 }
@@ -101,10 +119,24 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         print ("Sorting by time!!!");
         for timeIndex in schedule.getTimeSortedSchedulingData().keys {
             unfilteredEventCount = unfilteredEventCount + 1
-            if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
-                for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys)!{
+            guard let timeDict = schedule.getTimeSortedSchedulingData()[timeIndex], timeDict.isEmpty == false else {
+                continue
+            }
+            for bandName in timeDict.keys {
                     unfilteredBandCount = unfilteredBandCount + 1
-                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
+                guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
+                    print("WARNING: No bandDict for bandName: \(bandName)")
+                    continue
+                }
+                guard let timeDictInner = bandDict[timeIndex] else {
+                    print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
+                    continue
+                }
+                guard let dateFieldValue = timeDictInner[dateField], let endTimeFieldValue = timeDictInner[endTimeField] else {
+                    print("WARNING: Missing dateField or endTimeField for bandName: \(bandName), timeIndex: \(timeIndex)")
+                    continue
+                }
+                var eventEndTime = schedule.getDateIndex(dateFieldValue, timeString: endTimeFieldValue, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
                         eventEndTime = eventEndTime + (3600*24)
@@ -112,11 +144,10 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     if (eventEndTime > Date().timeIntervalSince1970 || getHideExpireScheduleData() == false){
                         unfilteredCurrentEventCount = unfilteredCurrentEventCount + 1
                         totalUpcomingEvents += 1;
-                        if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField]?.isEmpty == false){
+                    if let typeValue = timeDictInner[typeField], !typeValue.isEmpty {
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
-                                
                                 let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
                                 let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
                                 let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
@@ -127,12 +158,10 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                     eventCounterUnoffical = eventCounterUnoffical + 1
                                 }
                             }
+                    } else {
+                        print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
                         }
                     }
-                }
-            } else {
-                unfilteredBandCount = unfilteredBandCount + 1
-                newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             }
         }
         bandCount = 0;

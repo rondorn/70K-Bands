@@ -9,67 +9,52 @@
     android:gravity="top"
     android:fitsSystemWindows="true">
 
-    <!-- Download Report Button in upper left corner -->
-    <Button
-        android:id="@+id/downloadReportButton"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="10dp"
-        android:text=""
-        android:background="#000000"
-        android:textColor="#FFFFFF"
-        android:drawableLeft="@drawable/stats_icon"
-        android:drawablePadding="20dp"
-        android:contentDescription="View Report Dashboard" />
-
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="0dp"
-        android:layout_marginRight="0dp"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-        <View
-            android:layout_width="0dp"
+        <Button
+            android:id="@+id/downloadReportButton"
+            android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_weight="1" />
+            android:background="#000000"
+            android:textColor="#FFFFFF"
+            android:drawableLeft="@drawable/stats_icon"
+            android:drawablePadding="20dp"
+            android:contentDescription="View Report Dashboard" />
 
         <TextView
             android:id="@+id/headerBandCount"
-            android:layout_width="300dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="30dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:width="200dp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
             android:gravity="center"
             android:text="70,000 Tons"
             android:textAlignment="center"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/white"
-            android:textStyle="bold" />
-
+            android:textStyle="bold"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="4sp"
+            android:autoSizeMaxTextSize="40sp"
+            android:autoSizeStepGranularity="1sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <ImageButton
             android:id="@+id/preferences"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:width="32dp"
-            android:height="40dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:src="@drawable/icon_gear"
             android:text="prefs"
-            android:layout_marginRight="12dp"
             android:background="@android:color/black"
             android:scaleType="fitEnd"/>
-
 
     </LinearLayout>
 

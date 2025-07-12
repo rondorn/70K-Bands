@@ -81,6 +81,9 @@ import java.util.Map;
 import static com.Bands70k.staticVariables.*;
 import static java.lang.Thread.sleep;
 
+import android.view.Window;
+import android.view.WindowManager;
+
 
 public class showBands extends Activity implements MediaPlayer.OnPreparedListener {
 
@@ -117,6 +120,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private static Boolean recievedPermAnswer = false;
     private Boolean loadOnceStopper = false;
+
+    // Easter egg trigger state for search
+    private boolean hasTriggeredCowbellEasterEgg = false;
 
     private Boolean sharedZipFile = false;
     private File zipFile;
@@ -349,6 +355,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         mVideoView.setOnPreparedListener(this);
         mVideoView.getHolder().setFixedSize(300, 400);
         dialog.show();
+
+        // Center the dialog on the screen
+        Window window = dialog.getWindow();
+        if (window != null) {
+            WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+            layoutParams.copyFrom(window.getAttributes());
+            layoutParams.gravity = Gravity.CENTER;
+            // Optionally set width/height:
+            // layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
+            // layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            window.setAttributes(layoutParams);
+        }
+
         mVideoView.setVideoPath(path);
         mVideoView.requestFocus();
         mVideoView.start();
@@ -398,6 +417,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     public boolean onQueryTextSubmit(String query) {
                         Log.d("searchCriteria", "onQueryTextChange - 1 " + searchCriteria);
                         searchCriteria = searchCriteriaObject.getQuery().toString();
+                        // Easter egg trigger for 'More Cow Bell'
+                        if (searchCriteria.equalsIgnoreCase("More Cow Bell")) {
+                            if (!hasTriggeredCowbellEasterEgg) {
+                                triggerEasterEgg();
+                                hasTriggeredCowbellEasterEgg = true;
+                            }
+                        } else {
+                            hasTriggeredCowbellEasterEgg = false;
+                        }
                         searchCriteriaObject.clearFocus();
                         listHandler.sortableBandNames = new ArrayList<String>();
                         listHandler.sortableBandNames = listHandler.getSortableBandNames();
@@ -407,9 +435,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                     @Override
                     public boolean onQueryTextChange(String newText) {
-
                         searchCriteria = searchCriteriaObject.getQuery().toString();
                         Log.d("searchCriteria", "onQueryTextChange - 2 " + searchCriteria);
+                        // Easter egg trigger for 'More Cow Bell'
+                        if (searchCriteria.equalsIgnoreCase("More Cow Bell")) {
+                            if (!hasTriggeredCowbellEasterEgg) {
+                                triggerEasterEgg();
+                                hasTriggeredCowbellEasterEgg = true;
+                            }
+                        } else {
+                            hasTriggeredCowbellEasterEgg = false;
+                        }
                         listHandler.sortableBandNames = new ArrayList<String>();
                         listHandler.sortableBandNames = listHandler.getSortableBandNames();
                         refreshData();

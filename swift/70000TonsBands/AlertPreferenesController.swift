@@ -627,9 +627,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setupCurrentYearUrls()
         setupDefaults()
 
-        // 7. Force reload of all band and schedule data for the current year
-        var bandNamesHandle = bandNamesHandler()
-        bandNamesHandle.gatherData()
+        // 7. Force reload of all band and schedule data for the current year, with eventYear override
+        let bandNamesHandle = bandNamesHandler()
+        bandNamesHandle.requestDataCollection(eventYearOverride: true)
+
+        let scheduleHandle = scheduleHandler()
+        scheduleHandle.requestDataCollection(eventYearOverride: true)
+
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
         dataHandle.readFile(dateWinnerPassed: "")

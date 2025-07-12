@@ -377,6 +377,28 @@ public class mainListHandler {
         return timeIndex;
     }
 
+    /**
+     * Returns true if any real filter (not just search) is active.
+     */
+    private boolean isAnyFilterActive() {
+        // Adjust these as needed for your app's default filter settings
+        return !(staticVariables.preferences.getShowMust() &&
+                 staticVariables.preferences.getShowMight() &&
+                 staticVariables.preferences.getShowWont() &&
+                 staticVariables.preferences.getShowUnknown() &&
+                 !staticVariables.preferences.getShowWillAttend() &&
+                 staticVariables.preferences.getShowSpecialEvents() &&
+                 staticVariables.preferences.getShowMeetAndGreet() &&
+                 staticVariables.preferences.getShowClinicEvents() &&
+                 staticVariables.preferences.getShowAlbumListen() &&
+                 staticVariables.preferences.getShowUnofficalEvents() &&
+                 staticVariables.preferences.getShowPoolShows() &&
+                 staticVariables.preferences.getShowTheaterShows() &&
+                 staticVariables.preferences.getShowRinkShows() &&
+                 staticVariables.preferences.getShowLoungeShows() &&
+                 staticVariables.preferences.getShowOtherShows());
+    }
+
     public String getSizeDisplay() {
 
         staticVariables.filteringInPlace = false;
@@ -385,43 +407,12 @@ public class mainListHandler {
 
         String filteringText = "";
 
-        Log.d("Setup header Text Events", String.valueOf(numberOfUnofficalEvents) + " - " + String.valueOf(numberOfEvents));
-        Log.d("Setup header Text Events", String.valueOf(allUpcomingEvents) + " - " + String.valueOf(numberOfEvents));
-        Log.d("Setup header Text Bands", String.valueOf(staticVariables.unfilteredBandCount) + " - " + String.valueOf(numberOfBands) + " - " + String.valueOf(altNumberOfBands));
-        if ((Integer.valueOf(numberOfEvents) != 0 || numberOfUnofficalEvents != numberOfEvents) && Integer.valueOf(allUpcomingEvents) > Integer.valueOf(numberOfEvents)){
-            filteringText = " (" +   staticVariables.context.getResources().getString(R.string.Filtering) + ")";
+        // Only show (Filtering) if a real filter is active
+        if (isAnyFilterActive()) {
+            filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
             staticVariables.filteringInPlace = true;
-            Log.d("Setup header Text Bands", "Filtering in place 1");
-        } else if (Integer.valueOf(numberOfEvents) == 0 && numberOfUnofficalEvents != numberOfEvents) {
-            if (numberOfBands < staticVariables.unfilteredBandCount) {
-                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
-                staticVariables.filteringInPlace = true;
-                Log.d("Setup header Text Bands", "Filtering in place 2");
-            } else {
-                staticVariables.filteringInPlace = false;
-            }
-        } else if (Integer.valueOf(numberOfEvents) != 0 && numberOfUnofficalEvents == numberOfEvents) {
-            if (altNumberOfBands < staticVariables.unfilteredBandCount) {
-                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
-                staticVariables.filteringInPlace = true;
-                Log.d("Setup header Text Bands", "Filtering in place 3");
-            } else {
-                staticVariables.filteringInPlace = false;
-            }
-        } else if (Integer.valueOf(numberOfEvents) == 0 && numberOfUnofficalEvents == numberOfEvents) {
-            if (altNumberOfBands < staticVariables.unfilteredBandCount) {
-                filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
-                staticVariables.filteringInPlace = true;
-                Log.d("Setup header Text Bands", "Filtering in place 4");
-            } else {
-                staticVariables.filteringInPlace = false;
-            }
         } else {
             staticVariables.filteringInPlace = false;
-        }
-
-        if (staticVariables.searchCriteria.isEmpty() == false){
-            filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
         }
 
         Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace));
