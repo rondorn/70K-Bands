@@ -149,7 +149,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
                                 let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
-                                let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
+                                let location = " " + schedule.getData(bandName, index:timeIndex, variable: locationField)
                                 let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
                                 let indexText = bandName + ";" + location + ";" + event + ";" + startTime
                                 timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
@@ -803,81 +803,73 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 
 
 func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel, notes: String){
+    // Use a single colored marker followed by one space, then the venue info
+    let marker = " "
+    let locationString = marker + "  " + location // marker, then one space, then venue
+    let venueString = NSMutableAttributedString(string: locationString)
+    let locationColor = getVenueColor(venue: location)
 
-    //print ("not 1st entry Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
-    var locationString = "  " + location
-    var venueString = NSMutableAttributedString(string: locationString)
-    var locationColor = getVenueColor(venue: location)
-    
-    // First space - colored marker with fixed 17pt font
-    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    
-    // Location text (after the two spaces) - variable size font (12-16pt)
-    if location.count > 0 {
-        let locationTextSize = calculateOptimalFontSize(for: location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
-        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: location.count))
-        venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
+    // Colored marker: fixed 17pt bold font, background color
+    venueString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length:1))
+    venueString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
+
+    // Venue text: consistent font size (16pt), light gray
+    if location.count > 0 && locationString.count > 2 {
+        let range = NSRange(location: 2, length: location.count + 1)
+        if NSMaxRange(range) <= locationString.count {
+            venueString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: range)
+            venueString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: range)
+        }
     }
-    
-    // Disable font auto-sizing to preserve our 17pt marker
+
     bandNameView.adjustsFontSizeToFitWidth = false
     bandNameView.attributedText = venueString
     bandNameView.isHidden = false;
-    
-    var locationOfVenue = "  " + (venueLocation[location] ?? "")
-    if (notes.isEmpty == false && notes != " "){
+
+    // Second line: venueLocation/notes, same logic
+    let venueLocationText = (venueLocation[location] ?? "")
+    var locationOfVenue = marker + " " + venueLocationText
+    if !notes.trimmingCharacters(in: .whitespaces).isEmpty {
         locationOfVenue += " " + notes
     }
-    
-    var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
-    
-    // First space - colored marker with fixed 17pt font
-    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    
-    // Venue text (after the two spaces) - variable size font (12-16pt)
+    let locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+    locationOfVenueString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    locationOfVenueString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
     if locationOfVenue.count > 2 {
-        let venueText = String(locationOfVenue.dropFirst(2)) // Remove the two spaces
-        let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
-        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location:2,length: locationOfVenue.count - 2))
-        locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationOfVenue.count - 2))
+        let range = NSRange(location: 2, length: locationOfVenue.count - 2)
+        if NSMaxRange(range) <= locationOfVenue.count {
+            locationOfVenueString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: range)
+            locationOfVenueString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: range)
+        }
     }
-
-    // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = locationOfVenueString
-    
-    //setup bandname for use is access the details screen
     bandNameNoSchedule.text = bandName
     bandNameNoSchedule.isHidden = true
 }
 
 func getCellScheduleValueFullInfo(bandName: String, location: String, locationText: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel){
+    // Use a single space as the colored marker
+    let marker = " "
+    let locationString = marker + " " + locationText
+    let myMutableString = NSMutableAttributedString(string: locationString)
+    let locationColor = getVenueColor(venue: location)
 
-    var locationString = "  " + locationText
-    var myMutableString = NSMutableAttributedString(string: locationString)
-    var locationColor = getVenueColor(venue: location)
-    
-    // First space - colored marker with fixed 17pt font
-    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-    
-    // Location text (after the two spaces) - variable size font (12-16pt)
+    // Colored marker: fixed 17pt bold font, background color
+    myMutableString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    myMutableString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+
+    // Venue text: consistent font size (16pt), light gray
     if locationText.count > 0 {
-        let locationTextSize = calculateOptimalFontSize(for: locationText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
-        myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: locationText.count))
-        myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationText.count))
+        myMutableString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: NSRange(location:1,length: locationText.count))
+        myMutableString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
     }
-
     bandNameView.backgroundColor = UIColor.black;
-    // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = myMutableString
     bandNameView.isHidden = false
     bandNameNoSchedule.isHidden = true
     bandNameNoSchedule.text = ""
-    
 }
 
 func calculateOptimalFontSize(for text: String, in label: UILabel, markerWidth: CGFloat, maxSize: CGFloat, minSize: CGFloat) -> CGFloat {
