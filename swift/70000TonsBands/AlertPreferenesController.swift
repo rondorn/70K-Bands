@@ -636,7 +636,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
 
         dataHandle = dataHandler()
         dataHandle.clearCachedData()
-        dataHandle.readFile(dateWinnerPassed: "")
+        dataHandle.requestDataCollection(eventYearOverride: true)
 
         // 8. Notify UI to refresh
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)

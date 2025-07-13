@@ -917,16 +917,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
     }
     @IBAction func setBandPriority() {
-        if (bandName != nil){
-            
-            bandPriorityStorage[bandName!] = priorityButtons.selectedSegmentIndex
-            
-            print ("Setting band priority  from Details to \(bandPriorityStorage[bandName!])")
-            dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
-        
-            let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
+        guard let bandName = bandName else { return }
+        let newPriority = priorityButtons.selectedSegmentIndex
+        let currentPriority = bandPriorityStorage[bandName] ?? 0
+
+        // Only update if the user selected a different segment
+        if newPriority != currentPriority {
+            bandPriorityStorage[bandName] = newPriority
+            print("Setting band priority from Details to \(newPriority)")
+            dataHandle.addPriorityData(bandName, priority: newPriority)
+
+            let priorityImageName = getPriorityGraphic(newPriority)
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
-            
+
             setButtonNames()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
             NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
