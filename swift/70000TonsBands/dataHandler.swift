@@ -15,6 +15,82 @@ class dataHandler {
     var bandPriorityStorage = [String:Int]()
     var bandPriorityTimestamps = [String:Double]()
     var readInWrite = false;
+
+    private enum DataCollectionState {
+        case idle
+        case running
+        case queued
+        case eventYearOverridePending
+    }
+    private var state: DataCollectionState = .idle
+    private let dataCollectionQueue = DispatchQueue(label: "com.70kBands.dataHandler.dataCollectionQueue")
+    private var queuedRequest: (() -> Void)?
+    private var eventYearOverrideRequested: Bool = false
+    private var cancelRequested: Bool = false
+
+    /// Request a data reload. If eventYearOverride is true, aborts all others and runs immediately.
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        dataCollectionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if eventYearOverride {
+                // Cancel everything and run this immediately
+                self.eventYearOverrideRequested = true
+                self.cancelRequested = true
+                self.queuedRequest = nil
+                if self.state == .running {
+                    self.state = .eventYearOverridePending
+                } else {
+                    self.state = .running
+                    self._startDataCollection(eventYearOverride: true, completion: completion)
+                }
+            } else {
+                if self.state == .idle {
+                    self.state = .running
+                    self._startDataCollection(eventYearOverride: false, completion: completion)
+                } else if self.state == .running && self.queuedRequest == nil {
+                    // Queue one more
+                    self.queuedRequest = { [weak self] in self?.requestDataCollection(eventYearOverride: false, completion: completion) }
+                    self.state = .queued
+                } else {
+                    // Already queued, ignore further requests
+                }
+            }
+        }
+    }
+
+    private func _startDataCollection(eventYearOverride: Bool, completion: (() -> Void)?) {
+        cancelRequested = false
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            self._readFileWithCancellation(eventYearOverride: eventYearOverride, completion: completion)
+        }
+    }
+
+    private func _readFileWithCancellation(eventYearOverride: Bool, completion: (() -> Void)?) {
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        _ = self.readFile(dateWinnerPassed: "")
+        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        self._dataCollectionDidFinish()
+        completion?()
+    }
+
+    private func _dataCollectionDidFinish() {
+        dataCollectionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.eventYearOverrideRequested {
+                self.eventYearOverrideRequested = false
+                self.cancelRequested = false
+                self.state = .idle
+                self.requestDataCollection(eventYearOverride: true)
+            } else if let next = self.queuedRequest {
+                self.queuedRequest = nil
+                self.state = .running
+                next()
+            } else {
+                self.state = .idle
+            }
+        }
+    }
     
     init(){
         getCachedData()
@@ -56,8 +132,10 @@ class dataHandler {
     ///   - timestamp: The timestamp of the update.
     func addPriorityDataWithTimestamp(_ bandname: String, priority: Int, timestamp: Double) {
         print ("addPriorityDataWithTimestamp for \(bandname) = \(priority) at \(timestamp)")
-        bandPriorityStorage[bandname] = priority
-        bandPriorityTimestamps[bandname] = timestamp
+        staticData.async(flags: .barrier) {
+            self.bandPriorityStorage[bandname] = priority
+            self.bandPriorityTimestamps[bandname] = timestamp
+        }
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache[bandname] = priority
         }
@@ -100,7 +178,7 @@ class dataHandler {
         let key = String(describing: bandname)
         print ("Retrieving priority data for " + key + ":", terminator: "\n")
         staticData.sync {
-            if let value = bandPriorityStorage[key] {
+            if let value = self.bandPriorityStorage[key] {
                 priority = value
                 print("Reading data " + key + ":" + String(priority))
         }
@@ -117,7 +195,7 @@ class dataHandler {
         let key = String(describing: bandname)
         print ("Retrieving priority timestamp for " + key + ":", terminator: "\n")
         staticData.sync {
-            if let value = bandPriorityTimestamps[key] {
+            if let value = self.bandPriorityTimestamps[key] {
                 timestamp = value
                 print("Reading timestamp " + key + ":" + String(timestamp))
         }
@@ -134,10 +212,10 @@ class dataHandler {
         
         staticData.sync {
             // Skip if empty
-            if !bandPriorityStorage.isEmpty {
+            if !self.bandPriorityStorage.isEmpty {
                 // Make thread-safe copies
-                localPriorityStorage = bandPriorityStorage
-                localPriorityTimestamps = bandPriorityTimestamps
+                localPriorityStorage = self.bandPriorityStorage
+                localPriorityTimestamps = self.bandPriorityTimestamps
                 shouldWrite = true
             }
         }
@@ -169,16 +247,25 @@ class dataHandler {
     /// - Returns: A dictionary mapping band names to their priority values.
     func getPriorityData() -> [String:Int]{
         
-        return bandPriorityStorage;
+        var localPriorityStorage: [String: Int] = [:]
+        staticData.sync {
+            localPriorityStorage = self.bandPriorityStorage
+        }
+        return localPriorityStorage
     }
 
     /// Reads the priority data file from disk.
     func readFile(dateWinnerPassed : String) -> [String:Int]{
         
         print ("Load bandPriorityStorage data")
-        bandPriorityStorage = [String:Int]()
+        staticData.async(flags: .barrier) {
+            self.bandPriorityStorage = [String:Int]()
+            self.bandPriorityTimestamps = [String:Double]()
+        }
+        var localBandPriorityStorage = [String:Int]()
+        var localBandPriorityTimestamps = [String:Double]()
         
-        if (bandPriorityStorage.count == 0){
+        if (localBandPriorityStorage.count == 0){
             if let data = try? String(contentsOf: storageFile, encoding: String.Encoding.utf8) {
                 let dataArray = data.components(separatedBy: "\n")
                 for record in dataArray {
@@ -197,8 +284,8 @@ class dataHandler {
                         
                         print ("reading PRIORITIES \(element[0]) - \(priorityString):\(timestampString)")
                         
-                        bandPriorityStorage[element[0]] = priority
-                        bandPriorityTimestamps[element[0]] = timestamp
+                        localBandPriorityStorage[element[0]] = priority
+                        localBandPriorityTimestamps[element[0]] = timestamp
                         
                         staticData.async(flags: .barrier) {
                             cacheVariables.bandPriorityStorageCache[element[0]] = priority
@@ -212,8 +299,8 @@ class dataHandler {
                         
                         let priority = Int(priorityString) ?? 0
                         
-                        bandPriorityStorage[element[0]] = priority
-                        bandPriorityTimestamps[element[0]] = 0.0  // Default timestamp for old data
+                        localBandPriorityStorage[element[0]] = priority
+                        localBandPriorityTimestamps[element[0]] = 0.0  // Default timestamp for old data
                         
                         staticData.async(flags: .barrier) {
                             cacheVariables.bandPriorityStorageCache[element[0]] = priority
@@ -222,8 +309,11 @@ class dataHandler {
                 }
             }
         }
-        
-        return bandPriorityStorage
+        staticData.async(flags: .barrier) {
+            self.bandPriorityStorage = localBandPriorityStorage
+            self.bandPriorityTimestamps = localBandPriorityTimestamps
+        }
+        return localBandPriorityStorage
     }
 
 }
