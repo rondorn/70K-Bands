@@ -615,9 +615,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         }
 
-        bands =  [String]()
+        // REVERT: Remove the filtering that excluded bands with only filtered future shows
+        // Restore to:
+        // bands = getFilteredBands(...)
+        // Deduplicate if needed
         bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
-        // Deduplicate band names if no shows are present
         if eventCount == 0 {
             bands = self.deduplicatePreservingOrder(bands)
         }

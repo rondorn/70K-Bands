@@ -89,7 +89,7 @@ let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
 let staticBandName = DispatchQueue(label: "staticBandName")
-let staticData = DispatchQueue(label: "staticData")
+let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
 let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 

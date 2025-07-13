@@ -185,8 +185,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         //newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
-    if (schedule.getTimeSortedSchedulingData().count >= 1 ){
-        //add any bands without shows to the bottom of the list
+    // Only add bands without shows if NOT in Show Flagged Events Only mode
+    if (schedule.getTimeSortedSchedulingData().count >= 1 && getShowOnlyWillAttened() == false){
         bandCounter = 0
         unfilteredBandCount = 0
         for bandName in allBands {
@@ -218,7 +218,11 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
     }
     // Special case: band with no events (timeIndex == 0)
     if timeIndex == 0 {
-        // Only apply rank filtering
+        if getShowOnlyWillAttened() == true {
+            // In flagged-only mode, do not show bands with no events
+            return false
+        }
+        // Only apply rank filtering otherwise
         return rankFiltering(bandName, dataHandle: dataHandle)
     }
     // Defensive: Check for nil in bandDict and timeDict
@@ -730,6 +734,27 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         //bandNameNoSchedule.isHidden = true
         
     } else {
+        // Check if the band has any future shows (not just any shows)
+        let now = Date().timeIntervalSince1970
+        var hasFutureShow = false
+        if let bandSchedule = schedule.getBandSortedSchedulingData()[bandName] {
+            for (showTime, showData) in bandSchedule {
+                // Only consider shows in the future
+                if showTime > now {
+                    // Check if this show would be filtered out (e.g., by willAttenedFilters or other logic)
+                    // If it would be shown, then we should NOT show the band name only
+                    // If it would be filtered, we should NOT show the band at all
+                    hasFutureShow = true
+                    break
+                }
+            }
+        }
+        if hasFutureShow {
+            // Do not hide the cell; instead, do nothing so the cell is empty or not present in the bands array
+            // cell.isHidden = true // REMOVED to fix scroll area issue
+            return
+        }
+        // Otherwise, show only the band name (no future shows)
         rankLocationSchedule = false
         print ("Not display schedule for band " + bandName)
         scheduleButton = true
@@ -743,7 +768,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         bandNameNoSchedule.text = bandName
         bandNameNoSchedule.isHidden = false  
         bandNameView.isHidden = true
-
     }
     
     indexForCell.text = indexText;
