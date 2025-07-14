@@ -644,6 +644,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     override func viewWillDisappear(_ animated : Bool) {
         super.viewWillDisappear(animated)
         saveComments()
+        
+        // Perform data loading in the background
+        DispatchQueue.global(qos: .background).async {
+            //print ("Sync: Loading schedule data AlertController")
+            masterView.bandNameHandle.gatherData()
+            masterView.schedule.DownloadCsv()
+            masterView.schedule.populateSchedule()
+            
+            // Once done, refresh the GUI on the main thread
+            DispatchQueue.main.async {
+                masterView.refreshData(isUserInitiated: true)
+            }
+        }
     }
     
     @objc func rotationChecking(){
@@ -1237,6 +1250,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let notesView = eventView.viewWithTag(10) as! UILabel
         notesView.textColor = UIColor.lightGray
         notesView.text = notes
+        // Dynamically adjust font size to fit available width/height
+        notesView.adjustsFontSizeToFitWidth = true
+        notesView.minimumScaleFactor = 0.5
+        notesView.numberOfLines = 1
+        // Optionally, you can use a custom calculation for optimal font size if you want more control:
+        // let optimalFontSize = calculateOptimalFontSize(for: notes, in: notesView, markerWidth: 0, maxSize: 18, minSize: 10)
+        // notesView.font = UIFont.systemFont(ofSize: optimalFontSize)
         
         eventView.frame = CGRect(x: 14 , y: 94, width: 386, height: 40)
         locationColor!.frame = CGRect(x: 0 , y: 0, width: 4, height: 40)

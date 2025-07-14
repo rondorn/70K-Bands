@@ -173,7 +173,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
         localNotification.addNotifications()
-        
+        /*
         // Perform data loading in the background
         DispatchQueue.global(qos: .background).async {
             //print ("Sync: Loading schedule data AlertController")
@@ -186,6 +186,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 masterView.refreshData(isUserInitiated: true)
             }
         }
+        */
     }
     
     /// Builds the event year menu for selecting different event years.
