@@ -123,7 +123,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.refreshControl = refreshControl
         
         //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-        mainTableView.separatorColor = UIColor.lightGray
+        mainTableView.separatorStyle = .none
         
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
@@ -202,6 +202,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
+        
     }
     
     @objc func bandNamesCacheReadyHandler() {
@@ -495,7 +496,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isLoadingBandData = false
         writeFiltersFile()
         // Always refresh when returning from another view, bypassing the throttle
-        refreshData(isUserInitiated: true)
+        pullTorefreshData()
         // Removed quickRefresh() and refreshDisplayAfterWake() to avoid unnecessary data refreshes
         // Removed startScheduleRefreshTimer() to avoid restarting timer on every appearance
     }
@@ -667,12 +668,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("iCloud: pull to refresh, load in new iCloud data")
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            // Perform data loading in the background
+            DispatchQueue.global(qos: .background).async {
+                print ("pullTorefreshData: Loading schedule data on pull to refresh")
+                self.bandNameHandle.gatherData()
+                self.schedule.DownloadCsv()
+                self.schedule.populateSchedule()
+                
+                // Once done, refresh the GUI on the main thread
+                DispatchQueue.main.async {
+                    self.refreshData(isUserInitiated: true)
+                    print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
+                }
+            }
+        }
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
-        refreshData(isUserInitiated: true);
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false, forceBandNameDownload: Bool = false) {
@@ -684,8 +700,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // But still force band name refresh if requested
                 if forceBandNameDownload {
                     DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                        let bandNameHandle = bandNamesHandler()
-                        bandNameHandle.gatherData()
+                        self.bandNameHandle.gatherData()
+                        self.schedule.DownloadCsv()
+                        self.schedule.populateSchedule()
                         print("Forced band name refresh (throttled schedule)")
                     }
                 }
@@ -710,9 +727,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if shouldDownload && internetAvailble {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 //print ("Async: Loading schedule data MasterViewController")
+                self?.bandNameHandle.gatherData()
                 self?.schedule.DownloadCsv()
-                self?.lastScheduleDownload = Date()
-                self?.schedule.getCachedData()
+                self?.schedule.populateSchedule()
                 DispatchQueue.main.async {
                     // Refresh the UI here if needed
                     self?.tableView.reloadData()
@@ -1599,7 +1616,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+        pullTorefreshData()
+        //refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
     }
     
     @objc func handleAppWillEnterForeground() {

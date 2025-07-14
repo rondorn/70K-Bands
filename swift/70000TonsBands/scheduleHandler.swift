@@ -312,12 +312,18 @@ open class scheduleHandler {
         return dateIndex
     }
     
-    func setData (bandName:String, index:TimeInterval, variable:String, value:String){
-        if (variable.isEmpty == false && value.isEmpty == false && bandName.isEmpty == false && index.isZero == false){
-            if (isSchedulingDataPresent(schedulingData: schedulingData,bandName: bandName) == true){
-                self.schedulingData[bandName]?[index]?[variable] = value as String;
-            }
+    func setData(bandName: String, index: TimeInterval, variable: String, value: String) {
+        guard !variable.isEmpty, !value.isEmpty, !bandName.isEmpty, !index.isZero else { return }
+        // Ensure the bandName dictionary exists
+        if schedulingData[bandName] == nil {
+            schedulingData[bandName] = [TimeInterval: [String: String]]()
         }
+        // Ensure the index dictionary exists
+        if schedulingData[bandName]?[index] == nil {
+            schedulingData[bandName]?[index] = [String: String]()
+        }
+        // Now safely assign
+        schedulingData[bandName]?[index]?[variable] = value
     }
     
     func isSchedulingDataPresent(schedulingData: [String : [TimeInterval : [String : String]]], bandName: String)->Bool{
