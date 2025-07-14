@@ -799,6 +799,17 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     if (firstBandName.isEmpty == true){
         firstBandName  = bandName;
     }
+    // At the end of getCellValue, after setting rankLocationSchedule:
+    // Remove any existing custom separator
+    cell.contentView.viewWithTag(9999)?.removeFromSuperview()
+    if rankLocationSchedule {
+        // Add custom separator for schedule rows
+        let separator = UIView(frame: CGRect(x: 15, y: cell.contentView.frame.height - 1, width: cell.contentView.frame.width - 30, height: 1))
+        separator.backgroundColor = UIColor.lightGray
+        separator.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
+        separator.tag = 9999
+        cell.contentView.addSubview(separator)
+    }
 }
 
 

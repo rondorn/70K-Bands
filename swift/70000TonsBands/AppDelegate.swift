@@ -46,6 +46,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
     
+        // Initialize staticDataKey for deadlock protection
+        staticData.setSpecific(key: staticDataKey, value: ())
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)

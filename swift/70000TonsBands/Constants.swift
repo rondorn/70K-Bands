@@ -90,6 +90,16 @@ let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
 let staticBandName = DispatchQueue(label: "staticBandName")
 let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
+let staticDataKey = DispatchSpecificKey<Void>()
+
+private struct StaticDataInitializer {
+    static let initialize: Void = {
+        staticData.setSpecific(key: staticDataKey, value: ())
+    }()
+}
+
+// Force initialization at launch
+//private let _ = StaticDataInitializer.initialize
 let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 

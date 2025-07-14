@@ -369,15 +369,26 @@ class iCloudDataHandler {
                 let priorityHandler = dataHandler()
                 priorityHandler.refreshData()
                 
+                // Prefetch all schedule data into a local variable
                 let scheduleData = scheduleHandle.getBandSortedSchedulingData()
+                let scheduleDataKeys = Array(scheduleData.keys)
+                var scheduleDataTimeKeys: [String: [Double]] = [:]
+                for bandName in scheduleDataKeys {
+                    if let dict = scheduleData[bandName] {
+                        scheduleDataTimeKeys[bandName] = Array(dict.keys)
+                    } else {
+                        scheduleDataTimeKeys[bandName] = [Double]()
+                    }
+                }
                 
                 print("iCloudSchedule: Processing schedule data for \(scheduleData.count) bands")
                 
                 if (scheduleData.count > 0){
-                    for bandName in scheduleData.keys {
+                    for bandName in scheduleDataKeys {
                         print("iCloudSchedule: Processing schedule data for band: \(bandName)")
                         if (scheduleData.isEmpty == false){
-                            for timeIndex in scheduleData[bandName]!.keys {
+                            let timeKeys = scheduleDataTimeKeys[bandName] ?? []
+                            for timeIndex in timeKeys {
                                 if scheduleData[bandName] != nil {
                                     if (scheduleData[bandName]![timeIndex] != nil){
                                         if (scheduleData[bandName]![timeIndex]![locationField] != nil){

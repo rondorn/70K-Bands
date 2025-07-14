@@ -101,7 +101,8 @@ class dataHandler {
     
         print ("Loading priority Data cache")
         
-        staticData.sync() {
+        if DispatchQueue.getSpecific(key: staticDataKey) != nil {
+            // Already on staticData queue, execute directly to avoid deadlock
             if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
                 print ("Loading bandPriorityStorage from Data cache")
                 self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
@@ -115,6 +116,22 @@ class dataHandler {
             iCloudIndicator = iCloudIndicator?.uppercased()
 
             print ("Done Loading bandName Data cache")
+        } else {
+            staticData.sync() {
+                if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
+                    print ("Loading bandPriorityStorage from Data cache")
+                    self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
+                    print ("Loading bandPriorityStorage from Data cache, done")
+                } else {
+                    print ("Loading bandPriorityStorage Cache did not load, loading from file")
+                    self.refreshData()
+                }
+                
+                var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
+                iCloudIndicator = iCloudIndicator?.uppercased()
+
+                print ("Done Loading bandName Data cache")
+            }
         }
     }
     

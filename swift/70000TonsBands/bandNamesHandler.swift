@@ -75,10 +75,13 @@ open class bandNamesHandler {
             cacheVariables.bandNamesStaticCache =  [String :[String : String]]()
             cacheVariables.bandNamesArrayStaticCache = [String]()
             for bandName in self.bandNames.keys {
-                cacheVariables.bandNamesStaticCache[bandName] =  [String : String]()
-                cacheVariables.bandNamesStaticCache[bandName] =  self.bandNames[bandName]
-                print ("Adding Data to cacheVariables.bandNamesStaticCache = \(String(describing: cacheVariables.bandNamesStaticCache[bandName]))")
-                cacheVariables.bandNamesArrayStaticCache.append(bandName)
+                // Defensive: Only add if bandName is String and value is [String: String]
+                if let bandDict = self.bandNames[bandName] as? [String: String] {
+                    cacheVariables.bandNamesStaticCache[bandName] = bandDict
+                    cacheVariables.bandNamesArrayStaticCache.append(bandName)
+                } else {
+                    print("Warning: bandNames[\(bandName)] is not a [String: String]: \(String(describing: self.bandNames[bandName]))")
+                }
             }
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .bandNamesCacheReady, object: nil)
@@ -136,34 +139,32 @@ open class bandNamesHandler {
                         bandNames[bandNameValue]!["bandName"] = bandNameValue
                         
                         if (lineData.isEmpty == false){
-                            if (lineData["imageUrl"] != nil){
-                                bandNames[bandNameValue]!["bandImageUrl"] = "http://" + lineData["imageUrl"]!;
+                            if let value = lineData["imageUrl"], !value.isEmpty {
+                                bandNames[bandNameValue]!["bandImageUrl"] = "http://" + String(describing: value)
                             }
-                            if (lineData["officalSite"] != nil){
-                                if (lineData["bandName"] != nil){
-                                    bandNames[bandNameValue]!["officalUrls"] = "http://" + lineData["officalSite"]!;
-                                }
+                            if let value = lineData["officalSite"], !value.isEmpty {
+                                bandNames[bandNameValue]!["officalUrls"] = "http://" + String(describing: value)
                             }
-                            if (lineData["wikipedia"] != nil){
-                                bandNames[bandNameValue]!["wikipediaLink"] = lineData["wikipedia"]!;
+                            if let value = lineData["wikipedia"], !value.isEmpty {
+                                bandNames[bandNameValue]!["wikipediaLink"] = String(describing: value)
                             }
-                            if (lineData["youtube"] != nil){
-                                bandNames[bandNameValue]!["youtubeLinks"] = lineData["youtube"]!;
+                            if let value = lineData["youtube"], !value.isEmpty {
+                                bandNames[bandNameValue]!["youtubeLinks"] = String(describing: value)
                             }
-                            if (lineData["metalArchives"] != nil){
-                                bandNames[bandNameValue]!["metalArchiveLinks"] = lineData["metalArchives"]!;
+                            if let value = lineData["metalArchives"], !value.isEmpty {
+                                bandNames[bandNameValue]!["metalArchiveLinks"] = String(describing: value)
                             }
-                            if (lineData["country"] != nil){
-                                bandNames[bandNameValue]!["bandCountry"] = lineData["country"]!;
+                            if let value = lineData["country"], !value.isEmpty {
+                                bandNames[bandNameValue]!["bandCountry"] = String(describing: value)
                             }
-                            if (lineData["genre"] != nil){
-                                bandNames[bandNameValue]!["bandGenre"] = lineData["genre"]!;
+                            if let value = lineData["genre"], !value.isEmpty {
+                                bandNames[bandNameValue]!["bandGenre"] = String(describing: value)
                             }
-                            if (lineData["noteworthy"] != nil){
-                                bandNames[bandNameValue]!["bandNoteWorthy"] = lineData["noteworthy"]!;
+                            if let value = lineData["noteworthy"], !value.isEmpty {
+                                bandNames[bandNameValue]!["bandNoteWorthy"] = String(describing: value)
                             }
-                            if (lineData["priorYears"] != nil){
-                                bandNames[bandNameValue]!["priorYears"] = lineData["priorYears"]!;
+                            if let value = lineData["priorYears"], !value.isEmpty {
+                                bandNames[bandNameValue]!["priorYears"] = String(describing: value)
                             }
                         }
                     }

@@ -17,11 +17,11 @@ open class imageHandler {
         
         
         let bandName = bandName
-        let urlString = urlString
+        let trimmedUrlString = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var returnedImage:UIImage?;
         
-        print ("urlString is " + urlString);
+        print ("urlString is " + trimmedUrlString);
         
         let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")
         
@@ -31,22 +31,13 @@ open class imageHandler {
             print ("ImageCall using cached imaged from \(imageStoreFile)")
             returnedImage = imageData
         
-        } else if (urlString == ""){
+        } else if (trimmedUrlString.isEmpty || trimmedUrlString == "http://"){
             returnedImage = UIImage(named: "70000TonsLogo")!
-        
-        } else if (urlString == "http://"){
-            returnedImage = UIImage(named: "70000TonsLogo")!
-        
-        } else {
+        } else if let url = URL(string: trimmedUrlString), url.scheme != nil {
 
-            print ("ImageCall download imaged from \(urlString)")
+            print ("ImageCall download imaged from \(trimmedUrlString)")
 
-            let url = URL(string: urlString)
-            if (url == nil){
-                return UIImage(named: "70000TonsLogo")!
-            }
-            
-            URLSession.shared.dataTask(with: url!) { data, response, error in
+            URLSession.shared.dataTask(with: url) { data, response, error in
                 guard
                     let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
                     let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
@@ -73,33 +64,35 @@ open class imageHandler {
                 sleep(1)
                 count = count + 1
             }
+        } else {
+            // Invalid URL (no scheme, etc.)
+            returnedImage = UIImage(named: "70000TonsLogo")!
         }
 
-        if (urlString.contains("www.dropbox.com") == true || urlString.isEmpty == true){
-            print ("Image URL string is not Inverted for " + urlString);
+        if (trimmedUrlString.contains("www.dropbox.com") == true || trimmedUrlString.isEmpty == true){
+            print ("Image URL string is not Inverted for " + trimmedUrlString);
         } else {
-            print ("Image URL string is Inverted for " + urlString);
+            print ("Image URL string is Inverted for " + trimmedUrlString);
             returnedImage = returnedImage?.inverseImage(cgResult: true)
         }
-        
         return returnedImage ?? UIImage(named: "70000TonsLogo")!;
-        
     }
 
     func getAllImages(bandNameHandle: bandNamesHandler){
-        
-        if (downloadingAllImages == false){
+        if downloadingAllImages == false {
             downloadingAllImages = true
             bands = bandNameHandle.getBandNames()
+            // Prefetch all image URLs into a dictionary
+            var bandImageUrls: [String: String] = [:]
             for bandName in bands {
-                
+                bandImageUrls[bandName] = bandNameHandle.getBandImageUrl(bandName)
+            }
+            for bandName in bands {
                 let imageStoreName = bandName + ".png"
-                let imageStoreFile = directoryPath.appendingPathComponent( imageStoreName)
-
-                if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
-                    
-                    let imageURL = bandNameHandle.getBandImageUrl(bandName)
-                    print ("Loading image in background so it will be cached by default " + imageURL);
+                let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
+                if FileManager.default.fileExists(atPath: imageStoreFile.path) == false {
+                    let imageURL = bandImageUrls[bandName] ?? ""
+                    print("Loading image in background so it will be cached by default " + imageURL)
                     _ = displayImage(urlString: imageURL, bandName: bandName)
                 }
             }
