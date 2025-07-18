@@ -189,46 +189,19 @@ class iCloudDataHandler {
     /// Iterates through all band priority data and syncs it to iCloud storage
     func writeAllPriorityData(){
         print("iCloudPriority: Starting writeAllPriorityData operation")
-        
         if (checkForIcloud() == true){
             print("iCloudPriority: Internet available and iCloud enabled, proceeding with data write")
             let priorityHandler = dataHandler()
             priorityHandler.refreshData()
             let priorityData = priorityHandler.getPriorityData()
-            
-            print("iCloudPriority: Retrieved priority data with \(priorityData.count ?? 0) entries")
-            
-            if (priorityData != nil && priorityData.count > 0){
+            print("iCloudPriority: Retrieved priority data with \(priorityData.count) entries")
+            if (priorityData.count > 0){
                 print("iCloudPriority: Writing \(priorityData.count) priority records to iCloud (with timestamp check)")
                 for (bandName, priority) in priorityData {
                     print("iCloudPriority: Processing priority record for band: \(bandName)")
-                    let index = "bandName:" + bandName
-                    let iCloudValue = NSUbiquitousKeyValueStore.default.string(forKey: index)
-                    var iCloudTimestamp: Double = 0
-                    if let iCloudValue = iCloudValue, !iCloudValue.isEmpty {
-                        let parts = iCloudValue.split(separator: ":")
-                        if parts.count == 3, let ts = Double(parts[2]) {
-                            iCloudTimestamp = ts
-                        } else {
-                            // Old format or invalid, treat as 0
-                            iCloudTimestamp = 0
-                        }
-                    }
-                    // Get the timestamp that would be written for this band
-                    var proposedTimestamp = priorityHandler.getPriorityLastChange(bandName)
-                    if proposedTimestamp <= 0 {
-                        proposedTimestamp = Date().timeIntervalSince1970
-                    }
-                    print("iCloudPriority: Comparing proposedTimestamp \(proposedTimestamp) to iCloudTimestamp \(iCloudTimestamp) for band: \(bandName)")
-                    if proposedTimestamp > iCloudTimestamp {
-                        print("iCloudPriority: Proposed data is newer, writing to iCloud for band: \(bandName)")
-                        writeAPriorityRecord(bandName: bandName, priority: priority)
-                    } else {
-                        print("iCloudPriority: Skipping write for band: \(bandName) because iCloud data is newer or equal")
-                    }
+                    writeAPriorityRecord(bandName: bandName, priority: priority)
                 }
                 NSUbiquitousKeyValueStore.default.synchronize()
-                //writeLastiCloudDataWrite()
                 print("iCloudPriority: All priority data written and synchronized (with timestamp check)")
             } else {
                 print("iCloudPriority: No priority data to write")
@@ -236,49 +209,29 @@ class iCloudDataHandler {
         } else {
             print("iCloudPriority: Cannot write priority data - internet unavailable or iCloud disabled")
         }
-        
         print("iCloudPriority: writeAllPriorityData operation completed")
     }
-    
-    /// Writes a single priority record for a specific band to iCloud
-    /// - Parameters:
-    ///   - bandName: The name of the band
-    ///   - priority: The priority value to store
+
     func writeAPriorityRecord(bandName: String, priority: Int){
-        
         if (checkForIcloud() == true){
             print("iCloudPriority: Starting writeAPriorityRecord for band: \(bandName)")
-            
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                // Get the timestamp from local data handler or use current time
-                let localDataHandler = dataHandler()
-                var timestamp = localDataHandler.getPriorityLastChange(bandName)
-                
-                // If no valid timestamp exists, use current time in seconds since epoch
-                if timestamp <= 0 {
-                    timestamp = Date().timeIntervalSince1970
-                }
-                
-                // ENFORCE: Always use current device UID and timestamp from local data
-                if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
-                    let timestampString = String(format: "%.0f", timestamp) // Format to remove decimals
-                    
-                    // Use format: priority:uid:timestamp for better conflict resolution
-                    let dataString = String(priority) + ":" + currentUid + ":" + timestampString
-                    print("iCloudPriority: Writing priority record - bandName: \(bandName), priority: \(priority), uid: \(currentUid), timestamp: \(timestampString)")
-                    print("iCloudPriority: Full dataString: \(dataString)")
-                    
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
-                    print("iCloudPriority: Priority record written for band: \(bandName)")
-                    NSUbiquitousKeyValueStore.default.synchronize()
-                } else {
-                    print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot write priority record for band: \(bandName)")
-                }
+            let localDataHandler = dataHandler()
+            var timestamp = localDataHandler.getPriorityLastChange(bandName)
+            if timestamp <= 0 {
+                timestamp = Date().timeIntervalSince1970
+            }
+            if let currentUid = UIDevice.current.identifierForVendor?.uuidString {
+                let timestampString = String(format: "%.0f", timestamp)
+                let dataString = String(priority) + ":" + currentUid + ":" + timestampString
+                print("iCloudPriority: Writing priority record - bandName: \(bandName), priority: \(priority), uid: \(currentUid), timestamp: \(timestampString)")
+                NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
+                print("iCloudPriority: Priority record written for band: \(bandName)")
+            } else {
+                print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot write priority record for band: \(bandName)")
             }
         }
     }
-    
-
+        
     /// Writes all schedule/attendance data to iCloud
     /// Syncs all attended shows data to iCloud storage
     func writeAllScheduleData(){
@@ -287,29 +240,28 @@ class iCloudDataHandler {
         
         if (checkForIcloud() == true){
             print("iCloudSchedule: iCloud enabled, proceeding with schedule data write")
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                let attendedHandle = ShowsAttended()
-                attendedHandle.loadShowsAttended()
-                let showsAttendedArray = attendedHandle.getShowsAttended();
-                
-                let uid = (UIDevice.current.identifierForVendor?.uuidString) ?? ""
-                print("iCloudSchedule: Device UID: \(uid)")
-                
-                if (uid.isEmpty == false){
-                    print("iCloudSchedule: Valid UID found, processing attended shows")
-                    if (showsAttendedArray != nil && showsAttendedArray.isEmpty == false){
-                        print("iCloudSchedule: Writing \(showsAttendedArray.count) schedule records to iCloud")
-                        for eventIndex in showsAttendedArray {
-                            print("iCloudSchedule: Processing schedule record for event: \(eventIndex.key) - \(eventIndex.value)")
-                            self.writeAScheduleRecord(eventIndex: eventIndex.key, status: eventIndex.value)
-                        }
-                    } else {
-                        print("iCloudSchedule: No attended shows data to write")
+            let attendedHandle = ShowsAttended()
+            attendedHandle.loadShowsAttended()
+            let showsAttendedArray = attendedHandle.getShowsAttended();
+            
+            let uid = (UIDevice.current.identifierForVendor?.uuidString) ?? ""
+            print("iCloudSchedule: Device UID: \(uid)")
+            
+            if (uid.isEmpty == false){
+                print("iCloudSchedule: Valid UID found, processing attended shows")
+                if (showsAttendedArray != nil && showsAttendedArray.isEmpty == false){
+                    print("iCloudSchedule: Writing \(showsAttendedArray.count) schedule records to iCloud")
+                    for eventIndex in showsAttendedArray {
+                        print("iCloudSchedule: Processing schedule record for event: \(eventIndex.key) - \(eventIndex.value)")
+                        writeAScheduleRecord(eventIndex: eventIndex.key, status: eventIndex.value)
                     }
                 } else {
-                    print("iCloudSchedule: Invalid UID, cannot write schedule data")
+                    print("iCloudSchedule: No attended shows data to write")
                 }
+            } else {
+                print("iCloudSchedule: Invalid UID, cannot write schedule data")
             }
+            NSUbiquitousKeyValueStore.default.synchronize()
         } else {
             print("iCloudSchedule: iCloud disabled, skipping schedule data write")
         }
@@ -318,15 +270,10 @@ class iCloudDataHandler {
 
     }
     
-    /// Writes a single schedule record to iCloud
-    /// - Parameters:
-    ///   - eventIndex: The event identifier
-    ///   - status: The attendance status
     func writeAScheduleRecord(eventIndex: String, status: String){
         if (checkForIcloud() == true){
             print("iCloudSchedule: Starting writeAScheduleRecord for event: \(eventIndex)")
             let timestamp: String
-            // If status already contains a timestamp, use it; otherwise, use now
             let statusParts = status.split(separator: ":")
             if statusParts.count == 2 {
                 timestamp = String(statusParts[1])
@@ -339,7 +286,6 @@ class iCloudDataHandler {
                 print("iCloudSchedule: Writing schedule record - eventIndex: \(eventIndex), dataString: \(dataString)")
                 NSUbiquitousKeyValueStore.default.set(dataString, forKey: "eventName:" + eventIndex)
                 print("iCloudSchedule: Schedule record written for event: \(eventIndex)")
-                NSUbiquitousKeyValueStore.default.synchronize()
             } else {
                 print("iCloudSchedule: ERROR - UIDevice identifierForVendor is nil, cannot write schedule record for event: \(eventIndex)")
             }

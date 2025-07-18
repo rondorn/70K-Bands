@@ -18,12 +18,12 @@ class firebaseBandDataWrite {
     var bandRank: [String : String] = [String : String]();
     let variableStoreHandle = variableStore();
     
-    init(){
-        
-        ref = Database.database().reference()
-        
-    }
+    // Network resilience properties
+    private let timeoutInterval: TimeInterval = 5.0
     
+    init(){
+        ref = Database.database().reference()
+    }
     
     func loadCompareFile()->[String:String]{
         do {
@@ -39,22 +39,38 @@ class firebaseBandDataWrite {
     
     func writeSingleRecord(dataHandle: dataHandler, bandName: String, ranking: String){
         
+        // Validate input
+        guard !bandName.isEmpty else {
+            print("writeSingleRecord: Invalid band name")
+            return
+        }
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
             self.firebaseBandAttendedArray = self.loadCompareFile()
             
-            let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-            print ("writeSingleRecord: uid = \(uid) = eventYear = \(eventYear) - bandName - \(bandName)")
-            //exit if things look wrong
-            if (bandName == nil || bandName.isEmpty == true){
+            guard let uid = UIDevice.current.identifierForVendor?.uuidString, !uid.isEmpty else {
+                print("writeSingleRecord: Invalid device ID")
                 return
             }
+            
+            print ("writeSingleRecord: uid = \(uid) = eventYear = \(eventYear) - bandName - \(bandName)")
+            
+            // Create a timeout timer
+            let timeoutTimer = Timer.scheduledTimer(withTimeInterval: self.timeoutInterval, repeats: false) { _ in
+                print("writeSingleRecord: Timeout for \(bandName), skipping Firebase operation")
+            }
+            
             self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
                 "bandName": bandName,
                 "ranking": ranking,
                 "userID": uid,
                 "year": String(eventYear)]){
                     (error:Error?, ref:DatabaseReference) in
+                    
+                    // Cancel timeout timer
+                    timeoutTimer.invalidate()
+                    
                     if let error = error {
                         print("Writing firebase band data could not be saved: \(error).")
                     } else {
@@ -62,17 +78,21 @@ class firebaseBandDataWrite {
                         
                         self.firebaseBandAttendedArray[bandName] = ranking
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
-                        
-
                     }
                 }
-
         }
     }
     
     func writeData (dataHandle: dataHandler){
         
         if inTestEnvironment == false {
+            // Check network connectivity before attempting Firebase operations
+            let networkTester = NetworkTesting()
+            guard networkTester.isInternetAvailable() else {
+                print("Firebase: No internet connectivity, skipping Firebase operations")
+                return
+            }
+            
             dataHandle.refreshData()
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             firebaseBandAttendedArray = self.loadCompareFile()

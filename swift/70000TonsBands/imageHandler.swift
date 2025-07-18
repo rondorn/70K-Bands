@@ -36,7 +36,7 @@ open class imageHandler {
         } else if let url = URL(string: trimmedUrlString), url.scheme != nil {
 
             print ("ImageCall download imaged from \(trimmedUrlString)")
-
+            
             URLSession.shared.dataTask(with: url) { data, response, error in
                 guard
                     let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,

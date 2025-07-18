@@ -18,6 +18,9 @@ class firebaseEventDataWrite {
     let attended = ShowsAttended()
     let variableStoreHandle = variableStore();
     
+    // Network resilience properties
+    private let timeoutInterval: TimeInterval = 5.0
+    
     init(){
         ref = Database.database().reference()
     }
@@ -49,7 +52,16 @@ class firebaseEventDataWrite {
             
             self.firebaseShowsAttendedArray = self.loadCompareFile();
             
-            let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+            guard let uid = UIDevice.current.identifierForVendor?.uuidString, !uid.isEmpty else {
+                print("writeEvent: Invalid device ID")
+                return
+            }
+            
+            // Create a timeout timer
+            let timeoutTimer = Timer.scheduledTimer(withTimeInterval: self.timeoutInterval, repeats: false) { _ in
+                print("writeEvent: Timeout for \(index), skipping Firebase operation")
+            }
+            
             self.ref.child("showData/").child(uid).child(String(year)).child(index).setValue([
                 "bandName": bandName,
                 "location": location,
@@ -58,6 +70,10 @@ class firebaseEventDataWrite {
                 "eventType": eventType,
                 "status": status]){
                     (error:Error?, ref:DatabaseReference) in
+                    
+                    // Cancel timeout timer
+                    timeoutTimer.invalidate()
+                    
                     if let error = error {
                         print("Writing firebase data could not be saved: \(error).")
                     } else {
@@ -73,6 +89,13 @@ class firebaseEventDataWrite {
     func writeData (){
         
         if (inTestEnvironment == false){
+            // Check network connectivity before attempting Firebase operations
+            let networkTester = NetworkTesting()
+            guard networkTester.isInternetAvailable() else {
+                print("Firebase: No internet connectivity, skipping Firebase operations")
+                return
+            }
+            
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
                 self.firebaseShowsAttendedArray = self.loadCompareFile();

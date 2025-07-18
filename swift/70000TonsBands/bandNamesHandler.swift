@@ -20,21 +20,22 @@ open class bandNamesHandler {
     
     /// Loads band name data from cache if available, otherwise loads from disk or Dropbox.
     func getCachedData(completion: (() -> Void)? = nil){
-        print ("Loading bandName Data cache")
+        print("[LOG] getCachedData: START")
         staticBandName.sync() {
             if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
-                print ("Loading bandName Data cache, from cache")
+                print("[LOG] getCachedData: Loading from cache")
                 bandNames = cacheVariables.bandNamesStaticCache
                 bandNamesArray = cacheVariables.bandNamesArrayStaticCache
+                print("[LOG] getCachedData: END (from cache)")
                 completion?()
             } else {
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    print ("Loading bandName Data cache, from disk or dropbox")
+                    print("[LOG] getCachedData: Loading from disk or dropbox")
                     self.gatherData(completion: completion)
                 }
             }
         }
-        print ("Done Loading bandName Data cache")
+        print("[LOG] getCachedData: EXIT")
     }
     
     /// Clears the static cache of band names.
@@ -45,6 +46,16 @@ open class bandNamesHandler {
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
     /// Calls completion handler when done.
     func gatherData(completion: (() -> Void)? = nil) {
+        print("[LOG] gatherData: START")
+        var didCallCompletion = false
+        let timeoutWorkItem = DispatchWorkItem {
+            if !didCallCompletion {
+                print("[LOG] gatherData: TIMEOUT - calling completion fallback after 10s")
+                didCallCompletion = true
+                completion?()
+            }
+        }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 10, execute: timeoutWorkItem)
         if isInternetAvailable() == true {
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("Loading bandName Data gatherData")
@@ -59,18 +70,43 @@ open class bandNamesHandler {
             }
         }
         readBandFile()
-        if bandNames.isEmpty && !cacheVariables.justLaunched {
-            print("Skipping cache population: bandNames is empty and app is not just launched.")
-            completion?()
+        // Defensive type check for bandNames
+        if let bandNamesDict = bandNames as? [String: [String: String]] {
+            if bandNamesDict.isEmpty && !cacheVariables.justLaunched {
+                print("[LOG] gatherData: Skipping cache population: bandNames is empty and app is not just launched.")
+                if !didCallCompletion {
+                    didCallCompletion = true
+                    timeoutWorkItem.cancel()
+                    completion?()
+                }
+                print("[LOG] gatherData: END (empty bandNames)")
+                return
+            }
+        } else {
+            print("[LOG] ERROR: bandNames is not a dictionary! Actual type: \(type(of: bandNames)) Value: \(bandNames)")
+            bandNames = [String: [String: String]]()
+            if !didCallCompletion {
+                didCallCompletion = true
+                timeoutWorkItem.cancel()
+                completion?()
+            }
+            print("[LOG] gatherData: END (bad type)")
             return
         }
-        populateCache(completion: completion)
+        populateCache {
+            if !didCallCompletion {
+                didCallCompletion = true
+                timeoutWorkItem.cancel()
+                print("[LOG] gatherData: END (populateCache complete)")
+                completion?()
+            }
+        }
     }
 
     /// Populates the static cache variables with the current bandNames dictionary.
     /// Posts a notification when the cache is ready and calls the completion handler.
     func populateCache(completion: (() -> Void)? = nil){
-        print ("Starting population of acheVariables.bandNamesStaticCache")
+        print("[LOG] populateCache: START")
         staticBandName.async(flags: .barrier) {
             cacheVariables.bandNamesStaticCache =  [String :[String : String]]()
             cacheVariables.bandNamesArrayStaticCache = [String]()
@@ -80,10 +116,11 @@ open class bandNamesHandler {
                     cacheVariables.bandNamesStaticCache[bandName] = bandDict
                     cacheVariables.bandNamesArrayStaticCache.append(bandName)
                 } else {
-                    print("Warning: bandNames[\(bandName)] is not a [String: String]: \(String(describing: self.bandNames[bandName]))")
+                    print("[LOG] Warning: bandNames[\(bandName)] is not a [String: String]: \(String(describing: self.bandNames[bandName]))")
                 }
             }
             DispatchQueue.main.async {
+                print("[LOG] populateCache: END (cache ready)")
                 NotificationCenter.default.post(name: .bandNamesCacheReady, object: nil)
                 completion?()
             }

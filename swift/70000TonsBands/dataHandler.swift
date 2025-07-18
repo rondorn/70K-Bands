@@ -97,40 +97,37 @@ class dataHandler {
     }
     
     /// Refreshes the data by reloading from disk or cache.
-    func getCachedData(){
-    
-        print ("Loading priority Data cache")
-        
+    func getCachedData(completion: (() -> Void)? = nil) {
+        print("[LOG] getCachedData: START")
         if DispatchQueue.getSpecific(key: staticDataKey) != nil {
-            // Already on staticData queue, execute directly to avoid deadlock
-            if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
-                print ("Loading bandPriorityStorage from Data cache")
+            if !cacheVariables.bandPriorityStorageCache.isEmpty {
+                print("[LOG] getCachedData: Loaded from Data cache")
                 self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
-                print ("Loading bandPriorityStorage from Data cache, done")
+                print("[LOG] getCachedData: END (from cache)")
+                completion?()
             } else {
-                print ("Loading bandPriorityStorage Cache did not load, loading from file")
-                self.refreshData()
-            }
-            
-            var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
-            iCloudIndicator = iCloudIndicator?.uppercased()
-
-            print ("Done Loading bandName Data cache")
-        } else {
-            staticData.sync() {
-                if (cacheVariables.bandPriorityStorageCache.isEmpty == false){
-                    print ("Loading bandPriorityStorage from Data cache")
-                    self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
-                    print ("Loading bandPriorityStorage from Data cache, done")
-                } else {
-                    print ("Loading bandPriorityStorage Cache did not load, loading from file")
-                    self.refreshData()
+                print("[LOG] getCachedData: Cache did not load, loading from file")
+                DispatchQueue.global(qos: .background).async {
+                    self.bandPriorityStorage = self.readFile(dateWinnerPassed: "")
+                    print("[LOG] getCachedData: END (from file)")
+                    completion?()
                 }
-                
-                var iCloudIndicator = UserDefaults.standard.string(forKey: "iCloud")
-                iCloudIndicator = iCloudIndicator?.uppercased()
-
-                print ("Done Loading bandName Data cache")
+            }
+        } else {
+            staticData.sync {
+                if !cacheVariables.bandPriorityStorageCache.isEmpty {
+                    print("[LOG] getCachedData: Loaded from Data cache")
+                    self.bandPriorityStorage = cacheVariables.bandPriorityStorageCache
+                    print("[LOG] getCachedData: END (from cache)")
+                    completion?()
+                } else {
+                    print("[LOG] getCachedData: Cache did not load, loading from file")
+                    DispatchQueue.global(qos: .background).async {
+                        self.bandPriorityStorage = self.readFile(dateWinnerPassed: "")
+                        print("[LOG] getCachedData: END (from file)")
+                        completion?()
+                    }
+                }
             }
         }
     }
