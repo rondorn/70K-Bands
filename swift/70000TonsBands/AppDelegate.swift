@@ -84,6 +84,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
+        // Test Firebase connectivity in background
+        DispatchQueue.global(qos: .background).async {
+            self.testFirebaseConnectivity()
+        }
+        
         let iCloudHandle = iCloudDataHandler()
         iCloudHandle.purgeOldiCloudKeys()
         let iCloudEnabled = iCloudHandle.checkForIcloud()
@@ -460,10 +465,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // Saves changes in the application's managed object context before the application terminates.
-
         self.saveContext()
+        // Sync iCloud data
+        let iCloudHandle = iCloudDataHandler()
+        iCloudHandle.writeAllPriorityData()
+        iCloudHandle.writeAllScheduleData()
     }
 
+    /**
+     Tests Firebase connectivity and logs the result for debugging network issues.
+     */
+    private func testFirebaseConnectivity() {
+        let ref = Database.database().reference()
+        
+        // Test with a simple read operation
+        ref.child(".info/connected").observeSingleEvent(of: .value) { snapshot in
+            if let connected = snapshot.value as? Bool {
+                print("Firebase connectivity test: \(connected ? "Connected" : "Disconnected")")
+            } else {
+                print("Firebase connectivity test: Unable to determine connection status")
+            }
+        } withCancel: { error in
+            print("Firebase connectivity test failed: \(error.localizedDescription)")
+        }
+    }
+    
     // MARK: - Split view
 
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool {
