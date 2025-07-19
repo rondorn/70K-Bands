@@ -42,6 +42,18 @@ open class ShowsAttended {
     }
     
     /**
+     Requests data collection with optional year override and completion handler.
+     - Parameters:
+        - eventYearOverride: If true, cancels all other operations and runs immediately
+        - completion: Completion handler called when operation finishes
+     */
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        // For ShowsAttended, we just load cached data since it doesn't download from network
+        getCachedData()
+        completion?()
+    }
+    
+    /**
      Sets the showsAttendedArray to the provided attendedData.
      - Parameter attendedData: A dictionary of attended data to set.
      */

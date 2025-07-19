@@ -11,6 +11,8 @@ import CoreData
 import Firebase
 import AVKit
 
+
+
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
     @IBOutlet var mainTableView: UITableView!
@@ -128,7 +130,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
         
-        refreshData(isUserInitiated: false)
+        // Use coordinator for initial data loading
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // For first install, band names will be loaded in foreground
+        // For subsequent launches, all data loads in parallel
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                            // Initial load complete, refresh the UI
+                            DispatchQueue.main.async {
+                                self.performInitialDataRefresh()
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
         
@@ -543,11 +563,98 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        self.refreshData(isUserInitiated: false)
+        // Use coordinator for data loading
+        let coordinator = DataCollectionCoordinator.shared
+        
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                            DispatchQueue.main.async {
+                                self.refreshData(isUserInitiated: false)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Performs the initial data refresh after coordinator has loaded data
+    private func performInitialDataRefresh() {
+        // This method is called after the coordinator has loaded all data
+        // It performs the same operations as refreshData but without triggering the coordinator again
+        
+        print ("Initial data refresh: Processing loaded data")
+        localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
+        internetAvailble = isInternetAvailable();
+        
+        if (internetAvailble == false){
+            self.refreshControl?.endRefreshing();
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                self.refreshControl?.endRefreshing();
+            })
+        }
+        
+        refreshFromCache()
+        let searchCriteria = bandSearch.text ?? ""
+        
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
+            while (refreshDataLock == true){ sleep(1); }
+            refreshDataLock = true;
+            var offline = true
+            if Reachability.isConnectedToNetwork(){ offline = false; }
+            let bandNameHandle = bandNamesHandler()
+            let schedule = scheduleHandler()
+            
+            self.bandsByName = [String]()
+            self.bands = []
+            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
+            // Deduplicate band names if no shows are present
+            if eventCount == 0 {
+                self.bands = self.deduplicatePreservingOrder(self.bands)
+            }
+            currentBandList = self.bands
+            self.bandsByName = self.bands
+            self.attendedHandle.loadShowsAttended()
+            DispatchQueue.main.async{
+                print ("Initial data refresh: Updating UI");
+                self.bandNameHandle.readBandFile()
+                self.dataHandle.getCachedData()
+                self.attendedHandle.getCachedData()
+                self.ensureCorrectSorting()
+                self.refreshAlerts()
+                self.updateCountLable()
+                self.reloadTablePreservingScroll()
+                print ("DONE Initial data refresh");
+                refreshDataLock = false;
+                print ("Counts: bandCounter = \(bandCounter)")
+                print ("Counts: eventCounter = \(eventCounter)")
+                print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
+            }
+        }
+        print ("Done Initial data refresh");
     }
     
     @objc func refreshDisplayAfterWake(){
-        self.refreshData(isUserInitiated: false)
+        // Use coordinator for data loading
+        let coordinator = DataCollectionCoordinator.shared
+        
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                            DispatchQueue.main.async {
+                                self.refreshData(isUserInitiated: false)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         //createrFilterMenu(controller: self)
     }
     
@@ -667,18 +774,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("iCloud: pull to refresh, load in new iCloud data")
         
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            // Perform data loading in the background
-            DispatchQueue.global(qos: .background).async {
-                print ("pullTorefreshData: Loading schedule data on pull to refresh")
-                self.bandNameHandle.gatherData()
-                self.schedule.DownloadCsv()
-                self.schedule.populateSchedule()
-                
-                // Once done, refresh the GUI on the main thread
-                DispatchQueue.main.async {
-                    self.refreshData(isUserInitiated: true)
-                    print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
+        // Use coordinator for data loading
+        let coordinator = DataCollectionCoordinator.shared
+        
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                            // Once done, refresh the GUI on the main thread
+                            DispatchQueue.main.async {
+                                self.refreshData(isUserInitiated: true)
+                                print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -699,10 +809,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("refreshData throttled: Only one run per 60 seconds unless user-initiated.")
                 // But still force band name refresh if requested
                 if forceBandNameDownload {
-                    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                        self.bandNameHandle.gatherData()
-                        self.schedule.DownloadCsv()
-                        self.schedule.populateSchedule()
+                    DataCollectionCoordinator.shared.requestBandNamesCollection(eventYearOverride: false) {
                         print("Forced band name refresh (throttled schedule)")
                     }
                 }
@@ -724,18 +831,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshFromCache()
         let searchCriteria = bandSearch.text ?? ""
         let shouldDownload = shouldDownloadSchedule(force: forceDownload || isUserInitiated)
+        
+        // Use coordinator for data loading
+        let coordinator = DataCollectionCoordinator.shared
+        
         if shouldDownload && internetAvailble {
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                //print ("Async: Loading schedule data MasterViewController")
-                self?.bandNameHandle.gatherData()
-                self?.schedule.DownloadCsv()
-                self?.schedule.populateSchedule()
-                DispatchQueue.main.async {
-                    // Refresh the UI here if needed
-                    self?.tableView.reloadData()
+            // Load all data types in parallel using coordinator
+            coordinator.requestBandNamesCollection(eventYearOverride: false) {
+                coordinator.requestScheduleCollection(eventYearOverride: false) {
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             while (refreshDataLock == true){ sleep(1); }
             refreshDataLock = true;

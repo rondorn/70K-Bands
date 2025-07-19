@@ -36,6 +36,18 @@ open class CustomBandDescription {
         }
     }
     
+    /**
+     Requests data collection with optional year override and completion handler.
+     - Parameters:
+        - eventYearOverride: If true, cancels all other operations and runs immediately
+        - completion: Completion handler called when operation finishes
+     */
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        // For CustomBandDescription, we just refresh cache since it doesn't download from network
+        refreshCache()
+        completion?()
+    }
+    
     func refreshData(){
         
         print ("commentFile performaing getAll")

@@ -13,6 +13,17 @@ import CoreData
 
 open class imageHandler {
     
+    /**
+     Requests data collection with optional year override and completion handler.
+     - Parameters:
+        - eventYearOverride: If true, cancels all other operations and runs immediately
+        - completion: Completion handler called when operation finishes
+     */
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        // For imageHandler, we don't need to do anything since images are loaded on-demand
+        completion?()
+    }
+    
     func displayImage ( urlString: String, bandName: String) -> UIImage {
         
         
