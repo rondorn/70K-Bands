@@ -73,6 +73,7 @@
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0331B1AB3A77F00AA29B8 /* InterfaceController.swift */; };
 		11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0331B1AB3A77F00AA29B8 /* InterfaceController.swift */; };
+		11F4AB251B61673000C52BE2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F4AB241B61673000C52BE1 /* DataCollectionCoordinator.swift */; };
 		49639E1BF0EFB0FDD2D257AF /* libPods-70K BandsTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EFC68E0B2EEFE9DCE2BE8DAA /* libPods-70K BandsTests.a */; };
 		7AF6242495CE306672BADF43 /* libPods-70K Bands.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C214975A8FB2AE947E6A6DF /* libPods-70K Bands.a */; };
 /* End PBXBuildFile section */
@@ -167,6 +168,7 @@
 		11F0332B1AB3A77F00AA29B8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Interface.storyboard; sourceTree = "<group>"; };
 		11F0332D1AB3A77F00AA29B8 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
+		11F4AB241B61673000C52BE1 /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
 		2C214975A8FB2AE947E6A6DF /* libPods-70K Bands.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-70K Bands.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A12F2EE05680E287A844296 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Pods/Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		825AF53FB93C56F8298EE35B /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
@@ -280,6 +282,7 @@
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
 				11AC1D7A1A682A1100267A8F /* PushNotificationController.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
+				11F4AB241B61673000C52BE1 /* DataCollectionCoordinator.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
@@ -638,6 +641,7 @@
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
 				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
+				11F4AB251B61673000C52BE2 /* DataCollectionCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

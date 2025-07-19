@@ -9,6 +9,8 @@
 import UIKit
 import CoreData
 
+
+
 class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate{
     
     @IBOutlet weak var linkGroup: UIStackView!
@@ -645,16 +647,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         super.viewWillDisappear(animated)
         saveComments()
         
-        // Perform data loading in the background
-        DispatchQueue.global(qos: .background).async {
-            //print ("Sync: Loading schedule data AlertController")
-            masterView.bandNameHandle.gatherData()
-            masterView.schedule.DownloadCsv()
-            masterView.schedule.populateSchedule()
-            
-            // Once done, refresh the GUI on the main thread
-            DispatchQueue.main.async {
-                masterView.refreshData(isUserInitiated: true)
+        // Use coordinator for data loading
+        let coordinator = DataCollectionCoordinator.shared
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                    // Once done, refresh the GUI on the main thread
+                    DispatchQueue.main.async {
+                        masterView.refreshData(isUserInitiated: true)
+                    }
+                }
             }
         }
     }

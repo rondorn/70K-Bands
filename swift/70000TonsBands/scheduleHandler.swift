@@ -67,7 +67,7 @@ open class scheduleHandler {
         cacheVariables.scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     }
     
-    func populateSchedule(){
+    func populateSchedule(completion: (() -> Void)? = nil){
         
         print ("Loading schedule data 1")
         isLoadingSchedule = true;
@@ -78,9 +78,17 @@ open class scheduleHandler {
         
         if (FileManager.default.fileExists(atPath: scheduleFile) == false){
             //print ("Sync: Loading schedule data 1")
-            DownloadCsv();
+            DownloadCsv(completion: completion);
+        } else {
+            // File exists, process it synchronously
+            self._processScheduleFile()
+            completion?()
         }
         
+        self._processScheduleFile()
+    }
+    
+    private func _processScheduleFile() {
         if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
             
             var unuiqueIndex = Dictionary<TimeInterval, Int>()
@@ -180,11 +188,10 @@ open class scheduleHandler {
         //saveCacheFile
         NSKeyedArchiver.archiveRootObject(schedulingData, toFile: schedulingDataCacheFile.path)
         NSKeyedArchiver.archiveRootObject(schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
-
     }
     
     
-    func DownloadCsv (){
+    func DownloadCsv(completion: (() -> Void)? = nil){
         
         var scheduleUrl = "";
         
@@ -257,6 +264,10 @@ open class scheduleHandler {
                 }
             }
         }
+        
+        // Process the downloaded file and call completion
+        self._processScheduleFile()
+        completion?()
     }
 
     func getDateIndex (_ dateString: String, timeString: String, band:String) -> TimeInterval{
