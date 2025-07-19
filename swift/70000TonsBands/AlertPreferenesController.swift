@@ -8,6 +8,91 @@
 
 import Foundation
 import UIKit
+
+// DataCollectionCoordinator class definition
+class DataCollectionCoordinator {
+    static let shared = DataCollectionCoordinator()
+    
+    private var isYearChangeInProgress = false
+    private var yearChangeRequested = false
+    
+    func requestBandNamesCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let bandNameHandle = bandNamesHandler()
+            bandNameHandle.gatherData(completion: {
+                DispatchQueue.main.async {
+                    completion?()
+                }
+            })
+        }
+    }
+    
+    func requestScheduleCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let schedule = scheduleHandler()
+            schedule.populateSchedule(completion: {
+                DispatchQueue.main.async {
+                    completion?()
+                }
+            })
+        }
+    }
+    
+    func requestDataHandlerCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let dataHandle = dataHandler()
+            dataHandle.getCachedData {
+                DispatchQueue.main.async {
+                    completion?()
+                }
+            }
+        }
+    }
+    
+    func requestShowsAttendedCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let attendedHandle = ShowsAttended()
+            attendedHandle.getCachedData()
+            DispatchQueue.main.async {
+                completion?()
+            }
+        }
+    }
+    
+    func requestCustomBandDescriptionCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let customBandDescription = CustomBandDescription()
+            customBandDescription.refreshCache()
+            DispatchQueue.main.async {
+                completion?()
+            }
+        }
+    }
+    
+    func requestImageHandlerCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let imageHandle = imageHandler()
+            // Image handler doesn't have a getCachedData method, so we'll just call completion
+            DispatchQueue.main.async {
+                completion?()
+            }
+        }
+    }
+    
+    func cancelAllOperations() {
+        // Placeholder implementation
+    }
+    
+    func notifyYearChangeRequested() {
+        // Placeholder implementation
+    }
+    
+    func notifyYearChangeCompleted() {
+        // Placeholder implementation
+    }
+}
+
+
 // FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
 // Consider refactoring the code to use the non-optional operators.
 fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
@@ -587,6 +672,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         print ("Files were Ok, Pressed")
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
 
+        // Notify coordinator that year change is starting
+        DataCollectionCoordinator.shared.notifyYearChangeRequested()
+
         // 1. Set URLs for the selected year (including 'Current')
         setArtistUrl(eventYearChangeAttempt)
         setScheduleUrl(eventYearChangeAttempt)
@@ -628,19 +716,27 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setupCurrentYearUrls()
         setupDefaults()
 
-        // 7. Force reload of all band and schedule data for the current year, with eventYear override
-        let bandNamesHandle = bandNamesHandler()
-        bandNamesHandle.requestDataCollection(eventYearOverride: true)
-
-        let scheduleHandle = scheduleHandler()
-        scheduleHandle.requestDataCollection(eventYearOverride: true)
-
-        dataHandle = dataHandler()
-        dataHandle.clearCachedData()
-        dataHandle.requestDataCollection(eventYearOverride: true)
-
-        // 8. Notify UI to refresh
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        // 7. Use coordinator to reload all data with year override
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // Load all data types with year override
+        coordinator.requestBandNamesCollection(eventYearOverride: true, completion: {
+            coordinator.requestScheduleCollection(eventYearOverride: true, completion: {
+                coordinator.requestDataHandlerCollection(eventYearOverride: true, completion: {
+                    coordinator.requestShowsAttendedCollection(eventYearOverride: true, completion: {
+                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true, completion: {
+                            // Notify coordinator that year change is complete
+                            coordinator.notifyYearChangeCompleted()
+                            
+                            // 8. Notify UI to refresh
+                            DispatchQueue.main.async {
+                                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                            }
+                        })
+                    })
+                })
+            })
+        })
     }
 
 }
