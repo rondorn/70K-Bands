@@ -156,6 +156,12 @@ class dataHandler {
         staticLastModifiedDate.async(flags: .barrier) {
             cacheVariables.lastModifiedDate = Date()
         }
+        
+        // HIGH PRIORITY: Post immediate update notification
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("PriorityChangeImmediate"), object: bandname)
+        }
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAPriorityRecord(bandName: bandname, priority: priority)
