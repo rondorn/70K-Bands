@@ -12,6 +12,7 @@ open class CustomBandDescription {
     
     var bandDescriptionUrl = [String:String]()
     var bandDescriptionUrlDate = [String:String]()
+    private var downloadingBands = Set<String>() // Track bands currently being downloaded
     
     init(){
         refreshCache()
@@ -177,7 +178,14 @@ open class CustomBandDescription {
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
-            print ("commentFile lookup for \(bandName) via \(descriptionUrl) field does not yes exist")
+            // Check if already downloading this band to prevent infinite loops
+            if downloadingBands.contains(bandName) {
+                print("Already downloading note for \(bandName), skipping duplicate request")
+                return commentText
+            }
+            
+            downloadingBands.insert(bandName)
+            print ("commentFile lookup for \(bandName) via \(descriptionUrl) field does not yet exist")
             let httpData = getUrlData(urlString: descriptionUrl);
                 
                 //do not write if we are getting 404 error
@@ -188,10 +196,22 @@ open class CustomBandDescription {
                     print ("Wrote commentFile for \(bandName) " + commentText)
                     do {
                         try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                        
+                        // Notify DetailViewController that note download is complete
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(
+                                name: Notification.Name("NoteDownloaded"), 
+                                object: nil, 
+                                userInfo: ["bandName": bandName]
+                            )
+                        }
                     } catch {
                         print("commentFile " + error.localizedDescription)
                     }
                 }
+                
+                // Remove from downloading set when done
+                downloadingBands.remove(bandName)
             }
 
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
@@ -301,12 +321,17 @@ open class CustomBandDescription {
         commentText = commentText.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
         
         if (commentText.contains("Comment text is not available yet. Please wait")){
-            do {
-                print ("commentFile being deleted \(commentFile) -! - \(commentText)")
-                try FileManager.default.removeItem(atPath: commentFile.path)
-                
-            } catch let error as NSError {
-                print ("Encountered an error removing old commentFile " + error.debugDescription)
+            // Only try to delete if the file actually exists
+            if FileManager.default.fileExists(atPath: commentFile.path) {
+                do {
+                    print ("commentFile being deleted \(commentFile) -! - \(commentText)")
+                    try FileManager.default.removeItem(atPath: commentFile.path)
+                    
+                } catch let error as NSError {
+                    print ("Encountered an error removing old commentFile " + error.debugDescription)
+                }
+            } else {
+                print ("commentFile does not exist, skipping deletion: \(commentFile)")
             }
         }
         return commentText;
