@@ -194,6 +194,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
             }
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.rotationChecking), name: UIDevice.orientationDidChangeNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.imageDownloaded), name: Notification.Name("ImageDownloaded"), object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.noteDownloaded), name: Notification.Name("NoteDownloaded"), object: nil)
             
             setupEventAttendClicks()
             setupSwipeGenstures()
@@ -647,6 +649,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         super.viewWillDisappear(animated)
         saveComments()
         
+        // Clean up tracking dictionaries to prevent memory leaks
+        lastNoteRefreshTime.removeAll()
+        
         // Use coordinator for data loading
         let coordinator = DataCollectionCoordinator.shared
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
@@ -654,10 +659,68 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 coordinator.requestDataHandlerCollection(eventYearOverride: false) {
                     // Once done, refresh the GUI on the main thread
                     DispatchQueue.main.async {
-                        masterView.refreshData(isUserInitiated: true)
+                        masterView.refreshData(isUserInitiated: false)
                     }
                 }
             }
+        }
+    }
+    
+    @objc func imageDownloaded(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadedBandName = userInfo["bandName"] as? String,
+              let currentBandName = bandName,
+              downloadedBandName == currentBandName else {
+            return
+        }
+        
+        // Refresh the image display for the current band
+        let imageURL = self.bandNameHandle.getBandImageUrl(currentBandName)
+        print("Refreshing image display for \(currentBandName) after download")
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let imageHandle = imageHandler()
+            let newImage = imageHandle.displayImage(urlString: imageURL, bandName: currentBandName)
+            
+            DispatchQueue.main.async {
+                self.bandLogo.image = newImage
+                self.imageSizeController(special: "")
+            }
+        }
+    }
+    
+    // Track last note refresh time to prevent rapid successive updates
+    private var lastNoteRefreshTime: [String: Date] = [:]
+    
+    @objc func noteDownloaded(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadedBandName = userInfo["bandName"] as? String,
+              let currentBandName = bandName,
+              downloadedBandName == currentBandName else {
+            return
+        }
+        
+        // Debounce rapid successive updates (prevent updates more frequent than 1 second)
+        let now = Date()
+        if let lastRefresh = lastNoteRefreshTime[currentBandName],
+           now.timeIntervalSince(lastRefresh) < 1.0 {
+            print("Skipping rapid note refresh for \(currentBandName) - too soon since last update")
+            return
+        }
+        
+        lastNoteRefreshTime[currentBandName] = now
+        
+        // Refresh the notes display for the current band
+        print("Refreshing notes display for \(currentBandName) after download")
+        
+        DispatchQueue.main.async {
+            // Directly load the note from file without triggering another download
+            let noteText = self.bandNotes.getDescription(bandName: currentBandName)
+            self.customNotesText.text = noteText
+            self.customNotesText.textColor = UIColor.white
+            self.setNotesHeight()
+            self.customNotesText.setNeedsDisplay()
+            self.customNotesText.layoutIfNeeded()
         }
     }
     
@@ -946,11 +1009,18 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
 
             setButtonNames()
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-            NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                masterView?.refreshData(isUserInitiated: true)
+            
+            // IMMEDIATE HIGH PRIORITY UPDATE: Post notifications with high priority
+            DispatchQueue.main.async { [weak self] in
+                // Update the main list immediately with high priority
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+                
+                // Additional high-priority notification for immediate list refresh
+                NotificationCenter.default.post(name: Notification.Name("PriorityChangeImmediate"), object: self?.bandName)
             }
+            
+            // Note: The DetailDidUpdate notification will handle iPad-specific updates more efficiently
         }
     }
     
@@ -1397,8 +1467,17 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let message = attendedHandle.setShowsAttendedStatus(empty,status: status);
         
         ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: true)
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+        
+        // IMMEDIATE HIGH PRIORITY UPDATE: Post notifications with high priority
+        DispatchQueue.main.async { [weak self] in
+            // Update the main list immediately with high priority
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+            
+            // Additional high-priority notification for immediate list refresh
+            NotificationCenter.default.post(name: Notification.Name("AttendedChangeImmediate"), object: self?.bandName)
+        }
+        
         showFullSchedule ()
     }
     

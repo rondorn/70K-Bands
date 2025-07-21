@@ -195,6 +195,15 @@ open class ShowsAttended {
         - eventType: The type of event.
         - eventYearString: The event year as a string.
      - Returns: The new attendance status as a string.
+     
+     Cycling Logic:
+     - If attended value is null/empty → First click sets it to "Will Attend"
+     - If the value is "Will Attend" → Change to "Partially Attended" (only for 'show' events)
+     - If the value is "Partially Attended" → Change to "Will Not Attend"
+     - If the value is "Will Not Attend" → Change to "Will Attend"
+     - For event types other than shows, partial is not a valid value, so just toggle between "Will Attend" and "Will Not Attend"
+     
+     Note: Null or empty entries display as "Will Not Attend" but cycle to "Will Attend" on first click.
      */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
         if (showsAttendedArray.count == 0){
@@ -208,14 +217,29 @@ open class ShowsAttended {
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
         let currentStatus = getShowAttendedStatusRaw(index: index)
-        if (showsAttendedArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus){
-            value = sawAllStatus
-        } else if (currentStatus == sawAllStatus && eventType == showType ){
-            value = sawSomeStatus
-        } else if (currentStatus == sawSomeStatus){
-            value = sawNoneStatus;
+        
+        // IMPORTANT: Null or empty entries are treated as "Will Not Attend" (sawNoneStatus) for display
+        // Cycling logic:
+        // If attended value is null/empty → First click sets it to "Will Attend"
+        // If the value is "Will Attend" → Change to "Partially Attended" (only for 'show' events)
+        // If the value is "Partially Attended" → Change to "Will Not Attend"
+        // If the value is "Will Not Attend" → Change to "Will Attend"
+        // For event types other than shows, partial is not a valid value, so just toggle between "Will Attend" and "Will Not Attend"
+        if (currentStatus == nil) {
+            // First click on a new event - set to "Will Attend"
+            value = sawAllStatus // Will Attend
+        } else if (currentStatus == sawAllStatus) {
+            if eventTypeValue == showType {
+                value = sawSomeStatus // Partially Attended
+            } else {
+                value = sawNoneStatus // For non-shows, just toggle between will and wont
+            }
+        } else if (currentStatus == sawSomeStatus) {
+            value = sawNoneStatus // Partially Attended -> Will Not Attend
+        } else if (currentStatus == sawNoneStatus) {
+            value = sawAllStatus // Will Not Attend -> Will Attend
         } else {
-            value = sawNoneStatus;
+            value = sawAllStatus // fallback - treats any unrecognized value as "Will Attend" on first click
         }
         let timestamp = String(format: "%.0f", Date().timeIntervalSince1970)
         changeShowAttendedStatus(index: index, status: value + ":" + timestamp)
@@ -240,6 +264,12 @@ open class ShowsAttended {
             cacheVariables.attendedStaticCache[index] = status
         }
         saveShowsAttended()
+        
+        // HIGH PRIORITY: Post immediate update notification
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("AttendedChangeImmediate"), object: nil)
+        }
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
@@ -312,6 +342,16 @@ open class ShowsAttended {
         return color
     }
     
+    /**
+     Returns the attendance status for a specific show.
+     - Parameters:
+        - band: The band name.
+        - location: The event location.
+        - startTime: The event start time.
+        - eventType: The type of event.
+        - eventYearString: The event year as a string.
+     - Returns: The attendance status as a string. Null or empty entries are treated as "Will Not Attend" (sawNoneStatus) for display.
+     */
     func getShowAttendedStatus (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
         var eventTypeVariable = eventType;
         if (eventType == unofficalEventTypeOld){
@@ -321,11 +361,14 @@ open class ShowsAttended {
         let raw = getShowAttendedStatusRaw(index: index)
         var value = ""
         print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(raw ?? "")")
+        
+        // IMPORTANT: Null or empty entries are treated as "Will Not Attend" (sawNoneStatus) for display
         if (raw == sawAllStatus){
             value = sawAllStatus
         } else if (raw == sawSomeStatus){
             value = sawSomeStatus
         } else {
+            // This handles null, empty, and any other unrecognized values - all treated as "Will Not Attend" for display
             value = sawNoneStatus;
         }
         return value

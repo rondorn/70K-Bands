@@ -31,6 +31,16 @@
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
+		11450BED2E2E8CDA00428D6F /* TestRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BEC2E2E8CDA00428D6F /* TestRunner.swift */; };
+		11450BEE2E2E8CDA00428D6F /* FunctionalAppTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE42E2E8CDA00428D6F /* FunctionalAppTest.swift */; };
+		11450BEF2E2E8CDA00428D6F /* HotelWifiTestUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE72E2E8CDA00428D6F /* HotelWifiTestUsage.swift */; };
+		11450BF02E2E8CDA00428D6F /* iPadYearChangeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE92E2E8CDA00428D6F /* iPadYearChangeTest.swift */; };
+		11450BF12E2E8CDA00428D6F /* dataLoadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE32E2E8CDA00428D6F /* dataLoadingTests.swift */; };
+		11450BF22E2E8CDA00428D6F /* HotelWifiTestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE62E2E8CDA00428D6F /* HotelWifiTestHelpers.swift */; };
+		11450BF32E2E8CDA00428D6F /* SimpleTestRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BEB2E2E8CDA00428D6F /* SimpleTestRunner.swift */; };
+		11450BF42E2E8CDA00428D6F /* HotelWifiOfflineTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE52E2E8CDA00428D6F /* HotelWifiOfflineTest.swift */; };
+		11450BF52E2E8CDA00428D6F /* iPadPriorityUpdateTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BE82E2E8CDA00428D6F /* iPadPriorityUpdateTest.swift */; };
+		11450BF62E2E8CDA00428D6F /* runFunctionalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11450BEA2E2E8CDA00428D6F /* runFunctionalTests.swift */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
 		114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
 		115213292A69E23C0017DD9F /* variableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115213282A69E23C0017DD9F /* variableStore.swift */; };
@@ -168,6 +178,16 @@
 		112873C424A54F370036CC2A /* 70K Bands copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "70K Bands copy-Info.plist"; path = "/Users/rdorn/personalGit/70K-Bands/swift/70K Bands copy-Info.plist"; sourceTree = "<absolute>"; };
 		1139BEB11AF52C2C0011EF60 /* 70K Bands WatchKit Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "70K Bands WatchKit Extension.entitlements"; sourceTree = "<group>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
+		11450BE32E2E8CDA00428D6F /* dataLoadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = dataLoadingTests.swift; sourceTree = "<group>"; };
+		11450BE42E2E8CDA00428D6F /* FunctionalAppTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionalAppTest.swift; sourceTree = "<group>"; };
+		11450BE52E2E8CDA00428D6F /* HotelWifiOfflineTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelWifiOfflineTest.swift; sourceTree = "<group>"; };
+		11450BE62E2E8CDA00428D6F /* HotelWifiTestHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelWifiTestHelpers.swift; sourceTree = "<group>"; };
+		11450BE72E2E8CDA00428D6F /* HotelWifiTestUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelWifiTestUsage.swift; sourceTree = "<group>"; };
+		11450BE82E2E8CDA00428D6F /* iPadPriorityUpdateTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadPriorityUpdateTest.swift; sourceTree = "<group>"; };
+		11450BE92E2E8CDA00428D6F /* iPadYearChangeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadYearChangeTest.swift; sourceTree = "<group>"; };
+		11450BEA2E2E8CDA00428D6F /* runFunctionalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = runFunctionalTests.swift; sourceTree = "<group>"; };
+		11450BEB2E2E8CDA00428D6F /* SimpleTestRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleTestRunner.swift; sourceTree = "<group>"; };
+		11450BEC2E2E8CDA00428D6F /* TestRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRunner.swift; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		114976C51C838D87003316D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		114CC0711C79204100CF5BF1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -408,6 +428,16 @@
 		1154F6231A575893003F4764 /* 70000TonsBandsTests */ = {
 			isa = PBXGroup;
 			children = (
+				11450BE32E2E8CDA00428D6F /* dataLoadingTests.swift */,
+				11450BE42E2E8CDA00428D6F /* FunctionalAppTest.swift */,
+				11450BE52E2E8CDA00428D6F /* HotelWifiOfflineTest.swift */,
+				11450BE62E2E8CDA00428D6F /* HotelWifiTestHelpers.swift */,
+				11450BE72E2E8CDA00428D6F /* HotelWifiTestUsage.swift */,
+				11450BE82E2E8CDA00428D6F /* iPadPriorityUpdateTest.swift */,
+				11450BE92E2E8CDA00428D6F /* iPadYearChangeTest.swift */,
+				11450BEA2E2E8CDA00428D6F /* runFunctionalTests.swift */,
+				11450BEB2E2E8CDA00428D6F /* SimpleTestRunner.swift */,
+				11450BEC2E2E8CDA00428D6F /* TestRunner.swift */,
 				1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */,
 				1154F6241A575893003F4764 /* Supporting Files */,
 				1155E3A21A8B0A0400D51ED9 /* bandNamesTest.swift */,
@@ -826,6 +856,16 @@
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
+				11450BED2E2E8CDA00428D6F /* TestRunner.swift in Sources */,
+				11450BEE2E2E8CDA00428D6F /* FunctionalAppTest.swift in Sources */,
+				11450BEF2E2E8CDA00428D6F /* HotelWifiTestUsage.swift in Sources */,
+				11450BF02E2E8CDA00428D6F /* iPadYearChangeTest.swift in Sources */,
+				11450BF12E2E8CDA00428D6F /* dataLoadingTests.swift in Sources */,
+				11450BF22E2E8CDA00428D6F /* HotelWifiTestHelpers.swift in Sources */,
+				11450BF32E2E8CDA00428D6F /* SimpleTestRunner.swift in Sources */,
+				11450BF42E2E8CDA00428D6F /* HotelWifiOfflineTest.swift in Sources */,
+				11450BF52E2E8CDA00428D6F /* iPadPriorityUpdateTest.swift in Sources */,
+				11450BF62E2E8CDA00428D6F /* runFunctionalTests.swift in Sources */,
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
@@ -1079,7 +1119,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250714002;
+				CURRENT_PROJECT_VERSION = 20250721002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1100,7 +1140,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250714002;
+				MARKETING_VERSION = 20250721002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1155,7 +1195,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250714002;
+				CURRENT_PROJECT_VERSION = 20250721002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1180,7 +1220,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250714002;
+				MARKETING_VERSION = 20250721002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

@@ -1201,8 +1201,8 @@
                         </barButtonItem>
                         <barButtonItem id="4Ec-Q2-92D">
                             <searchBar key="customView" contentMode="scaleToFill" misplaced="YES" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" barStyle="black" searchBarStyle="prominent" placeholder="Search Criteria" backgroundImage="70KSearch" scopeBarBackgroundImage="70KSearch" id="ie8-i2-Sz0">
-                                <rect key="frame" x="103" y="0.0" width="121" height="44"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <rect key="frame" x="103" y="0.0" width="200" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES" flexibleMinX="YES" flexibleMaxX="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="barTintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -1212,6 +1212,7 @@
                                 </connections>
                             </searchBar>
                         </barButtonItem>
+                        <barButtonItem systemItem="flexibleSpace" id="flexible-space-search"/>
                         <barButtonItem systemItem="flexibleSpace" id="gfg-yZ-Brt"/>
                         <barButtonItem image="icon-share" landscapeImage="icon-share" width="50" id="N41-zI-gGY">
                             <inset key="landscapeImageInsets" minX="46" minY="0.0" maxX="40" maxY="0.0"/>

@@ -48,33 +48,44 @@ open class imageHandler {
 
             print ("ImageCall download imaged from \(trimmedUrlString)")
             
-            URLSession.shared.dataTask(with: url) { data, response, error in
-                guard
-                    let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
-                    let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
-                    let data = data, error == nil,
-                    let image = UIImage(data: data)
-                    else { return }
-                DispatchQueue.main.async() {
-                    returnedImage = image
-       
-                    do {
-                        print ("Loading image URL String from file \(imageStoreFile)")
-                        let imageData = returnedImage?.jpegData(compressionQuality: 0.75)
-                        try imageData?.write(to: imageStoreFile, options: [.atomic])
-                    } catch {
-                        print ("ImageCall \(error)")
+            // Start background download without blocking the UI
+            DispatchQueue.global(qos: .background).async {
+                URLSession.shared.dataTask(with: url) { data, response, error in
+                    guard
+                        let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
+                        let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
+                        let data = data, error == nil,
+                        let image = UIImage(data: data)
+                        else { 
+                            print("Failed to download image for \(bandName): \(error?.localizedDescription ?? "unknown error")")
+                            return 
+                        }
+                    
+                    // Save image to cache in background
+                    DispatchQueue.global(qos: .background).async {
+                        do {
+                            print ("Loading image URL String from file \(imageStoreFile)")
+                            let imageData = image.jpegData(compressionQuality: 0.75)
+                            try imageData?.write(to: imageStoreFile, options: [.atomic])
+                            print("Successfully cached image for \(bandName)")
+                            
+                            // Notify DetailViewController to refresh the display
+                            DispatchQueue.main.async {
+                                NotificationCenter.default.post(
+                                    name: Notification.Name("ImageDownloaded"), 
+                                    object: nil, 
+                                    userInfo: ["bandName": bandName]
+                                )
+                            }
+                        } catch {
+                            print ("ImageCall \(error)")
+                        }
                     }
-                }
                 }.resume()
-            var count = 0;
-            while (returnedImage == nil){
-                if (count == 15){
-                    break
-                }
-                sleep(1)
-                count = count + 1
             }
+            
+            // Return default image immediately, don't wait for download
+            returnedImage = UIImage(named: "70000TonsLogo")!
         } else {
             // Invalid URL (no scheme, etc.)
             returnedImage = UIImage(named: "70000TonsLogo")!

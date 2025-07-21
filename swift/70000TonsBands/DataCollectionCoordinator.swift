@@ -94,7 +94,12 @@ class DataCollectionCoordinator {
             guard let self = self else { return }
             self.yearChangeRequested = true
             self.isYearChangeInProgress = true
-            print("[DataCollectionCoordinator] Year change requested - canceling all operations")
+            
+            // Immediately cancel all running operations
+            self.runningOperations.removeAll()
+            self.pendingOperations.removeAll()
+            
+            print("[DataCollectionCoordinator] Year change requested - canceled all operations")
         }
     }
     

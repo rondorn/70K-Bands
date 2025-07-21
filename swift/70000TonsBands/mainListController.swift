@@ -370,6 +370,101 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
     return filteredBands
 }
 
+/// HIGH PRIORITY: Immediate filtering function that bypasses delays for priority/attended changes
+func getFilteredBandsImmediate(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended, searchCriteria: String) -> [String] {
+    
+    let allBands = bandNameHandle.getBandNames()
+
+    var sortedBy = getSortedBy()
+    
+    //set default if empty
+    if (sortedBy.isEmpty == true){
+        sortedBy = "time"
+    }
+    
+    var filteredBands = [String]()
+    
+    var newAllBands = [String]()
+    
+    filteredBandCount = 0
+    unfilteredBandCount = 0
+    
+    // HIGH PRIORITY: Skip the blocking check for immediate updates
+    // if (isGetFilteredBands == true){
+    //     while (isGetFilteredBands == true){
+    //         sleep(1);
+    //     }
+    // } else {
+ 
+    // isGetFilteredBands = true;
+
+    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
+    
+    if (getShowOnlyWillAttened() == true){
+        filteredBands = newAllBands;
+        
+        if (searchCriteria != ""){
+            var newFilteredBands = [String]()
+            for bandNameIndex in filteredBands {
+                if (bandNameIndex.contains(searchCriteria) == true){
+                    newFilteredBands.append(bandNameIndex)
+                }
+            }
+            filteredBands = newFilteredBands
+        }
+        
+    } else {
+        for bandNameIndex in newAllBands {
+            let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
+            
+            if (searchCriteria != ""){
+                if (bandName.contains(searchCriteria) == false){
+                    continue
+                }
+            }
+            switch dataHandle.getPriorityData(bandName) {
+            case 1:
+                if (getMustSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
+                }
+            
+            case 2:
+                if (getMightSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
+                }
+                
+            case 3:
+                if (getWontSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
+                }
+                
+            case 0:
+                if (getUnknownSeeOn() == true){
+                    filteredBands.append(bandNameIndex)
+                }
+                
+            default:
+                print("Encountered unexpected value of ", terminator: "")
+                print (dataHandle.getPriorityData(bandName))
+            }
+        }
+    }
+    // isGetFilteredBands = false;
+    // }
+    filteredBandCount = filteredBands.count
+
+    if (filteredBandCount == 0){
+        print ("handleEmptryList: Why is this being called 1")
+        filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
+    } else {
+        bandCounter = filteredBands.count
+        listCount = filteredBands.count
+    }
+    
+    print ("HIGH PRIORITY: Immediate listCount is \(listCount) - 2")
+    return filteredBands
+}
+
 func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
     
     var filteredBands = [String]()

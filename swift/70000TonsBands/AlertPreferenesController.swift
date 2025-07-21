@@ -716,27 +716,46 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         setupCurrentYearUrls()
         setupDefaults()
 
-        // 7. Use coordinator to reload all data with year override
+        // 7. Use coordinator to reload all data with year override in parallel
         let coordinator = DataCollectionCoordinator.shared
         
-        // Load all data types with year override
-        coordinator.requestBandNamesCollection(eventYearOverride: true, completion: {
-            coordinator.requestScheduleCollection(eventYearOverride: true, completion: {
-                coordinator.requestDataHandlerCollection(eventYearOverride: true, completion: {
-                    coordinator.requestShowsAttendedCollection(eventYearOverride: true, completion: {
-                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true, completion: {
-                            // Notify coordinator that year change is complete
-                            coordinator.notifyYearChangeCompleted()
-                            
-                            // 8. Notify UI to refresh
-                            DispatchQueue.main.async {
-                                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-                            }
-                        })
-                    })
-                })
-            })
-        })
+        // Create a dispatch group to track all parallel operations
+        let group = DispatchGroup()
+        
+        // Load all data types in parallel with year override
+        group.enter()
+        coordinator.requestBandNamesCollection(eventYearOverride: true) {
+            group.leave()
+        }
+        
+        group.enter()
+        coordinator.requestScheduleCollection(eventYearOverride: true) {
+            group.leave()
+        }
+        
+        group.enter()
+        coordinator.requestDataHandlerCollection(eventYearOverride: true) {
+            group.leave()
+        }
+        
+        group.enter()
+        coordinator.requestShowsAttendedCollection(eventYearOverride: true) {
+            group.leave()
+        }
+        
+        group.enter()
+        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true) {
+            group.leave()
+        }
+        
+        // When all operations complete, notify completion
+        group.notify(queue: .main) {
+            // Notify coordinator that year change is complete
+            coordinator.notifyYearChangeCompleted()
+            
+            // 8. Notify UI to refresh
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        }
     }
 
 }
