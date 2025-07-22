@@ -273,9 +273,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         // Restart bulk loading operations
         DispatchQueue.global(qos: .background).async {
             print("DetailViewController: Starting bulk image loading")
-            imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+            let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+            imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
             print("DetailViewController: Starting bulk description loading")
-            bandNotes.getAllDescriptions()
+            bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
         }
     }
     
@@ -638,11 +639,25 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
 
     func loadComments(){
-        let noteText = bandNotes.getDescription(bandName: bandName)
+        print("DetailViewController: Loading comments for band: \(bandName ?? "nil")")
+        
+        guard let safeBandName = bandName, !safeBandName.isEmpty else {
+            print("DetailViewController: No band name available for comment loading")
+            customNotesText.text = "No band selected"
+            customNotesText.textColor = UIColor.lightGray
+            setNotesHeight()
+            return
+        }
+        
+        let noteText = bandNotes.getDescription(bandName: safeBandName)
+        print("DetailViewController: Retrieved note text: '\(noteText.prefix(50))...'")
+        
+        // Set the text immediately
         customNotesText.text = noteText
         customNotesText.textColor = UIColor.white
         setNotesHeight()
         
+        // Handle special link formatting
         if (customNotesText.text.contains("!!!!https://")){
             doNotSaveText = true
             customNotesText.text = customNotesText.text.replacingOccurrences(of: "!!!!https://", with: "https://")
@@ -652,31 +667,54 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.isUserInteractionEnabled = true
         }
         
-        if (bandNameHandle.getBandNoteWorthy(bandName).isEmpty == false){
+        // Add note worthy information if available
+        if (bandNameHandle.getBandNoteWorthy(safeBandName).isEmpty == false){
             customNotesText.text = "\n" + customNotesText.text
         }
         
-        // If no note data exists, but a note URL is available, download in background and update UI
+        // If no note data exists or it's the default waiting message, try to download
         if noteText.isEmpty || noteText.starts(with: "Comment text is not available yet") {
-            guard let safeBandName = bandName else { return }
+            print("DetailViewController: No note data available, attempting to download")
             let noteUrl = bandNotes.getDescriptionUrl(safeBandName)
+            print("DetailViewController: Note URL for \(safeBandName): \(noteUrl)")
+            
             if !noteUrl.isEmpty {
                 let currentBand = safeBandName
                 DispatchQueue.global(qos: .background).async {
+                    print("DetailViewController: Downloading note for \(currentBand) from URL: \(noteUrl)")
                     let downloadedNote = self.bandNotes.getDescriptionFromUrl(bandName: currentBand, descriptionUrl: noteUrl)
+                    print("DetailViewController: Downloaded note for \(currentBand): '\(downloadedNote.prefix(50))...'")
+                    
                     DispatchQueue.main.async {
                         // Only update if still showing the same band
                         if self.bandName == currentBand {
+                            print("DetailViewController: Updating UI with downloaded note for \(currentBand)")
                             self.customNotesText.text = downloadedNote
                             self.setNotesHeight()
-                            self.showBandDetails()
                             self.customNotesText.setNeedsDisplay()
                             self.customNotesText.layoutIfNeeded()
+                            
+                            // Mark description as loaded and check if we can resume bulk loading
+                            self.currentBandDescriptionLoaded = true
+                            self.resumeBulkLoadingAfterCurrentBandLoaded()
+                        } else {
+                            print("DetailViewController: Band changed from \(currentBand) to \(self.bandName ?? "nil"), not updating UI")
                         }
                     }
                 }
+            } else {
+                print("DetailViewController: No note URL available for \(safeBandName)")
             }
+        } else {
+            print("DetailViewController: Note data already available for \(safeBandName)")
+            // Mark description as loaded since we have data
+            currentBandDescriptionLoaded = true
+            resumeBulkLoadingAfterCurrentBandLoaded()
         }
+        
+        // Force UI update
+        customNotesText.setNeedsDisplay()
+        customNotesText.layoutIfNeeded()
     }
     
     func saveComments(){
@@ -760,12 +798,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     @objc func imageDownloaded(_ notification: Notification) {
         print("DetailViewController: imageDownloaded notification received")
-        guard let userInfo = notification.userInfo,
-              let downloadedBandName = userInfo["bandName"] as? String,
+        let userInfo = notification.userInfo
+        guard let downloadedBandName = userInfo?["bandName"] as? String,
               let currentBandName = bandName,
               downloadedBandName == currentBandName else {
             print("DetailViewController: imageDownloaded - band name mismatch or missing data")
-            print("  downloadedBandName: \(userInfo["bandName"] ?? "nil")")
+            print("  downloadedBandName: \(userInfo?["bandName"] ?? "nil")")
             print("  currentBandName: \(bandName ?? "nil")")
             return
         }
@@ -816,10 +854,15 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
 
     
     @objc func noteDownloaded(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let downloadedBandName = userInfo["bandName"] as? String,
+        print("DetailViewController: noteDownloaded notification received")
+        
+        let userInfo = notification.userInfo
+        guard let downloadedBandName = userInfo?["bandName"] as? String,
               let currentBandName = bandName,
               downloadedBandName == currentBandName else {
+            print("DetailViewController: noteDownloaded - band name mismatch or missing data")
+            print("  downloadedBandName: \(userInfo?["bandName"] ?? "nil")")
+            print("  currentBandName: \(bandName ?? "nil")")
             return
         }
         
@@ -827,27 +870,34 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         let now = Date()
         if let lastRefresh = lastNoteRefreshTime[currentBandName],
            now.timeIntervalSince(lastRefresh) < 1.0 {
-            print("Skipping rapid note refresh for \(currentBandName) - too soon since last update")
+            print("DetailViewController: Skipping rapid note refresh for \(currentBandName) - too soon since last update")
             return
         }
         
         lastNoteRefreshTime[currentBandName] = now
         
         // Refresh the notes display for the current band
-        print("Refreshing notes display for \(currentBandName) after download")
+        print("DetailViewController: Refreshing notes display for \(currentBandName) after download")
         
         DispatchQueue.main.async {
             // Directly load the note from file without triggering another download
             let noteText = self.bandNotes.getDescription(bandName: currentBandName)
+            print("DetailViewController: Loaded note text for \(currentBandName): '\(noteText.prefix(50))...'")
+            
+            // Update the UI
             self.customNotesText.text = noteText
             self.customNotesText.textColor = UIColor.white
             self.setNotesHeight()
+            
+            // Force UI update
             self.customNotesText.setNeedsDisplay()
             self.customNotesText.layoutIfNeeded()
             
             // Mark description as loaded and check if we can resume bulk loading
             self.currentBandDescriptionLoaded = true
             self.resumeBulkLoadingAfterCurrentBandLoaded()
+            
+            print("DetailViewController: Successfully updated notes display for \(currentBandName)")
         }
     }
     

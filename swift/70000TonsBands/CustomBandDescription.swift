@@ -99,19 +99,25 @@ open class CustomBandDescription {
     }
     
     /// Loads all band descriptions from the description map file.
-    func getAllDescriptions(){
+    func getAllDescriptions(bandNamesSnapshot: [String: [String: String]]? = nil){
+        // Extract just the band names from the snapshot, or use our own bandDescriptionUrl
+        let bandNames: [String]
+        if let snapshot = bandNamesSnapshot {
+            bandNames = Array(snapshot.keys)
+        } else {
+            bandNames = Array(self.bandDescriptionUrl.keys)
+        }
         
         if (downloadingAllComments == false){
             downloadingAllComments = true
             print ("commentFile looping through bands")
-            for record in self.bandDescriptionUrl{
+            for bandName in bandNames {
                 // Check if bulk loading is paused
                 if bulkLoadingPaused {
                     print("commentFile bulk loading paused, stopping getAllDescriptions")
                     break
                 }
                 
-                let bandName = record.key
                 print ("commentFile working on bandName " + bandName)
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
                     _ = self.getDescription(bandName: bandName)
@@ -182,6 +188,7 @@ open class CustomBandDescription {
         let commentFileName = getNoteFileName(bandName: bandName)
         
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
+        print("CustomBandDescription: getDescriptionFromUrl - Comment file path: \(commentFile.path)")
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
             // Check if already downloading this band to prevent infinite loops
@@ -193,6 +200,8 @@ open class CustomBandDescription {
             downloadingBands.insert(bandName)
             print ("commentFile lookup for \(bandName) via \(descriptionUrl) field does not yet exist")
             let httpData = getUrlData(urlString: descriptionUrl);
+            print("CustomBandDescription: Downloaded data length: \(httpData.count)")
+            print("CustomBandDescription: Downloaded data preview: '\(httpData.prefix(100))...'")
                 
                 //do not write if we are getting 404 error
                 if (httpData.starts(with: "<!DOCTYPE") == false){
@@ -202,6 +211,7 @@ open class CustomBandDescription {
                     print ("Wrote commentFile for \(bandName) " + commentText)
                     do {
                         try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                        print("CustomBandDescription: Successfully wrote comment file for \(bandName)")
                         
                         // Notify DetailViewController that note download is complete
                         DispatchQueue.main.async {
@@ -210,20 +220,30 @@ open class CustomBandDescription {
                                 object: nil, 
                                 userInfo: ["bandName": bandName]
                             )
+                            print("CustomBandDescription: Posted NoteDownloaded notification for \(bandName)")
                         }
                     } catch {
                         print("commentFile " + error.localizedDescription)
                     }
+                } else {
+                    print("CustomBandDescription: Received HTML error page for \(bandName), not saving")
                 }
                 
                 // Remove from downloading set when done
                 downloadingBands.remove(bandName)
+            } else {
+                print("CustomBandDescription: Description file already exists for \(bandName)")
             }
 
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.count > 2){
                 commentText = data
+                print("CustomBandDescription: Successfully read comment file for \(bandName): '\(commentText.prefix(50))...'")
+            } else {
+                print ("No URL for band  What happened here - \(data)")
             }
+        } else {
+                print ("No URL for band  What happened here")
         }
     
         commentText = removeSpecialCharsFromString(text: commentText)
@@ -275,14 +295,18 @@ open class CustomBandDescription {
     /// - Returns: The description string for the band.
     func getDescription(bandName: String) -> String {
         
+        print("CustomBandDescription: getDescription called for \(bandName)")
         convertOldData(bandName: bandName)
         print ("commentFile lookup for \(bandName)")
         var commentText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
         
         let commentFileName = self.getNoteFileName(bandName: bandName)
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
+        print("CustomBandDescription: Comment file path for \(bandName): \(commentFile.path)")
+        print("CustomBandDescription: File exists: \(FileManager.default.fileExists(atPath: commentFile.path))")
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
+            print("CustomBandDescription: Description file does not exist for \(bandName)")
             
             if (downloadingAllComments == false){
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
@@ -299,6 +323,9 @@ open class CustomBandDescription {
                     
                     self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: self.bandDescriptionUrl[bandName]! )
                 }
+            } else {
+                print("CustomBandDescription: No URL found for \(bandName) in bandDescriptionUrl")
+                print("CustomBandDescription: Available bands: \(Array(bandDescriptionUrl.keys))")
             }
         } else {
             print ("No URL for band \(bandName) - \(commentFile)")
@@ -314,6 +341,7 @@ open class CustomBandDescription {
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.count > 2){
                 commentText = data
+                print("CustomBandDescription: Successfully loaded comment text for \(bandName): '\(commentText.prefix(50))...'")
             } else {
                 print ("No URL for band  What happened here - \(data)")
             }
@@ -340,6 +368,8 @@ open class CustomBandDescription {
                 print ("commentFile does not exist, skipping deletion: \(commentFile)")
             }
         }
+        
+        print("CustomBandDescription: Returning comment text for \(bandName): '\(commentText.prefix(50))...'")
         return commentText;
     }
     

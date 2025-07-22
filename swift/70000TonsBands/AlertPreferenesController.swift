@@ -31,7 +31,9 @@ class DataCollectionCoordinator {
         DispatchQueue.global(qos: .userInitiated).async {
             let schedule = scheduleHandler()
             schedule.populateSchedule(completion: {
+                // Ensure completion is called on the main thread after schedule is fully loaded
                 DispatchQueue.main.async {
+                    print("Schedule collection completed")
                     completion?()
                 }
             })
@@ -722,34 +724,53 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Create a dispatch group to track all parallel operations
         let group = DispatchGroup()
         
+        // Add timeout to prevent indefinite waiting
+        let timeoutTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { _ in
+            print("Year change timeout reached - proceeding with available data")
+            // Notify coordinator that year change is complete
+            coordinator.notifyYearChangeCompleted()
+            
+            // Notify UI to refresh
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        }
+        
         // Load all data types in parallel with year override
         group.enter()
         coordinator.requestBandNamesCollection(eventYearOverride: true) {
+            print("Band names collection completed")
             group.leave()
         }
         
         group.enter()
         coordinator.requestScheduleCollection(eventYearOverride: true) {
+            print("Schedule collection completed")
             group.leave()
         }
         
         group.enter()
         coordinator.requestDataHandlerCollection(eventYearOverride: true) {
+            print("Data handler collection completed")
             group.leave()
         }
         
         group.enter()
         coordinator.requestShowsAttendedCollection(eventYearOverride: true) {
+            print("Shows attended collection completed")
             group.leave()
         }
         
         group.enter()
         coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true) {
+            print("Custom band description collection completed")
             group.leave()
         }
         
         // When all operations complete, notify completion
         group.notify(queue: .main) {
+            // Cancel the timeout timer since we completed successfully
+            timeoutTimer.invalidate()
+            
+            print("All year change data collection completed")
             // Notify coordinator that year change is complete
             coordinator.notifyYearChangeCompleted()
             

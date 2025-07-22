@@ -158,9 +158,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 // Initial load complete, refresh the UI
@@ -633,9 +634,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 DispatchQueue.main.async {
@@ -739,9 +741,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 DispatchQueue.main.async {
@@ -912,9 +915,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 // Once done, refresh the GUI on the main thread
@@ -1923,9 +1927,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 DispatchQueue.main.async {
@@ -1967,9 +1972,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                     let imageHandle = imageHandler()
                                     let bandNotes = CustomBandDescription()
                                     
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
+                                    // Start bulk loading operations with immutable snapshot
+                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
                                 }
                                 
                                 DispatchQueue.main.async {
@@ -2095,64 +2101,114 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Starts bulk loading operations for images and descriptions
     private func startBulkLoadingOperations() {
+        let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
         DispatchQueue.global(qos: .background).async {
             print("MasterViewController: Starting bulk loading operations")
             let imageHandle = imageHandler()
             let bandNotes = CustomBandDescription()
-            
-            // Start bulk loading operations
-            imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-            bandNotes.getAllDescriptions()
+            // Start bulk loading operations with immutable snapshot
+            imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+            bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
         }
     }
     
     /// Handles year change notifications and ensures proper data loading sequence
     @objc func handleYearChange() {
-        print("Year change detected - implementing prioritized loading sequence")
+        print("Year change detected - implementing parallel loading with immediate UI updates")
         
-        // Step 1: Load band names and schedule immediately with high priority
+        // Step 1: Load band names and schedule in parallel with immediate UI updates
         let coordinator = DataCollectionCoordinator.shared
         
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
+        // Track completion status for both operations
+        var bandNamesLoaded = false
+        var scheduleLoaded = false
+        
+        // Add timeout to prevent indefinite blocking
+        let timeoutTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: false) { _ in
+            print("Year change: Timeout reached - updating UI with available data")
+            DispatchQueue.main.async {
+                self.refreshFromCache()
+                self.updateCountLable()
+                self.reloadTablePreservingScroll()
+            }
+        }
+        
+        // Function to check if we can update UI
+        let checkAndUpdateUI = {
+            if bandNamesLoaded && scheduleLoaded {
+                timeoutTimer.invalidate()
                 DispatchQueue.main.async {
-                    print("Year change: Band names and schedule loaded - updating UI immediately")
+                    print("Year change: Both band names and schedule loaded - updating UI")
                     self.refreshFromCache()
                     self.updateCountLable()
                     self.reloadTablePreservingScroll()
                     
-                    // Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Year change: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
-                                    
-                                    // Start bulk loading operations
-                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
-                                    bandNotes.getAllDescriptions()
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    print("Year change loading sequence complete")
-                                    if UIDevice.current.userInterfaceIdiom == .pad {
-                                        // On iPad, force a complete refresh to update the side-by-side view
-                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                                        print("iPad: Complete refresh triggered after year change")
-                                    } else {
-                                        // On iPhone, use normal refresh since screen changes trigger updates
-                                        self.refreshData(isUserInitiated: false)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    // Start loading remaining data in background (non-blocking)
+                    self.startRemainingDataLoad()
+                }
+            } else if bandNamesLoaded || scheduleLoaded {
+                // Update UI with partial data to improve responsiveness
+                DispatchQueue.main.async {
+                    print("Year change: Partial data loaded - updating UI with available data")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                }
+            }
+        }
+        
+        // Load band names in parallel
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            print("Year change: Band names loaded")
+            bandNamesLoaded = true
+            checkAndUpdateUI()
+        }
+        
+        // Load schedule in parallel
+        coordinator.requestScheduleCollection(eventYearOverride: false) {
+            print("Year change: Schedule loaded")
+            scheduleLoaded = true
+            checkAndUpdateUI()
+        }
+    }
+    
+    /// Starts loading remaining data in background (non-blocking)
+    private func startRemainingDataLoad() {
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // Load remaining data in parallel (lower priority, non-blocking)
+        coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+            print("Year change: Data handler loaded")
+        }
+        
+        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+            print("Year change: Shows attended loaded")
+        }
+        
+        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+            print("Year change: Custom band descriptions loaded")
+            
+            // Start bulk loading of images and descriptions in background
+            DispatchQueue.global(qos: .background).async {
+                print("Year change: Starting bulk loading of images and descriptions")
+                let imageHandle = imageHandler()
+                let bandNotes = CustomBandDescription()
+                
+                // Start bulk loading operations with immutable snapshot
+                let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
+                imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
+                bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
+            }
+            
+            DispatchQueue.main.async {
+                print("Year change loading sequence complete")
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    // On iPad, force a complete refresh to update the side-by-side view
+                    self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+                    print("iPad: Complete refresh triggered after year change")
+                } else {
+                    // On iPhone, use normal refresh since screen changes trigger updates
+                    self.refreshData(isUserInitiated: false)
                 }
             }
         }
