@@ -72,6 +72,7 @@ var currentBandList = [String]()
 
 var downloadingAllComments = false
 var downloadingAllImages = false
+var bulkLoadingPaused = false
 var bandSelected = String();
 var eventSelectedIndex = String();
 

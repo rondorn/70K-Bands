@@ -90,10 +90,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     var scheduleIndex : [String:[String:String]] = [String:[String:String]]()
 
+    // Track current band data loading state
+    private var currentBandImageLoaded = false
+    private var currentBandDescriptionLoaded = false
+    
+    // Track last note refresh time to prevent rapid successive updates
+    private var lastNoteRefreshTime: [String: Date] = [:]
+
     var detailItem: AnyObject? {
         didSet {
             // Update the view.
             self.configureView()
+            // Pause bulk loading for the new band
+            onDetailItemChanged()
         }
     }
     
@@ -102,6 +111,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         super.viewDidLoad()
         
         self.configureView()
+        
+        // Pause bulk loading operations when entering detail view
+        pauseBulkLoadingOperations()
         
         // Ensure back button always says "Back"
         let backItem = UIBarButtonItem()
@@ -198,20 +210,96 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.noteDownloaded), name: Notification.Name("NoteDownloaded"), object: nil)
             
             setupEventAttendClicks()
-            setupSwipeGenstures()
-            customNotesText.setContentOffset(.zero, animated: true)
-            customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-            loadComments()
-            rotationChecking()
+        }
+    }
+    
+    /// Pauses bulk loading operations and loads current band data with priority
+    private func pauseBulkLoadingOperations() {
+        print("DetailViewController: Pausing bulk loading operations")
+        
+        // Reset tracking state for new band
+        currentBandImageLoaded = false
+        currentBandDescriptionLoaded = false
+        
+        // Pause bulk loading
+        let imageHandle = imageHandler()
+        let bandNotes = CustomBandDescription()
+        
+        imageHandle.pauseBulkLoading()
+        bandNotes.pauseBulkLoading()
+        
+        // Load current band data with priority if band name is available
+        if let currentBandName = bandName, !currentBandName.isEmpty {
+            print("DetailViewController: Loading priority data for \(currentBandName)")
             
-            setButtonNames()
-            
-            if #available(iOS 26.0, *) {
-                //topNavView.leftBarButtonItem?.hidesSharedBackground = true
+            // Check if image already exists locally
+            let imageStoreName = currentBandName + ".png"
+            let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
+            if FileManager.default.fileExists(atPath: imageStoreFile.path) {
+                currentBandImageLoaded = true
+                print("DetailViewController: Image already exists for \(currentBandName)")
+            } else {
+                // Load image with priority
+                imageHandle.loadImageWithPriority(bandName: currentBandName, bandNameHandle: bandNameHandle)
             }
             
+            // Check if description already exists locally
+            if bandNotes.doesDescriptionFileExists(bandName: currentBandName) {
+                currentBandDescriptionLoaded = true
+                print("DetailViewController: Description already exists for \(currentBandName)")
+            } else {
+                // Load description with priority
+                bandNotes.loadDescriptionWithPriority(bandName: currentBandName)
+            }
+            
+            // If both already exist, resume bulk loading immediately
+            if currentBandImageLoaded && currentBandDescriptionLoaded {
+                print("DetailViewController: Both image and description already exist, resuming bulk loading")
+                resumeBulkLoadingAfterCurrentBandLoaded()
+            }
         }
+    }
+    
+    /// Resumes bulk loading operations
+    private func resumeBulkLoadingOperations() {
+        print("DetailViewController: Resuming bulk loading operations")
         
+        let imageHandle = imageHandler()
+        let bandNotes = CustomBandDescription()
+        
+        imageHandle.resumeBulkLoading()
+        bandNotes.resumeBulkLoading()
+        
+        // Restart bulk loading operations
+        DispatchQueue.global(qos: .background).async {
+            print("DetailViewController: Starting bulk image loading")
+            imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+            print("DetailViewController: Starting bulk description loading")
+            bandNotes.getAllDescriptions()
+        }
+    }
+    
+    /// Resumes bulk loading after current band's data is loaded
+    private func resumeBulkLoadingAfterCurrentBandLoaded() {
+        // Only resume if both image and description are loaded
+        if currentBandImageLoaded && currentBandDescriptionLoaded {
+            print("DetailViewController: Current band data loaded, resuming bulk loading")
+            resumeBulkLoadingOperations()
+        } else {
+            print("DetailViewController: Waiting for current band data to load - Image: \(currentBandImageLoaded), Description: \(currentBandDescriptionLoaded)")
+        }
+    }
+    
+    /// Called when the band changes in detail view (e.g., through swipe navigation)
+    private func onBandChanged() {
+        print("DetailViewController: Band changed to \(bandName ?? "nil"), pausing bulk loading for new band")
+        pauseBulkLoadingOperations()
+    }
+    
+    /// Called when the detail item changes (band selection)
+    private func onDetailItemChanged() {
+        print("DetailViewController: Detail item changed, pausing bulk loading for new band")
+        pauseBulkLoadingOperations()
     }
     
     func setupSwipeGenstures(){
@@ -652,6 +740,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         // Clean up tracking dictionaries to prevent memory leaks
         lastNoteRefreshTime.removeAll()
         
+        // Resume bulk loading operations when leaving detail view
+        print("DetailViewController: Leaving detail view, resuming bulk loading operations")
+        resumeBulkLoadingOperations()
+        
         // Use coordinator for data loading
         let coordinator = DataCollectionCoordinator.shared
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
@@ -667,30 +759,61 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     @objc func imageDownloaded(_ notification: Notification) {
+        print("DetailViewController: imageDownloaded notification received")
         guard let userInfo = notification.userInfo,
               let downloadedBandName = userInfo["bandName"] as? String,
               let currentBandName = bandName,
               downloadedBandName == currentBandName else {
+            print("DetailViewController: imageDownloaded - band name mismatch or missing data")
+            print("  downloadedBandName: \(userInfo["bandName"] ?? "nil")")
+            print("  currentBandName: \(bandName ?? "nil")")
             return
         }
         
         // Refresh the image display for the current band
-        let imageURL = self.bandNameHandle.getBandImageUrl(currentBandName)
         print("Refreshing image display for \(currentBandName) after download")
         
         DispatchQueue.global(qos: .userInitiated).async {
-            let imageHandle = imageHandler()
-            let newImage = imageHandle.displayImage(urlString: imageURL, bandName: currentBandName)
+            // Load the image directly from the cached file
+            let imageStoreName = currentBandName + ".png"
+            let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
             
-            DispatchQueue.main.async {
-                self.bandLogo.image = newImage
-                self.imageSizeController(special: "")
+            print("DetailViewController: Checking for cached image at \(imageStoreFile.path)")
+            print("DetailViewController: File exists: \(FileManager.default.fileExists(atPath: imageStoreFile.path))")
+            
+            if let imageData = UIImage(contentsOfFile: imageStoreFile.path) {
+                print("DetailViewController: Successfully loaded image from cache")
+                // Apply the same inversion logic as imageHandler
+                var finalImage = imageData
+                let imageURL = self.bandNameHandle.getBandImageUrl(currentBandName)
+                
+                if !(imageURL.contains("www.dropbox.com") || imageURL.isEmpty) {
+                    print("Image URL string is Inverted for \(imageURL)")
+                    if let invertedImage = imageData.inverseImage(cgResult: true) {
+                        finalImage = invertedImage
+                    }
+                } else {
+                    print("Image URL string is not Inverted for \(imageURL)")
+                }
+                
+                DispatchQueue.main.async {
+                    print("DetailViewController: Updating UI with downloaded image")
+                    self.bandLogo.image = finalImage
+                    self.imageSizeController(special: "")
+                    
+                    // Mark image as loaded and check if we can resume bulk loading
+                    self.currentBandImageLoaded = true
+                    self.resumeBulkLoadingAfterCurrentBandLoaded()
+                    
+                    print("Successfully refreshed image display for \(currentBandName)")
+                }
+            } else {
+                print("Failed to load cached image for \(currentBandName)")
             }
         }
     }
     
-    // Track last note refresh time to prevent rapid successive updates
-    private var lastNoteRefreshTime: [String: Date] = [:]
+
     
     @objc func noteDownloaded(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
@@ -721,6 +844,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             self.setNotesHeight()
             self.customNotesText.setNeedsDisplay()
             self.customNotesText.layoutIfNeeded()
+            
+            // Mark description as loaded and check if we can resume bulk loading
+            self.currentBandDescriptionLoaded = true
+            self.resumeBulkLoadingAfterCurrentBandLoaded()
         }
     }
     
@@ -1056,6 +1183,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
             bandSelected = nextBandName
             bandName = nextBandName
+            
+            // Pause bulk loading for the new band
+            onBandChanged()
             
             ToastMessages(message).show(self, cellLocation: self.view.frame, placeHigh: false )
             print ("Starting animtion")
@@ -1406,9 +1536,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     func disableButtonsIfNeeded(){
         
         var offline = true
-        
-        if Reachability.isConnectedToNetwork(){
-            offline = false;
+        if Reachability.isConnectedToNetwork() {
+            offline = false
         }
         
         print ("Checking button status " + bandName)
@@ -1500,9 +1629,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             toastLabel.removeFromSuperview()
         })
     }
+    
+} // End of DetailViewController class
 
-}
 
+// MARK: - Extensions
 
 extension UITextField {
     func halfTextColorChange (fullText : String , changeText : String, locationColor: UIColor ) {

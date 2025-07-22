@@ -105,7 +105,8 @@ public class SwipeMenuLayout extends FrameLayout {
 			public boolean onFling(MotionEvent e1, MotionEvent e2,
 					float velocityX, float velocityY) {
 				// TODO
-				if (Math.abs(e1.getX() - e2.getX()) > MIN_FLING
+				if (e1 != null && e2 != null && 
+					Math.abs(e1.getX() - e2.getX()) > MIN_FLING
 						&& velocityX < MAX_VELOCITYX) {
 					isFling = true;
 				}

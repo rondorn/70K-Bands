@@ -141,12 +141,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // For subsequent launches, all data loads in parallel
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
             coordinator.requestScheduleCollection(eventYearOverride: false) {
-                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                            // Initial load complete, refresh the UI
-                            DispatchQueue.main.async {
-                                self.performInitialDataRefresh()
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Initial load: Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Initial load: Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                // Initial load complete, refresh the UI
+                                DispatchQueue.main.async {
+                                    self.performInitialDataRefresh()
+                                }
                             }
                         }
                     }
@@ -231,6 +251,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.priorityChangeImmediate), name: Notification.Name("PriorityChangeImmediate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.attendedChangeImmediate), name: Notification.Name("AttendedChangeImmediate"), object: nil)
         
+        // Add observer for year change notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(self.handleYearChange), name: Notification.Name("YearChange"), object: nil)
     }
     
     @objc func bandNamesCacheReadyHandler() {
@@ -584,23 +606,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        // Use coordinator for data loading
+        
+        print("Year change detected - implementing prioritized loading sequence")
+        
+        // Step 1: Load band names and schedule immediately with high priority
         let coordinator = DataCollectionCoordinator.shared
         
+        // Load band names first (highest priority)
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
             coordinator.requestScheduleCollection(eventYearOverride: false) {
-                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                            DispatchQueue.main.async {
-                                if UIDevice.current.userInterfaceIdiom == .pad {
-                                    // On iPad, force a complete refresh to update the side-by-side view
-                                    // This ensures the band list updates after year changes
-                                    self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                                    print("iPad: Complete refresh triggered after year change notification")
-                                } else {
-                                    // On iPhone, use normal refresh since screen changes trigger updates
-                                    self.refreshData(isUserInitiated: false)
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Step 2: Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Step 3: Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    print("Year change loading sequence complete")
+                                    if UIDevice.current.userInterfaceIdiom == .pad {
+                                        // On iPad, force a complete refresh to update the side-by-side view
+                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+                                        print("iPad: Complete refresh triggered after year change notification")
+                                    } else {
+                                        // On iPhone, use normal refresh since screen changes trigger updates
+                                        self.refreshData(isUserInitiated: false)
+                                    }
                                 }
                             }
                         }
@@ -657,29 +704,56 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
+                
+                // Start bulk loading operations after initial data is loaded
+                self.startBulkLoadingOperations()
             }
         }
         print ("Done Initial data refresh");
     }
     
     @objc func refreshDisplayAfterWake(){
-        // Use coordinator for data loading
+        print("Refresh display after wake - implementing prioritized loading sequence")
+        
+        // Step 1: Load band names and schedule immediately with high priority
         let coordinator = DataCollectionCoordinator.shared
         
+        // Load band names first (highest priority)
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
             coordinator.requestScheduleCollection(eventYearOverride: false) {
-                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                            DispatchQueue.main.async {
-                                if UIDevice.current.userInterfaceIdiom == .pad {
-                                    // On iPad, force a complete refresh to update the side-by-side view
-                                    // This ensures the band list updates after year changes
-                                    self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                                    print("iPad: Complete refresh triggered after year change")
-                                } else {
-                                    // On iPhone, use normal refresh since screen changes trigger updates
-                                    self.refreshData(isUserInitiated: false)
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Step 2: Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Step 3: Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    print("Refresh display loading sequence complete")
+                                    if UIDevice.current.userInterfaceIdiom == .pad {
+                                        // On iPad, force a complete refresh to update the side-by-side view
+                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+                                        print("iPad: Complete refresh triggered after year change")
+                                    } else {
+                                        // On iPhone, use normal refresh since screen changes trigger updates
+                                        self.refreshData(isUserInitiated: false)
+                                    }
                                 }
                             }
                         }
@@ -687,7 +761,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
         }
-        //createrFilterMenu(controller: self)
     }
     
     @objc func refreshAlerts(){
@@ -815,18 +888,40 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             tableView.refreshControl = refreshControl
         }
         
-        // Use coordinator for data loading
+        // Use coordinator for data loading with prioritized sequence
         let coordinator = DataCollectionCoordinator.shared
         
+        // Load band names first (highest priority)
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
             coordinator.requestScheduleCollection(eventYearOverride: false) {
-                coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                    coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                            // Once done, refresh the GUI on the main thread
-                            DispatchQueue.main.async {
-                                self.refreshData(isUserInitiated: true)
-                                print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Pull to refresh: Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Pull to refresh: Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                // Once done, refresh the GUI on the main thread
+                                DispatchQueue.main.async {
+                                    self.refreshData(isUserInitiated: true)
+                                    print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
+                                }
                             }
                         }
                     }
@@ -1802,16 +1897,89 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        pullTorefreshData()
-        //refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+        print("Push notification received - implementing prioritized loading sequence")
+        
+        // Step 1: Load band names and schedule immediately with high priority
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // Load band names first (highest priority)
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Push notification: Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Push notification: Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    self.refreshData(isUserInitiated: false)
+                                    print("Push notification loading sequence complete")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     @objc func handleAppWillEnterForeground() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-            DispatchQueue.main.async {
-                // Preserve scroll position when app enters foreground
-                self?.reloadTablePreservingScroll()
+        print("App will enter foreground - implementing prioritized loading sequence")
+        
+        // Step 1: Load band names and schedule immediately with high priority
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // Load band names first (highest priority)
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Foreground: Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Foreground: Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    // Preserve scroll position when app enters foreground
+                                    self.reloadTablePreservingScroll()
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1923,6 +2091,71 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func deduplicatePreservingOrder(_ array: [String]) -> [String] {
         var seen = Set<String>()
         return array.filter { seen.insert($0).inserted }
+    }
+    
+    /// Starts bulk loading operations for images and descriptions
+    private func startBulkLoadingOperations() {
+        DispatchQueue.global(qos: .background).async {
+            print("MasterViewController: Starting bulk loading operations")
+            let imageHandle = imageHandler()
+            let bandNotes = CustomBandDescription()
+            
+            // Start bulk loading operations
+            imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+            bandNotes.getAllDescriptions()
+        }
+    }
+    
+    /// Handles year change notifications and ensures proper data loading sequence
+    @objc func handleYearChange() {
+        print("Year change detected - implementing prioritized loading sequence")
+        
+        // Step 1: Load band names and schedule immediately with high priority
+        let coordinator = DataCollectionCoordinator.shared
+        
+        // Load band names first (highest priority)
+        coordinator.requestBandNamesCollection(eventYearOverride: false) {
+            // Load schedule immediately after band names
+            coordinator.requestScheduleCollection(eventYearOverride: false) {
+                // Update UI immediately with band names and schedule
+                DispatchQueue.main.async {
+                    print("Year change: Band names and schedule loaded - updating UI immediately")
+                    self.refreshFromCache()
+                    self.updateCountLable()
+                    self.reloadTablePreservingScroll()
+                    
+                    // Load remaining data in parallel (lower priority)
+                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
+                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
+                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+                                // Start bulk loading of images and descriptions in background
+                                DispatchQueue.global(qos: .background).async {
+                                    print("Year change: Starting bulk loading of images and descriptions")
+                                    let imageHandle = imageHandler()
+                                    let bandNotes = CustomBandDescription()
+                                    
+                                    // Start bulk loading operations
+                                    imageHandle.getAllImages(bandNameHandle: self.bandNameHandle)
+                                    bandNotes.getAllDescriptions()
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    print("Year change loading sequence complete")
+                                    if UIDevice.current.userInterfaceIdiom == .pad {
+                                        // On iPad, force a complete refresh to update the side-by-side view
+                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
+                                        print("iPad: Complete refresh triggered after year change")
+                                    } else {
+                                        // On iPhone, use normal refresh since screen changes trigger updates
+                                        self.refreshData(isUserInitiated: false)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
