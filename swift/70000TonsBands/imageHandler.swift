@@ -102,14 +102,14 @@ open class imageHandler {
         return returnedImage ?? UIImage(named: "70000TonsLogo")!;
     }
 
-    func getAllImages(bandNameHandle: bandNamesHandler){
+    func getAllImages(bandNamesSnapshot: [String: [String: String]]){
         if downloadingAllImages == false {
             downloadingAllImages = true
-            bands = bandNameHandle.getBandNames()
+            let bands = Array(bandNamesSnapshot.keys)
             // Prefetch all image URLs into a dictionary
             var bandImageUrls: [String: String] = [:]
             for bandName in bands {
-                bandImageUrls[bandName] = bandNameHandle.getBandImageUrl(bandName)
+                bandImageUrls[bandName] = bandNamesSnapshot[bandName]?["bandImageUrl"] ?? ""
             }
             for bandName in bands {
                 // Check if bulk loading is paused
@@ -117,7 +117,6 @@ open class imageHandler {
                     print("imageHandler bulk loading paused, stopping getAllImages")
                     break
                 }
-                
                 let imageStoreName = bandName + ".png"
                 let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
                 if FileManager.default.fileExists(atPath: imageStoreFile.path) == false {

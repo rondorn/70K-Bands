@@ -247,6 +247,11 @@ open class bandNamesHandler {
         return bandNamesArray
     }
 
+    /// Returns a snapshot (copy) of the bandNames dictionary for thread-safe background use.
+    func getBandNamesSnapshot() -> [String: [String: String]] {
+        return self.bandNames
+    }
+
     /// Returns the image URL for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The image URL string.
@@ -396,7 +401,7 @@ open class bandNamesHandler {
         }
     }
 
-    private func _startDataCollection(eventYearOverride: Bool, completion: (() -> Void)?) {
+    private func _startDataCollection(eventYearOverride: Bool, completion: (() -> Void)? = nil) {
         cancelRequested = false
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -405,33 +410,63 @@ open class bandNamesHandler {
     }
 
     private func _gatherDataWithCancellation(eventYearOverride: Bool, completion: (() -> Void)?) {
-        if isInternetAvailable() == true {
-            eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
-            print ("Loading bandName Data gatherData (cancellable)")
-            var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-            print ("Getting band data from " + artistUrl);
-            let httpData = getUrlData(urlString: artistUrl)
-            if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
-            print ("Getting band data of " + httpData);
-            if (httpData.isEmpty == false) {
-                writeBandFile(httpData);
-            } else {
-                print ("Internet is down, prevented blanking out data")
+        defer {
+            // Ensure completion is always called
+            DispatchQueue.main.async {
+                completion?()
             }
         }
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
-        readBandFile()
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        
+        if isInternetAvailable() == true {
+            do {
+                let eventYearString = getPointerUrlData(keyValue: "eventYear")
+                if let eventYearInt = Int(eventYearString ?? "0") {
+                    eventYear = eventYearInt
+                } else {
+                    print("Warning: Invalid event year format: \(eventYearString ?? "nil")")
+                }
+                
+                print ("Loading bandName Data gatherData (cancellable)")
+                var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
+                print ("Getting band data from " + artistUrl);
+                
+                let httpData = getUrlData(urlString: artistUrl)
+                if cancelRequested { self._dataCollectionDidFinish(); return }
+                
+                print ("Getting band data of " + httpData);
+                if (httpData.isEmpty == false) {
+                    writeBandFile(httpData);
+                } else {
+                    print ("Internet is down, prevented blanking out data")
+                }
+            } catch {
+                print("Error during band names data collection: \(error)")
+                self._dataCollectionDidFinish()
+                return
+            }
+        }
+        
+        if cancelRequested { self._dataCollectionDidFinish(); return }
+        
+        do {
+            readBandFile()
+        } catch {
+            print("Error reading band file: \(error)")
+            self._dataCollectionDidFinish()
+            return
+        }
+        
+        if cancelRequested { self._dataCollectionDidFinish(); return }
+        
         if bandNames.isEmpty && !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")
             self._dataCollectionDidFinish();
-            completion?()
             return
         }
+        
         populateCache(completion: { [weak self] in
             if let self = self {
                 self._dataCollectionDidFinish()
-                completion?()
             }
         })
     }
