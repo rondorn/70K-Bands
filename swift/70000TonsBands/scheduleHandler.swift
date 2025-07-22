@@ -85,7 +85,7 @@ open class scheduleHandler {
             completion?()
         }
         
-        self._processScheduleFile()
+        // Remove the duplicate call to _processScheduleFile() that was here
     }
     
     private func _processScheduleFile() {
@@ -267,7 +267,11 @@ open class scheduleHandler {
         
         // Process the downloaded file and call completion
         self._processScheduleFile()
-        completion?()
+        
+        // Ensure completion is called on the main thread
+        DispatchQueue.main.async {
+            completion?()
+        }
     }
 
     func getDateIndex (_ dateString: String, timeString: String, band:String) -> TimeInterval{
@@ -460,19 +464,29 @@ open class scheduleHandler {
     }
 
     private func _downloadCsvWithCancellation(eventYearOverride: Bool, completion: (() -> Void)?) {
+        defer {
+            // Ensure completion is always called
+            DispatchQueue.main.async {
+                completion?()
+            }
+        }
+        
         var scheduleUrl = ""
         if (scheduleUrl.isEmpty == true){
             scheduleUrl = defaultPrefsValue
         }
         print ("Downloading Schedule URL " + scheduleUrl);
         scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        if cancelRequested { self._dataCollectionDidFinish(); return }
         print("scheduleUrl = " + scheduleUrl)
+        
         let httpData = getUrlData(urlString: scheduleUrl)
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        if cancelRequested { self._dataCollectionDidFinish(); return }
         print("This will be making HTTP Calls for schedule " + httpData);
+        
         let oldScheduleFile = scheduleFile + ".old"
         var didRenameOld = false
+        
         if FileManager.default.fileExists(atPath: scheduleFile) {
             do {
                 if FileManager.default.fileExists(atPath: oldScheduleFile) {
@@ -485,7 +499,9 @@ open class scheduleHandler {
                 isLoadingBandData = false
             }
         }
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        
+        if cancelRequested { self._dataCollectionDidFinish(); return }
+        
         if (httpData.isEmpty == false){
             do {
                 try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
@@ -521,10 +537,11 @@ open class scheduleHandler {
                 }
             }
         }
-        if cancelRequested { self._dataCollectionDidFinish(); completion?(); return }
+        
+        if cancelRequested { self._dataCollectionDidFinish(); return }
+        
         // Optionally, call populateSchedule or other post-processing here
         self._dataCollectionDidFinish()
-        completion?()
     }
 
     private func _dataCollectionDidFinish() {
