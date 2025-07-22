@@ -71,11 +71,13 @@ open class imageHandler {
                             
                             // Notify DetailViewController to refresh the display
                             DispatchQueue.main.async {
+                                print("imageHandler: Sending ImageDownloaded notification for \(bandName)")
                                 NotificationCenter.default.post(
                                     name: Notification.Name("ImageDownloaded"), 
                                     object: nil, 
                                     userInfo: ["bandName": bandName]
                                 )
+                                print("imageHandler: ImageDownloaded notification sent for \(bandName)")
                             }
                         } catch {
                             print ("ImageCall \(error)")
@@ -110,6 +112,12 @@ open class imageHandler {
                 bandImageUrls[bandName] = bandNameHandle.getBandImageUrl(bandName)
             }
             for bandName in bands {
+                // Check if bulk loading is paused
+                if bulkLoadingPaused {
+                    print("imageHandler bulk loading paused, stopping getAllImages")
+                    break
+                }
+                
                 let imageStoreName = bandName + ".png"
                 let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
                 if FileManager.default.fileExists(atPath: imageStoreFile.path) == false {
@@ -120,6 +128,33 @@ open class imageHandler {
             }
         }
         downloadingAllImages = false
+    }
+    
+    /// Pauses bulk loading operations
+    func pauseBulkLoading() {
+        bulkLoadingPaused = true
+        print("imageHandler: Bulk loading paused")
+    }
+    
+    /// Resumes bulk loading operations
+    func resumeBulkLoading() {
+        bulkLoadingPaused = false
+        print("imageHandler: Bulk loading resumed")
+    }
+    
+    /// Loads image for a specific band with priority (ignores pause state)
+    /// - Parameter bandName: The name of the band to load image for
+    func loadImageWithPriority(bandName: String, bandNameHandle: bandNamesHandler) {
+        print("imageHandler: Loading image with priority for \(bandName)")
+        let imageURL = bandNameHandle.getBandImageUrl(bandName)
+        let imageStoreName = bandName + ".png"
+        let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
+        if FileManager.default.fileExists(atPath: imageStoreFile.path) == false {
+            print("Loading image with priority for \(bandName) from \(imageURL)")
+            _ = displayImage(urlString: imageURL, bandName: bandName)
+        } else {
+            print("imageHandler: Image already exists for \(bandName), skipping priority load")
+        }
     }
 
 }

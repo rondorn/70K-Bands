@@ -105,6 +105,12 @@ open class CustomBandDescription {
             downloadingAllComments = true
             print ("commentFile looping through bands")
             for record in self.bandDescriptionUrl{
+                // Check if bulk loading is paused
+                if bulkLoadingPaused {
+                    print("commentFile bulk loading paused, stopping getAllDescriptions")
+                    break
+                }
+                
                 let bandName = record.key
                 print ("commentFile working on bandName " + bandName)
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
@@ -411,6 +417,27 @@ open class CustomBandDescription {
     /// - Returns: The date string for the band's description.
     func getDescriptionDate(_ band: String) -> String {
         return bandDescriptionUrlDate[band] ?? ""
+    }
+    
+    /// Pauses bulk loading operations
+    func pauseBulkLoading() {
+        bulkLoadingPaused = true
+        print("CustomBandDescription: Bulk loading paused")
+    }
+    
+    /// Resumes bulk loading operations
+    func resumeBulkLoading() {
+        bulkLoadingPaused = false
+        print("CustomBandDescription: Bulk loading resumed")
+    }
+    
+    /// Loads description for a specific band with priority (ignores pause state)
+    /// - Parameter bandName: The name of the band to load description for
+    func loadDescriptionWithPriority(bandName: String) {
+        print("CustomBandDescription: Loading description with priority for \(bandName)")
+        if (self.doesDescriptionFileExists(bandName: bandName) == false){
+            _ = self.getDescription(bandName: bandName)
+        }
     }
 }
 
