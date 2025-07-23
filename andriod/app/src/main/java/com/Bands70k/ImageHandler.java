@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -18,26 +19,142 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Handles downloading and managing band images.
  * Created by rdorn on 10/5/17.
  */
 
 public class ImageHandler {
 
-    private String bandName;
-    private File bandImageFile;
+    // Singleton instance
+    private static ImageHandler instance;
+    public static final Object lock = new Object();
+    
+    // Instance tracking
+    public static final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private static final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private static final AtomicInteger currentYear = new AtomicInteger(0);
+    
+    // Background loading state
+    public static final AtomicBoolean backgroundLoadingActive = new AtomicBoolean(false);
+    private static final AtomicBoolean detailsScreenActive = new AtomicBoolean(false);
+    
+    // Background task reference
+    private AsyncAllImageLoader currentBackgroundTask;
+
+    // Instance fields for background loading
+    public String bandName;
+    public File bandImageFile;
     private File oldImageFile;
 
-    public ImageHandler(){
+    /**
+     * Private constructor for singleton pattern.
+     */
+    private ImageHandler(){
 
     }
 
+    /**
+     * Constructor for specific band image handling.
+     * @param bandNameValue The name of the band.
+     */
     public ImageHandler(String bandNameValue){
         this.bandName = bandNameValue;
         oldImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
         bandImageFile = new File(FileHandler70k.imageDirectory + bandName + ".png");
         this.moveOldToNew();
+    }
+
+    /**
+     * Gets the singleton instance of ImageHandler.
+     * @return The singleton instance.
+     */
+    public static synchronized ImageHandler getInstance() {
+        if (instance == null) {
+            instance = new ImageHandler();
+        }
+        return instance;
+    }
+
+    /**
+     * Checks if the handler is currently running.
+     * @return True if running, false otherwise.
+     */
+    public static boolean isRunning() {
+        return isRunning.get();
+    }
+
+    /**
+     * Checks if the handler is currently paused.
+     * @return True if paused, false otherwise.
+     */
+    public static boolean isPaused() {
+        return isPaused.get();
+    }
+
+    /**
+     * Pauses the background loading (called when entering details screen).
+     */
+    public static void pauseBackgroundLoading() {
+        Log.d("ImageHandler", "Pausing background loading");
+        isPaused.set(true);
+        detailsScreenActive.set(true);
+    }
+
+    /**
+     * Resumes the background loading (called when exiting details screen).
+     */
+    public static void resumeBackgroundLoading() {
+        Log.d("ImageHandler", "Resuming background loading");
+        isPaused.set(false);
+        detailsScreenActive.set(false);
+        
+        // Restart background loading if it was active
+        if (backgroundLoadingActive.get()) {
+            ImageHandler handler = getInstance();
+            handler.startBackgroundLoading();
+        }
+    }
+
+    /**
+     * Checks if year has changed and resets state if needed.
+     * @return True if year changed, false otherwise.
+     */
+    private boolean checkYearChange() {
+        int newYear = staticVariables.eventYearRaw;
+        int oldYear = currentYear.get();
+        
+        if (oldYear != 0 && oldYear != newYear) {
+            Log.d("ImageHandler", "Year changed from " + oldYear + " to " + newYear + ", resetting state");
+            currentYear.set(newYear);
+            isRunning.set(false);
+            isPaused.set(false);
+            backgroundLoadingActive.set(false);
+            detailsScreenActive.set(false);
+            
+            // Clear image URL map to force reloading for new year
+            staticVariables.imageUrlMap.clear();
+            
+            // Cancel current background task if running
+            if (currentBackgroundTask != null && !currentBackgroundTask.isCancelled()) {
+                currentBackgroundTask.cancel(true);
+            }
+            
+            // Restart background loading for new year
+            Log.d("ImageHandler", "Restarting background loading for new year: " + newYear);
+            startBackgroundLoading();
+            
+            return true;
+        }
+        
+        if (oldYear == 0) {
+            currentYear.set(newYear);
+        }
+        
+        return false;
     }
 
     private void moveOldToNew() {
@@ -64,37 +181,82 @@ public class ImageHandler {
 
             Log.e("loadImageFile", "image file already exists Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
 
-            URI remoteURl = null;
-
-            if (OnlineStatus.isOnline() == true) {
-                Log.e("loadImageFile", "image file already , in online mmode");
-                try {
-                    remoteURl = URI.create(BandInfo.getImageUrl(this.bandName));
-                } catch (Exception error) {
-                    remoteURl = URI.create(staticVariables.logo70kUrl);
-                }
-            } else {
-                Log.e("loadImageFile", "image file already , in offline mmode");
-            }
-            Log.e("loadImageFile", "image file already existsremoteUrl is :" + remoteURl);
-
-            if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
-                String htmlImage = String.valueOf(remoteURl);
-                htmlImage = htmlImage.replace("https", "http");
-                remoteURl = URI.create(htmlImage);
-            }
-
-            return remoteURl;
         }
         */
-        Log.d("loadImageFile", "image file already exists from " + bandImageFile.getAbsolutePath());
-        localURL = bandImageFile.toURI();
-        Log.d("loadImageFile", "Local URL is  " + localURL.toString());
 
-        if (bandImageFile.exists() == false) {
-            localURL = URI.create("./");
+        if (bandImageFile.exists() == true){
+            localURL = bandImageFile.toURI();
+            Log.d("loadImageFile", "image file exists " + localURL.toString());
+        } else {
+            localURL = null;
+            Log.d("loadImageFile", "image file does not exist " + bandImageFile.getAbsolutePath());
         }
+
         return localURL;
+    }
+
+    /**
+     * Gets the image for a band immediately, loading it if needed.
+     * This method is used when the details screen needs to load an image immediately.
+     * @return The image URI or null if not available.
+     */
+    public URI getImageImmediate(){
+
+        URI localURL;
+        this.bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
+        if (this.bandName.isEmpty() == true){
+            Log.d("loadImageFile", "image file already exists band null, returning");
+            return null;
+        }
+
+        Log.d("loadImageFile", "getImageImmediate called for " + this.bandName + ", file exists: " + bandImageFile.exists());
+
+        // If image doesn't exist, try to download it immediately
+        if (bandImageFile.exists() == false) {
+            Log.d("loadImageFile", "Image file does not exist, downloading immediately for " + this.bandName);
+            downloadImageImmediate();
+        }
+
+        if (bandImageFile.exists() == true){
+            localURL = bandImageFile.toURI();
+            Log.d("loadImageFile", "image file exists " + localURL.toString());
+        } else {
+            localURL = null;
+            Log.d("loadImageFile", "image file does not exist after download attempt " + bandImageFile.getAbsolutePath());
+        }
+
+        return localURL;
+    }
+
+    /**
+     * Downloads the image for a band immediately, bypassing background loading pause.
+     */
+    private void downloadImageImmediate() {
+        try {
+            String imageUrl = BandInfo.getImageUrl(this.bandName);
+            if (imageUrl != null && !imageUrl.trim().isEmpty() && !imageUrl.equals(" ")) {
+                Log.d("loadImageFile", "Downloading image immediately from URL: " + imageUrl);
+                
+                URL url = new URL(imageUrl);
+                InputStream in = new BufferedInputStream(url.openStream());
+                FileOutputStream out = new FileOutputStream(bandImageFile);
+                
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                
+                in.close();
+                out.close();
+                
+                Log.d("loadImageFile", "Image downloaded successfully for " + this.bandName);
+            } else {
+                Log.d("loadImageFile", "No image URL available for " + this.bandName);
+            }
+        } catch (Exception e) {
+            Log.e("loadImageFile", "Error downloading image for " + this.bandName, e);
+        }
     }
 
     public void getRemoteImage(){
@@ -125,7 +287,43 @@ public class ImageHandler {
         }
     }
 
+    /**
+     * Starts background loading of all images with proper synchronization.
+     */
     public void getAllRemoteImages(){
+        synchronized (lock) {
+            // Check if already running
+            if (isRunning.get()) {
+                Log.d("ImageHandler", "Background loading already running, skipping");
+                return;
+            }
+            
+            // Check year change
+            if (checkYearChange()) {
+                Log.d("ImageHandler", "Year changed, restarting background loading");
+            }
+            
+            startBackgroundLoading();
+        }
+    }
+
+    /**
+     * Starts the background loading task.
+     */
+    private void startBackgroundLoading() {
+        if (isRunning.compareAndSet(false, true)) {
+            Log.d("ImageHandler", "Starting background loading");
+            backgroundLoadingActive.set(true);
+            
+            currentBackgroundTask = new AsyncAllImageLoader();
+            currentBackgroundTask.execute();
+        }
+    }
+
+    /**
+     * Loads all remote images in the background.
+     */
+    private void loadAllRemoteImagesInBackground(){
 
         BandInfo bandInfo = new BandInfo();
         ArrayList<String> bandList = bandInfo.getBandNames();
@@ -158,7 +356,6 @@ class AsyncImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
     @Override
     protected ArrayList<String> doInBackground(String... params) {
 
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -173,6 +370,110 @@ class AsyncImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
         }
 
         return null;
+    }
+}
+
+class AsyncAllImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
+
+    ArrayList<String> result;
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    @Override
+    protected ArrayList<String> doInBackground(String... params) {
+
+        ImageHandler imageHandler = ImageHandler.getInstance();
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        Log.d("AsyncTask", "Downloading Image data for all bands in background");
+
+        // Wait for any existing loading to complete
+        while (staticVariables.loadingNotes == true) {
+            SystemClock.sleep(2000);
+        }
+
+        Log.d("AsyncTask", "Starting image download for all bands");
+        
+        // Load images in batches to allow for pause/resume
+        BandInfo bandInfo = new BandInfo();
+        ArrayList<String> bandList = bandInfo.getBandNames();
+
+        // Process imageUrlMap first
+        for (String bandNameTmp : staticVariables.imageUrlMap.keySet()){
+            // Check if task was cancelled or paused
+            if (isCancelled()) {
+                Log.d("AsyncTask", "Task cancelled, stopping image loading");
+                break;
+            }
+            
+            // Check if paused (details screen active)
+            while (ImageHandler.isPaused() && !isCancelled()) {
+                Log.d("AsyncTask", "Paused due to details screen, waiting...");
+                SystemClock.sleep(1000);
+            }
+            
+            if (isCancelled()) {
+                break;
+            }
+            
+            Log.d("AsyncTask", "Downloading image for " + bandNameTmp);
+            imageHandler.bandName = bandNameTmp;
+            imageHandler.bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + imageHandler.bandName + ".png");
+            if (imageHandler.bandImageFile.exists() == false) {
+                imageHandler.getRemoteImage();
+            }
+        }
+
+        // Process band list
+        for (String bandNameTmp : bandList){
+            // Check if task was cancelled or paused
+            if (isCancelled()) {
+                Log.d("AsyncTask", "Task cancelled, stopping image loading");
+                break;
+            }
+            
+            // Check if paused (details screen active)
+            while (ImageHandler.isPaused() && !isCancelled()) {
+                Log.d("AsyncTask", "Paused due to details screen, waiting...");
+                SystemClock.sleep(1000);
+            }
+            
+            if (isCancelled()) {
+                break;
+            }
+            
+            Log.d("AsyncTask", "Downloading image for " + bandNameTmp);
+            imageHandler.bandName = bandNameTmp;
+            imageHandler.bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + imageHandler.bandName + ".png");
+            if (imageHandler.bandImageFile.exists() == false) {
+                imageHandler.getRemoteImage();
+            }
+        }
+
+        return result;
+
+    }
+
+    @Override
+    protected void onPostExecute(ArrayList<String> result) {
+        synchronized (ImageHandler.lock) {
+            ImageHandler.isRunning.set(false);
+            ImageHandler.backgroundLoadingActive.set(false);
+            Log.d("ImageHandler", "Background loading completed");
+        }
+    }
+
+    @Override
+    protected void onCancelled() {
+        synchronized (ImageHandler.lock) {
+            ImageHandler.isRunning.set(false);
+            ImageHandler.backgroundLoadingActive.set(false);
+            Log.d("ImageHandler", "Background loading cancelled");
+        }
     }
 }
 

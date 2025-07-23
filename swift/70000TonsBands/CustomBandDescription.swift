@@ -13,6 +13,7 @@ open class CustomBandDescription {
     var bandDescriptionUrl = [String:String]()
     var bandDescriptionUrlDate = [String:String]()
     private var downloadingBands = Set<String>() // Track bands currently being downloaded
+    private let downloadingBandsQueue = DispatchQueue(label: "com.70kbands.downloadingBands", qos: .utility)
     
     init(){
         refreshCache()
@@ -44,8 +45,15 @@ open class CustomBandDescription {
         - completion: Completion handler called when operation finishes
      */
     func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
-        // For CustomBandDescription, we just refresh cache since it doesn't download from network
-        refreshCache()
+        if eventYearOverride {
+            // When year changes, we need to refresh the description URL pointer
+            // and reload the description map for the new year
+            print("CustomBandDescription: Year change detected, refreshing description URL pointer")
+            refreshData()
+        } else {
+            // For normal operations, just refresh cache since it doesn't download from network
+            refreshCache()
+        }
         completion?()
     }
     
@@ -192,12 +200,19 @@ open class CustomBandDescription {
         
         if (doesDescriptionFileExists(bandName: bandName) == false){
             // Check if already downloading this band to prevent infinite loops
-            if downloadingBands.contains(bandName) {
-                print("Already downloading note for \(bandName), skipping duplicate request")
-                return commentText
+            var shouldDownload = false
+            downloadingBandsQueue.sync {
+                if downloadingBands.contains(bandName) {
+                    print("Already downloading note for \(bandName), skipping duplicate request")
+                    return
+                }
+                downloadingBands.insert(bandName)
+                shouldDownload = true
             }
             
-            downloadingBands.insert(bandName)
+            if !shouldDownload {
+                return commentText
+            }
             print ("commentFile lookup for \(bandName) via \(descriptionUrl) field does not yet exist")
             let httpData = getUrlData(urlString: descriptionUrl);
             print("CustomBandDescription: Downloaded data length: \(httpData.count)")
@@ -230,7 +245,9 @@ open class CustomBandDescription {
                 }
                 
                 // Remove from downloading set when done
-                downloadingBands.remove(bandName)
+                downloadingBandsQueue.async {
+                    self.downloadingBands.remove(bandName)
+                }
             } else {
                 print("CustomBandDescription: Description file already exists for \(bandName)")
             }

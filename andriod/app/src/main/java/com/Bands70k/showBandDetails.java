@@ -84,7 +84,7 @@ public class showBandDetails extends Activity {
             onBackPressed();
         } else if (bandName.isEmpty() == false) {
             bandHandler = new BandNotes(bandName);
-            bandNote = bandHandler.getBandNote();
+            bandNote = bandHandler.getBandNoteImmediate();
 
             Log.d("descriptionMapFileError",  "1 bandNote = " + bandNote);
             initializeWebContent();

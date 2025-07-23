@@ -152,7 +152,13 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 let location = " " + schedule.getData(bandName, index:timeIndex, variable: locationField)
                                 let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
                                 let indexText = bandName + ";" + location + ";" + event + ";" + startTime
-                                timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
+                                // Defensive: Ensure bandName is valid before using as dictionary key
+                                if !bandName.isEmpty && bandName.count < 1000 { // Reasonable length check
+                                    let key = String(timeIndex) + ":" + bandName
+                                    timeIndexMap[key] = indexText
+                                } else {
+                                    print("WARNING: Invalid bandName for timeIndexMap key: '\(bandName)'")
+                                }
                                 eventCounter = eventCounter + 1
                                 if (event == unofficalEventType){
                                     eventCounterUnoffical = eventCounterUnoffical + 1

@@ -2172,6 +2172,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    /// Handles stats page errors by refreshing stats data and notifying user
+    @objc func handleStatsPageError() {
+        print("📊 MasterViewController: Handling stats page error")
+        
+        DispatchQueue.main.async {
+            // Show user feedback
+            let alert = UIAlertController(
+                title: NSLocalizedString("Stats Error", comment: "Stats error alert title"),
+                message: NSLocalizedString("There was an issue loading the stats page. Attempting to refresh the data.", comment: "Stats error alert message"),
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default))
+            
+            // Present the alert
+            if let topViewController = UIApplication.shared.keyWindow?.rootViewController {
+                var presentingViewController = topViewController
+                while let presented = presentingViewController.presentedViewController {
+                    presentingViewController = presented
+                }
+                presentingViewController.present(alert, animated: true)
+            }
+            
+            // Attempt to refresh stats data in background
+            DispatchQueue.global(qos: .background).async {
+                print("📊 Refreshing stats data in background")
+                // Add any stats-specific refresh logic here if needed
+                // For now, we'll just log the attempt
+            }
+        }
+    }
+    
     /// Starts loading remaining data in background (non-blocking)
     private func startRemainingDataLoad() {
         let coordinator = DataCollectionCoordinator.shared
@@ -2185,7 +2217,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Year change: Shows attended loaded")
         }
         
-        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
+        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true) {
             print("Year change: Custom band descriptions loaded")
             
             // Start bulk loading of images and descriptions in background

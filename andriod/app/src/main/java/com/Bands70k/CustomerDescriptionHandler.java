@@ -20,6 +20,9 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.io.FileNotFoundException;
 
 
 /**
@@ -29,13 +32,131 @@ import java.util.Map;
 
 public class CustomerDescriptionHandler {
 
+    // Singleton instance
+    private static CustomerDescriptionHandler instance;
+    private static final Object lock = new Object();
+    
+    // Instance tracking
+    private static final AtomicBoolean isInitialized = new AtomicBoolean(false);
+    private static final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private static final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private static final AtomicInteger currentYear = new AtomicInteger(0);
+    
+    // Background loading state
+    private static final AtomicBoolean backgroundLoadingActive = new AtomicBoolean(false);
+    private static final AtomicBoolean detailsScreenActive = new AtomicBoolean(false);
+    
+    // Data storage
     private Map<String, String> descriptionMapData = new HashMap<String,String>();
+    
+    // Background task reference
+    private AsyncAllDescriptionLoader currentBackgroundTask;
 
     /**
-     * Constructs a CustomerDescriptionHandler and loads the description map.
+     * Private constructor for singleton pattern.
      */
-    public CustomerDescriptionHandler(){
+    private CustomerDescriptionHandler(){
         descriptionMapData = this.getDescriptionMap();
+    }
+
+    /**
+     * Gets the singleton instance of CustomerDescriptionHandler.
+     * @return The singleton instance.
+     */
+    public static synchronized CustomerDescriptionHandler getInstance() {
+        if (instance == null) {
+            instance = new CustomerDescriptionHandler();
+        }
+        return instance;
+    }
+
+    /**
+     * Checks if the handler is currently running.
+     * @return True if running, false otherwise.
+     */
+    public static boolean isRunning() {
+        return isRunning.get();
+    }
+
+    /**
+     * Checks if the handler is currently paused.
+     * @return True if paused, false otherwise.
+     */
+    public static boolean isPaused() {
+        return isPaused.get();
+    }
+
+    /**
+     * Pauses the background loading (called when entering details screen).
+     */
+    public static void pauseBackgroundLoading() {
+        Log.d("CustomerDescriptionHandler", "Pausing background loading");
+        isPaused.set(true);
+        detailsScreenActive.set(true);
+    }
+
+    /**
+     * Resumes the background loading (called when exiting details screen).
+     */
+    public static void resumeBackgroundLoading() {
+        Log.d("CustomerDescriptionHandler", "Resuming background loading");
+        isPaused.set(false);
+        detailsScreenActive.set(false);
+        
+        // Restart background loading if it was active
+        if (backgroundLoadingActive.get()) {
+            CustomerDescriptionHandler handler = getInstance();
+            handler.startBackgroundLoading();
+        }
+    }
+
+    /**
+     * Checks if year has changed and resets state if needed.
+     * @return True if year changed, false otherwise.
+     */
+    private boolean checkYearChange() {
+        int newYear = staticVariables.eventYearRaw;
+        int oldYear = currentYear.get();
+        
+        if (oldYear != 0 && oldYear != newYear) {
+            Log.d("CustomerDescriptionHandler", "Year changed from " + oldYear + " to " + newYear + ", resetting state");
+            currentYear.set(newYear);
+            isRunning.set(false);
+            isPaused.set(false);
+            backgroundLoadingActive.set(false);
+            detailsScreenActive.set(false);
+            
+            // Clear description map data to force reloading for new year
+            descriptionMapData.clear();
+            staticVariables.descriptionMapModData.clear();
+            
+            // Re-lookup URLs to get correct description map URL for new year
+            Log.d("CustomerDescriptionHandler", "Re-looking up URLs for new year: " + newYear);
+            staticVariables.lookupUrls();
+            
+            // Delete and reload description map file for new year
+            if (FileHandler70k.descriptionMapFile.exists()) {
+                FileHandler70k.descriptionMapFile.delete();
+                Log.d("CustomerDescriptionHandler", "Deleted description map file for year change");
+            }
+            
+            // Cancel current background task if running
+            if (currentBackgroundTask != null && !currentBackgroundTask.isCancelled()) {
+                currentBackgroundTask.cancel(true);
+            }
+            
+            // Restart background loading for new year
+            Log.d("CustomerDescriptionHandler", "Restarting background loading for new year: " + newYear);
+            startBackgroundLoading();
+            
+            return true;
+        }
+        
+        if (oldYear == 0) {
+            currentYear.set(newYear);
+        }
+        
+        return false;
     }
 
     /**
@@ -112,6 +233,32 @@ public class CustomerDescriptionHandler {
                 }
             }
 
+        } catch (FileNotFoundException fnfe) {
+            Log.e("General Exception", "Description map file not found, attempting to download it", fnfe);
+            // File was deleted after check, try to download it again
+            this.getDescriptionMapFile();
+            // Try to read it again
+            try {
+                File file = FileHandler70k.descriptionMapFile;
+                if (file.exists()) {
+                    BufferedReader br = new BufferedReader(new FileReader(file));
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] rowData = line.split(",");
+                        if (rowData[0] != "Band") {
+                            Log.d("descriptionMapFile", "Adding " + rowData[0] + "-" + rowData[1]);
+                            descriptionMapData.put(rowData[0], rowData[1]);
+                            if (rowData.length > 2){
+                                Log.d("descriptionMapFile", "Date value is " + rowData[2]);
+                                staticVariables.descriptionMapModData.put(rowData[0], rowData[2]);
+                            }
+                        }
+                    }
+                    br.close();
+                }
+            } catch (Exception retryError) {
+                Log.e("General Exception", "Failed to read description map file after retry", retryError);
+            }
         } catch (Exception error){
             Log.e("General Exception", "Unable to parse descriptionMapFile", error);
         }
@@ -120,12 +267,36 @@ public class CustomerDescriptionHandler {
     }
 
     /**
-     * Starts an async task to load all band descriptions.
+     * Starts background loading of all descriptions with proper synchronization.
      */
     public void getAllDescriptions(){
+        synchronized (lock) {
+            // Check if already running
+            if (isRunning.get()) {
+                Log.d("CustomerDescriptionHandler", "Background loading already running, skipping");
+                return;
+            }
+            
+            // Check year change
+            if (checkYearChange()) {
+                Log.d("CustomerDescriptionHandler", "Year changed, restarting background loading");
+            }
+            
+            startBackgroundLoading();
+        }
+    }
 
-        AsyncAllDescriptionLoader myNotesTask = new AsyncAllDescriptionLoader();
-        myNotesTask.execute();
+    /**
+     * Starts the background loading task.
+     */
+    private void startBackgroundLoading() {
+        if (isRunning.compareAndSet(false, true)) {
+            Log.d("CustomerDescriptionHandler", "Starting background loading");
+            backgroundLoadingActive.set(true);
+            
+            currentBackgroundTask = new AsyncAllDescriptionLoader();
+            currentBackgroundTask.execute();
+        }
     }
 
     /**
@@ -150,6 +321,18 @@ public class CustomerDescriptionHandler {
         if (customNote != null && !customNote.trim().isEmpty()) {
             Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
             return customNote;
+        }
+
+        // Check if year has changed and reload description map if needed
+        if (checkYearChange()) {
+            Log.d("70K_NOTE_DEBUG", "Year changed in getDescription, reloading description map");
+            getDescriptionMapFile();
+        }
+
+        // Ensure description map file exists before trying to read it
+        if (!FileHandler70k.descriptionMapFile.exists()) {
+            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it");
+            getDescriptionMapFile();
         }
 
         if (descriptionMapData.containsKey(bandName) == false) {
@@ -192,6 +375,162 @@ public class CustomerDescriptionHandler {
 
         Log.d("70K_NOTE_DEBUG", "Returning note for " + bandName + ": " + bandNote);
         return bandNote;
+    }
+
+    /**
+     * Gets the description for a specific band immediately, bypassing background loading pause.
+     * This method is used when the details screen needs to load a note immediately.
+     * @param bandNameValue The name of the band.
+     * @return The band description string.
+     */
+    public String getDescriptionImmediate(String bandNameValue) {
+        Log.d("70K_NOTE_DEBUG", "getDescriptionImmediate called for " + bandNameValue);
+
+        String bandName = bandNameValue;
+        String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+        String bandNote = bandNoteDefault;
+
+        BandNotes bandNoteHandler = new BandNotes(bandName);
+
+        // Always check for a custom note first
+        String customNote = bandNoteHandler.getBandNoteFromFile();
+        if (customNote != null && !customNote.trim().isEmpty()) {
+            Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
+            return customNote;
+        }
+
+        // Check if year has changed and reload description map if needed
+        if (checkYearChange()) {
+            Log.d("70K_NOTE_DEBUG", "Year changed in immediate loading, reloading description map");
+            getDescriptionMapFile();
+        }
+
+        // Ensure description map file exists before trying to read it
+        if (!FileHandler70k.descriptionMapFile.exists()) {
+            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it");
+            getDescriptionMapFile();
+        }
+
+        // If no custom note, try to load from description map
+        if (descriptionMapData.isEmpty()) {
+            descriptionMapData = this.getDescriptionMap();
+        }
+
+        if (descriptionMapData.containsKey(bandName) == false) {
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + bandName + ", returning default note");
+            return bandNoteDefault;
+        }
+
+        // Load the note immediately without being affected by background loading state
+        Log.d("70K_NOTE_DEBUG", "Loading note immediately for " + bandName);
+        loadNoteFromURLImmediate(bandName);
+        
+        bandNote = bandNoteHandler.getBandNoteFromFile();
+        bandNote = removeSpecialCharsFromString(bandNote);
+
+        if (bandNote == null || bandNote.trim().isEmpty()) {
+            Log.d("70K_NOTE_DEBUG", "No note loaded for " + bandName + ", returning default");
+            return bandNoteDefault;
+        }
+
+        Log.d("70K_NOTE_DEBUG", "Returning immediate note for " + bandName + ": " + bandNote);
+        return bandNote;
+    }
+
+    /**
+     * Loads the note for a band from a remote URL immediately, bypassing background loading pause.
+     * @param bandName The name of the band.
+     */
+    public void loadNoteFromURLImmediate(String bandName) {
+        Log.d("70K_NOTE_DEBUG", "loadNoteFromURLImmediate called for " + bandName);
+
+        BandNotes bandNoteHandler = new BandNotes(bandName);
+        File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
+        if (oldBandNoteFile.exists() == true) {
+            Log.d("70K_NOTE_DEBUG", "Converting old band note for " + bandName);
+            bandNoteHandler.convertOldBandNote();
+        }
+
+        try {
+            File changeFileFlag = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
+            File bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
+            
+            // If a custom note exists, do NOT overwrite with default note from server
+            if (bandCustNoteFile.exists()) {
+                Log.d("70K_NOTE_DEBUG", "Custom note exists for " + bandName + ", skipping default note download and overwrite.");
+                return;
+            }
+            
+            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false) {
+                Log.d("70K_NOTE_DEBUG", "getDescription, re-downloading default data due to change! " + bandName);
+            } else if (bandNoteHandler.fileExists() == true) {
+                Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! " + bandName);
+                return;
+            }
+            
+            // Check if year has changed and reload description map if needed
+            if (checkYearChange()) {
+                Log.d("70K_NOTE_DEBUG", "Year changed in immediate URL loading, reloading description map");
+                getDescriptionMapFile();
+            }
+            
+            // Ensure description map file exists before trying to read it
+            if (!FileHandler70k.descriptionMapFile.exists()) {
+                Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it");
+                getDescriptionMapFile();
+            }
+            
+            if (descriptionMapData.containsKey(bandName) == false) {
+                descriptionMapData = new HashMap<String,String>();
+                getDescriptionMapFile();
+                descriptionMapData = this.getDescriptionMap();
+            }
+
+            URL url;
+            if (OnlineStatus.isOnline() == true) {
+                try {
+                    if (staticVariables.showNotesMap.containsKey(bandName) &&
+                            staticVariables.showNotesMap.get(bandName).length() > 5) {
+                        url = new URL(staticVariables.showNotesMap.get(bandName));
+                        Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
+                    } else if (descriptionMapData.containsKey(bandName) == true) {
+                        url = new URL(descriptionMapData.get(bandName));
+                        Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
+                    } else {
+                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + bandName);
+                        return;
+                    }
+                } catch (Exception error) {
+                    Log.d("70K_NOTE_DEBUG", "could not load! for " + bandName + " - " + descriptionMapData.get(bandName));
+                    return;
+                }
+            } else {
+                Log.d("70K_NOTE_DEBUG", "Not online, skipping download for " + bandName);
+                return;
+            }
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            String line;
+            String bandNote = "";
+            while ((line = in.readLine()) != null) {
+                bandNote += line + "\n";
+            }
+            in.close();
+
+            bandNote = this.removeSpecialCharsFromString(bandNote);
+
+            Log.d("70K_NOTE_DEBUG", "Saving default note for " + bandName + ": " + bandNote);
+            bandNoteHandler.saveDefaultBandNote(bandNote);
+
+        } catch (MalformedURLException mue) {
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile malformed url error", mue);
+        } catch (IOException ioe) {
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile io error", ioe);
+        } catch (SecurityException se) {
+            Log.e("70K_NOTE_DEBUG", "descriptionMapFile security error", se);
+        } catch (Exception generalError) {
+            Log.e("70K_NOTE_DEBUG", "Downloading descriptionMapFile", generalError);
+        }
     }
 
     /**
@@ -301,21 +640,21 @@ public class CustomerDescriptionHandler {
 
         ArrayList<String> result;
 
-
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
         }
 
-
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
-            CustomerDescriptionHandler descriptionHandler = new CustomerDescriptionHandler();
+            CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
 
             Log.d("AsyncTask", "Downloading NoteData for all bands in background");
+            
+            // Wait for any existing loading to complete
             while (staticVariables.loadingNotes == true) {
                 SystemClock.sleep(2000);
             }
@@ -327,7 +666,23 @@ public class CustomerDescriptionHandler {
             Log.d("AsyncTask", "Downloading NoteData for " + descriptionMapData);
             if (descriptionMapData != null) {
                 for (String bandName : descriptionMapData.keySet()) {
-                    Log.d("AsyncTask", "Downloading NoteData for  -1 " + bandName);
+                    // Check if task was cancelled or paused
+                    if (isCancelled()) {
+                        Log.d("AsyncTask", "Task cancelled, stopping background loading");
+                        break;
+                    }
+                    
+                    // Check if paused (details screen active)
+                    while (isPaused.get() && !isCancelled()) {
+                        Log.d("AsyncTask", "Paused due to details screen, waiting...");
+                        SystemClock.sleep(1000);
+                    }
+                    
+                    if (isCancelled()) {
+                        break;
+                    }
+                    
+                    Log.d("AsyncTask", "Downloading NoteData for " + bandName);
                     descriptionHandler.loadNoteFromURL(bandName);
                 }
                 staticVariables.notesLoaded = false;
@@ -339,7 +694,20 @@ public class CustomerDescriptionHandler {
 
         @Override
         protected void onPostExecute(ArrayList<String> result) {
+            synchronized (lock) {
+                isRunning.set(false);
+                backgroundLoadingActive.set(false);
+                Log.d("CustomerDescriptionHandler", "Background loading completed");
+            }
+        }
 
+        @Override
+        protected void onCancelled() {
+            synchronized (lock) {
+                isRunning.set(false);
+                backgroundLoadingActive.set(false);
+                Log.d("CustomerDescriptionHandler", "Background loading cancelled");
+            }
         }
     }
 
@@ -347,16 +715,13 @@ public class CustomerDescriptionHandler {
 
         ArrayList<String> result;
 
-
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
         }
 
-
         @Override
         protected ArrayList<String> doInBackground(String... params) {
-
 
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);

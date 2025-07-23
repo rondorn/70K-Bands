@@ -32,6 +32,7 @@ public class newDetailHtmlGeneration {
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
+        String imageUrl = String.valueOf(imageHandler.getImageImmediate());
 
         String htmlText =
                 "<html><head>" +
@@ -43,7 +44,7 @@ public class newDetailHtmlGeneration {
                         "<div style='height:20px;font-size:130%;left:0;right:0;'>" +
                         "<center>" + bandName + "</center>" + "</div>" +
                         "<div style='width=100%;left:0;right:0;'>" +
-                        "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageHandler.getImage() + "'</img></center></div>";
+                        "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageUrl + "'</img></center></div>";
 
         Log.d("tileLogohtmlData", "tile Logo html Data is :" + htmlText);
 

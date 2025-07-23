@@ -7,11 +7,16 @@
 //
 
 import Foundation
+import UIKit
 
 open class scheduleHandler {
     
     var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
+    
+    // Track when the last Dropbox error alert was shown (to prevent spam)
+    private var lastDropboxErrorAlertTime: TimeInterval = 0
+    private let dropboxErrorAlertInterval: TimeInterval = 3600 // 1 hour in seconds
 
     init() {
         print ("Loading schedule Data")
@@ -212,6 +217,45 @@ open class scheduleHandler {
         
         let oldScheduleFile = scheduleFile + ".old"
         var didRenameOld = false
+        
+        // Validate that the downloaded data is actually a CSV file
+        if !httpData.isEmpty {
+            let isCSV = validateCSVContent(httpData)
+            if !isCSV {
+                let errorMessage = "DropBoxIssue: Downloaded file is not a valid CSV. File appears to be: \(getFileTypeDescription(httpData))"
+                let fullContent = "DropBoxIssue: Full file contents:\n\(httpData)"
+                print(errorMessage)
+                print(fullContent)
+                
+                // Show toast alert to user (only once per hour to prevent spam)
+                let currentTime = Date().timeIntervalSince1970
+                if currentTime - lastDropboxErrorAlertTime >= dropboxErrorAlertInterval {
+                    DispatchQueue.main.async {
+                        self.showToastAlert(title: "Dropbox Issue", message: "Dropbox issues are preventing the data from being loaded.")
+                    }
+                    lastDropboxErrorAlertTime = currentTime
+                }
+                
+                // Restore old file if available
+                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
+                    do {
+                        if FileManager.default.fileExists(atPath: scheduleFile) {
+                            try FileManager.default.removeItem(atPath: scheduleFile)
+                        }
+                        try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
+                        print("Restored old schedule file after invalid CSV download.")
+                    } catch let restoreError as NSError {
+                        print("Failed to restore old schedule file: " + restoreError.debugDescription)
+                    }
+                }
+                
+                // Call completion and return early
+                DispatchQueue.main.async {
+                    completion?()
+                }
+                return
+            }
+        }
         // Rename existing file to .old
         if FileManager.default.fileExists(atPath: scheduleFile) {
             do {
@@ -559,6 +603,109 @@ open class scheduleHandler {
             } else {
                 self.state = .idle
             }
+        }
+    }
+    
+    /// Validates if the downloaded content is a valid CSV file
+    private func validateCSVContent(_ content: String) -> Bool {
+        // Check if content is empty
+        if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return false
+        }
+        
+        // Check if content starts with HTML (common error response)
+        if content.hasPrefix("<!DOCTYPE") || content.hasPrefix("<html") || content.hasPrefix("<HTML") {
+            return false
+        }
+        
+        // Check if content contains CSV-like structure (comma-separated values)
+        let lines = content.components(separatedBy: .newlines)
+        if lines.isEmpty {
+            return false
+        }
+        
+        // Check if first line contains commas (typical CSV header)
+        let firstLine = lines[0].trimmingCharacters(in: .whitespacesAndNewlines)
+        if firstLine.isEmpty {
+            return false
+        }
+        
+        // Count commas in first line - CSV should have multiple columns
+        let commaCount = firstLine.filter { $0 == "," }.count
+        if commaCount < 2 { // At least 3 columns (2 commas)
+            return false
+        }
+        
+        // Check if content contains typical CSV patterns
+        let hasCSVPatterns = content.contains(",") && 
+                            (content.contains("\n") || content.contains("\r")) &&
+                            !content.contains("<html") &&
+                            !content.contains("<!DOCTYPE")
+        
+        return hasCSVPatterns
+    }
+    
+    /// Determines the type of file based on its content
+    private func getFileTypeDescription(_ content: String) -> String {
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedContent.isEmpty {
+            return "Empty file"
+        }
+        
+        if trimmedContent.hasPrefix("<!DOCTYPE") || trimmedContent.hasPrefix("<html") {
+            return "HTML file (likely error page)"
+        }
+        
+        if trimmedContent.hasPrefix("<?xml") {
+            return "XML file"
+        }
+        
+        if trimmedContent.hasPrefix("{") || trimmedContent.hasPrefix("[") {
+            return "JSON file"
+        }
+        
+        if trimmedContent.contains("error") || trimmedContent.contains("Error") {
+            return "Error response"
+        }
+        
+        if trimmedContent.contains("404") {
+            return "404 Not Found response"
+        }
+        
+        if trimmedContent.contains("403") {
+            return "403 Forbidden response"
+        }
+        
+        if trimmedContent.contains("500") {
+            return "500 Server Error response"
+        }
+        
+        // Check if it looks like CSV
+        let lines = trimmedContent.components(separatedBy: .newlines)
+        if !lines.isEmpty {
+            let firstLine = lines[0]
+            let commaCount = firstLine.filter { $0 == "," }.count
+            if commaCount >= 2 {
+                return "Possible CSV file with \(commaCount + 1) columns"
+            }
+        }
+        
+        return "Unknown file type (first 100 chars: \(String(trimmedContent.prefix(100)))"
+    }
+    
+    /// Shows a toast alert to the user
+    private func showToastAlert(title: String, message: String) {
+        // Find the top view controller to present the alert
+        if let topViewController = UIApplication.shared.keyWindow?.rootViewController {
+            var presentingViewController = topViewController
+            while let presented = presentingViewController.presentedViewController {
+                presentingViewController = presented
+            }
+            
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            presentingViewController.present(alert, animated: true)
         }
     }
 }

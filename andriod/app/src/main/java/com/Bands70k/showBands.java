@@ -244,7 +244,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         this.getCountry();
         Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
-        bandNotes = new CustomerDescriptionHandler();
+        bandNotes = CustomerDescriptionHandler.getInstance();
 
         Log.d("startup", "show init start - 3");
         scheduleAlertHandler alertHandler = new scheduleAlertHandler();
@@ -1060,8 +1060,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             rankStore.getBandRankings();
 
             Log.d("reloadData", "reloadData - 3");
-            Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
-            bandNamesList.setSelection(listPosition);
+            // Delay scroll position restoration to ensure adapter is set
+            bandNamesList.post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
+                    bandNamesList.setSelection(listPosition);
+                }
+            });
 
             Log.d("reloadData", "reloadData - 4");
             scheduleAlertHandler alerts = new scheduleAlertHandler();
@@ -1308,8 +1314,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("DisplayListData", "called from refreshData");
         displayBandData();
 
-        Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
-        bandNamesList.setSelection(listPosition);
+        // Delay scroll position restoration to ensure adapter is set
+        bandNamesList.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
+                bandNamesList.setSelection(listPosition);
+            }
+        });
 
     }
 
@@ -1424,11 +1436,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         subscribeToAlerts();
 
         Log.d(TAG, notificationTag + " In onResume - 7");
-        Log.d("Setting position", "Setting position in onResume to " + String.valueOf(listPosition));
-        bandNamesList.setSelection(listPosition);
+        // Delay scroll position restoration to ensure adapter is set
+        bandNamesList.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("Setting position", "Setting position in onResume to " + String.valueOf(listPosition));
+                bandNamesList.setSelection(listPosition);
+            }
+        });
 
         Log.d(TAG, notificationTag + " In onResume - 8");
 
+        // Resume background loading when returning from details screen
+        CustomerDescriptionHandler.resumeBackgroundLoading();
+        ImageHandler.resumeBackgroundLoading();
 
     }
 
@@ -1596,6 +1617,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         BandInfo.setSelectedBand(selectedBand);
 
+        // Pause background loading when entering details screen
+        CustomerDescriptionHandler.pauseBackgroundLoading();
+        ImageHandler.pauseBackgroundLoading();
+
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
         startActivity(showDetails);
     }
@@ -1711,8 +1736,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 fileDownloaded = true;
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 4");
-                Log.d("Setting position", "Setting position in onPostExecute to " + String.valueOf(listPosition));
-                bandNamesList.setSelection(listPosition);
+                // Scroll position is now handled by refreshData()
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 5");
 
@@ -1755,7 +1779,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandNotes.getAllDescriptions();
 
                 //download all band logos in the background
-                ImageHandler imageHandler = new ImageHandler();
+                ImageHandler imageHandler = ImageHandler.getInstance();
                 imageHandler.getAllRemoteImages();
 
             } catch (Exception error) {
