@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        .dashboard-title {
+            color: #50fa7b;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            word-wrap: break-word;
+        }
+        .tab-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+        }
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            background: #1e1e1e;
+            border-bottom: 2px solid #50fa7b;
+            width: 100%;
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 15px 20px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            min-width: fit-content;
+        }
+        .tab-button:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        .tab-button.active {
+            background: #2a2a2a;
+            color: #50fa7b;
+            border-bottom: 2px solid #50fa7b;
+            margin-bottom: -2px;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #1e1e1e;
+            table-layout: auto;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+            white-space: nowrap;
+        }
+        .data-table th {
+            background: #2a2a2a;
+            color: #50fa7b;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .data-table tr:hover {
+            background: #2a2a2a;
+        }
+        .number-cell {
+            text-align: right;
+        }
+        .total-row {
+            background: #2a2a2a;
+            border-top: 2px solid #50fa7b;
+            font-weight: bold;
+        }
+        .total-row:hover {
+            background: #333 !important;
+        }
+        .truncated-text {
+            cursor: pointer;
+            position: relative;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .truncated-text.show-tooltip::after,
+        .truncated-text:hover::after {
+            content: attr(title);
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #2a2a2a;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: 1px solid #50fa7b;
+            z-index: 1000;
+            white-space: normal;
+            max-width: 80vw;
+            width: auto;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            word-break: break-word;
+            font-size: 14px;
+        }
+        .data-note {
+            color: #888;
+            font-size: 12px;
+            font-style: italic;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .band-rankings-note {
+            color: #888;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .note {
+            color: #888;
+            margin-bottom: 10px;
+            font-style: italic;
+            font-size: 12px;
+            display: block;
+        }
+        .country-count-note {
+            text-align: left;
+            display: block;
+        }
+        .showing-top-note {
+            text-align: left;
+            display: block;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .dashboard-title {
+                font-size: 20px;
+            }
+            .tab-button {
+                padding: 10px;
+                font-size: 14px;
+                text-align: center;
+            }
+            .data-table th,
+            .data-table td {
+                padding: 8px;
+                font-size: 14px;
+            }
+            .truncated-text {
+                max-width: 150px;
+            }
+            .truncated-text.show-tooltip::after,
+            .truncated-text:hover::after {
+                padding: 15px;
+                font-size: 16px;
+                min-width: 200px;
+            }
+        }
+        @media (max-width: 480px) {
+            .dashboard-title {
+                font-size: 18px;
+            }
+            .tab-button {
+                padding: 8px;
+                font-size: 12px;
+            }
+            .data-table th,
+            .data-table td {
+                padding: 6px;
+                font-size: 12px;
+            }
+            .truncated-text {
+                max-width: 120px;
+            }
+        }
+    </style>
+    <script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tab-button");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+    // Handle truncated text interactions
+    function handleTruncatedText(element) {
+        // Remove show-tooltip class from all other elements
+        document.querySelectorAll('.truncated-text').forEach(el => {
+            if (el !== element) {
+                el.classList.remove('show-tooltip');
+            }
+        });
+        // Toggle show-tooltip class on clicked element
+        element.classList.toggle('show-tooltip');
+        // Add click event to body to close tooltip when clicking outside
+        document.body.addEventListener('click', function closeTooltip(e) {
+            if (!element.contains(e.target)) {
+                element.classList.remove('show-tooltip');
+                document.body.removeEventListener('click', closeTooltip);
+            }
+        });
+    }
+    // Open first tab by default and set up event handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Open first tab
+        document.querySelector('.tab-button').click();
+        // Add click/touch handlers for truncated text
+        document.querySelectorAll('.truncated-text').forEach(function(element) {
+            element.addEventListener('click', function(e) {
+                e.stopPropagation();
+                handleTruncatedText(this);
+            });
+        });
+    });
+    </script>
+</head>
+<body>
+    <h1 class="dashboard-title" id="dashboard-title" data-en="Stats">Stats</h1>
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="openTab(event, 'tab-0')" data-en="Band Rankings">Band Rankings</button><button class="tab-button" onclick="openTab(event, 'tab-1')" data-en="Countries">Countries</button><button class="tab-button" onclick="openTab(event, 'tab-2')" data-en="Platforms">Platforms</button><button class="tab-button" onclick="openTab(event, 'tab-3')" data-en="Band  Country">Band  Country</button><button class="tab-button" onclick="openTab(event, 'tab-4')" data-en="Band  Repeats">Band  Repeats</button>
+        </div>
+        <div id="tab-0" class="tab-content" style="display: block"><div class="showing-top-note" data-n="15" style="color: #888; margin-bottom: 10px; font-style: italic;">Showing top 15 entries only</div><div style="overflow-x: auto;">
+<table class="data-table">
+<thead>
+<tr>
+<th data-en="Band Name">Band Name</th>
+<th data-en="% Must">% Must</th>
+<th data-en="Must">Must</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Dark Tranquillity</td>
+<td class="number-cell">80.2%</td>
+<td class="number-cell">420</td>
+</tr>
+<tr><td>Insomnium</td>
+<td class="number-cell">76.0%</td>
+<td class="number-cell">310</td>
+</tr>
+<tr><td>Amorphis</td>
+<td class="number-cell">72.3%</td>
+<td class="number-cell">376</td>
+</tr>
+<tr><td>Eluveitie</td>
+<td class="number-cell">68.3%</td>
+<td class="number-cell">299</td>
+</tr>
+<tr><td>Soilwork</td>
+<td class="number-cell">65.9%</td>
+<td class="number-cell">135</td>
+</tr>
+<tr><td>Wind Rose</td>
+<td class="number-cell">65.4%</td>
+<td class="number-cell">263</td>
+</tr>
+<tr><td>Tyr</td>
+<td class="number-cell">61.7%</td>
+<td class="number-cell">263</td>
+</tr>
+<tr><td>Orden Ogan</td>
+<td class="number-cell">61.0%</td>
+<td class="number-cell">227</td>
+</tr>
+<tr><td>Kamelot</td>
+<td class="number-cell">60.5%</td>
+<td class="number-cell">273</td>
+</tr>
+<tr><td>Vader</td>
+<td class="number-cell">59.4%</td>
+<td class="number-cell">148</td>
+</tr>
+<tr><td>Hiraes</td>
+<td class="number-cell">59.2%</td>
+<td class="number-cell">157</td>
+</tr>
+<tr><td>Beast In Black</td>
+<td class="number-cell">57.0%</td>
+<td class="number-cell">239</td>
+</tr>
+<tr><td>Rhapsody Of Fire</td>
+<td class="number-cell">56.2%</td>
+<td class="number-cell">218</td>
+</tr>
+<tr><td>Haggard</td>
+<td class="number-cell">51.0%</td>
+<td class="number-cell">210</td>
+</tr>
+<tr><td>Seven Spires</td>
+<td class="number-cell">50.8%</td>
+<td class="number-cell">156</td>
+</tr>
+</tbody>
+</table>
+</div><div class="band-rankings-note" data-en="The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.">The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.</div></div><div id="tab-1" class="tab-content" style="display: none"><div class="showing-top-note" data-n="20" style="color: #888; margin-bottom: 10px; font-style: italic;">Showing top 20 entries only</div><div style="overflow-x: auto;">
+<div class="country-count-note" data-en="The app is being used by users in {{n}} countries." style="color: #888; margin-bottom: 10px; font-style: italic;">The app is being used by users in 49 countries.</div>
+<table class="data-table">
+<thead>
+<tr>
+<th data-en="Country" title="Tap/click truncated names to see full text">Country</th>
+<th data-en="Percentage">Percentage</th>
+<th data-en="User Count">User Count</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>United States</td>
+<td class="number-cell">49%</td>
+<td class="number-cell">580</td>
+</tr>
+<tr><td>Germany</td>
+<td class="number-cell">10%</td>
+<td class="number-cell">123</td>
+</tr>
+<tr><td>Canada</td>
+<td class="number-cell">8%</td>
+<td class="number-cell">101</td>
+</tr>
+<tr><td>Switzerland</td>
+<td class="number-cell">5%</td>
+<td class="number-cell">57</td>
+</tr>
+<tr><td>Finland</td>
+<td class="number-cell">3%</td>
+<td class="number-cell">33</td>
+</tr>
+<tr><td>Mexico</td>
+<td class="number-cell">2%</td>
+<td class="number-cell">27</td>
+</tr>
+<tr><td>Netherlands</td>
+<td class="number-cell">2%</td>
+<td class="number-cell">26</td>
+</tr>
+<tr><td>France</td>
+<td class="number-cell">2%</td>
+<td class="number-cell">23</td>
+</tr>
+<tr><td>Belgium</td>
+<td class="number-cell">2%</td>
+<td class="number-cell">19</td>
+</tr>
+<tr><td>Norway</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">16</td>
+</tr>
+<tr><td>Austria</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">14</td>
+</tr>
+<tr><td>Colombia</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">14</td>
+</tr>
+<tr><td>United Kingdom</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">13</td>
+</tr>
+<tr><td>Australia</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">12</td>
+</tr>
+<tr><td>Costa Rica</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">11</td>
+</tr>
+<tr><td>Brazil</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">10</td>
+</tr>
+<tr><td>Hungary</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">10</td>
+</tr>
+<tr><td>Puerto Rico</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">10</td>
+</tr>
+<tr><td>Sweden</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">8</td>
+</tr>
+<tr><td>Greece</td>
+<td class="number-cell">1%</td>
+<td class="number-cell">7</td>
+</tr>
+</tbody>
+</table>
+</div></div><div id="tab-2" class="tab-content" style="display: none"><div style="overflow-x: auto;">
+<table class="data-table">
+<thead>
+<tr>
+<th data-en="Platform">Platform</th>
+<th data-en="% of Users">% of Users</th>
+<th data-en="User Count">User Count</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>iOS</td>
+<td class="number-cell">55.6%</td>
+<td class="number-cell">658</td>
+</tr>
+<tr><td>Android</td>
+<td class="number-cell">44.4%</td>
+<td class="number-cell">526</td>
+</tr>
+<tr class="total-row"><td data-en="Total">Total</td>
+<td></td>
+<td class="number-cell">1184</td>
+</tr>
+</tbody>
+</table>
+</div></div><div id="tab-3" class="tab-content" style="display: none"><div style="overflow-x: auto;">
+<table class="data-table">
+<thead>
+<tr>
+<th data-en="Country">Country</th>
+<th data-en="Band Count">Band Count</th>
+<th data-en="Percentage">Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>United States</td>
+<td class="number-cell">6</td>
+<td class="number-cell">19.4%</td>
+</tr>
+<tr><td>Germany</td>
+<td class="number-cell">5</td>
+<td class="number-cell">16.1%</td>
+</tr>
+<tr><td>Sweden</td>
+<td class="number-cell">4</td>
+<td class="number-cell">12.9%</td>
+</tr>
+<tr><td>Finland</td>
+<td class="number-cell">3</td>
+<td class="number-cell">9.7%</td>
+</tr>
+<tr><td>Italy</td>
+<td class="number-cell">3</td>
+<td class="number-cell">9.7%</td>
+</tr>
+<tr><td>United Kingdom</td>
+<td class="number-cell">2</td>
+<td class="number-cell">6.5%</td>
+</tr>
+<tr><td>Andorra</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Austria</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Denmark</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Faroe Islands</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Greece</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Norway</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Poland</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td>Switzerland</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr class="total-row"><td data-en="Total">Total</td>
+<td class="number-cell">31</td>
+<td class="number-cell">100.0%</td>
+</tr>
+</tbody>
+</table>
+</div></div><div id="tab-4" class="tab-content" style="display: none"><div style="overflow-x: auto;">
+<table class="data-table">
+<thead>
+<tr>
+<th data-en="Year">Year</th>
+<th data-en="Band Count">Band Count</th>
+<th data-en="Percentage">Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Never</td>
+<td class="number-cell">11</td>
+<td class="number-cell">35.5%</td>
+</tr>
+<tr><td class="number-cell">2016</td>
+<td class="number-cell">6</td>
+<td class="number-cell">19.4%</td>
+</tr>
+<tr><td class="number-cell">2017</td>
+<td class="number-cell">5</td>
+<td class="number-cell">16.1%</td>
+</tr>
+<tr><td class="number-cell">2020</td>
+<td class="number-cell">5</td>
+<td class="number-cell">16.1%</td>
+</tr>
+<tr><td class="number-cell">2014</td>
+<td class="number-cell">4</td>
+<td class="number-cell">12.9%</td>
+</tr>
+<tr><td class="number-cell">2018</td>
+<td class="number-cell">4</td>
+<td class="number-cell">12.9%</td>
+</tr>
+<tr><td class="number-cell">2019</td>
+<td class="number-cell">4</td>
+<td class="number-cell">12.9%</td>
+</tr>
+<tr><td class="number-cell">2023</td>
+<td class="number-cell">4</td>
+<td class="number-cell">12.9%</td>
+</tr>
+<tr><td class="number-cell">2011</td>
+<td class="number-cell">2</td>
+<td class="number-cell">6.5%</td>
+</tr>
+<tr><td class="number-cell">2012</td>
+<td class="number-cell">2</td>
+<td class="number-cell">6.5%</td>
+</tr>
+<tr><td class="number-cell">2015</td>
+<td class="number-cell">2</td>
+<td class="number-cell">6.5%</td>
+</tr>
+<tr><td class="number-cell">2013</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+<tr><td class="number-cell">2024</td>
+<td class="number-cell">1</td>
+<td class="number-cell">3.2%</td>
+</tr>
+</tbody>
+</table>
+</div></div>
+    </div>
+    <div id="data-note" class="data-note" data-en="All data based on users who have used the app in the last 30 days.">All data based on users who have used the app in the last 30 days.</div>
+    <div id="report-generated" data-en="Report generated: July 23, 2025 at 12:00 PM" style="color: #888; margin-bottom: 10px; font-size: 12px; font-style: italic; text-align: center;">Report generated: July 23, 2025 at 12:00 PM</div>
+    <script>
+    // Translation dictionary for static text
+    const translations = {
+        da: {
+            'Stats': 'Statistik',
+            'Band Rankings': 'Top Bands',
+            'Countries': 'Lande',
+            'Platforms': 'Platforme',
+            'Band Name': 'Bandnavn',
+            '% Must': '% Skal',
+            'Must': 'Skal',
+            'Country': 'Land',
+            '% Of Users': '% af brugere',
+            'User Count': 'Brugerantal',
+            'Platform': 'Platform',
+            'Total': 'Total',
+            'Report generated:': 'Rapport genereret:',
+            'No data available': 'Ingen data tilgængelig',
+            'Last updated:': 'Sidst opdateret:',
+            'Showing top': 'Viser top',
+            'entries only': 'poster kun',
+            'Tap/click truncated names to see full text': 'Tryk/klik på afkortede navne for at se fuld tekst',
+            'All data based on users who have used the app in the last 30 days.': 'Alle data er baseret på brugere, der har brugt appen inden for de sidste 30 dage.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'Det samlede antal, der bruges til procentberegningen, er baseret på antallet af Must, Might og Wont-stemmer, et band har modtaget.',
+            'The app is being used by users in {{n}} countries.': 'Appen bruges af brugere i {{n}} lande.',
+        },
+        en: {
+            'Stats': 'Stats',
+            'Band Rankings': 'Band Rankings',
+            'Countries': 'Countries',
+            'Platforms': 'Platforms',
+            'Band Name': 'Band Name',
+            '% Must': '% Must',
+            'Must': 'Must',
+            'Country': 'Country',
+            '% Of Users': '% Of Users',
+            'User Count': 'User Count',
+            'Platform': 'Platform',
+            'Total': 'Total',
+            'Report generated:': 'Report generated:',
+            'No data available': 'No data available',
+            'Last updated:': 'Last updated:',
+            'Showing top': 'Showing top',
+            'entries only': 'entries only',
+            'Tap/click truncated names to see full text': 'Tap/click truncated names to see full text',
+            'All data based on users who have used the app in the last 30 days.': 'All data based on users who have used the app in the last 30 days.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.',
+            'The app is being used by users in {{n}} countries.': 'The app is being used by users in {{n}} countries.',
+        },
+        fi: {
+            'Stats': 'Tilastot',
+            'Band Rankings': 'Bändien sijoitukset',
+            'Countries': 'Maat',
+            'Platforms': 'Alustat',
+            'Band Name': 'Bändin nimi',
+            '% Must': '% Pakko',
+            'Must': 'Pakko',
+            'Country': 'Maa',
+            '% Of Users': 'Käyttäjien %',
+            'User Count': 'Käyttäjämäärä',
+            'Platform': 'Alusta',
+            'Total': 'Yhteensä',
+            'Report generated:': 'Raportti luotu:',
+            'No data available': 'Ei tietoja saatavilla',
+            'Last updated:': 'Viimeksi päivitetty:',
+            'Showing top': 'Näytetään parhaat',
+            'entries only': 'merkintää',
+            'Tap/click truncated names to see full text': 'Napauta/klikkaa lyhennettyjä nimiä nähdäksesi koko tekstin',
+            'All data based on users who have used the app in the last 30 days.': 'Kaikki tiedot perustuvat käyttäjiin, jotka ovat käyttäneet sovellusta viimeisten 30 päivän aikana.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'Prosenttilaskennassa käytetty kokonaismäärä perustuu bändin saamiin Must, Might ja Wont -ääniin.',
+            'The app is being used by users in {{n}} countries.': 'Sovellusta käyttää käyttäjiä {{n}} maassa.',
+        },
+        de: {
+            'Stats': 'Statistiken',
+            'Band Rankings': 'Band-Rangliste',
+            'Countries': 'Länder',
+            'Platforms': 'Plattformen',
+            'Band Name': 'Bandname',
+            '% Must': '% Muss',
+            'Must': 'Muss',
+            'Country': 'Land',
+            '% Of Users': '% der Nutzer',
+            'User Count': 'Nutzeranzahl',
+            'Platform': 'Plattform',
+            'Total': 'Gesamt',
+            'Report generated:': 'Bericht erstellt:',
+            'No data available': 'Keine Daten verfügbar',
+            'Last updated:': 'Zuletzt aktualisiert:',
+            'Showing top': 'Zeige Top',
+            'entries only': 'Einträge',
+            'Tap/click truncated names to see full text': 'Tippen/Klicken Sie auf gekürzte Namen, um den vollständigen Text anzuzeigen',
+            'All data based on users who have used the app in the last 30 days.': 'Alle Daten basieren auf Nutzern, die die App in den letzten 30 Tagen verwendet haben.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'Die Gesamtzahl für die Prozentberechnung basiert auf der Anzahl der Must-, Might- und Wont-Stimmen, die eine Band erhalten hat.',
+            'The app is being used by users in {{n}} countries.': 'Die App wird von Nutzern in {{n}} Ländern verwendet.',
+        },
+        es: {
+            'Stats': 'Estadísticas',
+            'Band Rankings': 'Ranking de bandas',
+            'Countries': 'Países',
+            'Platforms': 'Plataformas',
+            'Band Name': 'Nombre de la banda',
+            '% Must': '% Debe',
+            'Must': 'Debe',
+            'Country': 'País',
+            '% Of Users': '% de usuarios',
+            'User Count': 'Cantidad de usuarios',
+            'Platform': 'Plataforma',
+            'Total': 'Total',
+            'Report generated:': 'Informe generado:',
+            'No data available': 'No hay datos disponibles',
+            'Last updated:': 'Última actualización:',
+            'Showing top': 'Mostrando los',
+            'entries only': 'primeros registros',
+            'Tap/click truncated names to see full text': 'Toque/haga clic en los nombres truncados para ver el texto completo',
+            'All data based on users who have used the app in the last 30 days.': 'Todos los datos se basan en usuarios que han utilizado la aplicación en los últimos 30 días.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'El total utilizado para el cálculo del porcentaje se basa en el número de votos Must, Might y Wont que recibió una banda.',
+            'The app is being used by users in {{n}} countries.': 'La aplicación está siendo utilizada por usuarios en {{n}} países.',
+        },
+        pt: {
+            'Stats': 'Estatísticas',
+            'Band Rankings': 'Ranking de bandas',
+            'Countries': 'Países',
+            'Platforms': 'Plataformas',
+            'Band Name': 'Nome da banda',
+            '% Must': '% Deve',
+            'Must': 'Deve',
+            'Country': 'País',
+            '% Of Users': '% de usuários',
+            'User Count': 'Contagem de usuários',
+            'Platform': 'Plataforma',
+            'Total': 'Total',
+            'Report generated:': 'Relatório gerado:',
+            'No data available': 'Nenhum dado disponível',
+            'Last updated:': 'Última atualização:',
+            'Showing top': 'Mostrando os',
+            'entries only': 'principais registros',
+            'Tap/click truncated names to see full text': 'Toque/clique em nomes truncados para ver o texto completo',
+            'All data based on users who have used the app in the last 30 dias.': 'Todos os dados são baseados em usuários que usaram o aplicativo nos últimos 30 dias.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'O total usado para o cálculo da porcentagem é baseado no número de votos Must, Might e Wont que uma banda recebeu.',
+            'The app is being used by users in {{n}} countries.': 'O aplicativo está sendo usado por usuários em {{n}} países.',
+        },
+        fr: {
+            'Stats': 'Statistiques',
+            'Band Rankings': 'Classement des groupes',
+            'Countries': 'Pays',
+            'Platforms': 'Plateformes',
+            'Band Name': 'Nom du groupe',
+            '% Must': '% Doit',
+            'Must': 'Doit',
+            'Country': 'Pays',
+            '% Of Users': '% des utilisateurs',
+            'User Count': "Nombre d'utilisateurs",
+            'Platform': 'Plateforme',
+            'Total': 'Total',
+            'Report generated:': 'Rapport généré :',
+            'No data available': 'Aucune donnée disponible',
+            'Last updated:': 'Dernière mise à jour :',
+            'Showing top': 'Affichage des',
+            'entries only': 'premières entrées',
+            'Tap/click truncated names to see full text': 'Appuyez/cliquez sur les noms tronqués pour voir le texte complet',
+            'All data based on users who have used the app in the last 30 days.': 'Toutes les données sont basées sur les utilisateurs ayant utilisé l’application au cours des 30 derniers jours.',
+            'The total used for the percentage calculation is based on the number of Must, Might, and Wont votes a band received.': 'Le total utilisé pour le calcul du pourcentage est basé sur le nombre de votes Must, Might et Wont qu’un groupe a reçus.',
+            'The app is being used by users in {{n}} countries.': 'L’application est utilisée par des utilisateurs dans {{n}} pays.',
+        }
+    };
+    // function getLang() {
+    //     return 'fi'; // Hard code Finnish for testing
+    // }
+    function getLang() {
+        const lang = navigator.language || navigator.userLanguage || 'en';
+        const short = lang.split('-')[0];
+        console.log('navigator.language:', lang, 'short:', short, 'translations[short]:', translations[short]);
+        return translations[short] ? short : 'en';
+    }
+    function translateStaticText() {
+        const lang = getLang();
+        console.log('translateStaticText: lang:', lang, 'translations[lang]:', translations[lang]);
+        // Dashboard title
+        const titleEl = document.getElementById('dashboard-title');
+        if (titleEl) {
+            titleEl.textContent = translations[lang]['Stats'] || 'Stats';
+        }
+        // Report generated
+        const reportGenEl = document.getElementById('report-generated');
+        if (reportGenEl) {
+            const enText = reportGenEl.getAttribute('data-en');
+            if (enText) {
+                const prefix = 'Report generated:';
+                const datePart = enText.replace(prefix, '').trim();
+                reportGenEl.textContent = (translations[lang][prefix] || prefix) + ' ' + datePart;
+            }
+        }
+        // No data available
+        const noDataEls = document.querySelectorAll('.no-data');
+        noDataEls.forEach(el => {
+            el.textContent = translations[lang]['No data available'] || 'No data available';
+        });
+        // Last updated
+        const lastUpdatedEls = document.querySelectorAll('div[style*="Last updated:"]');
+        lastUpdatedEls.forEach(el => {
+            const enText = el.textContent;
+            const prefix = 'Last updated:';
+            if (enText.startsWith(prefix)) {
+                const datePart = enText.replace(prefix, '').trim();
+                el.textContent = (translations[lang][prefix] || prefix) + ' ' + datePart;
+            }
+        });
+        // Showing top N entries only (robust translation)
+        const showingTopEls = document.querySelectorAll('.showing-top-note');
+        showingTopEls.forEach(el => {
+            const n = el.getAttribute('data-n');
+            if (translations[lang]['Showing top'] && translations[lang]['entries only']) {
+                el.textContent = `${translations[lang]['Showing top']} ${n} ${translations[lang]['entries only']}`;
+            } else if (translations[lang]['Showing top']) {
+                el.textContent = `${translations[lang]['Showing top']} ${n} entries only`;
+            } else {
+                el.textContent = `Showing top ${n} entries only`;
+            }
+        });
+        // Tooltip for truncated names (th title)
+        const thTitleEls = document.querySelectorAll('th[title]');
+        thTitleEls.forEach(el => {
+            if (el.getAttribute('title') === 'Tap/click truncated names to see full text') {
+                el.setAttribute('title', translations[lang]['Tap/click truncated names to see full text'] || 'Tap/click truncated names to see full text');
+            }
+        });
+        // Data note (30-day user activity)
+        const dataNoteEl = document.getElementById('data-note');
+        if (dataNoteEl) {
+            const enText = dataNoteEl.getAttribute('data-en');
+            if (enText && translations[lang][enText]) {
+                dataNoteEl.textContent = translations[lang][enText];
+            }
+        }
+        // Band rankings percentage note translation
+        const bandRankingsEls = document.querySelectorAll('.band-rankings-note');
+        bandRankingsEls.forEach(el => {
+            const enText = el.getAttribute('data-en');
+            if (enText && translations[lang][enText]) {
+                el.textContent = translations[lang][enText];
+            }
+        });
+        // Tab button translations
+        const tabButtonEls = document.querySelectorAll('.tab-button');
+        tabButtonEls.forEach(el => {
+            const enText = el.getAttribute('data-en');
+            if (enText && translations[lang][enText]) {
+                el.textContent = translations[lang][enText];
+            }
+        });
+        // Table header translations
+        const thDataEnEls = document.querySelectorAll('th[data-en]');
+        thDataEnEls.forEach(el => {
+            const enText = el.getAttribute('data-en');
+            if (enText && translations[lang][enText]) {
+                el.textContent = translations[lang][enText];
+            }
+        });
+        // Robust Total cell translation (case-insensitive, trimmed)
+        const tdDataEnEls = document.querySelectorAll('td[data-en]');
+        tdDataEnEls.forEach(function(el) {
+            if ((el.getAttribute('data-en') || '').trim().toLowerCase() === 'total') {
+                if (translations[lang]['Total']) {
+                    el.textContent = translations[lang]['Total'];
+                }
+            }
+        });
+        // Country count note translation
+        const countryCountEls = document.querySelectorAll('.country-count-note');
+        countryCountEls.forEach(el => {
+            const enText = el.getAttribute('data-en');
+            if (enText) {
+                const n = el.textContent.match(/\d+/)[0]; // Extract number from text
+                const template = translations[lang][enText] || enText;
+                el.textContent = template.replace('{{n}}', n);
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', translateStaticText);
+    </script>
+</body>
+</html> 
