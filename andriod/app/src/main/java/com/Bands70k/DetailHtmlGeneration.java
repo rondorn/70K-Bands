@@ -36,7 +36,7 @@ public class DetailHtmlGeneration {
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
-        String htmlImage = String.valueOf(imageHandler.getImage());
+        String htmlImage = String.valueOf(imageHandler.getImageImmediate());
         String imageSetup = getImageBoundry(htmlImage, bandName);
         Log.d("loadImageFile", "htmlImahge is   " + htmlImage);
         String htmlText =

@@ -57,8 +57,25 @@ public class BandNotes {
      * @return The band note as a string.
      */
     public String getBandNote(){
-        CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
+        CustomerDescriptionHandler noteHandler = CustomerDescriptionHandler.getInstance();
         String bandNote = noteHandler.getDescription(bandName);
+
+        if (bandNote.contains("!!!!https://")){
+            bandNote = bandNote.replaceAll("!!!!https://([^\\s]+)", "<a  target='_blank' style='color: lightblue' href=https://$1>$1</a>");
+        }
+
+        return bandNote;
+
+    }
+
+    /**
+     * Gets the band note immediately, bypassing background loading pause.
+     * This method is used when the details screen needs to load a note immediately.
+     * @return The band note as a string.
+     */
+    public String getBandNoteImmediate(){
+        CustomerDescriptionHandler noteHandler = CustomerDescriptionHandler.getInstance();
+        String bandNote = noteHandler.getDescriptionImmediate(bandName);
 
         if (bandNote.contains("!!!!https://")){
             bandNote = bandNote.replaceAll("!!!!https://([^\\s]+)", "<a  target='_blank' style='color: lightblue' href=https://$1>$1</a>");
@@ -87,7 +104,7 @@ public class BandNotes {
 
         oldBandNoteFile.delete();
 
-        CustomerDescriptionHandler noteHandler = new CustomerDescriptionHandler();
+        CustomerDescriptionHandler noteHandler = CustomerDescriptionHandler.getInstance();
         noteHandler.loadNoteFromURL(bandName);
         Map<String, String> notesData = FileHandler70k.readObject(bandNoteFile);
         String newBandNote = notesData.get("defaultNote");
