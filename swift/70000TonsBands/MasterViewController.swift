@@ -1410,7 +1410,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
-            let task = URLSession.shared.dataTask(with: URL(string: statsUrl)!) { (data, response, error) in
+            let dynamicStatsUrl = getPointerUrlData(keyValue: "reportUrl")
+            print("[YEAR_CHANGE_DEBUG] statsButtonTapped: Retrieved reportUrl: \(dynamicStatsUrl)")
+            if let url = URL(string: dynamicStatsUrl) {
+                let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
                 if let data = data {
                     do {
                         try data.write(to: fileUrl)
@@ -1438,6 +1441,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
             task.resume()
+        } else {
+            print("Invalid stats URL: \(dynamicStatsUrl)")
+        }
         } else if !fileExists {
             // Only show no data message if there's no cached file
             presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
