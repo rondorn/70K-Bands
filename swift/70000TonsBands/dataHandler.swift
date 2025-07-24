@@ -225,4 +225,11 @@ class dataHandler {
         return localBandPriorityStorage
     }
 
+    func readAllScheduleData() {
+        // ... existing code for loading and parsing schedule data ...
+        // After schedule data is loaded and parsed:
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ScheduleDataReady"), object: nil)
+        }
+    }
 }

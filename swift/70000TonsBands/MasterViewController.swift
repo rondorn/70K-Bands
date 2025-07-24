@@ -91,6 +91,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     static var isRefreshingBandList = false
     private static var refreshBandListSafetyTimer: Timer?
     
+    // Flag to ensure snap-to-top after pull-to-refresh is not overridden
+    var shouldSnapToTopAfterRefresh = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -213,6 +216,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         
         // Defensive: trigger a delayed refresh to help with first-launch data population
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -248,7 +252,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     bandNamesHandler.readBandFileCallCount = 0
                     bandNamesHandler.lastReadBandFileCallTime = nil
                     self.bandNameHandle.forceReadBandFileAndPopulateCache {
+                        // Always call refreshBandList, even if data is empty
                         self.refreshBandList(reason: "First launch blocking download complete")
+                        // If both band and schedule data are empty, show an alert
+                        let noBands = self.bands.isEmpty
+                        let noEvents = eventCount == 0
+                        if noBands && noEvents {
+                            let alert = UIAlertController(title: "No Data Loaded", message: "Unable to load band or event data. Please check your internet connection and try again.", preferredStyle: .alert)
+                            alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
+                                // Retry logic: re-run viewDidLoad's first-launch block
+                                cacheVariables.justLaunched = true
+                                self.viewDidLoad()
+                            })
+                            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                            self.present(alert, animated: true, completion: nil)
+                        }
                     }
                 }
             }
@@ -662,14 +680,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.attendedHandle.getCachedData()
             self.tableView.reloadData()
             self.updateCountLable()
-            if scrollToTop, self.bands.count > 0 {
+            if shouldSnapToTopAfterRefresh {
+                shouldSnapToTopAfterRefresh = false
+                self.tableView.setContentOffset(.zero, animated: false)
+            } else if scrollToTop, self.bands.count > 0 {
                 let topIndex = IndexPath(row: 0, section: 0)
                 self.tableView.scrollToRow(at: topIndex, at: .top, animated: false)
             } else {
                 self.tableView.setContentOffset(previousOffset, animated: false)
             }
-            if isPullToRefresh {
-                self.refreshControl?.endRefreshing()
+            // Set separator style: none for bands view, singleLine for schedule view
+            if eventCount == 0 {
+                self.tableView.separatorStyle = .none
+            } else {
+                self.tableView.separatorStyle = .singleLine
             }
             MasterViewController.isRefreshingBandList = false
             MasterViewController.refreshBandListSafetyTimer?.invalidate()
@@ -717,17 +741,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func pullTorefreshData(){
         checkForEasterEgg()
-        
         print ("iCloud: pull to refresh, load in new iCloud data")
-        
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        shouldSnapToTopAfterRefresh = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Purge caches before loading new data
+            self.bandNameHandle.clearCachedData()
+            self.dataHandle.clearCachedData()
+            self.schedule.clearCache()
+            // Reload all data
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+            self.schedule.DownloadCsv()
+            self.schedule.populateSchedule(forceDownload: false)
+            // Simple approach: after 4 seconds, end refresh and trigger refreshBandList
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                self.refreshControl?.endRefreshing()
+                self.refreshBandList(reason: "Pull to refresh", scrollToTop: false, isPullToRefresh: true)
+            }
         }
-        print("Calling refreshBandList from pullTorefreshData with reason: Pull to refresh")
-        refreshBandList(reason: "Pull to refresh", scrollToTop: true, isPullToRefresh: true)
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
@@ -752,66 +784,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             })
         }
         print("Calling refreshBandList from refreshData with reason: Cache refresh")
-        refreshBandList(reason: "Cache refresh")
-        let searchCriteria = bandSearch.text ?? ""
-        let shouldDownload = shouldDownloadSchedule(force: forceDownload || isUserInitiated)
-        if shouldDownload && internetAvailble {
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                //print ("Async: Loading schedule data MasterViewController")
-                self?.schedule.DownloadCsv()
-                self?.lastScheduleDownload = Date()
-                self?.schedule.getCachedData()
-                DispatchQueue.main.async {
-                    // Refresh the UI here if needed
-                    self?.tableView.reloadData()
-                }
+        // Always download and parse schedule data synchronously before refreshing UI
+        DispatchQueue.global(qos: .userInitiated).async {
+            let shouldDownload = self.shouldDownloadSchedule(force: forceDownload || isUserInitiated)
+            if internetAvailble && shouldDownload {
+                self.schedule.DownloadCsv()
+                self.lastScheduleDownload = Date()
+            }
+            self.schedule.populateSchedule(forceDownload: false)
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Cache refresh")
             }
         }
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
-            while (refreshDataLock == true){ sleep(1); }
-            refreshDataLock = true;
-            var offline = true
-            if Reachability.isConnectedToNetwork(){ offline = false; }
-            let bandNameHandle = bandNamesHandler()
-            let schedule = scheduleHandler()
-            if (offline == false && shouldDownload) {
-                cacheVariables();
-                dataHandle.getCachedData()
-                bandNameHandle.gatherData();
-                print ("Loading show attended data! From MasterViewController")
-                schedule.populateSchedule()
-            }
-            self.bandsByName = [String]()
-            self.bands = []
-            getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria) { [weak self] filtered in
-                guard let self = self else { return }
-                var bandsResult = filtered
-            // Deduplicate band names if no shows are present
-            if eventCount == 0 {
-                    bandsResult = self.deduplicatePreservingOrder(bandsResult)
-            }
-                currentBandList = bandsResult
-                self.bandsByName = bandsResult
-            self.attendedHandle.loadShowsAttended()
-            DispatchQueue.main.async{
-                print ("Refreshing data in backgroud");
-                self.bandNameHandle.readBandFile()
-                self.dataHandle.getCachedData()
-                self.attendedHandle.getCachedData()
-                self.ensureCorrectSorting()
-                self.refreshAlerts()
-                self.updateCountLable()
-                self.tableView.reloadData()
-                print ("DONE Refreshing data in backgroud 1");
-                refreshDataLock = false;
-                // NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
-                print ("Counts: bandCounter = \(bandCounter)")
-                print ("Counts: eventCounter = \(eventCounter)")
-                print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
-                }
-            }
-        }
-        print ("Done Refreshing data in backgroud 2");
     }
     
     
@@ -1696,6 +1680,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Calling refreshBandList from iCloudDataReadyHandler with reason: iCloud data ready (after forced reload)")
             self.refreshBandList(reason: "iCloud data ready (after forced reload)")
         }
+    }
+    
+        /*
+    @objc func bandNamesCacheReadyHandler() {
+        print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
+        refreshBandList(reason: "Band names cache ready")
+    }
+    */
+    @objc func handleDataReady() {
+        self.refreshBandList()
     }
     
     // Helper to deduplicate while preserving order

@@ -14,10 +14,8 @@ class firebaseUserWrite {
     
     var ref: DatabaseReference!
     
-    // Network resilience properties
-    private let timeoutInterval: TimeInterval = 5.0
-    
     init(){
+        
         ref = Database.database().reference()
     }
     
@@ -25,13 +23,6 @@ class firebaseUserWrite {
         
         //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
         if (inTestEnvironment == false){
-            // Check network connectivity before attempting Firebase operations
-            let networkTester = NetworkTesting()
-            guard networkTester.isInternetAvailable() else {
-                print("Firebase: No internet connectivity, skipping Firebase operations")
-                return
-            }
-            
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
                 let randomInt = Int.random(in: 5..<25)
@@ -43,12 +34,7 @@ class firebaseUserWrite {
                 if (userDataHandle.uid.isEmpty == false){
                     NSLog("Writing Firebase data new userData Id is 2 " + userDataHandle.uid)
                     
-                    print ("Writing Firebase  firebase data to userData start")
-                    
-                    // Create a timeout timer
-                    let timeoutTimer = Timer.scheduledTimer(withTimeInterval: self.timeoutInterval, repeats: false) { _ in
-                        print("writeData: Timeout for user data, skipping Firebase operation")
-                    }
+                    print ("Writing Firebase  firebase data to userData start");
                     
                     self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
                                                                                     "country": userDataHandle.country,
@@ -58,10 +44,6 @@ class firebaseUserWrite {
                                                                                     "70kVersion" : userDataHandle.bandsVersion,
                                                                                     "lastLaunch": userDataHandle.getCurrentDateString()]) {
                         (error:Error?, ref:DatabaseReference) in
-                        
-                        // Cancel timeout timer
-                        timeoutTimer.invalidate()
-                        
                         if let error = error {
                             print("Writing Firebase data could not be saved: \(error).")
                         } else {

@@ -73,7 +73,7 @@ open class scheduleHandler {
                 
                 DispatchQueue.main.async {
                     print ("Cache did not load, loading schedule data")
-                    self.populateSchedule()
+                    self.populateSchedule(forceDownload: false)
                 }
             }
             
@@ -82,7 +82,7 @@ open class scheduleHandler {
             } else {
                 DispatchQueue.main.async {
                     print ("Cache did not load, loading schedule data")
-                    self.populateSchedule()
+                    self.populateSchedule(forceDownload: false)
                 }
             }
             
@@ -102,7 +102,7 @@ open class scheduleHandler {
         self.schedulingData = [:]
     }
     
-    func populateSchedule(){
+    func populateSchedule(forceDownload: Bool = false){
         
         print ("Loading schedule data 1")
         isLoadingSchedule = true;
@@ -111,7 +111,7 @@ open class scheduleHandler {
         self.schedulingDataByTime = [:]
     
         
-        if (FileManager.default.fileExists(atPath: scheduleFile) == false){
+        if (FileManager.default.fileExists(atPath: scheduleFile) == false || forceDownload){
             //print ("Sync: Loading schedule data 1")
             DownloadCsv();
         }
