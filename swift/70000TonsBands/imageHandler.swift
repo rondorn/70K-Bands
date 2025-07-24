@@ -13,6 +13,14 @@ import CoreData
 
 open class imageHandler {
     
+    // MARK: - Singleton
+    static let shared = imageHandler()
+    
+    // MARK: - Private Initializer
+    private init() {
+        // Initialize singleton
+    }
+    
     /**
      Requests data collection with optional year override and completion handler.
      - Parameters:
@@ -38,15 +46,18 @@ open class imageHandler {
         
         let imageStoreFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent( bandName + ".png")
         
+        // First, check if we have a cached image - this should always be used if available
         if let imageData: UIImage = UIImage(contentsOfFile: imageStore) {
-            print ("ImageCall using cached imaged from \(imageStoreFile)")
+            print ("ImageCall using cached image from \(imageStoreFile)")
             returnedImage = imageData
         
         } else if (trimmedUrlString.isEmpty || trimmedUrlString == "http://"){
+            // Only use generic logo if no URL is available
+            print("ImageCall: No URL available for \(bandName), using generic logo")
             returnedImage = UIImage(named: "70000TonsLogo")!
         } else if let url = URL(string: trimmedUrlString), url.scheme != nil {
 
-            print ("ImageCall download imaged from \(trimmedUrlString)")
+            print ("ImageCall: Starting download for \(bandName) from \(trimmedUrlString)")
             
             // Start background download without blocking the UI
             DispatchQueue.global(qos: .background).async {
@@ -86,10 +97,12 @@ open class imageHandler {
                 }.resume()
             }
             
-            // Return default image immediately, don't wait for download
+            // For now, return generic logo while downloading, but the notification will update it
+            print("ImageCall: Returning generic logo while downloading proper image for \(bandName)")
             returnedImage = UIImage(named: "70000TonsLogo")!
         } else {
             // Invalid URL (no scheme, etc.)
+            print("ImageCall: Invalid URL for \(bandName): \(trimmedUrlString)")
             returnedImage = UIImage(named: "70000TonsLogo")!
         }
 

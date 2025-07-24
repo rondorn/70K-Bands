@@ -223,13 +223,13 @@ class DataCollectionCoordinator {
         
         switch operationType {
         case .bandNames:
-            let bandNamesHandle = bandNamesHandler()
+            let bandNamesHandle = bandNamesHandler.shared
             bandNamesHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
                 completion()
             }
             
         case .schedule:
-            let scheduleHandle = scheduleHandler()
+            let scheduleHandle = scheduleHandler.shared
             scheduleHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
                 completion()
             }
@@ -247,13 +247,13 @@ class DataCollectionCoordinator {
             }
             
         case .customBandDescription:
-            let descriptionHandle = CustomBandDescription()
+            let descriptionHandle = CustomBandDescription.shared
             descriptionHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
                 completion()
             }
             
         case .imageHandler:
-            let imageHandle = imageHandler()
+            let imageHandle = imageHandler.shared
             imageHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
                 completion()
             }
