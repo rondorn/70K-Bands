@@ -745,19 +745,19 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel, notes: String){
 
     //print ("not 1st entry Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
-    var locationString = "  " + location
+    var locationString = "   " + location
     var venueString = NSMutableAttributedString(string: locationString)
     var locationColor = getVenueColor(venue: location)
     
-    // First space - colored marker with fixed 17pt font
-    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    // Second space - colored marker with fixed 17pt font (moved over 1 space for alignment)
+    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length:1))
+    venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
     
-    // Location text (after the two spaces) - variable size font (12-16pt)
+    // Location text (after the three spaces) - variable size font (12-16pt)
     if location.count > 0 {
         let locationTextSize = calculateOptimalFontSize(for: location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
-        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: location.count))
-        venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
+        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:3,length: location.count))
+        venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:3,length: location.count))
     }
     
     // Disable font auto-sizing to preserve our 17pt marker
@@ -772,16 +772,16 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     
     var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
     
-    // First space - colored marker with fixed 17pt font
+    // Second space - colored marker with fixed 17pt font (moved over 1 space for alignment)
     locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
     locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
     
-    // Venue text (after the two spaces) - variable size font (12-16pt)
-    if locationOfVenue.count > 2 {
-        let venueText = String(locationOfVenue.dropFirst(2)) // Remove the two spaces
+    // Venue text (after the three spaces) - variable size font (12-16pt)
+    if locationOfVenue.count > 3 {
+        let venueText = String(locationOfVenue.dropFirst(3)) // Remove the three spaces
         let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
-        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location:2,length: locationOfVenue.count - 2))
-        locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationOfVenue.count - 2))
+        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location:3,length: locationOfVenue.count - 3))
+        locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:3,length: locationOfVenue.count - 3))
     }
 
     // Disable font auto-sizing to preserve our 17pt marker
