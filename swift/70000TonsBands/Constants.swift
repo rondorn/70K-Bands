@@ -283,7 +283,7 @@ func getDocumentsDirectory() -> NSString {
 }
 
 /// Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
-/// Handles special logic for the "eventYear" key.
+/// Handles special logic for the "eventYear" key with robust fallback mechanisms.
 /// - Parameter keyValue: The key for which to retrieve pointer data.
 /// - Returns: The pointer data as a string, or an empty string if not found.
 func getPointerUrlData(keyValue: String) -> String {
@@ -334,10 +334,53 @@ func getPointerUrlData(keyValue: String) -> String {
         if (keyValue == "eventYear"){
             dataString = getArtistUrl();
             if (dataString == "Current"){
-                dataString = pointerValues["Current"]?["eventYear"] ?? "2024"
-                print ("   is Current - setting to \(dataString) from Current")
-                if dataString == "2024" {
-                    //exit(1)
+                // Find the largest year available from all pointer values
+                var largestYear = 0
+                var largestYearString = ""
+                
+                for (index, values) in pointerValues {
+                    if let eventYearValue = values["eventYear"], let yearInt = Int(eventYearValue) {
+                        if yearInt > largestYear {
+                            largestYear = yearInt
+                            largestYearString = eventYearValue
+                        }
+                    }
+                }
+                
+                // Use the largest year found, or fall back to Current if no valid years found
+                if largestYear > 0 {
+                    dataString = largestYearString
+                    print ("   is Current - found largest year \(dataString) from all available years")
+                    
+                    // Cache the resolved year to disk for future launches
+                    do {
+                        try dataString.write(toFile: eventYearFile, atomically: true, encoding: String.Encoding.utf8)
+                        cacheVariables.storePointerData[keyValue] = dataString
+                        print ("getPointerUrlData: Cached resolved year \(dataString) to disk")
+                    } catch let error as NSError {
+                        print ("getPointerUrlData: Failed to cache year to disk: \(error.debugDescription)")
+                    }
+                } else {
+                    // Try to read from cached file as fallback
+                    do {
+                        if FileManager.default.fileExists(atPath: eventYearFile) {
+                            dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                            print ("   is Current - using cached year \(dataString) from disk")
+                        } else {
+                            dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
+                            print ("   is Current - setting to \(dataString) from Current (fallback)")
+                        }
+                    } catch {
+                        dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
+                        print ("   is Current - setting to \(dataString) from Current (final fallback)")
+                    }
+                }
+                
+                if dataString == "Problem" {
+                   print ("This is BAD - no valid year found and no cached year available")
+                   // Don't exit, try to use a reasonable default
+                   dataString = "2026" // Use a reasonable default year
+                   print ("Using default year \(dataString) as fallback")
                 }
                 
             }
@@ -416,11 +459,103 @@ func setupDefaults() {
     //print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
     
     print ("Trying to get the year  \(eventYear)")
-    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+    
+    // Use robust year resolution that handles launch scenarios
+    eventYear = ensureYearResolvedAtLaunch()
+    
+    // Check if year has changed and handle accordingly
+    let resolvedYearString = String(eventYear)
+    checkAndHandleYearChange(newYear: resolvedYearString)
 
     print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
 
     didVersionChangeFunction();
+}
+
+/// Checks if the year has changed and handles the year change process if needed.
+/// This function can be called from both setupDefaults and when year changes are detected.
+/// - Parameter newYear: The new year string that was resolved.
+func checkAndHandleYearChange(newYear: String) {
+    // Read the previously cached year
+    var previousYear = ""
+    do {
+        if FileManager.default.fileExists(atPath: eventYearFile) {
+            previousYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+        }
+    } catch {
+        print("checkAndHandleYearChange: Could not read previous year from cache")
+    }
+    
+    // If year has changed, run the same process as year change in preferences
+    if !previousYear.isEmpty && previousYear != newYear {
+        print("checkAndHandleYearChange: Year changed from \(previousYear) to \(newYear), running year change process")
+        
+        // Clear caches and files like in preferences year change
+        do {
+            try FileManager.default.removeItem(atPath: scheduleFile)
+            try FileManager.default.removeItem(atPath: bandFile)
+            print("checkAndHandleYearChange: Cleared cached files for year change")
+        } catch {
+            print("checkAndHandleYearChange: Some files were not removed (may not have existed)")
+        }
+        
+        // Clear pointer data cache to ensure fresh data
+        cacheVariables.storePointerData = [String:String]()
+        
+        // Clear all existing notifications
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        
+        // Purge all caches
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        if let masterView = masterView {
+            masterView.schedule.clearCache()
+        }
+        
+        // Clear static caches
+        staticSchedule.sync {
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+            cacheVariables.bandNamesStaticCache = [:]
+        }
+        
+        print("checkAndHandleYearChange: Year change process completed for \(newYear)")
+    }
+}
+
+/// Ensures the year is properly resolved at launch, with fallback mechanisms.
+/// This function should be called during app initialization to ensure a valid year is set.
+/// - Returns: The resolved year as an integer, or a default year if resolution fails.
+func ensureYearResolvedAtLaunch() -> Int {
+    print("ensureYearResolvedAtLaunch: Starting year resolution")
+    
+    // First try to read from cached file
+    var resolvedYear = ""
+    do {
+        if FileManager.default.fileExists(atPath: eventYearFile) {
+            resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+            print("ensureYearResolvedAtLaunch: Found cached year: \(resolvedYear)")
+        }
+    } catch {
+        print("ensureYearResolvedAtLaunch: Could not read cached year")
+    }
+    
+    // If no cached year, try to resolve from pointer data
+    if resolvedYear.isEmpty {
+        print("ensureYearResolvedAtLaunch: No cached year, resolving from pointer data")
+        resolvedYear = getPointerUrlData(keyValue: "eventYear")
+    }
+    
+    // Validate the year
+    guard let yearInt = Int(resolvedYear), yearInt > 2000 && yearInt < 2030 else {
+        print("ensureYearResolvedAtLaunch: Invalid year \(resolvedYear), using default")
+        resolvedYear = "2026" // Default fallback
+        return Int(resolvedYear)!
+    }
+    
+    print("ensureYearResolvedAtLaunch: Final resolved year: \(resolvedYear)")
+    return Int(resolvedYear)!
 }
 
 /// Sets up the current year URLs for artist and schedule data, writing a flag file if needed.
