@@ -11,8 +11,6 @@ import CoreData
 import Firebase
 import AVKit
 
-
-
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
     @IBOutlet var mainTableView: UITableView!
@@ -39,8 +37,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var bandSearch: UISearchBar!
         
-    let schedule = scheduleHandler.shared
-    let bandNameHandle = bandNamesHandler.shared
+    let schedule = scheduleHandler()
+    let bandNameHandle = bandNamesHandler()
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
@@ -64,7 +62,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var filtersOnText = ""
     
-    var bandDescriptions = CustomBandDescription.shared
+    var bandDescriptions = CustomBandDescription()
     
     @IBOutlet weak var titleLabel: UINavigationItem!
     
@@ -83,8 +81,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var lastRefreshDataRun: Date? = nil
     
-    var easterEggTriggeredBySearch = false
-    var isReturningFromDetail = false
+    // Add the missing property
+    var isPerformingQuickLoad = false
+    
+    var easterEggTriggeredForSearch = false
+    
+    var filterRequestID = 0
+    
+    static var isRefreshingBandList = false
+    private static var refreshBandListSafetyTimer: Timer?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -125,59 +130,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshControl.tintColor = UIColor.red;
         self.refreshControl = refreshControl
         
-        // Ensure refresh control is properly associated with the table view
-        tableView.refreshControl = refreshControl
-        
         //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-        mainTableView.separatorStyle = .none
+        mainTableView.separatorColor = UIColor.lightGray
+        mainTableView.tableFooterView = UIView() // Remove separators for empty rows
         
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
         
-        // Use coordinator for initial data loading
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Ensure schedule CSV is downloaded during app launch
-        let schedule = scheduleHandler.shared
-        schedule.DownloadCsv()
-        
-        // For first install, band names will be loaded in foreground
-        // For subsequent launches, all data loads in parallel
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Initial load: Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Initial load: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler.shared
-                                    let bandNotes = CustomBandDescription.shared
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                // Initial load complete, refresh the UI
-                                DispatchQueue.main.async {
-                                    self.performInitialDataRefresh()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
+        refreshBandList(reason: "Initial launch")
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
         
@@ -251,22 +212,53 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         
-        // Add observers for high-priority immediate updates
-        NotificationCenter.default.addObserver(self, selector: #selector(self.priorityChangeImmediate), name: Notification.Name("PriorityChangeImmediate"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(self.attendedChangeImmediate), name: Notification.Name("AttendedChangeImmediate"), object: nil)
-        
-        // Add observer for year change notifications
-        NotificationCenter.default.addObserver(self, selector: #selector(self.handleYearChange), name: Notification.Name("YearChange"), object: nil)
+        // Defensive: trigger a delayed refresh to help with first-launch data population
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            print("Calling refreshBandList from delayed initial refresh with reason: Initial delayed refresh")
+            self.refreshBandList(reason: "Initial delayed refresh")
+        }
+
+        if cacheVariables.justLaunched {
+            DispatchQueue.global(qos: .userInitiated).async {
+                // Download pointer/defaultStorageUrl if needed
+                let pointerUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
+                // Download band data
+                let bandData = getUrlData(urlString: pointerUrl)
+                if !bandData.isEmpty {
+                    self.bandNameHandle.writeBandFile(bandData)
+                }
+                // Download schedule data
+                let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? "http://dropbox.com"
+                let scheduleData = getUrlData(urlString: scheduleUrl)
+                if !scheduleData.isEmpty {
+                    let scheduleFilePath = scheduleFile
+                    do {
+                        try scheduleData.write(toFile: scheduleFilePath, atomically: true, encoding: .utf8)
+                    } catch {
+                        print("Error writing schedule data: \(error)")
+                    }
+                }
+                // Mark as not just launched
+                cacheVariables.justLaunched = false
+
+                DispatchQueue.main.async {
+                    // Force reload of band file and cache before refreshing UI
+                    bandNamesHandler.readBandFileCallCount = 0
+                    bandNamesHandler.lastReadBandFileCallTime = nil
+                    self.bandNameHandle.forceReadBandFileAndPopulateCache {
+                        self.refreshBandList(reason: "First launch blocking download complete")
+                    }
+                }
+            }
+            return // Prevent normal UI setup until data is ready
+        }
     }
     
     @objc func bandNamesCacheReadyHandler() {
-        // Called when band names are loaded (first launch or foreground)
-        DispatchQueue.global(qos: .background).async {
-            let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readAllPriorityData()
-            iCloudHandle.readAllScheduleData()
-        }
+        print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
+        refreshBandList(reason: "Band names cache ready")
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
@@ -282,40 +274,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         print("Filtering activated 2  \(searchBar.text) \(searchBar.text?.count)")
-        let searchText = searchBar.text ?? ""
-        // Easter egg: Trigger on 'More Cow Bell' (case-insensitive, ignore whitespace)
-        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).localizedCaseInsensitiveCompare("More Cow Bell") == .orderedSame {
-            if !easterEggTriggeredBySearch {
-                easterEggTriggeredBySearch = true
+        let lowercased = searchText.lowercased()
+        if lowercased.contains("more cow bell") {
+            if !easterEggTriggeredForSearch {
                 triggerEasterEgg()
+                easterEggTriggeredForSearch = true
             }
         } else {
-            // Reset so user can trigger again if they retype
-            easterEggTriggeredBySearch = false
+            easterEggTriggeredForSearch = false
         }
-        var searchTextForBands = searchText
-        if (searchTextForBands.isEmpty){
-            searchTextForBands = ""
-        }
-        bands =  [String]()
-        bandsByName = [String]()
-        bandNameHandle.readBandFile()
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.schedule.getCachedData()
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.bands = []
-                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchTextForBands)
-                // Deduplicate band names if no shows are present
-                if eventCount == 0 {
-                    self.bands = self.deduplicatePreservingOrder(self.bands)
-                }
-                self.bandsByName = self.bands
-                self.attendedHandle.getCachedData()
-                print("Filtering activated 3  \(searchTextForBands) \(searchTextForBands.count)")
-                self.quickRefresh()
-            }
-        }
+        print("Calling refreshBandList from searchBar(_:textDidChange:) with reason: Search changed")
+        refreshBandList(reason: "Search changed")
     }
     
     @objc func iCloudRefresh() {
@@ -323,9 +292,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
-        print ("Refresh done, so updating the display in main 3")
+        print("Calling refreshBandList from refreshMainDisplayAfterRefresh with reason: Main display after refresh")
         if (Thread.isMainThread == true){
-            refreshFromCache()
+            refreshBandList(reason: "Main display after refresh")
         }
     }
     
@@ -338,8 +307,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
-        // Preserve scroll position when device rotates
-        reloadTablePreservingScroll()
+        self.tableView.reloadData()
     }
     
     func checkForEasterEgg(){
@@ -373,25 +341,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func triggerEasterEgg(){
     
-        videoURL = Bundle.main.url(forResource: "SNL-More_Cowbell", withExtension: "mov")
-        player = AVPlayer(url: videoURL!)
-        playerLayer = AVPlayerLayer(player: player)
-        
-        playerLayer.frame = self.view.bounds
-        self.view.layer.addSublayer(playerLayer)
-        player.play()
-        
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
-            sleep(42)
-            finishedPlaying()
+        if let url = Bundle.main.url(forResource: "SNL-More_Cowbell", withExtension: "mov") {
+            videoURL = url
+            player = AVPlayer(url: url)
+            playerLayer = AVPlayerLayer(player: player)
+            
+            playerLayer.frame = self.view.bounds
+            self.view.layer.addSublayer(playerLayer)
+            player.play()
+            
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
+                sleep(42)
+                finishedPlaying()
+            }
+        } else {
+            print("Error: SNL-More_Cowbell.mov not found in bundle.")
         }
     }
     
     func finishedPlaying() {
-        print ("Easter Egg, lets make this go away")
-        self.player.pause()
-        self.playerLayer.removeFromSuperlayer()
-        self.refreshData(isUserInitiated: false)
+        print("Easter Egg, lets make this go away")
+        player.pause()
+        if playerLayer.superlayer != nil {
+            playerLayer.removeFromSuperlayer()
+        }
+        player.replaceCurrentItem(with: nil)
+        refreshData(isUserInitiated: false)
     }
     
     func chooseCountry(){
@@ -541,7 +516,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func viewWillAppear(_ animated: Bool) {
-        print ("The viewWillAppear was called");
         super.viewWillAppear(animated)
         
         // Ensure back button always says "Back" when navigating from this view
@@ -551,24 +525,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         isLoadingBandData = false
         writeFiltersFile()
-        
-        // Always refresh data to ensure we have the latest information
-        // But use a different approach when returning from detail to preserve scroll position
-        if isReturningFromDetail {
-            // When returning from detail, refresh data but preserve scroll position
-            refreshData(isUserInitiated: false)
-        } else {
-            // For other navigation scenarios, use the normal refresh
-            pullTorefreshData()
-        }
-        
-        // Reset the flag after handling the return from detail
-        isReturningFromDetail = false
-        
+        // Always refresh when returning from another view, bypassing the throttle
+        refreshData(isUserInitiated: true)
         // Removed quickRefresh() and refreshDisplayAfterWake() to avoid unnecessary data refreshes
         // Removed startScheduleRefreshTimer() to avoid restarting timer on every appearance
+        finishedPlaying() // Defensive: ensure no video is left over
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        finishedPlaying()
+    }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
         self.tableView.contentOffset = CGPoint(x: 0, y: 0 - self.tableView.contentInset.top);
@@ -611,163 +578,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        
-        print("Year change detected - implementing prioritized loading sequence")
-        
-        // Step 1: Load band names and schedule immediately with high priority
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Step 2: Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Step 3: Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler.shared
-                                    let bandNotes = CustomBandDescription.shared
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    print("Year change loading sequence complete")
-                                    if UIDevice.current.userInterfaceIdiom == .pad {
-                                        // On iPad, force a complete refresh to update the side-by-side view
-                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                                        print("iPad: Complete refresh triggered after year change notification")
-                                    } else {
-                                        // On iPhone, use normal refresh since screen changes trigger updates
-                                        self.refreshData(isUserInitiated: false)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    /// Performs the initial data refresh after coordinator has loaded data
-    private func performInitialDataRefresh() {
-        // This method is called after the coordinator has loaded all data
-        // It performs the same operations as refreshData but without triggering the coordinator again
-        
-        print ("Initial data refresh: Processing loaded data")
-        localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
-        internetAvailble = isInternetAvailable();
-        
-        // Initial data refresh doesn't need refresh control management
-        // This is not a pull-to-refresh operation
-        
-        refreshFromCache()
-        let searchCriteria = bandSearch.text ?? ""
-        
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
-            while (refreshDataLock == true){ sleep(1); }
-            refreshDataLock = true;
-            var offline = true
-            if Reachability.isConnectedToNetwork(){ offline = false; }
-            let bandNameHandle = bandNamesHandler.shared
-            let schedule = scheduleHandler.shared
-            
-            self.bandsByName = [String]()
-            self.bands = []
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
-            // Deduplicate band names if no shows are present
-            if eventCount == 0 {
-                self.bands = self.deduplicatePreservingOrder(self.bands)
-            }
-            currentBandList = self.bands
-            self.bandsByName = self.bands
-            self.attendedHandle.loadShowsAttended()
-            DispatchQueue.main.async{
-                print ("Initial data refresh: Updating UI");
-                self.bandNameHandle.readBandFile()
-                self.dataHandle.getCachedData()
-                self.attendedHandle.getCachedData()
-                self.ensureCorrectSorting()
-                self.refreshAlerts()
-                self.updateCountLable()
-                self.reloadTablePreservingScroll()
-                print ("DONE Initial data refresh");
-                refreshDataLock = false;
-                print ("Counts: bandCounter = \(bandCounter)")
-                print ("Counts: eventCounter = \(eventCounter)")
-                print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
-                
-                // Start bulk loading operations after initial data is loaded
-                self.startBulkLoadingOperations()
-            }
-        }
-        print ("Done Initial data refresh");
+        self.refreshData(isUserInitiated: false)
     }
     
     @objc func refreshDisplayAfterWake(){
-        print("Refresh display after wake - implementing prioritized loading sequence")
-        
-        // Step 1: Load band names and schedule immediately with high priority
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Step 2: Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Step 3: Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler.shared
-                                    let bandNotes = CustomBandDescription.shared
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    print("Refresh display loading sequence complete")
-                                    if UIDevice.current.userInterfaceIdiom == .pad {
-                                        // On iPad, force a complete refresh to update the side-by-side view
-                                        self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                                        print("iPad: Complete refresh triggered after year change")
-                                    } else {
-                                        // On iPhone, use normal refresh since screen changes trigger updates
-                                        self.refreshData(isUserInitiated: false)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        self.refreshData(isUserInitiated: false)
+        //createrFilterMenu(controller: self)
     }
     
     @objc func refreshAlerts(){
@@ -783,163 +599,126 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     }
     
-    /// Reloads the table view while preserving the current scroll position (unless called from pull-to-refresh)
-    func reloadTablePreservingScroll() {
-        let offset = self.tableView.contentOffset
-        self.tableView.reloadData()
-        self.tableView.setContentOffset(offset, animated: false)
-    }
-
-    func refreshFromCache (){
-        print ("RefreshFromCache called")
-        bands =  [String]()
-        bandsByName = [String]()
+    // Centralized refresh method for band list
+    func refreshBandList(reason: String = "", scrollToTop: Bool = false, isPullToRefresh: Bool = false) {
+        if MasterViewController.isRefreshingBandList {
+            print("Global: Band list refresh already in progress. Skipping.")
+            return
+        }
+        MasterViewController.isRefreshingBandList = true
+        // Start safety timer
+        MasterViewController.refreshBandListSafetyTimer?.invalidate()
+        MasterViewController.refreshBandListSafetyTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
+            print("Safety timer: Resetting isRefreshingBandList after 10 seconds.")
+            MasterViewController.isRefreshingBandList = false
+        }
+        print("Refreshing band list. Reason: \(reason)")
+        // Save the current scroll position
+        let previousOffset = self.tableView.contentOffset
+        // GUARD: Only proceed if not already reading
+        if bandNameHandle.readingBandFile {
+            print("Band file is already being read. Skipping redundant refresh.");
+            MasterViewController.isRefreshingBandList = false
+            MasterViewController.refreshBandListSafetyTimer?.invalidate()
+            MasterViewController.refreshBandListSafetyTimer = nil
+            return
+        }
         bandNameHandle.readBandFile()
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.schedule.getCachedData()
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.bands = []
-                self.bands = getFilteredBands(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
-                // Deduplicate band names if no shows are present
-                if eventCount == 0 {
-                    self.bands = self.deduplicatePreservingOrder(self.bands)
-                }
-                self.bandsByName = self.bands
-                self.attendedHandle.getCachedData()
-                self.reloadTablePreservingScroll()
+        schedule.getCachedData()
+        filterRequestID += 1
+        let requestID = filterRequestID
+        getFilteredBands(
+            bandNameHandle: bandNameHandle,
+            schedule: schedule,
+            dataHandle: dataHandle,
+            attendedHandle: attendedHandle,
+            searchCriteria: bandSearch.text ?? ""
+        ) { [weak self] filtered in
+            guard let self = self else {
+                MasterViewController.isRefreshingBandList = false
+                MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                MasterViewController.refreshBandListSafetyTimer = nil
+                return
             }
+            // Only update UI if this is the latest request
+            if requestID != self.filterRequestID {
+                MasterViewController.isRefreshingBandList = false
+                MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                MasterViewController.refreshBandListSafetyTimer = nil
+                return
+            }
+            var bandsResult = filtered
+            if eventCount == 0 {
+                bandsResult = self.deduplicatePreservingOrder(bandsResult)
+            }
+            let sortedBy = getSortedBy()
+            if sortedBy == "name" {
+                bandsResult.sort { getNameFromSortable($0, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable($1, sortedBy: sortedBy)) == .orderedAscending }
+            } else if sortedBy == "time" {
+                bandsResult.sort { getTimeFromSortable($0, sortBy: sortedBy) < getTimeFromSortable($1, sortBy: sortedBy) }
+            }
+            self.bands = bandsResult
+            self.bandsByName = bandsResult
+            self.attendedHandle.getCachedData()
+            self.tableView.reloadData()
+            self.updateCountLable()
+            if scrollToTop, self.bands.count > 0 {
+                let topIndex = IndexPath(row: 0, section: 0)
+                self.tableView.scrollToRow(at: topIndex, at: .top, animated: false)
+            } else {
+                self.tableView.setContentOffset(previousOffset, animated: false)
+            }
+            if isPullToRefresh {
+                self.refreshControl?.endRefreshing()
+            }
+            MasterViewController.isRefreshingBandList = false
+            MasterViewController.refreshBandListSafetyTimer?.invalidate()
+            MasterViewController.refreshBandListSafetyTimer = nil
         }
     }
     
     func ensureCorrectSorting(){
-        
         if (eventCount == 0){
-            print("Schedule is empty, stay hidden")
-            //self.scheduleButton.isHidden = true;
-            //willAttendButton.isHidden = true;
-            mainTableView.separatorColor = UIColor.black
-            //print ("setting showOnlyWillAttened value of false = 1")
-            //setShowOnlyWillAttened(false);
-            
-        } else if (sortedBy == "name"){
-            print("Sort By is Name, Show")
-            //self.scheduleButton.isHidden = false;
-            //willAttendButton.isHidden = false;
-            //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
-            mainTableView.separatorColor = UIColor.lightGray
-            
+            print("Schedule is empty, hide separators")
+            mainTableView.separatorStyle = .none
         } else {
-            print("Sort By is Time, Show")
-            mainTableView.separatorColor = UIColor.lightGray
-            
+            print("Schedule present, show separators")
+            mainTableView.separatorStyle = .singleLine
         }
-
-        // REVERT: Remove the filtering that excluded bands with only filtered future shows
-        // Restore to:
-        // bands = getFilteredBands(...)
-        // Deduplicate if needed
-        bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
-        if eventCount == 0 {
-            bands = self.deduplicatePreservingOrder(bands)
-        }
+        refreshBandList(reason: "Sorting changed")
     }
     
     func quickRefresh_Pre(){
         writeFiltersFile()
-        
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
-            
             self.dataHandle.getCachedData()
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle, searchCriteria: bandSearch.text ?? "")
-            // Deduplicate band names if no shows are present
-            if eventCount == 0 {
-                self.bands = self.deduplicatePreservingOrder(self.bands)
-            }
-            self.bandsByName = self.bands
-            ensureCorrectSorting()
-            self.attendedHandle.getCachedData()
-            updateCountLable()
-            isPerformingQuickLoad = false
+            print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
+            refreshBandList(reason: "Quick refresh")
+            self.isPerformingQuickLoad = false
         }
     }
     
     @objc func quickRefresh(){
         quickRefresh_Pre()
-        self.reloadTablePreservingScroll()
+        // self.tableView.reloadData() is now handled in refreshBandList
     }
     
     @objc func refreshGUI(){
-        self.reloadTablePreservingScroll()
+        self.tableView.reloadData()
     }
     
 
     @objc func OnOrientationChange(){
         sleep(1)
-        quickRefresh_Pre()
-        self.reloadTablePreservingScroll()
+        print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
+        refreshBandList(reason: "Orientation change")
     }
     
     @objc func pullTorefreshData(){
-        // Only check for Easter egg if this is an actual pull-to-refresh gesture
-        // Check if the refresh control is currently refreshing (indicating user gesture)
-        if refreshControl?.isRefreshing == true {
-            checkForEasterEgg()
-        }
+        checkForEasterEgg()
         
         print ("iCloud: pull to refresh, load in new iCloud data")
-        
-        // Ensure refresh control is properly associated with the table view
-        if refreshControl?.superview == nil {
-            tableView.refreshControl = refreshControl
-        }
-        
-        // Use coordinator for data loading with prioritized sequence
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Ensure schedule CSV is downloaded first
-        let schedule = scheduleHandler.shared
-        schedule.DownloadCsv()
-        
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Pull to refresh: Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Pull to refresh: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler.shared
-                                    let bandNotes = CustomBandDescription.shared
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                // Once done, refresh the GUI on the main thread
-                                DispatchQueue.main.async {
-                                    self.refreshData(isUserInitiated: true)
-                                    print ("pullTorefreshData: Loading schedule data on pull to refresh - Done")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
@@ -947,20 +726,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             iCloudHandle.readAllScheduleData()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
         }
+        print("Calling refreshBandList from pullTorefreshData with reason: Pull to refresh")
+        refreshBandList(reason: "Pull to refresh", scrollToTop: true, isPullToRefresh: true)
     }
     
-    @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false, forceBandNameDownload: Bool = false) {
-        // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh) or forced download
+    @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
+        // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh)
         let now = Date()
-        if !isUserInitiated && !forceDownload {
+        if !isUserInitiated {
             if let lastRun = lastRefreshDataRun, now.timeIntervalSince(lastRun) < 60 {
-                print("refreshData throttled: Only one run per 60 seconds unless user-initiated or forced download.")
-                // But still force band name refresh if requested
-                if forceBandNameDownload {
-                    DataCollectionCoordinator.shared.requestBandNamesCollection(eventYearOverride: false) {
-                        print("Forced band name refresh (throttled schedule)")
-                    }
-                }
+                print("refreshData throttled: Only one run per 60 seconds unless user-initiated.")
                 return
             }
         }
@@ -969,61 +744,54 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
         internetAvailble = isInternetAvailable();
-        
-        // Only manage refresh control for pull-to-refresh operations
-        if isUserInitiated && refreshControl?.isRefreshing == true {
-            // Always end refreshing after 4 seconds for pull-to-refresh
-            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4), execute: {
-                self.refreshControl?.endRefreshing()
-                // Ensure table view snaps back to top after pull-to-refresh
-                DispatchQueue.main.async {
-                    self.tableView.setContentOffset(.zero, animated: true)
-                }
+        if (internetAvailble == false){
+            self.refreshControl?.endRefreshing();
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: {
+                self.refreshControl?.endRefreshing();
             })
         }
-        // No timeout management for non-pull-to-refresh operations
-        refreshFromCache()
+        print("Calling refreshBandList from refreshData with reason: Cache refresh")
+        refreshBandList(reason: "Cache refresh")
         let searchCriteria = bandSearch.text ?? ""
         let shouldDownload = shouldDownloadSchedule(force: forceDownload || isUserInitiated)
-        
-        // Use coordinator for data loading
-        let coordinator = DataCollectionCoordinator.shared
-        
         if shouldDownload && internetAvailble {
-            // Use independent collectors instead of problematic coupled system
-            loadDataWithIndependentCollectors()
-        } else {
-            // Just refresh from cache without triggering downloads
-            refreshFromCache()
-            updateCountLable()
-            reloadTablePreservingScroll()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                //print ("Async: Loading schedule data MasterViewController")
+                self?.schedule.DownloadCsv()
+                self?.lastScheduleDownload = Date()
+                self?.schedule.getCachedData()
+                DispatchQueue.main.async {
+                    // Refresh the UI here if needed
+                    self?.tableView.reloadData()
+                }
+            }
         }
-        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
             while (refreshDataLock == true){ sleep(1); }
             refreshDataLock = true;
             var offline = true
             if Reachability.isConnectedToNetwork(){ offline = false; }
-            let bandNameHandle = bandNamesHandler.shared
-            let schedule = scheduleHandler.shared
-            if (offline == false && (shouldDownload || forceBandNameDownload)) {
+            let bandNameHandle = bandNamesHandler()
+            let schedule = scheduleHandler()
+            if (offline == false && shouldDownload) {
                 cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 print ("Loading show attended data! From MasterViewController")
                 schedule.populateSchedule()
-                // Download schedule CSV to ensure schedule data is available
-                schedule.DownloadCsv()
             }
             self.bandsByName = [String]()
             self.bands = []
-            self.bands = getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria)
+            getFilteredBands(bandNameHandle: bandNameHandle, schedule: schedule, dataHandle: dataHandle, attendedHandle: self.attendedHandle, searchCriteria: searchCriteria) { [weak self] filtered in
+                guard let self = self else { return }
+                var bandsResult = filtered
             // Deduplicate band names if no shows are present
             if eventCount == 0 {
-                self.bands = self.deduplicatePreservingOrder(self.bands)
+                    bandsResult = self.deduplicatePreservingOrder(bandsResult)
             }
-            currentBandList = self.bands
-            self.bandsByName = self.bands
+                currentBandList = bandsResult
+                self.bandsByName = bandsResult
             self.attendedHandle.loadShowsAttended()
             DispatchQueue.main.async{
                 print ("Refreshing data in backgroud");
@@ -1033,18 +801,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.ensureCorrectSorting()
                 self.refreshAlerts()
                 self.updateCountLable()
-                // Only preserve scroll if not a pull-to-refresh
-                if !isUserInitiated {
-                    self.reloadTablePreservingScroll()
-                } else {
-                    self.tableView.reloadData()
-                }
+                self.tableView.reloadData()
                 print ("DONE Refreshing data in backgroud 1");
                 refreshDataLock = false;
                 // NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
                 print ("Counts: bandCounter = \(bandCounter)")
                 print ("Counts: eventCounter = \(eventCounter)")
                 print ("Counts: eventCounterUnoffical = \(eventCounterUnoffical)")
+                }
             }
         }
         print ("Done Refreshing data in backgroud 2");
@@ -1127,34 +891,36 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
   
-    func updateCountLable() {
+    func updateCountLable(){
+        
         setFilterTitleText()
-        let currentYearSetting = getScheduleUrl()
-        let yearText = (currentYearSetting != "Current" && currentYearSetting != "Default") ? "(\(currentYearSetting)) " : ""
-
-        // Determine if only 'Cruiser Organized' events are present
-        let onlyCruiserOrganized = (unfilteredEventCount > 0 && unfilteredEventCount == unfilteredCruiserEventCount)
-        // Determine if there are any non-'Cruiser Organized' events
-        let hasNonCruiserEvents = (eventCounter - eventCounterUnoffical) > 0
-
-        var labelCounter: Int
-        var labelCounterString: String
-
-        if hasNonCruiserEvents {
-            // Show Events
-            labelCounter = eventCounter
-            labelCounterString = " Events " + filtersOnText
+        var lableCounterString = String();
+        var labeleCounter = Int()
+        
+        print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
+        if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
+            labeleCounter = listCount
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
-            // Show Bands (either only Cruiser Organized events, or just bands)
-            labelCounter = bandCounter
-            labelCounterString = " Bands " + filtersOnText
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            sortedBy = "time"
         }
 
-        if yearText.isEmpty {
-            titleButton.title = "\(labelCounter)\(labelCounterString)"
+        var currentYearSetting = getScheduleUrl()
+        if (currentYearSetting != "Current" && currentYearSetting != "Default"){
+            titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            
         } else {
-            titleButton.title = "\(yearText)\(labelCounter)\(labelCounterString)"
+            titleButton.title = String(labeleCounter) + lableCounterString
         }
+        //createrFilterMenu(controller: self);
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
@@ -1203,7 +969,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
+        print("bands type:", type(of: bands))
         return bands.count
     }
     
@@ -1236,7 +1002,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     //swip code start
     
     func currentlySectionBandName(_ rowNumber: Int) -> String{
-        
+        print("bands type in currentlySectionBandName:", type(of: bands))
         var bandName = "";
     
         print ("SelfBandCount is " + String(self.bands.count) + " rowNumber is " + String(rowNumber));
@@ -1371,13 +1137,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("Getting Details")
-        
+        print("bands type in prepare(for:sender:):", type(of: bands))
         currentBandList = self.bands
         print ("Waiting for band data to load, Done")
         if (currentBandList.count == 0){
-            while(currentBandList.count == 0){
-                refreshFromCache()
+            var attempts = 0
+            while(currentBandList.count == 0 && attempts < 3){
+                print("prepare(for:sender:): Attempt \(attempts+1) to refresh band list")
+                refreshBandList(reason: "Cache refresh")
                 currentBandList = self.bands
+                attempts += 1
+            }
+            if currentBandList.count == 0 {
+                print("prepare(for:sender:): Band list still empty after 3 attempts, aborting to prevent infinite loop")
+                // Optionally: return or handle gracefully here
             }
         }
         self.splitViewController!.delegate = self;
@@ -1389,33 +1162,36 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.extendedLayoutIncludesOpaqueBars = true
         
         if segue.identifier == "showDetail" {
-            // Set flag to indicate we're navigating to detail view
-            isReturningFromDetail = true
-            
             if let indexPath = self.tableView.indexPathForSelectedRow {
-            
-                let cell = self.tableView.cellForRow(at: indexPath)
-                let bandNameView = cell!.viewWithTag(2) as! UILabel
-                let bandNameNoSchedule = cell!.viewWithTag(12) as! UILabel
-                
-                let cellDataView = cell!.viewWithTag(1) as! UILabel
+                guard let cell = self.tableView.cellForRow(at: indexPath) else {
+                    print("Error: Could not get cell for selected row.")
+                    return
+                }
+                guard let bandNameView = cell.viewWithTag(2) as? UILabel else {
+                    print("Error: Could not get bandNameView.")
+                    return
+                }
+                guard let bandNameNoSchedule = cell.viewWithTag(12) as? UILabel else {
+                    print("Error: Could not get bandNameNoSchedule.")
+                    return
+                }
+                guard let cellDataView = cell.viewWithTag(1) as? UILabel else {
+                    print("Error: Could not get cellDataView.")
+                    return
+                }
                 let cellDataText = cellDataView.text ?? "";
-                
-                eventSelectedIndex = cellDataView.text!
+                eventSelectedIndex = cellDataView.text ?? ""
                 var bandName = bandNameNoSchedule.text ?? ""
-                
                 if (bandName.isEmpty == true){
                     bandName = bandNameView.text ?? ""
                 }
-                
                 print ("BandName for Details is \(bandName)")
                 detailMenuChoices(cellDataText: cellDataText, bandName: bandName, segue: segue, indexPath: indexPath)
             }
         }
         updateCountLable()
 
-        // Preserve scroll position when preparing for segue
-        reloadTablePreservingScroll()
+        tableView.reloadData()
 
     }
     
@@ -1546,7 +1322,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             bandSelected = bandName;
             bandListIndexCache = indexPath.row
-            let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+            guard let navController = segue.destination as? UINavigationController else {
+                print("Error: segue.destination is not UINavigationController")
+                return
+            }
+            guard let controller = navController.topViewController as? DetailViewController else {
+                print("Error: topViewController is not DetailViewController")
+                return
+            }
         
             print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
 
@@ -1613,8 +1396,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         ensureCorrectSorting()
         updateCountLable()
 
-        // Preserve scroll position when resorting bands
-        reloadTablePreservingScroll()
+        self.tableView.reloadData()
 
         
     }
@@ -1629,23 +1411,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
 
-        // Always present the web view immediately with local file
+        // Always present the web view immediately
         let fileExists = fileManager.fileExists(atPath: fileUrl.path)
         presentWebView(url: fileUrl.absoluteString, isLoading: !fileExists)
 
-        // Always attempt to download new content and refresh the view
+        // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
             let task = URLSession.shared.dataTask(with: URL(string: statsUrl)!) { (data, response, error) in
                 if let data = data {
                     do {
                         try data.write(to: fileUrl)
-                        // Refresh the currently displayed web view with the local file
+                        // Refresh the currently displayed web view if it exists
                         DispatchQueue.main.async {
                             if let currentWebViewController = self.getCurrentWebViewController() {
                                 let request = URLRequest(url: fileUrl)
                                 currentWebViewController.webDisplay.load(request)
                             } else {
-                                // If no cached content was shown initially, present the web view now with local file
+                                // If no cached content was shown initially, present the web view now
                                 self.presentWebView(url: fileUrl.absoluteString, isLoading: false)
                             }
                         }
@@ -1777,25 +1559,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func presentWebView(url: String, isLoading: Bool = false) {
         DispatchQueue.main.async {
-            // Safety check: Ensure stats screen never loads remote URLs directly
-            if url.contains("dropbox.com") || url.contains("http://") || url.contains("https://") {
-                print("WARNING: Attempted to load remote URL in stats screen: \(url)")
-                // Fall back to local file or show error
-                let fileManager = FileManager.default
-                let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-                let localFileUrl = documentsUrl.appendingPathComponent("stats.html")
-                
-                if fileManager.fileExists(atPath: localFileUrl.path) {
-                    setUrl(localFileUrl.absoluteString)
-                } else {
-                    self.presentNoDataView(message: "Stats data not available locally. Please try again.")
-                    return
-                }
-            } else {
-                setUrl(url)
-            }
-            
             if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
+                setUrl(url)
 
                 let backItem = UIBarButtonItem()
                 backItem.title = "Back"
@@ -1903,169 +1668,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        print("Push notification received - implementing prioritized loading sequence")
-        
-        // Step 1: Load band names and schedule immediately with high priority
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Push notification: Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Push notification: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler.shared
-                                    let bandNotes = CustomBandDescription.shared
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    self.refreshData(isUserInitiated: false)
-                                    print("Push notification loading sequence complete")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        refreshData(isUserInitiated: false, forceDownload: true)
     }
     
     @objc func handleAppWillEnterForeground() {
-        print("App will enter foreground - using independent data collectors")
-        
-        // Use independent collectors instead of problematic coupled system
-        loadDataWithIndependentCollectors()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.refreshData(isUserInitiated: false, forceDownload: true)
+            DispatchQueue.main.async {
+                self?.tableView.reloadData()
+            }
+        }
     }
     
     @objc func detailDidUpdate() {
         if UIDevice.current.userInterfaceIdiom == .pad {
-            // On iPad, refresh data and preserve scroll position when detail view updates
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                // Refresh data in background
-                self?.dataHandle.getCachedData()
-                self?.attendedHandle.getCachedData()
-                
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    // Update the band list with fresh data using high-priority function
-                    self.bands = getFilteredBandsImmediate(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
-                    
-                    // Deduplicate band names if no shows are present
-                    if eventCount == 0 {
-                        self.bands = self.deduplicatePreservingOrder(self.bands)
-                    }
-                    
-                    // Preserve scroll position when detail view updates
-                    self.reloadTablePreservingScroll()
-                    
-                    print("iPad: Band list updated after detail view priority change")
-                }
-            }
+            self.tableView.reloadData()
         }
     }
     
-    /// HIGH PRIORITY: Immediate update when priority changes occur
-    @objc func priorityChangeImmediate(_ notification: Notification) {
-        guard let bandName = notification.object as? String else { return }
-        
-        print("HIGH PRIORITY: Immediate priority change update for \(bandName)")
-        
-        // Immediately refresh cached data
+    @objc func iCloudDataReadyHandler() {
+        print("iCloud data ready, forcing reload of all caches and band file.")
+        bandNameHandle.readBandFile()
         dataHandle.getCachedData()
-        
-        // Update the band list immediately with high priority
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Force immediate refresh of the band list using high-priority function
-            self.bands = getFilteredBandsImmediate(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
-            
-            // Deduplicate band names if no shows are present
-            if eventCount == 0 {
-                self.bands = self.deduplicatePreservingOrder(self.bands)
-            }
-            
-            // Update counts and refresh table immediately
-            self.updateCountLable()
-            self.reloadTablePreservingScroll()
-            
-            print("HIGH PRIORITY: Band list immediately updated for priority change")
-        }
-    }
-    
-    // Debouncing mechanism to prevent rapid successive attended change updates
-    private var lastAttendedUpdateTime: TimeInterval = 0
-    private let attendedUpdateDebounceInterval: TimeInterval = 0.5 // 500ms debounce
-    
-    /// HIGH PRIORITY: Immediate update when attended changes occur
-    @objc func attendedChangeImmediate(_ notification: Notification) {
-        // The notification object might be nil for attended changes from ShowsAttended
-        let bandName = notification.object as? String
-        
-        // Debounce rapid successive updates
-        let currentTime = Date().timeIntervalSince1970
-        if currentTime - lastAttendedUpdateTime < attendedUpdateDebounceInterval {
-            print("HIGH PRIORITY: Debouncing attended change update for \(bandName ?? "unknown band") - too soon since last update")
-            return
-        }
-        lastAttendedUpdateTime = currentTime
-        
-        print("HIGH PRIORITY: Immediate attended change update for \(bandName ?? "unknown band")")
-        
-        // Immediately refresh cached data
         attendedHandle.getCachedData()
-        
-        // Update the band list immediately with high priority
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Force immediate refresh of the band list using high-priority function
-            self.bands = getFilteredBandsImmediate(bandNameHandle: self.bandNameHandle, schedule: self.schedule, dataHandle: self.dataHandle, attendedHandle: self.attendedHandle, searchCriteria: self.bandSearch.text ?? "")
-            
-            // Deduplicate band names if no shows are present
-            if eventCount == 0 {
-                self.bands = self.deduplicatePreservingOrder(self.bands)
-            }
-            
-            // Update counts and refresh table immediately
-            self.updateCountLable()
-            self.reloadTablePreservingScroll()
-            
-            print("HIGH PRIORITY: Band list immediately updated for attended change")
-        }
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        // Stop and clear the easter egg video if playing
-        if player.timeControlStatus == .playing || player.timeControlStatus == .paused {
-            player.pause()
-            playerLayer.removeFromSuperlayer()
-        }
-    }
-    
-    // Stop easter egg video if a list entry is clicked
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if player.timeControlStatus == .playing || player.timeControlStatus == .paused {
-            player.pause()
-            playerLayer.removeFromSuperlayer()
+        schedule.getCachedData()
+        DispatchQueue.main.async {
+            print("Calling refreshBandList from iCloudDataReadyHandler with reason: iCloud data ready (after forced reload)")
+            self.refreshBandList(reason: "iCloud data ready (after forced reload)")
         }
     }
     
@@ -2073,188 +1702,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func deduplicatePreservingOrder(_ array: [String]) -> [String] {
         var seen = Set<String>()
         return array.filter { seen.insert($0).inserted }
-    }
-    
-    /// Starts bulk loading operations for images and descriptions
-    private func startBulkLoadingOperations() {
-        let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-        DispatchQueue.global(qos: .background).async {
-            print("MasterViewController: Starting bulk loading operations")
-            let imageHandle = imageHandler.shared
-            let bandNotes = CustomBandDescription.shared
-            // Start bulk loading operations with immutable snapshot
-            imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-            bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-        }
-    }
-    
-    /// Handles year change notifications and ensures proper data loading sequence
-    @objc func handleYearChange() {
-        print("Year change detected - implementing parallel loading with immediate UI updates")
-        
-        // Step 1: Load band names and schedule in parallel with immediate UI updates
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Track completion status for both operations
-        var bandNamesLoaded = false
-        var scheduleLoaded = false
-        
-        // Add timeout to prevent indefinite blocking
-        let timeoutTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: false) { _ in
-            print("Year change: Timeout reached - updating UI with available data")
-            DispatchQueue.main.async {
-                self.refreshFromCache()
-                self.updateCountLable()
-                self.reloadTablePreservingScroll()
-            }
-        }
-        
-        // Function to check if we can update UI
-        let checkAndUpdateUI = {
-            if bandNamesLoaded && scheduleLoaded {
-                timeoutTimer.invalidate()
-                DispatchQueue.main.async {
-                    print("Year change: Both band names and schedule loaded - updating UI")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Start loading remaining data in background (non-blocking)
-                    self.startRemainingDataLoad()
-                }
-            } else if bandNamesLoaded || scheduleLoaded {
-                // Update UI with partial data to improve responsiveness
-                DispatchQueue.main.async {
-                    print("Year change: Partial data loaded - updating UI with available data")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                }
-            }
-        }
-        
-        // Load band names in parallel
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            print("Year change: Band names loaded")
-            bandNamesLoaded = true
-            checkAndUpdateUI()
-        }
-        
-        // Load schedule in parallel
-        coordinator.requestScheduleCollection(eventYearOverride: false) {
-            print("Year change: Schedule loaded")
-            scheduleLoaded = true
-            checkAndUpdateUI()
-        }
-    }
-    
-    /// Handles stats page errors by refreshing stats data and notifying user
-    @objc func handleStatsPageError() {
-        print("📊 MasterViewController: Handling stats page error")
-        
-        DispatchQueue.main.async {
-            // Show user feedback
-            let alert = UIAlertController(
-                title: NSLocalizedString("Stats Error", comment: "Stats error alert title"),
-                message: NSLocalizedString("There was an issue loading the stats page. Attempting to refresh the data.", comment: "Stats error alert message"),
-                preferredStyle: .alert
-            )
-            
-            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default))
-            
-            // Present the alert
-            if let topViewController = UIApplication.shared.keyWindow?.rootViewController {
-                var presentingViewController = topViewController
-                while let presented = presentingViewController.presentedViewController {
-                    presentingViewController = presented
-                }
-                presentingViewController.present(alert, animated: true)
-            }
-            
-            // Attempt to refresh stats data in background
-            DispatchQueue.global(qos: .background).async {
-                print("📊 Refreshing stats data in background")
-                // Add any stats-specific refresh logic here if needed
-                // For now, we'll just log the attempt
-            }
-        }
-    }
-    
-    /// Starts loading remaining data in background (non-blocking)
-    private func startRemainingDataLoad() {
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Load remaining data in parallel (lower priority, non-blocking)
-        coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-            print("Year change: Data handler loaded")
-        }
-        
-        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-            print("Year change: Shows attended loaded")
-        }
-        
-        coordinator.requestCustomBandDescriptionCollection(eventYearOverride: true) {
-            print("Year change: Custom band descriptions loaded")
-            
-            // Start bulk loading of images and descriptions in background
-            DispatchQueue.global(qos: .background).async {
-                print("Year change: Starting bulk loading of images and descriptions")
-                let imageHandle = imageHandler.shared
-                let bandNotes = CustomBandDescription.shared
-                
-                // Start bulk loading operations with immutable snapshot
-                let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-            }
-            
-            DispatchQueue.main.async {
-                print("Year change loading sequence complete")
-                if UIDevice.current.userInterfaceIdiom == .pad {
-                    // On iPad, force a complete refresh to update the side-by-side view
-                    self.refreshData(isUserInitiated: false, forceDownload: true, forceBandNameDownload: true)
-                    print("iPad: Complete refresh triggered after year change")
-                } else {
-                    // On iPhone, use normal refresh since screen changes trigger updates
-                    self.refreshData(isUserInitiated: false)
-                }
-            }
-        }
-    }
-    
-    // MARK: - Independent Data Collection Integration
-    
-    /// Use the new independent data collectors to avoid infinite loops and race conditions
-    private func loadDataWithIndependentCollectors() {
-        print("[MasterViewController] Using fallback data loading approach")
-        
-        // TEMPORARILY DISABLED - using fallback approach
-        // Start all collections in parallel with timeout
-        let timeoutWorkItem = DispatchWorkItem {
-            print("[MasterViewController] Fallback collection timeout - proceeding with available data")
-            DispatchQueue.main.async {
-                self.refreshFromCache()
-                self.updateCountLable()
-                self.reloadTablePreservingScroll()
-            }
-        }
-        
-        // Set 10-second timeout
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: timeoutWorkItem)
-        
-        // Simulate data loading completion
-        DispatchQueue.global(qos: .userInitiated).async {
-            // Simulate some work
-            Thread.sleep(forTimeInterval: 2)
-            
-            DispatchQueue.main.async {
-                timeoutWorkItem.cancel()
-                print("[MasterViewController] Fallback collection completed")
-                self.refreshFromCache()
-                self.updateCountLable()
-                self.reloadTablePreservingScroll()
-            }
-        }
     }
 }
 

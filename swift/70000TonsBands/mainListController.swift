@@ -65,37 +65,21 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     print ("sortedBy = \(sortedBy)")
     schedule.buildTimeSortedSchedulingData();
     print (schedule.getTimeSortedSchedulingData());
-    if (schedule.getBandSortedSchedulingData().isEmpty) {
-        print("WARNING: Band sorted scheduling data is empty")
-        return allBands
-    }
     if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
         print ("Sorting by name!!!");
         for bandName in schedule.getBandSortedSchedulingData().keys {
             unfilteredBandCount = unfilteredBandCount + 1
-            guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
-                print("WARNING: No bandDict for bandName: \(bandName)")
-                continue
-            }
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
                 unfilteredEventCount = unfilteredEventCount + 1
-                for timeIndex in bandDict.keys {
-                    guard let timeDict = bandDict[timeIndex] else {
-                        print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
-                        continue
-                    }
-                    guard let dateFieldValue = timeDict[dateField], let endTimeFieldValue = timeDict[endTimeField] else {
-                        print("WARNING: Missing dateField or endTimeField for bandName: \(bandName), timeIndex: \(timeIndex)")
-                        continue
-                    }
-                    var eventEndTime = schedule.getDateIndex(dateFieldValue, timeString: endTimeFieldValue, band: bandName)
+                for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
+                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
                         eventEndTime = eventEndTime + (3600*24)
                     }
                     if (eventEndTime > Date().timeIntervalSince1970  || getHideExpireScheduleData() == false){
                         totalUpcomingEvents += 1;
-                        if let typeValue = timeDict[typeField], !typeValue.isEmpty {
+                        if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(bandName + ":" + String(timeIndex));
                                 presentCheck.append(bandName);
@@ -105,8 +89,6 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                     eventCounterUnoffical = eventCounterUnoffical + 1
                                 }
                             }
-                        } else {
-                            print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
                         }
                     }
                 }
@@ -119,24 +101,19 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         print ("Sorting by time!!!");
         for timeIndex in schedule.getTimeSortedSchedulingData().keys {
             unfilteredEventCount = unfilteredEventCount + 1
-            guard let timeDict = schedule.getTimeSortedSchedulingData()[timeIndex], timeDict.isEmpty == false else {
-                continue
-            }
-            for bandName in timeDict.keys {
+            if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
+                for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys ?? [:].keys) {
                     unfilteredBandCount = unfilteredBandCount + 1
-                guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
-                    print("WARNING: No bandDict for bandName: \(bandName)")
-                    continue
-                }
-                guard let timeDictInner = bandDict[timeIndex] else {
-                    print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
-                    continue
-                }
-                guard let dateFieldValue = timeDictInner[dateField], let endTimeFieldValue = timeDictInner[endTimeField] else {
-                    print("WARNING: Missing dateField or endTimeField for bandName: \(bandName), timeIndex: \(timeIndex)")
-                    continue
-                }
-                var eventEndTime = schedule.getDateIndex(dateFieldValue, timeString: endTimeFieldValue, band: bandName)
+                    guard
+                        let bandData = schedule.getBandSortedSchedulingData()[bandName],
+                        let timeData = bandData[timeIndex],
+                        let dateValue = timeData[dateField],
+                        let endTimeValue = timeData[endTimeField]
+                    else {
+                        print("Nil found for band: \(bandName), timeIndex: \(timeIndex)")
+                        continue
+                    }
+                    var eventEndTime = schedule.getDateIndex(dateValue, timeString: endTimeValue, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
                         eventEndTime = eventEndTime + (3600*24)
@@ -144,38 +121,27 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     if (eventEndTime > Date().timeIntervalSince1970 || getHideExpireScheduleData() == false){
                         unfilteredCurrentEventCount = unfilteredCurrentEventCount + 1
                         totalUpcomingEvents += 1;
-                    if let typeValue = timeDictInner[typeField], !typeValue.isEmpty {
+                        if let typeValue = schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField], !typeValue.isEmpty {
                             if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
+                                
                                 let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
-                                let location = " " + schedule.getData(bandName, index:timeIndex, variable: locationField)
+                                let location = schedule.getData(bandName, index:timeIndex, variable: locationField)
                                 let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
                                 let indexText = bandName + ";" + location + ";" + event + ";" + startTime
-                                // Defensive: Ensure bandName is valid before using as dictionary key
-                                if !bandName.isEmpty && bandName.count < 1000 { // Reasonable length check
-                                    let key = String(timeIndex) + ":" + bandName
-                                    
-                                    // Defensive check: ensure timeIndexMap is actually a dictionary
-                                    guard timeIndexMap is [String: String] else {
-                                        print("CRITICAL ERROR: timeIndexMap is corrupted, type: \(type(of: timeIndexMap))")
-                                        // Reset the corrupted dictionary
-                                        timeIndexMap = [String: String]()
-                                    }
-                                    
-                                    setTimeIndexMapValue(key: key, value: indexText)
-                                } else {
-                                    print("WARNING: Invalid bandName for timeIndexMap key: '\(bandName)'")
-                                }
+                                timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
                                 eventCounter = eventCounter + 1
                                 if (event == unofficalEventType){
                                     eventCounterUnoffical = eventCounterUnoffical + 1
                                 }
                             }
-                    } else {
-                        print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
                         }
                     }
+                }
+            } else {
+                unfilteredBandCount = unfilteredBandCount + 1
+                newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
             }
         }
         bandCount = 0;
@@ -189,6 +155,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         bandCount = newAllBands.count;
         eventCount = 0;
         bandCounter = allBands.count
+        
+        print ("determineBandOrScheduleList is returning \(newAllBands.count) entries -1 ")
         return newAllBands
     }
 
@@ -199,8 +167,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         //newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
-    // Only add bands without shows if NOT in Show Flagged Events Only mode
-    if (schedule.getTimeSortedSchedulingData().count >= 1 && getShowOnlyWillAttened() == false){
+    if (schedule.getTimeSortedSchedulingData().count >= 1 ){
+        //add any bands without shows to the bottom of the list
         bandCounter = 0
         unfilteredBandCount = 0
         for bandName in allBands {
@@ -216,68 +184,44 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         }
     }
     
+    print ("determineBandOrScheduleList is returning \(newAllBands.count) entries")
     //unfilteredBandCount = unfilteredBandCount - unfilteredCruiserEventCount
     return newAllBands
 }
 
 func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended)-> Bool{
-    // Defensive: Ensure correct types
-    guard type(of: bandName) == String.self else {
-        print("ERROR: applyFilters called with non-String bandName: \(bandName) (type: \(type(of: bandName)))")
-        return false
-    }
-    guard type(of: timeIndex) == Double.self else {
-        print("ERROR: applyFilters called with non-Double timeIndex: \(timeIndex) (type: \(type(of: timeIndex)))")
-        return false
-    }
-    // Special case: band with no events (timeIndex == 0)
-    if timeIndex == 0 {
-        if getShowOnlyWillAttened() == true {
-            // In flagged-only mode, do not show bands with no events
-            return false
-        }
-        // Only apply rank filtering otherwise
-        return rankFiltering(bandName, dataHandle: dataHandle)
-    }
-    // Defensive: Check for nil in bandDict and timeDict
-    guard let bandDict = schedule.getBandSortedSchedulingData()[bandName] else {
-        print("WARNING: No bandDict for bandName: \(bandName)")
-        return false
-    }
-    guard let timeDict = bandDict[timeIndex] else {
-        print("WARNING: No timeDict for bandName: \(bandName), timeIndex: \(timeIndex)")
-        return false
-    }
-    guard let typeValue = timeDict[typeField], !typeValue.isEmpty else {
-        print("WARNING: No typeField for bandName: \(bandName), timeIndex: \(timeIndex)")
-        return false
-    }
     var include = false;
-    
     if (timeIndex.isZero == false){
-        
         if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle) == true){
             attendingCount = attendingCount + 1;
             print ("attendingCount is \(attendingCount) after adding 1")
         }
-        
         if (getShowOnlyWillAttened() == true){
             include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle);
-        
         } else {
+            guard
+                let bandData = schedule.getBandSortedSchedulingData()[bandName],
+                let timeData = bandData[timeIndex],
+                let typeValue = timeData[typeField], !typeValue.isEmpty
+            else {
+                print("applyFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
+                return false
+            }
             let eventType = typeValue
             if (eventType == unofficalEventType){
                 unfilteredCruiserEventCount = unfilteredCruiserEventCount + 1
             }
             if (eventTypeFiltering(eventType) == true){
-                if (schedule.getBandSortedSchedulingData().isEmpty == false){
-                    if let locationValue = timeDict[locationField], venueFiltering(locationValue) == true {
+                if (!bandData.isEmpty) {
+                    if let locationValue = timeData[locationField], venueFiltering(locationValue) == true {
                         if (rankFiltering(bandName, dataHandle: dataHandle) == true){
                             if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
                                 unofficalEventCount = unofficalEventCount + 1
                             }
                             include = true
                         }
+                    } else {
+                        print("applyFilters: Missing or invalid location for band: \(bandName), timeIndex: \(timeIndex)")
                     }
                 }
             }
@@ -287,41 +231,34 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
             include = rankFiltering(bandName, dataHandle: dataHandle);
         }
     }
-    
     return include
 }
 
-func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended, searchCriteria: String) -> [String] {
-    
-    let allBands = bandNameHandle.getBandNames()
+// Add a serial queue for filtering
+let filterQueue = DispatchQueue(label: "com.yourapp.filterQueue")
 
+// Refactored getFilteredBands to use serial queue and completion handler
+func getFilteredBands(
+    bandNameHandle: bandNamesHandler,
+    schedule: scheduleHandler,
+    dataHandle: dataHandler,
+    attendedHandle: ShowsAttended,
+    searchCriteria: String,
+    completion: @escaping ([String]) -> Void
+) {
+    filterQueue.async {
+    let allBands = bandNameHandle.getBandNames()
     var sortedBy = getSortedBy()
-    
-    //set default if empty
     if (sortedBy.isEmpty == true){
         sortedBy = "time"
     }
-    
     var filteredBands = [String]()
-    
     var newAllBands = [String]()
-    
     filteredBandCount = 0
     unfilteredBandCount = 0
-    
-    if (isGetFilteredBands == true){
-        while (isGetFilteredBands == true){
-            sleep(1);
-        }
-    } else {
- 
-        isGetFilteredBands = true;
-
         newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
-        
         if (getShowOnlyWillAttened() == true){
             filteredBands = newAllBands;
-            
             if (searchCriteria != ""){
                 var newFilteredBands = [String]()
                 for bandNameIndex in filteredBands {
@@ -331,11 +268,9 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
                 }
                 filteredBands = newFilteredBands
             }
-            
         } else {
             for bandNameIndex in newAllBands {
                 let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
-                
                 if (searchCriteria != ""){
                     if (bandName.contains(searchCriteria) == false){
                         continue
@@ -346,137 +281,37 @@ func getFilteredBands(bandNameHandle: bandNamesHandler, schedule: scheduleHandle
                     if (getMustSeeOn() == true){
                         filteredBands.append(bandNameIndex)
                     }
-                
                 case 2:
                     if (getMightSeeOn() == true){
                         filteredBands.append(bandNameIndex)
                     }
-                    
                 case 3:
                     if (getWontSeeOn() == true){
                         filteredBands.append(bandNameIndex)
                     }
-                    
                 case 0:
                     if (getUnknownSeeOn() == true){
                         filteredBands.append(bandNameIndex)
                     }
-                    
                 default:
                     print("Encountered unexpected value of ", terminator: "")
                     print (dataHandle.getPriorityData(bandName))
                 }
             }
-        }
-        isGetFilteredBands = false;
     }
     filteredBandCount = filteredBands.count
-
     if (filteredBandCount == 0){
-        print ("handleEmptryList: Why is this being called 1")
+            print ("mainListDebug: handleEmptryList: Why is this being called 1")
         filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
     } else {
         bandCounter = filteredBands.count
         listCount = filteredBands.count
     }
-    
-    print ("listCount is \(listCount) - 2")
-    return filteredBands
-}
-
-/// HIGH PRIORITY: Immediate filtering function that bypasses delays for priority/attended changes
-func getFilteredBandsImmediate(bandNameHandle: bandNamesHandler, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended, searchCriteria: String) -> [String] {
-    
-    let allBands = bandNameHandle.getBandNames()
-
-    var sortedBy = getSortedBy()
-    
-    //set default if empty
-    if (sortedBy.isEmpty == true){
-        sortedBy = "time"
-    }
-    
-    var filteredBands = [String]()
-    
-    var newAllBands = [String]()
-    
-    filteredBandCount = 0
-    unfilteredBandCount = 0
-    
-    // HIGH PRIORITY: Skip the blocking check for immediate updates
-    // if (isGetFilteredBands == true){
-    //     while (isGetFilteredBands == true){
-    //         sleep(1);
-    //     }
-    // } else {
- 
-    // isGetFilteredBands = true;
-
-    newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
-    
-    if (getShowOnlyWillAttened() == true){
-        filteredBands = newAllBands;
-        
-        if (searchCriteria != ""){
-            var newFilteredBands = [String]()
-            for bandNameIndex in filteredBands {
-                if (bandNameIndex.contains(searchCriteria) == true){
-                    newFilteredBands.append(bandNameIndex)
-                }
-            }
-            filteredBands = newFilteredBands
-        }
-        
-    } else {
-        for bandNameIndex in newAllBands {
-            let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
-            
-            if (searchCriteria != ""){
-                if (bandName.contains(searchCriteria) == false){
-                    continue
-                }
-            }
-            switch dataHandle.getPriorityData(bandName) {
-            case 1:
-                if (getMustSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-            
-            case 2:
-                if (getMightSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            case 3:
-                if (getWontSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            case 0:
-                if (getUnknownSeeOn() == true){
-                    filteredBands.append(bandNameIndex)
-                }
-                
-            default:
-                print("Encountered unexpected value of ", terminator: "")
-                print (dataHandle.getPriorityData(bandName))
-            }
+        print ("mainListDebug: listCount is \(listCount) - 2")
+        DispatchQueue.main.async {
+            completion(filteredBands)
         }
     }
-    // isGetFilteredBands = false;
-    // }
-    filteredBandCount = filteredBands.count
-
-    if (filteredBandCount == 0){
-        print ("handleEmptryList: Why is this being called 1")
-        filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
-    } else {
-        bandCounter = filteredBands.count
-        listCount = filteredBands.count
-    }
-    
-    print ("HIGH PRIORITY: Immediate listCount is \(listCount) - 2")
-    return filteredBands
 }
 
 func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
@@ -498,45 +333,32 @@ func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
 }
 
 func getNameFromSortable(_ value: String, sortedBy: String) -> String{
-    
     let indexString = value.components(separatedBy: ":")
     var bandName = String();
-    
     if (indexString.count == 2){
-        
-        if ((indexString[0].doubleValue) != nil){
+        if let _ = indexString[0].doubleValue {
             bandName = indexString[1];
-            
-        } else if ((indexString[1].doubleValue) != nil){
+        } else if let _ = indexString[1].doubleValue {
             bandName = indexString[0];
-            
         } else {
             bandName = value
         }
-        
     } else {
         bandName = value
     }
-    
     return bandName;
 }
 
 func getTimeFromSortable(_ value: String, sortBy: String) -> Double{
-    
     let indexString = value.components(separatedBy: ":")
     var timeIndex = Double()
-    
     if (indexString.count == 2){
-        
-        if ((indexString[0].doubleValue) != nil){
-            timeIndex = Double(indexString[0])!;
-            
-        } else if ((indexString[1].doubleValue) != nil){
-            timeIndex = Double(indexString[1])!;
-            
+        if let first = indexString[0].doubleValue {
+            timeIndex = first
+        } else if let second = indexString[1].doubleValue {
+            timeIndex = second
         }
     }
-    
     return timeIndex;
 }
 
@@ -584,32 +406,32 @@ func rankFiltering(_ bandName: String, dataHandle: dataHandler) -> Bool {
 }
 
 func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: scheduleHandler, attendedHandle: ShowsAttended) -> Bool{
-
-    var showEvent = true;
-
-    let eventType = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![typeField]!
-    let location = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![locationField]!
-    let startTime = schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![startTimeField]!
-
-    if (timeIndex.isZero){
+    var showEvent = true
+    guard
+        let bandData = schedule.getBandSortedSchedulingData()[bandName],
+        let timeData = bandData[timeIndex],
+        let eventType = timeData[typeField],
+        let location = timeData[locationField],
+        let startTime = timeData[startTimeField]
+    else {
+        print("willAttenedFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
+        return false
+    }
+    if timeIndex.isZero {
         showEvent = false
-    
     } else {
-        // Prevent infinite loop by checking if attended data is ready
-        let showsAttended = attendedHandle.getShowsAttended()
-        if showsAttended.isEmpty {
-            print("mainListController: Skipping attended filtering - data not ready yet")
-            showEvent = true // Default to showing the event when data isn't ready
-        } else {
-            let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
-
-            if (status == sawNoneStatus){
-                showEvent = false
-            }
+        let status = attendedHandle.getShowAttendedStatus(
+            band: bandName,
+            location: location,
+            startTime: startTime,
+            eventType: eventType,
+            eventYearString: String(eventYear)
+        )
+        if status == sawNoneStatus {
+            showEvent = false
         }
     }
-
-    return showEvent;
+    return showEvent
 }
 
 func eventTypeFiltering(_ eventType: String) -> Bool{
@@ -850,27 +672,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         //bandNameNoSchedule.isHidden = true
         
     } else {
-        // Check if the band has any future shows (not just any shows)
-        let now = Date().timeIntervalSince1970
-        var hasFutureShow = false
-        if let bandSchedule = schedule.getBandSortedSchedulingData()[bandName] {
-            for (showTime, showData) in bandSchedule {
-                // Only consider shows in the future
-                if showTime > now {
-                    // Check if this show would be filtered out (e.g., by willAttenedFilters or other logic)
-                    // If it would be shown, then we should NOT show the band name only
-                    // If it would be filtered, we should NOT show the band at all
-                    hasFutureShow = true
-                    break
-                }
-            }
-        }
-        if hasFutureShow {
-            // Do not hide the cell; instead, do nothing so the cell is empty or not present in the bands array
-            // cell.isHidden = true // REMOVED to fix scroll area issue
-            return
-        }
-        // Otherwise, show only the band name (no future shows)
         rankLocationSchedule = false
         print ("Not display schedule for band " + bandName)
         scheduleButton = true
@@ -884,6 +685,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         bandNameNoSchedule.text = bandName
         bandNameNoSchedule.isHidden = false  
         bandNameView.isHidden = true
+
     }
     
     indexForCell.text = indexText;
@@ -915,88 +717,85 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     if (firstBandName.isEmpty == true){
         firstBandName  = bandName;
     }
-    // At the end of getCellValue, after setting rankLocationSchedule:
-    // Remove any existing custom separator
-    cell.contentView.viewWithTag(9999)?.removeFromSuperview()
-    if rankLocationSchedule {
-        // Add custom separator for schedule rows
-        let separator = UIView(frame: CGRect(x: 15, y: cell.contentView.frame.height - 1, width: cell.contentView.frame.width - 30, height: 1))
-        separator.backgroundColor = UIColor.lightGray
-        separator.autoresizingMask = [.flexibleWidth, .flexibleTopMargin]
-        separator.tag = 9999
-        cell.contentView.addSubview(separator)
-    }
 }
 
 
 func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel, notes: String){
-    // Use a single colored marker followed by one space, then the venue info
-    let marker = " "
-    let locationString = marker + "  " + location // marker, then one space, then venue
-    let venueString = NSMutableAttributedString(string: locationString)
-    let locationColor = getVenueColor(venue: location)
 
-    // Colored marker: fixed 17pt bold font, background color
-    venueString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:1,length:1))
-    venueString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:1,length:1))
-
-    // Venue text: consistent font size (16pt), light gray
-    if location.count > 0 && locationString.count > 2 {
-        let range = NSRange(location: 2, length: location.count + 1)
-        if NSMaxRange(range) <= locationString.count {
-            venueString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: range)
-            venueString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: range)
-        }
+    //print ("not 1st entry Checking if bandname \(bandName) matched previous bandname \(previousBandName) - \(nextBandName) index for cell \(indexRow) - \(scrollDirection)")
+    var locationString = "  " + location
+    var venueString = NSMutableAttributedString(string: locationString)
+    var locationColor = getVenueColor(venue: location)
+    
+    // First space - colored marker with fixed 17pt font
+    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    
+    // Location text (after the two spaces) - variable size font (12-16pt)
+    if location.count > 0 {
+        let locationTextSize = calculateOptimalFontSize(for: location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
+        venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: location.count))
+        venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: location.count))
     }
-
+    
+    // Disable font auto-sizing to preserve our 17pt marker
     bandNameView.adjustsFontSizeToFitWidth = false
     bandNameView.attributedText = venueString
     bandNameView.isHidden = false;
-
-    // Second line: venueLocation/notes, same logic
-    let venueLocationText = (venueLocation[location] ?? "")
-    var locationOfVenue = marker + " " + venueLocationText
-    if !notes.trimmingCharacters(in: .whitespaces).isEmpty {
+    
+    var locationOfVenue = "  " + (venueLocation[location] ?? "")
+    if (notes.isEmpty == false && notes != " "){
         locationOfVenue += " " + notes
     }
-    let locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
-    locationOfVenueString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    locationOfVenueString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    
+    var locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+    
+    // First space - colored marker with fixed 17pt font
+    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    
+    // Venue text (after the two spaces) - variable size font (12-16pt)
     if locationOfVenue.count > 2 {
-        let range = NSRange(location: 2, length: locationOfVenue.count - 2)
-        if NSMaxRange(range) <= locationOfVenue.count {
-            locationOfVenueString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: range)
-            locationOfVenueString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: range)
-        }
+        let venueText = String(locationOfVenue.dropFirst(2)) // Remove the two spaces
+        let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+        locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location:2,length: locationOfVenue.count - 2))
+        locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationOfVenue.count - 2))
     }
+
+    // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = locationOfVenueString
+    
+    //setup bandname for use is access the details screen
     bandNameNoSchedule.text = bandName
     bandNameNoSchedule.isHidden = true
 }
 
 func getCellScheduleValueFullInfo(bandName: String, location: String, locationText: String, bandNameView: UILabel, locationView: UILabel, bandNameNoSchedule: UILabel){
-    // Use a single space as the colored marker
-    let marker = " "
-    let locationString = marker + " " + locationText
-    let myMutableString = NSMutableAttributedString(string: locationString)
-    let locationColor = getVenueColor(venue: location)
 
-    // Colored marker: fixed 17pt bold font, background color
-    myMutableString.addAttribute(.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
-    myMutableString.addAttribute(.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
-
-    // Venue text: consistent font size (16pt), light gray
+    var locationString = "  " + locationText
+    var myMutableString = NSMutableAttributedString(string: locationString)
+    var locationColor = getVenueColor(venue: location)
+    
+    // First space - colored marker with fixed 17pt font
+    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location:0,length:1))
+    myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: locationColor, range: NSRange(location:0,length:1))
+    
+    // Location text (after the two spaces) - variable size font (12-16pt)
     if locationText.count > 0 {
-        myMutableString.addAttribute(.font, value: UIFont.systemFont(ofSize: 16), range: NSRange(location:1,length: locationText.count))
-        myMutableString.addAttribute(.foregroundColor, value: UIColor.lightGray, range: NSRange(location:1,length: locationText.count))
+        let locationTextSize = calculateOptimalFontSize(for: locationText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+        myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location:2,length: locationText.count))
+        myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location:2,length: locationText.count))
     }
+
     bandNameView.backgroundColor = UIColor.black;
+    // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
     locationView.attributedText = myMutableString
     bandNameView.isHidden = false
     bandNameNoSchedule.isHidden = true
     bandNameNoSchedule.text = ""
+    
 }
 
 func calculateOptimalFontSize(for text: String, in label: UILabel, markerWidth: CGFloat, maxSize: CGFloat, minSize: CGFloat) -> CGFloat {
