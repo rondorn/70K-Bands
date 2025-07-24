@@ -14,7 +14,7 @@ import FirebaseCore
 import FirebaseMessaging
 import Foundation
 
-let appDelegate : AppDelegate = UIApplication.shared.delegate as! AppDelegate
+let appDelegate : AppDelegate? = UIApplication.shared.delegate as? AppDelegate
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
@@ -51,20 +51,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let splitViewController = storyboard.instantiateInitialViewController() as! UISplitViewController
-        self.window?.rootViewController = splitViewController
-        
-        // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            self.window?.makeKeyAndVisible()
+        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
+            self.window?.rootViewController = splitViewController
+            // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                self.window?.makeKeyAndVisible()
+            }
+            if let navigationController = splitViewController.viewControllers.last as? UINavigationController {
+                splitViewController.delegate = self
+                setupDefaults()
+                
+                // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
+                // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
+                
+                if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+                   let controller = masterNavigationController.viewControllers.first as? MasterViewController {
+                    controller.managedObjectContext = self.managedObjectContext
+                } else {
+                    print("Error: Could not get MasterViewController from navigation stack.")
+                }
+            } else {
+                print("Error: Could not get UINavigationController from splitViewController.")
+            }
+        } else {
+            print("Error: Could not instantiate UISplitViewController from storyboard.")
         }
-
-        let navigationController = splitViewController.viewControllers[splitViewController.viewControllers.count-1] as! UINavigationController
-        // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
-        // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
-        splitViewController.delegate = self
-
-        setupDefaults()
         
         // Register default UserDefaults values including iCloud setting
         let defaults = ["artistUrl": "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1",
@@ -118,10 +129,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Test iCloud availability and log status
         print("iCloud: Testing iCloud setup...")
         
-        let masterNavigationController = splitViewController.viewControllers[0] as! UINavigationController
-        let controller = masterNavigationController.viewControllers[0] as! MasterViewController
-        controller.managedObjectContext = self.managedObjectContext
-    
         setupCurrentYearUrls()
         
 
@@ -156,9 +163,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //generate user data
         print ("Firebase, calling ")
 
-        // Mark app as no longer just launched
-        cacheVariables.justLaunched = false
-
         return true
     
     }
@@ -189,13 +193,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let alertCtrl = UIAlertController(title: "70K Bands", message: message, preferredStyle: UIAlertController.Style.alert)
         alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
-            // Find the presented VC...
-            var presentedVC = self.window?.rootViewController
-            while (presentedVC!.presentedViewController != nil)  {
-                presentedVC = presentedVC!.presentedViewController}
-        
-            presentedVC!.present(alertCtrl, animated: true, completion: nil)
+        var presentedVC = self.window?.rootViewController
+        while let nextVC = presentedVC?.presentedViewController {
+            presentedVC = nextVC
+        }
+        if let presentedVC = presentedVC {
+            presentedVC.present(alertCtrl, animated: true, completion: nil)
             notificationDisplayed = true;
+        } else {
+            print("Error: No root view controller to present alert.")
+        }
         //}
         
     }
@@ -518,37 +525,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }()
 
     lazy var managedObjectModel: NSManagedObjectModel = {
-        // The managed object model for the application. This property is not optional. It is a fatal error for the application not to be able to find and load its model.
-        let modelURL = Bundle.main.url(forResource: "_0000TonsBands", withExtension: "momd")!
-        return NSManagedObjectModel(contentsOf: modelURL)!
+        let modelURL = Bundle.main.url(forResource: "_0000TonsBands", withExtension: "momd")
+        guard let url = modelURL else {
+            fatalError("Failed to find model URL for _0000TonsBands.momd")
+        }
+        guard let model = NSManagedObjectModel(contentsOf: url) else {
+            fatalError("Failed to load managed object model from \(url)")
+        }
+        return model
     }()
 
     lazy var persistentStoreCoordinator: NSPersistentStoreCoordinator? = {
-        // The persistent store coordinator for the application. This implementation creates and return a coordinator, having added the store for the application to it. This property is optional since there are legitimate error conditions that could cause the creation of the store to fail.
-        // Create the coordinator and store
-        var coordinator: NSPersistentStoreCoordinator? = NSPersistentStoreCoordinator(managedObjectModel: self.managedObjectModel)
+        let coordinator = NSPersistentStoreCoordinator(managedObjectModel: self.managedObjectModel)
         let url = self.applicationDocumentsDirectory.appendingPathComponent("_0000TonsBands.sqlite")
-        var error: NSError? = nil
-        var failureReason = "There was an error creating or loading the application's saved data."
         do {
-            try coordinator!.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: url, options: nil)
-        } catch var error1 as NSError {
-            error = error1
-            coordinator = nil
-            // Report any error we got.
-            var dict = [String: AnyObject]()
-            dict[NSLocalizedDescriptionKey] = "Failed to initialize the application's saved data" as AnyObject
-            dict[NSLocalizedFailureReasonErrorKey] = failureReason as AnyObject
-            dict[NSUnderlyingErrorKey] = error
-            error = NSError(domain: "YOUR_ERROR_DOMAIN", code: 9999, userInfo: dict)
-            // Replace this with code to handle the error appropriately.
-            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            //NSLog("Unresolved error \(error ?? <#default value#>), \(error!.userInfo)")
-            abort()
+            try coordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: url, options: nil)
         } catch {
-            fatalError()
+            print("Unresolved error adding persistent store: \(error)")
+            return nil
         }
-        
         return coordinator
     }()
 

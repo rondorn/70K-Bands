@@ -72,71 +72,10 @@ var currentBandList = [String]()
 
 var downloadingAllComments = false
 var downloadingAllImages = false
-var bulkLoadingPaused = false
 var bandSelected = String();
 var eventSelectedIndex = String();
 
-// Thread-safe wrapper for timeIndexMap to prevent corruption
-private var _timeIndexMap: [String: String] = [String: String]()
-private let timeIndexMapLock = NSLock()
-
-var timeIndexMap: [String: String] {
-    get {
-        timeIndexMapLock.lock()
-        defer { timeIndexMapLock.unlock() }
-        
-        // Defensive check: ensure the dictionary is not corrupted
-        guard _timeIndexMap is [String: String] else {
-            print("CRITICAL ERROR: _timeIndexMap is corrupted, type: \(type(of: _timeIndexMap))")
-            _timeIndexMap = [String: String]()
-            return [String: String]()
-        }
-        
-        return _timeIndexMap
-    }
-    set {
-        timeIndexMapLock.lock()
-        defer { timeIndexMapLock.unlock() }
-        
-        // Defensive check: ensure we're setting a valid dictionary
-        guard newValue is [String: String] else {
-            print("CRITICAL ERROR: Attempting to set timeIndexMap with invalid type: \(type(of: newValue))")
-            _timeIndexMap = [String: String]()
-            return
-        }
-        
-        _timeIndexMap = newValue
-    }
-}
-
-// Thread-safe method to set individual key-value pairs
-func setTimeIndexMapValue(key: String, value: String) {
-    timeIndexMapLock.lock()
-    defer { timeIndexMapLock.unlock() }
-    
-    // Defensive check: ensure the dictionary is not corrupted
-    guard _timeIndexMap is [String: String] else {
-        print("CRITICAL ERROR: _timeIndexMap is corrupted in setTimeIndexMapValue, type: \(type(of: _timeIndexMap))")
-        _timeIndexMap = [String: String]()
-    }
-    
-    _timeIndexMap[key] = value
-}
-
-// Thread-safe method to get individual values
-func getTimeIndexMapValue(key: String) -> String? {
-    timeIndexMapLock.lock()
-    defer { timeIndexMapLock.unlock() }
-    
-    // Defensive check: ensure the dictionary is not corrupted
-    guard _timeIndexMap is [String: String] else {
-        print("CRITICAL ERROR: _timeIndexMap is corrupted in getTimeIndexMapValue, type: \(type(of: _timeIndexMap))")
-        _timeIndexMap = [String: String]()
-        return nil
-    }
-    
-    return _timeIndexMap[key]
-}
+var timeIndexMap : [String:String] = [String:String]();
 
 var inTestEnvironment = false;
 
@@ -150,17 +89,7 @@ let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
 let staticBandName = DispatchQueue(label: "staticBandName")
-let staticData = DispatchQueue(label: "staticData", attributes: .concurrent)
-let staticDataKey = DispatchSpecificKey<Void>()
-
-private struct StaticDataInitializer {
-    static let initialize: Void = {
-        staticData.setSpecific(key: staticDataKey, value: ())
-    }()
-}
-
-// Force initialization at launch
-//private let _ = StaticDataInitializer.initialize
+let staticData = DispatchQueue(label: "staticData")
 let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 
@@ -275,7 +204,6 @@ let subscriptionUnofficalTopic = "unofficalEvents"
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
 
 let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
-let priorityFile = getDocumentsDirectory().appendingPathComponent("priorityFile.txt")
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
@@ -295,8 +223,8 @@ let testingSetting = "Testing"
 var userCountry = ""
 var didNotFindMarkedEventsCount = 0
 var defaultStorageUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/productionPointer.txt"
-var defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
-let statsUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/report_dashboard.html"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&st=bvyfmaib&raw=1"
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
@@ -387,11 +315,9 @@ func getPointerUrlData(keyValue: String) -> String {
 
     print ("Files were Done setting 2 \(pointerIndex)")
     if (dataString.isEmpty == true){
-            print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
-    print ("[BAND_DEBUG] getPointerUrlData: defaultStorageUrl = \(defaultStorageUrl)")
-    let httpData = getUrlData(urlString: defaultStorageUrl)
-    print ("getPointerUrlData: httpData for pointers data = \(httpData)")
-    print ("[BAND_DEBUG] getPointerUrlData: httpData length = \(httpData.count)")
+        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
+        let httpData = getUrlData(urlString: defaultStorageUrl)
+        print ("getPointerUrlData: httpData for pointers data = \(httpData)")
         if (httpData.isEmpty == false){
             
             let dataArray = httpData.components(separatedBy: "\n")
