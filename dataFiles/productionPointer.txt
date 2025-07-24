@@ -1,14 +1,14 @@
-Default::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistLineup_2026.csv
-Default::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2026.csv
+Default::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistLineup_2026.csv
+Default::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistSchedule2026.csv
 Default::eventYear::2026
-Default::descriptionMap::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/descriptionMap2026.csv
-Default::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/report_dashboard.html
+Default::descriptionMap::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/descriptionMap2026.csv
+Default::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/report_dashboard.html
 
-Current::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistLineup_2026.csv
-Current::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2026.csv
+Current::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistLineup_2026.csv
+Current::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistSchedule2026.csv
 Current::eventYear::2026
-Current::descriptionMap::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/descriptionMap2026.csv
-Current::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/report_dashboard.html
+Current::descriptionMap::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/descriptionMap2026.csv
+Current::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/report_dashboard.html
 
 2025::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistLineup_2025.csv
 2025::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2025.csv

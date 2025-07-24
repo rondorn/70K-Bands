@@ -1401,49 +1401,62 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
         let fileManager = FileManager.default
-        let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            showAlert("Error", message: "Could not access documents directory.")
+            return
+        }
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
 
-        // Always present the web view immediately
+        // Check if we already have a web view controller displayed
+        let currentWebViewController = getCurrentWebViewController()
         let fileExists = fileManager.fileExists(atPath: fileUrl.path)
-        presentWebView(url: fileUrl.absoluteString, isLoading: !fileExists)
+        
+        // Only present the web view if we don't already have one
+        if currentWebViewController == nil {
+            presentWebView(url: fileUrl.absoluteString, isLoading: !fileExists)
+        }
 
         // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
             let dynamicStatsUrl = getPointerUrlData(keyValue: "reportUrl")
             print("[YEAR_CHANGE_DEBUG] statsButtonTapped: Retrieved reportUrl: \(dynamicStatsUrl)")
             if let url = URL(string: dynamicStatsUrl) {
-                let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-                if let data = data {
-                    do {
-                        try data.write(to: fileUrl)
-                        // Refresh the currently displayed web view if it exists
-                        DispatchQueue.main.async {
-                            if let currentWebViewController = self.getCurrentWebViewController() {
-                                let request = URLRequest(url: fileUrl)
-                                currentWebViewController.webDisplay.load(request)
-                            } else {
-                                // If no cached content was shown initially, present the web view now
-                                self.presentWebView(url: fileUrl.absoluteString, isLoading: false)
+                let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
+                    guard let self = self else { return }
+                    
+                    if let data = data {
+                        do {
+                            try data.write(to: fileUrl)
+                            // Refresh the currently displayed web view if it exists
+                            DispatchQueue.main.async {
+                                if let currentWebViewController = self.getCurrentWebViewController(),
+                                   let webDisplay = currentWebViewController.webDisplay {
+                                    let request = URLRequest(url: fileUrl)
+                                    webDisplay.load(request)
+                                }
+                                // Note: We don't present a new web view here since we already have one
+                            }
+                        } catch {
+                            // Only show error if we didn't already show cached content
+                            if !fileExists {
+                                DispatchQueue.main.async {
+                                    self.presentNoDataView(message: "Could not save stats file.")
+                                }
                             }
                         }
-                    } catch {
+                    } else {
                         // Only show error if we didn't already show cached content
                         if !fileExists {
-                            self.presentNoDataView(message: "Could not save stats file.")
+                            DispatchQueue.main.async {
+                                self.presentNoDataView(message: "Could not download stats data.")
+                            }
                         }
                     }
-                } else {
-                    // Only show error if we didn't already show cached content
-                    if !fileExists {
-                        self.presentNoDataView(message: "Could not download stats data.")
-                    }
                 }
+                task.resume()
+            } else {
+                print("Invalid stats URL: \(dynamicStatsUrl)")
             }
-            task.resume()
-        } else {
-            print("Invalid stats URL: \(dynamicStatsUrl)")
-        }
         } else if !fileExists {
             // Only show no data message if there's no cached file
             presentNoDataView(message: "No stats data available. Please connect to the internet to download stats.")
@@ -1529,7 +1542,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // Write the HTML content to a temporary file
                 let fileManager = FileManager.default
-                let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                    // Fallback to basic alert if we can't get documents directory
+                    self.showAlert("No Stats Data", message: message)
+                    return
+                }
                 let tempUrl = documentsUrl.appendingPathComponent("no_stats.html")
                 do {
                     try htmlContent.write(to: tempUrl, atomically: true, encoding: .utf8)
@@ -1618,7 +1635,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     </html>
                     """
                     let fileManager = FileManager.default
-                    let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+                    guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                        // Fallback to basic alert if we can't get documents directory
+                        self.showAlert("Loading Stats", message: "Please wait while stats are being downloaded...")
+                        return
+                    }
                     let tempUrl = documentsUrl.appendingPathComponent("loading_stats.html")
                     do {
                         try htmlContent.write(to: tempUrl, atomically: true, encoding: .utf8)
