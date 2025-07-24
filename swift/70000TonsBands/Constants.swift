@@ -222,7 +222,7 @@ let testingSetting = "Testing"
 
 var userCountry = ""
 var didNotFindMarkedEventsCount = 0
-var defaultStorageUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest//dataFiles/productionPointer.txt"
+var defaultStorageUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest//dataFiles/productionPointer_2026.txt"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 let statsUrl = getPointerUrlData(keyValue: "reportUrl")
 
