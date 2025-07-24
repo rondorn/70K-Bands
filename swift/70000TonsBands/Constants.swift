@@ -222,7 +222,7 @@ let testingSetting = "Testing"
 
 var userCountry = ""
 var didNotFindMarkedEventsCount = 0
-var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
+var defaultStorageUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/productionPointer.txt"
 let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&st=bvyfmaib&raw=1"
 
