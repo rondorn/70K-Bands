@@ -1,0 +1,218 @@
+# SwiftLint Configuration for 70K Bands App
+# Enforces coding rules to prevent deadlocks, delays, and infinite loops
+
+# Disable some rules that are too strict for this codebase
+disabled_rules:
+  - trailing_whitespace
+  - line_length
+  - function_body_length
+  - file_length
+  - type_body_length
+  - cyclomatic_complexity
+
+# Force unwrapping is dangerous - only allow in specific cases
+force_unwrapping:
+  severity: error
+  warning_directives:
+    - "// swiftlint:disable:next force_unwrapping"
+
+# Prevent blocking operations on main thread
+main_queue_check:
+  severity: error
+
+# Enforce proper error handling
+try:
+  severity: warning
+
+# Prevent force casting
+force_cast:
+  severity: error
+
+# Enforce proper access control
+private_outlet:
+  severity: warning
+
+# Prevent unused code
+unused_import:
+  severity: warning
+
+# Enforce proper naming conventions
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 40
+    error: 50
+
+# Prevent empty methods
+empty_count:
+  severity: warning
+
+# Enforce proper spacing
+empty_parameters:
+  severity: warning
+
+# Prevent redundant type annotations
+redundant_type_annotation:
+  severity: warning
+
+# Enforce proper closure syntax
+closure_end_indentation:
+  severity: warning
+
+# Prevent unused variables
+unused_private_declaration:
+  severity: warning
+
+# Enforce proper file organization
+file_header:
+  severity: warning
+
+# Prevent force try
+force_try:
+  severity: error
+
+# Enforce proper return statements
+implicit_return:
+  severity: warning
+
+# Prevent unused optional binding
+unused_optional_binding:
+  severity: warning
+
+# Enforce proper enum cases
+enum_case_associated_values_count:
+  severity: warning
+
+# Prevent redundant nil coalescing
+redundant_nil_coalescing:
+  severity: warning
+
+# Enforce proper array initialization
+array_init:
+  severity: warning
+
+# Prevent redundant string enum case
+redundant_string_enum_case:
+  severity: warning
+
+# Enforce proper dictionary initialization
+dictionary_init:
+  severity: warning
+
+# Prevent redundant type annotation
+redundant_type_annotation:
+  severity: warning
+
+# Enforce proper void return
+redundant_void_return:
+  severity: warning
+
+# Prevent unused closure parameter
+unused_closure_parameter:
+  severity: warning
+
+# Enforce proper trailing closure
+trailing_closure:
+  severity: warning
+
+# Prevent unused control flow label
+unused_control_flow_label:
+  severity: warning
+
+# Enforce proper enum case
+enum_case_associated_values_count:
+  severity: warning
+
+# Prevent redundant optional initialization
+redundant_optional_initialization:
+  severity: warning
+
+# Enforce proper return arrow whitespace
+return_arrow_whitespace:
+  severity: warning
+
+# Prevent redundant set access control
+redundant_set_access_control:
+  severity: warning
+
+# Enforce proper sorted imports
+sorted_imports:
+  severity: warning
+
+# Prevent redundant type annotation
+redundant_type_annotation:
+  severity: warning
+
+# Enforce proper unused declaration
+unused_declaration:
+  severity: warning
+
+# Prevent redundant void return
+redundant_void_return:
+  severity: warning
+
+# Enforce proper weak delegate
+weak_delegate:
+  severity: warning
+
+# Prevent xctfail message
+xctfail_message:
+  severity: warning
+
+# Enforce proper yoda_condition
+yoda_condition:
+  severity: warning
+
+# Custom rules for this codebase
+custom_rules:
+  # Prevent force unwrapping without comments
+  no_force_unwrap_without_comment:
+    name: "No Force Unwrap Without Comment"
+    regex: '!\s*(?!//.*force.*unwrap)'
+    message: "Force unwrapping should be avoided. Use safe unwrapping with guard let or if let."
+    severity: error
+    
+  # Prevent blocking operations on main thread
+  no_main_thread_blocking:
+    name: "No Blocking Operations on Main Thread"
+    regex: 'DispatchQueue\.main\.sync'
+    message: "Avoid blocking operations on main thread. Use async with completion handlers."
+    severity: error
+    
+  # Prevent infinite loops
+  no_infinite_loop:
+    name: "No Infinite Loops"
+    regex: 'while\s+true\s*\{'
+    message: "Infinite loops can cause deadlocks. Add exit conditions."
+    severity: error
+    
+  # Enforce timeout for async operations
+  require_timeout_for_async:
+    name: "Require Timeout for Async Operations"
+    regex: 'DispatchQueue\.global\(\)\.asyncAfter.*timeout'
+    message: "Async operations should have timeouts to prevent infinite waiting."
+    severity: warning
+    
+  # Prevent nested locks
+  no_nested_locks:
+    name: "No Nested Locks"
+    regex: '\.lock\(\)[\s\S]*\.lock\(\)'
+    message: "Nested locks can cause deadlocks. Use single locks or DispatchQueue."
+    severity: error
+
+# Exclude certain files/directories
+excluded:
+  - Pods
+  - 70000TonsBandsTests
+  - "70K Bands WatchKit App"
+  - "70K Bands WatchKit Extension"
+  - "*.generated.swift"
+
+# Include only Swift files
+included:
+  - "*.swift"
+
+# Reporter configuration
+reporter: "xcode" 
