@@ -53,46 +53,15 @@ func getUrlData(urlString: String) -> String{
         print ("\(currentQueueLabel ?? "") !!Looking up url \(urlString)")
         
         if (urlString == "Unable to communicate with Drop Box!"){
-            print ("HTTP_ERROR: Unable to communicate with Drop Box! - 1")
                 results = urlString
         } else {
             do {
                 print ("Problem URL string is \(urlString)")
                 //create the url with NSURL
                 let url = try URL(string: urlString) ?? URL(fileURLWithPath: "") //change the url
-                
-                // Use URLSession for better timeout handling and async behavior
-                let semaphore = DispatchSemaphore(value: 0)
-                var urlContents = ""
-                var urlError: Error?
-                
-                let task = URLSession.shared.dataTask(with: url) { data, response, error in
-                    if let error = error {
-                        urlError = error
-                        print("HTTP_ERROR: Network error for \(urlString): \(error.localizedDescription)")
-                    } else if let data = data {
-                        urlContents = String(data: data, encoding: .utf8) ?? ""
-                        print("[BAND_DEBUG] getUrlData: Received \(data.count) bytes for \(urlString)")
-                    } else {
-                        print("[BAND_DEBUG] getUrlData: No data received for \(urlString)")
-                    }
-                    semaphore.signal()
-                }
-                
-                task.resume()
-                
-                // Wait with timeout to prevent indefinite hanging
-                let timeoutResult = semaphore.wait(timeout: .now() + 30.0) // 30 second timeout
-                
-                if timeoutResult == .timedOut {
-                    print("Timeout waiting for URL data: \(urlString)")
-                    task.cancel()
-                } else if urlError != nil {
-                    print("Failed to find data !!Looking up url \(urlString): \(urlError!.localizedDescription)")
-                } else {
-                    results = urlContents
-                }
-                
+                let contents = try String(contentsOf: url)
+                print(contents)
+                results = contents
             } catch {
                 print ("Failed to find data !!Looking up url \(urlString)")
             }

@@ -12,7 +12,7 @@ import UserNotifications
 
 class localNoticationHandler {
     
-    var schedule = scheduleHandler.shared
+    var schedule = scheduleHandler()
     var alertTextMessage = String()
     let attendedHandle = ShowsAttended()
     var dataHandle = dataHandler()
@@ -235,35 +235,32 @@ class localNoticationHandler {
      Adds notifications for all eligible events in the schedule.
      */
     func addNotifications(){
+        
         print ("Locking object with schedule.schedulingData")
+        
         scheduleQueue.sync {
+
             if (schedule.schedulingData.isEmpty == false){
-                // Prefetch all band names and their time keys
-                let bandNames = Array(schedule.schedulingData.keys)
-                var bandTimeKeys: [String: [TimeInterval]] = [:]
-                for bandName in bandNames {
-                    if let dict = schedule.schedulingData[bandName] {
-                        bandTimeKeys[bandName] = Array(dict.keys)
-                    } else {
-                        bandTimeKeys[bandName] = []
-                    }
-                }
-                for bandName in bandNames {
-                    let timeKeys = bandTimeKeys[bandName] ?? []
-                    for startTime in timeKeys {
-                        let alertTime = NSDate(timeIntervalSince1970: startTime)
-                        if (startTime.isZero == false && bandName.isEmpty == false && typeField.isEmpty == false){
-                            if (schedule.schedulingData[bandName]?[startTime]?[typeField]?.isEmpty == false){
-                                let eventTypeValue = (schedule.schedulingData[bandName]?[startTime]?[typeField])!
-                                let startTimeValue = (schedule.schedulingData[bandName]?[startTime]?[startTimeField])!
-                                let locationValue = (schedule.schedulingData[bandName]?[startTime]?[locationField])!
-                                let addToNoticication = willAddToNotifications(bandName, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
+                for bandName in schedule.schedulingData{
+                    for startTime in schedule.schedulingData[bandName.0]!{
+                        let alertTime = NSDate(timeIntervalSince1970: startTime.0)
+                        //print ("Adding notificaiton \(bandName) Date provided is \(alertTime)")
+                        if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
+                            
+                            if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
+                                let eventTypeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!
+                                let startTimeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[startTimeField])!
+                                let locationValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[locationField])!
+                                
+                                let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
+                                
                                 if (addToNoticication == true){
                                     let compareResult = alertTime.compare(NSDate() as Date)
                                     if compareResult == ComparisonResult.orderedDescending {
                                         print ("Adding notificaiton \(alertTextMessage) for \(alertTime)")
-                                        getAlertMessage(bandName, indexValue: alertTime as Date)
+                                        getAlertMessage(bandName.0, indexValue: alertTime as Date)
                                         addNotification(message: alertTextMessage, showTime: alertTime)
+
                                     }
                                 }
                             }

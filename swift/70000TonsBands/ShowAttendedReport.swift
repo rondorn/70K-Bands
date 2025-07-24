@@ -13,10 +13,10 @@ class showAttendenceReport {
     var eventCounts :[String:[String:Int]] = [String:[String:Int]]()
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
     
-    var schedule = scheduleHandler.shared
+    var schedule = scheduleHandler()
     var attendedHandle = ShowsAttended()
     
-    var bandNamesHandle = bandNamesHandler.shared
+    var bandNamesHandle = bandNamesHandler()
     var dataHandle = dataHandler()
     
     var isReportEmpty = false
