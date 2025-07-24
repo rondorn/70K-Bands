@@ -59,9 +59,12 @@ open class scheduleHandler {
         staticSchedule.sync {
             if (cacheVariables.scheduleStaticCache.isEmpty == false && cacheVariables.scheduleTimeStaticCache.isEmpty == false ){
                 staticCacheUsed = true
+                print("[YEAR_CHANGE_DEBUG] getCachedData: Using static cache with \(cacheVariables.scheduleStaticCache.count) bands")
                 // Make a deep copy to avoid mutating shared cache
                 self.schedulingData = cacheVariables.scheduleStaticCache.mapValues { $0.mapValues { $0 } }
                 self.schedulingDataByTime = cacheVariables.scheduleTimeStaticCache.mapValues { $0 }
+            } else {
+                print("[YEAR_CHANGE_DEBUG] getCachedData: Static cache is empty, will load from file")
             }
         }
         
@@ -99,12 +102,20 @@ open class scheduleHandler {
     }
     
     func clearCache(){
+        print("[YEAR_CHANGE_DEBUG] Clearing schedule cache for year \(eventYear)")
         self.schedulingData = [:]
+        self.schedulingDataByTime = [:]
+        
+        // Also clear the static cache
+        staticSchedule.sync {
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+        }
     }
     
     func populateSchedule(forceDownload: Bool = false){
         
-        print ("Loading schedule data 1")
+        print ("[YEAR_CHANGE_DEBUG] Loading schedule data for year \(eventYear), forceDownload: \(forceDownload)")
         isLoadingSchedule = true;
         
         self.schedulingData = [:]
@@ -117,12 +128,14 @@ open class scheduleHandler {
         }
         
         if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
+            print("[YEAR_CHANGE_DEBUG] Schedule file loaded successfully, size: \(csvDataString.count) characters")
             
             var unuiqueIndex = Dictionary<TimeInterval, Int>()
             var csvData: CSV
             
             csvData = try! CSV(csvStringToParse: csvDataString)
             
+            print("[YEAR_CHANGE_DEBUG] Processing \(csvData.rows.count) schedule entries")
             for lineData in csvData.rows {
                 if (lineData[dateField]?.isEmpty == false && lineData[startTimeField]?.isEmpty == false){
                     
@@ -215,6 +228,9 @@ open class scheduleHandler {
         //saveCacheFile
         NSKeyedArchiver.archiveRootObject(schedulingData, toFile: schedulingDataCacheFile.path)
         NSKeyedArchiver.archiveRootObject(schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
+        
+        print("[YEAR_CHANGE_DEBUG] Schedule population completed for year \(eventYear): \(schedulingData.count) bands, \(schedulingDataByTime.count) time slots")
+        isLoadingSchedule = false
 
     }
     
@@ -388,16 +404,20 @@ open class scheduleHandler {
     }
 
     func buildTimeSortedSchedulingData () {
+        print("[YEAR_CHANGE_DEBUG] Building time-sorted scheduling data for year \(eventYear)")
         scheduleHandlerQueue.async(flags: .barrier) {
+            self._schedulingDataByTime.removeAll()
+            var timeSlotCount = 0
             for bandName in self._schedulingData.keys {
                 if let bandSchedule = self._schedulingData[bandName], !bandSchedule.isEmpty {
                     for timeIndex in bandSchedule.keys {
-                        print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
+                        print ("[YEAR_CHANGE_DEBUG] timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
                         self._schedulingDataByTime[timeIndex] = [bandName:bandName]
+                        timeSlotCount += 1
                     }
                 }
             }
-            print ("schedulingDataByTime is")
+            print ("[YEAR_CHANGE_DEBUG] schedulingDataByTime built with \(timeSlotCount) time slots for year \(eventYear)")
         }
     }
     

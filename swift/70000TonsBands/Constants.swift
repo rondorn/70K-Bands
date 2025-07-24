@@ -228,7 +228,7 @@ let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dash
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
-let networkTestingUrl = "https://www.dropbox.com/s/3c5m8he1jinezkh/test.txt?raw=1";
+let networkTestingUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/testFile.txt";
 
 var internetAvailble = isInternetAvailable();
 
@@ -335,18 +335,23 @@ func getPointerUrlData(keyValue: String) -> String {
             dataString = getArtistUrl();
             if (dataString == "Current"){
                 dataString = pointerValues["Current"]?["eventYear"] ?? "2024"
+                print ("   is Current - setting to \(dataString) from Current")
+                if dataString == "2024" {
+                    //exit(1)
+                }
+                
             }
             do {
                 if (dataString.count == 4){
                     try dataString.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
                     try cacheVariables.storePointerData[keyValue] = dataString
-                    print ("getPointerUrlData: Just created eventYear file " + eventYearFile);
+                    print ("getPointerUrlData: Just created eventYear file using \(keyValue) = \(dataString)" + eventYearFile);
                 } else {
                     try dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-                    print ("getPointerUrlData: Just reading eventYear file " + eventYearFile + " and got \(dataString)");
+                    print ("getPointerUrlData: Just reading eventYear file  using \(keyValue) = \(dataString)" + eventYearFile + " and got \(dataString)");
                 }
             } catch let error as NSError {
-                print ("getPointerUrlData: Encountered an error of creating file eventYear File " + error.debugDescription)
+                print ("getPointerUrlData: Encountered an error of creating file eventYear  using \(keyValue) = \(dataString) File " + error.debugDescription)
             }
         }
 

@@ -62,17 +62,39 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     unfilteredCurrentEventCount = 0
     
     
-    print ("sortedBy = \(sortedBy)")
+    print ("[YEAR_CHANGE_DEBUG] sortedBy = \(sortedBy)")
     schedule.buildTimeSortedSchedulingData();
-    print (schedule.getTimeSortedSchedulingData());
+    print ("[YEAR_CHANGE_DEBUG] Schedule data count: \(schedule.getTimeSortedSchedulingData().count) time-sorted, \(schedule.getBandSortedSchedulingData().count) band-sorted")
+    
+    // Don't process schedule data if it's empty
+    if schedule.getBandSortedSchedulingData().isEmpty && schedule.getTimeSortedSchedulingData().isEmpty {
+        print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Schedule data is empty, returning bands list")
+        newAllBands = allBands;
+        newAllBands.sort();
+        bandCount = newAllBands.count;
+        eventCount = 0;
+        bandCounter = allBands.count
+        return newAllBands
+    }
+    
     if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
         print ("Sorting by name!!!");
         for bandName in schedule.getBandSortedSchedulingData().keys {
             unfilteredBandCount = unfilteredBandCount + 1
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
                 unfilteredEventCount = unfilteredEventCount + 1
-                for timeIndex in schedule.getBandSortedSchedulingData()[bandName]!.keys {
-                    var eventEndTime = schedule.getDateIndex(schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![dateField]!, timeString: schedule.getBandSortedSchedulingData()[bandName]![timeIndex]![endTimeField]!, band: bandName)
+                guard let bandSchedule = schedule.getBandSortedSchedulingData()[bandName] else {
+                    print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Skipping band \(bandName) - no schedule data")
+                    continue
+                }
+                for timeIndex in bandSchedule.keys {
+                    guard let timeData = bandSchedule[timeIndex],
+                          let dateValue = timeData[dateField],
+                          let endTimeValue = timeData[endTimeField] else {
+                        print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Missing data for band \(bandName) at time \(timeIndex)")
+                        continue
+                    }
+                    var eventEndTime = schedule.getDateIndex(dateValue, timeString: endTimeValue, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
                         eventEndTime = eventEndTime + (3600*24)
@@ -98,8 +120,9 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         eventCount = newAllBands.count;
         
     } else if (schedule.getTimeSortedSchedulingData().count > 0 && sortedBy == "time"){
-        print ("Sorting by time!!!");
+        print ("[YEAR_CHANGE_DEBUG] Sorting by time!!! Time-sorted data count: \(schedule.getTimeSortedSchedulingData().count)");
         for timeIndex in schedule.getTimeSortedSchedulingData().keys {
+            print("[YEAR_CHANGE_DEBUG] Processing time index: \(timeIndex)")
             unfilteredEventCount = unfilteredEventCount + 1
             if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
                 for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys ?? [:].keys) {
@@ -140,15 +163,14 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     }
                 }
             } else {
-                unfilteredBandCount = unfilteredBandCount + 1
-                newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle)
+                print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Time index \(timeIndex) has no band data")
             }
         }
         bandCount = 0;
         eventCount = newAllBands.count;
     } else {
         
-        print ("returning Bands!!!");
+        print ("[YEAR_CHANGE_DEBUG] returning Bands!!! Band-sorted count: \(schedule.getBandSortedSchedulingData().count), Time-sorted count: \(schedule.getTimeSortedSchedulingData().count), sortedBy: \(sortedBy)");
         //return immediatly. Dont need to do schedule sorting magic
         newAllBands = allBands;
         newAllBands.sort();
