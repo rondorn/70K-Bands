@@ -58,6 +58,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var hideExpireScheduleData = Bool()
     var promptForAttended = Bool()
     
+    var yearChagingTo = "Current";
+    
     var eventYearChangeAttempt = "Current";
     var changeYearDialogBoxTitle = String();
     
@@ -601,16 +603,18 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
         
+        print("[YEAR_CHANGE_DEBUG] lastYearWarningAccepted: Setting URLs for year \(eventYearChangeAttempt)")
         setArtistUrl(eventYearChangeAttempt)
         setScheduleUrl(eventYearChangeAttempt)
         writeFiltersFile()
         cacheVariables.storePointerData = [String:String]()
         var pointerIndex = getScheduleUrl()
         
-        print ("Files were Done setting \(pointerIndex)")
+        print("[YEAR_CHANGE_DEBUG] lastYearWarningAccepted: pointerIndex=\(pointerIndex), artistUrl=\(getArtistUrl()), scheduleUrl=\(getScheduleUrl())")
         do {
             try  FileManager.default.removeItem(atPath: scheduleFile)
             try  FileManager.default.removeItem(atPath: bandFile)
+            try  FileManager.default.removeItem(atPath: eventYearFile)
 
             print ("Files were removed")
         } catch {
@@ -626,10 +630,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         //clear all existing notifications
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications();
-        eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+        
+        // Clear the pointer data cache to ensure fresh data
+        cacheVariables.storePointerData = [String:String]()
         
         setupCurrentYearUrls()
         setupDefaults()
+        
+        // Now get the event year after cache is cleared
+        eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
         
         print ("Refreshing data in backgroud..not really..\(eventYear)")
         
@@ -637,6 +646,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         bandNamesHandler().clearCachedData()
         dataHandler().clearCachedData()
         masterView.schedule.clearCache()
+        
+        // Clear static caches to ensure fresh data
+        staticSchedule.sync {
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+            cacheVariables.bandNamesStaticCache = [:]
+        }
         // --- Refactored: Wait for both band and schedule data to load before proceeding ---
         let group = DispatchGroup()
         // Increment the global request ID and store for this load
@@ -645,22 +661,25 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
+            print("[YEAR_CHANGE_DEBUG] Starting band names data loading for year \(self.eventYearChangeAttempt)")
             let bandNamesHandle = bandNamesHandler()
             bandNamesHandle.clearCachedData()
             bandNamesHandle.gatherData {
+                print("[YEAR_CHANGE_DEBUG] Band names data loading completed for year \(self.eventYearChangeAttempt)")
                 group.leave()
             }
         }
         
         group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
+            print("[YEAR_CHANGE_DEBUG] Starting schedule data loading for year \(self.eventYearChangeAttempt)")
             let dataHandle = dataHandler()
             dataHandle.clearCachedData()
             dataHandle.readFile(dateWinnerPassed: "")
             masterView.schedule.clearCache()
             
             // Ensure CSV is downloaded before populating schedule
-            print("Year change: Downloading schedule CSV first")
+            print("[YEAR_CHANGE_DEBUG] Downloading schedule CSV first")
             masterView.schedule.DownloadCsv()
             
             // Wait for file to be written and verify it exists
@@ -668,29 +687,34 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
                 Thread.sleep(forTimeInterval: 0.2)
                 attempts += 1
-                print("Year change: Waiting for schedule file to be written (attempt \(attempts))")
+                print("[YEAR_CHANGE_DEBUG] Waiting for schedule file to be written (attempt \(attempts))")
             }
             
             if FileManager.default.fileExists(atPath: scheduleFile) {
-                print("Year change: Schedule file downloaded successfully, now populating")
+                print("[YEAR_CHANGE_DEBUG] Schedule file downloaded successfully, now populating")
                 masterView.schedule.populateSchedule(forceDownload: false) // Don't force download since we already did it
             } else {
-                print("Year change: Schedule file download failed, will retry in populateSchedule")
+                print("[YEAR_CHANGE_DEBUG] Schedule file download failed, will retry in populateSchedule")
                 masterView.schedule.populateSchedule(forceDownload: true) // Force download as fallback
             }
             
+            print("[YEAR_CHANGE_DEBUG] Schedule data loading completed for year \(self.eventYearChangeAttempt)")
             group.leave()
         }
         
         group.notify(queue: .main) {
+            print("[YEAR_CHANGE_DEBUG] All data loading completed for year \(self.eventYearChangeAttempt)")
             // Only update UI if this is the latest request
-            if thisLoadRequestID != AlertPreferenesController.currentLoadRequestID { return }
+            if thisLoadRequestID != AlertPreferenesController.currentLoadRequestID { 
+                print("[YEAR_CHANGE_DEBUG] Ignoring outdated request \(thisLoadRequestID) vs current \(AlertPreferenesController.currentLoadRequestID)")
+                return 
+            }
             // Now all data is loaded, allow user to proceed (refresh UI, dismiss waiting message, etc.)
-            // Ensure schedule is parsed before UI refresh
-            masterView.schedule.populateSchedule(forceDownload: false)
+            // Don't call populateSchedule again - it was already called in the background tasks
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
             // UNLOCK GUI: Re-enable user interaction
             self.view.isUserInteractionEnabled = true
+            print("[YEAR_CHANGE_DEBUG] UI unlocked and refresh notification sent for year \(self.eventYearChangeAttempt)")
             // Don't dismiss the Preferences screen - let the user make their choice
             // The navigation will happen when they select Band List or Event List
         }

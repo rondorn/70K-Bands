@@ -238,30 +238,44 @@ class localNoticationHandler {
         
         print ("Locking object with schedule.schedulingData")
         
+        // Don't add notifications if schedule data is empty or inconsistent
+        if schedule.schedulingData.isEmpty {
+            print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping - schedule data is empty")
+            return
+        }
+        
         scheduleQueue.sync {
 
             if (schedule.schedulingData.isEmpty == false){
                 for bandName in schedule.schedulingData{
-                    for startTime in schedule.schedulingData[bandName.0]!{
+                    guard let bandSchedule = schedule.schedulingData[bandName.0] else {
+                        print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping band \(bandName.0) - no schedule data")
+                        continue
+                    }
+                    
+                    for startTime in bandSchedule{
                         let alertTime = NSDate(timeIntervalSince1970: startTime.0)
                         //print ("Adding notificaiton \(bandName) Date provided is \(alertTime)")
                         if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                             
-                            if (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField]?.isEmpty == false){
-                                let eventTypeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[typeField])!
-                                let startTimeValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[startTimeField])!
-                                let locationValue = (schedule.schedulingData[bandName.0]?[startTime.0]?[locationField])!
-                                
-                                let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
-                                
-                                if (addToNoticication == true){
-                                    let compareResult = alertTime.compare(NSDate() as Date)
-                                    if compareResult == ComparisonResult.orderedDescending {
-                                        print ("Adding notificaiton \(alertTextMessage) for \(alertTime)")
-                                        getAlertMessage(bandName.0, indexValue: alertTime as Date)
-                                        addNotification(message: alertTextMessage, showTime: alertTime)
+                            guard let eventData = schedule.schedulingData[bandName.0]?[startTime.0],
+                                  let eventTypeValue = eventData[typeField],
+                                  let startTimeValue = eventData[startTimeField],
+                                  let locationValue = eventData[locationField],
+                                  !eventTypeValue.isEmpty else {
+                                print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping event - missing required data for \(bandName.0) at \(startTime.0)")
+                                continue
+                            }
+                            
+                            let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
+                            
+                            if (addToNoticication == true){
+                                let compareResult = alertTime.compare(NSDate() as Date)
+                                if compareResult == ComparisonResult.orderedDescending {
+                                    print ("Adding notificaiton \(alertTextMessage) for \(alertTime)")
+                                    getAlertMessage(bandName.0, indexValue: alertTime as Date)
+                                    addNotification(message: alertTextMessage, showTime: alertTime)
 
-                                    }
                                 }
                             }
                         }

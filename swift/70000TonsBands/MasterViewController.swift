@@ -80,6 +80,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // --- END ADDED ---
     
     var lastRefreshDataRun: Date? = nil
+    var lastBandNamesCacheRefresh: Date? = nil
     
     // Add the missing property
     var isPerformingQuickLoad = false
@@ -275,6 +276,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func bandNamesCacheReadyHandler() {
+        // Prevent infinite loop: only refresh if we haven't already refreshed recently
+        let now = Date()
+        if let lastBandNamesRefresh = lastBandNamesCacheRefresh, now.timeIntervalSince(lastBandNamesRefresh) < 2.0 {
+            print("Skipping bandNamesCacheReadyHandler: Last refresh was too recent (\(now.timeIntervalSince(lastBandNamesRefresh)) seconds ago)")
+            return
+        }
+        lastBandNamesCacheRefresh = now
         print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
         refreshBandList(reason: "Band names cache ready")
     }
@@ -620,17 +628,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // Centralized refresh method for band list
     func refreshBandList(reason: String = "", scrollToTop: Bool = false, isPullToRefresh: Bool = false) {
         if MasterViewController.isRefreshingBandList {
-            print("Global: Band list refresh already in progress. Skipping.")
+            print("[YEAR_CHANGE_DEBUG] Global: Band list refresh already in progress. Skipping. Reason: \(reason)")
             return
         }
         MasterViewController.isRefreshingBandList = true
         // Start safety timer
         MasterViewController.refreshBandListSafetyTimer?.invalidate()
         MasterViewController.refreshBandListSafetyTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
-            print("Safety timer: Resetting isRefreshingBandList after 10 seconds.")
+            print("[YEAR_CHANGE_DEBUG] Safety timer: Resetting isRefreshingBandList after 10 seconds.")
             MasterViewController.isRefreshingBandList = false
         }
-        print("Refreshing band list. Reason: \(reason)")
+        print("[YEAR_CHANGE_DEBUG] Refreshing band list. Reason: \(reason), current year: \(eventYear)")
         // Save the current scroll position
         let previousOffset = self.tableView.contentOffset
         // GUARD: Only proceed if not already reading
@@ -675,6 +683,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             } else if sortedBy == "time" {
                 bandsResult.sort { getTimeFromSortable($0, sortBy: sortedBy) < getTimeFromSortable($1, sortBy: sortedBy) }
             }
+            print("[YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             self.bands = bandsResult
             self.bandsByName = bandsResult
             self.attendedHandle.getCachedData()
