@@ -8,10 +8,6 @@
 
 import Foundation
 import UIKit
-
-// The DataCollectionCoordinator class is now properly included in the project
-
-
 // FIXME: comparison operators with optionals were removed from the Swift Standard Libary.
 // Consider refactoring the code to use the non-optional operators.
 fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
@@ -65,6 +61,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     var eventYearChangeAttempt = "Current";
     var changeYearDialogBoxTitle = String();
     
+    // Track the latest data load request
+    static var currentLoadRequestID: Int = 0
+    var myLoadRequestID: Int = 0
     
     @IBOutlet weak var DetailScreenSection: UILabel!
     @IBOutlet weak var NotesFontSizeLargeLabel: UILabel!
@@ -177,20 +176,19 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
         localNotification.addNotifications()
-        /*
+        
         // Perform data loading in the background
         DispatchQueue.global(qos: .background).async {
             //print ("Sync: Loading schedule data AlertController")
             masterView.bandNameHandle.gatherData()
             masterView.schedule.DownloadCsv()
-            masterView.schedule.populateSchedule()
+            masterView.schedule.populateSchedule(forceDownload: false)
             
             // Once done, refresh the GUI on the main thread
             DispatchQueue.main.async {
                 masterView.refreshData(isUserInitiated: true)
             }
         }
-        */
     }
     
     /// Builds the event year menu for selecting different event years.
@@ -243,6 +241,13 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         }
         
         eventYearChangeAttempt = yearChange
+        // Increment the global request ID and store for this load
+        AlertPreferenesController.currentLoadRequestID += 1
+        myLoadRequestID = AlertPreferenesController.currentLoadRequestID
+        // Always purge caches and reload everything, even for 'Current' year
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        masterView.schedule.clearCache()
         
         UseLastYearsDataAction()
     }
@@ -488,36 +493,32 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: restartAlertText, preferredStyle: .alert)
         
         // Create the actions
-        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let okActionButton = UIAlertAction(title: okPrompt, style: .default) { _ in
             NotificationCenter.default.post(name: Notification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
-            
             Task{
-                        
                 await self.lastYearWarningAccepted()
-                
                 await DispatchQueue.global(qos: DispatchQoS.QoSClass.default).sync {
                     if (self.eventYearChangeAttempt.isYearValue == false){
+                        // For "Current" year, automatically use Band List without asking
                         self.HideExpiredSwitch.isOn = true
                         setHideExpireScheduleData(true)
+                        masterView.refreshData(isUserInitiated: true)
                         self.navigationController?.popViewController(animated: true)
                         self.dismiss(animated: true, completion: nil)
                     } else {
+                        // For specific years, show the dialog to let user choose
                         NotificationCenter.default.post(name: Notification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
                     }
                 }
-                
             }
-
         }
-        let cancelAction = UIAlertAction(title: cancelPrompt, style: UIAlertAction.Style.cancel) {
-            UIAlertAction in
+        let cancelActionButton = UIAlertAction(title: cancelPrompt, style: .cancel) { _ in
             self.buildEventYearMenu(currentYear: self.currentYearSetting)
         }
         
         // Add the actions
-        alertController.addAction(okAction)
-        alertController.addAction(cancelAction)
+        alertController.addAction(okActionButton)
+        alertController.addAction(cancelActionButton)
         
         // Present the controller
         self.present(alertController, animated: true, completion: nil)
@@ -534,8 +535,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: yearChangeAborted, preferredStyle: .alert)
         
         // Create the actions
-        let okAction = UIAlertAction(title: okPrompt, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let okAction = UIAlertAction(title: okPrompt, style: .default) { _ in
             self.buildEventYearMenu(currentYear: self.currentYearSetting)
             return
         }
@@ -553,20 +553,22 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let alertController = UIAlertController(title: changeYearDialogBoxTitle, message: eventOrBandPrompt, preferredStyle: .alert)
         
         // Create the actions
-        let bandAction = UIAlertAction(title:bandListButton, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let bandAction = UIAlertAction(title:bandListButton, style: .default) { _ in
             self.HideExpiredSwitch.isOn = true
             setHideExpireScheduleData(true)
+            // Always proceed regardless of schedule status
+            masterView.refreshData(isUserInitiated: true)
             self.navigationController?.popViewController(animated: true)
             self.dismiss(animated: true, completion: nil)
         }
         // Add the actions
         alertController.addAction(bandAction)
         
-        let eventAction = UIAlertAction(title:eventListButton, style: UIAlertAction.Style.default) {
-            UIAlertAction in
+        let eventAction = UIAlertAction(title:eventListButton, style: .default) { _ in
             self.HideExpiredSwitch.isOn = false
             setHideExpireScheduleData(false)
+            // Always proceed regardless of schedule status
+            masterView.refreshData(isUserInitiated: true)
             self.navigationController?.popViewController(animated: true)
             self.dismiss(animated: true, completion: nil)
         }
@@ -581,119 +583,117 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     /// Handles the acceptance of the last year warning, updates URLs, clears data, and refreshes the app state.
     func lastYearWarningAccepted() async{
+        
         let netTest = NetworkTesting()
         internetAvailble = netTest.forgroundNetworkTest(callingGui: self)
+        
         if (internetAvailble == false){
             print("No internet connection is available, can NOT switch years at this time")
+            
             networkDownWarning()
             return()
         }
-        print ("Files were Ok, Pressed")
+        // LOCK GUI: Disable user interaction until data is loaded
+        DispatchQueue.main.async {
+            self.view.isUserInteractionEnabled = false
+        }
+        print ("Files were in UseLastYearsDataAction")
+        
         print ("Files were Seeing last years data \(eventYearChangeAttempt)")
-
-        // Notify coordinator that year change is starting
-        DataCollectionCoordinator.shared.notifyYearChangeRequested()
-
-        // 1. Set URLs for the selected year (including 'Current')
+        
         setArtistUrl(eventYearChangeAttempt)
         setScheduleUrl(eventYearChangeAttempt)
         writeFiltersFile()
         cacheVariables.storePointerData = [String:String]()
         var pointerIndex = getScheduleUrl()
+        
         print ("Files were Done setting \(pointerIndex)")
-
-        // 2. Remove any old/cached files for schedule, bands, descriptions, and cache files
         do {
-            if FileManager.default.fileExists(atPath: scheduleFile) {
-                try FileManager.default.removeItem(atPath: scheduleFile)
-            }
-            if FileManager.default.fileExists(atPath: bandFile) {
-                try FileManager.default.removeItem(atPath: bandFile)
-            }
-            if FileManager.default.fileExists(atPath: descriptionMapFile) {
-                try FileManager.default.removeItem(atPath: descriptionMapFile)
-            }
-            if FileManager.default.fileExists(atPath: schedulingDataCacheFile.path) {
-                try FileManager.default.removeItem(atPath: schedulingDataCacheFile.path)
-            }
-            if FileManager.default.fileExists(atPath: schedulingDataByTimeCacheFile.path) {
-                try FileManager.default.removeItem(atPath: schedulingDataByTimeCacheFile.path)
-            }
-            if FileManager.default.fileExists(atPath: bandNamesCacheFile.path) {
-                try FileManager.default.removeItem(atPath: bandNamesCacheFile.path)
-            }
+            try  FileManager.default.removeItem(atPath: scheduleFile)
+            try  FileManager.default.removeItem(atPath: bandFile)
+
             print ("Files were removed")
         } catch {
             print ("Files were not removed..why?");
             //guess there was no file to delete
         }
 
-        // 3. Reset all filter and display settings to defaults
-        setMustSeeOn(true)
-        setMightSeeOn(true)
-        setWontSeeOn(true)
-        setUnknownSeeOn(true)
-        establishDefaults() // extra: ensure all filter settings are default
+        setMustSeeOn(true);
+        setMightSeeOn(true);
+        setWontSeeOn(true);
+        setUnknownSeeOn(true);
 
-        // 4. Clear all existing notifications
+        //clear all existing notifications
         let localNotification = localNoticationHandler()
-        localNotification.clearNotifications()
-
-        // 5. Clear all caches to force fresh data loading for the new year
-        // This ensures that when changing years, all cached data is cleared and fresh data
-        // is loaded from the correct URLs for the new year, preventing stale data issues
-        cacheVariables.storePointerData = [String:String]()
-        cacheVariables.bandDescriptionUrlCache = [String:String]()
-        cacheVariables.bandDescriptionUrlDateCache = [String:String]()
-        cacheVariables.bandPriorityStorageCache = [String:Int]()
-        cacheVariables.scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
-        cacheVariables.scheduleTimeStaticCache = [TimeInterval : [String : String]]()
-        // Don't clear attended cache during year change to prevent infinite loop
-        // The attended data is year-specific and will be filtered appropriately
-        cacheVariables.bandNamesStaticCache = [String :[String : String]]()
-        cacheVariables.bandNamesArrayStaticCache = [String]()
-        cacheVariables.bandNamedStaticCache = [String :[String : String]]()
-        
-        // Reset other cache-related variables
-        cacheVariables.lastModifiedDate = nil
-        cacheVariables.justLaunched = false
-        
-        // Force reload of pointer data for the current year
+        localNotification.clearNotifications();
         eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
-
-        // 6. Setup URLs and defaults for the current year
+        
         setupCurrentYearUrls()
         setupDefaults()
-
-        // 7. Use independent collectors to reload all data with year override
-        // TEMPORARILY DISABLED - using fallback approach
-        print("Year change data loading - using fallback approach")
         
-        // Add timeout to prevent indefinite waiting
-        let timeoutTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { _ in
-            print("Year change timeout reached - proceeding with available data")
-            // Notify UI to refresh
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        }
+        print ("Refreshing data in backgroud..not really..\(eventYear)")
         
-        // Load data using fallback approach - ensure schedule CSV is downloaded
-        let masterView = MasterViewController()
-        masterView.schedule.DownloadCsv()
-        masterView.bandNameHandle.gatherData()
-        masterView.schedule.populateSchedule()
+        // --- Purge all caches before loading new data ---
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        masterView.schedule.clearCache()
+        // --- Refactored: Wait for both band and schedule data to load before proceeding ---
+        let group = DispatchGroup()
+        // Increment the global request ID and store for this load
+        AlertPreferenesController.currentLoadRequestID += 1
+        let thisLoadRequestID = AlertPreferenesController.currentLoadRequestID
         
-        // Load data using fallback approach
+        group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
-            // Simulate data loading completion
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                timeoutTimer.invalidate()
-                print("Year change data loading complete!")
-                // Notify UI to refresh
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            let bandNamesHandle = bandNamesHandler()
+            bandNamesHandle.clearCachedData()
+            bandNamesHandle.gatherData {
+                group.leave()
             }
         }
         
-        // Completion is now handled in the nested callbacks above
+        group.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let dataHandle = dataHandler()
+            dataHandle.clearCachedData()
+            dataHandle.readFile(dateWinnerPassed: "")
+            masterView.schedule.clearCache()
+            
+            // Ensure CSV is downloaded before populating schedule
+            print("Year change: Downloading schedule CSV first")
+            masterView.schedule.DownloadCsv()
+            
+            // Wait for file to be written and verify it exists
+            var attempts = 0
+            while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
+                Thread.sleep(forTimeInterval: 0.2)
+                attempts += 1
+                print("Year change: Waiting for schedule file to be written (attempt \(attempts))")
+            }
+            
+            if FileManager.default.fileExists(atPath: scheduleFile) {
+                print("Year change: Schedule file downloaded successfully, now populating")
+                masterView.schedule.populateSchedule(forceDownload: false) // Don't force download since we already did it
+            } else {
+                print("Year change: Schedule file download failed, will retry in populateSchedule")
+                masterView.schedule.populateSchedule(forceDownload: true) // Force download as fallback
+            }
+            
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            // Only update UI if this is the latest request
+            if thisLoadRequestID != AlertPreferenesController.currentLoadRequestID { return }
+            // Now all data is loaded, allow user to proceed (refresh UI, dismiss waiting message, etc.)
+            // Ensure schedule is parsed before UI refresh
+            masterView.schedule.populateSchedule(forceDownload: false)
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            // UNLOCK GUI: Re-enable user interaction
+            self.view.isUserInteractionEnabled = true
+            // Don't dismiss the Preferences screen - let the user make their choice
+            // The navigation will happen when they select Band List or Event List
+        }
     }
 
 }
