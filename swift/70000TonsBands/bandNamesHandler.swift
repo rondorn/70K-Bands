@@ -19,32 +19,61 @@ open class bandNamesHandler {
         getCachedData()
     }
     
-    /// Loads band name data from cache if available, otherwise loads from disk or Dropbox.
-    func getCachedData(completion: (() -> Void)? = nil){
-        print ("Loading bandName Data cache")
-        var needsGather = false
-        staticBandName.sync() {
-            if (cacheVariables.bandNamesStaticCache.isEmpty == false && cacheVariables.bandNamesArrayStaticCache.isEmpty == false ){
-                print ("Loading bandName Data cache, from cache")
-                // Write access: must use barrier
+    /// Loads band name data from cache if available, otherwise loads from disk.
+    /// Always shows cached/disk data immediately except on first launch or explicit refresh.
+    /// Triggers background update if needed.
+    func getCachedData(forceNetwork: Bool = false, completion: (() -> Void)? = nil) {
+        print("Loading bandName Data cache")
+        var needsNetworkFetch = false
+        var showedData = false
+
+        staticBandName.sync {
+            if !self.bandNames.isEmpty {
+                // Cache is available, show immediately
+                print("Loading bandName Data cache, from cache")
+                showedData = true
+            } else if !cacheVariables.bandNamesStaticCache.isEmpty {
+                // cacheVariables has data, load into memory and show immediately
+                print("Loading bandName Data cache, from cacheVariables")
                 staticBandName.async(flags: .barrier) {
                     self.bandNames = cacheVariables.bandNamesStaticCache
                     self.bandNamesArray = cacheVariables.bandNamesArrayStaticCache
                     DispatchQueue.main.async {
-                completion?()
+                        completion?()
                     }
                 }
+                showedData = true
+            } else if FileManager.default.fileExists(atPath: bandFile) {
+                // Disk file exists, load synchronously and show immediately
+                print("Loading bandName Data cache, from disk")
+                self.readBandFile()
+                showedData = true
             } else {
-                needsGather = true
+                // No data at all, need to fetch from network (first launch or forced)
+                needsNetworkFetch = true
             }
         }
-        if needsGather {
+
+        if showedData {
+            // Show data immediately
+            DispatchQueue.main.async {
+                completion?()
+            }
+            // After showing, trigger background update if not just launched or forced
+            if (!cacheVariables.justLaunched && !forceNetwork) {
+                print("Triggering background update for band data")
+                DispatchQueue.global(qos: .background).async {
+                    self.gatherData()
+                }
+            }
+        } else if needsNetworkFetch || forceNetwork {
+            // If we need to fetch from network (first launch or forced refresh), block UI and fetch
+            print("No cached/disk data, fetching from network (blocking UI)")
             DispatchQueue.global(qos: .default).async {
-                    print ("Loading bandName Data cache, from disk or dropbox")
-                    self.gatherData(completion: completion)
+                self.gatherData(completion: completion)
             }
         }
-        print ("Done Loading bandName Data cache")
+        print("Done Loading bandName Data cache")
     }
     
     /// Clears the static cache of band names.
@@ -246,6 +275,10 @@ open class bandNamesHandler {
                 }
             }
             readingBandFile = false
+        }
+        // After band names data is loaded and parsed:
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("BandNamesDataReady"), object: nil)
         }
     }
 

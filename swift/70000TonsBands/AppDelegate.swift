@@ -32,7 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     var bandPriorityStorage = [String:Int]()
     
-    var bandDescriptions = CustomBandDescription.shared
+    var bandDescriptions = CustomBandDescription()
     var dataHandle = dataHandler()
     
     /**
@@ -46,8 +46,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
     
-        // Initialize staticDataKey for deadlock protection
-        staticData.setSpecific(key: staticDataKey, value: ())
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
@@ -95,11 +93,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseApp.configure()
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
-        // Test Firebase connectivity in background
-        DispatchQueue.global(qos: .background).async {
-            self.testFirebaseConnectivity()
-        }
-        
         let iCloudHandle = iCloudDataHandler()
         iCloudHandle.purgeOldiCloudKeys()
         let iCloudEnabled = iCloudHandle.checkForIcloud()
@@ -145,16 +138,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         printFCMToken()
         
-        DispatchQueue.main.async{
+        // Remove the old DispatchQueue.main.async block and replace with background thread for iCloud data loading
+        DispatchQueue.global(qos: .background).async {
+            let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+            if isFirstLaunch {
+                UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+                UserDefaults.standard.synchronize()
+                print("First launch detected, waiting 20 seconds before loading iCloud data...")
+                Thread.sleep(forTimeInterval: 20.0)
+            }
             let iCloudHandle = iCloudDataHandler()
-            
             // IMPORTANT: Check for old iCloud data format and migrate if needed
             // This must happen BEFORE reading iCloud data to prevent conflicts
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
-            
-            let notes = CustomBandDescription.shared
+            let notes = CustomBandDescription()
             notes.getAllDescriptions()
+            // Refresh the display on the main thread
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            }
         }
         
         application.registerForRemoteNotifications()
@@ -347,10 +350,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("iCloud: App became active, forcing iCloud synchronization")
         NSUbiquitousKeyValueStore.default.synchronize()
         
-        // Ensure schedule CSV is downloaded when app becomes active (e.g., from push notification)
-        let schedule = scheduleHandler.shared
-        schedule.DownloadCsv()
-        
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         let userDataHandle = userDataHandler()
@@ -476,31 +475,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // Saves changes in the application's managed object context before the application terminates.
+
         self.saveContext()
-        // Sync iCloud data
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.writeAllPriorityData()
-        iCloudHandle.writeAllScheduleData()
     }
 
-    /**
-     Tests Firebase connectivity and logs the result for debugging network issues.
-     */
-    private func testFirebaseConnectivity() {
-        let ref = Database.database().reference()
-        
-        // Test with a simple read operation
-        ref.child(".info/connected").observeSingleEvent(of: .value) { snapshot in
-            if let connected = snapshot.value as? Bool {
-                print("Firebase connectivity test: \(connected ? "Connected" : "Disconnected")")
-            } else {
-                print("Firebase connectivity test: Unable to determine connection status")
-            }
-        } withCancel: { error in
-            print("Firebase connectivity test failed: \(error.localizedDescription)")
-        }
-    }
-    
     // MARK: - Split view
 
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool {
