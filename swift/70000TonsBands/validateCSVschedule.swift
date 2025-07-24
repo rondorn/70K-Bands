@@ -45,7 +45,7 @@ class validateCSVSchedule {
         
         let defaults = UserDefaults.standard
         let validateSchedulePreference = defaults.bool(forKey: "validateScheduleFile")
-        let bandNameHandle = bandNamesHandler.shared
+        let bandNameHandle = bandNamesHandler()
         
         if (validateSchedulePreference == true){
             bands = bandNameHandle.getBandNames()
