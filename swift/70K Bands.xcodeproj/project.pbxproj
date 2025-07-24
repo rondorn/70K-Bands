@@ -73,6 +73,8 @@
 		11563F1024A567B40075CC84 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11274945242D044800B8E1B8 /* WebKit.framework */; };
 		1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
+		1158FEBB2E3193610089217A /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1158FEBA2E3193610089217A /* DataCollectionCoordinator.swift */; };
+		1158FEBC2E3193610089217A /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1158FEBA2E3193610089217A /* DataCollectionCoordinator.swift */; };
 		115A52B01CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
 		115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
 		115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
@@ -211,6 +213,7 @@
 		1156251C1B6E65F200C658C6 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1156B4F21A660BE500D48D12 /* guiIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = guiIcons.swift; sourceTree = "<group>"; };
 		1156B4F41A6613E700D48D12 /* urlStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = urlStorage.swift; sourceTree = "<group>"; };
+		1158FEBA2E3193610089217A /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
 		115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		1169374420F555CD00038DA5 /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -369,6 +372,7 @@
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */,
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
+				1158FEBA2E3193610089217A /* DataCollectionCoordinator.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1154F6121A575893003F4764 /* DetailViewController.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
@@ -386,7 +390,6 @@
 				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
-				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -399,6 +402,7 @@
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
+				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
@@ -806,6 +810,7 @@
 				119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
 				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
+				1158FEBB2E3193610089217A /* DataCollectionCoordinator.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
@@ -885,6 +890,7 @@
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
 				11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */,
+				1158FEBC2E3193610089217A /* DataCollectionCoordinator.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
 				11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,

@@ -32,7 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     var bandPriorityStorage = [String:Int]()
     
-    var bandDescriptions = CustomBandDescription()
+    var bandDescriptions = CustomBandDescription.shared
     var dataHandle = dataHandler()
     
     /**
@@ -146,7 +146,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
             
-            let notes = CustomBandDescription()
+            let notes = CustomBandDescription.shared
             notes.getAllDescriptions()
         }
         
@@ -339,6 +339,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Force iCloud synchronization when app becomes active
         print("iCloud: App became active, forcing iCloud synchronization")
         NSUbiquitousKeyValueStore.default.synchronize()
+        
+        // Ensure schedule CSV is downloaded when app becomes active (e.g., from push notification)
+        let schedule = scheduleHandler.shared
+        schedule.DownloadCsv()
         
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         

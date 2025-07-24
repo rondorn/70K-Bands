@@ -54,6 +54,7 @@ func getUrlData(urlString: String) -> String{
         print ("\(currentQueueLabel ?? "") !!Looking up url \(urlString)")
         
         if (urlString == "Unable to communicate with Drop Box!"){
+            print ("HTTP_ERROR: Unable to communicate with Drop Box! - 1")
                 results = urlString
         } else {
             do {
@@ -69,9 +70,12 @@ func getUrlData(urlString: String) -> String{
                 let task = URLSession.shared.dataTask(with: url) { data, response, error in
                     if let error = error {
                         urlError = error
-                        print("Network error for \(urlString): \(error.localizedDescription)")
+                        print("HTTP_ERROR: Network error for \(urlString): \(error.localizedDescription)")
                     } else if let data = data {
                         urlContents = String(data: data, encoding: .utf8) ?? ""
+                        print("[BAND_DEBUG] getUrlData: Received \(data.count) bytes for \(urlString)")
+                    } else {
+                        print("[BAND_DEBUG] getUrlData: No data received for \(urlString)")
                     }
                     semaphore.signal()
                 }
