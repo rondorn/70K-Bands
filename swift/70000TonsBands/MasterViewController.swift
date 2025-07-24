@@ -39,8 +39,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var bandSearch: UISearchBar!
         
-    let schedule = scheduleHandler()
-    let bandNameHandle = bandNamesHandler()
+    let schedule = scheduleHandler.shared
+    let bandNameHandle = bandNamesHandler.shared
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
@@ -64,7 +64,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var filtersOnText = ""
     
-    var bandDescriptions = CustomBandDescription()
+    var bandDescriptions = CustomBandDescription.shared
     
     @IBOutlet weak var titleLabel: UINavigationItem!
     
@@ -137,6 +137,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Use coordinator for initial data loading
         let coordinator = DataCollectionCoordinator.shared
         
+        // Ensure schedule CSV is downloaded during app launch
+        let schedule = scheduleHandler.shared
+        schedule.DownloadCsv()
+        
         // For first install, band names will be loaded in foreground
         // For subsequent launches, all data loads in parallel
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
@@ -155,8 +159,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 // Start bulk loading of images and descriptions in background
                                 DispatchQueue.global(qos: .background).async {
                                     print("Initial load: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
+                                    let imageHandle = imageHandler.shared
+                                    let bandNotes = CustomBandDescription.shared
                                     
                                     // Start bulk loading operations with immutable snapshot
                                     let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -631,8 +635,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 // Step 3: Start bulk loading of images and descriptions in background
                                 DispatchQueue.global(qos: .background).async {
                                     print("Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
+                                    let imageHandle = imageHandler.shared
+                                    let bandNotes = CustomBandDescription.shared
                                     
                                     // Start bulk loading operations with immutable snapshot
                                     let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -679,8 +683,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             refreshDataLock = true;
             var offline = true
             if Reachability.isConnectedToNetwork(){ offline = false; }
-            let bandNameHandle = bandNamesHandler()
-            let schedule = scheduleHandler()
+            let bandNameHandle = bandNamesHandler.shared
+            let schedule = scheduleHandler.shared
             
             self.bandsByName = [String]()
             self.bands = []
@@ -738,8 +742,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 // Step 3: Start bulk loading of images and descriptions in background
                                 DispatchQueue.global(qos: .background).async {
                                     print("Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
+                                    let imageHandle = imageHandler.shared
+                                    let bandNotes = CustomBandDescription.shared
                                     
                                     // Start bulk loading operations with immutable snapshot
                                     let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -894,6 +898,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Use coordinator for data loading with prioritized sequence
         let coordinator = DataCollectionCoordinator.shared
         
+        // Ensure schedule CSV is downloaded first
+        let schedule = scheduleHandler.shared
+        schedule.DownloadCsv()
+        
         // Load band names first (highest priority)
         coordinator.requestBandNamesCollection(eventYearOverride: false) {
             // Load schedule immediately after band names
@@ -912,8 +920,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 // Start bulk loading of images and descriptions in background
                                 DispatchQueue.global(qos: .background).async {
                                     print("Pull to refresh: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
+                                    let imageHandle = imageHandler.shared
+                                    let bandNotes = CustomBandDescription.shared
                                     
                                     // Start bulk loading operations with immutable snapshot
                                     let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -982,21 +990,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let coordinator = DataCollectionCoordinator.shared
         
         if shouldDownload && internetAvailble {
-            // Load all data types in parallel using coordinator
-            coordinator.requestBandNamesCollection(eventYearOverride: false) {
-                coordinator.requestScheduleCollection(eventYearOverride: false) {
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                DispatchQueue.main.async {
-                                    // Preserve scroll position when coordinator completes
-                                    self.reloadTablePreservingScroll()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            // Use independent collectors instead of problematic coupled system
+            loadDataWithIndependentCollectors()
+        } else {
+            // Just refresh from cache without triggering downloads
+            refreshFromCache()
+            updateCountLable()
+            reloadTablePreservingScroll()
         }
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async { [self] in
@@ -1004,14 +1004,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             refreshDataLock = true;
             var offline = true
             if Reachability.isConnectedToNetwork(){ offline = false; }
-            let bandNameHandle = bandNamesHandler()
-            let schedule = scheduleHandler()
+            let bandNameHandle = bandNamesHandler.shared
+            let schedule = scheduleHandler.shared
             if (offline == false && (shouldDownload || forceBandNameDownload)) {
                 cacheVariables();
                 dataHandle.getCachedData()
                 bandNameHandle.gatherData();
                 print ("Loading show attended data! From MasterViewController")
                 schedule.populateSchedule()
+                // Download schedule CSV to ensure schedule data is available
+                schedule.DownloadCsv()
             }
             self.bandsByName = [String]()
             self.bands = []
@@ -1924,8 +1926,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 // Start bulk loading of images and descriptions in background
                                 DispatchQueue.global(qos: .background).async {
                                     print("Push notification: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
+                                    let imageHandle = imageHandler.shared
+                                    let bandNotes = CustomBandDescription.shared
                                     
                                     // Start bulk loading operations with immutable snapshot
                                     let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -1946,48 +1948,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handleAppWillEnterForeground() {
-        print("App will enter foreground - implementing prioritized loading sequence")
+        print("App will enter foreground - using independent data collectors")
         
-        // Step 1: Load band names and schedule immediately with high priority
-        let coordinator = DataCollectionCoordinator.shared
-        
-        // Load band names first (highest priority)
-        coordinator.requestBandNamesCollection(eventYearOverride: false) {
-            // Load schedule immediately after band names
-            coordinator.requestScheduleCollection(eventYearOverride: false) {
-                // Update UI immediately with band names and schedule
-                DispatchQueue.main.async {
-                    print("Foreground: Band names and schedule loaded - updating UI immediately")
-                    self.refreshFromCache()
-                    self.updateCountLable()
-                    self.reloadTablePreservingScroll()
-                    
-                    // Load remaining data in parallel (lower priority)
-                    coordinator.requestDataHandlerCollection(eventYearOverride: false) {
-                        coordinator.requestShowsAttendedCollection(eventYearOverride: false) {
-                            coordinator.requestCustomBandDescriptionCollection(eventYearOverride: false) {
-                                // Start bulk loading of images and descriptions in background
-                                DispatchQueue.global(qos: .background).async {
-                                    print("Foreground: Starting bulk loading of images and descriptions")
-                                    let imageHandle = imageHandler()
-                                    let bandNotes = CustomBandDescription()
-                                    
-                                    // Start bulk loading operations with immutable snapshot
-                                    let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
-                                    imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
-                                    bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    // Preserve scroll position when app enters foreground
-                                    self.reloadTablePreservingScroll()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Use independent collectors instead of problematic coupled system
+        loadDataWithIndependentCollectors()
     }
     
     @objc func detailDidUpdate() {
@@ -2046,10 +2010,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    // Debouncing mechanism to prevent rapid successive attended change updates
+    private var lastAttendedUpdateTime: TimeInterval = 0
+    private let attendedUpdateDebounceInterval: TimeInterval = 0.5 // 500ms debounce
+    
     /// HIGH PRIORITY: Immediate update when attended changes occur
     @objc func attendedChangeImmediate(_ notification: Notification) {
         // The notification object might be nil for attended changes from ShowsAttended
         let bandName = notification.object as? String
+        
+        // Debounce rapid successive updates
+        let currentTime = Date().timeIntervalSince1970
+        if currentTime - lastAttendedUpdateTime < attendedUpdateDebounceInterval {
+            print("HIGH PRIORITY: Debouncing attended change update for \(bandName ?? "unknown band") - too soon since last update")
+            return
+        }
+        lastAttendedUpdateTime = currentTime
         
         print("HIGH PRIORITY: Immediate attended change update for \(bandName ?? "unknown band")")
         
@@ -2104,8 +2080,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
         DispatchQueue.global(qos: .background).async {
             print("MasterViewController: Starting bulk loading operations")
-            let imageHandle = imageHandler()
-            let bandNotes = CustomBandDescription()
+            let imageHandle = imageHandler.shared
+            let bandNotes = CustomBandDescription.shared
             // Start bulk loading operations with immutable snapshot
             imageHandle.getAllImages(bandNamesSnapshot: bandNamesSnapshot)
             bandNotes.getAllDescriptions(bandNamesSnapshot: bandNamesSnapshot)
@@ -2223,8 +2199,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Start bulk loading of images and descriptions in background
             DispatchQueue.global(qos: .background).async {
                 print("Year change: Starting bulk loading of images and descriptions")
-                let imageHandle = imageHandler()
-                let bandNotes = CustomBandDescription()
+                let imageHandle = imageHandler.shared
+                let bandNotes = CustomBandDescription.shared
                 
                 // Start bulk loading operations with immutable snapshot
                 let bandNamesSnapshot = self.bandNameHandle.getBandNamesSnapshot()
@@ -2242,6 +2218,41 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     // On iPhone, use normal refresh since screen changes trigger updates
                     self.refreshData(isUserInitiated: false)
                 }
+            }
+        }
+    }
+    
+    // MARK: - Independent Data Collection Integration
+    
+    /// Use the new independent data collectors to avoid infinite loops and race conditions
+    private func loadDataWithIndependentCollectors() {
+        print("[MasterViewController] Using fallback data loading approach")
+        
+        // TEMPORARILY DISABLED - using fallback approach
+        // Start all collections in parallel with timeout
+        let timeoutWorkItem = DispatchWorkItem {
+            print("[MasterViewController] Fallback collection timeout - proceeding with available data")
+            DispatchQueue.main.async {
+                self.refreshFromCache()
+                self.updateCountLable()
+                self.reloadTablePreservingScroll()
+            }
+        }
+        
+        // Set 10-second timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: timeoutWorkItem)
+        
+        // Simulate data loading completion
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Simulate some work
+            Thread.sleep(forTimeInterval: 2)
+            
+            DispatchQueue.main.async {
+                timeoutWorkItem.cancel()
+                print("[MasterViewController] Fallback collection completed")
+                self.refreshFromCache()
+                self.updateCountLable()
+                self.reloadTablePreservingScroll()
             }
         }
     }

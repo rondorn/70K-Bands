@@ -10,12 +10,16 @@ import Foundation
 
 open class CustomBandDescription {
     
+    // MARK: - Singleton
+    static let shared = CustomBandDescription()
+    
     var bandDescriptionUrl = [String:String]()
     var bandDescriptionUrlDate = [String:String]()
     private var downloadingBands = Set<String>() // Track bands currently being downloaded
     private let downloadingBandsQueue = DispatchQueue(label: "com.70kbands.downloadingBands", qos: .utility)
     
-    init(){
+    // MARK: - Private Initializer
+    private init(){
         refreshCache()
     }
     
@@ -108,6 +112,12 @@ open class CustomBandDescription {
     
     /// Loads all band descriptions from the description map file.
     func getAllDescriptions(bandNamesSnapshot: [String: [String: String]]? = nil){
+        // Ensure bandDescriptionUrl is properly initialized before accessing keys
+        if !(bandDescriptionUrl is [String: String]) {
+            print("CustomBandDescription: Resetting corrupted bandDescriptionUrl in getAllDescriptions")
+            bandDescriptionUrl = [String: String]()
+        }
+        
         // Extract just the band names from the snapshot, or use our own bandDescriptionUrl
         let bandNames: [String]
         if let snapshot = bandNamesSnapshot {
@@ -148,8 +158,24 @@ open class CustomBandDescription {
         
         var matches = false
         
-        if bandDescriptionUrlDate.keys.contains(bandName){
-            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: bandDescriptionUrl[bandName]!)
+        // Type safety check for bandDescriptionUrlDate - handle corruption
+        guard let urlDateDict = bandDescriptionUrlDate as? [String: String] else {
+            print("CustomBandDescription: bandDescriptionUrlDate is corrupted in custMatchesDefault, type: \(type(of: bandDescriptionUrlDate)), value: \(bandDescriptionUrlDate)")
+            // Reset the corrupted dictionary
+            bandDescriptionUrlDate = [String: String]()
+            return false
+        }
+        
+        // Type safety check for bandDescriptionUrl - handle corruption
+        guard let urlDict = bandDescriptionUrl as? [String: String] else {
+            print("CustomBandDescription: bandDescriptionUrl is corrupted in custMatchesDefault, type: \(type(of: bandDescriptionUrl)), value: \(bandDescriptionUrl)")
+            // Reset the corrupted dictionary
+            bandDescriptionUrl = [String: String]()
+            return false
+        }
+        
+        if urlDateDict.keys.contains(bandName) && urlDict.keys.contains(bandName){
+            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: urlDict[bandName]!)
             
             defaultBandNote = defaultBandNote.filter {!$0.isWhitespace}
             
@@ -170,8 +196,16 @@ open class CustomBandDescription {
         var approvedFileName = ""
         let custCommentFileName = bandName + "_comment.note-cust";
         
-        if bandDescriptionUrlDate.keys.contains(bandName){
-            let defaultCommentFileName = bandName + "_comment.note-" + bandDescriptionUrlDate[bandName]!;
+        // Type safety check for bandDescriptionUrlDate - handle corruption
+        guard let urlDateDict = bandDescriptionUrlDate as? [String: String] else {
+            print("CustomBandDescription: bandDescriptionUrlDate is corrupted, type: \(type(of: bandDescriptionUrlDate)), value: \(bandDescriptionUrlDate)")
+            // Reset the corrupted dictionary
+            bandDescriptionUrlDate = [String: String]()
+            return custCommentFileName
+        }
+        
+        if urlDateDict.keys.contains(bandName){
+            let defaultCommentFileName = bandName + "_comment.note-" + urlDateDict[bandName]!;
             
             
             let custCommentFile = directoryPath.appendingPathComponent( custCommentFileName)
@@ -313,6 +347,13 @@ open class CustomBandDescription {
     func getDescription(bandName: String) -> String {
         
         print("CustomBandDescription: getDescription called for \(bandName)")
+        
+        // Ensure bandDescriptionUrl is properly initialized
+        if !(bandDescriptionUrl is [String: String]) {
+            print("CustomBandDescription: Resetting corrupted bandDescriptionUrl")
+            bandDescriptionUrl = [String: String]()
+        }
+        
         convertOldData(bandName: bandName)
         print ("commentFile lookup for \(bandName)")
         var commentText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
@@ -333,12 +374,20 @@ open class CustomBandDescription {
             }
             
             //bandDescriptionLock.sync() {
-            if (bandDescriptionUrl.index(forKey: bandName) != nil && bandDescriptionUrl[bandName] != nil){
+            // Type safety check for bandDescriptionUrl - handle all possible corruption cases
+            guard let urlDict = bandDescriptionUrl as? [String: String] else {
+                print("CustomBandDescription: bandDescriptionUrl is corrupted, type: \(type(of: bandDescriptionUrl)), value: \(bandDescriptionUrl)")
+                // Reset the corrupted dictionary
+                bandDescriptionUrl = [String: String]()
+                return commentText
+            }
+            
+            if (urlDict.index(forKey: bandName) != nil && urlDict[bandName] != nil){
                 
-                print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
+                print ("commentFile downloading URL \(urlDict[bandName] ?? "nil")")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: self.bandDescriptionUrl[bandName]! )
+                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: urlDict[bandName]! )
                 }
             } else {
                 print("CustomBandDescription: No URL found for \(bandName) in bandDescriptionUrl")
@@ -419,13 +468,19 @@ open class CustomBandDescription {
                 csvData = try! CSV(csvStringToParse: csvDataString)
                 
                 for lineData in csvData.rows {
-                    if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                        print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
-                        bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
-                        bandDescriptionUrlDate[(lineData[bandField]) ?? ""] = lineData[urlDateField]
+                    // Type safety check - ensure lineData is a dictionary
+                    guard let lineDict = lineData as? [String: String] else {
+                        print("CustomBandDescription: Skipping invalid lineData type: \(type(of: lineData))")
+                        continue
+                    }
+                    
+                    if (lineDict[bandField] != nil && lineDict[urlField] != nil &&  lineDict[bandField]?.isEmpty == false && lineDict[urlField]?.isEmpty == false){
+                        print ("commentFile descriptiopnMap Adding \(lineDict[bandField]?.debugDescription ?? "nil") with url \(lineDict[urlField]?.debugDescription ?? "nil")")
+                        bandDescriptionUrl[(lineDict[bandField]) ?? ""] = lineDict[urlField]
+                        bandDescriptionUrlDate[(lineDict[bandField]) ?? ""] = lineDict[urlDateField]
                         bandDescriptionLock.async(flags: .barrier) {
-                            cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
-                            cacheVariables.bandDescriptionUrlDateCache[(lineData[bandField])!] = lineData[urlDateField]
+                            cacheVariables.bandDescriptionUrlCache[(lineDict[bandField])!] = lineDict[urlField]
+                            cacheVariables.bandDescriptionUrlDateCache[(lineDict[bandField])!] = lineDict[urlDateField]
                         }
                         
                     } else {

@@ -11,7 +11,11 @@ import CoreData
 open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
-    var showsAttendedArray = [String : String]();
+    private var showsAttendedArray = [String : String]();
+    private var isLoadingData = false
+    private let attendedLock = NSLock()
+    private var lastNotificationTime: TimeInterval = 0
+    private let notificationDebounceInterval: TimeInterval = 0.1 // 100ms debounce
     
     /**
      Initializes a new instance of ShowsAttended and loads cached data.
@@ -27,11 +31,30 @@ open class ShowsAttended {
      */
     func getCachedData(){
         
+        // Prevent infinite loop by checking if already loading
+        if isLoadingData {
+            print("ShowsAttended: Skipping getCachedData - already loading data")
+            return
+        }
+        
         var staticCacheUsed = false
         
         staticAttended.sync() {
             if (cacheVariables.attendedStaticCache.isEmpty == true){
-                loadShowsAttended()
+                // Only load if we have band names available to prevent infinite loop
+                let bandNameHandle = bandNamesHandler.shared
+                
+                // Prevent infinite loop: check if band names are being loaded
+                if readingBandFile {
+                    print("ShowsAttended: Skipping getCachedData - band names are being loaded")
+                    return
+                }
+                
+                if !bandNameHandle.getBandNames().isEmpty {
+                    loadShowsAttended()
+                } else {
+                    print("ShowsAttended: Skipping loadShowsAttended - band names not available yet")
+                }
             } else {
                 staticCacheUsed = true
                 showsAttendedArray = cacheVariables.attendedStaticCache
@@ -49,7 +72,10 @@ open class ShowsAttended {
      */
     func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
         // For ShowsAttended, we just load cached data since it doesn't download from network
-        getCachedData()
+        // Only load if not already loading to prevent infinite loops
+        if !isLoadingData {
+            getCachedData()
+        }
         completion?()
     }
     
@@ -58,6 +84,8 @@ open class ShowsAttended {
      - Parameter attendedData: A dictionary of attended data to set.
      */
     func setShowsAttended(attendedData: [String : String]){
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
         showsAttendedArray = attendedData
     }
     
@@ -66,7 +94,29 @@ open class ShowsAttended {
      - Returns: A dictionary of show attendance data.
      */
     func getShowsAttended()->[String : String]{
-        return showsAttendedArray;
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
+        
+        // Defensive check: ensure showsAttendedArray is actually a dictionary
+        guard showsAttendedArray is [String: String] else {
+            print("ShowsAttended: CRITICAL ERROR - showsAttendedArray is corrupted in getShowsAttended, type: \(type(of: showsAttendedArray))")
+            // Reset the corrupted dictionary
+            showsAttendedArray = [:]
+            return [:]
+        }
+        
+        // Safer approach: check if we can access the dictionary safely
+        let dictionaryCount = showsAttendedArray.count
+        if dictionaryCount == 0 {
+            // Return empty array if data is not ready to prevent infinite loop
+            if isLoadingData {
+                print("ShowsAttended: Returning empty array - data not ready yet")
+                return [:]
+            }
+            return [:]
+        }
+        
+        return showsAttendedArray
     }
     
     /**
@@ -91,22 +141,52 @@ open class ShowsAttended {
      */
     func loadShowsAttended(){
         
+        // Prevent infinite loop by checking if already loading
+        if isLoadingData {
+            print("ShowsAttended: Skipping loadShowsAttended - already loading data")
+            return
+        }
+        
+        isLoadingData = true
+        
         //print ("Loading shows attended data 1")
-        let bandNameHandle = bandNamesHandler()
+        let bandNameHandle = bandNamesHandler.shared
+        
+        // Prevent infinite loop: check if band names are being loaded
+        if readingBandFile {
+            print("ShowsAttended: Skipping loadShowsAttended - band names are being loaded")
+            isLoadingData = false
+            return
+        }
         
         let allBands = bandNameHandle.getBandNames()
+        
+        // Prevent infinite loop by checking if band names are available
+        if allBands.isEmpty {
+            print("ShowsAttended: Skipping loadShowsAttended - band names not available")
+            isLoadingData = false
+            return
+        }
+        
         let artistUrl = getScheduleUrl()
 
         var unuiqueSpecial = [String]()
         do {
             let data = try Data(contentsOf: showsAttended, options: [])
             //print ("Loading show attended data!! From json")
-            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String : String] {
-                showsAttendedArray = dict
-            } else {
-                print("ShowsAttended: ERROR - Unable to decode showsAttendedArray from JSON, data may be corrupted or in an unexpected format.")
+            
+            // Defensive check: validate JSON structure before parsing
+            let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+            
+            // Ensure we have a dictionary
+            guard let dict = jsonObject as? [String: String] else {
+                print("ShowsAttended: ERROR - JSON root is not a dictionary, type: \(type(of: jsonObject))")
                 showsAttendedArray = [:]
+                isLoadingData = false
+                return
             }
+            
+            showsAttendedArray = dict
             print ("Loaded show attended data!! From json \(showsAttendedArray)")
             var needsMigration = false
             let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
@@ -145,8 +225,13 @@ open class ShowsAttended {
             
             //iCloudHandle.readCloudAttendedData(attendedHandle: self)
             
+            // Reset loading flag
+            isLoadingData = false
+            
         } catch {
             print ("Loaded show attended data!! Error, unable to load showsAtteneded Data \(error.localizedDescription)")
+            // Reset loading flag on error
+            isLoadingData = false
         }
     
     }
@@ -206,9 +291,28 @@ open class ShowsAttended {
      Note: Null or empty entries display as "Will Not Attend" but cycle to "Will Attend" on first click.
      */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
-        if (showsAttendedArray.count == 0){
-            loadShowsAttended();
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
+        
+        // Defensive check: ensure showsAttendedArray is actually a dictionary
+        guard showsAttendedArray is [String: String] else {
+            print("ShowsAttended: CRITICAL ERROR - showsAttendedArray is corrupted in addShowsAttended, type: \(type(of: showsAttendedArray))")
+            // Reset the corrupted dictionary
+            showsAttendedArray = [:]
         }
+        
+        // Safer approach: check if we can access the dictionary safely
+        let dictionaryCount = showsAttendedArray.count
+        if dictionaryCount == 0 {
+            // Only load if we have band names available to prevent infinite loop
+            let bandNameHandle = bandNamesHandler.shared
+            if !bandNameHandle.getBandNames().isEmpty {
+                loadShowsAttended();
+            } else {
+                print("ShowsAttended: Skipping loadShowsAttended in addShowsAttended - band names not available")
+            }
+        }
+        
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
@@ -216,7 +320,7 @@ open class ShowsAttended {
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
-        let currentStatus = getShowAttendedStatusRaw(index: index)
+        let currentStatus = getShowAttendedStatusRawUnsafe(index: index)
         
         // IMPORTANT: Null or empty entries are treated as "Will Not Attend" (sawNoneStatus) for display
         // Cycling logic:
@@ -256,8 +360,12 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
+        
         print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
         showsAttendedArray[index] = status
+        
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
         staticAttended.async(flags: .barrier) {
@@ -265,9 +373,13 @@ open class ShowsAttended {
         }
         saveShowsAttended()
         
-        // HIGH PRIORITY: Post immediate update notification
+        // HIGH PRIORITY: Post immediate update notification with debouncing
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: Notification.Name("AttendedChangeImmediate"), object: nil)
+            let currentTime = Date().timeIntervalSince1970
+            if currentTime - self.lastNotificationTime > self.notificationDebounceInterval {
+                self.lastNotificationTime = currentTime
+                NotificationCenter.default.post(name: Notification.Name("AttendedChangeImmediate"), object: nil)
+            }
         }
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
@@ -353,12 +465,34 @@ open class ShowsAttended {
      - Returns: The attendance status as a string. Null or empty entries are treated as "Will Not Attend" (sawNoneStatus) for display.
      */
     func getShowAttendedStatus (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
+        
+        // Defensive check: ensure showsAttendedArray is actually a dictionary
+        guard showsAttendedArray is [String: String] else {
+            print("ShowsAttended: CRITICAL ERROR - showsAttendedArray is corrupted in getShowAttendedStatus, type: \(type(of: showsAttendedArray))")
+            // Reset the corrupted dictionary
+            showsAttendedArray = [:]
+            return sawNoneStatus
+        }
+        
+        // Safer approach: check if we can access the dictionary safely
+        let dictionaryCount = showsAttendedArray.count
+        if dictionaryCount == 0 {
+            // Prevent infinite loop by checking if data is ready
+            if isLoadingData {
+                print("ShowsAttended: Skipping getShowAttendedStatus - data not ready yet")
+                return sawNoneStatus
+            }
+            return sawNoneStatus
+        }
+        
         var eventTypeVariable = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeVariable = unofficalEventType;
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
-        let raw = getShowAttendedStatusRaw(index: index)
+        let raw = getShowAttendedStatusRawUnsafe(index: index)
         var value = ""
         print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(raw ?? "")")
         
@@ -455,8 +589,35 @@ open class ShowsAttended {
         }
     }
     
-    // Helper to get the raw status (without timestamp)
+    // Helper to get the raw status (without timestamp) - thread-safe public interface
     func getShowAttendedStatusRaw(index: String) -> String? {
+        attendedLock.lock()
+        defer { attendedLock.unlock() }
+        return getShowAttendedStatusRawUnsafe(index: index)
+    }
+    
+    // Helper to get the raw status (without timestamp) - unsafe internal method
+    private func getShowAttendedStatusRawUnsafe(index: String) -> String? {
+        // Defensive check: ensure showsAttendedArray is actually a dictionary
+        guard showsAttendedArray is [String: String] else {
+            print("ShowsAttended: CRITICAL ERROR - showsAttendedArray is corrupted, type: \(type(of: showsAttendedArray))")
+            // Reset the corrupted dictionary
+            showsAttendedArray = [:]
+            return nil
+        }
+        
+        // Safer approach: check if we can access the dictionary safely
+        let dictionaryCount = showsAttendedArray.count
+        if dictionaryCount == 0 {
+            // Prevent infinite loop by checking if data is ready
+            if isLoadingData {
+                print("ShowsAttended: Skipping getShowAttendedStatusRaw - data not ready yet")
+                return nil
+            }
+            return nil
+        }
+        
+        // Safe access to the dictionary value using optional chaining
         guard let value = showsAttendedArray[index] else { return nil }
         let parts = value.split(separator: ":")
         return parts.first.map { String($0) }
@@ -464,6 +625,21 @@ open class ShowsAttended {
     
     // New: Get the last change timestamp for a show
     func getShowAttendedLastChange(index: String) -> Double {
+        // Defensive check: ensure showsAttendedArray is actually a dictionary
+        guard showsAttendedArray is [String: String] else {
+            print("ShowsAttended: CRITICAL ERROR - showsAttendedArray is corrupted in getShowAttendedLastChange, type: \(type(of: showsAttendedArray))")
+            // Reset the corrupted dictionary
+            showsAttendedArray = [:]
+            return 0
+        }
+        
+        // Safer approach: check if we can access the dictionary safely
+        let dictionaryCount = showsAttendedArray.count
+        if dictionaryCount == 0 {
+            return 0
+        }
+        
+        // Safe access to the dictionary value using optional chaining
         guard let value = showsAttendedArray[index] else { return 0 }
         let parts = value.split(separator: ":")
         if parts.count == 2, let ts = Double(parts[1]) { return ts }

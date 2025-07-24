@@ -76,7 +76,67 @@ var bulkLoadingPaused = false
 var bandSelected = String();
 var eventSelectedIndex = String();
 
-var timeIndexMap : [String:String] = [String:String]();
+// Thread-safe wrapper for timeIndexMap to prevent corruption
+private var _timeIndexMap: [String: String] = [String: String]()
+private let timeIndexMapLock = NSLock()
+
+var timeIndexMap: [String: String] {
+    get {
+        timeIndexMapLock.lock()
+        defer { timeIndexMapLock.unlock() }
+        
+        // Defensive check: ensure the dictionary is not corrupted
+        guard _timeIndexMap is [String: String] else {
+            print("CRITICAL ERROR: _timeIndexMap is corrupted, type: \(type(of: _timeIndexMap))")
+            _timeIndexMap = [String: String]()
+            return [String: String]()
+        }
+        
+        return _timeIndexMap
+    }
+    set {
+        timeIndexMapLock.lock()
+        defer { timeIndexMapLock.unlock() }
+        
+        // Defensive check: ensure we're setting a valid dictionary
+        guard newValue is [String: String] else {
+            print("CRITICAL ERROR: Attempting to set timeIndexMap with invalid type: \(type(of: newValue))")
+            _timeIndexMap = [String: String]()
+            return
+        }
+        
+        _timeIndexMap = newValue
+    }
+}
+
+// Thread-safe method to set individual key-value pairs
+func setTimeIndexMapValue(key: String, value: String) {
+    timeIndexMapLock.lock()
+    defer { timeIndexMapLock.unlock() }
+    
+    // Defensive check: ensure the dictionary is not corrupted
+    guard _timeIndexMap is [String: String] else {
+        print("CRITICAL ERROR: _timeIndexMap is corrupted in setTimeIndexMapValue, type: \(type(of: _timeIndexMap))")
+        _timeIndexMap = [String: String]()
+    }
+    
+    _timeIndexMap[key] = value
+}
+
+// Thread-safe method to get individual values
+func getTimeIndexMapValue(key: String) -> String? {
+    timeIndexMapLock.lock()
+    defer { timeIndexMapLock.unlock() }
+    
+    // Defensive check: ensure the dictionary is not corrupted
+    guard _timeIndexMap is [String: String] else {
+        print("CRITICAL ERROR: _timeIndexMap is corrupted in getTimeIndexMapValue, type: \(type(of: _timeIndexMap))")
+        _timeIndexMap = [String: String]()
+        return nil
+    }
+    
+    return _timeIndexMap[key]
+}
 
 var inTestEnvironment = false;
 
@@ -215,6 +275,7 @@ let subscriptionUnofficalTopic = "unofficalEvents"
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
 
 let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
+let priorityFile = getDocumentsDirectory().appendingPathComponent("priorityFile.txt")
 let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
 
 let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
@@ -233,9 +294,9 @@ let testingSetting = "Testing"
 
 var userCountry = ""
 var didNotFindMarkedEventsCount = 0
-var defaultStorageUrl = "https://www.dropbox.com/s/cdblpniyzi3avbh/productionPointer2024.txt?dl=1"
-let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
-let statsUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&st=bvyfmaib&raw=1"
+var defaultStorageUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/productionPointer.txt"
+var defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+let statsUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/report_dashboard.html"
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
@@ -326,9 +387,11 @@ func getPointerUrlData(keyValue: String) -> String {
 
     print ("Files were Done setting 2 \(pointerIndex)")
     if (dataString.isEmpty == true){
-        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
-        let httpData = getUrlData(urlString: defaultStorageUrl)
-        print ("getPointerUrlData: httpData for pointers data = \(httpData)")
+            print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
+    print ("[BAND_DEBUG] getPointerUrlData: defaultStorageUrl = \(defaultStorageUrl)")
+    let httpData = getUrlData(urlString: defaultStorageUrl)
+    print ("getPointerUrlData: httpData for pointers data = \(httpData)")
+    print ("[BAND_DEBUG] getPointerUrlData: httpData length = \(httpData.count)")
         if (httpData.isEmpty == false){
             
             let dataArray = httpData.components(separatedBy: "\n")

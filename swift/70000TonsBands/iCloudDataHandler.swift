@@ -65,7 +65,15 @@ class iCloudDataHandler {
                 iCloudDataisLoading = true;
                 print("iCloudPriority: Set iCloudDataisLoading to true")
                 
-                let bandNameHandle = bandNamesHandler()
+                let bandNameHandle = bandNamesHandler.shared
+                
+                // Prevent infinite loop: check if band names are being loaded
+                if readingBandFile {
+                    print("iCloudDataHandler: Skipping readAllPriorityData - band names are being loaded")
+                    iCloudDataisLoading = false
+                    return
+                }
+                
                 let bandNames = bandNameHandle.getBandNames()
                 
                 let priorityHandler = dataHandler()
@@ -294,7 +302,6 @@ class iCloudDataHandler {
         
     /// Reads all schedule/attendance data from iCloud
     /// Syncs all attended shows data from iCloud to local storage
-    var iCloudScheduleDataisLoading = false;
     func readAllScheduleData(){
         if (checkForIcloud() == true){
             print("iCloudSchedule: Starting readAllScheduleData operation")
@@ -303,11 +310,19 @@ class iCloudDataHandler {
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 print("iCloudSchedule: Initializing handlers for schedule data read")
                 
-                let scheduleHandle = scheduleHandler()
-                scheduleHandle.buildTimeSortedSchedulingData();
+                let bandNameHandle = bandNamesHandler.shared
                 
-                let bandNameHandle = bandNamesHandler()
+                // Prevent infinite loop: check if band names are being loaded
+                if readingBandFile {
+                    print("iCloudDataHandler: Skipping readAllScheduleData - band names are being loaded")
+                    iCloudScheduleDataisLoading = false
+                    return
+                }
+                
                 let bandNames = bandNameHandle.getBandNames()
+                
+                let scheduleHandle = scheduleHandler.shared
+                scheduleHandle.buildTimeSortedSchedulingData();
                 
                 let attendedHandle = ShowsAttended()
                 attendedHandle.loadShowsAttended()
@@ -362,7 +377,7 @@ class iCloudDataHandler {
                 print("iCloudSchedule: readAllScheduleData operation completed")
                 // Ensure local attended data is saved to disk for offline use
                 attendedHandle.saveShowsAttended()
-                self.iCloudScheduleDataisLoading = false;
+                iCloudScheduleDataisLoading = false;
             }
         }
     }

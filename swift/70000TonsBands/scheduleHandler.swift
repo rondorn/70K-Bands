@@ -11,6 +11,9 @@ import UIKit
 
 open class scheduleHandler {
     
+    // MARK: - Singleton
+    static let shared = scheduleHandler()
+    
     var schedulingData: [String : [TimeInterval : [String : String]]] = [String : [TimeInterval : [String : String]]]()
     var schedulingDataByTime: [TimeInterval : [String : String]] = [TimeInterval : [String : String]]()
     
@@ -18,7 +21,8 @@ open class scheduleHandler {
     private var lastDropboxErrorAlertTime: TimeInterval = 0
     private let dropboxErrorAlertInterval: TimeInterval = 3600 // 1 hour in seconds
 
-    init() {
+    // MARK: - Private Initializer
+    private init() {
         print ("Loading schedule Data")
         getCachedData()
     }
@@ -27,13 +31,19 @@ open class scheduleHandler {
         
         var staticCacheUsed = false
         
-        staticSchedule.sync {
+        // Use non-blocking approach for cache check
+        let semaphore = DispatchSemaphore(value: 0)
+        staticSchedule.async {
             if (cacheVariables.scheduleStaticCache.isEmpty == false && cacheVariables.scheduleTimeStaticCache.isEmpty == false ){
                 staticCacheUsed = true
-                schedulingData = cacheVariables.scheduleStaticCache
-                schedulingDataByTime = cacheVariables.scheduleTimeStaticCache
+                self.schedulingData = cacheVariables.scheduleStaticCache
+                self.schedulingDataByTime = cacheVariables.scheduleTimeStaticCache
             }
+            semaphore.signal()
         }
+        
+        // Wait with timeout to prevent deadlocks
+        _ = semaphore.wait(timeout: .now() + 0.05) // 50ms timeout
         
         if (staticCacheUsed == false){
             if ((FileManager.default.fileExists(atPath: schedulingDataCacheFile.path)) == true){
@@ -48,7 +58,13 @@ open class scheduleHandler {
             }
             
             if ((FileManager.default.fileExists(atPath: schedulingDataByTimeCacheFile.path)) == true){
-                schedulingDataByTime = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
+                // Use non-blocking approach for loading cache
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let loadedData = NSKeyedUnarchiver.unarchiveObject(withFile: schedulingDataByTimeCacheFile.path) as! [TimeInterval : [String : String]]
+                    staticSchedule.async(flags: .barrier) {
+                        self.schedulingDataByTime = loadedData
+                    }
+                }
             } else {
                 DispatchQueue.main.async {
                     print ("Cache did not load, loading schedule data")
@@ -60,11 +76,14 @@ open class scheduleHandler {
                 print("Skipping schedule cache population: schedulingData is empty and app is not just launched.")
                 return
             }
-            staticSchedule.sync {
-                cacheVariables.scheduleStaticCache = self.schedulingData
-                cacheVariables.scheduleTimeStaticCache = self.schedulingDataByTime
-            }
             
+            // Use non-blocking approach for cache population
+            DispatchQueue.global(qos: .utility).async {
+                staticSchedule.async(flags: .barrier) {
+                    cacheVariables.scheduleStaticCache = self.schedulingData
+                    cacheVariables.scheduleTimeStaticCache = self.schedulingDataByTime
+                }
+            }
         }
     }
     
@@ -77,8 +96,13 @@ open class scheduleHandler {
         print ("Loading schedule data 1")
         isLoadingSchedule = true;
         
-        self.schedulingData.removeAll();
-        self.schedulingDataByTime.removeAll();
+        // Use non-blocking thread-safe access for clearing data
+        DispatchQueue.global(qos: .userInitiated).async {
+            staticSchedule.async(flags: .barrier) {
+                self.schedulingData.removeAll();
+                self.schedulingDataByTime.removeAll();
+            }
+        }
     
         
         if (FileManager.default.fileExists(atPath: scheduleFile) == false){
@@ -94,105 +118,112 @@ open class scheduleHandler {
     }
     
     private func _processScheduleFile() {
-        if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
-            
-            var unuiqueIndex = Dictionary<TimeInterval, Int>()
-            var csvData: CSV
-            
-            csvData = try! CSV(csvStringToParse: csvDataString)
-            
-            for lineData in csvData.rows {
-                if (lineData[dateField]?.isEmpty == false && lineData[startTimeField]?.isEmpty == false){
-                    
-                    var dateIndex = getDateIndex(lineData[dateField]!, timeString: lineData[startTimeField]!, band: lineData["Band"]!)
-                    
-                    //ensures all dateIndex's are unuique
-                    while (unuiqueIndex[dateIndex] == 1){
-                        dateIndex = dateIndex + 1;
-                    }
-                    
-                    unuiqueIndex[dateIndex] = 1
-                    
-                    let dateFormatter = DateFormatter();
-                    dateFormatter.dateFormat = "YYYY-M-d HH:mm"
-                    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-                    
-                    print("Adding index for band " + lineData[bandField]! + " ")
-                    print (dateIndex)
-                    scheduleReleased = true
-                    if (schedulingData[lineData[bandField]!] == nil){
-                        self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
-        
-                    }
-                    if (schedulingData[lineData[bandField]!]?[dateIndex] == nil){
-                        self.schedulingData[lineData[bandField]!]?[dateIndex] = [String : String]()
+        // Use thread-safe access for the entire processing operation
+        staticSchedule.async(flags: .barrier) {
+            if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
+                
+                var unuiqueIndex = Dictionary<TimeInterval, Int>()
+                var csvData: CSV
+                
+                csvData = try! CSV(csvStringToParse: csvDataString)
+                
+                for lineData in csvData.rows {
+                    if (lineData[dateField]?.isEmpty == false && lineData[startTimeField]?.isEmpty == false){
                         
-                    }
-
-                    print ("Adding location of " + lineData[locationField]!)
-                    
-                    //doing this double for unknown reason, it wont work if the first entry is single
-                    print ("adding dayField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
-                    
-                    print ("adding startTimeField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
-                    
-                    print ("adding dateField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
-                    
-                    print ("adding typeField");
-                    var eventType = lineData[typeField]!;
-                    if (eventType == unofficalEventTypeOld){
-                        eventType = unofficalEventType;
-                    }
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: eventType)
-                    
-                    print ("adding notesField");
-                    if let noteValue = lineData[notesField] {
-                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: noteValue)
-                    }
-                    
-                    print ("adding locationField");
-                    setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
-                    
-                    print ("adding descriptionUrlField \(lineData)")
-                    
-                    if let descriptUrl = lineData[descriptionUrlField] {
-                        if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
+                        var dateIndex = self.getDateIndex(lineData[dateField]!, timeString: lineData[startTimeField]!, band: lineData["Band"]!)
+                        
+                        //ensures all dateIndex's are unuique
+                        while (unuiqueIndex[dateIndex] == 1){
+                            dateIndex = dateIndex + 1;
+                        }
+                        
+                        unuiqueIndex[dateIndex] = 1
+                        
+                        let dateFormatter = DateFormatter();
+                        dateFormatter.dateFormat = "YYYY-M-d HH:mm"
+                        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+                        
+                        print("Adding index for band " + lineData[bandField]! + " ")
+                        print (dateIndex)
+                        scheduleReleased = true
+                        if (self.schedulingData[lineData[bandField]!] == nil){
+                            self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
+            
+                        }
+                        if (self.schedulingData[lineData[bandField]!]?[dateIndex] == nil){
+                            self.schedulingData[lineData[bandField]!]?[dateIndex] = [String : String]()
                             
-                            bandDescriptionLock.sync {
-                                cacheVariables.bandDescriptionUrlCache[lineData[bandField]!] = descriptUrl
+                        }
+
+                        print ("Adding location of " + lineData[locationField]!)
+                        
+                        //doing this double for unknown reason, it wont work if the first entry is single
+                        print ("adding dayField");
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:dayField, value: lineData[dayField]!)
+                        
+                        print ("adding startTimeField");
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:startTimeField, value: lineData[startTimeField]!)
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:endTimeField, value: lineData[endTimeField]!)
+                        
+                        print ("adding dateField");
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:dateField, value: lineData[dateField]!)
+                        
+                        print ("adding typeField");
+                        var eventType = lineData[typeField]!;
+                        if (eventType == unofficalEventTypeOld){
+                            eventType = unofficalEventType;
+                        }
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:typeField, value: eventType)
+                        
+                        print ("adding notesField");
+                        if let noteValue = lineData[notesField] {
+                            self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:notesField, value: noteValue)
+                        }
+                        
+                        print ("adding locationField");
+                        self.setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
+                        
+                        print ("adding descriptionUrlField \(lineData)")
+                        
+                        if let descriptUrl = lineData[descriptionUrlField] {
+                            if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
+                                
+                                bandDescriptionLock.sync {
+                                    cacheVariables.bandDescriptionUrlCache[lineData[bandField]!] = descriptUrl
+                                }
                             }
+                        } else {
+                            print ("field descriptionUrlField not present for " + lineData[bandField]!);
+                        }
+                        
+                        if let imageUrl = lineData[imageUrlField] {
+                            if (imageUrl.isEmpty == false && imageUrl.count >= 2){
+                                //save inmage in background
+                                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                                    
+                                    let imageHandle = imageHandler.shared
+                                    _ = imageHandle.displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
+                                }
+                            }
+                            
                         }
                     } else {
-                        print ("field descriptionUrlField not present for " + lineData[bandField]!);
+                        print ("Unable to parse schedule file")
                     }
-                    
-                    if let imageUrl = lineData[imageUrlField] {
-                        if (imageUrl.isEmpty == false && imageUrl.count >= 2){
-                            //save inmage in background
-                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                                
-                                let imageHandle = imageHandler()
-                                _ = imageHandle.displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
-                            }
-                        }
-                        
-                    }
-                } else {
-                    print ("Unable to parse schedule file")
+                }
+            } else {
+                print ("Encountered an error could not open schedule file ")
+            }
+            
+            //saveCacheFile - use non-blocking approach
+            DispatchQueue.global(qos: .utility).async {
+                staticSchedule.async(flags: .barrier) {
+                    NSKeyedArchiver.archiveRootObject(self.schedulingData, toFile: schedulingDataCacheFile.path)
+                                     NSKeyedArchiver.archiveRootObject(self.schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
                 }
             }
-        } else {
-            print ("Encountered an error could not open schedule file ")
         }
-        
-        //saveCacheFile
-        NSKeyedArchiver.archiveRootObject(schedulingData, toFile: schedulingDataCacheFile.path)
-        NSKeyedArchiver.archiveRootObject(schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
     }
     
     
@@ -218,44 +249,7 @@ open class scheduleHandler {
         let oldScheduleFile = scheduleFile + ".old"
         var didRenameOld = false
         
-        // Validate that the downloaded data is actually a CSV file
-        if !httpData.isEmpty {
-            let isCSV = validateCSVContent(httpData)
-            if !isCSV {
-                let errorMessage = "DropBoxIssue: Downloaded file is not a valid CSV. File appears to be: \(getFileTypeDescription(httpData))"
-                let fullContent = "DropBoxIssue: Full file contents:\n\(httpData)"
-                print(errorMessage)
-                print(fullContent)
-                
-                // Show toast alert to user (only once per hour to prevent spam)
-                let currentTime = Date().timeIntervalSince1970
-                if currentTime - lastDropboxErrorAlertTime >= dropboxErrorAlertInterval {
-                    DispatchQueue.main.async {
-                        self.showToastAlert(title: "Dropbox Issue", message: "Dropbox issues are preventing the data from being loaded.")
-                    }
-                    lastDropboxErrorAlertTime = currentTime
-                }
-                
-                // Restore old file if available
-                if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
-                    do {
-                        if FileManager.default.fileExists(atPath: scheduleFile) {
-                            try FileManager.default.removeItem(atPath: scheduleFile)
-                        }
-                        try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
-                        print("Restored old schedule file after invalid CSV download.")
-                    } catch let restoreError as NSError {
-                        print("Failed to restore old schedule file: " + restoreError.debugDescription)
-                    }
-                }
-                
-                // Call completion and return early
-                DispatchQueue.main.async {
-                    completion?()
-                }
-                return
-            }
-        }
+
         // Rename existing file to .old
         if FileManager.default.fileExists(atPath: scheduleFile) {
             do {
@@ -373,6 +367,8 @@ open class scheduleHandler {
     
     func setData(bandName: String, index: TimeInterval, variable: String, value: String) {
         guard !variable.isEmpty, !value.isEmpty, !bandName.isEmpty, !index.isZero else { return }
+        
+        // Since this is called from within a barrier block, we can access schedulingData directly
         // Ensure the bandName dictionary exists
         if schedulingData[bandName] == nil {
             schedulingData[bandName] = [TimeInterval: [String: String]]()
@@ -422,22 +418,43 @@ open class scheduleHandler {
 
     func buildTimeSortedSchedulingData () {
         
-        for bandName in schedulingData.keys {
-            if (schedulingData[bandName]?.isEmpty == false){
-                for timeIndex in (schedulingData[bandName]?.keys)!{
-                    print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
-                    self.schedulingDataByTime[timeIndex] = [bandName:bandName]
+        // Use non-blocking thread-safe access to schedulingDataByTime
+        DispatchQueue.global(qos: .userInitiated).async {
+            var tempSchedulingDataByTime = [TimeInterval : [String : String]]()
+            
+            for bandName in self.schedulingData.keys {
+                if (self.schedulingData[bandName]?.isEmpty == false){
+                    for timeIndex in (self.schedulingData[bandName]?.keys)!{
+                        print ("timeSortadding timeIndex:" + String(timeIndex) + " bandName:" + bandName);
+                        tempSchedulingDataByTime[timeIndex] = [bandName:bandName]
+                    }
                 }
             }
+            
+            // Update the shared dictionary atomically
+            staticSchedule.async(flags: .barrier) {
+                self.schedulingDataByTime = tempSchedulingDataByTime
+            }
+            
+            print ("schedulingDataByTime is")
+            //print (schedulingDataByTime);
         }
-    
-        print ("schedulingDataByTime is")
-        //print (schedulingDataByTime);
-
-          }
+    }
     
     func getTimeSortedSchedulingData () -> [TimeInterval : [String : String]] {
-        return schedulingDataByTime
+        // Use non-blocking read with timeout to prevent deadlocks
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: [TimeInterval : [String : String]] = [:]
+        
+        staticSchedule.async {
+            result = self.schedulingDataByTime
+            semaphore.signal()
+        }
+        
+        // Wait with timeout to prevent indefinite blocking
+        _ = semaphore.wait(timeout: .now() + 0.1) // 100ms timeout
+        
+        return result
     }
     
     func getBandSortedSchedulingData () -> [String : [TimeInterval : [String : String]]] {
@@ -552,6 +569,11 @@ open class scheduleHandler {
                 if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
                     try? FileManager.default.removeItem(atPath: oldScheduleFile)
                 }
+                
+                // Process the downloaded schedule data
+                print("Schedule CSV downloaded successfully, processing data...")
+                self._processScheduleFile()
+                
             } catch let error as NSError {
                 print ("Encountered an error writing schedule file " + error.debugDescription)
                 isLoadingBandData = false
@@ -606,93 +628,9 @@ open class scheduleHandler {
         }
     }
     
-    /// Validates if the downloaded content is a valid CSV file
-    private func validateCSVContent(_ content: String) -> Bool {
-        // Check if content is empty
-        if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return false
-        }
-        
-        // Check if content starts with HTML (common error response)
-        if content.hasPrefix("<!DOCTYPE") || content.hasPrefix("<html") || content.hasPrefix("<HTML") {
-            return false
-        }
-        
-        // Check if content contains CSV-like structure (comma-separated values)
-        let lines = content.components(separatedBy: .newlines)
-        if lines.isEmpty {
-            return false
-        }
-        
-        // Check if first line contains commas (typical CSV header)
-        let firstLine = lines[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        if firstLine.isEmpty {
-            return false
-        }
-        
-        // Count commas in first line - CSV should have multiple columns
-        let commaCount = firstLine.filter { $0 == "," }.count
-        if commaCount < 2 { // At least 3 columns (2 commas)
-            return false
-        }
-        
-        // Check if content contains typical CSV patterns
-        let hasCSVPatterns = content.contains(",") && 
-                            (content.contains("\n") || content.contains("\r")) &&
-                            !content.contains("<html") &&
-                            !content.contains("<!DOCTYPE")
-        
-        return hasCSVPatterns
-    }
+
     
-    /// Determines the type of file based on its content
-    private func getFileTypeDescription(_ content: String) -> String {
-        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if trimmedContent.isEmpty {
-            return "Empty file"
-        }
-        
-        if trimmedContent.hasPrefix("<!DOCTYPE") || trimmedContent.hasPrefix("<html") {
-            return "HTML file (likely error page)"
-        }
-        
-        if trimmedContent.hasPrefix("<?xml") {
-            return "XML file"
-        }
-        
-        if trimmedContent.hasPrefix("{") || trimmedContent.hasPrefix("[") {
-            return "JSON file"
-        }
-        
-        if trimmedContent.contains("error") || trimmedContent.contains("Error") {
-            return "Error response"
-        }
-        
-        if trimmedContent.contains("404") {
-            return "404 Not Found response"
-        }
-        
-        if trimmedContent.contains("403") {
-            return "403 Forbidden response"
-        }
-        
-        if trimmedContent.contains("500") {
-            return "500 Server Error response"
-        }
-        
-        // Check if it looks like CSV
-        let lines = trimmedContent.components(separatedBy: .newlines)
-        if !lines.isEmpty {
-            let firstLine = lines[0]
-            let commaCount = firstLine.filter { $0 == "," }.count
-            if commaCount >= 2 {
-                return "Possible CSV file with \(commaCount + 1) columns"
-            }
-        }
-        
-        return "Unknown file type (first 100 chars: \(String(trimmedContent.prefix(100)))"
-    }
+
     
     /// Shows a toast alert to the user
     private func showToastAlert(title: String, message: String) {

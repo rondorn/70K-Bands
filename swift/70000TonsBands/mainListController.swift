@@ -155,7 +155,15 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 // Defensive: Ensure bandName is valid before using as dictionary key
                                 if !bandName.isEmpty && bandName.count < 1000 { // Reasonable length check
                                     let key = String(timeIndex) + ":" + bandName
-                                    timeIndexMap[key] = indexText
+                                    
+                                    // Defensive check: ensure timeIndexMap is actually a dictionary
+                                    guard timeIndexMap is [String: String] else {
+                                        print("CRITICAL ERROR: timeIndexMap is corrupted, type: \(type(of: timeIndexMap))")
+                                        // Reset the corrupted dictionary
+                                        timeIndexMap = [String: String]()
+                                    }
+                                    
+                                    setTimeIndexMapValue(key: key, value: indexText)
                                 } else {
                                     print("WARNING: Invalid bandName for timeIndexMap key: '\(bandName)'")
                                 }
@@ -587,10 +595,17 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
         showEvent = false
     
     } else {
-        let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
+        // Prevent infinite loop by checking if attended data is ready
+        let showsAttended = attendedHandle.getShowsAttended()
+        if showsAttended.isEmpty {
+            print("mainListController: Skipping attended filtering - data not ready yet")
+            showEvent = true // Default to showing the event when data isn't ready
+        } else {
+            let status = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear))
 
-        if (status == sawNoneStatus){
-            showEvent = false
+            if (status == sawNoneStatus){
+                showEvent = false
+            }
         }
     }
 

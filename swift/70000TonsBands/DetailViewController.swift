@@ -76,12 +76,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     var backgroundNotesText = "";
     var bandName :String!
-    var schedule = scheduleHandler()
+    var schedule = scheduleHandler.shared
     let dataHandle = dataHandler()
-    var bandNameHandle = bandNamesHandler()
+    var bandNameHandle = bandNamesHandler.shared
     let attendedHandle = ShowsAttended()
     var bandPriorityStorage = [String:Int]()
-    let bandNotes = CustomBandDescription();
+    let bandNotes = CustomBandDescription.shared;
     
     var imagePosition = CGFloat(0);
     
@@ -173,26 +173,41 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
-            let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
-            print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
-            
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                
-                let imageHandle = imageHandler()
-                print ("displayedImaged URL is \(imageURL) for \(self.bandName)")
-                self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: self.bandName)
-                DispatchQueue.main.async {
-                    // Calculate the biggest size that fixes in the given CGSize
-                    self.bandLogo.image = self.displayedImaged
-                    self.imageSizeController(special: "")
+            // Check if band names data is ready before trying to get image URL
+            let bandNames = self.bandNameHandle.getBandNames()
+            print("DetailViewController: Band names count: \(bandNames.count)")
+            if bandNames.isEmpty {
+                print("DetailViewController: Band names not ready yet, requesting band names collection")
+                let coordinator = DataCollectionCoordinator.shared
+                coordinator.requestBandNamesCollection(eventYearOverride: false) {
+                    DispatchQueue.main.async {
+                        self.loadBandImage()
+                    }
                 }
+                return
             }
+            
+
+            
+            loadBandImage()
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(dataHandle.getPriorityData(bandName))
             
             print ("showFullSchedule");
-            showFullSchedule()
+            
+            // Ensure schedule data is loaded before showing schedule
+            if schedule.schedulingData.isEmpty {
+                print("DetailViewController: Schedule data is empty, requesting schedule collection")
+                let coordinator = DataCollectionCoordinator.shared
+                coordinator.requestScheduleCollection(eventYearOverride: false) {
+                    DispatchQueue.main.async {
+                        self.showFullSchedule()
+                    }
+                }
+            } else {
+                showFullSchedule()
+            }
             
             
             print ("showBandDetails");
@@ -210,6 +225,16 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NotificationCenter.default.addObserver(self, selector: #selector(DetailViewController.noteDownloaded), name: Notification.Name("NoteDownloaded"), object: nil)
             
             setupEventAttendClicks()
+            
+            // Ensure UI is set up correctly for current orientation
+            rotationChecking()
+            
+            // Ensure priority buttons are properly configured
+            if priorityButtons != nil {
+                setButtonNames()
+            } else {
+                print("DetailViewController: ERROR - priorityButtons outlet is nil!")
+            }
         }
     }
     
@@ -222,8 +247,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         currentBandDescriptionLoaded = false
         
         // Pause bulk loading
-        let imageHandle = imageHandler()
-        let bandNotes = CustomBandDescription()
+        let imageHandle = imageHandler.shared
+        let bandNotes = CustomBandDescription.shared
         
         imageHandle.pauseBulkLoading()
         bandNotes.pauseBulkLoading()
@@ -264,8 +289,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     private func resumeBulkLoadingOperations() {
         print("DetailViewController: Resuming bulk loading operations")
         
-        let imageHandle = imageHandler()
-        let bandNotes = CustomBandDescription()
+        let imageHandle = imageHandler.shared
+        let bandNotes = CustomBandDescription.shared
         
         imageHandle.resumeBulkLoading()
         bandNotes.resumeBulkLoading()
@@ -577,8 +602,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NoteWorthy.text = ""
         }
         
-        if (bandName.isEmpty) {
-            bandName = "";
+        if (bandName == nil || bandName.isEmpty || bandName == "None") {
+            if bandName == nil {
+                bandName = "";
+            }
             priorityButtons.isHidden = true
             Country.text = ""
             Genre.text = ""
@@ -919,8 +946,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 youtubeUrlButton.isHidden = true
                 metalArchivesButton.isHidden = true
             
-                priorityButtons.isHidden = true
-                PriorityIcon.isHidden = true
+                // Keep priority buttons visible even in landscape mode on iPhone
+                priorityButtons.isHidden = false
+                PriorityIcon.isHidden = false
                 
             } else {
                 LinksSection.isHidden = false
@@ -973,12 +1001,26 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 priorityButtons.isHidden = false
                 PriorityIcon.isHidden = false
                 
+            } else {
+                // iPad or other devices - ensure priority buttons are visible in portrait mode
+                priorityButtons.isHidden = false
+                PriorityIcon.isHidden = false
             }
             
             imageSizeController(special: "scale")
         }
 
         showBandDetails();
+        
+        // Ensure priority buttons are properly configured
+        if priorityButtons != nil {
+            setButtonNames()
+            // Force buttons to be visible
+            priorityButtons.isHidden = false
+            PriorityIcon.isHidden = false
+        } else {
+            print("DetailViewController: ERROR - priorityButtons outlet is nil in rotationChecking!")
+        }
     }
     
     func setNotesHeight(){
@@ -988,6 +1030,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     func setButtonNames(){
+        
+        print("DetailViewController: setButtonNames called for band: \(bandName ?? "nil")")
+        print("DetailViewController: priorityButtons exists: \(priorityButtons != nil)")
         
         let MustSee = NSLocalizedString("Must", comment: "A Must See Band")
         let MightSee: String = NSLocalizedString("Might", comment: "A Might See Band")
@@ -1090,7 +1135,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     sleep(1);
                 }
             }
-            var scheduleIndex = timeIndexMap[index]
+            // Defensive check: ensure timeIndexMap is actually a dictionary
+            guard timeIndexMap is [String: String] else {
+                print("CRITICAL ERROR: timeIndexMap is corrupted in DetailViewController, type: \(type(of: timeIndexMap))")
+                // Reset the corrupted dictionary
+                timeIndexMap = [String: String]()
+            }
+            var scheduleIndex = getTimeIndexMapValue(key: index) ?? ""
             
             counter = counter + 1
             
@@ -1101,7 +1152,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     counter = counter - 2;
                     if (counter > -1){
                         var nextIndex = getBandFromIndex(index: loopThroughBandList[counter])
-                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
+                        eventSelectedIndex = getTimeIndexMapValue(key: nextIndex) ?? ""
                         var bandNamefromIndex =  nextIndex.components(separatedBy: ":")
                         bandNameNext = bandNamefromIndex[1]
                         print ("Checking next bandName Previous \(nextIndex) - \(eventSelectedIndex) - \(bandNamefromIndex) - \(bandNameNext)")
@@ -1109,7 +1160,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 } else {
                     if (counter < sizeBands){
                         var nextIndex = getBandFromIndex(index: loopThroughBandList[counter])
-                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
+                        eventSelectedIndex = getTimeIndexMapValue(key: nextIndex) ?? ""
                         var bandNamefromIndex =  nextIndex.components(separatedBy: ":")
                         bandNameNext = bandNamefromIndex[1]
                         print ("Checking next bandName Next \(nextIndex) - \(eventSelectedIndex) - \(bandNamefromIndex) - \(bandNameNext)")
@@ -1163,6 +1214,62 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }
         
         return bandName;
+    }
+    
+    /// Loads the band image, checking for cached image first
+    private func loadBandImage() {
+        guard let bandName = self.bandName else { 
+            print("DetailViewController: loadBandImage - bandName is nil")
+            return 
+        }
+        
+        print("DetailViewController: loadBandImage - Loading image for band: \(bandName)")
+        let imageURL = self.bandNameHandle.getBandImageUrl(bandName)
+        print ("DetailViewController: loadBandImage - Image URL: \(imageURL) for band \(bandName)")
+        
+        // First, check if we have a proper band image cached locally
+        let imageStoreName = bandName + ".png"
+        let imageStoreFile = directoryPath.appendingPathComponent(imageStoreName)
+        
+        print("DetailViewController: loadBandImage - Checking for cached image at: \(imageStoreFile.path)")
+        print("DetailViewController: loadBandImage - File exists: \(FileManager.default.fileExists(atPath: imageStoreFile.path))")
+        
+        if FileManager.default.fileExists(atPath: imageStoreFile.path) {
+            // Use the cached image immediately
+            print("DetailViewController: Using cached image for \(bandName)")
+            if let imageData = UIImage(contentsOfFile: imageStoreFile.path) {
+                var finalImage = imageData
+                
+                // Apply inversion logic if needed
+                if !(imageURL.contains("www.dropbox.com") || imageURL.isEmpty) {
+                    print("Image URL string is Inverted for \(imageURL)")
+                    if let invertedImage = imageData.inverseImage(cgResult: true) {
+                        finalImage = invertedImage
+                    }
+                } else {
+                    print("Image URL string is not Inverted for \(imageURL)")
+                }
+                
+                self.bandLogo.image = finalImage
+                self.imageSizeController(special: "")
+                self.currentBandImageLoaded = true
+            }
+        } else {
+            // No cached image, start download process
+            print("DetailViewController: loadBandImage - No cached image found, starting download")
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                let imageHandle = imageHandler.shared
+                print ("DetailViewController: loadBandImage - Starting download for URL: \(imageURL) for \(bandName)")
+                self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: bandName)
+                DispatchQueue.main.async {
+                    print("DetailViewController: loadBandImage - Download completed, setting image")
+                    // Calculate the biggest size that fixes in the given CGSize
+                    self.bandLogo.image = self.displayedImaged
+                    self.imageSizeController(special: "")
+                    print("DetailViewController: loadBandImage - Image set successfully")
+                }
+            }
+        }
     }
     
     @IBAction func ClickOnNotes(_ sender: Any) {
@@ -1354,7 +1461,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         resetScheduleGUI()
         schedule.getCachedData()
         scheduleQueue.sync {
-            if (schedule.schedulingData[bandName]?.isEmpty == false){
+            print("DetailViewController: showFullSchedule - bandName: \(bandName ?? "nil")")
+            print("DetailViewController: showFullSchedule - schedulingData keys: \(schedule.schedulingData.keys)")
+            print("DetailViewController: showFullSchedule - schedulingData for band: \(schedule.schedulingData[bandName ?? ""] ?? [:])")
+            
+            if let bandScheduleData = schedule.schedulingData[bandName], !bandScheduleData.isEmpty {
                 
                 let keyValues = schedule.schedulingData[bandName]!.keys
                 let sortedArray = keyValues.sorted();

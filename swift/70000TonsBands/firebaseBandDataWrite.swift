@@ -119,7 +119,7 @@ class firebaseBandDataWrite {
     
     func buildBandRankArray(dataHandle: dataHandler){
         
-        let bandNameHandle = bandNamesHandler()
+        let bandNameHandle = bandNamesHandler.shared
         
         let allBands = bandNameHandle.getBandNames()
         for bandName in allBands {
