@@ -931,7 +931,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
             NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
             if UIDevice.current.userInterfaceIdiom == .pad {
-                masterView?.refreshData(isUserInitiated: true)
+                masterView?.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
             }
         }
     }

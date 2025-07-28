@@ -14,7 +14,7 @@ Current::reportUrl::https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_
 2025::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2025.csv
 2025::eventYear::2025
 2025::descriptionMap::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/descriptionMap2025.csv
-2025::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/report_dashboard.html
+2025::reportUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@nocache=1/dataFiles/report_dashboard.html
 
 2024::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistLineup2024.csv
 2024::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2024.csv

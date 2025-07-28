@@ -315,6 +315,59 @@ func getPointerUrlData(keyValue: String) -> String {
 
     print ("Files were Done setting 2 \(pointerIndex)")
     if (dataString.isEmpty == true){
+        // Check internet availability before attempting download
+        if !isInternetAvailable() {
+            print("getPointerUrlData: No internet available, using cached data for \(keyValue)")
+            
+            // Try to use cached pointer data from disk as fallback
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            if FileManager.default.fileExists(atPath: cachedPointerFile) {
+                do {
+                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+                    print("getPointerUrlData: Using cached pointer data from disk")
+                    let dataArray = cachedData.components(separatedBy: "\n")
+                    for record in dataArray {
+                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
+                    }
+                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                    
+                    // Cache the result in memory for future use
+                    storePointerLock.sync() {
+                        cacheVariables.storePointerData[keyValue] = dataString
+                    }
+                } catch {
+                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
+                }
+            }
+            return dataString
+        }
+        
+        // If we still don't have data and no internet, provide sensible defaults
+        if dataString.isEmpty && !isInternetAvailable() {
+            print("getPointerUrlData: No cached data and no internet, using defaults for \(keyValue)")
+            
+            // Provide default values for critical keys
+            switch keyValue {
+            case "artistUrl":
+                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistLineup_2026.csv"
+            case "scheduleUrl":
+                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistSchedule2026.csv"
+            case "reportUrl":
+                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/report_dashboard.html"
+            case "eventYear":
+                dataString = "2026"
+            default:
+                dataString = ""
+            }
+            
+            // Cache the default value
+            storePointerLock.sync() {
+                cacheVariables.storePointerData[keyValue] = dataString
+            }
+            
+            return dataString
+        }
+        
         print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
         let httpData = getUrlData(urlString: defaultStorageUrl)
         print ("getPointerUrlData: httpData for pointers data = \(httpData)")
@@ -326,9 +379,34 @@ func getPointerUrlData(keyValue: String) -> String {
             }
             
             dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+            
+            // Cache the pointer data to disk for future offline use
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            do {
+                try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
+                print("getPointerUrlData: Cached pointer data to disk for offline use")
+            } catch {
+                print("getPointerUrlData: Failed to cache pointer data: \(error)")
+            }
 
         } else {
-            print ("getPointerUrlData: Why is \(keyValue) emptry - \(dataString)")
+            print ("getPointerUrlData: Why is \(keyValue) empty - \(dataString)")
+            
+            // Try to use cached pointer data from disk as fallback
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            if FileManager.default.fileExists(atPath: cachedPointerFile) {
+                do {
+                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+                    print("getPointerUrlData: Using cached pointer data from disk")
+                    let dataArray = cachedData.components(separatedBy: "\n")
+                    for record in dataArray {
+                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
+                    }
+                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                } catch {
+                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
+                }
+            }
         }
         
         if (keyValue == "eventYear"){
@@ -492,9 +570,15 @@ func checkAndHandleYearChange(newYear: String) {
         
         // Clear caches and files like in preferences year change
         do {
-            try FileManager.default.removeItem(atPath: scheduleFile)
-            try FileManager.default.removeItem(atPath: bandFile)
-            print("checkAndHandleYearChange: Cleared cached files for year change")
+            // Only remove files if they exist and are for the old year
+            if FileManager.default.fileExists(atPath: scheduleFile) {
+                try FileManager.default.removeItem(atPath: scheduleFile)
+                print("checkAndHandleYearChange: Removed old schedule file")
+            }
+            if FileManager.default.fileExists(atPath: bandFile) {
+                try FileManager.default.removeItem(atPath: bandFile)
+                print("checkAndHandleYearChange: Removed old band file")
+            }
         } catch {
             print("checkAndHandleYearChange: Some files were not removed (may not have existed)")
         }
@@ -667,16 +751,10 @@ func convertEventTypeToLocalLanguage(eventType: String)->String{
     
 }
 
-/// Checks if the device currently has internet access using the NetworkTesting utility.
+/// Checks if the device currently has internet access using the global NetworkStatusManager.
 /// - Returns: True if internet is available, false otherwise.
 func isInternetAvailable() -> Bool {
-    
-    var networkTesting = NetworkTesting()
-    
-    var returnState = networkTesting.isInternetAvailable()
-    
-    return returnState;
-    
+    return NetworkStatusManager.shared.isInternetAvailable
 }
 
 struct cacheVariables {
