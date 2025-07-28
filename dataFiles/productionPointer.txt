@@ -2,13 +2,13 @@ Default::artistUrl::https://www.dropbox.com/scl/fi/u5azf0n9yrg2ap91p3zgi/artistL
 Default::scheduleUrl::https://www.dropbox.com/scl/fi/r7cf8qd8w7di7refgrsjj/artistSchedule2026.csv?rlkey=y309oe7pbd8wdhl8ubz80s4b7&raw=1
 Default::eventYear::2026
 Default::descriptionMap::https://www.dropbox.com/scl/fi/sud922ylb3se1bfrzqz90/descriptionMap2026.csv?rlkey=3ww5ozyhbjb53mvwgg58mcem9&raw=1
-Default::reportUrl::https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&raw=1
+Default::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/refs/heads/master/dataFiles/report_dashboard.html
 
 Current::artistUrl::https://www.dropbox.com/scl/fi/u5azf0n9yrg2ap91p3zgi/artistLineup_2026.csv?rlkey=isli0nm3mexf4kxw7fpjn1a5g&raw=1
 Current::scheduleUrl::https://www.dropbox.com/scl/fi/r7cf8qd8w7di7refgrsjj/artistSchedule2026.csv?rlkey=y309oe7pbd8wdhl8ubz80s4b7&raw=1
 Current::eventYear::2026
 Current::descriptionMap::https://www.dropbox.com/scl/fi/sud922ylb3se1bfrzqz90/descriptionMap2026.csv?rlkey=3ww5ozyhbjb53mvwgg58mcem9&raw=1
-Current::reportUrl::https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&raw=1
+Current::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/refs/heads/master/dataFiles/report_dashboard.html
 
 2025::artistUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistLineup_2025.csv
 2025::scheduleUrl::https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/artistSchedule2025.csv
