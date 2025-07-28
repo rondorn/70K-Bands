@@ -226,7 +226,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
 
         if cacheVariables.justLaunched {
+            // Perform network test on initial launch before loading any data (5 second max)
+            print("Initial launch: Performing network test before data loading")
+            let hasInternet = NetworkTesting.forceNetworkTest()
+            print("Initial launch: Network test result: \(hasInternet)")
+            
             DispatchQueue.global(qos: .userInitiated).async {
+                // Check internet availability first
+                if !hasInternet {
+                    print("First launch: No internet available, using cached data")
+                    DispatchQueue.main.async {
+                        // Mark as not just launched
+                        cacheVariables.justLaunched = false
+                        
+                        // Load from cache and refresh UI
+                        bandNamesHandler.readBandFileCallCount = 0
+                        bandNamesHandler.lastReadBandFileCallTime = nil
+                        self.bandNameHandle.forceReadBandFileAndPopulateCache {
+                            self.refreshBandList(reason: "First launch - offline mode")
+                            
+                            // Show offline message if no data available
+                            let noBands = self.bands.isEmpty
+                            let noEvents = eventCount == 0
+                            if noBands && noEvents {
+                                let alert = UIAlertController(title: "Offline Mode", message: "No internet connection detected. The app will work with cached data when available.", preferredStyle: .alert)
+                                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                                self.present(alert, animated: true, completion: nil)
+                            }
+                        }
+                    }
+                    return
+                }
+                
                 // Download pointer/defaultStorageUrl if needed
                 let pointerUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
                 // Download band data
@@ -314,7 +345,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func iCloudRefresh() {
-        refreshData(isUserInitiated: false)
+        refreshDataWithBackgroundUpdate(reason: "iCloud refresh")
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -392,7 +423,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             playerLayer.removeFromSuperlayer()
         }
         player.replaceCurrentItem(with: nil)
-        refreshData(isUserInitiated: false)
+        refreshDataWithBackgroundUpdate(reason: "Easter egg finished")
     }
     
     func chooseCountry(){
@@ -541,6 +572,66 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
 
+    // Track background refresh operations to prevent overlapping
+    private static var isBackgroundRefreshInProgress = false
+    private static let backgroundRefreshLock = NSLock()
+    
+    // Centralized background refresh with immediate GUI update
+    func refreshDataWithBackgroundUpdate(reason: String) {
+        // Immediately refresh GUI from cache
+        refreshBandList(reason: "\(reason) - immediate cache refresh")
+        
+        // Check if background refresh is already in progress
+        MasterViewController.backgroundRefreshLock.lock()
+        if MasterViewController.isBackgroundRefreshInProgress {
+            print("Background refresh (\(reason)): Skipping - another refresh already in progress")
+            MasterViewController.backgroundRefreshLock.unlock()
+            return
+        }
+        MasterViewController.isBackgroundRefreshInProgress = true
+        MasterViewController.backgroundRefreshLock.unlock()
+        
+        // Trigger background refresh
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { 
+                MasterViewController.backgroundRefreshLock.lock()
+                MasterViewController.isBackgroundRefreshInProgress = false
+                MasterViewController.backgroundRefreshLock.unlock()
+                return 
+            }
+            
+            // Check network before attempting downloads
+            let internetAvailable = NetworkStatusManager.shared.isInternetAvailable
+            if !internetAvailable {
+                print("Background refresh (\(reason)): No network, skipping data download")
+                MasterViewController.backgroundRefreshLock.lock()
+                MasterViewController.isBackgroundRefreshInProgress = false
+                MasterViewController.backgroundRefreshLock.unlock()
+                return
+            }
+            
+            print("Background refresh (\(reason)): Starting data download")
+            
+            // Perform the same operations as refreshData but in background
+            let shouldDownload = self.shouldDownloadSchedule(force: false)
+            if shouldDownload {
+                self.schedule.DownloadCsv()
+                self.lastScheduleDownload = Date()
+            }
+            self.schedule.populateSchedule(forceDownload: false)
+            
+            // Update UI on main thread when complete
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "\(reason) - background refresh complete")
+            }
+            
+            // Mark background refresh as complete
+            MasterViewController.backgroundRefreshLock.lock()
+            MasterViewController.isBackgroundRefreshInProgress = false
+            MasterViewController.backgroundRefreshLock.unlock()
+        }
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -551,10 +642,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         isLoadingBandData = false
         writeFiltersFile()
-        // Always refresh when returning from another view, bypassing the throttle
-        refreshData(isUserInitiated: true)
-        // Removed quickRefresh() and refreshDisplayAfterWake() to avoid unnecessary data refreshes
-        // Removed startScheduleRefreshTimer() to avoid restarting timer on every appearance
+        
+        // Use centralized background refresh
+        refreshDataWithBackgroundUpdate(reason: "Return from details")
+        
         finishedPlaying() // Defensive: ensure no video is left over
     }
     
@@ -588,7 +679,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             alert.addAction(dismissAction)
             self.present(alert, animated: true, completion: nil)
             isLoadingBandData = false
-            refreshData(isUserInitiated: false)
+            refreshDataWithBackgroundUpdate(reason: "Show alert")
     }
     
     
@@ -604,11 +695,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        self.refreshData(isUserInitiated: false)
+        // Force refresh when detail view updates priority data
+        self.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
     }
     
     @objc func refreshDisplayAfterWake(){
-        self.refreshData(isUserInitiated: false)
+        self.refreshDataWithBackgroundUpdate(reason: "Display after wake")
         //createrFilterMenu(controller: self)
     }
     
@@ -651,6 +743,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         bandNameHandle.readBandFile()
         schedule.getCachedData()
+        dataHandle.getCachedData()
         filterRequestID += 1
         let requestID = filterRequestID
         getFilteredBands(
@@ -752,6 +845,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         checkForEasterEgg()
         print ("iCloud: pull to refresh, load in new iCloud data")
         shouldSnapToTopAfterRefresh = true
+        
+        // First, validate network connectivity before clearing any data
+        let networkTesting = NetworkTesting()
+        let hasNetwork = networkTesting.forgroundNetworkTest(callingGui: self)
+        
+        if !hasNetwork {
+            print("Pull to refresh: No network connectivity detected, keeping existing data")
+            DispatchQueue.main.async {
+                self.refreshControl?.endRefreshing()
+                // Refresh GUI from cached data without showing alert
+                self.refreshBandList(reason: "Pull to refresh - no network, using cached data")
+            }
+            return
+        }
+        
+        print("Pull to refresh: Network validated, proceeding with data refresh")
         DispatchQueue.global(qos: .userInitiated).async {
             // Purge caches before loading new data
             self.bandNameHandle.clearCachedData()
@@ -784,7 +893,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print ("Redrawing the filter menu! Not")
         print ("Refresh Waiting for bandData, Done - \(refreshDataCounter)")
         localTimeZoneAbbreviation = TimeZone.current.abbreviation()!
-        internetAvailble = isInternetAvailable();
+        internetAvailble = NetworkStatusManager.shared.isInternetAvailable
         if (internetAvailble == false){
             self.refreshControl?.endRefreshing();
         } else {
@@ -1667,7 +1776,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func startScheduleRefreshTimer() {
         stopScheduleRefreshTimer()
         scheduleRefreshTimer = Timer.scheduledTimer(withTimeInterval: scheduleDownloadInterval, repeats: true) { [weak self] _ in
-            self?.refreshData(isUserInitiated: false)
+            self?.refreshDataWithBackgroundUpdate(reason: "Scheduled timer refresh")
         }
     }
     
@@ -1688,12 +1797,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        refreshData(isUserInitiated: false, forceDownload: true)
+        refreshDataWithBackgroundUpdate(reason: "Push notification received")
     }
     
     @objc func handleAppWillEnterForeground() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.refreshData(isUserInitiated: false, forceDownload: true)
+            self?.refreshDataWithBackgroundUpdate(reason: "App will enter foreground")
             DispatchQueue.main.async {
                 self?.tableView.reloadData()
             }
@@ -1701,9 +1810,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func detailDidUpdate() {
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            self.tableView.reloadData()
-        }
+        // Refresh data handler cache and reload table data when detail view updates
+        dataHandle.getCachedData()
+        self.tableView.reloadData()
     }
     
     @objc func iCloudDataReadyHandler() {

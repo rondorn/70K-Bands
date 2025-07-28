@@ -270,13 +270,15 @@ open class scheduleHandler {
             }
         }
         
-        if (httpData.isEmpty == false){
+        // Only write new data if it's not empty and appears valid
+        if (httpData.isEmpty == false && httpData.count > 100) { // Basic validation
             do {
                 try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
                 // If write succeeds, remove the .old file
                 if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
                     try? FileManager.default.removeItem(atPath: oldScheduleFile)
                 }
+                print("Successfully downloaded and wrote new schedule data")
             } catch let error as NSError {
                 print ("Encountered an error writing schedule file " + error.debugDescription)
                 isLoadingBandData = false
@@ -294,15 +296,15 @@ open class scheduleHandler {
                 }
             }
         } else {
-            print ("No data downloaded for schedule file.")
-            // Restore the old file if no data was downloaded
+            print ("No valid data downloaded for schedule file, keeping existing data.")
+            // Restore the old file if no valid data was downloaded
             if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
                 do {
                     if FileManager.default.fileExists(atPath: scheduleFile) {
                         try FileManager.default.removeItem(atPath: scheduleFile)
                     }
                     try FileManager.default.moveItem(atPath: oldScheduleFile, toPath: scheduleFile)
-                    print("Restored old schedule file after empty download.")
+                    print("Restored old schedule file after invalid download.")
                 } catch let restoreError as NSError {
                     print("Failed to restore old schedule file: " + restoreError.debugDescription)
                 }

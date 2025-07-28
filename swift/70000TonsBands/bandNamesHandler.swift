@@ -86,6 +86,9 @@ open class bandNamesHandler {
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
     /// Calls completion handler when done.
     func gatherData(completion: (() -> Void)? = nil) {
+        var newDataDownloaded = false
+        var newDataValid = false
+        
         if isInternetAvailable() == true {
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("Loading bandName Data gatherData")
@@ -93,17 +96,32 @@ open class bandNamesHandler {
             print ("Getting band data from " + artistUrl);
             let httpData = getUrlData(urlString: artistUrl)
             print ("Getting band data of " + httpData);
-            if (httpData.isEmpty == false) {
+            
+            // Only write new data if it's not empty and appears valid
+            if (httpData.isEmpty == false && httpData.count > 100) { // Basic validation
+                newDataDownloaded = true
+                newDataValid = true
                 writeBandFile(httpData);
+                print("Successfully downloaded and wrote new band data")
             } else {
-                print ("Internet is down, prevented blanking out data")
+                print ("Internet is down or data is invalid, keeping existing data")
+                newDataDownloaded = false
+                newDataValid = false
             }
+        } else {
+            print("No internet available, keeping existing data")
+            newDataDownloaded = false
+            newDataValid = false
         }
+        
+        // Always read the band file (either new or existing)
         readBandFile()
         var isEmpty = false
         staticBandName.sync {
             isEmpty = self.bandNames.isEmpty
         }
+        
+        // If we're just launched and have no data, try one more time
         if isEmpty && cacheVariables.justLaunched {
             print("Band file is empty and app is just launched. Retrying network fetch once more.")
             if isInternetAvailable() == true {
@@ -111,7 +129,7 @@ open class bandNamesHandler {
                 let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
                 print ("Retrying: Getting band data from " + artistUrl);
                 let httpData = getUrlData(urlString: artistUrl)
-                if (httpData.isEmpty == false) {
+                if (httpData.isEmpty == false && httpData.count > 100) {
                     writeBandFile(httpData);
                     readBandFile()
                     staticBandName.sync {
@@ -124,7 +142,7 @@ open class bandNamesHandler {
                         return
                     }
                 } else {
-                    print("Retry failed: Internet is down or data is empty.")
+                    print("Retry failed: Internet is down or data is empty/invalid.")
                 }
             } else {
                 print("Retry failed: No internet connection.")
@@ -133,16 +151,19 @@ open class bandNamesHandler {
             completion?()
             return
         }
+        
+        // If we have data (either new or existing), proceed
         if !isEmpty {
-            print("Band data loaded successfully, setting justLaunched to false.")
+            print("Band data available (new or existing), setting justLaunched to false.")
             cacheVariables.justLaunched = false
-        }
-        if isEmpty && !cacheVariables.justLaunched {
+            populateCache(completion: completion)
+        } else if !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")
             completion?()
-            return
+        } else {
+            print("No band data available and app just launched. Calling completion.")
+            completion?()
         }
-        populateCache(completion: completion)
     }
 
     /// Populates the static cache variables with the current bandNames dictionary.

@@ -27,7 +27,9 @@ func HTTPsendRequest(_ request: URLRequest,
 }
 
 func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
-    internetAvailble = isInternetAvailable();
+    
+    let netTest = NetworkTesting()
+    internetAvailble = netTest.isInternetAvailableSynchronous(); //isInternetAvailable();
     if (url.isEmpty == false && url != " " && internetAvailble == true){
         print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)
@@ -43,8 +45,9 @@ func getUrlData(urlString: String) -> String{
     
     let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
     
-    if (isInternetAvailable() == false){
-        print ("Internet is down, returning empty")
+    // Gate all network calls on cached network status
+    if (NetworkTesting.isNetworkAvailable() == false){
+        print ("Internet is down (cached), returning empty")
         return ""
     }
     var results = String()
