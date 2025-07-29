@@ -202,6 +202,35 @@ public class CustomerDescriptionHandler {
     }
 
     /**
+     * Normalizes a band name by removing invisible Unicode characters and trimming whitespace.
+     * @param bandName The band name to normalize.
+     * @return The normalized band name.
+     */
+    private String normalizeBandName(String bandName) {
+        if (bandName == null) {
+            return "";
+        }
+        
+        // Remove invisible Unicode characters and normalize
+        String normalized = bandName.trim()
+            .replace("⁦", "") // Remove left-to-right mark
+            .replace("⁧", "") // Remove right-to-left mark
+            .replace("\u200E", "") // Remove left-to-right mark
+            .replace("\u200F", "") // Remove right-to-left mark
+            .replace("\u202A", "") // Remove left-to-right embedding
+            .replace("\u202B", "") // Remove right-to-left embedding
+            .replace("\u202C", "") // Remove pop directional formatting
+            .replace("\u202D", "") // Remove left-to-right override
+            .replace("\u202E", "") // Remove right-to-left override
+            .replace("\u2066", "") // Remove left-to-right isolate
+            .replace("\u2067", "") // Remove right-to-left isolate
+            .replace("\u2068", "") // Remove first strong isolate
+            .replace("\u2069", ""); // Remove pop directional isolate
+        
+        return normalized;
+    }
+
+    /**
      * Loads the description map from file or downloads it if not present.
      * @return The map of band names to descriptions.
      */
@@ -224,11 +253,12 @@ public class CustomerDescriptionHandler {
             while ((line = br.readLine()) != null) {
                 String[] rowData = line.split(",");
                 if (rowData[0] != "Band") {
-                    Log.d("descriptionMapFile", "Adding " + rowData[0] + "-" + rowData[1]);
-                    descriptionMapData.put(rowData[0], rowData[1]);
+                    String normalizedBandName = normalizeBandName(rowData[0]);
+                    Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                    descriptionMapData.put(normalizedBandName, rowData[1]);
                     if (rowData.length > 2){
                         Log.d("descriptionMapFile", "Date value is " + rowData[2]);
-                        staticVariables.descriptionMapModData.put(rowData[0], rowData[2]);
+                        staticVariables.descriptionMapModData.put(normalizedBandName, rowData[2]);
                     }
                 }
             }
@@ -246,11 +276,12 @@ public class CustomerDescriptionHandler {
                     while ((line = br.readLine()) != null) {
                         String[] rowData = line.split(",");
                         if (rowData[0] != "Band") {
-                            Log.d("descriptionMapFile", "Adding " + rowData[0] + "-" + rowData[1]);
-                            descriptionMapData.put(rowData[0], rowData[1]);
+                            String normalizedBandName = normalizeBandName(rowData[0]);
+                            Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                            descriptionMapData.put(normalizedBandName, rowData[1]);
                             if (rowData.length > 2){
                                 Log.d("descriptionMapFile", "Date value is " + rowData[2]);
-                                staticVariables.descriptionMapModData.put(rowData[0], rowData[2]);
+                                staticVariables.descriptionMapModData.put(normalizedBandName, rowData[2]);
                             }
                         }
                     }
@@ -309,10 +340,12 @@ public class CustomerDescriptionHandler {
         Log.d("70K_NOTE_DEBUG", "getDescription called for " + bandNameValue);
 
         String bandName = bandNameValue;
+        String normalizedBandName = normalizeBandName(bandName);
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
 
         Log.d("70K_NOTE_DEBUG", "descriptionMapData: " + descriptionMapData);
+        Log.d("70K_NOTE_DEBUG", "Normalized band name: " + normalizedBandName);
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
@@ -335,8 +368,8 @@ public class CustomerDescriptionHandler {
             getDescriptionMapFile();
         }
 
-        if (descriptionMapData.containsKey(bandName) == false) {
-            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + bandName + ", returning default note");
+        if (descriptionMapData.containsKey(normalizedBandName) == false) {
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning default note");
             return bandNoteDefault;
         }
 
@@ -345,16 +378,16 @@ public class CustomerDescriptionHandler {
             Log.d("70K_NOTE_DEBUG", "descriptionMapData was empty, reloaded for " + bandNameValue);
         }
 
-        if (descriptionMapData.containsKey(bandName) == false) {
+        if (descriptionMapData.containsKey(normalizedBandName) == false) {
             descriptionMapData = new HashMap<String,String>();
             descriptionMapData = getDescriptionMap();
-            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing for " + bandName);
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing for " + normalizedBandName);
         } else {
-            Log.d("70K_NOTE_DEBUG", "descriptionMapData present for " + bandName + ": " + descriptionMapData.get(bandName));
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData present for " + normalizedBandName + ": " + descriptionMapData.get(normalizedBandName));
         }
 
-        if (descriptionMapData.containsKey(bandName) == false){
-            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing after reload for " + bandName);
+        if (descriptionMapData.containsKey(normalizedBandName) == false){
+            Log.d("70K_NOTE_DEBUG", "descriptionMapData still missing after reload for " + normalizedBandName);
             if (staticVariables.showNotesMap.containsKey(bandName) == true) {
                 if (staticVariables.showNotesMap.get(bandName).length() > 5) {
                     Log.d("70K_NOTE_DEBUG", "showNotesMap entry found for " + bandName + ", loading note from URL");
@@ -387,6 +420,7 @@ public class CustomerDescriptionHandler {
         Log.d("70K_NOTE_DEBUG", "getDescriptionImmediate called for " + bandNameValue);
 
         String bandName = bandNameValue;
+        String normalizedBandName = normalizeBandName(bandName);
         String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
         String bandNote = bandNoteDefault;
 
@@ -416,8 +450,8 @@ public class CustomerDescriptionHandler {
             descriptionMapData = this.getDescriptionMap();
         }
 
-        if (descriptionMapData.containsKey(bandName) == false) {
-            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + bandName + ", returning default note");
+        if (descriptionMapData.containsKey(normalizedBandName) == false) {
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning default note");
             return bandNoteDefault;
         }
 
@@ -480,7 +514,8 @@ public class CustomerDescriptionHandler {
                 getDescriptionMapFile();
             }
             
-            if (descriptionMapData.containsKey(bandName) == false) {
+            String normalizedBandName = normalizeBandName(bandName);
+            if (descriptionMapData.containsKey(normalizedBandName) == false) {
                 descriptionMapData = new HashMap<String,String>();
                 getDescriptionMapFile();
                 descriptionMapData = this.getDescriptionMap();
@@ -493,11 +528,11 @@ public class CustomerDescriptionHandler {
                             staticVariables.showNotesMap.get(bandName).length() > 5) {
                         url = new URL(staticVariables.showNotesMap.get(bandName));
                         Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
-                    } else if (descriptionMapData.containsKey(bandName) == true) {
-                        url = new URL(descriptionMapData.get(bandName));
+                    } else if (descriptionMapData.containsKey(normalizedBandName) == true) {
+                        url = new URL(descriptionMapData.get(normalizedBandName));
                         Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
                     } else {
-                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + bandName);
+                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + normalizedBandName);
                         return;
                     }
                 } catch (Exception error) {
@@ -579,7 +614,8 @@ public class CustomerDescriptionHandler {
                 return;
             }
             Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! "+ bandName);
-            if (descriptionMapData.containsKey(bandName) == false) {
+            String normalizedBandName = normalizeBandName(bandName);
+            if (descriptionMapData.containsKey(normalizedBandName) == false) {
                 descriptionMapData = new HashMap<String,String>();
                 getDescriptionMapFile();
                 descriptionMapData = this.getDescriptionMap();
@@ -594,11 +630,11 @@ public class CustomerDescriptionHandler {
                             staticVariables.showNotesMap.get(bandName).length() > 5) {
                         url = new URL(staticVariables.showNotesMap.get(bandName));
                         Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
-                    } else if (descriptionMapData.containsKey(bandName) == true) {
-                        url = new URL(descriptionMapData.get(bandName));
+                    } else if (descriptionMapData.containsKey(normalizedBandName) == true) {
+                        url = new URL(descriptionMapData.get(normalizedBandName));
                         Log.d("70K_NOTE_DEBUG", "Looking up NoteData at URL " + url.toString());
                     } else {
-                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + bandName);
+                        Log.d("70K_NOTE_DEBUG", "no description for bandName " + normalizedBandName);
                         return;
                     }
 
