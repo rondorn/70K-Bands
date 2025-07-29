@@ -137,7 +137,7 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest//dataFiles/productionPointer_2026.txt";
+    public final static String defaultUrls = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1";
     public final static String defaultUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1";
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";

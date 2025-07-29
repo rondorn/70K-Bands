@@ -114,9 +114,10 @@ open class CustomBandDescription {
     func custMatchesDefault(customNote: String, bandName: String)-> Bool{
         
         var matches = false
+        let normalizedBandName = normalizeBandName(bandName)
         
-        if bandDescriptionUrlDate.keys.contains(bandName){
-            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: bandDescriptionUrl[bandName]!)
+        if bandDescriptionUrlDate.keys.contains(normalizedBandName){
+            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: bandDescriptionUrl[normalizedBandName]!)
             
             defaultBandNote = defaultBandNote.filter {!$0.isWhitespace}
             
@@ -136,9 +137,10 @@ open class CustomBandDescription {
         
         var approvedFileName = ""
         let custCommentFileName = bandName + "_comment.note-cust";
+        let normalizedBandName = normalizeBandName(bandName)
         
-        if bandDescriptionUrlDate.keys.contains(bandName){
-            let defaultCommentFileName = bandName + "_comment.note-" + bandDescriptionUrlDate[bandName]!;
+        if bandDescriptionUrlDate.keys.contains(normalizedBandName){
+            let defaultCommentFileName = bandName + "_comment.note-" + bandDescriptionUrlDate[normalizedBandName]!;
             
             
             let custCommentFile = directoryPath.appendingPathComponent( custCommentFileName)
@@ -157,15 +159,16 @@ open class CustomBandDescription {
     
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
-        print ("commentFile lookup for \(bandName) via \(descriptionUrl) hmmm")
+        print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl) hmmm")
         var commentText = ""
         
         let commentFileName = getNoteFileName(bandName: bandName)
         
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
+        print ("DEBUG_commentFile: doesDescriptionFileExists for \(bandName)")
         if (doesDescriptionFileExists(bandName: bandName) == false){
-            print ("commentFile lookup for \(bandName) via \(descriptionUrl) field does not yes exist")
+            print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl) field does not yes exist")
             let httpData = getUrlData(urlString: descriptionUrl);
                 
                 //do not write if we are getting 404 error
@@ -238,12 +241,14 @@ open class CustomBandDescription {
     func getDescription(bandName: String) -> String {
         
         convertOldData(bandName: bandName)
-        print ("commentFile lookup for \(bandName)")
+        let normalizedBandName = normalizeBandName(bandName)
+        print ("DEBUG_commentFile:  lookup for \(bandName) (normalized: \(normalizedBandName))")
         var commentText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
         
         let commentFileName = self.getNoteFileName(bandName: bandName)
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
+        print ("DEBUG_commentFile: doesDescriptionFileExists for \(bandName)")
         if (doesDescriptionFileExists(bandName: bandName) == false){
             
             if (downloadingAllComments == false){
@@ -254,20 +259,22 @@ open class CustomBandDescription {
             }
             
             //bandDescriptionLock.sync() {
-            if (bandDescriptionUrl.index(forKey: bandName) != nil && bandDescriptionUrl[bandName] != nil){
+            if (bandDescriptionUrl.index(forKey: normalizedBandName) != nil && bandDescriptionUrl[normalizedBandName] != nil){
                 
-                print ("commentFile downloading URL \(bandDescriptionUrl[bandName])")
+                print ("DEBUG_commentFile: downloading URL \(bandDescriptionUrl[normalizedBandName])")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: self.bandDescriptionUrl[bandName]! )
+                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: self.bandDescriptionUrl[normalizedBandName]! )
                 }
+            } else {
+                print ("DEBUG_commentFile: No URL for band '\(normalizedBandName)' - \(bandDescriptionUrl)")
             }
         } else {
-            print ("No URL for band \(bandName) - \(commentFile)")
+            print ("DEBUG_commentFile: No URL for band \(bandName) - \(commentFile)")
             if FileManager.default.fileExists(atPath: commentFile.path){
-                print ("No URL for band \(bandName) - file exists")
+                print ("DEBUG_commentFile: No URL for band \(bandName) - file exists")
             } else {
-                print ("No URL for band \(bandName) - file does not exists")
+                print ("DEBUG_commentFile: No URL for band \(bandName) - file does not exists")
             }
         
         }
@@ -310,6 +317,29 @@ open class CustomBandDescription {
         return String(newText.filter {okayChars.contains($0) })
     }
     
+    /// Normalizes a band name by removing invisible Unicode characters and trimming whitespace.
+    /// - Parameter bandName: The band name to normalize.
+    /// - Returns: The normalized band name.
+    func normalizeBandName(_ bandName: String) -> String {
+        // Remove invisible Unicode characters and normalize
+        let normalized = bandName.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "⁦", with: "") // Remove left-to-right mark
+            .replacingOccurrences(of: "⁧", with: "") // Remove right-to-left mark
+            .replacingOccurrences(of: "\u{200E}", with: "") // Remove left-to-right mark
+            .replacingOccurrences(of: "\u{200F}", with: "") // Remove right-to-left mark
+            .replacingOccurrences(of: "\u{202A}", with: "") // Remove left-to-right embedding
+            .replacingOccurrences(of: "\u{202B}", with: "") // Remove right-to-left embedding
+            .replacingOccurrences(of: "\u{202C}", with: "") // Remove pop directional formatting
+            .replacingOccurrences(of: "\u{202D}", with: "") // Remove left-to-right override
+            .replacingOccurrences(of: "\u{202E}", with: "") // Remove right-to-left override
+            .replacingOccurrences(of: "\u{2066}", with: "") // Remove left-to-right isolate
+            .replacingOccurrences(of: "\u{2067}", with: "") // Remove right-to-left isolate
+            .replacingOccurrences(of: "\u{2068}", with: "") // Remove first strong isolate
+            .replacingOccurrences(of: "\u{2069}", with: "") // Remove pop directional isolate
+        
+        return normalized
+    }
+
     func getDescriptionMap(){
         
         if descriptionLock == false {
@@ -329,12 +359,13 @@ open class CustomBandDescription {
                 if let csvData = try? CSV(csvStringToParse: csvDataString) {
                     for lineData in csvData.rows {
                         if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                            print ("commentFile descriptiopnMap Adding \(lineData[bandField].debugDescription) with url \(lineData[urlField].debugDescription)")
-                            bandDescriptionUrl[(lineData[bandField]) ?? ""] = lineData[urlField]
-                            bandDescriptionUrlDate[(lineData[bandField]) ?? ""] = lineData[urlDateField]
+                            let normalizedBandName = normalizeBandName(lineData[bandField] ?? "")
+                            print ("commentFile descriptiopnMap Adding \(normalizedBandName) with url \(lineData[urlField].debugDescription)")
+                            bandDescriptionUrl[normalizedBandName] = lineData[urlField]
+                            bandDescriptionUrlDate[normalizedBandName] = lineData[urlDateField]
                             bandDescriptionLock.async(flags: .barrier) {
-                                cacheVariables.bandDescriptionUrlCache[(lineData[bandField])!] = lineData[urlField]
-                                cacheVariables.bandDescriptionUrlDateCache[(lineData[bandField])!] = lineData[urlDateField]
+                                cacheVariables.bandDescriptionUrlCache[normalizedBandName] = lineData[urlField]
+                                cacheVariables.bandDescriptionUrlDateCache[normalizedBandName] = lineData[urlDateField]
                             }
                         } else {
                             print ("commentFile  Unable to parse descriptionMap line \(lineData)")
@@ -344,7 +375,7 @@ open class CustomBandDescription {
                     print("Error: Failed to parse CSV data in getDescriptionMap.")
                 }
             } else {
-                print ("commentFile Encountered an error could not open descriptionMap file")
+                print ("commentFile Encountered an error could not open descriptionMap file - \(descriptionMapFile)")
             }
             
             descriptionLock = false;
@@ -367,14 +398,16 @@ open class CustomBandDescription {
     /// - Parameter band: The name of the band.
     /// - Returns: The description URL string for the band.
     func getDescriptionUrl(_ band: String) -> String {
-        return bandDescriptionUrl[band] ?? ""
+        let normalizedBand = normalizeBandName(band)
+        return bandDescriptionUrl[normalizedBand] ?? ""
     }
     
     /// Returns the date of the description for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The date string for the band's description.
     func getDescriptionDate(_ band: String) -> String {
-        return bandDescriptionUrlDate[band] ?? ""
+        let normalizedBand = normalizeBandName(band)
+        return bandDescriptionUrlDate[normalizedBand] ?? ""
     }
 }
 
