@@ -1,0 +1,93 @@
+
+/* Class = "UILabel"; text = "Alert On Might See Bands"; ObjectID = "4Px-mQ-94P"; */
+"4Px-mQ-94P.text" = "Alert On Might See Bands";
+
+/* Class = "UIButton"; normalTitle = "Metal Archives"; ObjectID = "6Zv-yV-wLQ"; */
+"6Zv-yV-wLQ.normalTitle" = "Metal Archives";
+
+/* Class = "UILabel"; text = "Alert For Special Events"; ObjectID = "6rh-64-BHF"; */
+"6rh-64-BHF.text" = "Alert For Special Events";
+
+/* Class = "UITableViewController"; title = "Master"; ObjectID = "7bK-jq-Zjz"; */
+"7bK-jq-Zjz.title" = "Master";
+
+/* Class = "UILabel"; text = "Use Last Years Data"; ObjectID = "AqN-Ko-joc"; */
+"AqN-Ko-joc.text" = "Use Last Years Data";
+
+/* Class = "UILabel"; text = "Title"; ObjectID = "Arm-wq-HPj"; */
+"Arm-wq-HPj.text" = "Title";
+
+/* Class = "UILabel"; text = "Alert For Clinic"; ObjectID = "DEu-Zn-f5v"; */
+"DEu-Zn-f5v.text" = "Alert For Clinic";
+
+/* Class = "UIViewController"; title = "Detail"; ObjectID = "JEX-9P-axG"; */
+"JEX-9P-axG.title" = "Detail";
+
+/* Class = "UIButton"; normalTitle = "YouTube"; ObjectID = "KER-Ol-1XT"; */
+"KER-Ol-1XT.normalTitle" = "YouTube";
+
+/* Class = "UIButton"; normalTitle = "❓"; ObjectID = "O3z-DP-F5g"; */
+"O3z-DP-F5g.normalTitle" = "❓";
+
+/* Class = "UINavigationController"; title = "Master"; ObjectID = "RMx-3f-FxP"; */
+"RMx-3f-FxP.title" = "Master";
+
+/* Class = "UILabel"; text = "Min Before Event to Alert"; ObjectID = "VsJ-uI-fpU"; */
+"VsJ-uI-fpU.text" = "Min Before Event to Alert";
+
+/* Class = "UITextView"; text = "Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features."; ObjectID = "XwI-fp-dny"; */
+"XwI-fp-dny.text" = "Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+/* Class = "UINavigationItem"; title = "70,000 Tons"; ObjectID = "Zdf-7t-Un8"; */
+"Zdf-7t-Un8.title" = "70,000 Tons";
+
+/* Class = "UILabel"; text = "Alert On Must See Bands"; ObjectID = "Zdt-B0-gyT"; */
+"Zdt-B0-gyT.text" = "Alert On Must See Bands";
+
+/* Class = "UIButton"; normalTitle = "⌚️"; ObjectID = "ZqH-lH-kF5"; */
+"ZqH-lH-kF5.normalTitle" = "⌚️";
+
+/* Class = "UIButton"; normalTitle = "🚫"; ObjectID = "bMq-b8-r9b"; */
+"bMq-b8-r9b.normalTitle" = "🚫";
+
+/* Class = "UILabel"; text = "Alert For Album Listening Events"; ObjectID = "c7E-hk-S5X"; */
+"c7E-hk-S5X.text" = "Alert For Album Listening Events";
+
+/* Class = "UIButton"; normalTitle = "Wikipedia"; ObjectID = "gni-Y6-ugV"; */
+"gni-Y6-ugV.normalTitle" = "Wikipedia";
+
+/* Class = "UILabel"; text = "Alert For Meeting and Greets"; ObjectID = "j7a-hd-VQL"; */
+"j7a-hd-VQL.text" = "Alert For Meeting and Greets";
+
+/* Class = "UIButton"; normalTitle = "✅"; ObjectID = "l6d-Sy-0B5"; */
+"l6d-Sy-0B5.normalTitle" = "✅";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[0] = "Must See"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[0]" = "Must See";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[1] = "Might See"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[1]" = "Might See";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[2] = "Wont See"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[2]" = "Wont See";
+
+/* Class = "UISegmentedControl"; lEP-z4-PfZ.segmentTitles[3] = "Unknown"; ObjectID = "lEP-z4-PfZ"; */
+"lEP-z4-PfZ.segmentTitles[3]" = "Unknown";
+
+/* Class = "UILabel"; text = "Alert For Shows"; ObjectID = "lYb-Qt-dwe"; */
+"lYb-Qt-dwe.text" = "Alert For Shows";
+
+/* Class = "UINavigationItem"; title = "Detail"; ObjectID = "mOI-FS-AaM"; */
+"mOI-FS-AaM.title" = "Detail";
+
+/* Class = "UIButton"; normalTitle = "Offical Web Site"; ObjectID = "pII-w4-ri7"; */
+"pII-w4-ri7.normalTitle" = "Offical Web Site";
+
+/* Class = "UIButton"; accessibilityLabel = "Share"; ObjectID = "qWy-ef-Y14"; */
+"qWy-ef-Y14.accessibilityLabel" = "Share";
+
+/* Class = "UIButton"; normalTitle = "🍺"; ObjectID = "vna-V9-U4m"; */
+"vna-V9-U4m.normalTitle" = "🍺";
+
+/* Class = "UIViewController"; title = "Alert Preferences"; ObjectID = "wME-gs-GWB"; */
+"wME-gs-GWB.title" = "Alert Preferences";

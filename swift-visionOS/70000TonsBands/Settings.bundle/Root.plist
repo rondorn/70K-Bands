@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PreferenceSpecifiers</key>
+	<array>
+		<dict>
+			<key>AutocapitalizationType</key>
+			<string>None</string>
+			<key>AutocorrectionType</key>
+			<string>No</string>
+			<key>DefaultValue</key>
+			<string>Default</string>
+			<key>IsSecure</key>
+			<false/>
+			<key>Key</key>
+			<string>artistUrl</string>
+			<key>KeyboardType</key>
+			<string>Alphabet</string>
+			<key>Title</key>
+			<string>Artist URL</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+		</dict>
+		<dict>
+			<key>DefaultValue</key>
+			<string>Default</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>Schedule URL</string>
+			<key>Key</key>
+			<string>scheduleUrl</string>
+		</dict>
+		<dict>
+			<key>DefaultValue</key>
+			<string>Prod</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>PointerUrl</string>
+			<key>Key</key>
+			<string>PointerUrl</string>
+		</dict>
+		<dict>
+			<key>DefaultValue</key>
+			<string>YES</string>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>iCloud</string>
+			<key>Key</key>
+			<string>iCloud</string>
+		</dict>
+	</array>
+</dict>
+</plist>

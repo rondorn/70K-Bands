@@ -1,0 +1,775 @@
+//
+//  Constants.swift
+//  70K Bands
+//
+//  Created by Ron Dorn on 2/7/15.
+//  Copyright (c) 2015 Ron Dorn. All rights reserved.
+//
+
+import Foundation
+import CoreData
+import SystemConfiguration
+import UIKit
+import Network
+//prevent alerts from being re-added all the time
+var alertTracker = [String]()
+
+//file locations
+var showsAttendedFileName = "showsAttended.data";
+
+//icloud data types
+var PRIORITY = "priority";  
+var ATTENDED = "attended";
+var NOTE = "note";
+
+var filterMenu:UIMenu  = UIMenu()
+
+var FCMnumber = "";
+var refreshDataCounter = 0;
+var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
+var directoryPath = URL(fileURLWithPath:dirs[0])
+var storageFile = directoryPath.appendingPathComponent( "data.txt")
+var dateFile = directoryPath.appendingPathComponent( "date.txt")
+var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
+var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
+var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
+var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
+let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
+let countryFile = directoryPath.appendingPathComponent("countryFile")
+
+let lastiCloudDataWriteFile = directoryPath.appendingPathComponent("iCloudDataWrite.txt")
+let lastPriorityDataWriteFile = directoryPath.appendingPathComponent("PriorityDataWrite.txt")
+let lastScheduleDataWriteFile = directoryPath.appendingPathComponent("ScheduleDataWrite.txt")
+
+var listCount = 0
+var noEntriesFlag = false
+var bandCounter = 0
+var eventCounter = 0
+var eventCounterUnoffical = 0
+private var _iCloudDataisLoading = false
+private var _iCloudScheduleDataisLoading = false
+private let iCloudLoadingQueue = DispatchQueue(label: "com.yourapp.iCloudLoadingQueue")
+
+var iCloudDataisLoading: Bool {
+    get { iCloudLoadingQueue.sync { _iCloudDataisLoading } }
+    set { iCloudLoadingQueue.sync { _iCloudDataisLoading = newValue } }
+}
+
+var iCloudScheduleDataisLoading: Bool {
+    get { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading } }
+    set { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading = newValue } }
+}
+
+var numberOfFilteredRecords = 0;
+var readingBandFile = false;
+
+var touchedThebottom = false;
+
+var refreshAfterMenuIsGoneFlag = false
+var isFilterMenuVisible = false
+
+var currentBandList = [String]()
+
+var downloadingAllComments = false
+var downloadingAllImages = false
+var bandSelected = String();
+var eventSelectedIndex = String();
+
+var timeIndexMap : [String:String] = [String:String]();
+
+var inTestEnvironment = false;
+
+var webMessageHelp = String();
+
+var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
+var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
+var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
+
+let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
+let staticSchedule = DispatchQueue(label: "staticSchedule")
+let staticAttended = DispatchQueue(label: "staticAttended")
+let staticBandName = DispatchQueue(label: "staticBandName")
+let staticData = DispatchQueue(label: "staticData")
+let storePointerLock = DispatchQueue(label: "storePointerLock")
+let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
+
+var iCloudCheck = false;
+var internetCheckCache = ""
+var internetCheckCacheDate = NSDate().timeIntervalSince1970
+
+//prevent mutiple threads doing the same thing
+var isAlertGenerationRunning = false
+var isLoadingBandData = false
+var isLoadingSchedule = false
+var isLoadingCommentData = false
+var isPerformingQuickLoad = false
+var isReadingBandFile = false;
+var isGetFilteredBands = false;
+
+var refreshDataLock = false;
+
+let scheduleQueue = DispatchQueue(label: "scheduleQueue")
+let bandNameQueue = DispatchQueue(label: "bandNameQueue")
+let bandPriorityQueue = DispatchQueue(label: "bandPriorityQueue")
+let showsAttendedQueue = DispatchQueue(label: "showsAttendedQueue")
+
+var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
+
+var loadingiCloud = false;
+var savingiCloud = false;
+
+//CSV field names
+var typeField = "Type"
+var showField = "Show"
+var bandField = "Band"
+var locationField = "Location"
+var dayField = "Day"
+var dateField = "Date"
+var startTimeField = "Start Time"
+var endTimeField = "End Time"
+var notesField = "Notes"
+var urlField = "URL"
+var urlDateField = "Date"
+var descriptionUrlField = "Description URL"
+var imageUrlField = "ImageURL"
+
+var loadUrlCounter = 0
+
+var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+var didVersionChange = false
+
+var lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
+var lastRefreshCount = 0
+
+//link containers
+var wikipediaLink = [String: String]()
+var youtubeLinks = [String: String]()
+var metalArchiveLinks = [String: String]()
+var bandCountry = [String: String]()
+var bandGenre = [String: String]()
+var bandNoteWorthy = [String: String]()
+
+//var band list placeHolder
+var bandListIndexCache = 0
+
+//number of unoffical events
+var unofficalEventCount = 0
+
+let chevronRight = UIImage(systemName: "chevron.right")
+let chevronDown = UIImage(systemName: "chevron.down")
+
+//valid event types
+var showType = "Show"
+var meetAndGreetype = "Meet and Greet"
+var clinicType = "Clinic"
+var listeningPartyType = "Listening Party"
+var specialEventType = "Special Event"
+var unofficalEventTypeOld = "Unofficial Event"
+var unofficalEventType = "Cruiser Organized"
+var karaokeEventType = "Karaoke";
+
+var poolVenueText = "Pool"
+var rinkVenueText = "Rink"
+var loungeVenueText = "Lounge"
+var theaterVenueText = "Theater"
+
+var venueLocation = [String:String]()
+
+//links to external site
+var officalSiteButtonName = "Offical Web Site"
+var wikipediaButtonName = "Wikipedia"
+var youTubeButtonName = "YouTube"
+var metalArchivesButtonName = "Metal Archives"
+
+var descriptionLock = false;
+
+let venuePoolKey:String = "Pool";
+let venueTheaterKey:String = "Theater";
+let venueLoungeKey:String = "Lounge";
+let venueRinkKey:String = "Rink";
+
+let sawAllColor = hexStringToUIColor(hex: "#67C10C")
+let sawSomeColor = hexStringToUIColor(hex: "#F0D905")
+let sawNoneColor = hexStringToUIColor(hex: "#5DADE2")
+let sawAllStatus = "sawAll";
+let sawSomeStatus = "sawSome";
+let sawNoneStatus = "sawNone";
+
+var eventYearArray = [String]();
+
+//alert topics
+let subscriptionTopic = "global"
+let subscriptionTopicTest = "Testing20250603"
+let subscriptionUnofficalTopic = "unofficalEvents"
+
+//file names
+let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
+
+let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
+let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
+
+let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
+let versionInfoFile = getDocumentsDirectory().appendingPathComponent("versionInfoFile")
+let eventYearsInfoFile = "eventYearsInfoFile"
+
+var eventYear:Int = 0
+
+//defaults preferences
+var artistUrlDefault = ""
+var scheduleUrlDefault = ""
+
+let defaultPrefsValue = "Default";
+
+let testingSetting = "Testing"
+
+var userCountry = ""
+var didNotFindMarkedEventsCount = 0
+var defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1"
+let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+let statsUrl = getPointerUrlData(keyValue: "reportUrl")
+
+//var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+
+
+var internetAvailble = isInternetAvailable();
+
+var hasScheduleData = false;
+
+var byPassCsvDownloadCheck = false
+//var listOfVenues = [String]()
+var scheduleReleased = false
+
+var filterMenuNeedsUpdating = false;
+
+var filteredBandCount = 0
+var unfilteredBandCount = 0
+var unfilteredEventCount = 0
+var unfilteredCruiserEventCount = 0
+var unfilteredCurrentEventCount = 0
+
+var masterView: MasterViewController!
+
+var googleCloudID = "Nothing";
+var currentPointerKey = ""
+
+/// Resolves a priority string (e.g., "1", "2", "3") to a human-readable label ("Must", "Might", "Wont", or "Unknown").
+/// - Parameter priority: The priority value as a string.
+/// - Returns: A string representing the human-readable priority label.
+func resolvePriorityNumber (priority: String)->String {
+
+    var result = ""
+    
+    if (priority == "1"){
+        result = "Must";
+    
+    } else if (priority == "2"){
+        result = "Might";
+
+    } else if (priority == "3"){
+        result = "Wont";
+        
+    } else {
+        result = "Unknown";
+    }
+    
+    return result;
+}
+
+/// Returns the path to the app's documents directory as an NSString.
+/// - Returns: The documents directory path.
+func getDocumentsDirectory() -> NSString {
+    let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+    let documentsDirectory = paths[0]
+    return documentsDirectory as NSString
+}
+
+/// Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
+/// Handles special logic for the "eventYear" key with robust fallback mechanisms.
+/// - Parameter keyValue: The key for which to retrieve pointer data.
+/// - Returns: The pointer data as a string, or an empty string if not found.
+func getPointerUrlData(keyValue: String) -> String {
+
+    var dataString = String()
+    
+    if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
+        defaultStorageUrl = defaultStorageUrlTest
+        inTestEnvironment = true;
+        
+    }
+    #if targetEnvironment(simulator)
+        inTestEnvironment = true;
+    #endif
+    
+    //returned cached data when needed. Will only look up pointer data on launch as this
+    //does not change very often during the year
+    storePointerLock.sync() {
+        if (cacheVariables.storePointerData.isEmpty == false){
+            dataString = cacheVariables.storePointerData[keyValue] ?? ""
+            print ("getPointerUrlData: got cached URL data of = \(dataString) for \(keyValue)")
+        }
+    }
+    //print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
+    
+
+    var pointerIndex = getScheduleUrl()
+    var pointerValues : [String:[String:String]] = [String:[String:String]]()
+
+    print ("Files were Done setting 2 \(pointerIndex)")
+    if (dataString.isEmpty == true){
+        // Check internet availability before attempting download
+        if !isInternetAvailable() {
+            print("getPointerUrlData: No internet available, using cached data for \(keyValue)")
+            
+            // Try to use cached pointer data from disk as fallback
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            if FileManager.default.fileExists(atPath: cachedPointerFile) {
+                do {
+                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+                    print("getPointerUrlData: Using cached pointer data from disk")
+                    let dataArray = cachedData.components(separatedBy: "\n")
+                    for record in dataArray {
+                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
+                    }
+                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                    
+                    // Cache the result in memory for future use
+                    storePointerLock.sync() {
+                        cacheVariables.storePointerData[keyValue] = dataString
+                    }
+                } catch {
+                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
+                }
+            }
+            return dataString
+        }
+        
+        // If we still don't have data and no internet, provide sensible defaults
+        if dataString.isEmpty && !isInternetAvailable() {
+            
+            sleep(3)
+            
+            loadUrlCounter = loadUrlCounter + 1
+            
+            if (loadUrlCounter < 5){
+                dataString = getPointerUrlData(keyValue: keyValue)
+            } else {
+                print ("Can not load needed data, exiting")
+                exit(1)
+            }
+            
+            return dataString
+        }
+        
+        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
+        let httpData = getUrlData(urlString: defaultStorageUrl)
+        print ("getPointerUrlData: httpData for pointers data = \(httpData)")
+        if (httpData.isEmpty == false){
+            
+            let dataArray = httpData.components(separatedBy: "\n")
+            for record in dataArray {
+                pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
+            }
+            
+            dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+            
+            // Cache the pointer data to disk for future offline use
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            do {
+                try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
+                print("getPointerUrlData: Cached pointer data to disk for offline use")
+            } catch {
+                print("getPointerUrlData: Failed to cache pointer data: \(error)")
+            }
+
+        } else {
+            print ("getPointerUrlData: Why is \(keyValue) empty - \(dataString)")
+            
+            // Try to use cached pointer data from disk as fallback
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            if FileManager.default.fileExists(atPath: cachedPointerFile) {
+                do {
+                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+                    print("getPointerUrlData: Using cached pointer data from disk")
+                    let dataArray = cachedData.components(separatedBy: "\n")
+                    for record in dataArray {
+                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
+                    }
+                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                } catch {
+                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
+                }
+            }
+        }
+        
+        if (keyValue == "eventYear"){
+            dataString = getArtistUrl();
+            if (dataString == "Current"){
+                // Find the largest year available from all pointer values
+                var largestYear = 0
+                var largestYearString = ""
+                
+                for (index, values) in pointerValues {
+                    if let eventYearValue = values["eventYear"], let yearInt = Int(eventYearValue) {
+                        if yearInt > largestYear {
+                            largestYear = yearInt
+                            largestYearString = eventYearValue
+                        }
+                    }
+                }
+                
+                // Use the largest year found, or fall back to Current if no valid years found
+                if largestYear > 0 {
+                    dataString = largestYearString
+                    print ("   is Current - found largest year \(dataString) from all available years")
+                    
+                    // Cache the resolved year to disk for future launches
+                    do {
+                        try dataString.write(toFile: eventYearFile, atomically: true, encoding: String.Encoding.utf8)
+                        cacheVariables.storePointerData[keyValue] = dataString
+                        print ("getPointerUrlData: Cached resolved year \(dataString) to disk")
+                    } catch let error as NSError {
+                        print ("getPointerUrlData: Failed to cache year to disk: \(error.debugDescription)")
+                    }
+                } else {
+                    // Try to read from cached file as fallback
+                    do {
+                        if FileManager.default.fileExists(atPath: eventYearFile) {
+                            dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                            print ("   is Current - using cached year \(dataString) from disk")
+                        } else {
+                            dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
+                            print ("   is Current - setting to \(dataString) from Current (fallback)")
+                        }
+                    } catch {
+                        dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
+                        print ("   is Current - setting to \(dataString) from Current (final fallback)")
+                    }
+                }
+                
+                if dataString == "Problem" {
+                   print ("This is BAD - no valid year found and no cached year available")
+                   // Don't exit, try to use a reasonable default
+                   dataString = "2026" // Use a reasonable default year
+                   print ("Using default year \(dataString) as fallback")
+                }
+                
+            }
+            do {
+                if (dataString.count == 4){
+                    try dataString.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
+                    try cacheVariables.storePointerData[keyValue] = dataString
+                    print ("getPointerUrlData: Just created eventYear file using \(keyValue) = \(dataString)" + eventYearFile);
+                } else {
+                    try dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                    print ("getPointerUrlData: Just reading eventYear file  using \(keyValue) = \(dataString)" + eventYearFile + " and got \(dataString)");
+                }
+            } catch let error as NSError {
+                print ("getPointerUrlData: Encountered an error of creating file eventYear  using \(keyValue) = \(dataString) File " + error.debugDescription)
+            }
+        }
+
+    }
+    print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString + " \(getArtistUrl())")
+    
+    loadUrlCounter = 0
+    
+    return dataString
+}
+
+/// Parses a pointer data record and updates the pointer values dictionary and cache as needed.
+/// - Parameters:
+///   - pointData: The raw pointer data string (delimited by ::).
+///   - pointerValues: The current dictionary of pointer values.
+///   - pointerIndex: The index to match for updating values.
+/// - Returns: The updated pointer values dictionary.
+func readPointData(pointData:String, pointerValues: [String:[String:String]], pointerIndex: String)->[String:[String:String]]{
+    
+    var newPointValues = pointerValues
+    
+    var valueArray = pointData.components(separatedBy: "::")
+    
+    if (valueArray.isEmpty == false && valueArray.count >= 3){
+        let currentIndex = valueArray[0]
+        
+        if (currentIndex != "Default" && currentIndex != "lastYear"){
+            if (eventYearArray.contains(currentIndex) == false){
+                eventYearArray.append(currentIndex)
+            }
+        }
+        
+        print ("eventYearsInfoFile: file is saving");
+        let variableStoreHandle = variableStore();
+        variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+        //print ("eventYearsInfoFile: file is saved \(eventYearArray)");
+        
+        if (currentIndex == pointerIndex){
+            let currentKey = valueArray[1]
+            let currentValue = valueArray[2]
+            var tempHash = [String:String]()
+            tempHash[currentKey] = currentValue
+            print ("getPointerUrlData: Using in loop \(currentIndex) - \(currentKey) - getting \(currentValue)")
+            newPointValues[currentIndex] = tempHash
+            storePointerLock.async(flags: .barrier) {
+                do {
+                    try cacheVariables.storePointerData[currentKey] = currentValue;
+                } catch let error as NSError {
+                    print ("getPointerUrlData: looks like we don't have internet yet")
+                }
+            }
+        }
+    }
+    
+    return newPointValues
+}
+
+/// Loads user defaults and venue locations, and sets the current event year from pointer data.
+func setupDefaults() {
+        
+    readFiltersFile()
+    setupVenueLocations()
+    
+    //print ("Schedule URL is \(UserDefaults.standard.string(forKey: "scheduleUrl") ?? "")")
+    
+    print ("Trying to get the year  \(eventYear)")
+    
+    // Use robust year resolution that handles launch scenarios
+    eventYear = ensureYearResolvedAtLaunch()
+    
+    // Check if year has changed and handle accordingly
+    let resolvedYearString = String(eventYear)
+    checkAndHandleYearChange(newYear: resolvedYearString)
+
+    print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
+
+    didVersionChangeFunction();
+}
+
+/// Checks if the year has changed and handles the year change process if needed.
+/// This function can be called from both setupDefaults and when year changes are detected.
+/// - Parameter newYear: The new year string that was resolved.
+func checkAndHandleYearChange(newYear: String) {
+    // Read the previously cached year
+    var previousYear = ""
+    do {
+        if FileManager.default.fileExists(atPath: eventYearFile) {
+            previousYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+        }
+    } catch {
+        print("checkAndHandleYearChange: Could not read previous year from cache")
+    }
+    
+    // If year has changed, run the same process as year change in preferences
+    if !previousYear.isEmpty && previousYear != newYear {
+        print("checkAndHandleYearChange: Year changed from \(previousYear) to \(newYear), running year change process")
+        
+        // Clear caches and files like in preferences year change
+        do {
+            // Only remove files if they exist and are for the old year
+            if FileManager.default.fileExists(atPath: scheduleFile) {
+                try FileManager.default.removeItem(atPath: scheduleFile)
+                print("checkAndHandleYearChange: Removed old schedule file")
+            }
+            if FileManager.default.fileExists(atPath: bandFile) {
+                try FileManager.default.removeItem(atPath: bandFile)
+                print("checkAndHandleYearChange: Removed old band file")
+            }
+        } catch {
+            print("checkAndHandleYearChange: Some files were not removed (may not have existed)")
+        }
+        
+        // Clear pointer data cache to ensure fresh data
+        cacheVariables.storePointerData = [String:String]()
+        
+        // Clear all existing notifications
+        let localNotification = localNoticationHandler()
+        localNotification.clearNotifications()
+        
+        // Purge all caches
+        bandNamesHandler().clearCachedData()
+        dataHandler().clearCachedData()
+        if let masterView = masterView {
+            masterView.schedule.clearCache()
+        }
+        
+        // Clear static caches
+        staticSchedule.sync {
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+            cacheVariables.bandNamesStaticCache = [:]
+        }
+        
+        print("checkAndHandleYearChange: Year change process completed for \(newYear)")
+    }
+}
+
+/// Ensures the year is properly resolved at launch, with fallback mechanisms.
+/// This function should be called during app initialization to ensure a valid year is set.
+/// - Returns: The resolved year as an integer, or a default year if resolution fails.
+func ensureYearResolvedAtLaunch() -> Int {
+    print("ensureYearResolvedAtLaunch: Starting year resolution")
+    
+    // First try to read from cached file
+    var resolvedYear = ""
+    do {
+        if FileManager.default.fileExists(atPath: eventYearFile) {
+            resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+            print("ensureYearResolvedAtLaunch: Found cached year: \(resolvedYear)")
+        }
+    } catch {
+        print("ensureYearResolvedAtLaunch: Could not read cached year")
+    }
+    
+    // If no cached year, try to resolve from pointer data
+    if resolvedYear.isEmpty {
+        print("ensureYearResolvedAtLaunch: No cached year, resolving from pointer data")
+        resolvedYear = getPointerUrlData(keyValue: "eventYear")
+    }
+    
+    // Validate the year
+    guard let yearInt = Int(resolvedYear), yearInt > 2000 && yearInt < 2030 else {
+        print("ensureYearResolvedAtLaunch: Invalid year \(resolvedYear), using default")
+        resolvedYear = "2026" // Default fallback
+        return Int(resolvedYear)!
+    }
+    
+    print("ensureYearResolvedAtLaunch: Final resolved year: \(resolvedYear)")
+    return Int(resolvedYear)!
+}
+
+/// Sets up the current year URLs for artist and schedule data, writing a flag file if needed.
+func setupCurrentYearUrls() {
+        
+    let filePath = defaultUrlConverFlagUrl.path
+    if(FileManager.default.fileExists(atPath: filePath)){
+        print ("setupCurrentYearUrls: Followup run of setupCurrentYearUrls routine")
+        artistUrlDefault = getArtistUrl()
+        scheduleUrlDefault = getScheduleUrl()
+        
+        print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
+        print ("setupCurrentYearUrls: scheduleUrlDefault is \(scheduleUrlDefault)")
+    } else {
+        print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine")
+       artistUrlDefault = defaultPrefsValue
+       scheduleUrlDefault = defaultPrefsValue
+       let flag = ""
+        do {
+            try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
+        }
+        catch {print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine Failed!")}
+    }
+    /*
+    print ("setupCurrentYearUrls: artistUrlDefault \(artistUrlDefault) - \(defaultPrefsValue)")
+    if (artistUrlDefault == defaultPrefsValue){
+        //setArtistUrl(defaultPrefsValue)
+    }
+    
+    print ("setupCurrentYearUrls: scheduleUrlDefault \(scheduleUrlDefault) - \(defaultPrefsValue)")
+    //if (scheduleUrlDefault == defaultPrefsValue){
+        //setScheduleUrl(defaultPrefsValue)
+    //}
+    print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
+    */
+    
+}
+
+/// Checks if the app version has changed and updates version info on disk if needed.
+func didVersionChangeFunction(){
+
+    var oldVersion = ""
+    
+    do {
+        if FileManager.default.fileExists(atPath: versionInfoFile) == false {
+            try versionInformation.write(toFile: versionInfoFile, atomically: true,encoding: String.Encoding.utf8)
+        } else {
+            try oldVersion = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+        }
+    } catch {
+        print ("Could not read or write version information")
+    }
+    
+    if (oldVersion != versionInformation){
+        didVersionChange = true
+        do {
+            try versionInformation.write(toFile: versionInfoFile, atomically: true,encoding: String.Encoding.utf8)
+        } catch {
+            print ("Could not write version information")
+        }
+    }
+}
+
+
+/// Populates the venueLocation dictionary with mappings from venue names to deck locations.
+func setupVenueLocations(){
+    
+    venueLocation[poolVenueText] = "Deck 11"
+    venueLocation[rinkVenueText] = "Deck 3"
+    venueLocation[loungeVenueText] = "Deck 5"
+    venueLocation[theaterVenueText] = "Deck 3/4"
+    venueLocation["Sports Bar"] = "Deck 4"
+    venueLocation["Viking Crown"] = "Deck 14"
+    venueLocation["Boleros Lounge"] = "Deck 4"
+    venueLocation["Solarium"] = "Deck 11"
+    venueLocation["Ale And Anchor Pub"] = "Deck 5"
+    venueLocation["Ale & Anchor Pub"] = "Deck 5"
+    venueLocation["Bull And Bear Pub"] = "Deck 5"
+    venueLocation["Bull & Bear Pub"] = "Deck 5"
+}
+
+/// Converts an event type string to a localized version for display.
+/// - Parameter eventType: The event type string to localize.
+/// - Returns: The localized event type string.
+func convertEventTypeToLocalLanguage(eventType: String)->String{
+    
+    var localEventType = eventType
+    
+    print ("Recieved an eventType of \(eventType)")
+    if eventType == "Cruiser Organized" {
+        localEventType = NSLocalizedString("Unofficial Events", comment: "")
+        
+    } else if eventType == "Listening Party" {
+        localEventType = NSLocalizedString(eventType, comment: "")
+    
+    } else if eventType == "Clinic"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    } else if eventType == "Meet and Greet"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    } else if eventType == "Special Event"{
+        localEventType = NSLocalizedString(eventType, comment: "")
+        
+    }
+    
+    print ("Recieved an eventType and returned \(localEventType)")
+    return localEventType;
+    
+}
+
+/// Checks if the device currently has internet access using the global NetworkStatusManager.
+/// - Returns: True if internet is available, false otherwise.
+func isInternetAvailable() -> Bool {
+    return NetworkStatusManager.shared.isInternetAvailable
+}
+
+struct cacheVariables {
+    
+    static var bandPriorityStorageCache = [String:Int]()
+    static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+    static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
+    static var bandNamedStaticCache = [String :[String : String]]()
+    static var attendedStaticCache = [String : String]()
+    static var bandNamesStaticCache =  [String :[String : String]]()
+    static var bandNamesArrayStaticCache = [String]()
+    static var storePointerData = [String:String]()
+    static var bandDescriptionUrlCache = [String:String]()
+    static var bandDescriptionUrlDateCache = [String:String]()
+    static var lastModifiedDate:Date? = nil;
+    static var justLaunched: Bool = true
+}
+
+extension Notification.Name {
+    static let bandNamesCacheReady = Notification.Name("BandNamesCacheReady")
+}
+
+
+ 
