@@ -115,6 +115,12 @@ open class scheduleHandler {
     
     func populateSchedule(forceDownload: Bool = false){
         
+        // Prevent concurrent schedule loading
+        if isLoadingSchedule {
+            print("[YEAR_CHANGE_DEBUG] Schedule loading already in progress, skipping duplicate request")
+            return
+        }
+        
         print ("[YEAR_CHANGE_DEBUG] Loading schedule data for year \(eventYear), forceDownload: \(forceDownload)")
         isLoadingSchedule = true;
         
@@ -194,6 +200,14 @@ open class scheduleHandler {
                     setData(bandName: lineData[bandField]!, index:dateIndex, variable:locationField, value: lineData[locationField]!)
                     
                     print ("adding descriptionUrlField \(lineData)")
+                    if let descriptionUrl = lineData[descriptionUrlField] {
+                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:descriptionUrlField, value: descriptionUrl)
+                    }
+                    
+                    print ("adding imageUrlField \(lineData)")
+                    if let imageUrl = lineData[imageUrlField] {
+                        setData(bandName: lineData[bandField]!, index:dateIndex, variable:imageUrlField, value: imageUrl)
+                    }
                     
                 } else {
                     print ("Unable to parse schedule file")
@@ -208,6 +222,22 @@ open class scheduleHandler {
         NSKeyedArchiver.archiveRootObject(schedulingDataByTime, toFile: schedulingDataByTimeCacheFile.path)
         
         print("[YEAR_CHANGE_DEBUG] Schedule population completed for year \(eventYear): \(schedulingData.count) bands, \(schedulingDataByTime.count) time slots")
+        
+        // Check if combined image list needs regeneration after schedule data is loaded
+        if forceDownload {
+            print("[YEAR_CHANGE_DEBUG] Schedule data downloaded from URL, checking if combined image list needs regeneration")
+            let bandNameHandle = bandNamesHandler()
+            if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: bandNameHandle, scheduleHandle: self) {
+                print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new schedule data")
+                CombinedImageListHandler.shared.generateCombinedImageList(
+                    bandNameHandle: bandNameHandle,
+                    scheduleHandle: self
+                ) {
+                    print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after schedule data load")
+                }
+            }
+        }
+        
         isLoadingSchedule = false
 
     }
@@ -228,9 +258,38 @@ open class scheduleHandler {
 
         print("scheduleUrl = " + scheduleUrl)
         
-        let httpData = getUrlData(urlString: scheduleUrl)
+        // Enhanced retry logic for schedule data
+        let maxRetries = 3
+        var retryCount = 0
+        var httpData = ""
+        var success = false
         
-        print("This will be making HTTP Calls for schedule " + httpData);
+        while retryCount < maxRetries && !success {
+            retryCount += 1
+            print("Schedule data download attempt \(retryCount)/\(maxRetries)")
+            
+            // Add a small delay between retries
+            if retryCount > 1 {
+                Thread.sleep(forTimeInterval: 1.0)
+            }
+            
+            httpData = getUrlData(urlString: scheduleUrl)
+            print("This will be making HTTP Calls for schedule " + httpData);
+            
+            if (httpData.isEmpty == false && httpData.count > 100) {
+                success = true
+                print("Schedule data downloaded successfully on attempt \(retryCount)")
+            } else {
+                print("Schedule download attempt \(retryCount) failed: Data is empty or invalid")
+                if retryCount < maxRetries {
+                    Thread.sleep(forTimeInterval: 2.0)
+                }
+            }
+        }
+        
+        if !success {
+            print("Failed to download schedule data after \(maxRetries) attempts")
+        }
         
         let oldScheduleFile = scheduleFile + ".old"
         var didRenameOld = false

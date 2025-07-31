@@ -121,21 +121,31 @@ open class imageHandler {
         }
     }
 
-    func getAllImages(bandNameHandle: bandNamesHandler){
+    func getAllImages(bandNameHandle: bandNamesHandler? = nil){
         
         if (downloadingAllImages == false){
             downloadingAllImages = true
-            bands = bandNameHandle.getBandNames()
-            for bandName in bands {
-                
+            
+            // Use the combined image list instead of just band names
+            let combinedImageList = CombinedImageListHandler.shared.combinedImageList
+            
+            print("Loading all images from combined image list with \(combinedImageList.count) entries")
+            
+            for (bandName, imageURL) in combinedImageList {
                 let imageStoreName = bandName + ".png"
                 let imageStoreFile = directoryPath.appendingPathComponent( imageStoreName)
 
                 if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
-                    
-                    let imageURL = bandNameHandle.getBandImageUrl(bandName)
-                    print ("Loading image in background so it will be cached by default " + imageURL);
-                    _ = displayImage(urlString: imageURL, bandName: bandName)
+                    print ("Downloading and caching image for \(bandName) from \(imageURL)");
+                    downloadAndCacheImage(urlString: imageURL, bandName: bandName) { downloadedImage in
+                        if downloadedImage != nil {
+                            print("Successfully downloaded and cached image for \(bandName)")
+                        } else {
+                            print("Failed to download image for \(bandName)")
+                        }
+                    }
+                } else {
+                    print("Image already cached for \(bandName)")
                 }
             }
         }

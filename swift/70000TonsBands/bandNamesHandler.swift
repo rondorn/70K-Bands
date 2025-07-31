@@ -86,6 +86,14 @@ open class bandNamesHandler {
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
     /// Calls completion handler when done.
     func gatherData(completion: (() -> Void)? = nil) {
+        // Prevent concurrent band data loading
+        if isLoadingBandData {
+            print("[YEAR_CHANGE_DEBUG] Band data loading already in progress, skipping duplicate request")
+            completion?()
+            return
+        }
+        
+        isLoadingBandData = true
         var newDataDownloaded = false
         var newDataValid = false
         
@@ -121,33 +129,57 @@ open class bandNamesHandler {
             isEmpty = self.bandNames.isEmpty
         }
         
-        // If we're just launched and have no data, try one more time
-        if isEmpty && cacheVariables.justLaunched {
-            print("Band file is empty and app is just launched. Retrying network fetch once more.")
-            if isInternetAvailable() == true {
-                eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
-                let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-                print ("Retrying: Getting band data from " + artistUrl);
-                let httpData = getUrlData(urlString: artistUrl)
-                if (httpData.isEmpty == false && httpData.count > 100) {
-                    writeBandFile(httpData);
-                    readBandFile()
-                    staticBandName.sync {
-                        isEmpty = self.bandNames.isEmpty
+        // Enhanced retry logic for band data
+        if isEmpty {
+            print("Band file is empty. Attempting retry with enhanced logic.")
+            let maxRetries = 3
+            var retryCount = 0
+            var success = false
+            
+            while retryCount < maxRetries && !success {
+                retryCount += 1
+                print("Band data retry attempt \(retryCount)/\(maxRetries)")
+                
+                if isInternetAvailable() == true {
+                    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+                    let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
+                    print ("Retrying: Getting band data from " + artistUrl + " (attempt \(retryCount))");
+                    
+                    // Add a small delay between retries
+                    if retryCount > 1 {
+                        Thread.sleep(forTimeInterval: 1.0)
                     }
-                    if !isEmpty {
-                        print("Band data loaded successfully on retry, setting justLaunched to false.")
-                        cacheVariables.justLaunched = false
-                        populateCache(completion: completion)
-                        return
+                    
+                    let httpData = getUrlData(urlString: artistUrl)
+                    if (httpData.isEmpty == false && httpData.count > 100) {
+                        writeBandFile(httpData);
+                        readBandFile()
+                        staticBandName.sync {
+                            isEmpty = self.bandNames.isEmpty
+                        }
+                        if !isEmpty {
+                            print("Band data loaded successfully on retry \(retryCount), setting justLaunched to false.")
+                            cacheVariables.justLaunched = false
+                            success = true
+                            populateCache(completion: completion)
+                            return
+                        } else {
+                            print("Retry \(retryCount) failed: Data downloaded but file is still empty.")
+                        }
+                    } else {
+                        print("Retry \(retryCount) failed: Internet is down or data is empty/invalid.")
                     }
                 } else {
-                    print("Retry failed: Internet is down or data is empty/invalid.")
+                    print("Retry \(retryCount) failed: No internet connection.")
                 }
-            } else {
-                print("Retry failed: No internet connection.")
+                
+                // Wait before next retry
+                if retryCount < maxRetries {
+                    Thread.sleep(forTimeInterval: 2.0)
+                }
             }
-            print("No band data available after retry. Giving up and calling completion.")
+            
+            print("No band data available after \(maxRetries) retries. Giving up and calling completion.")
             completion?()
             return
         }
@@ -157,13 +189,33 @@ open class bandNamesHandler {
             print("Band data available (new or existing), setting justLaunched to false.")
             cacheVariables.justLaunched = false
             populateCache(completion: completion)
+            
+            // Check if combined image list needs regeneration after artist data is loaded
+            if newDataDownloaded {
+                print("[YEAR_CHANGE_DEBUG] Artist data downloaded from URL, checking if combined image list needs regeneration")
+                let scheduleHandle = scheduleHandler()
+                if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: self, scheduleHandle: scheduleHandle) {
+                    print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new artist data")
+                    CombinedImageListHandler.shared.generateCombinedImageList(
+                        bandNameHandle: self,
+                        scheduleHandle: scheduleHandle
+                    ) {
+                        print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after artist data load")
+                    }
+                }
+            }
         } else if !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")
+            isLoadingBandData = false
             completion?()
         } else {
             print("No band data available and app just launched. Calling completion.")
+            isLoadingBandData = false
             completion?()
         }
+        
+        // Reset loading flag at the end
+        isLoadingBandData = false
     }
 
     /// Populates the static cache variables with the current bandNames dictionary.

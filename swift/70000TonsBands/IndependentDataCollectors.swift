@@ -604,26 +604,4 @@ extension IndependentDataCollectionManager {
     }
 }
 
-// MARK: - Migration Helper
-
-/// Helper to migrate from old coupled system to new independent system
-class DataCollectionMigrationHelper {
-    
-    static func migrateToIndependentCollectors() {
-        let manager = IndependentDataCollectionManager.shared
-        
-        // Replace old singleton calls with independent collectors
-        print("Migrating to independent data collectors...")
-        
-        // Start all collections in parallel
-        manager.startAllCollections { [weak manager] in
-            print("Migration complete!")
-            
-            // Verify all collectors have data
-            let status = manager?.getCollectionStatus() ?? [:]
-            for (name, isCollecting) in status {
-                print("\(name): \(isCollecting ? "Still collecting" : "Ready")")
-            }
-        }
-    }
-} 
+ 

@@ -159,7 +159,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
-            let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
+            // Use combined image list instead of just band image URL
+            let imageURL = CombinedImageListHandler.shared.getImageUrl(for: self.bandName)
             print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
             
             // Load image with proper UI refresh

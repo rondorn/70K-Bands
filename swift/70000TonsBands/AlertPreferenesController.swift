@@ -67,6 +67,10 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     static var currentLoadRequestID: Int = 0
     var myLoadRequestID: Int = 0
     
+    // Track data loading request IDs to cancel outdated requests
+    static var currentBandDataRequestID: Int = 0
+    static var currentScheduleDataRequestID: Int = 0
+    
     @IBOutlet weak var DetailScreenSection: UILabel!
     @IBOutlet weak var NotesFontSizeLargeLabel: UILabel!
     @IBOutlet weak var NotesFontSizeLargeSwitch: UISwitch!
@@ -246,6 +250,11 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         // Increment the global request ID and store for this load
         AlertPreferenesController.currentLoadRequestID += 1
         myLoadRequestID = AlertPreferenesController.currentLoadRequestID
+        // Cancel any ongoing data loading processes
+        print("[YEAR_CHANGE_DEBUG] Canceling ongoing data loading processes for year change")
+        isLoadingBandData = false
+        isLoadingSchedule = false
+        
         // Always purge caches and reload everything, even for 'Current' year
         bandNamesHandler().clearCachedData()
         dataHandler().clearCachedData()
@@ -502,11 +511,17 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 await DispatchQueue.global(qos: DispatchQoS.QoSClass.default).sync {
                     if (self.eventYearChangeAttempt.isYearValue == false){
                         // For "Current" year, automatically use Band List without asking
+                        // Show persistent waiting overlay for automatic Band List selection
+                        DispatchQueue.main.async {
+                            self.showPersistentWaitingOverlay()
+                        }
+                        
                         self.HideExpiredSwitch.isOn = true
                         setHideExpireScheduleData(true)
                         masterView.refreshData(isUserInitiated: true)
-                        self.navigationController?.popViewController(animated: true)
-                        self.dismiss(animated: true, completion: nil)
+                        
+                        // Use sophisticated navigation that waits for data to be ready
+                        self.navigateBackWithDataDelay()
                     } else {
                         // For specific years, show the dialog to let user choose
                         NotificationCenter.default.post(name: Notification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
@@ -530,6 +545,54 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     @objc func displayWaitingMessage(){
         let waitingMessage = NSLocalizedString("waiting_for_data", comment: "")
         ToastMessages(waitingMessage).show(self, cellLocation: self.view.frame, placeHigh: false)
+    }
+    
+    /// Shows a persistent waiting overlay that stays visible until navigation completes
+    func showPersistentWaitingOverlay() {
+        DispatchQueue.main.async {
+            // Create a full-screen overlay
+            let overlayView = UIView(frame: self.view.bounds)
+            overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            overlayView.tag = 999 // Tag for easy removal
+            
+            // Create activity indicator
+            let activityIndicator = UIActivityIndicatorView(style: .large)
+            activityIndicator.color = .white
+            activityIndicator.center = overlayView.center
+            activityIndicator.startAnimating()
+            
+            // Create label
+            let label = UILabel()
+            label.text = NSLocalizedString("waiting_for_data", comment: "")
+            label.textColor = .white
+            label.textAlignment = .center
+            label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+            label.numberOfLines = 0
+            
+            // Position label below activity indicator
+            label.frame = CGRect(x: 0, y: 0, width: overlayView.bounds.width - 40, height: 60)
+            label.center = CGPoint(x: overlayView.center.x, y: overlayView.center.y + 50)
+            
+            // Add subviews
+            overlayView.addSubview(activityIndicator)
+            overlayView.addSubview(label)
+            
+            // Add to view hierarchy
+            self.view.addSubview(overlayView)
+            self.view.bringSubviewToFront(overlayView)
+            
+            print("[YEAR_CHANGE_DEBUG] Persistent waiting overlay displayed")
+        }
+    }
+    
+    /// Removes the persistent waiting overlay
+    func hidePersistentWaitingOverlay() {
+        DispatchQueue.main.async {
+            if let overlayView = self.view.viewWithTag(999) {
+                overlayView.removeFromSuperview()
+                print("[YEAR_CHANGE_DEBUG] Persistent waiting overlay removed")
+            }
+        }
     }
     
     /// Shows a warning dialog if the network is down when attempting to change years.
@@ -556,24 +619,31 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         // Create the actions
         let bandAction = UIAlertAction(title:bandListButton, style: .default) { _ in
+            // Show persistent waiting overlay immediately when user makes choice
+            self.showPersistentWaitingOverlay()
+            
             self.HideExpiredSwitch.isOn = true
             setHideExpireScheduleData(true)
             // Always proceed regardless of schedule status
             masterView.refreshData(isUserInitiated: true)
-            self.navigationController?.popViewController(animated: true)
-            self.dismiss(animated: true, completion: nil)
+            
+            // Use sophisticated navigation that waits for data to be ready
+            self.navigateBackWithDataDelay()
         }
         // Add the actions
         alertController.addAction(bandAction)
         
         let eventAction = UIAlertAction(title:eventListButton, style: .default) { _ in
+            // Show persistent waiting overlay immediately when user makes choice
+            self.showPersistentWaitingOverlay()
+            
             self.HideExpiredSwitch.isOn = false
             setHideExpireScheduleData(false)
             // Always proceed regardless of schedule status
             masterView.refreshData(isUserInitiated: true)
-            self.navigationController?.popViewController(animated: true)
-            self.dismiss(animated: true, completion: nil)
-            sleep(5)
+            
+            // Use sophisticated navigation that waits for data to be ready
+            self.navigateBackWithDataDelay()
         }
         // Add the actions
         alertController.addAction(eventAction)
@@ -662,22 +732,42 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         
         group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
-            print("[YEAR_CHANGE_DEBUG] Starting band names data loading for year \(self.eventYearChangeAttempt)")
+            // Increment and store request ID for this band data load
+            AlertPreferenesController.currentBandDataRequestID += 1
+            let thisBandRequestID = AlertPreferenesController.currentBandDataRequestID
+            
+            print("[YEAR_CHANGE_DEBUG] Starting band names data loading for year \(self.eventYearChangeAttempt) (request \(thisBandRequestID))")
             let bandNamesHandle = bandNamesHandler()
             bandNamesHandle.clearCachedData()
             bandNamesHandle.gatherData {
-                print("[YEAR_CHANGE_DEBUG] Band names data loading completed for year \(self.eventYearChangeAttempt)")
+                // Only proceed if this is still the current request
+                if thisBandRequestID == AlertPreferenesController.currentBandDataRequestID {
+                    print("[YEAR_CHANGE_DEBUG] Band names data loading completed for year \(self.eventYearChangeAttempt) (request \(thisBandRequestID))")
+                } else {
+                    print("[YEAR_CHANGE_DEBUG] Band names data loading cancelled - outdated request \(thisBandRequestID) vs current \(AlertPreferenesController.currentBandDataRequestID)")
+                }
                 group.leave()
             }
         }
         
         group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
-            print("[YEAR_CHANGE_DEBUG] Starting schedule data loading for year \(self.eventYearChangeAttempt)")
+            // Increment and store request ID for this schedule data load
+            AlertPreferenesController.currentScheduleDataRequestID += 1
+            let thisScheduleRequestID = AlertPreferenesController.currentScheduleDataRequestID
+            
+            print("[YEAR_CHANGE_DEBUG] Starting schedule data loading for year \(self.eventYearChangeAttempt) (request \(thisScheduleRequestID))")
             let dataHandle = dataHandler()
             dataHandle.clearCachedData()
             dataHandle.readFile(dateWinnerPassed: "")
             masterView.schedule.clearCache()
+            
+            // Check if this request is still current before proceeding
+            if thisScheduleRequestID != AlertPreferenesController.currentScheduleDataRequestID {
+                print("[YEAR_CHANGE_DEBUG] Schedule data loading cancelled - outdated request \(thisScheduleRequestID) vs current \(AlertPreferenesController.currentScheduleDataRequestID)")
+                group.leave()
+                return
+            }
             
             // Ensure CSV is downloaded before populating schedule
             print("[YEAR_CHANGE_DEBUG] Downloading schedule CSV first")
@@ -686,9 +776,22 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             // Wait for file to be written and verify it exists
             var attempts = 0
             while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
+                // Check if request is still current during wait
+                if thisScheduleRequestID != AlertPreferenesController.currentScheduleDataRequestID {
+                    print("[YEAR_CHANGE_DEBUG] Schedule data loading cancelled during file wait - outdated request \(thisScheduleRequestID)")
+                    group.leave()
+                    return
+                }
                 Thread.sleep(forTimeInterval: 0.2)
                 attempts += 1
                 print("[YEAR_CHANGE_DEBUG] Waiting for schedule file to be written (attempt \(attempts))")
+            }
+            
+            // Final check before populating
+            if thisScheduleRequestID != AlertPreferenesController.currentScheduleDataRequestID {
+                print("[YEAR_CHANGE_DEBUG] Schedule data loading cancelled before population - outdated request \(thisScheduleRequestID)")
+                group.leave()
+                return
             }
             
             if FileManager.default.fileExists(atPath: scheduleFile) {
@@ -699,7 +802,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
                 masterView.schedule.populateSchedule(forceDownload: true) // Force download as fallback
             }
             
-            print("[YEAR_CHANGE_DEBUG] Schedule data loading completed for year \(self.eventYearChangeAttempt)")
+            print("[YEAR_CHANGE_DEBUG] Schedule data loading completed for year \(self.eventYearChangeAttempt) (request \(thisScheduleRequestID))")
             group.leave()
         }
         
@@ -718,6 +821,21 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             print("[YEAR_CHANGE_DEBUG] UI unlocked and refresh notification sent for year \(self.eventYearChangeAttempt)")
             // Don't dismiss the Preferences screen - let the user make their choice
             // The navigation will happen when they select Band List or Event List
+        }
+    }
+
+
+    
+    /// Navigates back to MasterViewController with a simple delay to allow data loading to complete
+    func navigateBackWithDataDelay() {
+        // Enhanced delay to account for retry logic: wait 8 seconds then navigate back
+        // This gives enough time for background processes including retries to complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) {
+            print("[YEAR_CHANGE_DEBUG] Navigating back after enhanced delay")
+            // Remove the persistent overlay before navigating
+            self.hidePersistentWaitingOverlay()
+            self.navigationController?.popViewController(animated: true)
+            self.dismiss(animated: true, completion: nil)
         }
     }
 

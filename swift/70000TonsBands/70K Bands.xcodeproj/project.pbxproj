@@ -65,7 +65,7 @@
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
-		11DCE9BA1A86D84D00A25FB8 /* validateCSVschedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */; };
+
 		11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
 		11DFF4A21C8393BE00D0BF54 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */; };
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
@@ -154,7 +154,7 @@
 		11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = dataHandler.swift; sourceTree = "<group>"; };
 		11DCE9B31A856EE600A25FB8 /* mainListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mainListController.swift; sourceTree = "<group>"; };
 		11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = localNotificationHandler.swift; sourceTree = "<group>"; };
-		11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = validateCSVschedule.swift; sourceTree = "<group>"; };
+
 		11DCE9BC1A86F9E000A25FB8 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = OnMyWayToDeath.wav; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
@@ -283,7 +283,7 @@
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
-				11DCE9B91A86D84D00A25FB8 /* validateCSVschedule.swift */,
+
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
 			);
 			path = 70000TonsBands;
@@ -632,7 +632,7 @@
 				1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */,
 				11BE68F11A5992A600602EC7 /* externalUrls.swift in Sources */,
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
-				11DCE9BA1A86D84D00A25FB8 /* validateCSVschedule.swift in Sources */,
+
 				11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */,
 				11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
