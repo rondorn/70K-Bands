@@ -192,9 +192,7 @@ open class NetworkTesting {
                 
                 // Try multiple test URLs to ensure reliable network detection
                 let testUrls = [
-                    "https://httpbin.org/status/200",
-                    "https://www.apple.com/library/test/success.html",
-                    "https://www.google.com/generate_204"
+                    "https://www.dropbox.com"
                 ]
                 
                 var testUrl = testUrls[0] // Default to first URL

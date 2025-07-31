@@ -159,31 +159,39 @@ open class CustomBandDescription {
     
     func getDescriptionFromUrl(bandName: String, descriptionUrl: String) -> String {
         
-        print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl) hmmm")
+        print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl)")
         var commentText = ""
         
         let commentFileName = getNoteFileName(bandName: bandName)
-        
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
         print ("DEBUG_commentFile: doesDescriptionFileExists for \(bandName)")
         if (doesDescriptionFileExists(bandName: bandName) == false){
-            print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl) field does not yes exist")
+            print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl) field does not yet exist")
+            
+            // Check if internet is available
+            guard isInternetAvailable() else {
+                print("No internet available for \(bandName) description download")
+                return "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
+            }
+            
             let httpData = getUrlData(urlString: descriptionUrl);
                 
-                //do not write if we are getting 404 error
-                if (httpData.starts(with: "<!DOCTYPE") == false){
-                    commentText = httpData;
-                    print ("commentFile text is '" + commentText + "'")
-                    
-                    print ("Wrote commentFile for \(bandName) " + commentText)
-                    do {
-                        try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
-                    } catch {
-                        print("commentFile " + error.localizedDescription)
-                    }
+            //do not write if we are getting 404 error or HTML error page
+            if (httpData.starts(with: "<!DOCTYPE") == false && !httpData.isEmpty){
+                commentText = httpData;
+                print ("commentFile text is '" + commentText + "'")
+                
+                print ("Wrote commentFile for \(bandName) " + commentText)
+                do {
+                    try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                } catch {
+                    print("commentFile " + error.localizedDescription)
                 }
+            } else {
+                print("Received HTML error page or empty response for \(bandName)")
             }
+        }
 
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.count > 2){
