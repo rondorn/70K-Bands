@@ -77,9 +77,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.Bands70k.staticVariables.*;
 import static java.lang.Thread.sleep;
+
+import com.Bands70k.CombinedImageListHandler;
 
 import android.view.Window;
 import android.view.WindowManager;
@@ -1025,6 +1028,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
+        // Generate combined image list after data is loaded
+        Log.d("refreshNewData", "Generating combined image list");
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        combinedHandler.generateCombinedImageList(bandInfo, new Runnable() {
+            @Override
+            public void run() {
+                Log.d("refreshNewData", "Combined image list generation completed");
+            }
+        });
+
         Log.d("refreshNewData", "refreshNewData - 3");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
@@ -1362,6 +1375,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         listState = bandNamesList.onSaveInstanceState();
         Log.d("Saving Data", "Saving state during Pause");
         super.onPause();
+
+        // Start background loading of images and descriptions when app goes to background
+        CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
+        descriptionHandler.startBackgroundLoadingOnPause();
+        
+        ImageHandler imageHandler = ImageHandler.getInstance();
+        imageHandler.startBackgroundLoadingOnPause();
 
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();

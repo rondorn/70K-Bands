@@ -828,9 +828,9 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     
     /// Navigates back to MasterViewController with a simple delay to allow data loading to complete
     func navigateBackWithDataDelay() {
-        // Enhanced delay to account for retry logic: wait 8 seconds then navigate back
+        // Enhanced delay to account for retry logic: wait 2 seconds then navigate back
         // This gives enough time for background processes including retries to complete
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             print("[YEAR_CHANGE_DEBUG] Navigating back after enhanced delay")
             // Remove the persistent overlay before navigating
             self.hidePersistentWaitingOverlay()

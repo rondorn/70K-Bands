@@ -23,6 +23,8 @@ import java.util.Map;
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
+import com.Bands70k.CombinedImageListHandler;
+
 /**
  * Represents band information and provides methods to retrieve and manage band-related data.
  */
@@ -362,6 +364,19 @@ public class BandInfo {
 
         scheduleInfo schedule = new scheduleInfo();
         scheduleRecords = schedule.DownloadScheduleFile(downloadUrls.get("scheduleUrl"));
+
+        // Regenerate combined image list after schedule data is loaded
+        // This ensures event images from schedule CSV are included
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        if (combinedHandler.needsRegeneration(this)) {
+            Log.d("BandInfo", "Regenerating combined image list due to new schedule data");
+            combinedHandler.generateCombinedImageList(this, new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("BandInfo", "Combined image list regenerated after schedule data load");
+                }
+            });
+        }
 
         return bandNames;
     }

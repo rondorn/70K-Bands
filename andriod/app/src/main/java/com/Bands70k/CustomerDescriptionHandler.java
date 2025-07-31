@@ -299,6 +299,7 @@ public class CustomerDescriptionHandler {
 
     /**
      * Starts background loading of all descriptions with proper synchronization.
+     * This method should only be called when the app is moved to background.
      */
     public void getAllDescriptions(){
         synchronized (lock) {
@@ -314,6 +315,20 @@ public class CustomerDescriptionHandler {
             }
             
             startBackgroundLoading();
+        }
+    }
+    
+    /**
+     * Starts background loading of all descriptions when app goes to background.
+     * This method should be called from the main activity's onPause() method.
+     */
+    public void startBackgroundLoadingOnPause() {
+        synchronized (lock) {
+            // Only start background loading if not already running and app is going to background
+            if (!isRunning.get() && !detailsScreenActive.get()) {
+                Log.d("CustomerDescriptionHandler", "Starting background loading due to app going to background");
+                getAllDescriptions();
+            }
         }
     }
 
