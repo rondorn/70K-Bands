@@ -1,0 +1,21 @@
+This is an unofficial application for your 70,000 Tons Of Metal cruise band rankings!
+
+This application lists all the band playing on the 70,000 Tons metal cruise sailing in February. Right now it is showing last years bands, but that will change when the new bands start to be announced. You can research the bands via the official band link, Wikipedia, and YouTube.
+
+The app supports the following features:
+
+* Push notifications when new bands are added
+* iPhone and iPad support with cloud integration so changes in one will reflect on the other
+* Offline mode so the app will work on the ship (minus external web links)
+* Share you favorite bands with your friends via standard IOS sharing
+* Setup Alert Preferences for when you are on the ship
+
+After the schedule of bands is made available on the day of the cruise, a whole new set of features will become available
+
+* Alert for shows, meet and greets, clinics, and specials event
+* Alerts will only activate for bands on your Must See or Might See List by default
+* Special event, not associated with a band and not displayed in the app, will still be alerted on by default
+* The main screen will show only current shows. Shows that are more then an hour after there start time will automatically drop from the list.
+* The main screen will sort by time automatically, but you can sort by name as well
+* All of the above features will always work offline
+* You can go under settings and choose 'Use Last Years Data' to see all the scheduling features that would otherwise only be available on the day of the cruise. Turn this off to see the latest data available

@@ -1,0 +1,52 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Google Translate (I apologize in advance)
+*/
+
+
+"Must"="Да";
+"Might"="Может Быть";
+"Wont"="Нет";
+
+"Ok"="Да";
+"Cancel"="Нет";
+
+"Alert On Must See Bands"="Предупреждение Для Да Шоу";
+"Alert On Might See Bands"="Предупреждение Для Maybe Шоу";
+"Minutes Before Event to Alert"="Оповещать меня до мероприятия (в минутах)";
+"Alert For Shows"="Предупреждение для шоу";
+"Alert For Special Events"="Предупреждение для специальных событий";
+"Alert For Meeting and Greet Events"="Предупреждение Для 'Meet and Greet'";
+"Alert For Clinics"="Предупреждение для клиник";
+"Use Last Years Data"="Используйте информацию прошлогодних";
+
+"Alert For Album Listening Events"="Предупреждение для альбома Слушайте События";
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
+"LastYearsFeatureExplication"="Активация 'Использовать последние годы информация' будет загружать Показать график с прошлого года, но использовать моделирование Чт-Вс показывает график, используя текущую неделю. Это предназначено для демонстрации и тестирования возможностей планирования.";
+
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "Требуется перезапуск";
+"restartMessage" = "НЕ ДЕЛАЙТЕ ЭТОГО на круизном. Интерент-соединение, необходимое. Это изменение требует перезапуска приложения. Теперь 70k полос будет выйти. Перезапустите, чтобы увидеть новые данные";
+
+
+
+
+
+
+
+
+
+
+
+
+

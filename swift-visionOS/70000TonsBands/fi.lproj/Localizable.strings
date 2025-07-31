@@ -1,0 +1,208 @@
+/*
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+ Translation provided by Memnoch, thank you kind sir!
+ 
+ Partially retranslated on 28th June 2023 and tweaked on 2nd July - this should be more natural to read. -Jussi
+ and added more crap on 7th Oct -j
+*/
+
+"Must"="Kyllä";
+"Might"="Ehkä";
+"Wont"="Ei";
+
+"Ok"="Kyllä";
+"Cancel"="Peruuta";
+
+"Alert On Must See Bands"="Hälytä Kyllä-listan yhtyeistä";
+"Alert On Might See Bands"="Hälytä Ehkä-listan yhtyeistä";
+"Alert Only for Will Attend Events"="Hälytä vain tapahtumista, joihin aiot osallistua";
+
+"showAttendedFilterTrueHelp"="Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä";
+"showAttendedFilterFalseHelp"="Näytä yhtyeet ja esitykset suodattimien mukaan";
+
+"Sorting Chronologically"="Lajittelu aikajärjestyksessä";
+"Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
+
+"All Of Event"="Osallistun koko tapahtumaan";
+"Part Of Event"="Osallistun osaan tapahtumasta";
+"None Of Event"="En tule osallistumaan tähän tapahtumaan";
+
+"Prompt For Attended Status Header"="Kysy osallistumisesta";
+"Prompt For Attended Status"="Kysy osallistumisesta";
+"Go To Details"="Siirry lisätietoihin";
+
+"Only alert for shows you will attend"="Hälytä vain esityksistä, joihin aiot osallistua";
+"Alert for shows according to your favorites selection"="Hälytä esityksistä valitsemiesi suosikkien ja tämän sivun asetusten mukaan";
+
+"ShowHideEvents"="Näytä/piilota vanhentunut";
+"HideExpiredEvents"="Piilota vanhentuneet tapahtumat";
+
+"Minutes Before Event to Alert"="Hälytä (minuuttia) ennen tapahtumaa";
+"Alert For Shows"="Hälytä esityksistä";
+"Alert For Special Events"="Hälytä erikoistapahtumista";
+"Alert For Meeting and Greet Events"="Hälytä artistitapaamisista";
+"Alert For Clinics"="Hälytä klinikoista";
+"Use Last Years Data"="Käytä viime vuoden tietoja";
+"Alert For Album Listening Events"="Hälytä levyjen kuuntelutapahtumista";
+"Alert For Unofficial Events"="Hälytä kanssaristeilijöiden järjestämistä tapahtumista";
+
+"Special Event"="Erikoistapahtumat";
+"Meet and Greet"="Artistitapaamiset";
+"Clinic"="Klinikat";
+"Listening Party"="Levyn kuuntelutapahtumat";
+"Unofficial Events"="Kanssaristeilijöiden järjestämät tapahtumat";
+
+"officialWebSiteLinkHelp" = "Ohjataan viralliselle sivustolle";
+"WikipediaLinkHelp" = "Etsitään Wikipediasta";
+"YouTubeLinkHelp" = "Etsitään virallisia videoita YouTubesta";
+"MetalArchiveLinkHelp" = "Etsitään Metal Archives-sivustolta";
+
+
+"PoolVenue" = "Allas";
+"TheaterVenue" = "Teatteri";
+"LoungeVenue" = "Klubi";
+"RinkVenue" = "Jäähalli";
+"OtherVenue" = "Muut";
+
+"venueFilterHeader" = "Näytä/piilota paikka";
+"showTypeFilterHeader" = "Näytä/piilota tapahtumatyyppi";
+
+"showHideExpiredLabel" = "Näytä/piilota vanhentuneet tapahtumat";
+"hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
+
+"AlertPreferences" = "Hälytysasetukset";
+"PreferenceHeader" = "70K Bands Asetukset";
+
+"disableAttendedPrompt" = "Poista tämä kehote käytöstä";
+
+"EndofList" = "Luettelon loppu";
+"AlreadyAtStart" = "Jo luettelon alussa";
+"Next" = "Seuraava";
+"Previous" = "Edellinen";
+
+"NoteFontSize" = "Suuri fonttikoko";
+
+"ShareBandChoices" = "Jaa bändivalinnat";
+"ShareShowChoices" = "Jaa esitysvalinnat";
+
+"visitBands" = "Linkit";
+"country" = "Maa";
+"genre" = "Tyylilaji";
+"Last On Cruise" = "Viimeinen risteilyllä"; //list of years a band was previously on
+"Note" = "Huomautus";  //something of note, like doing an album premier or the real or fake version of Batushka
+
+"verifyCountry" = "Vahvista maasi";
+"correctCountryDescription" = "Korjaa maasi tarvittaessa";
+"confirmCountry" = "Vahvista";
+"correctCountry" = "Muuta";
+
+"waiting_for_data" = "Ladataan tietoja, odota hetki....";
+"data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
+
+"SelectYearLabel"="Valitse näytettävä vuosi";
+
+"restartTitle" = "Vaatii uudelleenkäynnistyksen";
+"restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
+"yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
+"eventOrBandPrompt" = "Haluatko nähdä luettelon bändeistä vai tapahtumista?";
+"bandListButton" = "Bändiluettelo";
+"eventListButton" = "Tapahtumaluettelo";
+"changeYearDialogBoxTitle" = "Tapahtumavuoden vaihtaminen";
+//this represents the current year in the choice menu
+"Current" = "Nykyinen";
+
+//new section for the filter menu control
+"Clear Filters" = "Tyhjennä suodattimet"; //menu choice
+"Band Ranking Filters" = "Kiinnostussuodattimet"; //menu header
+"Show Only Flagged As Attended" = "Näytä vain kiinnostavat tapahtumat"; //menu header
+"Sorting Options" = "Lajitteluasetukset"; //menu header
+"Event Type Filters" = "Tapahtumatyyppisuodattimet"; //menu header
+"Venue Filters" = "Tapahtumapaikkasuodattimet"; //menu header
+
+"Can not hide all venues" = "Kaikkia tapahtumapaikkoja ei voi piilottaa"; //help text
+"Can not hide all statuses" = "Kaikkia tiloja ei voi piilottaa"; //help text
+"Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
+"Show All Events" = "Näytä kaikki tapahtumat"; //menu choice
+"Show Flagged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
+"Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, joihin aiot osallistua"; //help text
+
+//venue filters
+"Show Pool Events" = "Näytä allastapahtumat"; //menu choice
+"Hide Pool Events" = "Piilota allastapahtumat"; //menu choice
+"Pool Venue Filter On" = "Allaspaikan suodatin päällä"; //help text
+"Pool Venue Filter Off" = "Allaspaikan suodatin pois päältä"; //help text
+
+"Show Lounge Events" = "Näytä klubitapahtumat"; //menu choice
+"Hide Lounge Events" = "Piilota klubitapahtumat"; //menu choice
+"Lounge Venue Filter On" = "Klubisuodatin päällä"; //help text
+"Lounge Venue Filter Off" = "Klubisuodatin pois päältä"; //help text
+
+"Show Theater Events" = "Teatteritapahtumat"; //menu choice
+"Hide Theater Events" = "Piilota teatteritapahtumat"; //menu choice
+"Theater Venue Filter On" = "Teatterisuodatin päällä"; //help text
+"Theater Venue Filter Off" = "Teatterisuodatin pois päältä"; //help text
+
+"Show Rink Events" = "Näytä jäähallitapahtumat"; //menu choice
+"Hide Rink Events" = "Piilota jäähallitapahtumat"; //menu choice
+"Rink Venue Filter On" = "Jäähallisuodatin päällä"; //help text
+"Rink Venue Filter Off" = "Jäähallisuodatin pois päältä"; //help text
+
+"Show Other Events" = "Näytä muut tapahtumat"; //menu choice
+"Hide Other Events" = "Piilota muut tapahtumat"; //menu choice
+"Other Venue Filter On" = "Muun tapahtumapaikan suodatin päällä"; //help text
+"Other Venue Filter Off" = "Muun tapahtumapaikan suodatin pois päältä"; //help text
+
+//event filter
+"Show Meet & Greet Events" = "Näytä artistitapaamiset"; //menu choice
+"Hide Meet & Greet Events" = "Piilota artistitapaamiset"; //menu choice
+"Meet and Greet Event Filter On" = "Artistitapaamissuodatin päällä"; //help text
+"Meet and Greet Event Filter Off" = "Artistitapaamissuodatin pois päältä"; //help text
+
+"Show Unofficial Events" = "Näytä epäviralliset tapahtumat"; //menu choice
+"Hide Unofficial Events" = "Piilota epäviralliset tapahtumat"; //menu choice
+"Unofficial Event Filter On" = "Epävirallinen tapahtumasuodatin päällä"; //help text
+"Unofficial Event Filter Off" = "Epävirallinen tapahtumasuodatin pois päältä"; //help text
+
+"Show Special/Other Events" = "Näytä erikoistapahtumat"; //menu choice
+"Hide Special/Other Events" = "Piilota erikoistapahtumat"; //menu choice
+"Special/Other Event Filter On" = "Erikoistapahtumasuodatin päällä"; //help text
+"Special/Other Event Filter Off" = "Erikoistapahtumasuodatin pois päältä"; //help text
+
+//sorting
+"Sort By Name" = "Lajittele nimen mukaan"; //menu choice
+"Sort By Time" = "Lajittele ajan mukaan"; //menu choice
+
+//band preference filter
+"Show Must See Items" = "Näytä Kyllä-tapahtumat"; //menu choice
+"Hide Must See Items" = "Piilota Kyllä-tapahtumat"; //menu choice
+"Must See Filter On" = "Kyllä-tapahtumien suodatin päällä"; //help text
+"Must See Filter Off" = "Kyllä-tapahtumien suodatin pois päältä"; //help text
+
+"Show Might See Items" = "Näytä Ehkä-tapahtumat"; //menu choice
+"Hide Might See Items" = "Piilota Ehkä-tapahtumat"; //menu choice
+"Might See Filter On" = "Ehkä-tapahtumien suodatin päällä"; //help text
+"Might See Filter Off" = "Ehkä-tapahtumien suodatin pois päältä"; //help text
+
+"Show Wont See Items" = "Näytä Ei-tapahtumat"; //menu choice
+"Hide Wont See Items" = "Piilota Ei-tapahtumat"; //menu choice
+"Wont See Filter On" = "Ei-tapahtumien suodatin päällä"; //help text
+"Wont See Filter Off" = "Ei-tapahtumien suodatin pois päältä"; //help text
+
+"Show Unknown Items" = "Näytä merkitsemättömät"; //menu choice
+"Hide Unknown Items" = "Piilota merkitsemättömät"; //menu choice
+"Unknown Filter On" = "Merkitsemättömien suodatin päällä"; //help text
+"Unknown Filter Off" = "Merkitsemättömien suodatin pois päältä"; //help text
+
+"Filtering" = "Suodatus"; //filtering indicator near counts
+"Filters" = "Suodattimet"; //menu name
+
+"Day" = "Päivä";
+"Bands" = "Bändit";
+"Events" = "Tapahtumat";
+
+"SearchCriteria" = "Hakukriteerit";

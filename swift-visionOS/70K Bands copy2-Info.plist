@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen.xib</string>
+	<key>UIStatusBarTintParameters</key>
+	<dict>
+		<key>UINavigationBar</key>
+		<dict>
+			<key>Style</key>
+			<string>UIBarStyleDefault</string>
+			<key>Translucent</key>
+			<false/>
+		</dict>
+	</dict>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>iCloud.com.rdorn.-0000TonsBands</key>
+	<dict>
+		<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+		<true/>
+		<key>NSUbiquitousContainerName</key>
+		<string>70KBands</string>
+		<key>NSUbiquitousContainerSupportedFolderLevels</key>
+		<string>One</string>
+	</dict>
+</dict>
+</plist>

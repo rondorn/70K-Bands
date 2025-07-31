@@ -1,0 +1,71 @@
+//
+//  userDataHandler.swift
+//  70K Bands
+//
+//  Created by Ron Dorn on 3/3/19.
+//  Copyright © 2019 Ron Dorn. All rights reserved.
+//  Based on
+//
+
+import UIKit
+
+class userDataHandler: NSObject {
+    var uid: String
+    var country: String
+    var language: String
+    var lastLaunch: Date
+    var lanuchCount: Int
+    var bandsVersion: String
+    var iosVersion: String
+    
+    override init(){
+        
+        print ("Initializing userDataHandler")
+        var uidString = "Unknown"
+        if let deviceUid = UIDevice.current.identifierForVendor?.uuidString {
+            uidString = deviceUid
+        } else {
+            print("userDataHandler: ERROR - UIDevice identifierForVendor is nil, cannot set uidString")
+        }
+        
+        
+        var detectedCountry = ""
+        do {
+            detectedCountry = try String(contentsOf: countryFile, encoding: .utf8)
+            print ("From countryFile \(countryFile) for a country of \(detectedCountry)")
+            if (detectedCountry.isEmpty == true){
+                print ("Falling back to default Country with empty CountryFile")
+                detectedCountry = NSLocale.current.regionCode ?? "US"
+            }
+        } catch {
+            print ("Error - Falling back to default CountryFile")
+            detectedCountry = NSLocale.current.regionCode  ?? "US"
+        }
+        
+        print ("User data initialization complete")
+        
+        self.uid = uidString
+        self.country = detectedCountry
+        self.language = Locale.current.languageCode ?? "Unknown";
+        self.lastLaunch = NSDate() as Date
+        self.lanuchCount = 1
+        self.bandsVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+        self.iosVersion = UIDevice.current.systemVersion
+        
+        print ("User data created - " + self.uid + " - " + self.country + " - " + self.language);
+    }
+    
+
+    func getCurrentDateString()->String {
+        
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone.init(abbreviation: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let dateString = formatter.string(from: now)
+        
+        return dateString
+        
+    }
+
+}

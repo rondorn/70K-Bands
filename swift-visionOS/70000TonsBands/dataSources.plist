@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>artistURL</key>
+	<string>https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1</string>
+	<key>prod_artistURL</key>
+	<string>http://70000tons.com/artists/</string>
+	<key>scheduleURL</key>
+	<string>https://www.dropbox.com/s/tg9qgt48ezp7udv/2015Schedule.csv?dl=1</string>
+</dict>
+</plist>

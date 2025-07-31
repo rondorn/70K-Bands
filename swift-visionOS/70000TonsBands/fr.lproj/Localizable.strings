@@ -1,0 +1,209 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+  Translation provided by Margaret Miner (Not a native speaker, but speaks it well enough to fix google translates glaring errors)
+*/
+
+
+"Must" = "Oui";
+"Might" = "Peut Être";
+"Wont" = "Non";
+"Unknown" = "Inconnu";
+
+"Ok" = "Oui";
+"Cancel" = "Non";
+
+"Alert On Must See Bands"="Alerte Pour OUI Salons";
+"Alert On Might See Bands"="Alerte pour peut-être Shows";
+"Alert Only for Will Attend Events"="Alerte uniquement pour les événements liés à la volonté";
+
+"Only alert for shows you will attend"="Seulement alerte pour les spectacles auxquels vous assisterez";
+"Alert for shows according to your favorites selection"="Alerte pour les spectacles en fonction de votre sélection de favoris et des paramètres indiqués sur cet écran";
+
+"showAttendedFilterTrueHelp"="N'affichez que les événements que vous indiquez. Les autres filtres ne s'appliqueront pas";
+"showAttendedFilterFalseHelp"="Afficher les groupes et les émissions en fonction des filtres";
+
+"Sorting Chronologically"="Tri chronologique";
+"Sorting Alphabetically"="Tri alphabétique";
+
+"All Of Event"="Assister à tous cet événement";
+"Part Of Event"="Assister à certains de cet événement";
+"None Of Event"="Je ne verrai pas cet événement";
+
+"Prompt For Attended Status Header"="Demander le statut de présence";
+"Prompt For Attended Status"="Demander le statut de présence";
+
+"Go To Details"="Aller aux détails";
+
+"ShowHideEvents"="Afficher/Masquer Expiré";
+"HideExpiredEvents"="Masquer Les événements Expirés";
+
+"Minutes Before Event to Alert"="Alertez-moi avant l'événement (minutes)";
+"Alert For Shows"="Alerte pour les spectacles";
+"Alert For Special Events"="Alerte pour des événements spéciaux";
+"Alert For Meeting and Greet Events"="Alerte pour Meeting and Greet Evénements";
+"Alert For Clinics"="Alerte pour les cliniques";
+"Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
+"Alert For Unofficial Events"="Alerte pour les événements organisés par Cruiser";
+
+"Special Event"="événements spéciaux";
+"Meet and Greet"="Meet and Greet Evénements";
+"Clinic"="Cliniques Evénements";
+"Listening Party"="l'album Listening Evénements";
+"Unofficial Events"="Croisière organisée";
+
+
+"officialWebSiteLinkHelp" = "Vous emmenant sur le site officiel";
+"WikipediaLinkHelp" = "Recherche sur Wikipedia";
+"YouTubeLinkHelp" = "Recherche de vidéos officielles sur YouTube";
+"MetalArchiveLinkHelp" = "Rechercher dans les archives métalliques";
+
+"PoolVenue" = "Piscine";
+"TheaterVenue" = "Théâtre";
+"LoungeVenue" = "Salon";
+"RinkVenue" = "Patinoire";
+"OtherVenue" = "Autre";
+
+"venueFilterHeader" = "Afficher/Masquer le Lieu";
+"showTypeFilterHeader" = "Afficher/Masquer Type d'événement";
+
+"showHideExpiredLabel" = "Afficher/Masquer Événements Expirés";
+"hideExpiredEvents" = "Masquer Événements Expirés";
+
+"AlertPreferences" = "Préférences d'alerte";
+"PreferenceHeader" = "70K Bands Préférences";
+
+"disableAttendedPrompt" = "Désactiver cette invite";
+
+"EndofList" = "Fin de liste";
+"AlreadyAtStart" = "Déjà au début de la liste";
+"Next" = "Prochain";
+"Previous" = "Précédent";
+
+"NoteFontSize" = "Notez que la taille de la police est grande";
+
+"ShareBandChoices" = "Partager les choix de groupe";
+"ShareShowChoices" = "Partager Afficher les choix";
+
+"visitBands" = "Liens";
+"country" = "Pays";
+"genre" = "Le Genre";
+"Last On Cruise" = "Dernier en croisière"; //list of years a band was previously on
+"Note" = "Note";  //something of note, like doing an album premier or the real or fake version of Batushka
+
+"verifyCountry" = "Vérifiez votre pays";
+"correctCountryDescription" = "Corrigez votre pays si nécessaire";
+"confirmCountry" = "Confirmer";
+"correctCountry" = "Changer";
+
+"waiting_for_data" = "En attente de chargement des données, veuillez patienter....";
+"data_filter_issue" = "Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données";
+
+"SelectYearLabel"="Sélectionnez l'année à afficher";
+"restartTitle" = "Redémarrage Nécessaire";
+"restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
+"yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";
+"eventOrBandPrompt" = "Voulez-vous voir une liste de groupes ou une liste d'événements ?";
+"bandListButton" = "Liste des groupes";
+"eventListButton" = "Liste des événements";
+"changeYearDialogBoxTitle" = "Modification de l'année de l'événement";
+//this represents the current year in the choice menu
+"Current" = "Actuel";
+
+
+//new section for the filter menu control
+"Clear Filters" = "Effacer les filtres"; //menu choice
+"Band Ranking Filters" = "Filtres de classement des bandes"; //menu choice
+"Show Only Flagged As Attended" = "Afficher uniquement marqué comme étant présent"; //help text
+"Sorting Options" = "Options de tri"; //menu header
+"Event Type Filters" = "Filtres de types d'événements"; //menu header
+"Venue Filters" = "Filtres de sites"; //menu header
+
+"Can not hide all venues" = "Impossible de masquer tous les lieux"; //help text
+"Can not hide all statuses" = "Impossible de masquer tous les statuts"; //help text
+"Clear All Filters" = "Effacer tous les filtres"; //menu choice
+
+"Show All Events" = "Afficher tous les événements"; //menu choice
+"Show Flagged Events Only" = "Afficher uniquement les événements marqués"; //menu choice
+"Show Only Events Flagged As Attending" = "Afficher uniquement les événements marqués comme participants"; //help text
+
+//venue filters
+"Show Pool Events" = "Afficher les événements de la piscine"; //menu choice
+"Hide Pool Events" = "Masquer les événements de la piscine"; //menu choice
+"Pool Venue Filter On" = "Filtre de salle de piscine activé"; //help text
+"Pool Venue Filter Off" = "Filtre de salle de piscine désactivé"; //help text
+
+"Show Lounge Events" = "Événements du salon d’exposition"; //menu choice
+"Hide Lounge Events" = "Masquer les événements du salon"; //menu choice
+"Lounge Venue Filter On" = "Filtre de salle de salon activé"; //help text
+"Lounge Venue Filter Off" = "Filtre de salle de salon désactivé"; //help text
+
+"Show Theater Events" = "Événements de théâtre"; //menu choice
+"Hide Theater Events" = "Masquer les événements du théâtre"; //menu choice
+"Theater Venue Filter On" = "Filtre de salle de cinéma activé"; //help text
+"Theater Venue Filter Off" = "Filtre de salle de cinéma désactivé"; //help text
+
+"Show Rink Events" = "Afficher les événements de la patinoire"; //menu choice
+"Hide Rink Events" = "Masquer les événements de la patinoire"; //menu choice
+"Rink Venue Filter On" = "Filtrer le site de la patinoire activé"; //help text
+"Rink Venue Filter Off" = "Filtre des sites de patinoire désactivé"; //help text
+
+"Show Other Events" = "Afficher d'autres événements"; //menu choice
+"Hide Other Events" = "Masquer les autres événements"; //menu choice
+"Other Venue Filter On" = "Filtre autre lieu activé"; //help text
+"Other Venue Filter Off" = "Filtre autre lieu désactivé"; //help text
+
+//event filter
+"Show Meet & Greet Events" = "Afficher les événements Meet & Greet"; //menu choice
+"Hide Meet & Greet Events" = "Masquer les événements Meet & Greet"; //menu choice
+"Meet and Greet Event Filter On" = "Filtre d'événement Meet and Greet activé"; //help text
+"Meet and Greet Event Filter Off" = "Filtre d'événement de rencontre et d'accueil désactivé"; //help text
+
+"Show Unofficial Events" = "Afficher les événements non officiels"; //menu choice
+"Hide Unofficial Events" = "Masquer les événements non officiels"; //menu choice
+"Unofficial Event Filter On" = "Filtre d'événements non officiel activé"; //help text
+"Unofficial Event Filter Off" = "Filtre d'événements non officiel désactivé"; //help text
+
+"Show Special/Other Events" = "Afficher les événements spéciaux/autres"; //menu choice
+"Hide Special/Other Events" = "Masquer les événements spéciaux/autres"; //menu choice
+"Special/Other Event Filter On" = "Filtre d'événements spéciaux/autres activé"; //help text
+"Special/Other Event Filter Off" = "Filtre d'événements spéciaux/autres désactivé"; //help text
+
+//sorting
+"Sort By Name" = "Trier par nom"; //menu choice
+"Sort By Time" = "Trier par heure"; //menu choice
+ 
+//band preference filter
+"Show Must See Items" = "Afficher les éléments incontournables"; //menu choice
+"Hide Must See Items" = "Masquer les éléments incontournables"; //menu choice
+"Must See Filter On" = "Filtrer à voir absolument"; //help text
+"Must See Filter Off" = "À voir absolument Filtre désactivé"; //help text
+
+"Show Might See Items" = "Afficher les éléments susceptibles de voir"; //menu choice
+"Hide Might See Items" = "Masquer les éléments susceptibles de voir"; //menu choice
+"Might See Filter On" = "Peut voir le filtre activé"; //help text
+"Might See Filter Off" = "Pourrait voir le filtre désactivé"; //help text
+
+"Show Wont See Items" = "Afficher les éléments que je ne verrai pas"; //menu choice
+"Hide Wont See Items" = "Masquer les éléments que je ne verrai pas"; //menu choice
+"Wont See Filter On" = "Ne verra pas le filtre activé"; //help text
+"Wont See Filter Off" = "Je ne verrai pas le filtre désactivé"; //help text
+
+"Show Unknown Items" = "Afficher les éléments inconnus"; //menu choice
+"Hide Unknown Items" = "Masquer les éléments inconnus"; //menu choice
+"Unknown Filter On" = "Filtre inconnu activé"; //help text
+"Unknown Filter Off" = "Filtre inconnu désactivé"; //help text
+
+"Filtering" = "Filtration"; //filtering indicator near counts
+"Filters" = "Filtres"; //menu name
+
+"Day" = "Jour";
+
+"Bands" = "Bands";
+"Events" = "Événements";
+
+"SearchCriteria" = "Critères de recherche";
