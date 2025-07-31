@@ -218,6 +218,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
         
         // Defensive: trigger a delayed refresh to help with first-launch data population
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -785,6 +786,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if shouldSnapToTopAfterRefresh {
                 shouldSnapToTopAfterRefresh = false
                 self.tableView.setContentOffset(.zero, animated: false)
+                print("Pull-to-refresh: Snapped to top of list")
             } else if scrollToTop, self.bands.count > 0 {
                 let topIndex = IndexPath(row: 0, section: 0)
                 self.tableView.scrollToRow(at: topIndex, at: .top, animated: false)
@@ -854,6 +856,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Pull to refresh: No network connectivity detected, keeping existing data")
             DispatchQueue.main.async {
                 self.refreshControl?.endRefreshing()
+                // Ensure snap-to-top flag is set for pull-to-refresh even with cached data
+                self.shouldSnapToTopAfterRefresh = true
                 // Refresh GUI from cached data without showing alert
                 self.refreshBandList(reason: "Pull to refresh - no network, using cached data")
             }
@@ -875,6 +879,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Simple approach: after 4 seconds, end refresh and trigger refreshBandList
             DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                 self.refreshControl?.endRefreshing()
+                // Ensure the snap-to-top flag is still set for pull-to-refresh
+                self.shouldSnapToTopAfterRefresh = true
                 self.refreshBandList(reason: "Pull to refresh", scrollToTop: false, isPullToRefresh: true)
             }
         }
@@ -1835,6 +1841,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     */
     @objc func handleDataReady() {
         self.refreshBandList()
+    }
+    
+    @objc func handlePointerDataUpdated() {
+        // This observer is triggered when pointer data is updated on launch.
+        // It will force a refresh of the band list to ensure the UI is updated.
+        print("Pointer data updated, forcing refresh of band list.")
+        refreshBandList(reason: "Pointer data updated")
     }
     
     // Helper to deduplicate while preserving order

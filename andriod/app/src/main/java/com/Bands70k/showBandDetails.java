@@ -66,6 +66,10 @@ public class showBandDetails extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
 
+        // Pause background loading when entering details screen
+        CustomerDescriptionHandler.pauseBackgroundLoading();
+        ImageHandler.pauseBackgroundLoading();
+
         View view = getWindow().getDecorView();
 
         int orientationNum = getResources().getConfiguration().orientation;
@@ -354,6 +358,14 @@ public class showBandDetails extends Activity {
                     showBands.class));
 
         }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        // Resume background loading when leaving details screen
+        CustomerDescriptionHandler.resumeBackgroundLoading();
+        ImageHandler.resumeBackgroundLoading();
+        super.onDestroy();
     }
 
     public void SetButtonColors() {
