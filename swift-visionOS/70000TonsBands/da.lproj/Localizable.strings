@@ -1,0 +1,202 @@
+/*
+ LocalizationStrings.strings
+ 70K Bands
+ 
+ Oprettet af Ron Dorn 18/7-15.
+ Copyright (c) 2015 Ron Dorn. Alle rettigheder forbeholdes.
+ translation provided by Morten Petersen, thank you kind sir
+ */
+
+
+"Must"="Skal";
+"Might"="MÂske";
+"Wont"="Skal ikke";
+
+"Ok"="Ja";
+"Cancel"="Ingen";
+
+"Alert On Must See Bands"="Notifikation ved bands der skal ses";
+"Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
+"Alert Only for Will Attend Events"="Alarmer kun for at deltage i begivenheder";
+
+"showAttendedFilterTrueHelp"="Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke";
+"showAttendedFilterFalseHelp"="Vis bands og shows i henhold til filtre";
+
+"Only alert for shows you will attend"="Kun advarsel om shows, du vil deltage i";
+"Alert for shows according to your favorites selection"="Advarsel til shows i henhold til dit valgvalg og de indstillinger, der er angivet på denne skærm";
+
+"Sorting Chronologically"="Sortering Kronologisk";
+"Sorting Alphabetically"="Sortering Alfabetisk";
+
+"All Of Event"="Deltager i alt dette arrangement";
+"Part Of Event"="Deltager nogle af denne begivenhed";
+"None Of Event"="Jeg vil ikke se denne begivenhed";
+
+"Prompt For Attended Status Header"="Spørg om deltaget status";
+"Prompt For Attended Status"="Spørg om deltaget status";
+"Go To Details"="Gå til detaljer";
+
+"ShowHideEvents"="Vis/Skjul Udløbet";
+"HideExpiredEvents"="Skjul Udløbet Begivenheder";
+
+"Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
+"Alert For Shows"="Notifikation for shows";
+"Alert For Special Events"="Notifikation for specielle begivenheder";
+"Alert For Meeting and Greet Events"="Notifikation for meet and greet begivenheder";
+"Alert For Clinics"="Notifikation for clinics";
+"Alert For Album Listening Events"="Notifikation for prÊsentation af nyt album";
+"Alert For Unofficial Events"="Alert for Cruiser järjestettyihin tapahtumiin";
+
+"Special Event"="Specielle Begivenheder";
+"Meet and Greet"="Meet and Greet begivenheder";
+"Clinic"="Clinics";
+"Listening Party"="PrÊsentation af nyt Album";
+"Unofficial Events"="Cruiser Organiseret";
+
+"officialWebSiteLinkHelp" = "Tager dig til den officielle hjemmeside";
+"WikipediaLinkHelp" = "Søgning på Wikipedia";
+"YouTubeLinkHelp" = "Søgning på YouTube til officielle videoer";
+"MetalArchiveLinkHelp" = "Søgning på metalarkiver";
+
+"PoolVenue" = "Pool";
+"TheaterVenue" = "Teater";
+"LoungeVenue" = "Lounge";
+"RinkVenue" = "Rink";
+"OtherVenue" = "Andet";
+
+"venueFilterHeader" = "Vis/Skjul Lokalitet";
+"showTypeFilterHeader" = "Vis/Skjul Begivenhedstype";
+
+"showHideExpiredLabel" = "Vis/Skjul Udløbet Begivenheder";
+"hideExpiredEvents" = "Skjul Udløbet Begivenheder";
+
+"AlertPreferences" = "Indstillinger for Alarm";
+"PreferenceHeader" = "70K Bands Præferencer";
+
+"disableAttendedPrompt" = "Deaktiver denne prompt";
+
+"EndofList" = "Slut på listen";
+"AlreadyAtStart" = "Allerede ved start af listen";
+"Next" = "Næste";
+"Previous" = "Tidligere";
+
+"NoteFontSize" = "Bemærk skriftstørrelsen stor";
+
+"ShareBandChoices" = "Del Bandvalg";
+"ShareShowChoices" = "Del Vis valg";
+
+"visitBands" = "Links";
+"country" = "Land";
+"genre" = "Køn";
+"Last On Cruise" = "Sidst på krydstogt"; //list of years a band was previously on
+"Note" = "Bemærk";  //something of note, like doing an album premier or the real or fake version of Batushka
+
+"verifyCountry" = "Bekræft dit land";
+"correctCountryDescription" = "Ret dit land, hvis det er nødvendigt";
+"confirmCountry" = "Bekræfte";
+"correctCountry" = "Lave om";
+
+"waiting_for_data" = "Venter på, at data indlæses. Standby...";
+"data_filter_issue" = "Alle data filtreres fra. Fjern filtre for at se data";
+
+"SelectYearLabel"="Vælg det år, der skal vises";
+"restartTitle" = "Genstart pÂkrÊvet";
+"restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
+"yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
+"eventOrBandPrompt" = "Vil du se en liste over bands eller en liste over begivenheder?";
+"bandListButton" = "Band Liste";
+"eventListButton" = "Begivenhedsliste";
+"changeYearDialogBoxTitle" = "Ændring af begivenhedsåret";
+//this represents the current year in the choice menu
+"Current" = "Nuværende";
+
+//new section for the filter menu control
+"Clear Filters" = "Ryd filtre"; //menu choice
+"Band Ranking Filters" = "Båndrangeringsfiltre"; //menu header
+"Show Only Flagged As Attended" = "Vis kun markeret som deltog"; //menu header
+"Sorting Options" = "Sorteringsmuligheder"; //menu header
+"Event Type Filters" = "Hændelsestypefiltre"; //menu header
+"Venue Filters" = "Lokale filtre"; //menu header
+
+"Can not hide all venues" = "Can not hide all venues";
+"Can not hide all statuses" = "Kan ikke skjule al status";
+"Clear All Filters" = "Clear All Filters";  //menu choice
+"Show All Events" = "Vis alle begivenheder";  //menu choice
+"Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
+"Show Only Events Flagged As Attending" = "Vis kun begivenheder, der er markeret som tilstedeværende"; //help text
+
+//venue filters
+"Show Pool Events" = "Vis poolbegivenheder";  //menu choice
+"Hide Pool Events" = "Skjul poolbegivenheder";  //menu choice
+"Pool Venue Filter On" = "Pool Venue Filter On"; //help text
+"Pool Venue Filter Off" = "Pool Venue Filter Off"; //help text
+
+"Show Lounge Events" = "Vis Lounge-begivenheder";  //menu choice
+"Hide Lounge Events" = "Skjul Lounge-begivenheder";  //menu choice
+"Lounge Venue Filter On" = "Lounge Venue Filter On"; //help text
+"Lounge Venue Filter Off" = "Lounge Venue Filter Off"; //help text
+
+"Show Theater Events" = "Vis teaterbegivenheder";  //menu choice
+"Hide Theater Events" = "Skjul teaterbegivenheder";  //menu choice
+"Theater Venue Filter On" = "Teaterstedsfilter til"; //help text
+"Theater Venue Filter Off" = "Teaterstedsfilter fra"; //help text
+
+"Show Rink Events" = "Vis Rink-begivenheder";  //menu choice
+"Hide Rink Events" = "Skjul Rink-begivenheder";  //menu choice
+"Rink Venue Filter On" = "Rink Venue Filter On"; //help text
+"Rink Venue Filter Off" = "Rink Venue Filter Off"; //help text
+
+"Show Other Events" = "Vis andre begivenheder";  //menu choice
+"Hide Other Events" = "Skjul andre begivenheder";  //menu choice
+"Other Venue Filter On" = "Andet spillestedsfilter til"; //help text
+"Other Venue Filter Off" = "Andet spillestedsfilter fra"; //help text
+
+//event filter
+"Show Meet & Greet Events" = "Vis Meet & Greet-begivenheder";  //menu choice
+"Hide Meet & Greet Events" = "Skjul Meet & Greet-begivenheder";  //menu choice
+"Meet and Greet Event Filter On" = "Mød og hils begivenhedsfilter til"; //help text
+"Meet and Greet Event Filter Off" = "Mød og hils begivenhedsfilter fra"; //help text
+
+"Show Unofficial Events" = "Vis uofficielle begivenheder";  //menu choice
+"Hide Unofficial Events" = "Skjul uofficielle begivenheder";  //menu choice
+"Unofficial Event Filter On" = "Uofficielt hændelsesfilter er slået til"; //help text
+"Unofficial Event Filter Off" = "Uofficielt hændelsesfilter fra"; //help text
+
+"Show Special/Other Events" = "Vis særlige/andre begivenheder"; //menu choice
+"Hide Special/Other Events" = "Skjul særlige/andre begivenheder"; //menu choice
+"Special/Other Event Filter On" = "Speciel/Anden hændelsesfilter Til"; //help text
+"Special/Other Event Filter Off" = "Speciel/Anden hændelsesfilter Fra"; //help text
+
+//sorting
+"Sort By Name" = "Sorter efter navn";  //menu choice
+"Sort By Time" = "Sorter efter tid";  //menu choice
+
+//band preference filter
+"Show Must See Items" = "Vis varer, der skal ses";  //menu choice
+"Hide Must See Items" = "Skjul varer, du skal se";  //menu choice
+"Must See Filter On" = "Skal se filter på"; //help text
+"Must See Filter Off" = "Skal se filter fra"; //help text
+
+"Show Might See Items" = "Vis måske genstande";  //menu choice
+"Hide Might See Items" = "Skjul muligvis genstande";  //menu choice
+"Might See Filter On" = "Kan se filter slået til"; //help text
+"Might See Filter Off" = "Måske se filter fra"; //help text
+
+"Show Wont See Items" = "Vis ikke se varer";  //menu choice
+"Hide Wont See Items" = "Skjul genstande, der ikke kan ses";  //menu choice
+"Wont See Filter On" = "Vil ikke se filter på"; //help text
+"Wont See Filter Off" = "Vil ikke se filter fra"; //help text
+
+"Show Unknown Items" = "Vis ukendte genstande";  //menu choice
+"Hide Unknown Items" = "Skjul ukendte genstande";  //menu choice
+"Unknown Filter On" = "Ukendt filter til"; //help text
+"Unknown Filter Off" = "Ukendt filter fra"; //help text
+
+"Filtering" = "Filtrering"; //filtering indicator near counts
+"Filters" = "Filtre"; //menu name
+
+"Day" = "Dag";
+"Bands" = "Bands";
+"Events" = "Begivenheder";
+
+"SearchCriteria" = "Søgekriterier";

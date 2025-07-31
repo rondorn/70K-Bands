@@ -1,0 +1,43 @@
+/* 
+  LocalizationStrings.strings
+  70K Bands
+
+  Created by Ron Dorn on 7/18/15.
+  Copyright (c) 2015 Ron Dorn. All rights reserved.
+ 
+  Translation provided by Google Translate (I apologize in advance)
+*/
+
+
+"Must"="はい";
+"Might"="多分";
+"Wont"="いいえ";
+
+"Ok"="はい";
+"Cancel"="いいえ";
+
+
+"Alert On Must See Bands"="はいショーのアラート";
+"Alert On Might See Bands"="多分ショーのアラート";
+"Minutes Before Event to Alert"="イベントの前に通知する（分";
+"Alert For Shows"="ショーのアラート";
+"Alert For Special Events"="特別なイベントの警告";
+"Alert For Meeting and Greet Events"="イベントの「ミーティング＆グリート のアラート";
+"Alert For Clinics"="クリニックのアラート";
+
+"Alert For Album Listening Events"="アルバム鑑賞イベントの警告";
+
+//"LastYearsFeatureExplication"="Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
+
+
+"Use Last Years Data"="昨年の情報を使用してください";
+"LastYearsFeatureExplication"="「使用最後の年の情報を「有効にすると、昨年からのショーのスケジュールをロードしますが、シミュレートされた木-Sunはスケジュールあなたの現在の週を使用してを示して使用します。これは、スケジュール機能のデモやテストのために意図されています。";
+
+//"restarTitle" = "Restart Required";
+//"restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERENT CONNECTION REQUIRED.\nThis change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data";
+
+"restarTitle" = "再起動が必要";
+"restartMessage" = "CRUISE上にはこの処置を行いません。\nINTERENT接続が必要です。この変更は、アプリケーションを再起動する必要があります。\n70Kバンドは現在、終了します。新しいデータを確認するために再起動";
+
+
+
