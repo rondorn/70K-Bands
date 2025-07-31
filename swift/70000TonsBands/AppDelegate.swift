@@ -407,8 +407,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         DispatchQueue.global(qos: .background).async {
             let imageHandler = imageHandler()
-            let bandHandle = bandNamesHandler()
-            imageHandler.getAllImages(bandNameHandle: bandHandle)
+            imageHandler.getAllImages()
         }
         DispatchQueue.global(qos: .background).async {
             let noteHandle = CustomBandDescription()
