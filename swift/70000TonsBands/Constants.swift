@@ -230,7 +230,6 @@ let statsUrl = getPointerUrlData(keyValue: "reportUrl")
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
-let networkTestingUrl = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@master/dataFiles/testFile.txt";
 
 var internetAvailble = isInternetAvailable();
 

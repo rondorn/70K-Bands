@@ -17,7 +17,9 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -233,7 +235,15 @@ public class ImageHandler {
      */
     private void downloadImageImmediate() {
         try {
-            String imageUrl = BandInfo.getImageUrl(this.bandName);
+            // Use CombinedImageListHandler to get image URL
+            CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+            String imageUrl = combinedHandler.getImageUrl(this.bandName);
+            
+            // Fallback to BandInfo if not found in combined list
+            if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                imageUrl = BandInfo.getImageUrl(this.bandName);
+            }
+            
             if (imageUrl != null && !imageUrl.trim().isEmpty() && !imageUrl.equals(" ")) {
                 Log.d("loadImageFile", "Downloading image immediately from URL: " + imageUrl);
                 
@@ -260,35 +270,48 @@ public class ImageHandler {
     }
 
     public void getRemoteImage(){
-        Log.e("ImageFile", "debug 1 " + bandName);
-        String imageUrl = BandInfo.getImageUrl(bandName);
-        Log.e("ImageFile", "debug 2");
-        bandImageFile = new File( FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
-        Log.e("ImageFile", "debug 3" + OnlineStatus.isOnline());
-        if (OnlineStatus.isOnline() == true) {
+        Log.d("ImageFile", "Getting remote image for " + bandName);
+        
+        // Use CombinedImageListHandler to get image URL
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        String imageUrl = combinedHandler.getImageUrl(bandName);
+        
+        // Fallback to BandInfo if not found in combined list
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            imageUrl = BandInfo.getImageUrl(bandName);
+        }
+        
+        Log.d("ImageFile", "Image URL for " + bandName + ": " + imageUrl);
+        bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
+        Log.d("ImageFile", "Online status: " + OnlineStatus.isOnline());
+        
+        if (OnlineStatus.isOnline() == true && imageUrl != null && !imageUrl.trim().isEmpty() && !imageUrl.equals(" ")) {
             try {
-                Log.d("ImageFile", "Trying to write to 1" + imageUrl);
+                Log.d("ImageFile", "Downloading image from URL: " + imageUrl);
                 URL url = new URL(imageUrl);
-                Log.d("ImageFile", "Trying to write to 2" + bandImageFile.getAbsoluteFile());
                 InputStream in = new BufferedInputStream(url.openStream());
-                Log.d("ImageFile", "Trying to write to 3" + bandImageFile.getAbsoluteFile());
                 OutputStream out = new BufferedOutputStream(new FileOutputStream(bandImageFile.getAbsoluteFile()));
-                Log.d("ImageFile", "Trying to write to 4" + bandImageFile.getAbsoluteFile());
-                for (int i; (i = in.read()) != -1; ) {
-                    out.write(i);
+                
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
                 }
-                Log.d("ImageFile", "Trying to write to 4" + bandImageFile.getAbsoluteFile());
+                
                 in.close();
                 out.close();
-                Log.d("ImageFile", "Trying to write to 4" + bandImageFile.getAbsoluteFile());
+                Log.d("ImageFile", "Image downloaded successfully for " + this.bandName);
             } catch (Exception error) {
                 Log.e("ImageFile", "Unable to get band Image file " + error.getMessage());
             }
+        } else {
+            Log.d("ImageFile", "Skipping image download - offline or no valid URL for " + this.bandName);
         }
     }
 
     /**
      * Starts background loading of all images with proper synchronization.
+     * This method should only be called when the app is moved to background.
      */
     public void getAllRemoteImages(){
         synchronized (lock) {
@@ -306,6 +329,20 @@ public class ImageHandler {
             startBackgroundLoading();
         }
     }
+    
+    /**
+     * Starts background loading of all images when app goes to background.
+     * This method should be called from the main activity's onPause() method.
+     */
+    public void startBackgroundLoadingOnPause() {
+        synchronized (lock) {
+            // Only start background loading if not already running and app is going to background
+            if (!isRunning.get() && !detailsScreenActive.get()) {
+                Log.d("ImageHandler", "Starting background loading due to app going to background");
+                getAllRemoteImages();
+            }
+        }
+    }
 
     /**
      * Starts the background loading task.
@@ -321,27 +358,23 @@ public class ImageHandler {
     }
 
     /**
-     * Loads all remote images in the background.
+     * Loads all remote images in the background using the combined image list.
      */
     private void loadAllRemoteImagesInBackground(){
 
-        BandInfo bandInfo = new BandInfo();
-        ArrayList<String> bandList = bandInfo.getBandNames();
+        // Use the combined image list instead of separate band list and imageUrlMap
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        Map<String, String> combinedImageList = combinedHandler.getCombinedImageList();
 
-        for (String bandNameTmp : staticVariables.imageUrlMap.keySet()){
-            this.bandName = bandNameTmp;
+        Log.d("ImageFile", "Loading all images from combined image list with " + combinedImageList.size() + " entries");
 
-            bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
-            Log.d("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
-            if (bandImageFile.exists() == false) {
-                Log.d("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
-                this.getRemoteImage();
-            }
-        }
-
-        for (String bandNameTmp : bandList){
+        for (Map.Entry<String, String> entry : combinedImageList.entrySet()) {
+            String bandNameTmp = entry.getKey();
+            String imageUrl = entry.getValue();
+            
             this.bandName = bandNameTmp;
             bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + this.bandName + ".png");
+            
             Log.d("ImageFile", "does band Imagefile exist " + bandImageFile.getAbsolutePath());
             if (bandImageFile.exists() == false) {
                 Log.d("ImageFile", "does band Imagefile exist, NO " + bandImageFile.getAbsolutePath());
@@ -402,34 +435,16 @@ class AsyncAllImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
         BandInfo bandInfo = new BandInfo();
         ArrayList<String> bandList = bandInfo.getBandNames();
 
-        // Process imageUrlMap first
-        for (String bandNameTmp : staticVariables.imageUrlMap.keySet()){
-            // Check if task was cancelled or paused
-            if (isCancelled()) {
-                Log.d("AsyncTask", "Task cancelled, stopping image loading");
-                break;
-            }
-            
-            // Check if paused (details screen active)
-            while (ImageHandler.isPaused() && !isCancelled()) {
-                Log.d("AsyncTask", "Paused due to details screen, waiting...");
-                SystemClock.sleep(1000);
-            }
-            
-            if (isCancelled()) {
-                break;
-            }
-            
-            Log.d("AsyncTask", "Downloading image for " + bandNameTmp);
-            imageHandler.bandName = bandNameTmp;
-            imageHandler.bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + imageHandler.bandName + ".png");
-            if (imageHandler.bandImageFile.exists() == false) {
-                imageHandler.getRemoteImage();
-            }
-        }
+        // Use the combined image list instead of separate lists
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        Map<String, String> combinedImageList = combinedHandler.getCombinedImageList();
 
-        // Process band list
-        for (String bandNameTmp : bandList){
+        Log.d("AsyncTask", "Starting image download for combined image list with " + combinedImageList.size() + " entries");
+
+        for (Map.Entry<String, String> entry : combinedImageList.entrySet()) {
+            String bandNameTmp = entry.getKey();
+            String imageUrl = entry.getValue();
+            
             // Check if task was cancelled or paused
             if (isCancelled()) {
                 Log.d("AsyncTask", "Task cancelled, stopping image loading");
