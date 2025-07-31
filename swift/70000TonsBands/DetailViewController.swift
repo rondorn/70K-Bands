@@ -162,17 +162,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             let imageURL = self.bandNameHandle.getBandImageUrl(self.bandName)
             print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
             
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                
-                let imageHandle = imageHandler()
-                print ("displayedImaged URL is \(imageURL) for \(self.bandName)")
-                self.displayedImaged = imageHandle.displayImage(urlString: imageURL, bandName: self.bandName)
-                DispatchQueue.main.async {
-                    // Calculate the biggest size that fixes in the given CGSize
-                    self.bandLogo.image = self.displayedImaged
-                    self.imageSizeController(special: "")
-                }
-            }
+            // Load image with proper UI refresh
+            loadBandImage(imageURL: imageURL, bandName: self.bandName)
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(dataHandle.getPriorityData(bandName))
@@ -208,6 +199,90 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
         }
         
+    }
+    
+    /// Loads band image with proper UI refresh and error handling
+    func loadBandImage(imageURL: String, bandName: String) {
+        print("Loading band image for \(bandName) from URL: \(imageURL)")
+        
+        // Check if URL is valid
+        guard !imageURL.isEmpty && imageURL != "http://" else {
+            print("Invalid image URL for \(bandName), using default logo")
+            DispatchQueue.main.async {
+                self.bandLogo.image = UIImage(named: "70000TonsLogo")
+                self.imageSizeController(special: "")
+            }
+            return
+        }
+        
+        let imageHandle = imageHandler()
+        
+        // Always analyze URL for inversion requirement, even for cached images
+        let shouldInvert = imageHandle.shouldApplyInversion(urlString: imageURL)
+        print("URL analysis for \(bandName): shouldInvert=\(shouldInvert)")
+        
+        // Check if internet is available for download
+        if isInternetAvailable() {
+            print("Internet available for \(bandName), checking cache and downloading if needed")
+            
+            // First try to load from cache with proper inversion analysis
+            let cachedImage = imageHandle.displayImage(urlString: imageURL, bandName: bandName)
+            
+            DispatchQueue.main.async {
+                self.bandLogo.image = cachedImage
+                self.imageSizeController(special: "")
+            }
+            
+            // If no cached image exists, download it
+            if cachedImage == UIImage(named: "70000TonsLogo") {
+                print("No cached image for \(bandName), downloading from URL")
+                downloadAndCacheImageWithInversion(imageURL: imageURL, bandName: bandName, imageHandle: imageHandle)
+            }
+        } else {
+            print("No internet available for \(bandName), loading from cache only")
+            loadImageFromCacheWithInversion(bandName: bandName, imageURL: imageURL, imageHandle: imageHandle)
+        }
+    }
+    
+    /// Loads image from local cache with proper inversion analysis
+    func loadImageFromCacheWithInversion(bandName: String, imageURL: String, imageHandle: imageHandler) {
+        let imageStore = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + ".png"))
+        
+        if let imageData = UIImage(contentsOfFile: imageStore.path) {
+            print("Loading cached image for \(bandName) with inversion analysis")
+            let processedImage = imageHandle.processImage(imageData, urlString: imageURL)
+            DispatchQueue.main.async {
+                self.bandLogo.image = processedImage
+                self.imageSizeController(special: "")
+            }
+        } else {
+            print("No cached image for \(bandName), using default logo")
+            DispatchQueue.main.async {
+                self.bandLogo.image = UIImage(named: "70000TonsLogo")
+                self.imageSizeController(special: "")
+            }
+        }
+    }
+    
+    /// Downloads and caches image from URL with proper inversion analysis
+    func downloadAndCacheImageWithInversion(imageURL: String, bandName: String, imageHandle: imageHandler) {
+        imageHandle.downloadAndCacheImage(urlString: imageURL, bandName: bandName) { [weak self] processedImage in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                // Only update if still showing the same band
+                if self.bandName == bandName {
+                    if let image = processedImage {
+                        self.bandLogo.image = image
+                        print("Updated image for \(bandName) with proper inversion")
+                    } else {
+                        self.bandLogo.image = UIImage(named: "70000TonsLogo")
+                        print("Failed to download image for \(bandName), using default logo")
+                    }
+                    self.imageSizeController(special: "")
+                }
+            }
+        }
     }
     
     func setupSwipeGenstures(){
@@ -546,7 +621,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
 
     func loadComments(){
-        let noteText = bandNotes.getDescription(bandName: bandName)
+        guard let safeBandName = bandName else { return }
+        
+        print("Loading comments for \(safeBandName)")
+        
+        // First try to load from cache
+        let noteText = bandNotes.getDescription(bandName: safeBandName)
         customNotesText.text = noteText
         customNotesText.textColor = UIColor.white
         setNotesHeight()
@@ -560,31 +640,91 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.isUserInteractionEnabled = true
         }
         
-        if (bandNameHandle.getBandNoteWorthy(bandName).isEmpty == false){
+        if (bandNameHandle.getBandNoteWorthy(safeBandName).isEmpty == false){
             customNotesText.text = "\n" + customNotesText.text
         }
         
-        // If no note data exists, but a note URL is available, download in background and update UI
-        if noteText.isEmpty || noteText.starts(with: "Comment text is not available yet") {
-            guard let safeBandName = bandName else { return }
-            let noteUrl = bandNotes.getDescriptionUrl(safeBandName)
-            if !noteUrl.isEmpty {
-                let currentBand = safeBandName
-                DispatchQueue.global(qos: .background).async {
-                    let downloadedNote = self.bandNotes.getDescriptionFromUrl(bandName: currentBand, descriptionUrl: noteUrl)
-                    DispatchQueue.main.async {
-                        // Only update if still showing the same band
-                        if self.bandName == currentBand {
-                            self.customNotesText.text = downloadedNote
-                            self.setNotesHeight()
-                            self.showBandDetails()
-                            self.customNotesText.setNeedsDisplay()
-                            self.customNotesText.layoutIfNeeded()
-                        }
-                    }
+        // Check if we need to download description from URL
+        let noteUrl = bandNotes.getDescriptionUrl(safeBandName)
+        
+        if shouldDownloadDescription(noteText: noteText, noteUrl: noteUrl) {
+            downloadAndDisplayDescription(bandName: safeBandName, noteUrl: noteUrl)
+        }
+    }
+    
+    /// Determines if description should be downloaded from URL
+    func shouldDownloadDescription(noteText: String, noteUrl: String) -> Bool {
+        // Download if:
+        // 1. No local description exists or it's the default placeholder
+        // 2. URL is available
+        // 3. Internet is available
+        let needsDownload = noteText.isEmpty || 
+                           noteText.starts(with: "Comment text is not available yet") ||
+                           noteText.starts(with: "Comment text is not available yet. Please wait")
+        
+        let hasUrl = !noteUrl.isEmpty
+        let hasInternet = isInternetAvailable()
+        
+        print("Description download check: needsDownload=\(needsDownload), hasUrl=\(hasUrl), hasInternet=\(hasInternet)")
+        
+        return needsDownload && hasUrl && hasInternet
+    }
+    
+    /// Downloads and displays description from URL
+    func downloadAndDisplayDescription(bandName: String, noteUrl: String) {
+        print("Downloading description for \(bandName) from \(noteUrl)")
+        
+        guard let url = URL(string: noteUrl) else {
+            print("Invalid description URL for \(bandName): \(noteUrl)")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error downloading description for \(bandName): \(error)")
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let data = data,
+                  let descriptionText = String(data: data, encoding: .utf8) else {
+                print("Invalid response for \(bandName) description download")
+                return
+            }
+            
+            // Don't save if it's an HTML error page
+            guard !descriptionText.starts(with: "<!DOCTYPE") else {
+                print("Received HTML error page for \(bandName) description")
+                return
+            }
+            
+            // Cache the downloaded description
+            let commentFileName: String = self.bandNotes.getNoteFileName(bandName: bandName)
+            let commentFile: URL = directoryPath.appendingPathComponent(commentFileName)
+            
+            do {
+                try descriptionText.write(to: commentFile, atomically: false, encoding: .utf8)
+                print("Successfully cached description for \(bandName)")
+            } catch {
+                print("Error caching description for \(bandName): \(error)")
+            }
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                // Only update if still showing the same band
+                if self.bandName == bandName {
+                    self.customNotesText.text = descriptionText
+                    self.setNotesHeight()
+                    self.showBandDetails()
+                    self.customNotesText.setNeedsDisplay()
+                    self.customNotesText.layoutIfNeeded()
+                    print("Updated description for \(bandName)")
                 }
             }
-        }
+        }.resume()
     }
     
     func saveComments(){
@@ -1375,6 +1515,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
         showFullSchedule ()
+    }
+    
+    /// Checks if internet is available using the global NetworkStatusManager
+    func isInternetAvailable() -> Bool {
+        return NetworkStatusManager.shared.isInternetAvailable
     }
     
     func showToast(message : String) {

@@ -13,77 +13,112 @@ import CoreData
 
 open class imageHandler {
     
-    func displayImage ( urlString: String, bandName: String) -> UIImage {
-        
-        
-        let bandName = bandName
-        let urlString = urlString
-
-        var returnedImage:UIImage?;
-        
-        print ("urlString is " + urlString);
+    /// Analyzes a URL to determine if image inversion should be applied
+    /// - Parameter urlString: The URL string to analyze
+    /// - Returns: True if inversion should be applied, false otherwise
+    func shouldApplyInversion(urlString: String) -> Bool {
+        // Don't apply inversion for Dropbox URLs or empty URLs
+        if urlString.contains("www.dropbox.com") || urlString.isEmpty {
+            print("Image URL does not require inversion: \(urlString)")
+            return false
+        } else {
+            print("Image URL requires inversion: \(urlString)")
+            return true
+        }
+    }
+    
+    /// Loads and processes an image from cache or downloads it if needed
+    /// - Parameters:
+    ///   - urlString: The URL string for the image
+    ///   - bandName: The name of the band
+    /// - Returns: The processed image (with inversion applied if needed)
+    func displayImage(urlString: String, bandName: String) -> UIImage {
+        print("displayImage called for \(bandName) with URL: \(urlString)")
         
         let imageStore = getDocumentsDirectory().appendingPathComponent(bandName + ".png")
         
-        let imageStoreFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent( bandName + ".png")
-        
+        // First check if we have a cached image
         if let imageData: UIImage = UIImage(contentsOfFile: imageStore) {
-            print ("ImageCall using cached imaged from \(imageStoreFile)")
-            returnedImage = imageData
+            print("Using cached image from \(imageStore)")
+            return processImage(imageData, urlString: urlString)
+        }
         
-        } else if (urlString == ""){
-            returnedImage = UIImage(named: "70000TonsLogo")!
+        // Check for invalid URLs
+        if urlString.isEmpty || urlString == "http://" {
+            print("Invalid URL, using default logo")
+            return UIImage(named: "70000TonsLogo")!
+        }
         
-        } else if (urlString == "http://"){
-            returnedImage = UIImage(named: "70000TonsLogo")!
+        // If no cached image and no valid URL, return default
+        print("No cached image and no valid URL for \(bandName)")
+        return UIImage(named: "70000TonsLogo")!
+    }
+    
+    /// Downloads an image from URL and caches it with proper inversion analysis
+    /// - Parameters:
+    ///   - urlString: The URL string for the image
+    ///   - bandName: The name of the band
+    ///   - completion: Completion handler called with the processed image
+    func downloadAndCacheImage(urlString: String, bandName: String, completion: @escaping (UIImage?) -> Void) {
+        guard let url = URL(string: urlString) else {
+            print("Invalid URL for \(bandName): \(urlString)")
+            completion(nil)
+            return
+        }
         
-        } else {
-
-            print ("ImageCall download imaged from \(urlString)")
-
-            let url = URL(string: urlString)
-            if (url == nil){
-                return UIImage(named: "70000TonsLogo")!
+        print("Downloading image for \(bandName) from \(urlString)")
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Error downloading image for \(bandName): \(error)")
+                completion(nil)
+                return
             }
             
-            URLSession.shared.dataTask(with: url!) { data, response, error in
-                guard
-                    let httpURLResponse = response as? HTTPURLResponse, httpURLResponse.statusCode == 200,
-                    let mimeType = response?.mimeType, mimeType.hasPrefix("image"),
-                    let data = data, error == nil,
-                    let image = UIImage(data: data)
-                    else { return }
-                DispatchQueue.main.async() {
-                    returnedImage = image
-       
-                    do {
-                        print ("Loading image URL String from file \(imageStoreFile)")
-                        let imageData = returnedImage?.jpegData(compressionQuality: 0.75)
-                        try imageData?.write(to: imageStoreFile, options: [.atomic])
-                    } catch {
-                        print ("ImageCall \(error)")
-                    }
-                }
-                }.resume()
-            var count = 0;
-            while (returnedImage == nil){
-                if (count == 15){
-                    break
-                }
-                sleep(1)
-                count = count + 1
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let mimeType = response?.mimeType,
+                  mimeType.hasPrefix("image"),
+                  let data = data,
+                  let image = UIImage(data: data) else {
+                print("Invalid response for \(bandName) image download")
+                completion(nil)
+                return
             }
-        }
-
-        if (urlString.contains("www.dropbox.com") == true || urlString.isEmpty == true){
-            print ("Image URL string is not Inverted for " + urlString);
+            
+            // Analyze URL for inversion requirement
+            let shouldInvert = self.shouldApplyInversion(urlString: urlString)
+            let processedImage = shouldInvert ? (image.inverseImage(cgResult: true) ?? image) : image
+            
+            // Cache the processed image
+            let imageStoreFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + ".png"))
+            do {
+                let imageData = processedImage.jpegData(compressionQuality: 0.75)
+                try imageData?.write(to: imageStoreFile, options: [.atomic])
+                print("Successfully cached processed image for \(bandName)")
+            } catch {
+                print("Error caching image for \(bandName): \(error)")
+            }
+            
+            completion(processedImage)
+        }.resume()
+    }
+    
+    /// Processes an image (applies inversion if needed based on URL analysis)
+    /// - Parameters:
+    ///   - image: The image to process
+    ///   - urlString: The URL string to analyze for inversion requirement
+    /// - Returns: The processed image
+    func processImage(_ image: UIImage, urlString: String) -> UIImage {
+        let shouldInvert = shouldApplyInversion(urlString: urlString)
+        
+        if shouldInvert {
+            print("Applying inversion to image for URL: \(urlString)")
+            return image.inverseImage(cgResult: true) ?? image
         } else {
-            print ("Image URL string is Inverted for " + urlString);
-            returnedImage = returnedImage?.inverseImage(cgResult: true)
+            print("No inversion needed for URL: \(urlString)")
+            return image
         }
-        
-        return returnedImage ?? UIImage(named: "70000TonsLogo")!;
-        
     }
 
     func getAllImages(bandNameHandle: bandNamesHandler){

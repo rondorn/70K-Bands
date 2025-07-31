@@ -195,28 +195,6 @@ open class scheduleHandler {
                     
                     print ("adding descriptionUrlField \(lineData)")
                     
-                    if let descriptUrl = lineData[descriptionUrlField] {
-                        if (descriptUrl.isEmpty == false && descriptUrl.count >= 2){
-                            
-                            bandDescriptionLock.sync {
-                                cacheVariables.bandDescriptionUrlCache[lineData[bandField]!] = descriptUrl
-                            }
-                        }
-                    } else {
-                        print ("field descriptionUrlField not present for " + lineData[bandField]!);
-                    }
-                    
-                    if let imageUrl = lineData[imageUrlField] {
-                        if (imageUrl.isEmpty == false && imageUrl.count >= 2){
-                            //save inmage in background
-                            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                                
-                                let imageHandle = imageHandler()
-                                _ = imageHandle.displayImage(urlString: imageUrl, bandName: lineData[bandField]!)
-                            }
-                        }
-                        
-                    }
                 } else {
                     print ("Unable to parse schedule file")
                 }

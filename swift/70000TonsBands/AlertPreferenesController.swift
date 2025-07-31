@@ -573,6 +573,7 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             masterView.refreshData(isUserInitiated: true)
             self.navigationController?.popViewController(animated: true)
             self.dismiss(animated: true, completion: nil)
+            sleep(5)
         }
         // Add the actions
         alertController.addAction(eventAction)

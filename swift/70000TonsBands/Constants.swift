@@ -133,6 +133,8 @@ var urlDateField = "Date"
 var descriptionUrlField = "Description URL"
 var imageUrlField = "ImageURL"
 
+var loadUrlCounter = 0
+
 var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
 var didVersionChange = false
 
@@ -344,25 +346,16 @@ func getPointerUrlData(keyValue: String) -> String {
         
         // If we still don't have data and no internet, provide sensible defaults
         if dataString.isEmpty && !isInternetAvailable() {
-            print("getPointerUrlData: No cached data and no internet, using defaults for \(keyValue)")
             
-            // Provide default values for critical keys
-            switch keyValue {
-            case "artistUrl":
-                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistLineup_2026.csv"
-            case "scheduleUrl":
-                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/artistSchedule2026.csv"
-            case "reportUrl":
-                dataString = "https://cdn.jsdelivr.net/gh/rondorn/70K-Bands@latest/dataFiles/report_dashboard.html"
-            case "eventYear":
-                dataString = "2026"
-            default:
-                dataString = ""
-            }
+            sleep(3)
             
-            // Cache the default value
-            storePointerLock.sync() {
-                cacheVariables.storePointerData[keyValue] = dataString
+            loadUrlCounter = loadUrlCounter + 1
+            
+            if (loadUrlCounter < 5){
+                dataString = getPointerUrlData(keyValue: keyValue)
+            } else {
+                print ("Can not load needed data, exiting")
+                exit(1)
             }
             
             return dataString
@@ -478,6 +471,8 @@ func getPointerUrlData(keyValue: String) -> String {
 
     }
     print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString + " \(getArtistUrl())")
+    
+    loadUrlCounter = 0
     
     return dataString
 }
