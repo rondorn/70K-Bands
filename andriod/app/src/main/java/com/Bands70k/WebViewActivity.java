@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.FileOutputStream;
 
 /**
  * Activity for displaying HTML reports in a WebView, with caching and background refresh support.
@@ -44,6 +47,14 @@ public class WebViewActivity extends Activity {
         webSettings.setBuiltInZoomControls(true);
         webSettings.setDisplayZoomControls(false);
         
+        // Performance optimizations
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        
+        // Enable hardware acceleration for better performance
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        
         // Set up WebViewClient to handle loading
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -66,20 +77,27 @@ public class WebViewActivity extends Activity {
             Log.d("WebViewActivity", "Starting internal loading for URL: " + reportUrl);
             loadReportWithCaching(reportUrl);
         } else {
-            // Fallback: Check for legacy intent extras
-            String htmlContent = getIntent().getStringExtra("htmlContent");
-            String directUrl = getIntent().getStringExtra("directUrl");
-            
-            if (htmlContent != null && !htmlContent.isEmpty()) {
-                Log.d("WebViewActivity", "Loading provided HTML content");
-                webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
-            } else if (directUrl != null && !directUrl.isEmpty()) {
-                Log.d("WebViewActivity", "Loading URL directly: " + directUrl);
-                webView.loadUrl(directUrl);
+            // For stats page, get URL in background and load cached content immediately
+            boolean isStatsPage = getIntent().getBooleanExtra("isStatsPage", false);
+            if (isStatsPage) {
+                Log.d("WebViewActivity", "Loading stats page with cached content first");
+                loadStatsPageWithCaching();
             } else {
-                Log.e("WebViewActivity", "No content or URL provided");
-                Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();
-                finish();
+                // Fallback: Check for legacy intent extras
+                String htmlContent = getIntent().getStringExtra("htmlContent");
+                String directUrl = getIntent().getStringExtra("directUrl");
+                
+                if (htmlContent != null && !htmlContent.isEmpty()) {
+                    Log.d("WebViewActivity", "Loading provided HTML content");
+                    webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+                } else if (directUrl != null && !directUrl.isEmpty()) {
+                    Log.d("WebViewActivity", "Loading URL directly: " + directUrl);
+                    webView.loadUrl(directUrl);
+                } else {
+                    Log.e("WebViewActivity", "No content or URL provided");
+                    Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
             }
         }
     }
@@ -191,20 +209,209 @@ public class WebViewActivity extends Activity {
             }
         });
     }
+
+    /**
+     * Loads the stats page with caching, using a completely independent thread.
+     * This ensures the stats page loads in parallel with other data loads.
+     */
+    private void loadStatsPageWithCaching() {
+        // Use a dedicated thread for stats loading to ensure it runs in parallel
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                loadStatsPageIndependent();
+            }
+        }).start();
+    }
     
     /**
-     * Reads the content of a cached file as a string.
+     * Independent stats page loader that doesn't interfere with other downloads.
+     */
+    private void loadStatsPageIndependent() {
+        try {
+            // Check for cached content first
+            String cachedFilePath = getCacheDir().getAbsolutePath() + "/stats_report.html";
+            File cachedFile = new File(cachedFilePath);
+            
+            if (cachedFile.exists()) {
+                Log.d("WebViewActivity", "Loading stats page with cached content immediately");
+                String cachedContent = readCachedFileContent(cachedFilePath);
+                
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        webView.loadDataWithBaseURL(null, cachedContent, "text/html", "UTF-8", null);
+                        webView.setVisibility(View.VISIBLE);
+                        waitingMessage.setVisibility(View.GONE);
+                    }
+                });
+                
+                // Start background refresh for fresh content
+                downloadFreshStatsInBackground();
+            } else {
+                Log.d("WebViewActivity", "No cached stats page, downloading fresh content");
+                downloadFreshStatsInBackground();
+            }
+        } catch (Exception e) {
+            Log.e("WebViewActivity", "Error in independent stats loader: " + e.getMessage());
+            downloadFreshStatsInBackground();
+        }
+    }
+    
+    /**
+     * Downloads fresh stats content using independent network calls.
+     */
+    private void downloadFreshStatsInBackground() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                webView.setVisibility(View.GONE);
+                waitingMessage.setVisibility(View.VISIBLE);
+            }
+        });
+        
+        // Use a dedicated thread for network operations
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Get report URL independently
+                    String reportUrl = getReportUrlIndependent();
+                    if (reportUrl != null && !reportUrl.isEmpty()) {
+                        downloadStatsContentIndependent(reportUrl);
+                    } else {
+                        Log.e("WebViewActivity", "Failed to get report URL");
+                        showErrorOnUiThread("Failed to get report URL");
+                    }
+                } catch (Exception e) {
+                    Log.e("WebViewActivity", "Error downloading stats: " + e.getMessage());
+                    showErrorOnUiThread("Error downloading stats: " + e.getMessage());
+                }
+            }
+        }).start();
+    }
+    
+    /**
+     * Gets the report URL independently without using shared resources.
+     */
+    private String getReportUrlIndependent() {
+        try {
+            // Try cached pointer data first
+            String cachedUrl = staticVariables.getCachedPointerData("reportUrl");
+            if (!cachedUrl.isEmpty()) {
+                return cachedUrl;
+            }
+            
+            // If no cached URL, make independent network call
+            String pointerUrl = staticVariables.defaultUrls;
+            if (staticVariables.preferences.getPointerUrl().equals("Testing")) {
+                pointerUrl = staticVariables.defaultUrlTest;
+            }
+            
+            // Make independent HTTP call
+            URL url = new URL(pointerUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(10000);
+            connection.setRequestMethod("GET");
+            
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line).append("\n");
+            }
+            reader.close();
+            connection.disconnect();
+            
+            // Parse response for reportUrl
+            String[] lines = response.toString().split("\n");
+            for (String line2 : lines) {
+                if (line2.startsWith("reportUrl=")) {
+                    return line2.substring("reportUrl=".length()).trim();
+                }
+            }
+            
+            return null;
+        } catch (Exception e) {
+            Log.e("WebViewActivity", "Error getting report URL: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Downloads stats content independently.
+     */
+    private void downloadStatsContentIndependent(String reportUrl) {
+        try {
+            URL url = new URL(reportUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(15000);
+            connection.setRequestMethod("GET");
+            
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            reader.close();
+            connection.disconnect();
+            
+            // Save to cache
+            String cachedFilePath = getCacheDir().getAbsolutePath() + "/stats_report.html";
+            FileOutputStream fos = new FileOutputStream(cachedFilePath);
+            fos.write(content.toString().getBytes("UTF-8"));
+            fos.close();
+            
+            // Load in WebView
+            final String htmlContent = content.toString();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+                    webView.setVisibility(View.VISIBLE);
+                    waitingMessage.setVisibility(View.GONE);
+                }
+            });
+            
+        } catch (Exception e) {
+            Log.e("WebViewActivity", "Error downloading stats content: " + e.getMessage());
+            showErrorOnUiThread("Error downloading stats content: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Shows error on UI thread.
+     */
+    private void showErrorOnUiThread(final String error) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                webView.setVisibility(View.VISIBLE);
+                waitingMessage.setVisibility(View.GONE);
+                Toast.makeText(WebViewActivity.this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    
+    /**
+     * Reads the content of a cached file as a string with optimized performance.
      * @param filePath The path to the cached file.
      * @return The file content as a string.
      * @throws IOException If reading fails.
      */
     private String readCachedFileContent(String filePath) throws IOException {
-        StringBuilder content = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            content.append(line).append("\n");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"), 8192);
+        StringBuilder content = new StringBuilder(8192);
+        char[] buffer = new char[8192];
+        int bytesRead;
+        
+        while ((bytesRead = reader.read(buffer)) != -1) {
+            content.append(buffer, 0, bytesRead);
         }
+        
         reader.close();
         return content.toString();
     }

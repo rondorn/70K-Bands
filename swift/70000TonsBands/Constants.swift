@@ -199,7 +199,7 @@ var eventYearArray = [String]();
 
 //alert topics
 let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing20250603"
+let subscriptionTopicTest = "Testing20250801"
 let subscriptionUnofficalTopic = "unofficalEvents"
 
 //file names
@@ -291,6 +291,13 @@ func getPointerUrlData(keyValue: String) -> String {
 
     var dataString = String()
     
+    // Apply language-specific key logic for reportUrl
+    var actualKeyValue = keyValue
+    if keyValue == "reportUrl" {
+        actualKeyValue = getLanguageSpecificKey(keyValue: keyValue)
+        print("getPointerUrlData: Using language-specific key: \(actualKeyValue) for original key: \(keyValue)")
+    }
+    
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
         defaultStorageUrl = defaultStorageUrlTest
         inTestEnvironment = true;
@@ -304,8 +311,8 @@ func getPointerUrlData(keyValue: String) -> String {
     //does not change very often during the year
     storePointerLock.sync() {
         if (cacheVariables.storePointerData.isEmpty == false){
-            dataString = cacheVariables.storePointerData[keyValue] ?? ""
-            print ("getPointerUrlData: got cached URL data of = \(dataString) for \(keyValue)")
+            dataString = cacheVariables.storePointerData[actualKeyValue] ?? ""
+            print ("getPointerUrlData: got cached URL data of = \(dataString) for \(actualKeyValue)")
         }
     }
     //print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
@@ -318,7 +325,7 @@ func getPointerUrlData(keyValue: String) -> String {
     if (dataString.isEmpty == true){
         // Check internet availability before attempting download
         if !isInternetAvailable() {
-            print("getPointerUrlData: No internet available, using cached data for \(keyValue)")
+            print("getPointerUrlData: No internet available, using cached data for \(actualKeyValue)")
             
             // Try to use cached pointer data from disk as fallback
             let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
@@ -330,11 +337,11 @@ func getPointerUrlData(keyValue: String) -> String {
                     for record in dataArray {
                         pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
                     }
-                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                    dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
                     
                     // Cache the result in memory for future use
                     storePointerLock.sync() {
-                        cacheVariables.storePointerData[keyValue] = dataString
+                        cacheVariables.storePointerData[actualKeyValue] = dataString
                     }
                 } catch {
                     print("getPointerUrlData: Failed to read cached pointer data: \(error)")
@@ -360,7 +367,7 @@ func getPointerUrlData(keyValue: String) -> String {
             return dataString
         }
         
-        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(keyValue)")
+        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(actualKeyValue)")
         let httpData = getUrlData(urlString: defaultStorageUrl)
         print ("getPointerUrlData: httpData for pointers data = \(httpData)")
         if (httpData.isEmpty == false){
@@ -370,7 +377,7 @@ func getPointerUrlData(keyValue: String) -> String {
                 pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
             }
             
-            dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+            dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
             
             // Cache the pointer data to disk for future offline use
             let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
@@ -382,7 +389,7 @@ func getPointerUrlData(keyValue: String) -> String {
             }
 
         } else {
-            print ("getPointerUrlData: Why is \(keyValue) empty - \(dataString)")
+            print ("getPointerUrlData: Why is \(actualKeyValue) empty - \(dataString)")
             
             // Try to use cached pointer data from disk as fallback
             let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
@@ -394,7 +401,7 @@ func getPointerUrlData(keyValue: String) -> String {
                     for record in dataArray {
                         pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
                     }
-                    dataString = (pointerValues[pointerIndex]?[keyValue]) ?? ""
+                    dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
                 } catch {
                     print("getPointerUrlData: Failed to read cached pointer data: \(error)")
                 }
@@ -469,11 +476,36 @@ func getPointerUrlData(keyValue: String) -> String {
         }
 
     }
-    print ("getPointerUrlData: Using Final value of " + keyValue + " of " + dataString + " \(getArtistUrl())")
+    
+    print ("getPointerUrlData: Using Final value of " + actualKeyValue + " of " + dataString + " \(getArtistUrl())")
     
     loadUrlCounter = 0
     
     return dataString
+}
+
+/// Gets the language-specific key for reportUrl based on user's language preference.
+/// - Parameter keyValue: The original key value (should be "reportUrl").
+/// - Returns: The language-specific key (e.g., "reportUrl-en", "reportUrl-es").
+func getLanguageSpecificKey(keyValue: String) -> String {
+    // Get the user's preferred language
+    let userLanguage = Locale.current.languageCode ?? "en"
+    
+    // Define supported languages
+    let supportedLanguages = ["da", "de", "en", "es", "fi", "fr", "pt"]
+    
+    // Determine the language to use (default to "en" if not supported)
+    let languageToUse = supportedLanguages.contains(userLanguage) ? userLanguage : "en"
+    
+    // Create the language-specific key
+    let languageSpecificKey = "\(keyValue)-\(languageToUse)"
+    
+    print("getLanguageSpecificKey: Original key: \(keyValue)")
+    print("getLanguageSpecificKey: User language: \(userLanguage)")
+    print("getLanguageSpecificKey: Language to use: \(languageToUse)")
+    print("getLanguageSpecificKey: Language-specific key: \(languageSpecificKey)")
+    
+    return languageSpecificKey
 }
 
 /// Parses a pointer data record and updates the pointer values dictionary and cache as needed.

@@ -108,6 +108,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public Button willAttendFilterButton;
 
     public static Boolean inBackground = true;
+    
+    // Flag to track when returning from stats page to avoid blocking refresh
+    private static Boolean returningFromStatsPage = false;
 
     //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
@@ -937,13 +940,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Button downloadReportButton = (Button) findViewById(R.id.downloadReportButton);
         downloadReportButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                // Launch WebView immediately with URL - it will handle all loading logic internally
-                String reportUrl = "https://www.dropbox.com/scl/fi/sjsh8v384gdimhcrmiqtq/report_dashboard.html?rlkey=iz80457kowpbcksn0opmwh7er&raw=1";
+                // Set flag to prevent main activity refresh when returning from stats page
+                returningFromStatsPage = true;
                 
+                // Show WebView immediately - it will handle loading internally
                 Intent webViewIntent = new Intent(showBands.this, WebViewActivity.class);
-                webViewIntent.putExtra("reportUrl", reportUrl);
-                webViewIntent.putExtra("isStatsPage", true); // Add this line
+                webViewIntent.putExtra("isStatsPage", true);
                 startActivity(webViewIntent);
+                
+                // No need to fetch URL here - WebViewActivity will handle it
+                Log.d("showBands", "Stats button clicked - WebViewActivity will handle loading");
             }
         });
 
@@ -1421,7 +1427,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         inBackground = false;
 
         Log.d(TAG, notificationTag + " In onResume - 2");
-        refreshNewData();
+        
+        // Only refresh if we're not returning from stats page to avoid blocking stats loading
+        // The stats page should load immediately without waiting for main activity refresh
+        if (!returningFromStatsPage) {
+            refreshNewData();
+        } else {
+            Log.d("DisplayListData", "Skipping refresh - returning from stats page");
+            returningFromStatsPage = false; // Reset flag
+        }
 
         Log.d(TAG, notificationTag + " In onResume - 3");
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -1795,12 +1809,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 //get the descriptionMap
                 bandNotes.getDescriptionMap();
 
-                //download all descriptions in the background
-                bandNotes.getAllDescriptions();
+                // Descriptions should only be downloaded when app goes to background
+                // Removed: bandNotes.getAllDescriptions();
 
-                //download all band logos in the background
-                ImageHandler imageHandler = ImageHandler.getInstance();
-                imageHandler.getAllRemoteImages();
+                // Images should only be downloaded when app goes to background or when entering details screen
+                // Removed: imageHandler.getAllRemoteImages();
 
             } catch (Exception error) {
                 //Log.d("bandInfo", error.getMessage());
