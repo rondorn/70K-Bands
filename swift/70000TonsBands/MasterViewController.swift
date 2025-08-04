@@ -219,6 +219,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
         
         // Defensive: trigger a delayed refresh to help with first-launch data population
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -1848,6 +1849,50 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // It will force a refresh of the band list to ensure the UI is updated.
         print("Pointer data updated, forcing refresh of band list.")
         refreshBandList(reason: "Pointer data updated")
+    }
+    
+    @objc func handleBackgroundDataRefresh() {
+        print("MasterViewController: Background data refresh triggered from foreground")
+        
+        // Prevent conflicts with existing data collection processes
+        guard !isLoadingBandData, !bandNameHandle.readingBandFile else {
+            print("MasterViewController: Skipping background refresh - data collection already in progress")
+            return
+        }
+        
+        // Check if we're in the middle of first launch data loading
+        guard !cacheVariables.justLaunched || (!bandNameHandle.bandNames.isEmpty && !schedule.schedulingData.isEmpty) else {
+            print("MasterViewController: Skipping background refresh - first launch still in progress")
+            return
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("MasterViewController: Starting background data refresh from URL")
+            
+            // Refresh band names from URL with force flag to bypass justLaunched check
+            self.bandNameHandle.getCachedData(forceNetwork: true) {
+                print("MasterViewController: Band names refreshed from URL in background")
+            }
+            
+            // Refresh schedule data from URL if internet is available
+            if isInternetAvailable() {
+                let shouldDownload = self.shouldDownloadSchedule(force: true)
+                if shouldDownload {
+                    self.schedule.DownloadCsv()
+                    self.lastScheduleDownload = Date()
+                    print("MasterViewController: Schedule data refreshed from URL in background")
+                }
+                self.schedule.populateSchedule(forceDownload: false)
+            }
+            
+            // Refresh the UI on main thread after background data loading
+            DispatchQueue.main.async {
+                print("MasterViewController: Updating UI after background data refresh")
+                self.refreshBandList(reason: "Background data refresh from foreground")
+            }
+        }
     }
     
     // Helper to deduplicate while preserving order

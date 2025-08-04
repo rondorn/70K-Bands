@@ -1806,8 +1806,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
             try {
 
-                //get the descriptionMap
-                bandNotes.getDescriptionMap();
+                // Description map should only be downloaded when app goes to background
+                // Removed: bandNotes.getDescriptionMap();
 
                 // Descriptions should only be downloaded when app goes to background
                 // Removed: bandNotes.getAllDescriptions();

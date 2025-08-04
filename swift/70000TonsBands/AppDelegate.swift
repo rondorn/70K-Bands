@@ -599,6 +599,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Force iCloud synchronization when app enters foreground
         print("iCloud: App entering foreground, forcing iCloud synchronization")
         NSUbiquitousKeyValueStore.default.synchronize()
+        
+        // Trigger background refresh of band names and schedule data when coming to foreground
+        print("AppDelegate: Triggering background data refresh notification")
+        NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {
