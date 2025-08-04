@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Locale;
+import java.net.HttpURLConnection;
 
 /**
  * Holds global static variables and utility methods for the 70K Bands app.
@@ -85,6 +87,9 @@ public class staticVariables {
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
     public static Map<String, String> descriptionMapModData = new HashMap<String, String>();
     public static List<String> eventYearArray = new ArrayList<String>();
+    
+    // Cache for pointer data
+    public static Map<String, String> storePointerData = new HashMap<String, String>();
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
@@ -313,6 +318,9 @@ public class staticVariables {
         }
 
         setupVenueLocations();
+        
+        // No pre-caching needed - data will be loaded when first requested
+        Log.d("staticVariablesInitialize", "Initialization complete - data will be loaded on first request");
     }
 
     /**
@@ -547,6 +555,8 @@ public class staticVariables {
 
     /**
      * Looks up and sets URLs for artist and schedule data.
+     * This method should only be called at launch or pull-to-refresh.
+     * For all other operations, use cached data.
      */
     public static void lookupUrls(){
 
@@ -580,13 +590,21 @@ public class staticVariables {
                 }
                 in.close();
 
-
                 Log.d("defaultUrls", data);
 
                 String[] records = data.split("\\n");
                 Log.d("defaultUrls", "eventYearIndex is " + eventYearIndex);
                 Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
                 Log.d("defaultUrls",downloadUrls.toString());
+                
+                // Cache all the data for immediate access
+                storePointerData.clear(); // Clear old cache
+                for (Map.Entry<String, String> entry : downloadUrls.entrySet()) {
+                    storePointerData.put(entry.getKey(), entry.getValue());
+                    Log.d("lookupUrls", "Cached: " + entry.getKey() + " = " + entry.getValue());
+                }
+                
+                // Set the main variables
                 artistURL = downloadUrls.get("artistUrl");
                 scheduleURL = downloadUrls.get("scheduleUrl");
                 descriptionMap = downloadUrls.get("descriptionMap");
@@ -635,5 +653,159 @@ public class staticVariables {
             }
         }
         return downloadUrls;
+    }
+
+    /**
+     * Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
+     * Handles special logic for the "reportUrl" key with language-specific URL logic.
+     * @param keyValue The key for which to retrieve pointer data.
+     * @return The pointer data as a string, or an empty string if not found.
+     */
+    public static String getPointerUrlData(String keyValue) {
+        String dataString = "";
+        
+        // Apply language-specific key logic for reportUrl
+        String actualKeyValue = keyValue;
+        if (keyValue.equals("reportUrl")) {
+            actualKeyValue = getLanguageSpecificKey(keyValue);
+            Log.d("getPointerUrlData", "Using language-specific key: " + actualKeyValue + " for original key: " + keyValue);
+        }
+        
+        // Check if we're in test environment
+        if (preferences.getPointerUrl().equals("Testing")) {
+            isTestingEnv = true;
+        }
+        
+        // Get pointer index (equivalent to getScheduleUrl() in iOS)
+        String pointerIndex = preferences.getEventYearToLoad();
+        if (pointerIndex == null || pointerIndex.isEmpty() || pointerIndex.equals("true") || pointerIndex.equals("false")) {
+            pointerIndex = "Current";
+        }
+        
+        Log.d("getPointerUrlData", "Getting pointer data for key: " + actualKeyValue + " with index: " + pointerIndex);
+        
+        // Try to get data from cache first - this should be the primary path
+        if (storePointerData != null && storePointerData.get(actualKeyValue) != null && !storePointerData.get(actualKeyValue).isEmpty()) {
+            dataString = storePointerData.get(actualKeyValue);
+            Log.d("getPointerUrlData", "Got cached URL data: " + dataString + " for " + actualKeyValue);
+            return dataString; // Return immediately if cached
+        }
+        
+        // Only make network call if cache is completely empty (first launch scenario)
+        if (storePointerData == null || storePointerData.isEmpty()) {
+            Log.d("getPointerUrlData", "Cache is empty, making network call for " + actualKeyValue);
+            if (OnlineStatus.isOnline()) {
+                try {
+                    String pointerUrl = defaultUrls;
+                    if (preferences.getPointerUrl().equals("Testing")) {
+                        pointerUrl = defaultUrlTest;
+                    }
+                    
+                    Log.d("getPointerUrlData", "Fetching pointer data from: " + pointerUrl);
+                    
+                    URL url = new URL(pointerUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(5000);  // 5 seconds
+                    connection.setReadTimeout(10000);    // 10 seconds
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0)");
+                    
+                    try {
+                        int responseCode = connection.getResponseCode();
+                        Log.d("getPointerUrlData", "HTTP Response Code: " + responseCode);
+                        
+                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()), 8192);
+                            StringBuilder data = new StringBuilder(8192);
+                            char[] buffer = new char[8192];
+                            int bytesRead;
+                            
+                            while ((bytesRead = in.read(buffer)) != -1) {
+                                data.append(buffer, 0, bytesRead);
+                            }
+                            in.close();
+                            
+                            String[] records = data.toString().split("\\n");
+                            Map<String, String> downloadUrls = readPointData(records, pointerIndex);
+                            
+                            // Cache all the data for future use
+                            for (Map.Entry<String, String> entry : downloadUrls.entrySet()) {
+                                storePointerData.put(entry.getKey(), entry.getValue());
+                            }
+                            
+                            dataString = downloadUrls.get(actualKeyValue);
+                            if (dataString == null) {
+                                dataString = "";
+                            }
+                            
+                            Log.d("getPointerUrlData", "Retrieved and cached data: " + dataString + " for key: " + actualKeyValue);
+                            
+                        } else {
+                            Log.e("getPointerUrlData", "HTTP error code: " + responseCode);
+                            dataString = "";
+                        }
+                    } finally {
+                        connection.disconnect();
+                    }
+                    
+                } catch (Exception error) {
+                    Log.e("getPointerUrlData", "Error fetching pointer data: " + error.getMessage());
+                    dataString = "";
+                }
+            } else {
+                Log.d("getPointerUrlData", "No internet available, cache is empty for " + actualKeyValue);
+                dataString = "";
+            }
+        } else {
+            Log.d("getPointerUrlData", "Cache exists but key not found: " + actualKeyValue);
+            dataString = "";
+        }
+        
+        Log.d("getPointerUrlData", "Final value for " + actualKeyValue + ": " + dataString);
+        return dataString;
+    }
+
+    /**
+     * Gets the cached pointer data for a key without making network calls.
+     * @param keyValue The key to retrieve.
+     * @return The cached data or empty string if not cached.
+     */
+    public static String getCachedPointerData(String keyValue) {
+        if (storePointerData != null && storePointerData.get(keyValue) != null) {
+            return storePointerData.get(keyValue);
+        }
+        return "";
+    }
+
+    /**
+     * Gets the language-specific key for reportUrl based on user's language preference.
+     * @param keyValue The original key value (should be "reportUrl").
+     * @return The language-specific key (e.g., "reportUrl-en", "reportUrl-es").
+     */
+    private static String getLanguageSpecificKey(String keyValue) {
+        // Get the user's preferred language
+        String userLanguage = Locale.getDefault().getLanguage();
+        
+        // Define supported languages
+        String[] supportedLanguages = {"da", "de", "en", "es", "fi", "fr", "pt"};
+        
+        // Determine the language to use (default to "en" if not supported)
+        String languageToUse = "en"; // default
+        for (String lang : supportedLanguages) {
+            if (lang.equals(userLanguage)) {
+                languageToUse = userLanguage;
+                break;
+            }
+        }
+        
+        // Create the language-specific key
+        String languageSpecificKey = keyValue + "-" + languageToUse;
+        
+        Log.d("getLanguageSpecificKey", "Original key: " + keyValue);
+        Log.d("getLanguageSpecificKey", "User language: " + userLanguage);
+        Log.d("getLanguageSpecificKey", "Language to use: " + languageToUse);
+        Log.d("getLanguageSpecificKey", "Language-specific key: " + languageSpecificKey);
+        
+        return languageSpecificKey;
     }
 }
