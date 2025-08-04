@@ -200,6 +200,53 @@ public class CustomerDescriptionHandler {
             Log.d("descriptionMapFile", "descriptionMapFile Downloaded!");
         }
     }
+    
+    /**
+     * Downloads the description map file immediately, bypassing main thread restrictions.
+     * This method is used for immediate loading in the details screen.
+     */
+    private void getDescriptionMapFileImmediate() {
+        Log.d("70K_NOTE_DEBUG", "getDescriptionMapFileImmediate called");
+        
+        BandInfo bandInfo = new BandInfo();
+        bandInfo.getDownloadtUrls();
+
+        String descriptionMapURL = staticVariables.descriptionMap;
+
+        if (OnlineStatus.isOnline() == true) {
+            try {
+                Log.d("70K_NOTE_DEBUG", "Downloading description map immediately from: " + descriptionMapURL);
+                
+                URL u = new URL(descriptionMapURL);
+                InputStream is = u.openStream();
+
+                DataInputStream dis = new DataInputStream(is);
+
+                byte[] buffer = new byte[1024];
+                int length;
+
+                FileOutputStream fos = new FileOutputStream(FileHandler70k.descriptionMapFile);
+                while ((length = dis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+                dis.close();
+                fos.close();
+
+                Log.d("70K_NOTE_DEBUG", "Description map file downloaded successfully");
+
+            } catch (MalformedURLException mue) {
+                Log.e("70K_NOTE_DEBUG", "descriptionMapFile malformed url error", mue);
+            } catch (IOException ioe) {
+                Log.e("70K_NOTE_DEBUG", "descriptionMapFile io error", ioe);
+            } catch (SecurityException se) {
+                Log.e("70K_NOTE_DEBUG", "descriptionMapFile security error", se);
+            } catch (Exception generalError) {
+                Log.e("70K_NOTE_DEBUG", "Error downloading descriptionMapFile immediately", generalError);
+            }
+        } else {
+            Log.d("70K_NOTE_DEBUG", "Not online, cannot download description map file immediately");
+        }
+    }
 
     /**
      * Normalizes a band name by removing invisible Unicode characters and trimming whitespace.
@@ -252,7 +299,7 @@ public class CustomerDescriptionHandler {
 
             while ((line = br.readLine()) != null) {
                 String[] rowData = line.split(",");
-                if (rowData[0] != "Band") {
+                if (!"Band".equals(rowData[0])) {
                     String normalizedBandName = normalizeBandName(rowData[0]);
                     Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
                     descriptionMapData.put(normalizedBandName, rowData[1]);
@@ -426,6 +473,39 @@ public class CustomerDescriptionHandler {
     }
 
     /**
+     * Reads the description map file without triggering any downloads.
+     * Only reads the existing file if it exists.
+     */
+    private void readDescriptionMapFileOnly() {
+        if (!FileHandler70k.descriptionMapFile.exists()) {
+            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, cannot read");
+            return;
+        }
+
+        try {
+            File file = FileHandler70k.descriptionMapFile;
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] rowData = line.split(",");
+                if (!"Band".equals(rowData[0])) {
+                    String normalizedBandName = normalizeBandName(rowData[0]);
+                    Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                    descriptionMapData.put(normalizedBandName, rowData[1]);
+                    if (rowData.length > 2){
+                        Log.d("descriptionMapFile", "Date value is " + rowData[2]);
+                        staticVariables.descriptionMapModData.put(normalizedBandName, rowData[2]);
+                    }
+                }
+            }
+            br.close();
+        } catch (Exception e) {
+            Log.e("70K_NOTE_DEBUG", "Error reading description map file", e);
+        }
+    }
+
+    /**
      * Gets the description for a specific band immediately, bypassing background loading pause.
      * This method is used when the details screen needs to load a note immediately.
      * @param bandNameValue The name of the band.
@@ -455,14 +535,18 @@ public class CustomerDescriptionHandler {
         }
 
         // Ensure description map file exists before trying to read it
+        boolean mapFileWasDownloaded = false;
         if (!FileHandler70k.descriptionMapFile.exists()) {
-            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it");
-            getDescriptionMapFile();
+            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it immediately");
+            getDescriptionMapFileImmediate();
+            mapFileWasDownloaded = true;
         }
 
         // If no custom note, try to load from description map
-        if (descriptionMapData.isEmpty()) {
-            descriptionMapData = this.getDescriptionMap();
+        // Read the map file directly without triggering bulk downloads
+        if (descriptionMapData.isEmpty() || mapFileWasDownloaded) {
+            Log.d("70K_NOTE_DEBUG", "Reading description map from file (empty: " + descriptionMapData.isEmpty() + ", downloaded: " + mapFileWasDownloaded + ")");
+            readDescriptionMapFileOnly();
         }
 
         if (descriptionMapData.containsKey(normalizedBandName) == false) {

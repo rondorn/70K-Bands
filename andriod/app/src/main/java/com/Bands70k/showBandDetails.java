@@ -70,10 +70,6 @@ public class showBandDetails extends Activity {
         CustomerDescriptionHandler.pauseBackgroundLoading();
         ImageHandler.pauseBackgroundLoading();
 
-        // Trigger image downloads when entering details screen
-        ImageHandler imageHandler = ImageHandler.getInstance();
-        imageHandler.getAllRemoteImages();
-
         View view = getWindow().getDecorView();
 
         int orientationNum = getResources().getConfiguration().orientation;
@@ -93,6 +89,10 @@ public class showBandDetails extends Activity {
         } else if (bandName.isEmpty() == false) {
             bandHandler = new BandNotes(bandName);
             bandNote = bandHandler.getBandNoteImmediate();
+
+            // Load the specific band's image if not already cached
+            ImageHandler bandImageHandler = new ImageHandler(bandName);
+            bandImageHandler.getImageImmediate();
 
             Log.d("descriptionMapFileError",  "1 bandNote = " + bandNote);
             initializeWebContent();
@@ -349,19 +349,16 @@ public class showBandDetails extends Activity {
         Log.d("WebView", "Back button pressed");
         staticVariables.writeNoteHtml = "";
         if (inLink){
+            // Reset the link state and go back to main instead of creating new activity
+            inLink = false;
             mWebView.onPause();
-            Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-            startActivity(showDetails);
-            finish();
-
-        } else {
-            SystemClock.sleep(70);
-            setResult(RESULT_OK, null);
-            finish();
-            NavUtils.navigateUpTo(this, new Intent(this,
-                    showBands.class));
-
         }
+        // Always use the same navigation logic to go back to main screen
+        SystemClock.sleep(70);
+        setResult(RESULT_OK, null);
+        finish();
+        NavUtils.navigateUpTo(this, new Intent(this,
+                showBands.class));
     }
     
     @Override
