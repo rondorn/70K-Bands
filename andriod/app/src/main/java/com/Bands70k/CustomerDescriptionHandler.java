@@ -371,10 +371,12 @@ public class CustomerDescriptionHandler {
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
-            // Only start background loading if not already running and app is going to background
-            if (!isRunning.get() && !detailsScreenActive.get()) {
+            // Only start background loading if not already running
+            if (!isRunning.get()) {
                 Log.d("CustomerDescriptionHandler", "Starting background loading due to app going to background");
                 getAllDescriptions();
+            } else {
+                Log.d("CustomerDescriptionHandler", "Background loading already running, skipping");
             }
         }
     }

@@ -336,10 +336,12 @@ public class ImageHandler {
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
-            // Only start background loading if not already running and app is going to background
-            if (!isRunning.get() && !detailsScreenActive.get()) {
+            // Only start background loading if not already running
+            if (!isRunning.get()) {
                 Log.d("ImageHandler", "Starting background loading due to app going to background");
                 getAllRemoteImages();
+            } else {
+                Log.d("ImageHandler", "Background loading already running, skipping");
             }
         }
     }

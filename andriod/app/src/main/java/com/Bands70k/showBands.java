@@ -1057,10 +1057,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("refreshNewData", "refreshNewData - 5");
     }
 
+    @Override
     public void onStop() {
-
         super.onStop();
         inBackground = true;
+        
+        // Start background loading when app truly goes to background (not just switching activities)
+        Log.d("BackgroundLoading", "App going to background, starting bulk downloads");
+        CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
+        descriptionHandler.startBackgroundLoadingOnPause();
+        
+        ImageHandler imageHandler = ImageHandler.getInstance();
+        imageHandler.startBackgroundLoadingOnPause();
+        
         FireBaseAsyncBandEventWrite backgroundTask = new FireBaseAsyncBandEventWrite();
         backgroundTask.execute();
     }
@@ -1382,12 +1391,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("Saving Data", "Saving state during Pause");
         super.onPause();
 
-        // Start background loading of images and descriptions when app goes to background
-        CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
-        descriptionHandler.startBackgroundLoadingOnPause();
-        
-        ImageHandler imageHandler = ImageHandler.getInstance();
-        imageHandler.startBackgroundLoadingOnPause();
+        // Background loading will be started in onStop() when app truly goes to background
 
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
@@ -1481,9 +1485,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d(TAG, notificationTag + " In onResume - 8");
 
-        // Resume background loading when returning from details screen
-        CustomerDescriptionHandler.resumeBackgroundLoading();
-        ImageHandler.resumeBackgroundLoading();
+        // Pause background loading when app comes to foreground from background
+        if (inBackground) {
+            Log.d("BackgroundLoading", "App coming to foreground from background, pausing bulk downloads");
+            CustomerDescriptionHandler.pauseBackgroundLoading();
+            ImageHandler.pauseBackgroundLoading();
+            inBackground = false; // Reset the flag
+        }
 
     }
 
@@ -1650,10 +1658,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
         BandInfo.setSelectedBand(selectedBand);
-
-        // Pause background loading when entering details screen
-        CustomerDescriptionHandler.pauseBackgroundLoading();
-        ImageHandler.pauseBackgroundLoading();
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
         startActivity(showDetails);

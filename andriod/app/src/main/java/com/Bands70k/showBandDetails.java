@@ -66,9 +66,7 @@ public class showBandDetails extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.band_details);
 
-        // Pause background loading when entering details screen
-        CustomerDescriptionHandler.pauseBackgroundLoading();
-        ImageHandler.pauseBackgroundLoading();
+        // Background loading continues while in details screen
 
         View view = getWindow().getDecorView();
 
@@ -88,18 +86,153 @@ public class showBandDetails extends Activity {
             onBackPressed();
         } else if (bandName.isEmpty() == false) {
             bandHandler = new BandNotes(bandName);
-            bandNote = bandHandler.getBandNoteImmediate();
-
-            // Load the specific band's image if not already cached
-            ImageHandler bandImageHandler = new ImageHandler(bandName);
-            bandImageHandler.getImageImmediate();
-
+            
+            // Check if note is already cached - if so, use it immediately
+            String cachedNote = bandHandler.getBandNoteFromFile();
+            if (cachedNote != null && !cachedNote.trim().isEmpty()) {
+                bandNote = bandHandler.getBandNote(); // Apply URL formatting
+                Log.d("descriptionMapFileError", "Using cached note for " + bandName);
+            } else {
+                bandNote = "<div style='color: #888; font-style: italic; padding: 10px; text-align: center;'>" +
+                          "<div style='margin-bottom: 5px;'>📝 Loading note...</div>" +
+                          "<div style='font-size: 12px; color: #aaa;'>Please wait while we fetch the content</div>" +
+                          "</div>";
+                Log.d("descriptionMapFileError", "Using placeholder note for " + bandName);
+            }
+            
             Log.d("descriptionMapFileError",  "1 bandNote = " + bandNote);
             initializeWebContent();
+            
+            // Load missing content asynchronously (image and note if not cached)
+            loadContentAsync();
         } else {
             onBackPressed();
         }
 
+    }
+
+    /**
+     * Loads band content (note and image) asynchronously and refreshes the UI when ready.
+     */
+    private void loadContentAsync() {
+        // Load content in background thread to avoid blocking UI
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Log.d("AsyncContent", "Starting async content loading for " + bandName);
+                    
+                    // Load note - only if not already cached
+                    String loadedNote = null;
+                    boolean noteNeedsUpdate = false;
+                    try {
+                        // Check if note is already cached
+                        String cachedNote = bandHandler.getBandNoteFromFile();
+                        if (cachedNote != null && !cachedNote.trim().isEmpty()) {
+                            // Note is already cached, no download needed
+                            Log.d("AsyncContent", "Note already cached for " + bandName + ", skipping download");
+                        } else {
+                            // Download note immediately if not cached
+                            Log.d("AsyncContent", "Note not cached, downloading for " + bandName);
+                            loadedNote = bandHandler.getBandNoteImmediate();
+                            noteNeedsUpdate = true;
+                            if (loadedNote != null && !loadedNote.trim().isEmpty()) {
+                                Log.d("AsyncContent", "Note downloaded successfully for " + bandName);
+                            } else {
+                                Log.d("AsyncContent", "Note download returned empty for " + bandName);
+                                loadedNote = "<div style='color: #666;'>No note available for this band.</div>";
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("AsyncContent", "Error loading note for " + bandName, e);
+                        loadedNote = "<div style='color: #cc6666;'>Note could not be loaded.</div>";
+                        noteNeedsUpdate = true;
+                    }
+                    
+                    // Load image only if not already cached
+                    try {
+                        ImageHandler bandImageHandler = new ImageHandler(bandName);
+                        // Check if image is already cached  
+                        java.net.URI existingImage = bandImageHandler.getImage();
+                        if (existingImage != null) {
+                            Log.d("AsyncContent", "Image already cached for " + bandName + ", skipping download");
+                        } else {
+                            Log.d("AsyncContent", "Image not cached, downloading for " + bandName);
+                            bandImageHandler.getImageImmediate();
+                            Log.d("AsyncContent", "Image download completed for " + bandName);
+                        }
+                    } catch (Exception e) {
+                        Log.e("AsyncContent", "Error loading image for " + bandName, e);
+                    }
+                    
+                    // Update UI on main thread only if content changed
+                    final String finalNote = loadedNote;
+                    final boolean needsUpdate = noteNeedsUpdate;
+                    if (needsUpdate) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (finalNote != null) {
+                                    bandNote = finalNote;
+                                    Log.d("AsyncContent", "Refreshing UI with updated content for " + bandName);
+                                    refreshWebContent();
+                                } else {
+                                    Log.d("AsyncContent", "No content update needed for " + bandName);
+                                }
+                            }
+                        });
+                    } else {
+                        Log.d("AsyncContent", "No UI refresh needed for " + bandName + " - content already cached");
+                    }
+                    
+                } catch (Exception e) {
+                    Log.e("AsyncContent", "Error in async content loading for " + bandName, e);
+                }
+            }
+        }).start();
+    }
+    
+    /**
+     * Refreshes the web view content with updated note and image data.
+     */
+    private void refreshWebContent() {
+        if (mWebView != null) {
+            Log.d("RefreshContent", "Refreshing web content for " + bandName);
+            
+            // Regenerate HTML with updated content
+            DetailHtmlGeneration htmlGen = new DetailHtmlGeneration(getApplicationContext());
+            
+            DisplayMetrics metrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            int widthPixels = metrics.widthPixels;
+            float scaleDense = metrics.scaledDensity;
+            int displayWidth = (widthPixels/(int)scaleDense - 100);
+            
+            SetButtonColors();
+            
+            String refreshedHtml = htmlGen.setupTitleAndLogo(bandName);
+            
+            if (staticVariables.writeNoteHtml.isEmpty() == false) {
+                refreshedHtml += staticVariables.writeNoteHtml;
+            } else {
+                refreshedHtml += htmlGen.displaySchedule(bandName, displayWidth);
+                refreshedHtml += htmlGen.displayLinks(bandName, orientation);
+                
+                if (!orientation.equals("landscape")) {
+                    refreshedHtml += htmlGen.displayExtraData(bandName);
+                    refreshedHtml += htmlGen.displayNotes(bandNote);
+                }
+                
+                refreshedHtml += htmlGen.displayMustMightWont(rankIconLocation,
+                        unknownButtonColor,
+                        mustButtonColor,
+                        mightButtonColor,
+                        wontButtonColor);
+            }
+            
+            mWebView.loadDataWithBaseURL(null, refreshedHtml, "text/html", "UTF-8", null);
+            Log.d("RefreshContent", "Web content refreshed for " + bandName);
+        }
     }
 
 
@@ -333,6 +466,8 @@ public class showBandDetails extends Activity {
     protected void onPause() {
         super.onPause();
         mWebView.reload();
+        
+        // Background loading is managed by main activity lifecycle only
     }
 
     @Override
@@ -341,6 +476,8 @@ public class showBandDetails extends Activity {
         setContentView(R.layout.band_details);
         initializeWebContent();
         inLink = false;
+        
+        // Background loading is managed by main activity lifecycle only
     }
 
     @Override
@@ -363,9 +500,7 @@ public class showBandDetails extends Activity {
     
     @Override
     protected void onDestroy() {
-        // Resume background loading when leaving details screen
-        CustomerDescriptionHandler.resumeBackgroundLoading();
-        ImageHandler.resumeBackgroundLoading();
+        // Background loading is controlled by app lifecycle (onPause/onResume), not details screen
         super.onDestroy();
     }
 

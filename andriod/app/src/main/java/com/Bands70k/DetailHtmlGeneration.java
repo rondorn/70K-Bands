@@ -36,8 +36,20 @@ public class DetailHtmlGeneration {
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
-        String htmlImage = String.valueOf(imageHandler.getImageImmediate());
-        String imageSetup = getImageBoundry(htmlImage, bandName);
+        // Use cache-only image loading to avoid blocking the UI thread
+        java.net.URI imageURI = imageHandler.getImage();
+        String htmlImage = "";
+        String imageSetup = "width=70%"; // Default image setup
+        
+        if (imageURI != null) {
+            htmlImage = imageURI.toString();
+            imageSetup = getImageBoundryFromFile(htmlImage, bandName);
+        } else {
+            // Image not cached - will be loaded by background thread and screen will refresh
+            // Use reasonable placeholder dimensions (most images end up as height=10%)
+            imageSetup = "height=10%";
+            Log.d("loadImageFile", "Image not cached for " + bandName + ", using placeholder");
+        }
         Log.d("loadImageFile", "htmlImahge is   " + htmlImage);
         String htmlText =
                 "<html><head>" +
@@ -98,6 +110,49 @@ public class DetailHtmlGeneration {
 
         Log.d("tileLogohtmlData", "image dimensions are " + String.valueOf(ratio) + "-" + imageSetup + "-" + bandName);
 
+        return imageSetup;
+    }
+
+    /**
+     * Determines the image boundary for a local cached image file.
+     * @param imageFilePath The local file path to the image.
+     * @param bandName The name of the band.
+     * @return The image boundary string for HTML.
+     */
+    public String getImageBoundryFromFile(String imageFilePath, String bandName){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+        int width = 0;
+        int height = 0;
+        String imageSetup = "width=70%"; // default
+
+        try {
+            // Decode the local file instead of downloading from URL
+            java.io.File imageFile = new java.io.File(java.net.URI.create(imageFilePath));
+            if (imageFile.exists()) {
+                Bitmap bmp = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
+                if (bmp != null) {
+                    width = bmp.getWidth();
+                    height = bmp.getHeight();
+                    bmp.recycle(); // Free memory
+                }
+            }
+        } catch (Exception e) {
+            Log.e("ImageBoundry", "Error processing cached image for " + bandName, e);
+        }
+        
+        int ratio = 0;
+        if (width > 0 && height > 0) {
+            ratio = (width / height);
+            if (ratio > 5) {
+                imageSetup = "width=70%";
+            } else {
+                imageSetup = "height=10%";
+            }
+        }
+
+        Log.d("tileLogohtmlData", "cached image dimensions are " + String.valueOf(ratio) + "-" + imageSetup + "-" + bandName);
         return imageSetup;
     }
 

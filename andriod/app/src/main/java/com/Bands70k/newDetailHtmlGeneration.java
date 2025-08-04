@@ -32,7 +32,17 @@ public class newDetailHtmlGeneration {
     public String setupTitleAndLogo(String bandName){
 
         ImageHandler imageHandler = new ImageHandler(bandName);
-        String imageUrl = String.valueOf(imageHandler.getImageImmediate());
+        // Use cache-only image loading to avoid blocking the UI thread
+        java.net.URI imageURI = imageHandler.getImage();
+        String imageUrl = "";
+        
+        if (imageURI != null) {
+            imageUrl = imageURI.toString();
+            Log.d("loadImageFile", "Using cached image for " + bandName + ": " + imageUrl);
+        } else {
+            // Image not cached - will be loaded by background thread and screen will refresh
+            Log.d("loadImageFile", "Image not cached for " + bandName + ", using empty placeholder");
+        }
 
         String htmlText =
                 "<html><head>" +
@@ -44,7 +54,7 @@ public class newDetailHtmlGeneration {
                         "<div style='height:20px;font-size:130%;left:0;right:0;'>" +
                         "<center>" + bandName + "</center>" + "</div>" +
                         "<div style='width=100%;left:0;right:0;'>" +
-                        "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageUrl + "'</img></center></div>";
+                        "<center><img id=\"bandLogo\" style='max-height:100px;max-width:90%' src='" + imageUrl + "'></center></div>";
 
         Log.d("tileLogohtmlData", "tile Logo html Data is :" + htmlText);
 
