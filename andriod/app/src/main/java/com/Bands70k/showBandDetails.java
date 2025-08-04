@@ -70,6 +70,10 @@ public class showBandDetails extends Activity {
         CustomerDescriptionHandler.pauseBackgroundLoading();
         ImageHandler.pauseBackgroundLoading();
 
+        // Trigger image downloads when entering details screen
+        ImageHandler imageHandler = ImageHandler.getInstance();
+        imageHandler.getAllRemoteImages();
+
         View view = getWindow().getDecorView();
 
         int orientationNum = getResources().getConfiguration().orientation;

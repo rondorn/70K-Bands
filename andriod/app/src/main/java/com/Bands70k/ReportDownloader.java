@@ -64,7 +64,7 @@ public class ReportDownloader {
             if (new File(cachedFile).exists()) {
                 Log.d(TAG, "Using cached report file");
                 try {
-                    String content = readFileContent(cachedFile);
+                    String content = readFileContentOptimized(cachedFile);
                     callback.onDownloadComplete(cachedFile, content);
                 } catch (IOException e) {
                     callback.onDownloadError("Error reading cached file: " + e.getMessage());
@@ -76,28 +76,45 @@ public class ReportDownloader {
     }
     
     /**
-     * Reads the content of a file as a string.
-     * @param filePath The path to the file.
-     * @return The file content as a string.
-     * @throws IOException If reading fails.
-     */
-    private String readFileContent(String filePath) throws IOException {
-        StringBuilder content = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            content.append(line).append("\n");
-        }
-        reader.close();
-        return content.toString();
-    }
-    
-    /**
      * Gets the path to the cached report file.
      * @return The absolute path to the cached report file.
      */
     public String getCachedReportPath() {
         return context.getFilesDir().getAbsolutePath() + File.separator + REPORT_FILENAME;
+    }
+    
+    /**
+     * Gets the report URL from the cached file by parsing the HTML content.
+     * @param filePath The path to the cached file.
+     * @return The report URL if found, null otherwise.
+     */
+    public String getReportUrlFromCachedFile(String filePath) {
+        try {
+            String content = readFileContentOptimized(filePath);
+            // Look for a meta tag or script tag that contains the report URL
+            // This is a simple implementation - you might need to adjust based on your HTML structure
+            if (content.contains("reportUrl")) {
+                // Extract URL from content - this is a placeholder implementation
+                // You'll need to implement proper URL extraction based on your HTML structure
+                return staticVariables.getPointerUrlData("reportUrl");
+            }
+            return null;
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading cached file for URL extraction: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Downloads the report URL in the background and caches it.
+     * @param callback The callback to notify on completion or error.
+     */
+    public void downloadReportUrlInBackground(DownloadCallback callback) {
+        if (isNetworkAvailable()) {
+            new DownloadUrlTask(callback).execute();
+        } else {
+            callback.onDownloadError("No internet connection available");
+        }
     }
     
     /**
@@ -109,6 +126,26 @@ public class ReportDownloader {
             (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+    
+    /**
+     * Reads file content with optimized performance.
+     * @param filePath The path to the file.
+     * @return The file content as a string.
+     * @throws IOException If reading fails.
+     */
+    private String readFileContentOptimized(String filePath) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"), 8192);
+        StringBuilder content = new StringBuilder(8192);
+        char[] buffer = new char[8192];
+        int bytesRead;
+        
+        while ((bytesRead = reader.read(buffer)) != -1) {
+            content.append(buffer, 0, bytesRead);
+        }
+        
+        reader.close();
+        return content.toString();
     }
     
     /**
@@ -143,7 +180,7 @@ public class ReportDownloader {
             if (result != null) {
                 // Read the content and pass both file path and content
                 try {
-                    String content = readFileContent(result);
+                    String content = readFileContentOptimized(result);
                     callback.onDownloadComplete(result, content);
                 } catch (IOException e) {
                     callback.onDownloadError("Error reading downloaded file: " + e.getMessage());
@@ -154,7 +191,7 @@ public class ReportDownloader {
                 if (new File(cachedFile).exists()) {
                     Log.d(TAG, "Download failed, using cached file");
                     try {
-                        String content = readFileContent(cachedFile);
+                        String content = readFileContentOptimized(cachedFile);
                         callback.onDownloadComplete(cachedFile, content);
                     } catch (IOException e) {
                         callback.onDownloadError("Error reading cached file: " + e.getMessage());
@@ -177,8 +214,9 @@ public class ReportDownloader {
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(30000);
-            connection.setReadTimeout(45000);
+            // Reduced timeouts for faster failure detection
+            connection.setConnectTimeout(10000);  // 10 seconds instead of 30
+            connection.setReadTimeout(15000);     // 15 seconds instead of 45
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0)");
             
             try {
@@ -187,12 +225,12 @@ public class ReportDownloader {
                 
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     InputStream inputStream = connection.getInputStream();
-                    String content = readStream(inputStream);
+                    String content = readStreamOptimized(inputStream);
                     
                     // Save to local file
                     String filePath = getCachedReportPath();
                     Log.d(TAG, "Saving to file path: " + filePath);
-                    saveToFile(content, filePath);
+                    saveToFileOptimized(content, filePath);
                     
                     Log.d(TAG, "Report downloaded and saved to: " + filePath);
                     return filePath;
@@ -210,18 +248,19 @@ public class ReportDownloader {
         }
         
         /**
-         * Reads an InputStream into a string.
+         * Reads an InputStream into a string with optimized performance.
          * @param inputStream The input stream to read.
          * @return The content as a string.
          * @throws IOException If reading fails.
          */
-        private String readStream(InputStream inputStream) throws IOException {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder content = new StringBuilder();
-            String line;
+        private String readStreamOptimized(InputStream inputStream) throws IOException {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 8192); // Larger buffer
+            StringBuilder content = new StringBuilder(8192); // Pre-allocate buffer
+            char[] buffer = new char[8192]; // Use char buffer for better performance
+            int bytesRead;
             
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
+            while ((bytesRead = reader.read(buffer)) != -1) {
+                content.append(buffer, 0, bytesRead);
             }
             
             reader.close();
@@ -229,12 +268,12 @@ public class ReportDownloader {
         }
         
         /**
-         * Saves content to a file at the given path.
+         * Saves content to a file with optimized performance.
          * @param content The content to save.
          * @param filePath The file path to save to.
          * @throws IOException If writing fails.
          */
-        private void saveToFile(String content, String filePath) throws IOException {
+        private void saveToFileOptimized(String content, String filePath) throws IOException {
             try {
                 File file = new File(filePath);
                 File parentDir = file.getParentFile();
@@ -243,14 +282,55 @@ public class ReportDownloader {
                 }
                 
                 FileOutputStream fos = new FileOutputStream(file);
-                fos.write(content.getBytes("UTF-8"));
+                byte[] bytes = content.getBytes("UTF-8");
+                fos.write(bytes);
                 fos.flush();
                 fos.close();
                 
-                Log.d(TAG, "File saved successfully: " + filePath + " (size: " + content.length() + " chars)");
+                Log.d(TAG, "File saved successfully: " + filePath + " (size: " + bytes.length + " bytes)");
             } catch (IOException e) {
                 Log.e(TAG, "Error saving file: " + e.getMessage());
                 throw e;
+            }
+        }
+    }
+    
+    /**
+     * AsyncTask for downloading the report URL in the background.
+     */
+    private class DownloadUrlTask extends AsyncTask<Void, Void, String> {
+        private DownloadCallback callback;
+        private String errorMessage;
+        
+        /**
+         * Constructs a DownloadUrlTask with the given callback.
+         * @param callback The callback to notify on completion or error.
+         */
+        public DownloadUrlTask(DownloadCallback callback) {
+            this.callback = callback;
+        }
+        
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                // Get the report URL from pointer data
+                String reportUrl = staticVariables.getPointerUrlData("reportUrl");
+                Log.d(TAG, "Retrieved report URL: " + reportUrl);
+                return reportUrl;
+            } catch (Exception e) {
+                errorMessage = e.getMessage();
+                Log.e(TAG, "Failed to get report URL: " + e.getMessage());
+                return null;
+            }
+        }
+        
+        @Override
+        protected void onPostExecute(String result) {
+            if (result != null && !result.isEmpty()) {
+                // Download the actual report content
+                new DownloadTask(callback).execute(result);
+            } else {
+                callback.onDownloadError(errorMessage != null ? errorMessage : "Failed to get report URL");
             }
         }
     }
