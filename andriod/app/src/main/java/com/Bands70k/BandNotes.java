@@ -174,8 +174,9 @@ public class BandNotes {
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2 && bandCustNoteFile.exists() == false) {
 
-            notesData = notesData.replaceAll("\\n", "<br>");
-            notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
+            // Preserve line breaks for native TextView display instead of converting to HTML
+            // notesData = notesData.replaceAll("\\n", "<br>");  // Removed - no longer needed for native TextViews
+            // notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");  // Removed - no longer needed
 
             Log.d("70K_NOTE_DEBUG", "Writing defaultNote to " + bandNoteFile + " - " + notesData);
 
