@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:fitsSystemWindows="true"
+    android:id="@+id/main_container">
+
+    <!-- Main scrollable content -->
+    <ScrollView
+        android:id="@+id/content_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_ranking_buttons"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/content_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="0dp">
+
+            <!-- Band Title and Logo Section -->
+            <LinearLayout
+                android:id="@+id/title_logo_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <!-- Band Name -->
+                <TextView
+                    android:id="@+id/band_name_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp"
+                    android:text="Band Name"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:textStyle="normal"
+                    android:gravity="center"
+                    android:layout_marginTop="0dp"
+                    android:layout_marginBottom="0dp" />
+
+                <!-- Band Logo -->
+                <ImageView
+                    android:id="@+id/band_logo_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:adjustViewBounds="true"
+                    android:maxWidth="280dp"
+                    android:maxHeight="120dp"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Band Logo" />
+
+            </LinearLayout>
+
+            <!-- Schedule Section -->
+            <LinearLayout
+                android:id="@+id/schedule_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp">
+
+                <!-- Schedule items will be added dynamically -->
+
+            </LinearLayout>
+
+            <!-- Links Section -->
+            <LinearLayout
+                android:id="@+id/links_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:visibility="gone">
+
+                <!-- Links Label with fixed width to align with country labels -->
+                <TextView
+                    android:id="@+id/links_label"
+                    android:layout_width="120dp"
+                    android:layout_height="wrap_content"
+                    android:text="Links:"
+                    android:textColor="#4A90E2"
+                    android:textSize="15sp"
+                    android:gravity="start|center_vertical" />
+
+                <!-- Container for dynamically spaced icons aligned with country text -->
+                <LinearLayout
+                    android:id="@+id/links_icon_container"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="start"
+                    android:layout_marginStart="0dp">
+
+                    <!-- Website Link -->
+                    <ImageView
+                        android:id="@+id/website_link"
+                        android:layout_width="43dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/icon_www"
+                        android:contentDescription="Official Website"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter" />
+
+                    <!-- Metal Archives Link -->
+                    <ImageView
+                        android:id="@+id/metal_archives_link"
+                        android:layout_width="43dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/icon_ma"
+                        android:contentDescription="Metal Archives"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter" />
+
+                    <!-- Wikipedia Link -->
+                    <ImageView
+                        android:id="@+id/wikipedia_link"
+                        android:layout_width="43dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/icon_wiki"
+                        android:contentDescription="Wikipedia"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter" />
+
+                    <!-- YouTube Link -->
+                    <ImageView
+                        android:id="@+id/youtube_link"
+                        android:layout_width="43dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/icon_youtube"
+                        android:contentDescription="YouTube"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:padding="4dp"
+                        android:scaleType="fitCenter" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Extra Data Section -->
+            <LinearLayout
+                android:id="@+id/extra_data_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:visibility="gone">
+
+                <!-- Country -->
+                <LinearLayout
+                    android:id="@+id/country_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/country"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/country_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- Genre -->
+                <LinearLayout
+                    android:id="@+id/genre_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/genre"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/genre_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- Last On Cruise -->
+                <LinearLayout
+                    android:id="@+id/last_cruise_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/LastOnCruise"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/last_cruise_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- Note -->
+                <LinearLayout
+                    android:id="@+id/note_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="22dp"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/note_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#CCCCCC"
+                        android:textSize="16sp"
+                        android:singleLine="false"
+                        android:scrollHorizontally="false"
+                        android:justificationMode="inter_word" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- User Notes Section -->
+            <LinearLayout
+                android:id="@+id/user_notes_section"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/user_notes_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:lineSpacingMultiplier="1.1"
+                    android:scrollbars="vertical"
+                    android:padding="0dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:longClickable="true"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:singleLine="false"
+                    android:scrollHorizontally="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Bottom Ranking Buttons -->
+    <LinearLayout
+        android:id="@+id/bottom_ranking_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:background="@android:color/black"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:gravity="center">
+
+        <!-- Ranking Icon -->
+        <ImageView
+            android:id="@+id/ranking_icon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="Current Ranking"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <!-- Unknown Button -->
+        <Button
+            android:id="@+id/unknown_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:text="Unknown"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:background="@android:color/black"
+            android:clickable="true"
+            android:focusable="true"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <!-- Must Button -->
+        <Button
+            android:id="@+id/must_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:text="Must"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:background="@android:color/black"
+            android:clickable="true"
+            android:focusable="true"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <!-- Might Button -->
+        <Button
+            android:id="@+id/might_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:text="Might"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:background="@android:color/black"
+            android:clickable="true"
+            android:focusable="true"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <!-- Won't Button -->
+        <Button
+            android:id="@+id/wont_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:text="Won't"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:background="@android:color/black"
+            android:clickable="true"
+            android:focusable="true"
+            style="?android:attr/buttonBarButtonStyle" />
+
+    </LinearLayout>
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/loading_progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <!-- Snackbar Text (for compatibility) -->
+    <TextView
+        android:id="@+id/snackbarText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+</RelativeLayout>

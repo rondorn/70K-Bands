@@ -670,16 +670,17 @@ public class CustomerDescriptionHandler {
     }
 
     /**
-     * Removes special characters and replaces newlines with HTML breaks.
+     * Removes special characters and preserves newlines for native TextView display.
      * @param text The text to clean.
      * @return The cleaned text.
      */
     private String removeSpecialCharsFromString(String text) {
         String fixedText = "";
         if (text != null) {
-            fixedText = text.replaceAll("\\r", "<br><br>");
-            fixedText = fixedText.replaceAll("\\n", "<br><br>");
-            fixedText = fixedText.replaceAll("[^\\p{ASCII}]", "");
+            // Preserve original line breaks for native TextView display
+            // No longer convert to <br> tags since we're using native Android views
+            fixedText = text; // Keep original line breaks intact
+            fixedText = fixedText.replaceAll("[^\\p{ASCII}\\r\\n]", ""); // Remove non-ASCII except line breaks
             fixedText = fixedText.replaceAll("\\?", "");
         }
         return fixedText;
