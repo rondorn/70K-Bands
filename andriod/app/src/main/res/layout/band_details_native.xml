@@ -269,7 +269,12 @@
                         android:textSize="16sp"
                         android:singleLine="false"
                         android:scrollHorizontally="false"
-                        android:justificationMode="inter_word" />
+                        android:justificationMode="inter_word"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:minHeight="48dp" />
 
                 </LinearLayout>
 
