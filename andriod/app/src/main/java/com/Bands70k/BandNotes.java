@@ -224,8 +224,8 @@ public class BandNotes {
         if (notesData.startsWith("Comment text is not available yet") == false &&
                 notesData.length() > 2 && strippedDefaultNote.equals(strippedCustomNote) == false) {
 
-            notesData = notesData.replaceAll("\\n", "<br>");
-            notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");
+            // Preserve line breaks for native TextView display
+            // No longer convert to <br> tags since we're using native Android views
 
             Log.d("70K_NOTE_DEBUG", "Writing customDescription to " + bandNoteFile + " and " + bandCustNoteFile + " - " + notesData);
 
