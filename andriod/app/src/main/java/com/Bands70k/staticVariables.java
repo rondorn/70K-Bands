@@ -185,8 +185,6 @@ public class staticVariables {
     public static preferencesHandler preferences;
     public static showsAttended attendedHandler;
 
-    public static String writeNoteHtml = "";
-
     public static Context context;
 
     public static Boolean loadingBands = false;

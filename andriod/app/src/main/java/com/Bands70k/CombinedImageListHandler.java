@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.ArrayList;
 import static com.Bands70k.staticVariables.*;
 
@@ -33,6 +34,9 @@ public class CombinedImageListHandler {
     // File path for the combined image list cache
     private final File combinedImageListFile;
     
+    // Year change detection
+    private final AtomicInteger currentYear = new AtomicInteger(0);
+    
     /**
      * Private constructor for singleton pattern.
      */
@@ -53,12 +57,47 @@ public class CombinedImageListHandler {
     }
     
     /**
+     * Checks if year has changed and clears cache if needed.
+     * @return True if year changed, false otherwise.
+     */
+    private boolean checkYearChange() {
+        int newYear = staticVariables.eventYearRaw;
+        int oldYear = currentYear.get();
+        
+        if (oldYear != 0 && oldYear != newYear) {
+            Log.d(TAG, "Year changed from " + oldYear + " to " + newYear + ", clearing combined image list cache");
+            currentYear.set(newYear);
+            
+            // Clear cached combined list to force regeneration with new year data
+            synchronized (lock) {
+                combinedImageList.clear();
+            }
+            
+            // Delete cached file to force regeneration
+            if (combinedImageListFile.exists()) {
+                combinedImageListFile.delete();
+                Log.d(TAG, "Deleted combined image list cache file for year change");
+            }
+            
+            return true;
+        }
+        
+        if (oldYear == 0) {
+            currentYear.set(newYear);
+        }
+        
+        return false;
+    }
+    
+    /**
      * Generates the combined image list from artist and event data.
+     * This is lightweight metadata processing that creates a list of image URLs.
+     * NO ACTUAL IMAGE DOWNLOADING occurs in this method.
      * @param bandInfo Handler for band/artist data
      * @param completion Runnable called when the list is generated
      */
     public void generateCombinedImageList(BandInfo bandInfo, Runnable completion) {
-        Log.d(TAG, "Generating combined image list...");
+        Log.d(TAG, "Generating combined image list (URLs only, no downloads)...");
         
         new Thread(() -> {
             Map<String, String> newCombinedList = new HashMap<>();
@@ -101,7 +140,7 @@ public class CombinedImageListHandler {
             // Save to disk
             saveCombinedImageList();
             
-            Log.d(TAG, "Combined image list generated with " + newCombinedList.size() + " entries");
+            Log.d(TAG, "Combined image list generated with " + newCombinedList.size() + " URL entries (no downloads)");
             
             if (completion != null) {
                 completion.run();
@@ -115,6 +154,11 @@ public class CombinedImageListHandler {
      * @return The image URL or empty string if not found
      */
     public String getImageUrl(String name) {
+        // Check for year change first
+        if (checkYearChange()) {
+            Log.d(TAG, "Year changed detected, combined list cleared - will need regeneration");
+        }
+        
         String url = combinedImageList.get(name);
         if (url == null) {
             url = "";
@@ -245,6 +289,34 @@ public class CombinedImageListHandler {
     public void manualGenerateCombinedImageList(BandInfo bandInfo, Runnable completion) {
         Log.d(TAG, "Manual generation triggered");
         generateCombinedImageList(bandInfo, completion);
+    }
+    
+    /**
+     * Regenerates the combined image list after year change or new schedule data.
+     * This should be called when new schedule data is loaded that may contain new event images.
+     * This is lightweight URL list processing, NO ACTUAL IMAGE DOWNLOADING occurs.
+     * @param bandInfo Handler for band/artist data
+     */
+    public void regenerateAfterDataChange(BandInfo bandInfo) {
+        Log.d(TAG, "Regenerating combined image list after data change (URLs only, no downloads)");
+        
+        // Check for year change
+        boolean yearChanged = checkYearChange();
+        
+        // Always regenerate if year changed, or if current list is empty
+        boolean shouldRegenerate = yearChanged || combinedImageList.isEmpty() || needsRegeneration(bandInfo);
+        
+        if (shouldRegenerate) {
+            Log.d(TAG, "Regeneration needed - year changed: " + yearChanged + ", list empty: " + combinedImageList.isEmpty());
+            generateCombinedImageList(bandInfo, new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "Combined image list regenerated after data change (URLs only, no downloads)");
+                }
+            });
+        } else {
+            Log.d(TAG, "No regeneration needed - combined list is current");
+        }
     }
     
     /**

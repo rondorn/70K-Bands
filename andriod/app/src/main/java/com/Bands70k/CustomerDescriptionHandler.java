@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.io.FileNotFoundException;
 
 
@@ -45,6 +46,9 @@ public class CustomerDescriptionHandler {
     // Background loading state
     private static final AtomicBoolean backgroundLoadingActive = new AtomicBoolean(false);
     private static final AtomicBoolean detailsScreenActive = new AtomicBoolean(false);
+    
+    // Year change tracking (prevent bulk loading immediately after year change)
+    private static final AtomicLong lastYearChangeTime = new AtomicLong(0);
     
     // Data storage
     private Map<String, String> descriptionMapData = new HashMap<String,String>();
@@ -126,6 +130,10 @@ public class CustomerDescriptionHandler {
             backgroundLoadingActive.set(false);
             detailsScreenActive.set(false);
             
+            // Record year change time to prevent immediate bulk loading
+            lastYearChangeTime.set(System.currentTimeMillis());
+            Log.d("CustomerDescriptionHandler", "Year change timestamp recorded: " + lastYearChangeTime.get());
+            
             // Clear description map data to force reloading for new year
             descriptionMapData.clear();
             staticVariables.descriptionMapModData.clear();
@@ -145,9 +153,9 @@ public class CustomerDescriptionHandler {
                 currentBackgroundTask.cancel(true);
             }
             
-            // Restart background loading for new year
-            Log.d("CustomerDescriptionHandler", "Restarting background loading for new year: " + newYear);
-            startBackgroundLoading();
+            // DO NOT restart background loading automatically after year change
+            // Bulk loading should only happen when app goes to background (onPause)
+            Log.d("CustomerDescriptionHandler", "Year change complete - bulk loading will only occur when app goes to background");
             
             return true;
         }
@@ -212,6 +220,7 @@ public class CustomerDescriptionHandler {
         bandInfo.getDownloadtUrls();
 
         String descriptionMapURL = staticVariables.descriptionMap;
+        Log.d("SKILTRON_DEBUG", "Description map URL being used: " + descriptionMapURL);
 
         if (OnlineStatus.isOnline() == true) {
             try {
@@ -356,9 +365,9 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            // Check year change
+            // Check year change and clear cache if needed
             if (checkYearChange()) {
-                Log.d("CustomerDescriptionHandler", "Year changed, restarting background loading");
+                Log.d("CustomerDescriptionHandler", "Year changed detected, cache cleared - now starting background loading");
             }
             
             startBackgroundLoading();
@@ -368,9 +377,17 @@ public class CustomerDescriptionHandler {
     /**
      * Starts background loading of all descriptions when app goes to background.
      * This method should be called from the main activity's onPause() method.
+     * Prevents bulk loading immediately after year change to avoid inappropriate downloads.
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
+            // Check if it's too soon after a year change (prevent bulk loading for 10 seconds)
+            long timeSinceYearChange = System.currentTimeMillis() - lastYearChangeTime.get();
+            if (timeSinceYearChange < 10000) { // 10 seconds
+                Log.d("CustomerDescriptionHandler", "Skipping bulk loading - too soon after year change (" + timeSinceYearChange + "ms)");
+                return;
+            }
+            
             // Only start background loading if not already running
             if (!isRunning.get()) {
                 Log.d("CustomerDescriptionHandler", "Starting background loading due to app going to background");
@@ -494,6 +511,10 @@ public class CustomerDescriptionHandler {
                 if (!"Band".equals(rowData[0])) {
                     String normalizedBandName = normalizeBandName(rowData[0]);
                     Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                    // SKILTRON DEBUG: Log if this is Skiltron
+                    if (rowData[0].toLowerCase().contains("skiltron")) {
+                        Log.d("SKILTRON_DEBUG", "Found Skiltron in CSV! Raw: '" + rowData[0] + "' Normalized: '" + normalizedBandName + "' URL: " + rowData[1]);
+                    }
                     descriptionMapData.put(normalizedBandName, rowData[1]);
                     if (rowData.length > 2){
                         Log.d("descriptionMapFile", "Date value is " + rowData[2]);
@@ -553,6 +574,18 @@ public class CustomerDescriptionHandler {
 
         if (descriptionMapData.containsKey(normalizedBandName) == false) {
             Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning default note");
+            // SKILTRON DEBUG: Log all available keys if this is Skiltron
+            if (bandName.toLowerCase().contains("skiltron")) {
+                Log.d("SKILTRON_DEBUG", "Skiltron not found! Available keys in descriptionMapData:");
+                for (String key : descriptionMapData.keySet()) {
+                    if (key.toLowerCase().contains("skil")) {
+                        Log.d("SKILTRON_DEBUG", "Similar key found: '" + key + "'");
+                    }
+                }
+                Log.d("SKILTRON_DEBUG", "Total entries in descriptionMapData: " + descriptionMapData.size());
+                Log.d("SKILTRON_DEBUG", "Looking for normalized: '" + normalizedBandName + "'");
+                Log.d("SKILTRON_DEBUG", "Original band name: '" + bandName + "'");
+            }
             return bandNoteDefault;
         }
 
