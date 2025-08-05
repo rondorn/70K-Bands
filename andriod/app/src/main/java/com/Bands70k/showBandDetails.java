@@ -19,6 +19,11 @@ import android.os.Bundle;
 
 import android.os.SystemClock;
 
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+
 import androidx.core.app.NavUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -28,12 +33,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.webkit.JavascriptInterface;
 
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
 import android.widget.ProgressBar;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -47,6 +47,15 @@ import android.app.AlertDialog;
 import android.widget.EditText;
 import android.content.DialogInterface;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.content.Context;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -65,14 +74,14 @@ import static com.Bands70k.staticVariables.context;
 public class showBandDetails extends Activity {
     /** Called when the activity is first created. */
 
-    private WebView mWebView;
-    private String htmlText;
     private String mustButtonColor;
     private String mightButtonColor;
     private String wontButtonColor;
     private String unknownButtonColor;
     private Boolean inLink = false;
-    private ProgressBar webProgressBar;
+    
+    // INFINITE LOOP FIX: Flag to prevent repeated cache cleanup attempts
+    private boolean cacheCleanupAttempted = false;
     
     // Native view components
     private TextView bandNameText;
@@ -92,17 +101,20 @@ public class showBandDetails extends Activity {
     private ProgressBar loadingProgressBar;
     private ScrollView contentScrollView;
     private LinearLayout contentContainer;
-    private boolean useNativeView = true; // Toggle for native vs WebView
     private String orientation;
     private String bandNote;
     private String bandName;
     private BandNotes bandHandler;
     private Boolean clickedOnEvent = false;
 
-    private Intent browserIntent = null;
-
     private String rankIconLocation = "";
-    private int noteViewPercentage = 35;
+    
+    // WebView components for in-app external link browsing
+    private WebView inAppWebView;
+    private ProgressBar webViewProgressBar;
+    
+    // Swipe gesture detection
+    private GestureDetector swipeGestureDetector;
 
     public void onCreate(Bundle savedInstanceState) {
 
@@ -110,11 +122,10 @@ public class showBandDetails extends Activity {
 
         super.onCreate(savedInstanceState);
         
-        if (useNativeView) {
             setContentView(R.layout.band_details_native);
-        } else {
-            setContentView(R.layout.band_details);
-        }
+        
+        // Initialize swipe gesture detector
+        initializeSwipeGestureDetector();
 
         // Background loading continues while in details screen
 
@@ -136,36 +147,130 @@ public class showBandDetails extends Activity {
             onBackPressed();
         } else if (bandName.isEmpty() == false) {
             bandHandler = new BandNotes(bandName);
+            bandNote = ""; // Start with blank - content will load progressively
             
-            // Check if note is already cached - if so, use it immediately
-            String cachedNote = bandHandler.getBandNoteFromFile();
-            if (cachedNote != null && !cachedNote.trim().isEmpty()) {
-                bandNote = bandHandler.getBandNote(); // Apply URL formatting
-                Log.d("descriptionMapFileError", "Using cached note for " + bandName);
+            // IMMEDIATE SCREEN LOADING: Initialize UI components only (no data processing)
+            Log.d("PerformanceTrack", "Using IMMEDIATE loading path for " + bandName);
+            initializeUIComponentsOnly();
+            
+            // PROGRESSIVE LOADING: Load all data in background and update UI as ready
+            loadAllContentProgressively();
             } else {
-                bandNote = "<div style='color: #888; font-style: italic; padding: 10px; text-align: center;'>" +
-                          "<div style='margin-bottom: 5px;'>📝 Loading note...</div>" +
-                          "<div style='font-size: 12px; color: #aaa;'>Please wait while we fetch the content</div>" +
-                          "</div>";
-                Log.d("descriptionMapFileError", "Using placeholder note for " + bandName);
-            }
-            
-            if (useNativeView) {
-                initializeNativeContent();
-            } else {
-                initializeWebContent();
-            }
-            
-            // Load missing content asynchronously (image and note if not cached)
-            loadContentAsync();
-        } else {
             onBackPressed();
         }
 
     }
 
     /**
-     * Loads band content (note and image) asynchronously and refreshes the UI when ready.
+     * PROGRESSIVE LOADING: Load all content in background with UI updates as ready.
+     * Replaces both loadContentAsync and immediate heavy processing.
+     * CRASH-SAFE with comprehensive error handling and lifecycle checks.
+     */
+    private void loadAllContentProgressively() {
+        Log.d("ProgressiveLoading", "Starting progressive content loading for " + bandName);
+        
+        // Single background thread handles all data loading and UI updates
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // CRASH PREVENTION: Check activity state before starting phases
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed before progressive loading for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 1: Load cached note immediately if available
+                    loadCachedNoteIfAvailable();
+                    
+                    // Check activity state between phases
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 1 for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 2: Load and display cached image
+                    loadAndDisplayCachedImage();
+                    
+                    // Check activity state between phases
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 2 for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 3: Populate schedule, links, and other data
+                    populateStaticDataSections();
+                    
+                    // Check activity state between phases
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 3 for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 4: Download missing note if needed
+                    downloadMissingNoteIfNeeded();
+                    
+                    // Check activity state between phases
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 4 for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 5: Download missing image if needed  
+                    downloadMissingImageIfNeeded();
+                    
+                    // Check activity state before final phase
+                    if (isFinishing() || isDestroyed()) {
+                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 5 for " + bandName);
+                        return;
+                    }
+                    
+                    // PHASE 6: Final UI cleanup
+                    finalizeUILoading();
+                    
+                } catch (OutOfMemoryError oom) {
+                    Log.e("ProgressiveLoading", "OutOfMemoryError in progressive loading for " + bandName, oom);
+                    // Force garbage collection to try to recover
+                    System.gc();
+                    // CRASH PREVENTION: Safe cleanup
+                    if (!isFinishing() && !isDestroyed()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (!isFinishing() && !isDestroyed() && loadingProgressBar != null) {
+                                        loadingProgressBar.setVisibility(View.GONE);
+                                    }
+                                } catch (Exception e2) {
+                                    Log.e("ProgressiveLoading", "Error in OOM cleanup for " + bandName, e2);
+                                }
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    Log.e("ProgressiveLoading", "Error in progressive loading for " + bandName, e);
+                    // CRASH PREVENTION: Safe cleanup
+                    if (!isFinishing() && !isDestroyed()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (!isFinishing() && !isDestroyed() && loadingProgressBar != null) {
+                                        loadingProgressBar.setVisibility(View.GONE);
+                                    }
+                                } catch (Exception e2) {
+                                    Log.e("ProgressiveLoading", "Error in cleanup for " + bandName, e2);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }).start();
+    }
+    
+    /**
+     * LEGACY METHOD: Loads band content (note and image) asynchronously and refreshes the UI when ready.
      */
     private void loadContentAsync() {
         // Load content in background thread to avoid blocking UI
@@ -178,6 +283,7 @@ public class showBandDetails extends Activity {
                     // Load note - only if not already cached
                     String loadedNote = null;
                     boolean noteNeedsUpdate = false;
+                    boolean imageNeedsUpdate = false;
                     try {
                         // Check if note is already cached
                         String cachedNote = bandHandler.getBandNoteFromFile();
@@ -193,12 +299,12 @@ public class showBandDetails extends Activity {
                                 Log.d("AsyncContent", "Note downloaded successfully for " + bandName);
                             } else {
                                 Log.d("AsyncContent", "Note download returned empty for " + bandName);
-                                loadedNote = "<div style='color: #666;'>No note available for this band.</div>";
+                                loadedNote = "No note available for this band.";
                             }
                         }
                     } catch (Exception e) {
                         Log.e("AsyncContent", "Error loading note for " + bandName, e);
-                        loadedNote = "<div style='color: #cc6666;'>Note could not be loaded.</div>";
+                        loadedNote = "Note could not be loaded.";
                         noteNeedsUpdate = true;
                     }
                     
@@ -211,35 +317,43 @@ public class showBandDetails extends Activity {
                             Log.d("AsyncContent", "Image already cached for " + bandName + ", skipping download");
                         } else {
                             Log.d("AsyncContent", "Image not cached, downloading for " + bandName);
-                            bandImageHandler.getImageImmediate();
-                            Log.d("AsyncContent", "Image download completed for " + bandName);
+                            java.net.URI downloadedImage = bandImageHandler.getImageImmediate();
+                            if (downloadedImage != null) {
+                                imageNeedsUpdate = true;
+                                Log.d("AsyncContent", "Image download completed successfully for " + bandName);
+                            } else {
+                                Log.d("AsyncContent", "Image download failed for " + bandName);
+                            }
                         }
                     } catch (Exception e) {
                         Log.e("AsyncContent", "Error loading image for " + bandName, e);
                     }
                     
-                    // Update UI on main thread only if content changed
+                    // Update UI on main thread if content changed (note or image)
                     final String finalNote = loadedNote;
-                    final boolean needsUpdate = noteNeedsUpdate;
+                    final boolean needsNoteUpdate = noteNeedsUpdate;
+                    final boolean needsImageUpdate = imageNeedsUpdate;
+                    final boolean needsUpdate = needsNoteUpdate || needsImageUpdate;
                     if (needsUpdate) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                if (finalNote != null) {
+                                // Update note if needed
+                                if (needsNoteUpdate && finalNote != null) {
                                     bandNote = finalNote;
-                                    Log.d("AsyncContent", "Refreshing UI with updated content for " + bandName);
-                                    if (useNativeView) {
+                                    Log.d("AsyncContent", "Updating note content for " + bandName);
+                                }
+                                
+                                // Refresh UI if anything changed (note or image)
+                                if (needsNoteUpdate || needsImageUpdate) {
+                                    Log.d("AsyncContent", "Refreshing UI with updated content for " + bandName + 
+                                          " (note: " + needsNoteUpdate + ", image: " + needsImageUpdate + ")");
                                         refreshNativeContent();
-                                    } else {
-                                        refreshWebContent();
-                                    }
-                                } else {
-                                    Log.d("AsyncContent", "No content update needed for " + bandName);
                                 }
                             }
                         });
-                    } else {
-                        Log.d("AsyncContent", "No UI refresh needed for " + bandName + " - content already cached");
+                                    } else {
+                        Log.d("AsyncContent", "No UI refresh needed for " + bandName + " - note and image already cached");
                     }
                     
                 } catch (Exception e) {
@@ -249,49 +363,469 @@ public class showBandDetails extends Activity {
         }).start();
     }
     
+    // ==================== PROGRESSIVE LOADING PHASES ====================
+    
     /**
-     * Refreshes the web view content with updated note and image data.
+     * PHASE 1: Load cached note immediately if available (CRASH-SAFE with lifecycle checks)
      */
-    private void refreshWebContent() {
-        if (mWebView != null) {
-            Log.d("RefreshContent", "Refreshing web content for " + bandName);
-            
-            // Regenerate HTML with updated content
-            DetailHtmlGeneration htmlGen = new DetailHtmlGeneration(getApplicationContext());
-            
-            DisplayMetrics metrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            int widthPixels = metrics.widthPixels;
-            float scaleDense = metrics.scaledDensity;
-            int displayWidth = (widthPixels/(int)scaleDense - 100);
-            
-            SetButtonColors();
-            
-            String refreshedHtml = htmlGen.setupTitleAndLogo(bandName);
-            
-            if (staticVariables.writeNoteHtml.isEmpty() == false) {
-                refreshedHtml += staticVariables.writeNoteHtml;
-            } else {
-                refreshedHtml += htmlGen.displaySchedule(bandName, displayWidth);
-                refreshedHtml += htmlGen.displayLinks(bandName, orientation);
-                
-                if (!orientation.equals("landscape")) {
-                    refreshedHtml += htmlGen.displayExtraData(bandName);
-                    refreshedHtml += htmlGen.displayNotes(bandNote);
-                }
-                
-                refreshedHtml += htmlGen.displayMustMightWont(rankIconLocation,
-                        unknownButtonColor,
-                        mustButtonColor,
-                        mightButtonColor,
-                        wontButtonColor);
+    private void loadCachedNoteIfAvailable() {
+        try {
+            // Check if activity is still valid before proceeding
+            if (isFinishing() || isDestroyed()) {
+                Log.d("ProgressiveLoading", "Phase 1: Activity destroyed, skipping cached note for " + bandName);
+                return;
             }
             
-            mWebView.loadDataWithBaseURL(null, refreshedHtml, "text/html", "UTF-8", null);
-            Log.d("RefreshContent", "Web content refreshed for " + bandName);
+            String cachedNote = bandHandler.getBandNoteFromFile();
+            if (cachedNote != null && !cachedNote.trim().isEmpty()) {
+                Log.d("ProgressiveLoading", "Phase 1: Cached note found for " + bandName);
+                final String formattedNote = bandHandler.getBandNote(); // Apply URL formatting
+                
+                // CRASH PREVENTION: Check activity state before UI update
+                if (!isFinishing() && !isDestroyed()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                // Final check before UI update
+                                if (!isFinishing() && !isDestroyed() && noteValue != null) {
+                                    bandNote = formattedNote;
+                                    setupExtraDataSection(); // Update note display immediately (this is where notes are actually shown)
+                                    Log.d("ProgressiveLoading", "Phase 1: Cached note UI updated for " + bandName);
+                                }
+                            } catch (Exception e) {
+                                Log.e("ProgressiveLoading", "Phase 1: Error updating UI for " + bandName, e);
+                            }
+                        }
+                    });
+                                    }
+                                } else {
+                Log.d("ProgressiveLoading", "Phase 1: No cached note for " + bandName);
+            }
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 1: Error loading cached note for " + bandName, e);
         }
     }
-
+    
+    /**
+     * PHASE 2: Load and display cached image (CRASH-SAFE with memory management)
+     */
+    private void loadAndDisplayCachedImage() {
+        try {
+            // Check if activity is still valid before proceeding
+            if (isFinishing() || isDestroyed()) {
+                Log.d("ProgressiveLoading", "Phase 2: Activity destroyed, skipping image load for " + bandName);
+                return;
+            }
+            
+            ImageHandler imageHandler = new ImageHandler(bandName);
+            java.net.URI imageURI = imageHandler.getImage();
+            
+            if (imageURI != null) {
+                Log.d("ProgressiveLoading", "Phase 2: Cached image found for " + bandName);
+                java.io.File imageFile = new java.io.File(imageURI);
+                if (imageFile.exists() && imageFile.length() > 0) {
+                    // CRASH PREVENTION: Use safe bitmap decoding with memory limits
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                    
+                    // Check if image is reasonable size (prevent OutOfMemoryError)
+                    if (options.outWidth > 0 && options.outHeight > 0 && 
+                        options.outWidth <= 2048 && options.outHeight <= 2048) {
+                        
+                        options.inJustDecodeBounds = false;
+                        options.inSampleSize = 1; // Full resolution for cached images
+                        options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
+                        
+                        Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                        if (bitmap != null && !bitmap.isRecycled()) {
+                            // CRASH PREVENTION: Check activity state before UI update
+                            if (!isFinishing() && !isDestroyed()) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            // Final check before UI update
+                                            if (!isFinishing() && !isDestroyed() && bandLogoImage != null) {
+                                                displayBandImage(bitmap);
+                                            } else {
+                                                // Activity destroyed, recycle bitmap to prevent memory leak
+                                                if (!bitmap.isRecycled()) {
+                                                    bitmap.recycle();
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            Log.e("ProgressiveLoading", "Phase 2: Error updating UI for " + bandName, e);
+                                }
+                            }
+                        });
+                    } else {
+                                // Activity destroyed, recycle bitmap to prevent memory leak
+                                bitmap.recycle();
+                            }
+                        }
+                    } else {
+                        Log.w("ProgressiveLoading", "Phase 2: Image too large for " + bandName + 
+                              " (" + options.outWidth + "x" + options.outHeight + ")");
+                    }
+                }
+            } else {
+                Log.d("ProgressiveLoading", "Phase 2: No cached image for " + bandName);
+            }
+        } catch (OutOfMemoryError oom) {
+            Log.e("ProgressiveLoading", "Phase 2: OutOfMemoryError loading image for " + bandName, oom);
+            // Force garbage collection to try to recover
+            System.gc();
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 2: Error loading cached image for " + bandName, e);
+        }
+    }
+    
+    /**
+     * PHASE 3: Populate schedule, links, and other static data (CRASH-SAFE with lifecycle checks)
+     */
+    private void populateStaticDataSections() {
+        try {
+            // Check if activity is still valid before proceeding
+            if (isFinishing() || isDestroyed()) {
+                Log.d("ProgressiveLoading", "Phase 3: Activity destroyed, skipping static data for " + bandName);
+                return;
+            }
+            
+            Log.d("ProgressiveLoading", "Phase 3: Populating static data for " + bandName);
+            
+            // CRASH PREVENTION: Check activity state before UI update
+            if (!isFinishing() && !isDestroyed()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // Final check before UI update
+                            if (!isFinishing() && !isDestroyed() && scheduleSection != null) {
+                                setupScheduleSection();
+                                setupLinksSection();
+                                setupExtraDataSection();
+                                setupRankingButtons();
+                            }
+                } catch (Exception e) {
+                            Log.e("ProgressiveLoading", "Phase 3: Error updating UI for " + bandName, e);
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 3: Error populating static data for " + bandName, e);
+        }
+    }
+    
+    /**
+     * PHASE 4: Download missing note if needed (CRASH-SAFE with lifecycle checks)
+     */
+    private void downloadMissingNoteIfNeeded() {
+        try {
+            // Check if activity is still valid before proceeding
+            if (isFinishing() || isDestroyed()) {
+                Log.d("ProgressiveLoading", "Phase 4: Activity destroyed, skipping note download for " + bandName);
+                return;
+            }
+            
+            String cachedNote = bandHandler.getBandNoteFromFile();
+            if (cachedNote == null || cachedNote.trim().isEmpty()) {
+                Log.d("ProgressiveLoading", "Phase 4: Downloading missing note for " + bandName);
+                
+                // CRASH PREVENTION: Check activity state before expensive download
+                if (isFinishing() || isDestroyed()) {
+                    Log.d("ProgressiveLoading", "Phase 4: Activity destroyed during download check for " + bandName);
+                    return;
+                }
+                
+                String downloadedNote = bandHandler.getBandNoteImmediate();
+                if (downloadedNote != null && !downloadedNote.trim().isEmpty()) {
+                    // Apply proper formatting to the downloaded note
+                    final String formattedNote = bandHandler.getBandNote(); // This applies URL formatting
+                    
+                    // CRASH PREVENTION: Check activity state before UI update
+                    if (!isFinishing() && !isDestroyed()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    // Final check before UI update
+                                    if (!isFinishing() && !isDestroyed() && noteValue != null) {
+                                        bandNote = formattedNote;
+                                        setupExtraDataSection(); // Update with properly formatted note (this is where notes are actually shown)
+                                        Log.d("ProgressiveLoading", "Phase 4: Note UI updated for " + bandName);
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("ProgressiveLoading", "Phase 4: Error updating UI for " + bandName, e);
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    // CRASH PREVENTION: Check activity state before UI update
+                    if (!isFinishing() && !isDestroyed()) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (!isFinishing() && !isDestroyed() && noteValue != null) {
+                                        bandNote = "No note available for this band.";
+                                        setupExtraDataSection(); // Update note display (this is where notes are actually shown)
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("ProgressiveLoading", "Phase 4: Error updating UI for " + bandName, e);
+                                }
+                            }
+                        });
+                    }
+                }
+            } else {
+                Log.d("ProgressiveLoading", "Phase 4: Note already cached, skipping download for " + bandName);
+            }
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 4: Error downloading note for " + bandName, e);
+            // CRASH PREVENTION: Check activity state before UI update
+            if (!isFinishing() && !isDestroyed()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (!isFinishing() && !isDestroyed() && noteValue != null) {
+                                bandNote = "Note could not be loaded.";
+                                setupExtraDataSection(); // Update note display (this is where notes are actually shown)
+                            }
+                        } catch (Exception e2) {
+                            Log.e("ProgressiveLoading", "Phase 4: Error updating error UI for " + bandName, e2);
+                        }
+                    }
+                });
+            }
+        }
+    }
+    
+    /**
+     * PHASE 5: Download missing image if needed (CRASH-SAFE with memory management)
+     */
+    private void downloadMissingImageIfNeeded() {
+        try {
+            // Check if activity is still valid before proceeding
+            if (isFinishing() || isDestroyed()) {
+                Log.d("ProgressiveLoading", "Phase 5: Activity destroyed, skipping image download for " + bandName);
+                return;
+            }
+            
+            ImageHandler imageHandler = new ImageHandler(bandName);
+            java.net.URI existingImage = imageHandler.getImage();
+            if (existingImage == null) {
+                Log.d("ProgressiveLoading", "Phase 5: Downloading missing image for " + bandName);
+                
+                // CRASH PREVENTION: Check activity state before expensive download
+                if (isFinishing() || isDestroyed()) {
+                    Log.d("ProgressiveLoading", "Phase 5: Activity destroyed during download check for " + bandName);
+                    return;
+                }
+                
+                // CRASH PREVENTION: Wrap network download in try-catch for stability
+                java.net.URI downloadedImage = null;
+                try {
+                    downloadedImage = imageHandler.getImageImmediate();
+                } catch (OutOfMemoryError oom) {
+                    Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError during image download for " + bandName, oom);
+                    System.gc(); // Request garbage collection
+                    return; // Skip this image to prevent crash
+                } catch (Exception e) {
+                    Log.e("ProgressiveLoading", "Phase 5: Exception during image download for " + bandName, e);
+                    return; // Skip this image to prevent crash
+                }
+                if (downloadedImage != null) {
+                    java.io.File imageFile = new java.io.File(downloadedImage);
+                    if (imageFile.exists() && imageFile.length() > 0) {
+                        // CRASH PREVENTION: Use safe bitmap decoding with memory limits
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                        
+                        // Check if image is reasonable size (prevent OutOfMemoryError)
+                        if (options.outWidth > 0 && options.outHeight > 0 && 
+                            options.outWidth <= 2048 && options.outHeight <= 2048) {
+                            
+                            options.inJustDecodeBounds = false;
+                            options.inSampleSize = 1; // Full resolution for downloaded images
+                            options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
+                            
+                            Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                            if (bitmap != null && !bitmap.isRecycled()) {
+                                // CRASH PREVENTION: Check activity state before UI update
+                                if (!isFinishing() && !isDestroyed()) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                // Final check before UI update
+                                                if (!isFinishing() && !isDestroyed() && bandLogoImage != null) {
+                                                    displayBandImage(bitmap);
+            } else {
+                                                    // Activity destroyed, recycle bitmap to prevent memory leak
+                                                    if (!bitmap.isRecycled()) {
+                                                        bitmap.recycle();
+                                                    }
+                                                }
+                                            } catch (Exception e) {
+                                                Log.e("ProgressiveLoading", "Phase 5: Error updating UI for " + bandName, e);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    // Activity destroyed, recycle bitmap to prevent memory leak
+                                    bitmap.recycle();
+                                }
+                            }
+                        } else {
+                            Log.w("ProgressiveLoading", "Phase 5: Downloaded image too large for " + bandName + 
+                                  " (" + options.outWidth + "x" + options.outHeight + ")");
+                        }
+                    }
+                } else {
+                    Log.d("ProgressiveLoading", "Phase 5: Image download failed for " + bandName);
+                }
+            } else {
+                Log.d("ProgressiveLoading", "Phase 5: Image already cached, skipping download for " + bandName);
+            }
+        } catch (OutOfMemoryError oom) {
+            Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError downloading image for " + bandName, oom);
+            // Force garbage collection to try to recover
+            System.gc();
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 5: Error downloading image for " + bandName, e);
+        }
+    }
+    
+    /**
+     * PHASE 6: Final UI cleanup (CRASH-SAFE with lifecycle checks)
+     */
+    private void finalizeUILoading() {
+        try {
+            Log.d("ProgressiveLoading", "Phase 6: Finalizing UI for " + bandName);
+            
+            // CRASH PREVENTION: Check activity state before UI update
+            if (!isFinishing() && !isDestroyed()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // Final check before UI update
+                            if (!isFinishing() && !isDestroyed() && loadingProgressBar != null) {
+                                loadingProgressBar.setVisibility(View.GONE);
+                                Log.d("ProgressiveLoading", "Progressive loading complete for " + bandName);
+                            }
+                        } catch (Exception e) {
+                            Log.e("ProgressiveLoading", "Phase 6: Error finalizing UI for " + bandName, e);
+                        }
+                    }
+                });
+            } else {
+                Log.d("ProgressiveLoading", "Phase 6: Activity destroyed, skipping finalization for " + bandName);
+            }
+        } catch (Exception e) {
+            Log.e("ProgressiveLoading", "Phase 6: Error in finalization for " + bandName, e);
+        }
+    }
+    
+    /**
+     * Helper method to display band image with proper scaling (CRASH-SAFE)
+     */
+    private void displayBandImage(Bitmap bitmap) {
+        try {
+            // CRASH PREVENTION: Null checks before processing
+            if (bitmap == null || bitmap.isRecycled() || bandLogoImage == null) {
+                Log.w("displayBandImage", "Invalid bitmap or view for " + bandName);
+                return;
+            }
+            
+            bandLogoImage.setImageBitmap(bitmap);
+            bandLogoImage.setVisibility(View.VISIBLE);
+            
+            // Set appropriate scaling based on aspect ratio
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            if (width > 0 && height > 0) {
+                int ratio = width / height;
+                if (ratio > 5) {
+                    // Wide image - use width constraint
+                    bandLogoImage.getLayoutParams().width = (int) (getResources().getDisplayMetrics().widthPixels * 0.7);
+                    bandLogoImage.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                } else {
+                    // Tall or square image - use height constraint  
+                    bandLogoImage.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    bandLogoImage.getLayoutParams().height = (int) (getResources().getDisplayMetrics().heightPixels * 0.1);
+                }
+            }
+            Log.d("displayBandImage", "Image displayed successfully for " + bandName);
+        } catch (Exception e) {
+            Log.e("displayBandImage", "Error displaying image for " + bandName, e);
+            // CRASH PREVENTION: Recycle bitmap if there's an error to prevent memory leaks
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
+        }
+    }
+    
+    /**
+     * WEBVIEW EXIT FIX: Immediately restores cached image to prevent disappearing after WebView exit.
+     * This method runs synchronously on the main thread to instantly restore the image that was already displayed.
+     */
+    private void restoreCachedImageImmediately() {
+        try {
+            Log.d("WebViewImageFix", "Attempting to restore cached image for " + bandName);
+            
+            // Check if we have a cached image file
+            ImageHandler imageHandler = new ImageHandler(bandName);
+            java.net.URI imageURI = imageHandler.getImage();
+            
+            if (imageURI != null) {
+                java.io.File imageFile = new java.io.File(imageURI);
+                if (imageFile.exists() && imageFile.length() > 0) {
+                    Log.d("WebViewImageFix", "Found cached image file, loading immediately");
+                    
+                    // Use safe bitmap decoding with memory limits (same as progressive loading)
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                    
+                    // Only load if image is reasonable size
+                    if (options.outWidth > 0 && options.outHeight > 0 && 
+                        options.outWidth <= 2048 && options.outHeight <= 2048) {
+                        
+                        options.inJustDecodeBounds = false;
+                        options.inSampleSize = 1;
+                        options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
+                        
+                        Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                        if (bitmap != null && !bitmap.isRecycled() && bandLogoImage != null) {
+                            displayBandImage(bitmap);
+                            Log.d("WebViewImageFix", "Cached image restored successfully for " + bandName);
+                        }
+                    } else {
+                        Log.w("WebViewImageFix", "Cached image too large for " + bandName + 
+                              " (" + options.outWidth + "x" + options.outHeight + ")");
+                    }
+                } else {
+                    Log.d("WebViewImageFix", "No cached image file found for " + bandName);
+                }
+            } else {
+                Log.d("WebViewImageFix", "No cached image URI for " + bandName);
+            }
+        } catch (OutOfMemoryError oom) {
+            Log.e("WebViewImageFix", "OutOfMemoryError restoring cached image for " + bandName, oom);
+            System.gc(); // Request garbage collection
+        } catch (Exception e) {
+            Log.e("WebViewImageFix", "Error restoring cached image for " + bandName, e);
+        }
+    }
+    
+    // ==================== END PROGRESSIVE LOADING ====================
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -318,40 +852,163 @@ public class showBandDetails extends Activity {
     private void changeBand(String currentBand, String direction){
         BandInfo.setSelectedBand(currentBand);
         
-        if (useNativeView) {
-            // For native view, update the band name and refresh content without animation
+        // Update the band name and refresh content with slide animation
             bandName = currentBand;
-            refreshNativeContent();
-        } else {
-            // For WebView mode, keep the original animation behavior
-            Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-            startActivity(showDetails);
-            finish();
-            if (direction == "Next") {
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
-            } else {
-                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
-            }
+        animateContentTransition(direction);
+    }
+    
+    /**
+     * Animates the transition between band content with smooth slide effects
+     */
+    private void animateContentTransition(String direction) {
+        if (contentContainer == null) {
+            // Fallback to progressive loading if container not available
+            Log.d("SwipeAnimation", "Container not available, using progressive loading for " + bandName);
+            loadAllContentProgressively();
+            return;
         }
+        
+        Log.d("SwipeAnimation", "Starting smooth slide animation for direction: " + direction);
+        
+        // Determine slide direction based on swipe
+        boolean slideLeft = direction.equals("Next");
+        float screenWidth = contentContainer.getWidth();
+        
+        // Use ViewPropertyAnimator for smoother, hardware-accelerated animations
+        contentContainer.animate()
+            .translationX(slideLeft ? -screenWidth : screenWidth)
+            .alpha(0.7f) // Slight fade during transition
+            .setDuration(280)
+            .setInterpolator(new AccelerateDecelerateInterpolator())
+            .withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("SwipeAnimation", "Slide-out completed, updating content with progressive loading");
+                    
+                    // FIXED: Use progressive loading instead of heavy refresh
+                    loadAllContentProgressively();
+                    
+                    // Set up for slide-in from opposite direction
+                    contentContainer.setTranslationX(slideLeft ? screenWidth : -screenWidth);
+                    contentContainer.setAlpha(0.7f);
+                    
+                    // Animate slide-in with easing
+                    contentContainer.animate()
+                        .translationX(0f)
+                        .alpha(1.0f)
+                        .setDuration(280)
+                        .setInterpolator(new DecelerateInterpolator(1.2f))
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d("SwipeAnimation", "Slide-in animation completed");
+                                // Ensure final state is clean
+                                contentContainer.setTranslationX(0f);
+                                contentContainer.setAlpha(1.0f);
+                            }
+                        })
+                        .start();
+                }
+            })
+            .start();
+    }
+    
+    /**
+     * Alternative animation method using traditional Animation classes for compatibility
+     */
+    private void animateContentTransitionClassic(String direction) {
+        if (contentContainer == null) {
+            Log.d("SwipeAnimation", "Container not available, using progressive loading for " + bandName);
+            loadAllContentProgressively();
+            return;
+        }
+        
+        Log.d("SwipeAnimation", "Starting classic slide animation for direction: " + direction);
+        
+        // Determine slide direction based on swipe
+        boolean slideLeft = direction.equals("Next");
+        
+        // Create slide-out animation (current content slides out)
+        TranslateAnimation slideOut = new TranslateAnimation(
+            Animation.RELATIVE_TO_SELF, 0.0f,           // Start X
+            Animation.RELATIVE_TO_SELF, slideLeft ? -1.0f : 1.0f, // End X
+            Animation.RELATIVE_TO_SELF, 0.0f,           // Start Y  
+            Animation.RELATIVE_TO_SELF, 0.0f            // End Y
+        );
+        slideOut.setDuration(250);
+        slideOut.setFillAfter(true);
+        
+        // Create slide-in animation (new content slides in)
+        TranslateAnimation slideIn = new TranslateAnimation(
+            Animation.RELATIVE_TO_SELF, slideLeft ? 1.0f : -1.0f, // Start X (opposite direction)
+            Animation.RELATIVE_TO_SELF, 0.0f,           // End X
+            Animation.RELATIVE_TO_SELF, 0.0f,           // Start Y
+            Animation.RELATIVE_TO_SELF, 0.0f            // End Y
+        );
+        slideIn.setDuration(250);
+        
+        // Set up animation listener to update content at the right time
+        slideOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                Log.d("SwipeAnimation", "Classic slide-out animation started");
+            }
+            
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Log.d("SwipeAnimation", "Classic slide-out animation ended, updating content with progressive loading");
+                // FIXED: Use progressive loading instead of heavy refresh
+                loadAllContentProgressively();
+                contentContainer.startAnimation(slideIn);
+            }
+            
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        
+        slideIn.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                Log.d("SwipeAnimation", "Classic slide-in animation started");
+            }
+            
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Log.d("SwipeAnimation", "Classic slide-in animation completed");
+                contentContainer.clearAnimation();
+            }
+            
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        
+        // Start the slide-out animation
+        contentContainer.startAnimation(slideOut);
     }
 
 
     private void nextRecord(String direction){
 
+        Log.d("SwipeNavigation", "nextRecord called with direction: " + direction + 
+              ", current position: " + staticVariables.currentListPosition + 
+              ", list size: " + staticVariables.currentListForDetails.size());
+
         String directionMessage = "";
         String currentBand = "";
         String oldBandValue = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
 
-        if (staticVariables.currentListPosition == 0 && direction == "Previous"){
+        if (staticVariables.currentListPosition == 0 && direction.equals("Previous")){
+            Log.d("SwipeNavigation", "Already at start of list");
             HelpMessageHandler.showMessage(getResources().getString(R.string.AlreadyAtStart));
             return;
 
-        } else if (staticVariables.currentListPosition == staticVariables.currentListForDetails.size() &&
-                    direction == "Next") {
+        } else if (staticVariables.currentListPosition >= (staticVariables.currentListForDetails.size() - 1) &&
+                    direction.equals("Next")) {
+            Log.d("SwipeNavigation", "Already at end of list");
             HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
             return;
 
-        } else if (direction == "Next"){
+        } else if (direction.equals("Next")){
             staticVariables.currentListPosition = staticVariables.currentListPosition + 1;
             directionMessage = getResources().getString(R.string.Next);
 
@@ -374,6 +1031,7 @@ public class showBandDetails extends Activity {
             return;
         }
 
+        Log.d("SwipeNavigation", "Navigation successful to: " + currentBand + " at position: " + staticVariables.currentListPosition);
         HelpMessageHandler.showMessage(directionMessage + " " + currentBand);
         changeBand(currentBand, direction);
 
@@ -383,6 +1041,7 @@ public class showBandDetails extends Activity {
      * Initializes the native Android view content instead of WebView
      */
     private void initializeNativeContent() {
+        Log.w("PerformanceTrack", "WARNING: Using HEAVY loading path - this causes delays!");
         Log.d("initializeNativeContent", "Start"); 
         
         // Initialize all view references
@@ -424,18 +1083,7 @@ public class showBandDetails extends Activity {
         contentScrollView = findViewById(R.id.content_scroll_view);
         contentContainer = findViewById(R.id.content_container);
         
-        // Set up touch listener for swipe gestures on the main container
-        contentScrollView.setOnTouchListener(new OnSwipeTouchListener(context) {
-            @Override
-            public void onSwipeLeft() {
-                nextRecord("Next");
-            }
-
-            @Override
-            public void onSwipeRight() {
-                nextRecord("Previous");
-            }
-        });
+        // Swipe gestures are handled at the activity level via dispatchTouchEvent
         
         // Set up click listeners
         setupNativeClickListeners();
@@ -445,6 +1093,233 @@ public class showBandDetails extends Activity {
         
         loadingProgressBar.setVisibility(View.GONE);
         Log.d("initializeNativeContent", "Done");
+    }
+    
+    /**
+     * IMMEDIATE LOADING: Initialize UI components only with minimal processing.
+     * NO data processing or heavy operations - screen loads instantly.
+     */
+    private void initializeUIComponentsOnly() {
+        Log.d("initializeUIComponents", "Starting immediate UI setup");
+        
+        // Initialize all view references (fast findViewById calls)
+        bandNameText = findViewById(R.id.band_name_text);
+        bandLogoImage = findViewById(R.id.band_logo_image);
+        scheduleSection = findViewById(R.id.schedule_section);
+        linksSection = findViewById(R.id.links_section);
+        linksIconContainer = findViewById(R.id.links_icon_container);
+        extraDataSection = findViewById(R.id.extra_data_section);
+        userNotesSection = findViewById(R.id.user_notes_section);
+        userNotesText = findViewById(R.id.user_notes_text);
+        linksLabel = findViewById(R.id.links_label);
+        
+        // Link buttons
+        websiteLink = findViewById(R.id.website_link);
+        metalArchivesLink = findViewById(R.id.metal_archives_link);
+        wikipediaLink = findViewById(R.id.wikipedia_link);
+        youtubeLink = findViewById(R.id.youtube_link);
+        
+        // Extra data views
+        countryValue = findViewById(R.id.country_value);
+        genreValue = findViewById(R.id.genre_value);
+        lastCruiseValue = findViewById(R.id.last_cruise_value);
+        noteValue = findViewById(R.id.note_value);
+        countryRow = findViewById(R.id.country_row);
+        genreRow = findViewById(R.id.genre_row);
+        lastCruiseRow = findViewById(R.id.last_cruise_row);
+        noteRow = findViewById(R.id.note_row);
+        
+        // Ranking buttons
+        unknownButton = findViewById(R.id.unknown_button);
+        mustButton = findViewById(R.id.must_button);
+        mightButton = findViewById(R.id.might_button);
+        wontButton = findViewById(R.id.wont_button);
+        rankingIcon = findViewById(R.id.ranking_icon);
+        
+        // Other components
+        loadingProgressBar = findViewById(R.id.loading_progress_bar);
+        contentScrollView = findViewById(R.id.content_scroll_view);
+        contentContainer = findViewById(R.id.content_container);
+        
+        // Set up click listeners (fast)
+        setupNativeClickListeners();
+        
+        // IMMEDIATE: Show band name and loading state
+        bandNameText.setText(bandName);
+        bandLogoImage.setVisibility(View.GONE); // Will load progressively
+        loadingProgressBar.setVisibility(View.VISIBLE);
+        
+        // Clear dynamic content sections - will be populated progressively
+        scheduleSection.removeAllViews();
+        // NOTE: Don't clear linksIconContainer - it contains static link icons that are managed by findViewById
+        
+        // Show loading placeholders for key sections
+        if (noteValue != null) {
+            noteValue.setText("Loading notes...");
+        }
+        
+        Log.d("initializeUIComponents", "Immediate UI setup complete - screen ready");
+    }
+    
+    /**
+     * Sets up swipe gesture detection that works properly with ScrollView
+     */
+    private void setupSwipeGestureListener() {
+        final GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_MIN_DISTANCE = 120;
+            private static final int SWIPE_MAX_OFF_PATH = 250;
+            private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = e2.getY() - e1.getY();
+                
+                Log.d("SwipeGesture", "onFling - deltaX: " + deltaX + ", deltaY: " + deltaY + 
+                      ", velocityX: " + velocityX + ", velocityY: " + velocityY);
+                
+                // Check if this is primarily a horizontal swipe
+                if (Math.abs(deltaX) > Math.abs(deltaY) && 
+                    Math.abs(deltaY) < SWIPE_MAX_OFF_PATH && 
+                    Math.abs(deltaX) > SWIPE_MIN_DISTANCE && 
+                    Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    
+                    if (deltaX > 0) {
+                        Log.d("SwipeGesture", "Right swipe detected - moving to previous record");
+                        nextRecord("Previous");
+                    } else {
+                        Log.d("SwipeGesture", "Left swipe detected - moving to next record");
+                nextRecord("Next");
+            }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // Apply the gesture detector to the main scroll view
+        contentScrollView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // Let the gesture detector try to handle the event first
+                boolean gestureHandled = gestureDetector.onTouchEvent(event);
+                
+                // If no horizontal swipe was detected, let the ScrollView handle it normally
+                if (!gestureHandled) {
+                    // Return false to allow ScrollView to handle vertical scrolling
+                    return false;
+                }
+                
+                return true; // Consumed the horizontal swipe event
+            }
+        });
+        
+        Log.d("SwipeGesture", "Swipe gesture listener set up successfully");
+    }
+    
+    /**
+     * Initializes the main swipe gesture detector for the activity
+     */
+    private void initializeSwipeGestureDetector() {
+        swipeGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_MIN_DISTANCE = 100;
+            private static final int SWIPE_MAX_OFF_PATH = 300;
+            private static final int SWIPE_THRESHOLD_VELOCITY = 150;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                
+                // Don't process swipes if we're in WebView mode
+                if (inLink && inAppWebView != null) {
+                    return false;
+                }
+                
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = e2.getY() - e1.getY();
+                
+                Log.d("ActivitySwipe", "onFling - deltaX: " + deltaX + ", deltaY: " + deltaY + 
+                      ", velocityX: " + velocityX + ", velocityY: " + velocityY);
+                
+                // Check if this is primarily a horizontal swipe
+                if (Math.abs(deltaX) > Math.abs(deltaY) && 
+                    Math.abs(deltaY) < SWIPE_MAX_OFF_PATH && 
+                    Math.abs(deltaX) > SWIPE_MIN_DISTANCE && 
+                    Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    
+                    // Add haptic feedback and visual feedback for swipe gesture
+                    provideSwipeFeedback();
+                    
+                    if (deltaX > 0) {
+                        Log.d("ActivitySwipe", "Right swipe detected - moving to previous record");
+                nextRecord("Previous");
+                    } else {
+                        Log.d("ActivitySwipe", "Left swipe detected - moving to next record");
+                        nextRecord("Next");
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+        
+        Log.d("ActivitySwipe", "Activity-level swipe gesture detector initialized");
+    }
+    
+    /**
+     * Provides haptic and visual feedback when a swipe gesture is detected
+     */
+    private void provideSwipeFeedback() {
+        // Haptic feedback
+        try {
+            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    vibrator.vibrate(50);
+                }
+            }
+        } catch (Exception e) {
+            Log.w("SwipeFeedback", "Could not provide haptic feedback", e);
+        }
+        
+        // Visual feedback - subtle scale animation with easing
+        if (contentContainer != null) {
+            contentContainer.animate()
+                .scaleX(0.97f)
+                .scaleY(0.97f)
+                .setDuration(120)
+                .setInterpolator(new DecelerateInterpolator(1.5f))
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        contentContainer.animate()
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .setDuration(150)
+                            .setInterpolator(new DecelerateInterpolator(1.0f))
+                            .start();
+                    }
+                })
+                .start();
+        }
+    }
+    
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // Only process swipes when we're showing band details (not in WebView)
+        if (!inLink && swipeGestureDetector != null) {
+            boolean swipeHandled = swipeGestureDetector.onTouchEvent(event);
+            if (swipeHandled) {
+                return true; // Consume the swipe event
+            }
+        }
+        
+        // Let the normal touch event processing continue
+        return super.dispatchTouchEvent(event);
     }
     
     /**
@@ -464,14 +1339,8 @@ public class showBandDetails extends Activity {
         wontButton.setOnClickListener(v -> handleRankingClick(staticVariables.wontSeeKey));
         
         // Notes edit listener - make note content double-tap in native view
-        if (useNativeView && noteValue != null) {
+        if (noteValue != null) {
             setupNoteDoubleTapListener();
-        } else {
-            // Notes double-click listener for WebView mode (using long click as alternative)
-            userNotesText.setOnLongClickListener(v -> {
-                handleNotesEdit();
-                return true;
-            });
         }
         
         // Set online status for links
@@ -501,13 +1370,11 @@ public class showBandDetails extends Activity {
         String webUrl = getWebUrl(linkType);
         Log.d("webLink", "Going to weblinks Start " + webUrl);
 
-        // Show in-app WebView instead of external browser
+        // Show in-app WebView for external link browsing
         showInAppWebView(webUrl, linkType);
     }
     
-    // WebView components
-    private WebView inAppWebView;
-    private ProgressBar webViewProgressBar;
+
     
     /**
      * Shows a web URL in an in-app WebView using the normal screen area
@@ -667,20 +1534,27 @@ public class showBandDetails extends Activity {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         
         // Restore original band details content
-        Log.d("WebView", "Restoring band details content, useNativeView=" + useNativeView);
-        if (useNativeView) {
+        Log.d("WebView", "Restoring band details content");
             setContentView(R.layout.band_details_native);
-            initializeNativeContent();
-        } else {
-            setContentView(R.layout.band_details);
-            initializeWebContent();
-        }
+        
+        // Reinitialize swipe gesture detector
+        initializeSwipeGestureDetector();
+        
+        // IMMEDIATE LOADING: Use fast UI setup instead of heavy initialization
+        initializeUIComponentsOnly();
+        
+        // WEBVIEW EXIT FIX: Immediately restore cached image if available to prevent disappearing image
+        restoreCachedImageImmediately();
+        
+        // PROGRESSIVE LOADING: Load content in background (content likely cached by now)
+        loadAllContentProgressively();
         
         // Reset activity title
         setTitle(bandName);
         
         Log.d("WebView", "exitInAppWebView() completed");
     }
+
     
     /**
      * Gets user-friendly title for link type
@@ -764,13 +1638,8 @@ public class showBandDetails extends Activity {
                 
                 // Update the note content and refresh display without restarting activity
                 bandNote = noteText;
-                if (useNativeView) {
-                    refreshNativeContent();
-                } else {
-                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                    startActivity(showDetails);
-                    finish();
-                }
+                // IMAGE PRESERVATION FIX: Only refresh note section, not entire content
+                setupExtraDataSection(); // This will update the note display without affecting the image
             }
         });
         
@@ -797,13 +1666,24 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Refreshes native content with updated data
+     * Refreshes native content with updated data (HEAVY - avoid during progressive loading)
      */
     private void refreshNativeContent() {
         if (bandNameText != null) {
             Log.d("RefreshContent", "Refreshing native content for " + bandName);
-            populateNativeContent();
+            populateNativeContent(); // This is heavy - includes schedule processing and image loading
             Log.d("RefreshContent", "Native content refreshed for " + bandName);
+        }
+    }
+    
+    /**
+     * Lightweight refresh for progressive loading - only updates specific sections
+     */
+    private void refreshNativeContentLight() {
+        if (bandNameText != null) {
+            Log.d("RefreshContent", "Light refresh for " + bandName);
+            // Only refresh the sections that were actually updated
+            // Individual setup methods are called directly by progressive loading phases
         }
     }
     
@@ -930,7 +1810,7 @@ public class showBandDetails extends Activity {
                 @Override
                 public void onClick(View widget) {
                     Log.d("ClickableLink", "Clicked URL: " + url);
-                    // Open in the same in-app WebView as other links
+                    // Open in in-app WebView
                     showInAppWebView(url, "customLink");
                 }
                 
@@ -953,83 +1833,60 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Sets up the band title and logo section
+     * Sets up the band title and logo section.
+     * FIXED: Removed competing thread - now only sets title, image handled by progressive loading.
      */
     private void setupBandTitleAndLogo() {
-        // Set band name
+        // Set band name immediately (no blocking)
+        if (bandNameText != null) {
         bandNameText.setText(bandName);
+        }
         
-        // Load and set band logo
-        ImageHandler imageHandler = new ImageHandler(bandName);
-        java.net.URI imageURI = imageHandler.getImage();
-        
-        if (imageURI != null) {
-            try {
-                // Load the image from the cached file
-                java.io.File imageFile = new java.io.File(imageURI);
-                if (imageFile.exists()) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
-                    if (bitmap != null) {
-                        bandLogoImage.setImageBitmap(bitmap);
-                        bandLogoImage.setVisibility(View.VISIBLE);
-                        
-                        // Set appropriate scaling based on aspect ratio
-                        int width = bitmap.getWidth();
-                        int height = bitmap.getHeight();
-                        if (width > 0 && height > 0) {
-                            int ratio = width / height;
-                            if (ratio > 5) {
-                                // Wide image - use width constraint
-                                bandLogoImage.getLayoutParams().width = (int) (getResources().getDisplayMetrics().widthPixels * 0.7);
-                                bandLogoImage.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                            } else {
-                                // Tall or square image - use height constraint  
-                                bandLogoImage.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                                bandLogoImage.getLayoutParams().height = (int) (getResources().getDisplayMetrics().heightPixels * 0.1);
-                            }
-                        }
-                        Log.d("setupBandTitleAndLogo", "Image loaded for " + bandName);
-                    }
-                }
-            } catch (Exception e) {
-                Log.e("setupBandTitleAndLogo", "Error loading cached image for " + bandName, e);
+        // Hide image initially - will be loaded by progressive loading thread
+        // NOTE: This should only be called during initial setup, not during refresh operations
+        if (bandLogoImage != null) {
                 bandLogoImage.setVisibility(View.GONE);
             }
-        } else {
-            // Image not cached - will be loaded by background thread and screen will refresh
-            bandLogoImage.setVisibility(View.GONE);
-            Log.d("setupBandTitleAndLogo", "Image not cached for " + bandName + ", will load async");
-        }
+        
+        // NOTE: Image loading is handled by progressive loading phases to prevent thread conflicts
+        Log.d("setupBandTitleAndLogo", "Title set, image loading handled by progressive loading for " + bandName);
     }
     
     /**
-     * Sets up the schedule section with show times and venues
+     * Sets up the schedule section with show times and venues.
+     * PERFORMANCE OPTIMIZED: Reduces redundant map lookups and uses cached references.
      */
     private void setupScheduleSection() {
         // Clear existing schedule items
         scheduleSection.removeAllViews();
         
         try {
-            if (BandInfo.scheduleRecords.get(bandName) != null) {
-                Iterator entries = BandInfo.scheduleRecords.get(bandName).scheduleByTime.entrySet().iterator();
+            scheduleTimeTracker bandSchedule = BandInfo.scheduleRecords.get(bandName);
+            if (bandSchedule != null) {
+                // Cache the schedule map to avoid repeated lookups
+                Map<Long, scheduleHandler> scheduleByTime = bandSchedule.scheduleByTime;
+                Iterator entries = scheduleByTime.entrySet().iterator();
                 
                 while (entries.hasNext()) {
                     Map.Entry thisEntry = (Map.Entry) entries.next();
-                    Object key = thisEntry.getKey();
+                    Long key = (Long) thisEntry.getKey();
+                    
+                    // Cache the schedule info to avoid repeated map lookups
+                    scheduleHandler scheduleItem = scheduleByTime.get(key);
                     
                     // Create schedule item view
                     View scheduleItemView = LayoutInflater.from(this).inflate(R.layout.schedule_item, scheduleSection, false);
                     
-                    // Get schedule data
-                    String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowLocation();
+                    // Get schedule data (using cached references)
+                    String location = scheduleItem.getShowLocation();
                     String locationColor = staticVariables.getVenueColor(location);
-                    String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getStartTimeString();
+                    String rawStartTime = scheduleItem.getStartTimeString();
                     String startTime = dateTimeFormatter.formatScheduleTime(rawStartTime);
-                    String endTime = dateTimeFormatter.formatScheduleTime(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getEndTimeString());
-                    String dayNumber = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowDay();
+                    String endTime = dateTimeFormatter.formatScheduleTime(scheduleItem.getEndTimeString());
+                    String dayNumber = scheduleItem.getShowDay();
                     dayNumber = dayNumber.replaceFirst("Day ", "");
-                    String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowType();
-                    String eventNote = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(key).getShowNotes();
+                    String eventType = scheduleItem.getShowType();
+                    String eventNote = scheduleItem.getShowNotes();
                     
                     String attendIndex = bandName + ":" + location + ":" + rawStartTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
                     String eventTypeImage = showBandDetails.getEventTypeImage(eventType, bandName);
@@ -1040,8 +1897,10 @@ public class showBandDetails extends Activity {
                         eventType = "";
                     }
                     
-                    if (staticVariables.venueLocation.get(location) != null) {
-                        location = location + " " + staticVariables.venueLocation.get(location);
+                    // Append venue location if available
+                    String venueLocation = staticVariables.venueLocation.get(location);
+                    if (venueLocation != null) {
+                        location = location + " " + venueLocation;
                     }
                     
                     // Set up the schedule item views
@@ -1147,16 +2006,9 @@ public class showBandDetails extends Activity {
             String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
             HelpMessageHandler.showMessage(message);
 
-            // Refresh native content instead of restarting activity
-            if (useNativeView) {
-                refreshNativeContent();
-                clickedOnEvent = false; // Reset flag for native refresh
-            } else {
-                // For WebView mode, still need to restart activity
-                Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                startActivity(showDetails);
-                finish();
-            }
+            // IMAGE PRESERVATION FIX: Only refresh schedule section, not entire content
+            setupScheduleSection(); // This will update attendance icons without affecting the image
+            clickedOnEvent = false; // Reset flag for targeted refresh
         }
     }
     
@@ -1280,11 +2132,8 @@ public class showBandDetails extends Activity {
                     // Refresh the UI on the main thread
                     runOnUiThread(() -> {
                         Log.d("LineBreakDebug", "Refreshing display for " + bandName);
-                        if (useNativeView) {
-                            refreshNativeContent();
-                        } else {
-                            refreshWebContent();
-                        }
+                        // IMAGE PRESERVATION FIX: Only refresh the note section, not the entire content
+                        setupExtraDataSection(); // This will process the new note data
                         Log.d("LineBreakDebug", "Display refreshed - line breaks should now be visible");
                     });
                 } catch (Exception e) {
@@ -1302,7 +2151,7 @@ public class showBandDetails extends Activity {
      * Sets up the extra data section (country, genre, etc.)
      */
     private void setupExtraDataSection() {
-
+        Log.d("PerformanceDebug", "setupExtraDataSection called for " + bandName + " (cleanup attempted: " + cacheCleanupAttempted + ")");
         
         boolean hasExtraData = false;
         
@@ -1343,9 +2192,12 @@ public class showBandDetails extends Activity {
         }
         
         if (!rawNote.isEmpty()) {
-            // If the note still contains <br> tags, it's old cached data - force refresh
-            if (rawNote.contains("<br>")) {
+            // INFINITE LOOP FIX: Only clear cache once per activity instance to prevent continuous refresh
+            if (rawNote.contains("<br>") && !cacheCleanupAttempted) {
+                Log.d("LineBreakDebug", "Found <br> tags in note, clearing cache once for " + bandName);
+                cacheCleanupAttempted = true;
                 clearCachedNoteData(bandName);
+                return; // Exit early to prevent processing the old note
             }
             
             String noteText = processLineBreaks(rawNote);
@@ -1427,115 +2279,7 @@ public class showBandDetails extends Activity {
         }
     }
 
-    private void initializeWebContent (){
 
-        Log.d("initializeWebContent", "Start");
-        webProgressBar = (ProgressBar) findViewById(R.id.webProgressBar);
-
-        mWebView = (WebView) findViewById(R.id.detailWebView);
-        mWebView.setBackgroundColor(Color.argb(1, 0, 0, 0));
-        mWebView.setWebViewClient(new customWebViewClient());
-        mWebView.getSettings().setJavaScriptEnabled(true);
-        Log.d("initializeWebContent", "setOnTouchListener");
-        mWebView.setOnTouchListener(new OnSwipeTouchListener(context) {
-            @Override
-            public void onSwipeLeft() {
-                nextRecord("Next");
-            }
-
-            @Override
-            public void onSwipeRight() {
-                nextRecord("Previous");
-            }
-
-        });
-
-        WebSettings webSettings = mWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setAllowFileAccessFromFileURLs(true);
-        webSettings.setAllowFileAccess(true);
-        mWebView.setVerticalScrollBarEnabled(false);
-        mWebView.setHorizontalScrollBarEnabled(false);
-        Log.d("initializeWebContent", "writeNoteHtml");
-        mWebView.addJavascriptInterface(new Object() {
-
-            @JavascriptInterface
-            public void performClick(String value) {
-                Log.d("Variable is", "Variable is - '" + value + "'");
-                if (value.equals("Notes")) {
-                    Log.d("Variable is", "Variable is -  Lets run this code to edit notes");
-                    staticVariables.writeNoteHtml = createEditNoteInterface(BandInfo.getSelectedBand());
-                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                    startActivity(showDetails);
-                    finish();
-
-                } else if (value.startsWith(bandName + ":")){
-
-                    if (clickedOnEvent == false){
-                        clickedOnEvent = true;
-                        Log.d("showAttended", " Lets set this value of " + value);
-                        String status = staticVariables.attendedHandler.addShowsAttended(value, "");
-                        String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
-                        HelpMessageHandler.showMessage(message);
-
-                        Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                        startActivity(showDetails);
-                        finish();
-                    }
-
-                }else if (value.startsWith("UserNoteSubmit:")) {
-
-                    Log.d("saveNote", "Save note now");
-                    staticVariables.writeNoteHtml = "";
-                    //code to write note for band
-                    value = value.replaceFirst("UserNoteSubmit:", "");
-                    bandHandler.saveCustomBandNote(value);
-                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                    startActivity(showDetails);
-                    finish();
-
-                } else if (value.equals("webLink")){
-                    Log.d("webLink", "Going to weblink! " + BandInfo.getOfficalWebLink(bandName));
-                    WebView htmlWebView = (WebView)findViewById(R.id.detailWebView);
-                    htmlWebView.loadUrl(BandInfo.getOfficalWebLink(bandName));
-
-                } else {
-                    // Handle ranking button clicks
-                    rankStore.saveBandRanking(BandInfo.getSelectedBand(), resolveValue(value));
-                    
-                    // Refresh WebView content instead of restarting activity
-                    refreshWebContent();
-                }
-            }
-
-        }, "ok");
-        Log.d("initializeWebContent", "webLink");
-        mWebView.addJavascriptInterface(new Object() {
-
-            @JavascriptInterface
-            public void webLinkClick(String value) {
-                Log.d("webLink", "Going to weblinks kind of " + value);
-                staticVariables.webHelpMessage = setWebHelpMessage(value);
-                Log.d("webHelpMessage", staticVariables.webHelpMessage );
-                inLink = true;
-
-                String webUrl = getWebUrl(value);
-                Log.d("webLink", "Going to weblinks Start " + webUrl);
-
-                // Show in-app WebView instead of external browser (consistent with native implementation)
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showInAppWebView(webUrl, value);
-                    }
-                });
-            }
-
-        }, "link");
-        createDetailHTML();
-        webProgressBar.setVisibility(View.GONE);
-        Log.d("initializeWebContent", "Done");
-    }
 
 
     private String setWebHelpMessage(String linkType){
@@ -1584,24 +2328,25 @@ public class showBandDetails extends Activity {
     protected void onPause() {
         super.onPause();
         
-        // Only reload WebView if we're using WebView mode and it exists
-        if (!useNativeView && mWebView != null) {
-            mWebView.reload();
-        }
-        
         // Background loading is managed by main activity lifecycle only
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (useNativeView) {
             setContentView(R.layout.band_details_native);
-            initializeNativeContent();
-        } else {
-            setContentView(R.layout.band_details);
-            initializeWebContent();
-        }
+        
+        // Reinitialize swipe gesture detector
+        initializeSwipeGestureDetector();
+        
+        // IMMEDIATE LOADING: Use fast UI setup instead of heavy initialization
+        initializeUIComponentsOnly();
+        
+        // ONRESUME FIX: Immediately restore cached image if available to prevent disappearing image
+        restoreCachedImageImmediately();
+        
+        // PROGRESSIVE LOADING: Load content in background (likely cached by now)
+        loadAllContentProgressively();
         inLink = false;
         
         // Background loading is managed by main activity lifecycle only
@@ -1629,20 +2374,17 @@ public class showBandDetails extends Activity {
         }
         
         // Standard back navigation - return to main bands list
-        staticVariables.writeNoteHtml = "";
         if (inLink){
             // Reset the link state
             inLink = false;
-            if (mWebView != null) {
-                mWebView.onPause();
-            }
         }
         
         Log.d("WebView", "Standard back navigation to bands list");
         SystemClock.sleep(70);
         setResult(RESULT_OK, null);
+        // LIST POSITION FIX: Use simple finish() to return to existing parent activity
+        // This preserves the list position instead of creating a new activity instance
         finish();
-        NavUtils.navigateUpTo(this, new Intent(this, showBands.class));
     }
     
     @Override
@@ -1719,75 +2461,7 @@ public class showBandDetails extends Activity {
         return newValue;
     }
 
-    public void createDetailHTML () {
 
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int rotation = display.getRotation();
-
-        boolean landscape = false;
-
-        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int height = Resources.getSystem().getDisplayMetrics().heightPixels;
-
-        String fontSize = "4.5vm";
-
-        if (width > 1700 && height > 1700) {
-            //do nothing
-
-        } else {
-            if (rotation == 1 || rotation == 3) {
-                landscape = true;
-            }
-        }
-
-        Log.d("rotation", "rotation is " + rotation);
-
-        SetButtonColors();
-
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        int widthPixels = metrics.widthPixels;
-        float densityDpi = metrics.density;
-        float scaleDense = metrics.scaledDensity;
-        float xdpi = metrics.xdpi;
-
-        int displayWidth = (widthPixels/(int)scaleDense - 100);
-
-        DetailHtmlGeneration htmlGen = new DetailHtmlGeneration(getApplicationContext());
-
-        htmlText = htmlGen.setupTitleAndLogo(bandName);
-
-
-        if (staticVariables.writeNoteHtml.isEmpty() == false) {
-            Log.d("Variable is", "Adding HTML text of " + staticVariables.writeNoteHtml);
-            htmlText += staticVariables.writeNoteHtml;
-
-        } else {
-
-            htmlText += htmlGen.displaySchedule(bandName, displayWidth);
-
-            htmlText += htmlGen.displayLinks(bandName, orientation);
-
-            if (landscape == false) {
-                htmlText += htmlGen.displayExtraData(bandName);
-
-                htmlText += htmlGen.displayNotes(bandNote);
-            }
-
-            htmlText += htmlGen.displayMustMightWont(rankIconLocation,
-                    unknownButtonColor,
-                    mustButtonColor,
-                    mightButtonColor,
-                    wontButtonColor);
-
-
-        }
-
-        Log.d("exportedHtml", htmlText);
-
-        mWebView.loadDataWithBaseURL(null, htmlText, "text/html", "UTF-8", null);
-
-    }
 
     public static String getAttendedImage(String attendIndex){
 
@@ -1835,52 +2509,9 @@ public class showBandDetails extends Activity {
     }
 
 
-    private String createEditNoteInterface(String bandName){
 
-        String html = "<br>";
 
-        if (bandHandler.getNoteIsBlank() == true){
-            bandNote = "";
-        }
 
-        bandNote = bandNote.replaceAll("<br>", "\n");
-        html += "<br><div style='width:100%;height:90%;width=100%; left:0;right:0;'>";
-        html += "<center><form><textarea name='userNotes' id='userNotes' style='text-align:left;width:95%;height:80%;background-color:black;color:white;border:none;padding:2%;font:14px/16px sans-serif;outline:1px solid blue;' autofocus>";
-        html += bandNote;
-        html += "</textarea>";
-        html += "<br><br><button type=button value='UserNoteSubmit' onclick='ok.performClick(this.value + \":\" + this.form.userNotes.value);'>Save Note:</button></form></center><br></div>";
-
-        return html;
-    }
-
-    private class customWebViewClient extends WebViewClient {
-
-        @Override
-        public void onPageFinished(WebView view, String url) {
-            Log.d("WebView", "finished with webLink");
-            // TODO Auto-generated method stub
-            super.onPageFinished(view, url);
-            webProgressBar.setVisibility(View.GONE);
-        }
-
-        @Override
-        public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            // TODO Auto-generated method stub
-
-            webProgressBar.setVisibility(View.VISIBLE);
-            if (staticVariables.webHelpMessage.isEmpty() == false) {
-                HelpMessageHandler.showMessage(staticVariables.webHelpMessage);
-                staticVariables.webHelpMessage = "";
-            }
-            super.onPageStarted(view, url, favicon);
-        }
-
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-
-            view.loadUrl(url);
-            return true;
-        }
-    }
 }
 
 /**
@@ -1901,29 +2532,43 @@ class OnSwipeTouchListener implements View.OnTouchListener {
     }
 
     public boolean onTouch(View view, MotionEvent event) {
+        // Let the gesture detector handle the event
+        boolean gestureHandled = gestureDetector.onTouchEvent(event);
 
-        return gestureDetector.onTouchEvent(event);
+        // If the gesture detector didn't handle it (no horizontal swipe detected),
+        // allow the ScrollView to handle it for vertical scrolling
+        return gestureHandled;
     }
 
     private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
-        private static final int SWIPE_DISTANCE_THRESHOLD = 100;
-        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+        private static final int SWIPE_DISTANCE_THRESHOLD = 150;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 200;
 
         @Override
         public boolean onDown(MotionEvent e) {
-            return false;
+            return true; // Must return true to receive subsequent events
         }
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            if (e1 == null || e2 == null) return false;
+            
             float distanceX = e2.getX() - e1.getX();
             float distanceY = e2.getY() - e1.getY();
-            if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > SWIPE_DISTANCE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                if (distanceX > 0)
+            
+            // Check if this is primarily a horizontal swipe
+            if (Math.abs(distanceX) > Math.abs(distanceY) && 
+                Math.abs(distanceX) > SWIPE_DISTANCE_THRESHOLD && 
+                Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                
+                Log.d("SwipeGesture", "Horizontal swipe detected - distanceX: " + distanceX + ", velocityX: " + velocityX);
+                
+                if (distanceX > 0) {
                     onSwipeRight();
-                else
+                } else {
                     onSwipeLeft();
+                }
                 return true;
             }
             return false;

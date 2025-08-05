@@ -111,6 +111,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     
     // Flag to track when returning from stats page to avoid blocking refresh
     private static Boolean returningFromStatsPage = false;
+    
+    // INTERMITTENT POSITION LOSS FIX: Flag to track when we're returning from details screen
+    private static Boolean returningFromDetailsScreen = false;
 
     //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
@@ -661,11 +664,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             public void onScroll(AbsListView view, int firstVisibleItem,
                                  int visibleItemCount, int totalItemCount) {
 
-                if (firstVisibleItem > 0) {
-                    Log.d("Setting position", "Setting position ito be  " + String.valueOf(firstVisibleItem));
-                    listPosition = firstVisibleItem;
-                    if (listPosition == 1) {
-                        listPosition = 0;
+                // ERRATIC JUMPING FIX: Only update position during normal user scrolling
+                // Don't interfere when returning from details screen or during restoration
+                if (firstVisibleItem > 0 && !returningFromDetailsScreen) {
+                    // Only update if this seems like genuine user scrolling (not programmatic)
+                    if (staticVariables.listPosition == 0 || Math.abs(firstVisibleItem - staticVariables.listPosition) <= 3) {
+                        Log.d("Setting position", "Normal scroll - updating position to: " + firstVisibleItem);
+                        staticVariables.listPosition = firstVisibleItem;
+                        if (staticVariables.listPosition == 1) {
+                            staticVariables.listPosition = 0;
+                        }
                     }
                 }
 
@@ -751,7 +759,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
 
                 refreshData();
-                bandNamesList.onRestoreInstanceState(listState);
+                // ERRATIC JUMPING FIX: Remove conflicting state restoration
+                // Position restoration is handled centrally in displayBandDataWithSchedule()
+                // bandNamesList.onRestoreInstanceState(listState);
 
                 return false;
             }
@@ -1027,20 +1037,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         AsyncListViewLoader mytask = new AsyncListViewLoader();
         mytask.execute();
 
-        AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
-        myNotesTask.execute();
+        // REMOVED: AsyncNotesLoader should only run during background operations
+        // Individual note loading happens in details screen only
+        // Bulk note loading happens when app goes to background only
 
         Log.d("refreshNewData", "refreshNewData - 2");
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
-        // Generate combined image list after data is loaded
-        Log.d("refreshNewData", "Generating combined image list");
+        // Generate combined image list after data is loaded (lightweight URL list creation)
+        // This is metadata processing, not actual image downloading
+        Log.d("refreshNewData", "Generating combined image list (URLs only, no downloads)");
         CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
         combinedHandler.generateCombinedImageList(bandInfo, new Runnable() {
             @Override
             public void run() {
-                Log.d("refreshNewData", "Combined image list generation completed");
+                Log.d("refreshNewData", "Combined image list generation completed (no downloads)");
             }
         });
 
@@ -1088,14 +1100,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             rankStore.getBandRankings();
 
             Log.d("reloadData", "reloadData - 3");
-            // Delay scroll position restoration to ensure adapter is set
-            bandNamesList.post(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("Setting position", "Setting position in reloadData to " + String.valueOf(listPosition));
-                    bandNamesList.setSelection(listPosition);
-                }
-            });
+            // ERRATIC JUMPING FIX: Remove duplicate position restoration from reloadData
+            // Position restoration is now handled centrally in displayBandDataWithSchedule()
 
             Log.d("reloadData", "reloadData - 4");
             scheduleAlertHandler alerts = new scheduleAlertHandler();
@@ -1162,6 +1168,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private void displayBandDataWithSchedule() {
 
+        Log.d("ListPosition", "displayBandDataWithSchedule called - returningFromDetailsScreen: " + returningFromDetailsScreen + ", savedPosition: " + staticVariables.listPosition);
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
         bandNamesList.setAdapter(adapter);
@@ -1333,6 +1340,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
+        
+        // JUMPING FIX: Position restoration is no longer needed here
+        // We now prevent the refresh entirely when returning from details screen
+        // This eliminates the jumping because the list never gets rebuilt
     }
 
 
@@ -1340,16 +1351,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void refreshData() {
 
         Log.d("DisplayListData", "called from refreshData");
-        displayBandData();
-
-        // Delay scroll position restoration to ensure adapter is set
-        bandNamesList.post(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("Setting position", "Setting position in refreshData to " + String.valueOf(listPosition));
-                bandNamesList.setSelection(listPosition);
+        
+        // INTERMITTENT POSITION LOSS FIX: Save current position before refresh
+        if (bandNamesList != null && staticVariables.listPosition == 0) {
+            int currentPosition = bandNamesList.getFirstVisiblePosition();
+            if (currentPosition > 0) {
+                staticVariables.listPosition = currentPosition;
+                Log.d("ListPosition", "Saved current scroll position before refresh: " + currentPosition);
             }
-        });
+        }
+        
+        displayBandData();
+        
+        // Note: Position restoration is now handled in displayBandDataWithSchedule()
+        // Removed duplicate restoration logic to prevent conflicts
 
     }
 
@@ -1435,7 +1450,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Only refresh if we're not returning from stats page to avoid blocking stats loading
         // The stats page should load immediately without waiting for main activity refresh
         if (!returningFromStatsPage) {
-            refreshNewData();
+            // JUMPING FIX: Skip refresh when returning from details screen to prevent list rebuild
+            if (staticVariables.listPosition > 0) {
+                returningFromDetailsScreen = true;
+                Log.d("ListPosition", "Detected return from details screen - SKIPPING refresh to prevent jumping");
+                // Reset the flags after a delay since we're not refreshing
+                bandNamesList.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        staticVariables.listPosition = 0;
+                        returningFromDetailsScreen = false;
+                        Log.d("ListPosition", "Reset flags without refresh");
+                    }
+                }, 1000);
+            } else {
+                Log.d("ListPosition", "Normal onResume - proceeding with refresh");
+                refreshNewData();
+            }
         } else {
             Log.d("DisplayListData", "Skipping refresh - returning from stats page");
             returningFromStatsPage = false; // Reset flag
@@ -1458,9 +1489,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         handleSearch();
 
         Log.d(TAG, notificationTag + " In onResume - 4");
-        if (listState != null) {
-            Log.d("State Status", "restoring state during Resume");
+        // ERRATIC JUMPING FIX: Disable automatic state restoration that conflicts with position restoration
+        // Our manual position restoration in displayBandDataWithSchedule() is more reliable
+        if (listState != null && !returningFromDetailsScreen) {
+            Log.d("State Status", "restoring state during Resume (not returning from details)");
             bandNamesList.onRestoreInstanceState(listState);
+        } else if (returningFromDetailsScreen) {
+            Log.d("State Status", "skipping automatic state restoration - returning from details screen");
         }
 
         Log.d(TAG, notificationTag + " In onResume - 5");
@@ -1474,14 +1509,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         subscribeToAlerts();
 
         Log.d(TAG, notificationTag + " In onResume - 7");
-        // Delay scroll position restoration to ensure adapter is set
-        bandNamesList.post(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("Setting position", "Setting position in onResume to " + String.valueOf(listPosition));
-                bandNamesList.setSelection(listPosition);
-            }
-        });
+        // ERRATIC JUMPING FIX: Remove duplicate position restoration from onResume
+        // This was causing jumping by overriding the restoration in displayBandDataWithSchedule()
+        // Position restoration is now handled centrally in displayBandDataWithSchedule()
 
         Log.d(TAG, notificationTag + " In onResume - 8");
 
@@ -1658,6 +1688,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
         BandInfo.setSelectedBand(selectedBand);
+        
+        // LIST POSITION FIX: Save the current list position before launching details screen
+        staticVariables.listPosition = position;
+        Log.d("ListPosition", "Saved list position: " + position + " for band: " + selectedBand);
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
         startActivity(showDetails);
@@ -1738,8 +1772,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 BandInfo bandInfo = new BandInfo();
                 bandInfo.DownloadBandFile();
 
-                AsyncNotesLoader myNotesTask = new AsyncNotesLoader();
-                myNotesTask.execute();
+                // REMOVED: AsyncNotesLoader should only run during background operations
+                // Individual note loading happens in details screen only
+                // Bulk note loading happens when app goes to background only
 
             } catch (Exception error) {
                 Log.d("bandInfo", error.getMessage());

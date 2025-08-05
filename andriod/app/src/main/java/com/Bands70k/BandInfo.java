@@ -172,19 +172,23 @@ public class BandInfo {
      */
     public static String getImageUrl(String bandName){
 
+        // Priority 1: Artist images from band CSV (more reliable)
+        String artistImageUrl = getBandDetailsData(bandName, "imageUrl");
+        if (artistImageUrl != null && !artistImageUrl.trim().isEmpty()) {
+            Log.d("ImageUrlIs1", bandName + " artist image: https://" + artistImageUrl);
+            return "https://" + artistImageUrl;
 
-        if (staticVariables.imageUrlMap.containsKey(bandName) == true) {
-            Log.d("ImageUrlIs2", bandName + staticVariables.imageUrlMap.get(bandName));
-            return staticVariables.imageUrlMap.get(bandName);
-
-        } else if (getBandDetailsData(bandName, "imageUrl") != null) {
-            Log.d("ImageUrlIs1", bandName + "  http://" + getBandDetailsData(bandName, "imageUrl"));
-            return "https://" + getBandDetailsData(bandName, "imageUrl");
-
-        } else {
-            Log.d("ImageUrlIs3", bandName + " Nothing so default");
-            return " ";
+        // Priority 2: Event images from schedule CSV (less reliable fallback)
+        } else if (staticVariables.imageUrlMap.containsKey(bandName) == true) {
+            String eventImageUrl = staticVariables.imageUrlMap.get(bandName);
+            if (eventImageUrl != null && !eventImageUrl.trim().isEmpty()) {
+                Log.d("ImageUrlIs2", bandName + " event image: " + eventImageUrl);
+                return eventImageUrl;
+            }
         }
+        
+        Log.d("ImageUrlIs3", bandName + " no image URL available");
+        return " ";
     }
 
     /**
@@ -365,18 +369,11 @@ public class BandInfo {
         scheduleInfo schedule = new scheduleInfo();
         scheduleRecords = schedule.DownloadScheduleFile(downloadUrls.get("scheduleUrl"));
 
-        // Regenerate combined image list after schedule data is loaded
-        // This ensures event images from schedule CSV are included
+        // Regenerate combined image list after schedule data is loaded (lightweight URL list creation)
+        // This ensures event images from schedule CSV are included for year changes
+        // This is metadata processing only, not actual image downloading
         CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
-        if (combinedHandler.needsRegeneration(this)) {
-            Log.d("BandInfo", "Regenerating combined image list due to new schedule data");
-            combinedHandler.generateCombinedImageList(this, new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("BandInfo", "Combined image list regenerated after schedule data load");
-                }
-            });
-        }
+        combinedHandler.regenerateAfterDataChange(this);
 
         return bandNames;
     }
