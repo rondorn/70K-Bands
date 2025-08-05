@@ -50,6 +50,14 @@ import android.view.ViewGroup;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.io.File;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.method.LinkMovementMethod;
 
 import static com.Bands70k.staticVariables.context;
 
@@ -309,13 +317,21 @@ public class showBandDetails extends Activity {
 
     private void changeBand(String currentBand, String direction){
         BandInfo.setSelectedBand(currentBand);
-        Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-        startActivity(showDetails);
-        finish();
-        if (direction == "Next") {
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
+        
+        if (useNativeView) {
+            // For native view, update the band name and refresh content without animation
+            bandName = currentBand;
+            refreshNativeContent();
         } else {
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
+            // For WebView mode, keep the original animation behavior
+            Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+            startActivity(showDetails);
+            finish();
+            if (direction == "Next") {
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
+            } else {
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
+            }
         }
     }
 
@@ -447,11 +463,16 @@ public class showBandDetails extends Activity {
         mightButton.setOnClickListener(v -> handleRankingClick(staticVariables.mightSeeKey));
         wontButton.setOnClickListener(v -> handleRankingClick(staticVariables.wontSeeKey));
         
-        // Notes double-click listener (using long click as alternative)
-        userNotesText.setOnLongClickListener(v -> {
-            handleNotesEdit();
-            return true;
-        });
+        // Notes edit listener - make note content double-tap in native view
+        if (useNativeView && noteValue != null) {
+            setupNoteDoubleTapListener();
+        } else {
+            // Notes double-click listener for WebView mode (using long click as alternative)
+            userNotesText.setOnLongClickListener(v -> {
+                handleNotesEdit();
+                return true;
+            });
+        }
         
         // Set online status for links
         boolean isOnline = OnlineStatus.isOnline();
@@ -722,12 +743,34 @@ public class showBandDetails extends Activity {
         builder.setPositiveButton("Save Note", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String noteText = input.getText().toString();
+                String noteText = input.getText().toString().trim();
+                
+                // If note is empty or whitespace only, revert to original default content
+                if (noteText.isEmpty()) {
+                    // Get the original default note (not custom note) by checking the default note file directly
+                    String originalDefaultNote = getOriginalDefaultNote(bandName);
+                    
+                    if (originalDefaultNote != null && !originalDefaultNote.trim().isEmpty() && 
+                        !originalDefaultNote.contains("Comment text is not available yet")) {
+                        // Use the original default comment
+                        noteText = originalDefaultNote;
+                    } else {
+                        // Use the exact same waiting message as CustomerDescriptionHandler
+                        noteText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+                    }
+                }
+                
                 bandHandler.saveCustomBandNote(noteText);
                 
-                Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-                startActivity(showDetails);
-                finish();
+                // Update the note content and refresh display without restarting activity
+                bandNote = noteText;
+                if (useNativeView) {
+                    refreshNativeContent();
+                } else {
+                    Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+                    startActivity(showDetails);
+                    finish();
+                }
             }
         });
         
@@ -762,6 +805,151 @@ public class showBandDetails extends Activity {
             populateNativeContent();
             Log.d("RefreshContent", "Native content refreshed for " + bandName);
         }
+    }
+    
+    /**
+     * Sets up double-tap listener for note editing
+     */
+    private void setupNoteDoubleTapListener() {
+        GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                handleNotesEdit();
+                return true;
+            }
+        });
+        
+        noteValue.setOnTouchListener((v, event) -> {
+            // Handle double-tap for editing
+            boolean doubleTapHandled = gestureDetector.onTouchEvent(event);
+            
+            // If double-tap was handled, consume the event to prevent link clicks
+            if (doubleTapHandled) {
+                return true;
+            }
+            
+            // For single taps on links, let the LinkMovementMethod handle it
+            if (noteValue.getMovementMethod() != null) {
+                return noteValue.getMovementMethod().onTouchEvent(noteValue, (Spannable) noteValue.getText(), event);
+            }
+            
+            return false; // Allow other touch events to be processed
+        });
+    }
+    
+    /**
+     * Gets the original default note (not custom note) by reading directly from the default note file
+     */
+    private String getOriginalDefaultNote(String bandName) {
+        try {
+            // Read directly from the .note_new file to get the original default note
+            File defaultNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+            
+            if (!defaultNoteFile.exists()) {
+                Log.d("OriginalDefaultNote", "No default note file exists for " + bandName);
+                return null;
+            }
+            
+            // Read the note file (it's a serialized HashMap)
+            Map<String, String> noteData = (Map<String, String>) FileHandler70k.readObject(defaultNoteFile);
+            if (noteData != null && noteData.containsKey("defaultNote")) {
+                String originalNote = noteData.get("defaultNote");
+                Log.d("OriginalDefaultNote", "Found original default note for " + bandName + ": " + originalNote);
+                return originalNote;
+            } else {
+                Log.d("OriginalDefaultNote", "No defaultNote key found in file for " + bandName);
+                return null;
+            }
+            
+        } catch (Exception e) {
+            Log.e("OriginalDefaultNote", "Error reading original default note for " + bandName, e);
+            return null;
+        }
+    }
+    
+    /**
+     * Gets raw band note data without HTML conversion - directly from CustomerDescriptionHandler
+     */
+    private String getRawBandNote(String bandName) {
+        try {
+            // First check for custom note
+            BandNotes bandHandler = new BandNotes(bandName);
+            String customNote = bandHandler.getBandNoteFromFile();
+            if (customNote != null && !customNote.trim().isEmpty() && 
+                !customNote.contains("Comment text is not available yet")) {
+                Log.d("RawBandNote", "Returning custom note for " + bandName);
+                return customNote;
+            }
+            
+            // Get default note directly without HTML conversion
+            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+            // This calls the full getDescription but we'll strip HTML if present
+            String note = descHandler.getDescription(bandName);
+            Log.d("RawBandNote", "Got note from CustomerDescriptionHandler: " + note);
+            return note;
+            
+        } catch (Exception e) {
+            Log.e("RawBandNote", "Error getting raw band note for " + bandName, e);
+            return "Comment text is not available yet. Please wait for Aaron to add his description.";
+        }
+    }
+    
+    /**
+     * Converts text with URLs (both !!!! format and HTML <a> tags) to clickable spannable text for native TextView
+     */
+    private SpannableString makeUrlsClickable(String text) {
+        Log.d("LinkProcessing", "Original text: " + text);
+        String cleanText = text;
+        
+        // Handle already-converted HTML <a> tags from BandNotes.java
+        // Pattern: <a target='_blank' style='color: lightblue' href=https://URL>DISPLAY_TEXT</a>
+        // More flexible pattern to handle various href formats
+        String beforeHtml = cleanText;
+        cleanText = cleanText.replaceAll("<a[^>]*href=([^\\s>]+)[^>]*>([^<]+)</a>", "$1");
+        Log.d("LinkProcessing", "After HTML processing: " + cleanText);
+        
+        // Handle original !!!! format URLs
+        String beforeExclamation = cleanText;
+        cleanText = cleanText.replaceAll("!!!!https://([^\\s]+)", "https://$1");
+        Log.d("LinkProcessing", "After !!!! processing: " + cleanText);
+        
+        SpannableString spannableString = new SpannableString(cleanText);
+        
+        // Pattern to find all https:// URLs in the cleaned text
+        Pattern urlPattern = Pattern.compile("https://[^\\s]+");
+        Matcher matcher = urlPattern.matcher(cleanText);
+        
+        while (matcher.find()) {
+            final String url = matcher.group(0); // Full URL with https://
+            
+            int start = matcher.start();
+            int end = matcher.end();
+            
+            // Create clickable span that opens in in-app WebView
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    Log.d("ClickableLink", "Clicked URL: " + url);
+                    // Open in the same in-app WebView as other links
+                    showInAppWebView(url, "customLink");
+                }
+                
+                @Override
+                public void updateDrawState(android.text.TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(false); // Remove underline to match original style
+                }
+            };
+            
+            // Apply clickable span
+            spannableString.setSpan(clickableSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            
+            // Make the link light blue like the original HTML version
+            ForegroundColorSpan colorSpan = new ForegroundColorSpan(Color.parseColor("#ADD8E6")); // Light blue
+            spannableString.setSpan(colorSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        
+        return spannableString;
     }
     
     /**
@@ -959,9 +1147,16 @@ public class showBandDetails extends Activity {
             String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
             HelpMessageHandler.showMessage(message);
 
-            Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
-            startActivity(showDetails);
-            finish();
+            // Refresh native content instead of restarting activity
+            if (useNativeView) {
+                refreshNativeContent();
+                clickedOnEvent = false; // Reset flag for native refresh
+            } else {
+                // For WebView mode, still need to restart activity
+                Intent showDetails = new Intent(showBandDetails.this, showBandDetails.class);
+                startActivity(showDetails);
+                finish();
+            }
         }
     }
     
@@ -1138,12 +1333,13 @@ public class showBandDetails extends Activity {
             lastCruiseRow.setVisibility(View.GONE);
         }
         
-        // Note - Use bandNote variable if available, fallback to BandInfo
+        // Note - Get note data without HTML conversion for native TextView
         String rawNote = "";
         if (bandNote != null && !bandNote.trim().isEmpty()) {
             rawNote = bandNote;
-        } else if (!BandInfo.getNote(bandName).isEmpty()) {
-            rawNote = BandInfo.getNote(bandName);
+        } else {
+            // Get raw note data without HTML conversion by directly accessing BandNotes file
+            rawNote = getRawBandNote(bandName);
         }
         
         if (!rawNote.isEmpty()) {
@@ -1158,7 +1354,15 @@ public class showBandDetails extends Activity {
             noteValue.setSingleLine(false);
             noteValue.setMaxLines(Integer.MAX_VALUE);
             noteValue.setHorizontallyScrolling(false);
-            noteValue.setText(noteText);
+            
+            // Process URLs and make them clickable (handles both !!!! format and HTML <a> tags)
+            if (noteText.contains("!!!!https://") || noteText.contains("<a ") || noteText.contains("https://")) {
+                SpannableString clickableText = makeUrlsClickable(noteText);
+                noteValue.setText(clickableText);
+                noteValue.setMovementMethod(LinkMovementMethod.getInstance());
+            } else {
+                noteValue.setText(noteText);
+            }
             
             noteRow.setVisibility(View.VISIBLE);
             hasExtraData = true;
