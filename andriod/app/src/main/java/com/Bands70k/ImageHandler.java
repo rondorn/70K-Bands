@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Handles downloading and managing band images.
@@ -43,6 +44,9 @@ public class ImageHandler {
     // Background loading state
     public static final AtomicBoolean backgroundLoadingActive = new AtomicBoolean(false);
     private static final AtomicBoolean detailsScreenActive = new AtomicBoolean(false);
+    
+    // Year change tracking (prevent bulk loading immediately after year change)
+    private static final AtomicLong lastYearChangeTime = new AtomicLong(0);
     
     // Background task reference
     private AsyncAllImageLoader currentBackgroundTask;
@@ -137,6 +141,10 @@ public class ImageHandler {
             backgroundLoadingActive.set(false);
             detailsScreenActive.set(false);
             
+            // Record year change time to prevent immediate bulk loading
+            lastYearChangeTime.set(System.currentTimeMillis());
+            Log.d("ImageHandler", "Year change timestamp recorded: " + lastYearChangeTime.get());
+            
             // Clear image URL map to force reloading for new year
             staticVariables.imageUrlMap.clear();
             
@@ -145,9 +153,9 @@ public class ImageHandler {
                 currentBackgroundTask.cancel(true);
             }
             
-            // Restart background loading for new year
-            Log.d("ImageHandler", "Restarting background loading for new year: " + newYear);
-            startBackgroundLoading();
+            // DO NOT restart background loading automatically after year change
+            // Bulk loading should only happen when app goes to background (onPause)
+            Log.d("ImageHandler", "Year change complete - bulk loading will only occur when app goes to background");
             
             return true;
         }
@@ -321,9 +329,9 @@ public class ImageHandler {
                 return;
             }
             
-            // Check year change
+            // Check year change and clear cache if needed
             if (checkYearChange()) {
-                Log.d("ImageHandler", "Year changed, restarting background loading");
+                Log.d("ImageHandler", "Year changed detected, cache cleared - now starting background loading");
             }
             
             startBackgroundLoading();
@@ -333,9 +341,17 @@ public class ImageHandler {
     /**
      * Starts background loading of all images when app goes to background.
      * This method should be called from the main activity's onPause() method.
+     * Prevents bulk loading immediately after year change to avoid inappropriate downloads.
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
+            // Check if it's too soon after a year change (prevent bulk loading for 10 seconds)
+            long timeSinceYearChange = System.currentTimeMillis() - lastYearChangeTime.get();
+            if (timeSinceYearChange < 10000) { // 10 seconds
+                Log.d("ImageHandler", "Skipping bulk loading - too soon after year change (" + timeSinceYearChange + "ms)");
+                return;
+            }
+            
             // Only start background loading if not already running
             if (!isRunning.get()) {
                 Log.d("ImageHandler", "Starting background loading due to app going to background");
