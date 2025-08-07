@@ -131,7 +131,14 @@ open class ShowsAttended {
                 }
             }
         } catch {
-            print ("Loaded show attended data!! Error, unable to load showsAtteneded Data \(error.localizedDescription)")
+            // Handle missing showsAttended.data gracefully - this is expected on first install
+            if let nsError = error as NSError?, nsError.code == 260 { // NSFileReadNoSuchFileError
+                print("Shows attended data file does not exist yet - this is normal for first app launch. Starting with empty attendance records.")
+                // Initialize with empty data for first launch
+                self.showsAttendedArray = [:]
+            } else {
+                print("Error loading shows attended data: \(error.localizedDescription)")
+            }
         }
     }
     

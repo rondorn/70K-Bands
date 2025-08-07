@@ -178,7 +178,12 @@ func getAttendedIcons (attendedStatus: String)->UIImage {
 
     print ("Recieved attendedStatus of \(attendedStatus) returned \(graphicName)");
     
-    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
+    if graphicName.isEmpty {
+        graphicImage = UIImage()
+    } else {
+        graphicImage = UIImage(named: graphicName) ?? UIImage()
+    }
     
     return graphicImage
 }
@@ -217,7 +222,12 @@ func getRankGuiIcons (rank: String)->UIImage {
         graphicName = ""
     }
     
-    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
+    if graphicName.isEmpty {
+        graphicImage = UIImage()
+    } else {
+        graphicImage = UIImage(named: graphicName) ?? UIImage()
+    }
     
     return graphicImage
     

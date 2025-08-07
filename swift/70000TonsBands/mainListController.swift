@@ -45,6 +45,12 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     numberOfFilteredRecords = 0
     var newAllBands = [String]()
     
+    // If no band data is loaded yet, return empty array to trigger waiting message
+    if allBands.isEmpty {
+        print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: No band data loaded, returning empty array for waiting message")
+        return []
+    }
+    
     var presentCheck = [String]();
     //var listOfVenues = ["All"]
     attendingCount = 0
@@ -713,7 +719,13 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     indexForCell.text = indexText;
     
     print ("Cell text for \(bandName) ranking is \(dataHandle.getPriorityData(bandName))")
-    rankGraphic = UIImageView(image:UIImage(named: getPriorityGraphic(dataHandle.getPriorityData(bandName))))
+    // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
+let priorityGraphicName = getPriorityGraphic(dataHandle.getPriorityData(bandName))
+if priorityGraphicName.isEmpty {
+    rankGraphic = UIImageView(image: UIImage())
+} else {
+    rankGraphic = UIImageView(image: UIImage(named: priorityGraphicName) ?? UIImage())
+}
     
     if (timeIndex > 1 && sortBy == "name" && bandName == previousBandName){
         rankGraphic.image = nil

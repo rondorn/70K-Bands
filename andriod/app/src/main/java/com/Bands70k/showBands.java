@@ -758,10 +758,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         break;
                 }
 
+                // SWIPE MENU FIX: Save position before refresh, it will be restored automatically
+                saveScrollPosition();
                 refreshData();
-                // ERRATIC JUMPING FIX: Remove conflicting state restoration
-                // Position restoration is handled centrally in displayBandDataWithSchedule()
-                // bandNamesList.onRestoreInstanceState(listState);
 
                 return false;
             }
@@ -1064,7 +1063,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("refreshNewData", "refreshNewData - 4");
         if (headerText.equals("70,000 Tons")) {
             Log.d("DisplayListData", "running extra refresh");
+            // UNIVERSAL SCROLL PRESERVATION: Save position before extra refresh
+            if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
+                saveScrollPosition();
+                Log.d("ScrollPosition", "Universal scroll preservation activated for extra refresh");
+            }
             displayBandData();
+            // Restore position after extra refresh
+            restoreScrollPosition();
         }
         Log.d("refreshNewData", "refreshNewData - 5");
     }
@@ -1170,6 +1176,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d("ListPosition", "displayBandDataWithSchedule called - returningFromDetailsScreen: " + returningFromDetailsScreen + ", savedPosition: " + staticVariables.listPosition);
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
+        
+        // ANIMATION FIX: Disable layout animations during swipe menu refresh
+        if (staticVariables.disableListAnimations) {
+            Log.d("AnimationFix", "Disabling list animations for smooth refresh");
+            // Disable layout animations completely
+            bandNamesList.setLayoutAnimation(null);
+            // Disable list selector animations
+            bandNamesList.setLayoutAnimationListener(null);
+            // Ensure no transition animations
+            bandNamesList.setItemsCanFocus(false);
+        }
+        
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
         bandNamesList.setAdapter(adapter);
 
@@ -1348,11 +1366,76 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
 
 
+    /**
+     * Save the current scroll position of the list
+     */
+    private void saveScrollPosition() {
+        if (bandNamesList != null) {
+            staticVariables.savedScrollPosition = bandNamesList.getFirstVisiblePosition();
+            View firstView = bandNamesList.getChildAt(0);
+            staticVariables.savedScrollOffset = (firstView == null) ? 0 : firstView.getTop();
+            Log.d("ScrollPosition", "Saved scroll position: " + staticVariables.savedScrollPosition + ", offset: " + staticVariables.savedScrollOffset);
+            
+            // ANIMATION FIX: Disable list animations and briefly hide list for smoother refresh
+            staticVariables.disableListAnimations = true;
+            bandNamesList.setVisibility(View.INVISIBLE);
+        }
+    }
+    
+    /**
+     * Restore list animations to default state
+     */
+    private void restoreListAnimations() {
+        if (bandNamesList != null) {
+            Log.d("AnimationFix", "Restoring list animations to default state");
+            // Restore default list behavior
+            bandNamesList.setItemsCanFocus(true);
+            // Note: Layout animations are typically null by default, so we leave them disabled
+            // to prevent unwanted animations during normal operation
+        }
+    }
+    
+    /**
+     * Restore the saved scroll position of the list
+     */
+    private void restoreScrollPosition() {
+        if (bandNamesList != null && staticVariables.savedScrollPosition >= 0) {
+            // DETAILS RETURN FIX: Add slight delay for smoother restoration from showDetails
+            int delay = returningFromDetailsScreen ? 100 : 0;
+            
+            bandNamesList.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (staticVariables.savedScrollPosition < adapter.getCount()) {
+                        bandNamesList.setSelectionFromTop(staticVariables.savedScrollPosition, staticVariables.savedScrollOffset);
+                        Log.d("ScrollPosition", "Restored scroll position: " + staticVariables.savedScrollPosition + ", offset: " + staticVariables.savedScrollOffset);
+                        
+                        // ANIMATION FIX: Re-enable animations and show list after position is restored
+                        restoreListAnimations();
+                        bandNamesList.setVisibility(View.VISIBLE);
+                        staticVariables.disableListAnimations = false;
+                        
+                        // Clear saved position after restore
+                        staticVariables.savedScrollPosition = -1;
+                        staticVariables.savedScrollOffset = 0;
+                    }
+                }
+            }, delay);
+        }
+    }
+
     public void refreshData() {
 
         Log.d("DisplayListData", "called from refreshData");
         
-        // INTERMITTENT POSITION LOSS FIX: Save current position before refresh
+        // UNIVERSAL SCROLL PRESERVATION: Always save position before any refresh
+        if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
+            // Only save if we don't already have a saved position
+            saveScrollPosition();
+            Log.d("ScrollPosition", "Universal scroll preservation activated for refreshData()");
+        }
+        
+        // INTERMITTENT POSITION LOSS FIX: Save current position before refresh (legacy support)
         if (bandNamesList != null && staticVariables.listPosition == 0) {
             int currentPosition = bandNamesList.getFirstVisiblePosition();
             if (currentPosition > 0) {
@@ -1363,8 +1446,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         displayBandData();
         
-        // Note: Position restoration is now handled in displayBandDataWithSchedule()
-        // Removed duplicate restoration logic to prevent conflicts
+        // Restore scroll position if it was saved
+        restoreScrollPosition();
+        
+        // ANIMATION FIX: Safety fallback - ensure list is visible even if restore fails
+        bandNamesList.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (bandNamesList.getVisibility() != View.VISIBLE) {
+                    Log.d("AnimationFix", "Safety fallback: Making list visible");
+                    bandNamesList.setVisibility(View.VISIBLE);
+                    staticVariables.disableListAnimations = false;
+                }
+            }
+        }, 500); // 500ms timeout
 
     }
 
@@ -1450,19 +1545,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Only refresh if we're not returning from stats page to avoid blocking stats loading
         // The stats page should load immediately without waiting for main activity refresh
         if (!returningFromStatsPage) {
-            // JUMPING FIX: Skip refresh when returning from details screen to prevent list rebuild
+            // DETAILS RETURN FIX: Always refresh to show updated data, but preserve scroll position
             if (staticVariables.listPosition > 0) {
                 returningFromDetailsScreen = true;
-                Log.d("ListPosition", "Detected return from details screen - SKIPPING refresh to prevent jumping");
-                // Reset the flags after a delay since we're not refreshing
-                bandNamesList.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        staticVariables.listPosition = 0;
-                        returningFromDetailsScreen = false;
-                        Log.d("ListPosition", "Reset flags without refresh");
-                    }
-                }, 1000);
+                Log.d("ListPosition", "Detected return from details screen - refreshing with smooth animation control");
+                
+                // ANIMATION FIX: Enable smooth refresh for details return
+                staticVariables.disableListAnimations = true;
+                
+                // Save current scroll position before refresh (AsyncTask will also save if needed)
+                saveScrollPosition();
+                
+                // Refresh data to show updated rankings
+                refreshNewData();
+                
+                // Reset flags after refresh
+                staticVariables.listPosition = 0;
+                returningFromDetailsScreen = false;
             } else {
                 Log.d("ListPosition", "Normal onResume - proceeding with refresh");
                 refreshNewData();
@@ -1744,6 +1843,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("DisplayListData", "onPreExecuteRefresh - 1");
                 staticVariables.loadingBands = true;
                 Log.d("AsyncList refresh", "Starting AsyncList refresh");
+                
+                // ANIMATION FIX: Save scroll position before async refresh
+                if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
+                    saveScrollPosition();
+                    Log.d("ScrollPosition", "Async refresh scroll preservation activated");
+                }
+                
                 refreshData();
                 staticVariables.loadingBands = false;
                 Log.d("DisplayListData", "onPreExecuteRefresh - 2");
@@ -1794,13 +1900,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("Refresh", "Refresh Stage = Post-Start");
             //if (staticVariables.loadingBands == false) {
 
-                refreshData();
+                // ANIMATION FIX: Only refresh if we don't have scroll preservation active
+                if (staticVariables.savedScrollPosition < 0) {
+                    refreshData();
+                    Log.d("onPostExecuteRefresh", "Post-execute refresh (no scroll preservation)");
+                } else {
+                    Log.d("onPostExecuteRefresh", "Skipping post-execute refresh - scroll preservation active");
+                }
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 2");
-                showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-                showBands.this.bandNamesList.requestLayout();
+                
+                // ANIMATION FIX: Don't manually control visibility - let our system handle it
+                if (staticVariables.savedScrollPosition < 0) {
+                    // Only set visibility if our animation system isn't managing it
+                    showBands.this.bandNamesList.setVisibility(View.VISIBLE);
+                    showBands.this.bandNamesList.requestLayout();
+                }
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 3");
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
