@@ -152,6 +152,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         buildEventYearMenu(currentYear: currentYearSetting)
         disableAlertButtonsIfNeeded()
         self.navigationItem.title = NSLocalizedString("PreferenceHeader", comment: "")
+        
+        // Configure labels for multiline text after view setup
+        configureLabelsForMultilineText()
+        
+        // Update scroll view size after all setup is complete
+        updateScrollViewContentSize()
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayWaitingMessage), name: NSNotification.Name(rawValue: "DisplayWaitingMessage"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(self.eventsOrBandsPrompt), name: NSNotification.Name(rawValue: "EventsOrBandsPrompt"), object: nil)
@@ -172,6 +178,12 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         let backItem = UIBarButtonItem()
         backItem.title = "Back"
         self.navigationItem.backBarButtonItem = backItem
+        
+        // Ensure labels are configured for multiline text
+        configureLabelsForMultilineText()
+        
+        // Update scroll view size when view appears
+        updateScrollViewContentSize()
     }
     
     /// Called just before the view disappears. Resets local notifications and refreshes the master view.
@@ -267,17 +279,48 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
     func setLocalizedLables (){
         
         alertPreferenceHeader.text = NSLocalizedString("AlertPreferences", comment: "")
+        alertPreferenceHeader.numberOfLines = 0
+        alertPreferenceHeader.adjustsFontSizeToFitWidth = true
+        
         mustSeeAlertLable.text = NSLocalizedString("Alert On Must See Bands", comment: "")
+        mustSeeAlertLable.numberOfLines = 0
+        mustSeeAlertLable.adjustsFontSizeToFitWidth = true
+        
         mightSeeAlertLable.text = NSLocalizedString("Alert On Might See Bands", comment: "")
+        mightSeeAlertLable.numberOfLines = 0
+        mightSeeAlertLable.adjustsFontSizeToFitWidth = true
+        
         onlyAlertForAttendedLable.text = NSLocalizedString("Alert Only for Will Attend Events", comment: "")
+        onlyAlertForAttendedLable.numberOfLines = 0
+        onlyAlertForAttendedLable.adjustsFontSizeToFitWidth = true
         
         minBeforeAlertLable.text = NSLocalizedString("Minutes Before Event to Alert", comment: "")
+        minBeforeAlertLable.numberOfLines = 0
+        minBeforeAlertLable.adjustsFontSizeToFitWidth = true
+        
         alertForShowsLable.text = NSLocalizedString("Alert For Shows", comment: "")
+        alertForShowsLable.numberOfLines = 0
+        alertForShowsLable.adjustsFontSizeToFitWidth = true
+        
         alertForSpecialLable.text = NSLocalizedString("Alert For Special Events", comment: "")
+        alertForSpecialLable.numberOfLines = 0
+        alertForSpecialLable.adjustsFontSizeToFitWidth = true
+        
         alertForMandGLable.text = NSLocalizedString("Alert For Meeting and Greet Events", comment: "")
+        alertForMandGLable.numberOfLines = 0
+        alertForMandGLable.adjustsFontSizeToFitWidth = true
+        
         alertForClinicsLable.text = NSLocalizedString("Alert For Clinics", comment: "")
+        alertForClinicsLable.numberOfLines = 0
+        alertForClinicsLable.adjustsFontSizeToFitWidth = true
+        
         alertForListeningLable.text  = NSLocalizedString("Alert For Album Listening Events", comment: "")
+        alertForListeningLable.numberOfLines = 0
+        alertForListeningLable.adjustsFontSizeToFitWidth = true
+        
         alertForUnofficalEventsLable.text = NSLocalizedString("Alert For Unofficial Events", comment: "")
+        alertForUnofficalEventsLable.numberOfLines = 0
+        alertForUnofficalEventsLable.adjustsFontSizeToFitWidth = true
         
         restartAlertTitle = NSLocalizedString("restartTitle", comment: "")
         restartAlertText = NSLocalizedString("restartMessage", comment: "")
@@ -291,14 +334,38 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         eventListButton = NSLocalizedString("eventListButton", comment: "")
         
         NotesFontSizeLargeLabel.text = NSLocalizedString("NoteFontSize", comment: "")
+        NotesFontSizeLargeLabel.numberOfLines = 0
+        NotesFontSizeLargeLabel.adjustsFontSizeToFitWidth = true
         
         HideExpiredLabel.text = NSLocalizedString("showHideExpiredLabel", comment: "")
+        HideExpiredLabel.numberOfLines = 0
+        HideExpiredLabel.adjustsFontSizeToFitWidth = true
+        
         HideExpiredSwitchLabel.text = NSLocalizedString("hideExpiredEvents", comment: "")
+        HideExpiredSwitchLabel.numberOfLines = 0
+        HideExpiredSwitchLabel.adjustsFontSizeToFitWidth = true
         
         PromptForAttendedLabel.text = NSLocalizedString("Prompt For Attended Status Header", comment: "")
+        PromptForAttendedLabel.numberOfLines = 0
+        PromptForAttendedLabel.adjustsFontSizeToFitWidth = true
+        
         PromptForAttendedSwitchLabel.text = NSLocalizedString("Prompt For Attended Status", comment: "")
+        PromptForAttendedSwitchLabel.numberOfLines = 0
+        PromptForAttendedSwitchLabel.adjustsFontSizeToFitWidth = true
         
         selectYearLable.text = NSLocalizedString("SelectYearLabel", comment: "")
+        selectYearLable.numberOfLines = 0
+        selectYearLable.adjustsFontSizeToFitWidth = true
+        
+        // Enable multiline support for Detail Screen section header
+        DetailScreenSection.numberOfLines = 0
+        DetailScreenSection.adjustsFontSizeToFitWidth = true
+        
+        // Configure all labels for proper multiline text wrapping
+        configureLabelsForMultilineText()
+        
+        // Update scroll view size after text is set
+        updateScrollViewContentSize()
         
         if let uidString = UIDevice.current.identifierForVendor?.uuidString {
             userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation + "\nVersion: "
@@ -307,6 +374,189 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             userIDLabel.adjustsFontSizeToFitWidth = true
         } else {
             print("AlertPreferenesController: ERROR - UIDevice identifierForVendor is nil, cannot set uidString")
+        }
+    }
+    
+    /// Configures all labels for proper multiline text wrapping and pins toggle buttons to the right
+    func configureLabelsForMultilineText() {
+        let screenWidth = UIScreen.main.bounds.width
+        let maxControlWidth: CGFloat = 100 // Maximum width for any control (button, text field, switch)
+        let rightMargin: CGFloat = 5
+        let leftMargin: CGFloat = 20
+        let spacing: CGFloat = 10
+        // Calculate label width based on controls being positioned at screen edge
+        let labelWidth = screenWidth - leftMargin - maxControlWidth - rightMargin - spacing
+        
+        // Array of all switches that need to be pinned to the right
+        let switches: [UISwitch] = [
+            AlertOnMustSee,
+            AlertOnMightSee,
+            AlertOnlyForAttended,
+            AlertForShows,
+            AlertForSpecialEvents,
+            AlertForMeetAndGreets,
+            AlertForClinic,
+            AlertForListeningEvent,
+            alertForUnofficalEvents,
+            NotesFontSizeLargeSwitch,
+            HideExpiredSwitch,
+            PromptForAttendedSwitch
+        ]
+        
+        // Pin all switches to the actual right edge of the screen using absolute positioning
+        let rightEdgeX = screenWidth - rightMargin - 51 // 51 is standard UISwitch width
+        
+        for switchControl in switches {
+            // Use frame-based positioning to ensure they're at the screen edge
+            let currentY = switchControl.frame.origin.y
+            switchControl.frame = CGRect(x: rightEdgeX, y: currentY, width: 51, height: 31)
+        }
+        
+        // Pin the MinBeforeAlert text field to the right edge
+        let textFieldWidth: CGFloat = 60
+        let textFieldX = screenWidth - rightMargin - textFieldWidth
+        let currentTextFieldY = MinBeforeAlert.frame.origin.y
+        MinBeforeAlert.frame = CGRect(x: textFieldX, y: currentTextFieldY, width: textFieldWidth, height: MinBeforeAlert.frame.height)
+        
+        // Pin the year selection button to the right edge  
+        let buttonWidth: CGFloat = 100
+        let buttonX = screenWidth - rightMargin - buttonWidth
+        let currentButtonY = selectEventYear.frame.origin.y
+        selectEventYear.frame = CGRect(x: buttonX, y: currentButtonY, width: buttonWidth, height: selectEventYear.frame.height)
+        
+        // Array of all labels that need multiline support and dynamic font sizing
+        let labels: [UILabel] = [
+            alertPreferenceHeader,
+            mustSeeAlertLable,
+            mightSeeAlertLable,
+            onlyAlertForAttendedLable,
+            minBeforeAlertLable,
+            alertForShowsLable,
+            alertForSpecialLable,
+            alertForMandGLable,
+            alertForClinicsLable,
+            alertForListeningLable,
+            alertForUnofficalEventsLable,
+            NotesFontSizeLargeLabel,
+            HideExpiredLabel,
+            HideExpiredSwitchLabel,
+            PromptForAttendedLabel,
+            PromptForAttendedSwitchLabel,
+            selectYearLable,
+            DetailScreenSection
+        ]
+        
+        // Configure each label for multiline text and dynamic font sizing
+        for label in labels {
+            // Remove any existing width constraints
+            let widthConstraints = label.constraints.filter { $0.firstAttribute == .width }
+            label.removeConstraints(widthConstraints)
+            
+            // Set preferred maximum width for text wrapping
+            label.preferredMaxLayoutWidth = labelWidth
+            
+            // Enable dynamic font sizing
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.7 // Allow font to scale down to 70% of original size
+            
+            // Ensure word wrapping is enabled
+            label.lineBreakMode = .byWordWrapping
+            
+            // Force layout update
+            label.setNeedsLayout()
+        }
+        
+        // Update scroll view content size and re-position controls after layout
+        DispatchQueue.main.async {
+            self.view.layoutIfNeeded()
+            
+            // Re-position controls after layout is complete
+            self.repositionControlsToScreenEdge()
+            
+            // Calculate actual content height by finding the bottom-most element
+            var maxY: CGFloat = 0
+            for subview in self.controlView.subviews {
+                let bottomY = subview.frame.origin.y + subview.frame.size.height
+                maxY = max(maxY, bottomY)
+            }
+            
+            // Add extra padding for safety and account for potential layout changes
+            let contentHeight = maxY + 100
+            let minHeight = UIScreen.main.bounds.height + 200 // Ensure scrolling is always possible
+            let finalHeight = max(contentHeight, minHeight)
+            
+            self.scrollView.contentSize = CGSize(width: self.scrollView.frame.width, height: finalHeight)
+            print("Updated scroll view content size to: \(self.scrollView.contentSize)")
+        }
+    }
+    
+    /// Repositions all controls to the actual screen edge after layout is complete
+    func repositionControlsToScreenEdge() {
+        let screenWidth = UIScreen.main.bounds.width
+        let rightMargin: CGFloat = 5
+        
+        // Array of all switches that need to be repositioned
+        let switches: [UISwitch] = [
+            AlertOnMustSee,
+            AlertOnMightSee,
+            AlertOnlyForAttended,
+            AlertForShows,
+            AlertForSpecialEvents,
+            AlertForMeetAndGreets,
+            AlertForClinic,
+            AlertForListeningEvent,
+            alertForUnofficalEvents,
+            NotesFontSizeLargeSwitch,
+            HideExpiredSwitch,
+            PromptForAttendedSwitch
+        ]
+        
+        // Position all switches at screen edge
+        let switchX = screenWidth - rightMargin - 51 // 51 is standard UISwitch width
+        for switchControl in switches {
+            let currentY = switchControl.frame.origin.y
+            switchControl.frame = CGRect(x: switchX, y: currentY, width: 51, height: 31)
+        }
+        
+        // Position MinBeforeAlert text field
+        let textFieldWidth: CGFloat = 60
+        let textFieldX = screenWidth - rightMargin - textFieldWidth
+        let currentTextFieldY = MinBeforeAlert.frame.origin.y
+        MinBeforeAlert.frame = CGRect(x: textFieldX, y: currentTextFieldY, width: textFieldWidth, height: MinBeforeAlert.frame.height)
+        
+        // Position year selection button
+        let buttonWidth: CGFloat = 100
+        let buttonX = screenWidth - rightMargin - buttonWidth
+        let currentButtonY = selectEventYear.frame.origin.y
+        selectEventYear.frame = CGRect(x: buttonX, y: currentButtonY, width: buttonWidth, height: selectEventYear.frame.height)
+        
+        print("Repositioned controls to screen edge - screen width: \(screenWidth)")
+    }
+    
+    /// Recalculates and updates the scroll view content size based on actual content
+    func updateScrollViewContentSize() {
+        DispatchQueue.main.async {
+            // Force layout to ensure all label sizes are calculated
+            self.view.layoutIfNeeded()
+            
+            // Wait a bit more for text layout to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                var maxY: CGFloat = 0
+                
+                // Check all subviews in the control view
+                for subview in self.controlView.subviews {
+                    let bottomY = subview.frame.origin.y + subview.frame.size.height
+                    maxY = max(maxY, bottomY)
+                }
+                
+                // Add substantial padding for wrapped text and bottom elements
+                let contentHeight = maxY + 150
+                let minHeight = UIScreen.main.bounds.height + 300
+                let finalHeight = max(contentHeight, minHeight)
+                
+                self.scrollView.contentSize = CGSize(width: self.scrollView.frame.width, height: finalHeight)
+                print("Final scroll view content size: \(self.scrollView.contentSize), maxY was: \(maxY)")
+            }
         }
     }
     
