@@ -27,6 +27,7 @@ import android.webkit.WebChromeClient;
 import androidx.core.app.NavUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.widget.Toast;
 
 import android.view.Display;
 import android.view.GestureDetector;
@@ -430,12 +431,23 @@ public class showBandDetails extends Activity {
                     options.inJustDecodeBounds = true;
                     BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
                     
-                    // Check if image is reasonable size (prevent OutOfMemoryError)
-                    if (options.outWidth > 0 && options.outHeight > 0 && 
-                        options.outWidth <= 2048 && options.outHeight <= 2048) {
+                    // Check if image dimensions are valid and calculate appropriate sample size
+                    if (options.outWidth > 0 && options.outHeight > 0) {
+                        
+                        // Calculate sample size to fit within memory constraints (max 2048x2048)
+                        int maxDimension = 2048;
+                        int sampleSize = 1;
+                        
+                        if (options.outWidth > maxDimension || options.outHeight > maxDimension) {
+                            int widthRatio = options.outWidth / maxDimension;
+                            int heightRatio = options.outHeight / maxDimension;
+                            sampleSize = Math.max(widthRatio, heightRatio);
+                            Log.d("ProgressiveLoading", "Phase 2: Scaling down large image for " + bandName + 
+                                  " (" + options.outWidth + "x" + options.outHeight + ") with sample size " + sampleSize);
+                        }
                         
                         options.inJustDecodeBounds = false;
-                        options.inSampleSize = 1; // Full resolution for cached images
+                        options.inSampleSize = sampleSize;
                         options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
                         
                         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
@@ -466,7 +478,7 @@ public class showBandDetails extends Activity {
                             }
                         }
                     } else {
-                        Log.w("ProgressiveLoading", "Phase 2: Image too large for " + bandName + 
+                        Log.w("ProgressiveLoading", "Phase 2: Invalid image dimensions for " + bandName + 
                               " (" + options.outWidth + "x" + options.outHeight + ")");
                     }
                 }
@@ -647,12 +659,23 @@ public class showBandDetails extends Activity {
                         options.inJustDecodeBounds = true;
                         BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
                         
-                        // Check if image is reasonable size (prevent OutOfMemoryError)
-                        if (options.outWidth > 0 && options.outHeight > 0 && 
-                            options.outWidth <= 2048 && options.outHeight <= 2048) {
+                        // Check if image dimensions are valid and calculate appropriate sample size
+                        if (options.outWidth > 0 && options.outHeight > 0) {
+                            
+                            // Calculate sample size to fit within memory constraints (max 2048x2048)
+                            int maxDimension = 2048;
+                            int sampleSize = 1;
+                            
+                            if (options.outWidth > maxDimension || options.outHeight > maxDimension) {
+                                int widthRatio = options.outWidth / maxDimension;
+                                int heightRatio = options.outHeight / maxDimension;
+                                sampleSize = Math.max(widthRatio, heightRatio);
+                                Log.d("ProgressiveLoading", "Phase 5: Scaling down large downloaded image for " + bandName + 
+                                      " (" + options.outWidth + "x" + options.outHeight + ") with sample size " + sampleSize);
+                            }
                             
                             options.inJustDecodeBounds = false;
-                            options.inSampleSize = 1; // Full resolution for downloaded images
+                            options.inSampleSize = sampleSize;
                             options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
                             
                             Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
@@ -666,7 +689,7 @@ public class showBandDetails extends Activity {
                                                 // Final check before UI update
                                                 if (!isFinishing() && !isDestroyed() && bandLogoImage != null) {
                                                     displayBandImage(bitmap);
-            } else {
+                                                } else {
                                                     // Activity destroyed, recycle bitmap to prevent memory leak
                                                     if (!bitmap.isRecycled()) {
                                                         bitmap.recycle();
@@ -683,7 +706,7 @@ public class showBandDetails extends Activity {
                                 }
                             }
                         } else {
-                            Log.w("ProgressiveLoading", "Phase 5: Downloaded image too large for " + bandName + 
+                            Log.w("ProgressiveLoading", "Phase 5: Invalid downloaded image dimensions for " + bandName + 
                                   " (" + options.outWidth + "x" + options.outHeight + ")");
                         }
                     }
@@ -794,12 +817,23 @@ public class showBandDetails extends Activity {
                     options.inJustDecodeBounds = true;
                     BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
                     
-                    // Only load if image is reasonable size
-                    if (options.outWidth > 0 && options.outHeight > 0 && 
-                        options.outWidth <= 2048 && options.outHeight <= 2048) {
+                    // Check if image dimensions are valid and calculate appropriate sample size
+                    if (options.outWidth > 0 && options.outHeight > 0) {
+                        
+                        // Calculate sample size to fit within memory constraints (max 2048x2048)
+                        int maxDimension = 2048;
+                        int sampleSize = 1;
+                        
+                        if (options.outWidth > maxDimension || options.outHeight > maxDimension) {
+                            int widthRatio = options.outWidth / maxDimension;
+                            int heightRatio = options.outHeight / maxDimension;
+                            sampleSize = Math.max(widthRatio, heightRatio);
+                            Log.d("WebViewImageFix", "Scaling down large cached image for " + bandName + 
+                                  " (" + options.outWidth + "x" + options.outHeight + ") with sample size " + sampleSize);
+                        }
                         
                         options.inJustDecodeBounds = false;
-                        options.inSampleSize = 1;
+                        options.inSampleSize = sampleSize;
                         options.inPreferredConfig = Bitmap.Config.RGB_565; // Use less memory
                         
                         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
@@ -808,7 +842,7 @@ public class showBandDetails extends Activity {
                             Log.d("WebViewImageFix", "Cached image restored successfully for " + bandName);
                         }
                     } else {
-                        Log.w("WebViewImageFix", "Cached image too large for " + bandName + 
+                        Log.w("WebViewImageFix", "Invalid cached image dimensions for " + bandName + 
                               " (" + options.outWidth + "x" + options.outHeight + ")");
                     }
                 } else {
@@ -1424,6 +1458,16 @@ public class showBandDetails extends Activity {
         // Enable history tracking for proper back navigation
         inAppWebView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         
+        // SECURITY FIX: Restrict file access to prevent cross-app scripting
+        inAppWebView.getSettings().setAllowFileAccess(false);  // Disable file:// URL access
+        inAppWebView.getSettings().setAllowContentAccess(true);  // Keep content:// access
+        
+        // SECURITY FIX: Prevent universal file access (API 16+)
+        if (android.os.Build.VERSION.SDK_INT >= 16) {
+            inAppWebView.getSettings().setAllowUniversalAccessFromFileURLs(false);
+            inAppWebView.getSettings().setAllowFileAccessFromFileURLs(false);
+        }
+        
         // Enable navigation history
         inAppWebView.clearHistory(); // Start with clean history
         Log.d("WebView", "WebView history cleared, ready for navigation");
@@ -1451,8 +1495,48 @@ public class showBandDetails extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Log.d("WebView", "Loading URL: " + url);
-                // Allow the WebView to handle the URL normally for proper history tracking
-                return false;
+                // SECURITY FIX: Validate URL before allowing navigation
+                // Inline URL validation to avoid method resolution issues
+                boolean urlSafe = false;
+                if (url != null && !url.trim().isEmpty()) {
+                    try {
+                        java.net.URI uri = java.net.URI.create(url.trim());
+                        String scheme = uri.getScheme();
+                        if (scheme != null) {
+                            scheme = scheme.toLowerCase();
+                            if (scheme.equals("http") || scheme.equals("https")) {
+                                String lowerUrl = url.toLowerCase();
+                                if (!lowerUrl.contains("javascript:") && 
+                                    !lowerUrl.contains("data:") && 
+                                    !lowerUrl.contains("file:") &&
+                                    !lowerUrl.contains("content:") &&
+                                    !lowerUrl.contains("android_asset:") &&
+                                    !lowerUrl.contains("android_res:")) {
+                                    String host = uri.getHost();
+                                    if (host != null && !host.trim().isEmpty() &&
+                                        !host.equals("localhost") && 
+                                        !host.equals("127.0.0.1") && 
+                                        !host.startsWith("192.168.") && 
+                                        !host.startsWith("10.") && 
+                                        !host.startsWith("172.")) {
+                                        urlSafe = true;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.w("WebView", "URL validation failed: " + e.getMessage());
+                    }
+                }
+                
+                if (urlSafe) {
+                    // Allow the WebView to handle the URL normally for proper history tracking
+                    return false;
+                } else {
+                    Log.w("WebView", "Blocked potentially unsafe URL: " + url);
+                    Toast.makeText(showBandDetails.this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                    return true; // Block the navigation
+                }
             }
         });
         
@@ -1483,7 +1567,46 @@ public class showBandDetails extends Activity {
         
         // Load the URL
         Log.d("WebView", "Loading initial URL: " + url);
-        inAppWebView.loadUrl(url);
+        // SECURITY FIX: Validate URL before loading - inline validation
+        boolean urlSafe = false;
+        if (url != null && !url.trim().isEmpty()) {
+            try {
+                java.net.URI uri = java.net.URI.create(url.trim());
+                String scheme = uri.getScheme();
+                if (scheme != null) {
+                    scheme = scheme.toLowerCase();
+                    if (scheme.equals("http") || scheme.equals("https")) {
+                        String lowerUrl = url.toLowerCase();
+                        if (!lowerUrl.contains("javascript:") && 
+                            !lowerUrl.contains("data:") && 
+                            !lowerUrl.contains("file:") &&
+                            !lowerUrl.contains("content:") &&
+                            !lowerUrl.contains("android_asset:") &&
+                            !lowerUrl.contains("android_res:")) {
+                            String host = uri.getHost();
+                            if (host != null && !host.trim().isEmpty() &&
+                                !host.equals("localhost") && 
+                                !host.equals("127.0.0.1") && 
+                                !host.startsWith("192.168.") && 
+                                !host.startsWith("10.") && 
+                                !host.startsWith("172.")) {
+                                urlSafe = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("WebView", "URL validation failed: " + e.getMessage());
+            }
+        }
+        
+        if (urlSafe) {
+            inAppWebView.loadUrl(url);
+        } else {
+            Log.w("WebView", "Blocked unsafe initial URL: " + url);
+            Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+            exitInAppWebView(); // Exit back to details view
+        }
         
         // Set flag that we're in web link mode
         inLink = true;
@@ -2539,6 +2662,8 @@ class OnSwipeTouchListener implements View.OnTouchListener {
         // allow the ScrollView to handle it for vertical scrolling
         return gestureHandled;
     }
+
+
 
     private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
 

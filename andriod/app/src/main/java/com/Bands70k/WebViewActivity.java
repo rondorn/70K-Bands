@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.FileOutputStream;
+import java.net.URI;
 
 /**
  * Activity for displaying HTML reports in a WebView, with caching and background refresh support.
@@ -49,8 +50,16 @@ public class WebViewActivity extends Activity {
         
         // Performance optimizations
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAllowContentAccess(true);
+        
+        // SECURITY FIX: Restrict file access to prevent cross-app scripting
+        webSettings.setAllowFileAccess(false);  // Disable file:// URL access
+        webSettings.setAllowContentAccess(true);  // Keep content:// access for legitimate content
+        
+        // SECURITY FIX: Prevent universal file access (API 16+)
+        if (android.os.Build.VERSION.SDK_INT >= 16) {
+            webSettings.setAllowUniversalAccessFromFileURLs(false);
+            webSettings.setAllowFileAccessFromFileURLs(false);
+        }
         
         // Enable hardware acceleration for better performance
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -59,8 +68,47 @@ public class WebViewActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+                // SECURITY FIX: Validate URL before loading - inline validation
+                boolean urlSafe = false;
+                if (url != null && !url.trim().isEmpty()) {
+                    try {
+                        java.net.URI uri = java.net.URI.create(url.trim());
+                        String scheme = uri.getScheme();
+                        if (scheme != null) {
+                            scheme = scheme.toLowerCase();
+                            if (scheme.equals("http") || scheme.equals("https")) {
+                                String lowerUrl = url.toLowerCase();
+                                if (!lowerUrl.contains("javascript:") && 
+                                    !lowerUrl.contains("data:") && 
+                                    !lowerUrl.contains("file:") &&
+                                    !lowerUrl.contains("content:") &&
+                                    !lowerUrl.contains("android_asset:") &&
+                                    !lowerUrl.contains("android_res:")) {
+                                    String host = uri.getHost();
+                                    if (host != null && !host.trim().isEmpty() &&
+                                        !host.equals("localhost") && 
+                                        !host.equals("127.0.0.1") && 
+                                        !host.startsWith("192.168.") && 
+                                        !host.startsWith("10.") && 
+                                        !host.startsWith("172.")) {
+                                        urlSafe = true;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.w("WebViewActivity", "URL validation failed: " + e.getMessage());
+                    }
+                }
+                
+                if (urlSafe) {
+                    view.loadUrl(url);
+                    return true;
+                } else {
+                    Log.w("WebViewActivity", "Blocked potentially unsafe URL: " + url);
+                    Toast.makeText(WebViewActivity.this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                    return true; // Block the navigation
+                }
             }
             
             @Override
@@ -74,8 +122,45 @@ public class WebViewActivity extends Activity {
         String reportUrl = getIntent().getStringExtra("reportUrl");
         
         if (reportUrl != null && !reportUrl.isEmpty()) {
-            Log.d("WebViewActivity", "Starting internal loading for URL: " + reportUrl);
-            loadReportWithCaching(reportUrl);
+            // SECURITY FIX: Validate URL from intent before using - inline validation
+            boolean urlSafe = false;
+            try {
+                java.net.URI uri = java.net.URI.create(reportUrl.trim());
+                String scheme = uri.getScheme();
+                if (scheme != null) {
+                    scheme = scheme.toLowerCase();
+                    if (scheme.equals("http") || scheme.equals("https")) {
+                        String lowerUrl = reportUrl.toLowerCase();
+                        if (!lowerUrl.contains("javascript:") && 
+                            !lowerUrl.contains("data:") && 
+                            !lowerUrl.contains("file:") &&
+                            !lowerUrl.contains("content:") &&
+                            !lowerUrl.contains("android_asset:") &&
+                            !lowerUrl.contains("android_res:")) {
+                            String host = uri.getHost();
+                            if (host != null && !host.trim().isEmpty() &&
+                                !host.equals("localhost") && 
+                                !host.equals("127.0.0.1") && 
+                                !host.startsWith("192.168.") && 
+                                !host.startsWith("10.") && 
+                                !host.startsWith("172.")) {
+                                urlSafe = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("WebViewActivity", "URL validation failed: " + e.getMessage());
+            }
+            
+            if (urlSafe) {
+                Log.d("WebViewActivity", "Starting internal loading for URL: " + reportUrl);
+                loadReportWithCaching(reportUrl);
+            } else {
+                Log.w("WebViewActivity", "Blocked unsafe URL from intent: " + reportUrl);
+                Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                finish();
+            }
         } else {
             // For stats page, get URL in background and load cached content immediately
             boolean isStatsPage = getIntent().getBooleanExtra("isStatsPage", false);
@@ -92,7 +177,44 @@ public class WebViewActivity extends Activity {
                     webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
                 } else if (directUrl != null && !directUrl.isEmpty()) {
                     Log.d("WebViewActivity", "Loading URL directly: " + directUrl);
-                    webView.loadUrl(directUrl);
+                    // SECURITY FIX: Validate URL from intent before loading - inline validation
+                    boolean urlSafe = false;
+                    try {
+                        java.net.URI uri = java.net.URI.create(directUrl.trim());
+                        String scheme = uri.getScheme();
+                        if (scheme != null) {
+                            scheme = scheme.toLowerCase();
+                            if (scheme.equals("http") || scheme.equals("https")) {
+                                String lowerUrl = directUrl.toLowerCase();
+                                if (!lowerUrl.contains("javascript:") && 
+                                    !lowerUrl.contains("data:") && 
+                                    !lowerUrl.contains("file:") &&
+                                    !lowerUrl.contains("content:") &&
+                                    !lowerUrl.contains("android_asset:") &&
+                                    !lowerUrl.contains("android_res:")) {
+                                    String host = uri.getHost();
+                                    if (host != null && !host.trim().isEmpty() &&
+                                        !host.equals("localhost") && 
+                                        !host.equals("127.0.0.1") && 
+                                        !host.startsWith("192.168.") && 
+                                        !host.startsWith("10.") && 
+                                        !host.startsWith("172.")) {
+                                        urlSafe = true;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.w("WebViewActivity", "URL validation failed: " + e.getMessage());
+                    }
+                    
+                    if (urlSafe) {
+                        webView.loadUrl(directUrl);
+                    } else {
+                        Log.w("WebViewActivity", "Blocked unsafe URL from intent: " + directUrl);
+                        Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
                 } else {
                     Log.e("WebViewActivity", "No content or URL provided");
                     Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();

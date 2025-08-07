@@ -68,7 +68,11 @@ open class bandNamesHandler {
             }
         } else if needsNetworkFetch || forceNetwork {
             // If we need to fetch from network (first launch or forced refresh), block UI and fetch
-            print("No cached/disk data, fetching from network (blocking UI)")
+            if cacheVariables.justLaunched {
+                print("First app launch detected - downloading band data from network. This may take a moment...")
+            } else {
+                print("No cached/disk data, fetching from network (blocking UI)")
+            }
             DispatchQueue.global(qos: .default).async {
                 self.gatherData(completion: completion)
             }
@@ -340,11 +344,16 @@ open class bandNamesHandler {
                     }
                 }
             } else {
-                print ("Could not read file for some reason");
-                do {
-                    try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
-                } catch let error as NSError {
-                    print ("Encountered an error on reading file" + error.debugDescription)
+                // Handle missing bandFile gracefully - this is expected on first install
+                if !FileManager.default.fileExists(atPath: bandFile) {
+                    print("Band file does not exist yet - this is normal for first app launch. Will attempt to download from network.")
+                } else {
+                    print("Band file exists but could not be read - checking for file access issues")
+                    do {
+                        try NSString(contentsOfFile: bandFile, encoding: String.Encoding.utf8.rawValue)
+                    } catch let error as NSError {
+                        print("Error reading existing band file: \(error.localizedDescription)")
+                    }
                 }
             }
             readingBandFile = false

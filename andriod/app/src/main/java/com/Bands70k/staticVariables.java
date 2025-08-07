@@ -181,6 +181,11 @@ public class staticVariables {
     public static Boolean prefsLoaded = false;
 
     public static Integer listPosition = 0;
+    
+    // SWIPE MENU FIX: Variables to track scroll position during refreshes
+    public static Integer savedScrollPosition = -1;
+    public static Integer savedScrollOffset = 0;
+    public static Boolean disableListAnimations = false;
 
     public static preferencesHandler preferences;
     public static showsAttended attendedHandler;
