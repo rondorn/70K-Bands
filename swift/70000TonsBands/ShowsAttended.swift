@@ -200,13 +200,18 @@ open class ShowsAttended {
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
         let currentStatus = getShowAttendedStatusRaw(index: index)
-        if (currentArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus){
+        if (currentArray.isEmpty == true || currentStatus == nil) {
+            // First click on a new event - set to "Will Attend"
+            value = sawAllStatus
+        } else if (currentStatus == sawNoneStatus) {
+            // Will Not Attend -> Will Attend
             value = sawAllStatus
         } else if (currentStatus == sawAllStatus && eventType == showType ){
             value = sawSomeStatus
         } else if (currentStatus == sawSomeStatus){
             value = sawNoneStatus;
         } else {
+            // fallback - treats any unrecognized value as "Will Not Attend"
             value = sawNoneStatus;
         }
         let timestamp = String(format: "%.0f", Date().timeIntervalSince1970)

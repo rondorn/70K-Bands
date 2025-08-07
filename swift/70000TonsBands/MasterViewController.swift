@@ -746,8 +746,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        // Force refresh when detail view updates priority data
-        self.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
+        // Move all data loading to background thread to avoid GUI blocking
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Refresh priority data in background
+            self.dataHandle.getCachedData()
+            
+            // Update GUI on main thread after data loading is complete
+            DispatchQueue.main.async {
+                // Force refresh when detail view updates priority data
+                self.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
+            }
+        }
     }
     
     @objc func refreshDisplayAfterWake(){
@@ -792,18 +803,31 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             MasterViewController.refreshBandListSafetyTimer = nil
             return
         }
-        bandNameHandle.readBandFile()
-        schedule.getCachedData()
-        dataHandle.getCachedData()
-        filterRequestID += 1
-        let requestID = filterRequestID
-        getFilteredBands(
-            bandNameHandle: bandNameHandle,
-            schedule: schedule,
-            dataHandle: dataHandle,
-            attendedHandle: attendedHandle,
-            searchCriteria: bandSearch.text ?? ""
-        ) { [weak self] filtered in
+        // Move all data loading to background thread to avoid GUI blocking
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else {
+                MasterViewController.isRefreshingBandList = false
+                MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                MasterViewController.refreshBandListSafetyTimer = nil
+                return
+            }
+            
+            // Perform all data loading in background
+            self.bandNameHandle.readBandFile()
+            self.schedule.getCachedData()
+            self.dataHandle.getCachedData()
+            
+            // Continue with UI updates on main thread
+            DispatchQueue.main.async {
+                self.filterRequestID += 1
+                let requestID = self.filterRequestID
+                getFilteredBands(
+                    bandNameHandle: self.bandNameHandle,
+                    schedule: self.schedule,
+                    dataHandle: self.dataHandle,
+                    attendedHandle: self.attendedHandle,
+                    searchCriteria: self.bandSearch.text ?? ""
+                ) { [weak self] (filtered: [String]) in
             guard let self = self else {
                 MasterViewController.isRefreshingBandList = false
                 MasterViewController.refreshBandListSafetyTimer?.invalidate()
@@ -830,7 +854,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("[YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             self.bands = bandsResult
             self.bandsByName = bandsResult
-            self.attendedHandle.getCachedData()
+            // Move attendedHandle.getCachedData() to background to avoid blocking GUI
+            DispatchQueue.global(qos: .utility).async {
+                self.attendedHandle.getCachedData()
+            }
             self.tableView.reloadData()
             self.updateCountLable()
             if shouldSnapToTopAfterRefresh {
@@ -852,6 +879,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             MasterViewController.isRefreshingBandList = false
             MasterViewController.refreshBandListSafetyTimer?.invalidate()
             MasterViewController.refreshBandListSafetyTimer = nil
+                }
+            }
         }
     }
     
@@ -870,10 +899,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         writeFiltersFile()
         if (isPerformingQuickLoad == false){
             isPerformingQuickLoad = true
-            self.dataHandle.getCachedData()
-            print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
-            refreshBandList(reason: "Quick refresh")
-            self.isPerformingQuickLoad = false
+            // Move data loading to background to avoid GUI blocking
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
+                self.dataHandle.getCachedData()
+                
+                DispatchQueue.main.async {
+                    print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
+                    self.refreshBandList(reason: "Quick refresh")
+                    self.isPerformingQuickLoad = false
+                }
+            }
         }
     }
     
@@ -1529,8 +1566,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func resortBandsByTime(){
-
-        schedule.getCachedData()
+        // Move data loading to background to avoid GUI blocking
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            self.schedule.getCachedData()
+        }
     }
     
     func resortBands() {
@@ -1866,20 +1906,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func detailDidUpdate() {
-        // Refresh data handler cache and reload table data when detail view updates
-        dataHandle.getCachedData()
-        self.tableView.reloadData()
+        // This notification is now handled by RefreshDisplay notification to avoid duplication
+        // The RefreshDisplay notification already calls refreshDataWithBackgroundUpdate which includes:
+        // 1. Immediate refreshBandList (includes dataHandle.getCachedData())
+        // 2. Background data refresh
+        // 3. UI updates when complete
+        print("[MasterViewController] DetailDidUpdate: Handled by RefreshDisplay notification to avoid duplication")
     }
     
     @objc func iCloudDataReadyHandler() {
         print("iCloud data ready, forcing reload of all caches and band file.")
-        bandNameHandle.readBandFile()
-        dataHandle.getCachedData()
-        attendedHandle.getCachedData()
-        schedule.getCachedData()
-        DispatchQueue.main.async {
-            print("Calling refreshBandList from iCloudDataReadyHandler with reason: iCloud data ready (after forced reload)")
-            self.refreshBandList(reason: "iCloud data ready (after forced reload)")
+        // Move all data loading to background to avoid GUI blocking
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            self.bandNameHandle.readBandFile()
+            self.dataHandle.getCachedData()
+            self.attendedHandle.getCachedData()
+            self.schedule.getCachedData()
+            
+            DispatchQueue.main.async {
+                print("Calling refreshBandList from iCloudDataReadyHandler with reason: iCloud data ready (after forced reload)")
+                self.refreshBandList(reason: "iCloud data ready (after forced reload)")
+            }
         }
     }
     
