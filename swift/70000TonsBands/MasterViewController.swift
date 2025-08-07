@@ -87,6 +87,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     var easterEggTriggeredForSearch = false
     
+    // Flag to track if country dialog should be shown after data loads on first install
+    private var shouldShowCountryDialogAfterDataLoad = false
+    
     var filterRequestID = 0
     
     static var isRefreshingBandList = false
@@ -103,7 +106,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //bandSearch.setImage(UIImage(named: "70KSearch")!, for: <#UISearchBar.Icon#>, state: UIControl.State.normal)
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
-        getCountry()
+        
+        // Check if this is first install - if so, delay country dialog until data loads
+        let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
+        if !hasRunBefore {
+            shouldShowCountryDialogAfterDataLoad = true
+            print("[MasterViewController] First install detected - delaying country dialog until data loads")
+        } else {
+            // Not first install, show country dialog immediately if needed
+            getCountry()
+        }
         
         self.navigationController?.navigationBar.barStyle = UIBarStyle.blackTranslucent
         self.navigationController?.navigationBar.tintColor = UIColor.white
@@ -141,8 +153,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
         
-        print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
-        refreshBandList(reason: "Initial launch")
+        // Only show initial waiting message on first install (reuse hasRunBefore from above)
+        if !hasRunBefore {
+            print("[MasterViewController] First install - showing initial waiting message")
+            showInitialWaitingMessage()
+            
+            // Delay the data loading slightly to ensure waiting message is visible on first install
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                print("Calling refreshBandList from viewDidLoad with reason: Initial launch (first install)")
+                self.refreshBandList(reason: "Initial launch (first install)")
+            }
+        } else {
+            print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
+            refreshBandList(reason: "Initial launch")
+        }
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
         
@@ -318,6 +342,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         lastBandNamesCacheRefresh = now
         print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
         refreshBandList(reason: "Band names cache ready")
+        
+        // Show country dialog after data loads on first install
+        if shouldShowCountryDialogAfterDataLoad {
+            shouldShowCountryDialogAfterDataLoad = false
+            print("[MasterViewController] Data loaded - showing country dialog for first install")
+            DispatchQueue.main.async {
+                self.getCountry()
+            }
+        }
     }
     
     func searchBarSearchButtonShouldReturn(_ searchBar: UITextField) -> Bool {
@@ -458,6 +491,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
    
 
       present(alertController, animated: true, completion: nil)
+    }
+    
+    /// Shows the waiting message immediately on first install only, before data loading begins
+    private func showInitialWaitingMessage() {
+        let waitingMessage = NSLocalizedString("waiting_for_data", comment: "")
+        let initialData = [waitingMessage]
+        
+        // Update the bands array and table view immediately
+        setBands(initialData)
+        
+        // Force immediate table view update
+        self.tableView.reloadData()
+        print("[MasterViewController] Initial waiting message displayed immediately (first install only)")
+        
+        // Also ensure the bands array is set globally for mainListController
+        bands = initialData
     }
     
     func getCountry(){

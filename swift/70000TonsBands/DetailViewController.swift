@@ -907,7 +907,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         if (bandPriorityStorage[safeBandName] != nil){
             priorityButtons.selectedSegmentIndex = bandPriorityStorage[safeBandName]!
             let priorityImageName = getPriorityGraphic(bandPriorityStorage[safeBandName]!)
-            PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
+            if priorityImageName.isEmpty {
+                PriorityIcon.image = UIImage()
+            } else {
+                PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            }
             print ("Setting priorityButtons for \(safeBandName) - \(priorityImageName)")
             let fontColorSelected = [NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: font]
             priorityButtons.setTitleTextAttributes(fontColorSelected, for: .selected)
@@ -1066,7 +1071,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             dataHandle.addPriorityData(bandName, priority: priorityButtons.selectedSegmentIndex)
         
             let priorityImageName = getPriorityGraphic(priorityButtons.selectedSegmentIndex)
-            PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
+            if priorityImageName.isEmpty {
+                PriorityIcon.image = UIImage()
+            } else {
+                PriorityIcon.image = UIImage(named: priorityImageName) ?? UIImage()
+            }
             
             setButtonNames()
             NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
