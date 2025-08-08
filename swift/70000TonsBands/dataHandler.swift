@@ -94,6 +94,10 @@ class dataHandler {
         staticData.async(flags: .barrier) {
             cacheVariables.bandPriorityStorageCache = [String:Int]()
         }
+        
+        // Also clear local instance variables
+        bandPriorityStorage.removeAll()
+        bandPriorityTimestamps.removeAll()
     }
     
     /// Returns the priority value for a specific band.

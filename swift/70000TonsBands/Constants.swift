@@ -621,6 +621,9 @@ func checkAndHandleYearChange(newYear: String) {
         dataHandler().clearCachedData()
         if let masterView = masterView {
             masterView.schedule.clearCache()
+            
+            // Clear MasterViewController's cached data arrays
+            masterView.clearMasterViewCachedData()
         }
         
         // Clear static caches

@@ -104,6 +104,9 @@
 "data_filter_issue" = "Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données";
 
 "SelectYearLabel"="Sélectionnez l'année à afficher";
+"NoteFontSize"="Taille de police de note grande";
+"DetailScreenSection"="Écran de détails";
+"MiscSection"="Divers";
 "restartTitle" = "Redémarrage Nécessaire";
 "restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
 "yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";

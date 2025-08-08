@@ -104,6 +104,9 @@
 "data_filter_issue" = "Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados";
 
 "SelectYearLabel"="Selecione o ano para exibir";
+"DetailScreenSection"="Tela de detalhes";
+"MiscSection"="Diversos";
+"NoteFontSize"="Tamanho da fonte da nota grande";
 
 "restartTitle" = "Necessário Reiniciar";
 "restartMessage" = "NÃO FAÇA ISSO NO CRUZEIRO. NECESSÁRIO CONEXÃO DE INTERNET.";

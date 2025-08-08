@@ -83,7 +83,7 @@
 "Next" = "Next";
 "Previous" = "Previous";
 
-"NoteFontSize" = "Note Front Size Large";
+"NoteFontSize" = "Note Font Size Large";
 
 "ShareBandChoices" = "Share Band Choices";
 "ShareShowChoices" = "Share Show Choices";
@@ -103,6 +103,9 @@
 "data_filter_issue" = "All data is being filtered out, please remove filters to view data";
 
 "SelectYearLabel"="Select The Year To Display";
+"NoteFontSize"="Note Font Size Large";
+"DetailScreenSection"="Details Screen";
+"MiscSection"="Misc";
 "restartTitle" = "Restart Required";
 "restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
 "yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";

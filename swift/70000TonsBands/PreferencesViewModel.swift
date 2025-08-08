@@ -12,6 +12,11 @@ import UIKit
 
 class PreferencesViewModel: ObservableObject {
     
+    // Static request IDs to manage data loading
+    static var currentLoadRequestID: Int = 0
+    static var currentBandDataRequestID: Int = 0
+    static var currentScheduleDataRequestID: Int = 0
+    
     // MARK: - Published Properties
     @Published var hideExpiredEvents: Bool = false {
         didSet { setHideExpireScheduleData(hideExpiredEvents) }
@@ -92,6 +97,7 @@ class PreferencesViewModel: ObservableObject {
     private var eventYearArray: [String] = []
     private var eventYearChangeAttempt: String = "Current"
     private var currentYearSetting: String = "Current"
+    private var currentYearChangeTask: Task<Void, Never>? = nil
     
     // MARK: - Initialization
     init() {
@@ -177,43 +183,47 @@ class PreferencesViewModel: ObservableObject {
         showYearChangeConfirmation = false
         isLoadingData = true
         
-        Task {
+        // Cancel any ongoing year change task
+        currentYearChangeTask?.cancel()
+        print("🚫 Cancelled any previous year change task")
+        
+        // Start new year change task
+        currentYearChangeTask = Task {
             await performYearChangeWithFullLogic()
+            currentYearChangeTask = nil
         }
     }
     
     func selectBandList() {
+        print("🎯 selectBandList: Data already loaded from year change - navigating immediately")
         showBandEventChoice = false
-        isLoadingData = true
         
         // Force hide expired events for band list
         hideExpiredEvents = true
         setHideExpireScheduleData(true)
         
-        // Refresh data and navigate back
+        // Refresh display and navigate back immediately (data already loaded during year change)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         masterView.refreshData(isUserInitiated: true)
         
-        // Navigate back after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            self.navigateBackToMainScreen()
-        }
+        print("🎯 Band List selection complete - navigating back to main screen")
+        navigateBackToMainScreen()
     }
     
     func selectEventList() {
+        print("🎯 selectEventList: Data already loaded from year change - navigating immediately")
         showBandEventChoice = false
-        isLoadingData = true
         
         // Show expired events for event list
         hideExpiredEvents = false
         setHideExpireScheduleData(false)
         
-        // Refresh data and navigate back
+        // Refresh display and navigate back immediately (data already loaded during year change)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         masterView.refreshData(isUserInitiated: true)
         
-        // Navigate back after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            self.navigateBackToMainScreen()
-        }
+        print("🎯 Event List selection complete - navigating back to main screen")
+        navigateBackToMainScreen()
     }
     
     func dismissNetworkError() {
@@ -250,7 +260,7 @@ class PreferencesViewModel: ObservableObject {
         let variableStoreHandle = variableStore()
         print("🎯 Loading event years from file: \(eventYearsInfoFile)")
         
-        // Use the same logic as AlertPreferenesController
+        // Load event years from disk
         if eventYearArray.isEmpty {
             eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? ["Current"]
             print("🎯 eventYearsInfoFile: file is loaded \(eventYearArray)")
@@ -290,9 +300,66 @@ class PreferencesViewModel: ObservableObject {
     private func performYearChangeWithFullLogic() async {
         print("🎯 Starting year change to: \(eventYearChangeAttempt)")
         
-        // Test internet connection first
+        // Check if task was cancelled before starting
+        guard !Task.isCancelled else {
+            print("🚫 Year change cancelled before starting")
+            isLoadingData = false
+            return
+        }
+        
+        // STEP 1: Update year pointers IMMEDIATELY (very early in the process)
+        print("🎯 STEP 1: Updating year pointers immediately for year \(eventYearChangeAttempt)")
+        setArtistUrl(eventYearChangeAttempt)
+        setScheduleUrl(eventYearChangeAttempt)
+        writeFiltersFile()
+        
+        // Clear pointer cache and update global event year immediately
+        cacheVariables.storePointerData = [String:String]()
+        
+        // CRITICAL: Update the eventYearFile FIRST to prevent reversion
+        let targetEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 2024
+        do {
+            let yearString = String(targetEventYear)
+            try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
+            print("🎯 Updated eventYearFile to \(yearString) BEFORE setupDefaults to prevent reversion")
+        } catch {
+            print("⚠️ Failed to update eventYearFile: \(error)")
+        }
+        
+        // Now setup defaults will read the correct year
+        setupCurrentYearUrls()
+        setupDefaults()
+        eventYear = targetEventYear
+        
+        print("🎯 Year pointers updated early - artistUrl: \(getArtistUrl()), scheduleUrl: \(getScheduleUrl()), eventYear: \(eventYear)")
+        
+        // VERIFICATION: Ensure the year hasn't been overridden
+        let verifyEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
+        if verifyEventYear != targetEventYear {
+            print("⚠️ WARNING: Year was overridden! Expected \(targetEventYear), got \(verifyEventYear)")
+            print("⚠️ Forcing year back to intended value")
+            eventYear = targetEventYear
+            // Re-write the file
+            do {
+                let yearString = String(targetEventYear)
+                try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
+                print("🎯 Re-forced eventYearFile to \(yearString)")
+            } catch {
+                print("⚠️ Failed to re-write eventYearFile: \(error)")
+            }
+        } else {
+            print("✅ Year verification passed: \(verifyEventYear)")
+        }
+        
+        // Check cancellation after step 1
+        guard !Task.isCancelled else {
+            print("🚫 Year change cancelled after updating pointers")
+            isLoadingData = false
+            return
+        }
+        
+        // STEP 2: Test internet connection
         let netTest = NetworkTesting()
-        // Note: We can't easily pass a UIViewController from SwiftUI context
         let internetAvailable = netTest.forgroundNetworkTest(callingGui: masterView)
         
         if !internetAvailable {
@@ -302,18 +369,18 @@ class PreferencesViewModel: ObservableObject {
             return
         }
         
-        // Increment request IDs to cancel ongoing requests
-        AlertPreferenesController.currentLoadRequestID += 1
-        AlertPreferenesController.currentBandDataRequestID += 1
-        AlertPreferenesController.currentScheduleDataRequestID += 1
-        let thisLoadRequestID = AlertPreferenesController.currentLoadRequestID
+        // Check cancellation after network test
+        guard !Task.isCancelled else {
+            print("🚫 Year change cancelled after network test")
+            isLoadingData = false
+            return
+        }
         
-        // Update URLs and clear caches
-        print("🎯 Setting URLs for year \(eventYearChangeAttempt)")
-        setArtistUrl(eventYearChangeAttempt)
-        setScheduleUrl(eventYearChangeAttempt)
-        writeFiltersFile()
-        cacheVariables.storePointerData = [String:String]()
+        // STEP 3: Increment request IDs to cancel ongoing requests
+        PreferencesViewModel.currentLoadRequestID += 1
+        PreferencesViewModel.currentBandDataRequestID += 1
+        PreferencesViewModel.currentScheduleDataRequestID += 1
+        let thisLoadRequestID = PreferencesViewModel.currentLoadRequestID
         
         // Remove old files
         do {
@@ -335,18 +402,16 @@ class PreferencesViewModel: ObservableObject {
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
         
-        // Clear all caches
-        cacheVariables.storePointerData = [String:String]()
-        setupCurrentYearUrls()
-        setupDefaults()
-        
-        // Get event year after cache is cleared
-        eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+        // Clear all caches (pointers already updated above)
+        print("🎯 STEP 4: Clearing all caches and preparing for data refresh")
         
         // Clear static caches
         bandNamesHandler().clearCachedData()
         dataHandler().clearCachedData()
         masterView.schedule.clearCache()
+        
+        // Clear MasterViewController's cached data arrays
+        masterView.clearMasterViewCachedData()
         
         // Clear static caches to ensure fresh data
         staticSchedule.sync {
@@ -355,12 +420,176 @@ class PreferencesViewModel: ObservableObject {
             cacheVariables.bandNamesStaticCache = [:]
         }
         
-        // Load data in background
+        // STEP 5: Use centralized full data refresh to ensure complete data loading
+        print("🎯 STEP 5: Using centralized performFullDataRefresh for comprehensive data loading")
+        
+        // Check cancellation before starting data refresh
+        guard !Task.isCancelled else {
+            print("🚫 Year change cancelled before data refresh")
+            isLoadingData = false
+            return
+        }
+        
+        // Use a custom refresh approach that's cancellation-aware and immediate
+        print("🎯 STEP 5: Starting immediate data refresh for year change")
+        
+        // Trigger immediate cache refresh on main screen (no delay)
+        DispatchQueue.main.async {
+            masterView.refreshBandList(reason: "Year change to \(self.eventYearChangeAttempt) - immediate cache refresh")
+        }
+        
+        // Start background data loading immediately (no artificial delays)
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                // Check cancellation in background thread
+                guard !Task.isCancelled else {
+                    print("🚫 Year change cancelled during background data loading")
+                    DispatchQueue.main.async {
+                        self.isLoadingData = false
+                    }
+                    continuation.resume()
+                    return
+                }
+                
+                print("🎯 Starting immediate background data collection")
+                
+                // Clear ALL caches immediately - comprehensive clearing to prevent data mixing
+                print("🧹 COMPREHENSIVE CACHE CLEARING - preventing data mixing between years")
+                
+                // Clear handler-specific caches
+                masterView.bandNameHandle.clearCachedData()
+                masterView.dataHandle.clearCachedData()
+                masterView.schedule.clearCache()
+                
+                // Clear MasterViewController cached arrays
+                masterView.clearMasterViewCachedData()
+                
+                // Clear ALL static cache variables that could contain year-specific data
+                staticSchedule.sync {
+                    cacheVariables.scheduleStaticCache = [:]
+                    cacheVariables.scheduleTimeStaticCache = [:]
+                    cacheVariables.bandNamesStaticCache = [:]
+                    cacheVariables.bandNamesArrayStaticCache = []
+                    cacheVariables.bandDescriptionUrlCache = [:]
+                    cacheVariables.bandDescriptionUrlDateCache = [:]
+                    cacheVariables.attendedStaticCache = [:]
+                    cacheVariables.lastModifiedDate = nil
+                    print("🧹 Cleared all static cache variables")
+                }
+                
+                // Clear CustomBandDescription instance caches
+                masterView.bandDescriptions.bandDescriptionUrl.removeAll()
+                masterView.bandDescriptions.bandDescriptionUrlDate.removeAll()
+                
+                print("🧹 All caches cleared - ready for fresh \(self.eventYearChangeAttempt) data")
+                
+                // VERIFICATION: Log cache sizes to confirm they're cleared
+                print("🔍 CACHE VERIFICATION:")
+                print("🔍 - scheduleStaticCache count: \(cacheVariables.scheduleStaticCache.count)")
+                print("🔍 - bandNamesStaticCache count: \(cacheVariables.bandNamesStaticCache.count)")
+                print("🔍 - bandNamesArrayStaticCache count: \(cacheVariables.bandNamesArrayStaticCache.count)")
+                print("🔍 - bandDescriptionUrlCache count: \(cacheVariables.bandDescriptionUrlCache.count)")
+                print("🔍 - attendedStaticCache count: \(cacheVariables.attendedStaticCache.count)")
+                print("🔍 - masterView.objects count: \(masterView.objects.count)")
+                print("🔍 - masterView.bands count: \(masterView.bands.count)")
+                
+                // Use a dispatch group to track completion without artificial delays
+                let dataLoadGroup = DispatchGroup()
+                
+                // Load iCloud data
+                dataLoadGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    guard !Task.isCancelled else {
+                        dataLoadGroup.leave()
+                        return
+                    }
+                    let iCloudHandle = iCloudDataHandler()
+                    iCloudHandle.readAllPriorityData()
+                    iCloudHandle.readAllScheduleData()
+                    dataLoadGroup.leave()
+                }
+                
+                // Load schedule data
+                dataLoadGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    guard !Task.isCancelled else {
+                        dataLoadGroup.leave()
+                        return
+                    }
+                    masterView.schedule.DownloadCsv()
+                    masterView.schedule.populateSchedule(forceDownload: true)
+                    dataLoadGroup.leave()
+                }
+                
+                // Load band names data
+                dataLoadGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    guard !Task.isCancelled else {
+                        dataLoadGroup.leave()
+                        return
+                    }
+                    masterView.bandNameHandle.gatherData()
+                    dataLoadGroup.leave()
+                }
+                
+                // Load descriptionMap data
+                dataLoadGroup.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    guard !Task.isCancelled else {
+                        dataLoadGroup.leave()
+                        return
+                    }
+                    masterView.bandDescriptions.getDescriptionMapFile()
+                    masterView.bandDescriptions.getDescriptionMap()
+                    dataLoadGroup.leave()
+                }
+                
+                // Wait for all data to complete - NO ARTIFICIAL DELAYS
+                dataLoadGroup.notify(queue: .main) {
+                    print("🎯 STEP 6: All data loading completed immediately - no delays")
+                    
+                    // Final verification of URLs and data integrity
+                    let currentArtistUrl = getArtistUrl()
+                    let currentScheduleUrl = getScheduleUrl() 
+                    let currentEventYear = eventYear
+                    
+                    print("🎯 URL Verification:")
+                    print("🎯 - artistUrl: \(currentArtistUrl)")
+                    print("🎯 - scheduleUrl: \(currentScheduleUrl)")  
+                    print("🎯 - eventYear: \(currentEventYear)")
+                    print("🎯 - target year: \(self.eventYearChangeAttempt)")
+                    
+                    // DATA INTEGRITY VERIFICATION: Check cache contents after loading
+                    print("🔍 POST-LOAD CACHE VERIFICATION:")
+                    print("🔍 - scheduleStaticCache count: \(cacheVariables.scheduleStaticCache.count)")
+                    print("🔍 - bandNamesStaticCache count: \(cacheVariables.bandNamesStaticCache.count)")
+                    print("🔍 - bandNamesArrayStaticCache count: \(cacheVariables.bandNamesArrayStaticCache.count)")
+                    
+                    // Sample a few band names to verify they're from the correct year
+                    if !cacheVariables.bandNamesArrayStaticCache.isEmpty {
+                        let sampleBands = Array(cacheVariables.bandNamesArrayStaticCache.prefix(3))
+                        print("🔍 - Sample band names loaded: \(sampleBands)")
+                    }
+                    
+                    // Verify schedule data contains expected year
+                    if !cacheVariables.scheduleStaticCache.isEmpty {
+                        let sampleScheduleKeys = Array(cacheVariables.scheduleStaticCache.keys.prefix(3))
+                        print("🔍 - Sample schedule keys: \(sampleScheduleKeys)")
+                    }
+                    
+                    print("✅ Data collection and verification completed for year change")
+                    continuation.resume()
+                }
+            }
+        }
+        
+        // OLD METHOD - commented out in favor of centralized approach above
+        /*
         await withTaskGroup(of: Void.self) { group in
             // Band data loading
             group.addTask {
-                AlertPreferenesController.currentBandDataRequestID += 1
-                let thisBandRequestID = AlertPreferenesController.currentBandDataRequestID
+                PreferencesViewModel.currentBandDataRequestID += 1
+                let thisBandRequestID = PreferencesViewModel.currentBandDataRequestID
                 
                 print("🎵 Starting band names data loading for year \(self.eventYearChangeAttempt) (request \(thisBandRequestID))")
                 let bandNamesHandle = bandNamesHandler()
@@ -368,7 +597,7 @@ class PreferencesViewModel: ObservableObject {
                 
                 await withCheckedContinuation { continuation in
                     bandNamesHandle.gatherData {
-                        if thisBandRequestID == AlertPreferenesController.currentBandDataRequestID {
+                        if thisBandRequestID == PreferencesViewModel.currentBandDataRequestID {
                             print("✅ Band names data loading completed for year \(self.eventYearChangeAttempt)")
                         } else {
                             print("❌ Band names data loading cancelled - outdated request")
@@ -380,8 +609,8 @@ class PreferencesViewModel: ObservableObject {
             
             // Schedule data loading
             group.addTask {
-                AlertPreferenesController.currentScheduleDataRequestID += 1
-                let thisScheduleRequestID = AlertPreferenesController.currentScheduleDataRequestID
+                PreferencesViewModel.currentScheduleDataRequestID += 1
+                let thisScheduleRequestID = PreferencesViewModel.currentScheduleDataRequestID
                 
                 print("📅 Starting schedule data loading for year \(self.eventYearChangeAttempt) (request \(thisScheduleRequestID))")
                 let dataHandle = dataHandler()
@@ -390,7 +619,7 @@ class PreferencesViewModel: ObservableObject {
                 masterView.schedule.clearCache()
                 
                 // Check if request is still current
-                guard thisScheduleRequestID == AlertPreferenesController.currentScheduleDataRequestID else {
+                guard thisScheduleRequestID == PreferencesViewModel.currentScheduleDataRequestID else {
                     print("❌ Schedule data loading cancelled - outdated request")
                     return
                 }
@@ -401,7 +630,7 @@ class PreferencesViewModel: ObservableObject {
                 // Wait for file to be written
                 var attempts = 0
                 while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
-                    guard thisScheduleRequestID == AlertPreferenesController.currentScheduleDataRequestID else {
+                    guard thisScheduleRequestID == PreferencesViewModel.currentScheduleDataRequestID else {
                         print("❌ Schedule data loading cancelled during file wait")
                         return
                     }
@@ -411,7 +640,7 @@ class PreferencesViewModel: ObservableObject {
                 }
                 
                 // Final check before populating
-                guard thisScheduleRequestID == AlertPreferenesController.currentScheduleDataRequestID else {
+                guard thisScheduleRequestID == PreferencesViewModel.currentScheduleDataRequestID else {
                     print("❌ Schedule data loading cancelled before population")
                     return
                 }
@@ -427,14 +656,27 @@ class PreferencesViewModel: ObservableObject {
                 print("✅ Schedule data loading completed for year \(self.eventYearChangeAttempt)")
             }
         }
+        */
         
-        // Update UI on main thread
+        // Check final cancellation before UI update
+        guard !Task.isCancelled else {
+            print("🚫 Year change cancelled before final UI update")
+            await MainActor.run {
+                isLoadingData = false
+            }
+            return
+        }
+        
+        // STEP 7: Update UI on main thread and verify completion
         await MainActor.run {
-            // Only update if this is still the latest request
-            guard thisLoadRequestID == AlertPreferenesController.currentLoadRequestID else {
-                print("❌ Ignoring outdated request \(thisLoadRequestID) vs current \(AlertPreferenesController.currentLoadRequestID)")
+            // Only update if this is still the latest request AND not cancelled
+            guard thisLoadRequestID == PreferencesViewModel.currentLoadRequestID && !Task.isCancelled else {
+                print("❌ Ignoring outdated/cancelled request \(thisLoadRequestID) vs current \(PreferencesViewModel.currentLoadRequestID), cancelled: \(Task.isCancelled)")
+                isLoadingData = false
                 return
             }
+            
+            print("🎯 STEP 7: Updating UI and finalizing year change")
             
             // Update current year setting and selected year display
             currentYearSetting = eventYearChangeAttempt
@@ -444,11 +686,31 @@ class PreferencesViewModel: ObservableObject {
             }
             selectedYear = displayYear
             
-            print("✅ Year change completed to \(eventYearChangeAttempt)")
+            // Final verification that all pointers are correct
+            print("🎯 Final verification:")
+            print("🎯 - currentYearSetting: \(currentYearSetting)")
+            print("🎯 - selectedYear: \(selectedYear)")
+            print("🎯 - eventYear: \(eventYear)")
+            print("🎯 - artistUrl: \(getArtistUrl())")
+            print("🎯 - scheduleUrl: \(getScheduleUrl())")
+            
+            // FINAL YEAR VERIFICATION: Make sure year hasn't reverted
+            let finalEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
+            let expectedYear = Int(eventYearChangeAttempt) ?? 0
+            if finalEventYear != expectedYear {
+                print("🚨 CRITICAL: Year reverted at end! Expected \(expectedYear), got \(finalEventYear)")
+                print("🚨 This indicates a system conflict - check logs above")
+            } else {
+                print("✅ FINAL VERIFICATION PASSED: Year is correctly set to \(finalEventYear)")
+            }
+            
+            print("✅ Year change completed to \(eventYearChangeAttempt) with verified data loading")
             
             // Handle different year types
             if eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current" {
                 // For specific years, show Band List vs Event List choice
+                // Data is already fully loaded, so user can make choice immediately
+                print("🎯 Year change data complete - showing Band/Event choice with all data ready")
                 isLoadingData = false
                 showBandEventChoice = true
             } else {
@@ -456,27 +718,71 @@ class PreferencesViewModel: ObservableObject {
                 hideExpiredEvents = true
                 setHideExpireScheduleData(true)
                 
-                // Refresh display
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-                masterView.refreshData(isUserInitiated: true)
-                
-                // Navigate back after delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                    self.navigateBackToMainScreen()
+                // Ensure schedule data is loaded (same as Band/Event List choices)
+                Task {
+                    // Start timing to ensure minimum loading display time
+                    let loadingStartTime = Date()
+                    
+                    await ensureScheduleDataLoaded()
+                    
+                    await MainActor.run {
+                        // Refresh display
+                        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                        masterView.refreshData(isUserInitiated: true)
+                    }
+                    
+                    // Navigate immediately after data is loaded - no artificial delays
+                    let loadingElapsed = Date().timeIntervalSince(loadingStartTime)
+                    print("🎯 Current year: Loading took \(loadingElapsed)s, navigating immediately")
+                    
+                    DispatchQueue.main.async {
+                        print("🎯 Current year data loaded - navigating immediately")
+                        self.isLoadingData = false
+                        self.navigateBackToMainScreen()
+                    }
                 }
-                
-                isLoadingData = false
             }
         }
     }
     
+    /// Ensures schedule data is properly loaded - called by both Band List and Event List choices
+    private func ensureScheduleDataLoaded() async {
+        print("🎯 Ensuring schedule data is loaded for year \(eventYearChangeAttempt)")
+        
+        // Force schedule data loading (identical for both Band List and Event List)
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                // Ensure schedule data is downloaded and populated
+                masterView.schedule.DownloadCsv()
+                
+                // Wait for schedule file to be written
+                var attempts = 0
+                while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
+                    try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+                    attempts += 1
+                    print("⏳ Waiting for schedule file (attempt \(attempts))")
+                }
+                
+                if FileManager.default.fileExists(atPath: scheduleFile) {
+                    print("📄 Schedule file available, populating schedule data")
+                    masterView.schedule.populateSchedule(forceDownload: false)
+                } else {
+                    print("⚠️ Schedule file not found, forcing download")
+                    masterView.schedule.populateSchedule(forceDownload: true)
+                }
+                
+                print("✅ Schedule data loading completed")
+            }
+        }
+    }
+
     private func navigateBackToMainScreen() {
         // Dismiss the preferences screen and return to main screen
         NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreen"), object: nil)
     }
 }
 
-// Extension for year validation - using different name to avoid conflict with AlertPreferenesController
+// Extension for year validation
 extension String {
     var isYearString: Bool {
         return self.range(of: "^\\d\\d\\d\\d$", options: .regularExpression) != nil

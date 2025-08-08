@@ -45,7 +45,6 @@
 		1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
-		117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		119573B01C83B4CD0089749E /* libPods-70K BandsTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 119573AF1C83B4CD0089749E /* libPods-70K BandsTests.a */; };
 		11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
 		11AC1D671A6827FC00267A8F /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
@@ -133,7 +132,6 @@
 		1172A2311B5AB18E00C28AB3 /* es-MX */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-MX"; path = "es-MX.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		1172A2341B5AB22100C28AB3 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2361B5AB29000C28AB3 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
-		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		119573AF1C83B4CD0089749E /* libPods-70K BandsTests.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libPods-70K BandsTests.a"; path = "Pods/../build/Debug-iphoneos/libPods-70K BandsTests.a"; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		11AC1D661A6827FC00267A8F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -260,7 +258,6 @@
 			children = (
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
-				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
 				1154F6321A5758D3003F4764 /* bandNames.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
@@ -618,7 +615,6 @@
 			files = (
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
-				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
 				11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */,

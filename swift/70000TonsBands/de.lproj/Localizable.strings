@@ -103,6 +103,9 @@
 
 
 "SelectYearLabel"="Wählen Sie das anzuzeigende Jahr aus";
+"NoteFontSize"="Große Notizschriftgröße";
+"DetailScreenSection"="Detailbildschirm";
+"MiscSection"="Sonstiges";
 "restartTitle" = "Neustart erforderlich";
 "restartMessage"  = "NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.";
 "yearChangeAborted" = "Es ist keine Internetverbindung verfügbar, ein Jahreswechsel ist derzeit NICHT möglich";
