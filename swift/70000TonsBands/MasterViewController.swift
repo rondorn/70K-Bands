@@ -1061,21 +1061,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 dataLoadGroup.leave()
             }
             
-            // 3c. Once all data is loaded, refresh the GUI
+            // 3c. Once all data is loaded, generate consolidated image list then refresh the GUI
             dataLoadGroup.notify(queue: .main) {
-                print("Full data refresh (\(reason)): Step 3c - All data loaded, refreshing GUI")
+                print("Full data refresh (\(reason)): Step 3c - All data loaded, generating consolidated image list")
                 
-                if endRefreshControl {
-                    self.refreshControl?.endRefreshing()
+                // Generate consolidated image list immediately after both artist and schedule data are loaded
+                CombinedImageListHandler.shared.generateCombinedImageList(
+                    bandNameHandle: self.bandNameHandle,
+                    scheduleHandle: self.schedule
+                ) {
+                    print("Full data refresh (\(reason)): Step 3d - Consolidated image list generated, refreshing GUI")
+                    
+                    if endRefreshControl {
+                        self.refreshControl?.endRefreshing()
+                    }
+                    if shouldScrollToTop {
+                        self.shouldSnapToTopAfterRefresh = true
+                    }
+                    
+                    // Final GUI refresh with all new data and consolidated images
+                    self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
+                    
+                    print("Full data refresh (\(reason)): Complete with consolidated images!")
                 }
-                if shouldScrollToTop {
-                    self.shouldSnapToTopAfterRefresh = true
-                }
-                
-                // Final GUI refresh with all new data
-                self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
-                
-                print("Full data refresh (\(reason)): Complete!")
             }
         }
     }
