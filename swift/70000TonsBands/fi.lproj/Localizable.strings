@@ -105,6 +105,9 @@
 "data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
 
 "SelectYearLabel"="Valitse näytettävä vuosi";
+"DetailScreenSection"="Yksityiskohtanäyttö";
+"MiscSection"="Muut";
+"NoteFontSize"="Suuri muistiinpanojen fonttikoko";
 
 "restartTitle" = "Vaatii uudelleenkäynnistyksen";
 "restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";

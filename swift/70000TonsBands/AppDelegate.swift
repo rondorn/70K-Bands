@@ -600,9 +600,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("iCloud: App entering foreground, forcing iCloud synchronization")
         NSUbiquitousKeyValueStore.default.synchronize()
         
-        // Trigger background refresh of band names and schedule data when coming to foreground
-        print("AppDelegate: Triggering background data refresh notification")
-        NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
+        // Use the centralized full data refresh method
+        print("AppDelegate: App entering foreground - using centralized refresh")
+        if let masterViewController = masterView {
+            masterViewController.performFullDataRefresh(reason: "App entering foreground")
+        } else {
+            print("App foreground: Could not get master view controller reference, using notification fallback")
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
+            }
+        }
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {

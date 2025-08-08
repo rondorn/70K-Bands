@@ -23,7 +23,7 @@ class PreferencesHostingController: UIHostingController<PreferencesView> {
     
     private func setupController() {
         // Configure the hosting controller
-        modalPresentationStyle = .pageSheet
+        // Don't set modalPresentationStyle here - let the presentation method handle it
         
         // Force dark mode permanently
         overrideUserInterfaceStyle = .dark
@@ -54,7 +54,15 @@ class PreferencesHostingController: UIHostingController<PreferencesView> {
     
     @objc private func dismissPreferences() {
         print("🎯 Dismissing preferences screen via notification")
-        navigationController?.popViewController(animated: true)
+        
+        // Handle both modal and push presentation
+        if presentingViewController != nil {
+            // Modal presentation - dismiss
+            dismiss(animated: true)
+        } else {
+            // Push presentation - pop
+            navigationController?.popViewController(animated: true)
+        }
     }
     
     deinit {
@@ -90,16 +98,15 @@ extension PreferencesHostingController {
     }
     
     /// Creates and pushes the preferences screen onto the navigation stack
+    /// Note: This method is now deprecated in favor of in-frame presentation
     static func pushPreferences(from viewController: UIViewController) {
         let preferencesController = PreferencesHostingController()
         
-        // Remove modal presentation style for push
+        // Use push navigation for both iPhone and iPad
         preferencesController.modalPresentationStyle = .none
+        viewController.navigationController?.pushViewController(preferencesController, animated: true)
         
         // Ensure dark mode is applied
         preferencesController.overrideUserInterfaceStyle = .dark
-        
-        // Push onto navigation stack
-        viewController.navigationController?.pushViewController(preferencesController, animated: true)
     }
 }
