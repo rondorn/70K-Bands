@@ -13,7 +13,7 @@ import Foundation
 /// Key Features:
 /// - On first install: Loads bandNamesHandler in foreground before anything else
 /// - Parallel independent loading: Each class can run independently and in parallel
-/// - Year change override: When AlertPreferenesController changes year, all current data collection stops
+/// - Year change override: When year is changed via preferences, all current data collection stops
 /// - Single instance per class: Each class can only run one at a time
 class DataCollectionCoordinator {
     

@@ -14,11 +14,10 @@ struct PreferencesView: View {
     @State private var minutesText: String = ""
     
     var body: some View {
-        NavigationView {
-            Form {
+        Form {
                 // Show/Hide Expired Section
-                Section("Show/Hide Expired") {
-                    Toggle("Hide Expired Events", isOn: $viewModel.hideExpiredEvents)
+                Section(NSLocalizedString("showHideExpiredLabel", comment: "")) {
+                    Toggle(NSLocalizedString("hideExpiredEvents", comment: ""), isOn: $viewModel.hideExpiredEvents)
                 }
                 
                 // Prompt For Attended Status Section
@@ -27,7 +26,7 @@ struct PreferencesView: View {
                 }
                 
                 // Alert Preferences Section
-                Section("Alert Preferences") {
+                Section(NSLocalizedString("AlertPreferences", comment: "")) {
                     Toggle("Alert On Must See Bands", isOn: $viewModel.alertOnMustSee)
                         .disabled(viewModel.alertOnlyForWillAttend)
                         .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
@@ -78,14 +77,14 @@ struct PreferencesView: View {
                 }
                 
                 // Detail Screen Section
-                Section("Detail Screen") {
-                    Toggle("Note Font Size Large", isOn: $viewModel.noteFontSizeLarge)
+                Section(NSLocalizedString("DetailScreenSection", comment: "")) {
+                    Toggle(NSLocalizedString("NoteFontSize", comment: ""), isOn: $viewModel.noteFontSizeLarge)
                 }
                 
                 // Misc Section
-                Section("Misc") {
+                Section(NSLocalizedString("MiscSection", comment: "")) {
                     HStack {
-                        Text("Select The Year To Display")
+                        Text(NSLocalizedString("SelectYearLabel", comment: ""))
                         Spacer()
                         Menu(viewModel.selectedYear) {
                             ForEach(viewModel.availableYears, id: \.self) { year in
@@ -117,9 +116,20 @@ struct PreferencesView: View {
                             .foregroundColor(.secondary)
                     }
                 }
+        }
+        .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Only show close button on iPad split view (modal presentation)
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(NSLocalizedString("Ok", comment: "")) {
+                        // Send notification to dismiss preferences
+                        NotificationCenter.default.post(name: Notification.Name("DismissPreferencesScreen"), object: nil)
+                    }
+                    .fontWeight(.semibold)
+                }
             }
-            .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
-            .navigationBarTitleDisplayMode(.inline)
         }
         .preferredColorScheme(.dark)
         .environment(\.colorScheme, .dark)
@@ -170,6 +180,7 @@ struct PreferencesView: View {
             minutesText = String(newValue)
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreen"))) { _ in
+            // This will be handled by MasterViewController for in-frame display
             presentationMode.wrappedValue.dismiss()
         }
         .overlay(

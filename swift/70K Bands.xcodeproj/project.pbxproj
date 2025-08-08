@@ -77,7 +77,6 @@
 		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
-		117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -105,7 +104,6 @@
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
 		11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
-		11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117947751A8FF2F700DA080D /* AlertPreferenesController.swift */; };
 		11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
 		11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
 		11D05AAF291C571B00D5B002 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
@@ -210,7 +208,6 @@
 		1172A2311B5AB18E00C28AB3 /* es-MX */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-MX"; path = "es-MX.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		1172A2341B5AB22100C28AB3 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2361B5AB29000C28AB3 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
-		117947751A8FF2F700DA080D /* AlertPreferenesController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertPreferenesController.swift; sourceTree = "<group>"; };
 		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
@@ -353,7 +350,6 @@
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
-				117947751A8FF2F700DA080D /* AlertPreferenesController.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
@@ -787,7 +783,6 @@
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
 				119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
-				117947761A8FF2F700DA080D /* AlertPreferenesController.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
@@ -862,7 +857,6 @@
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
-				11CFB34620E5345600BE8E39 /* AlertPreferenesController.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
 				11F033411AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,

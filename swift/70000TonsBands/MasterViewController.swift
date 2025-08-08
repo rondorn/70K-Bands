@@ -164,8 +164,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshBandList(reason: "Initial launch (first install)")
             }
         } else {
-            print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
-            refreshBandList(reason: "Initial launch")
+            // Check if we should do a full refresh on launch (if it's been a while since last launch)
+            let lastLaunchKey = "LastAppLaunchDate"
+            let now = Date()
+            let lastLaunch = UserDefaults.standard.object(forKey: lastLaunchKey) as? Date
+            let shouldDoFullRefresh = lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
+            
+            UserDefaults.standard.set(now, forKey: lastLaunchKey)
+            
+            if shouldDoFullRefresh {
+                print("App launch: Been more than 24 hours since last launch, performing full data refresh")
+                performFullDataRefresh(reason: "App launch - full refresh")
+            } else {
+                print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
+                refreshBandList(reason: "Initial launch")
+            }
         }
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
@@ -238,12 +251,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // --- END ADDED ---
         
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        // App foreground handling is now done globally in AppDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
+        
+        // Listen for when returning from preferences screen
+        NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
         
         // Defensive: trigger a delayed refresh to help with first-launch data population
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -664,12 +680,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Background refresh (\(reason)): Starting data download")
             
             // Perform the same operations as refreshData but in background
-            let shouldDownload = self.shouldDownloadSchedule(force: false)
+            // Force download for certain high-priority reasons
+            let shouldForceDownload = reason.contains("foreground") || reason.contains("notification") || reason.contains("timer")
+            let shouldDownload = self.shouldDownloadSchedule(force: shouldForceDownload)
+            
             if shouldDownload {
                 self.schedule.DownloadCsv()
                 self.lastScheduleDownload = Date()
+                
+                // Also refresh band data when forcing downloads
+                if shouldForceDownload {
+                    self.bandNameHandle.gatherData()
+                }
             }
-            self.schedule.populateSchedule(forceDownload: false)
+            self.schedule.populateSchedule(forceDownload: shouldForceDownload)
             
             // Update UI on main thread when complete
             DispatchQueue.main.async {
@@ -930,47 +954,144 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshBandList(reason: "Orientation change")
     }
     
-    @objc func pullTorefreshData(){
-        checkForEasterEgg()
-        print ("iCloud: pull to refresh, load in new iCloud data")
-        shouldSnapToTopAfterRefresh = true
+    /// Centralized method that performs the same logic as pull-to-refresh
+    /// Can be called from various scenarios: pull-to-refresh, returning from preferences, app foreground, etc.
+    /// 
+    /// Order of operations:
+    /// 1. Refresh from cache
+    /// 2. Confirm internet access
+    /// 3. Start background process to:
+    ///    - Clear cache
+    ///    - Refresh all data (band names, schedule, descriptionMap) from URLs
+    ///    - Once all data is loaded, refresh the GUI
+    func performFullDataRefresh(reason: String, shouldScrollToTop: Bool = false, endRefreshControl: Bool = false) {
+        print("Performing full data refresh: \(reason)")
         
-        // First, validate network connectivity before clearing any data
+        if shouldScrollToTop {
+            shouldSnapToTopAfterRefresh = true
+        }
+        
+        // STEP 1: Refresh from cache first (immediate UI update)
+        print("Full data refresh (\(reason)): Step 1 - Refreshing from cache")
+        refreshBandList(reason: "\(reason) - cache refresh")
+        
+        // STEP 2: Confirm internet access
+        print("Full data refresh (\(reason)): Step 2 - Confirming internet access")
         let networkTesting = NetworkTesting()
         let hasNetwork = networkTesting.forgroundNetworkTest(callingGui: self)
         
         if !hasNetwork {
-            print("Pull to refresh: No network connectivity detected, keeping existing data")
+            print("Full data refresh (\(reason)): No network connectivity detected, staying with cached data")
             DispatchQueue.main.async {
-                self.refreshControl?.endRefreshing()
-                // Ensure snap-to-top flag is set for pull-to-refresh even with cached data
-                self.shouldSnapToTopAfterRefresh = true
-                // Refresh GUI from cached data without showing alert
-                self.refreshBandList(reason: "Pull to refresh - no network, using cached data")
+                if endRefreshControl {
+                    self.refreshControl?.endRefreshing()
+                }
             }
             return
         }
         
-        print("Pull to refresh: Network validated, proceeding with data refresh")
+        print("Full data refresh (\(reason)): Internet confirmed, proceeding with background refresh")
+        
+        // STEP 3: Start background process
         DispatchQueue.global(qos: .userInitiated).async {
-            // Purge caches before loading new data
+            print("Full data refresh (\(reason)): Step 3 - Starting background process")
+            
+            // 3a. Clear ALL caches comprehensively
+            print("Full data refresh (\(reason)): Step 3a - Comprehensive cache clearing")
             self.bandNameHandle.clearCachedData()
             self.dataHandle.clearCachedData()
             self.schedule.clearCache()
-            // Reload all data
-            let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readAllPriorityData()
-            iCloudHandle.readAllScheduleData()
-            self.schedule.DownloadCsv()
-            self.schedule.populateSchedule(forceDownload: false)
-            // Simple approach: after 4 seconds, end refresh and trigger refreshBandList
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                self.refreshControl?.endRefreshing()
-                // Ensure the snap-to-top flag is still set for pull-to-refresh
-                self.shouldSnapToTopAfterRefresh = true
-                self.refreshBandList(reason: "Pull to refresh", scrollToTop: false, isPullToRefresh: true)
+            
+            // Clear MasterViewController cached arrays
+            self.clearMasterViewCachedData()
+            
+            // Clear ALL static cache variables to prevent data mixing
+            staticSchedule.sync {
+                cacheVariables.scheduleStaticCache = [:]
+                cacheVariables.scheduleTimeStaticCache = [:]
+                cacheVariables.bandNamesStaticCache = [:]
+                cacheVariables.bandNamesArrayStaticCache = []
+                cacheVariables.bandDescriptionUrlCache = [:]
+                cacheVariables.bandDescriptionUrlDateCache = [:]
+                cacheVariables.attendedStaticCache = [:]
+                cacheVariables.lastModifiedDate = nil
+            }
+            
+            // Clear CustomBandDescription instance caches
+            self.bandDescriptions.bandDescriptionUrl.removeAll()
+            self.bandDescriptions.bandDescriptionUrlDate.removeAll()
+            
+            print("Full data refresh (\(reason)): All caches cleared comprehensively")
+            
+            // 3b. Refresh all data from URLs (band names, schedule, descriptionMap)
+            print("Full data refresh (\(reason)): Step 3b - Refreshing all data from URLs")
+            
+            // Use a dispatch group to track when all data loading is complete
+            let dataLoadGroup = DispatchGroup()
+            
+            // Load iCloud data
+            dataLoadGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                let iCloudHandle = iCloudDataHandler()
+                iCloudHandle.readAllPriorityData()
+                iCloudHandle.readAllScheduleData()
+                dataLoadGroup.leave()
+            }
+            
+            // Load schedule data
+            dataLoadGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                self.schedule.DownloadCsv()
+                self.schedule.populateSchedule(forceDownload: true)
+                dataLoadGroup.leave()
+            }
+            
+            // Load band names data
+            dataLoadGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                self.bandNameHandle.gatherData()
+                dataLoadGroup.leave()
+            }
+            
+            // Load descriptionMap data
+            dataLoadGroup.enter()
+            DispatchQueue.global(qos: .utility).async {
+                self.bandDescriptions.getDescriptionMapFile()
+                self.bandDescriptions.getDescriptionMap()
+                dataLoadGroup.leave()
+            }
+            
+            // 3c. Once all data is loaded, refresh the GUI
+            dataLoadGroup.notify(queue: .main) {
+                print("Full data refresh (\(reason)): Step 3c - All data loaded, refreshing GUI")
+                
+                if endRefreshControl {
+                    self.refreshControl?.endRefreshing()
+                }
+                if shouldScrollToTop {
+                    self.shouldSnapToTopAfterRefresh = true
+                }
+                
+                // Final GUI refresh with all new data
+                self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
+                
+                print("Full data refresh (\(reason)): Complete!")
             }
         }
+    }
+    
+    @objc func pullTorefreshData(){
+        checkForEasterEgg()
+        print ("iCloud: pull to refresh, load in new iCloud data")
+        
+        // Use the centralized method with pull-to-refresh specific settings
+        performFullDataRefresh(reason: "Pull to refresh", shouldScrollToTop: true, endRefreshControl: true)
+    }
+    
+    /// Called when returning from preferences screen
+    @objc func handleReturnFromPreferences() {
+        print("Handling return from preferences screen")
+        performFullDataRefresh(reason: "Return from preferences")
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
@@ -1333,12 +1454,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         print("🔍 prepare(for:sender:) called with identifier: \(segue.identifier ?? "nil"), destination: \(type(of: segue.destination))")
         
-        // Intercept the preferences segue and show SwiftUI instead
-        if segue.identifier == "Inr-4y-5qN" || segue.destination is AlertPreferenesController {
-            print("🎯 INTERCEPTED in prepare(for:sender:) - this segue should have been cancelled")
-            // This segue will be cancelled by shouldPerformSegue, but handle it here too
-            return
-        }
+
         
         print("Getting Details")
         print("bands type in prepare(for:sender:):", type(of: bands))
@@ -1619,13 +1735,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
         print("🔍 shouldPerformSegue called with identifier: \(identifier)")
         
-        // Intercept the preferences segue
-        if identifier == "Inr-4y-5qN" {
-            print("🎯 INTERCEPTED preferences segue - showing SwiftUI preferences")
-            // Show SwiftUI preferences instead
-            showSwiftUIPreferences()
-            return false
-        }
+
         
         print("🔄 Allowing segue to proceed normally")
         return super.shouldPerformSegue(withIdentifier: identifier, sender: sender)
@@ -1633,8 +1743,28 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     private func showSwiftUIPreferences() {
         print("🎯 Showing SwiftUI preferences screen")
-        PreferencesHostingController.pushPreferences(from: self)
+        
+        // Use the reliable PreferencesHostingController approach
+        let preferencesController = PreferencesHostingController()
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // For iPad split view, use a well-sized modal that doesn't obscure everything
+            preferencesController.modalPresentationStyle = .formSheet
+            preferencesController.preferredContentSize = CGSize(width: 540, height: 700)
+            
+            // Present from the split view controller to center it properly
+            if let splitVC = splitViewController {
+                splitVC.present(preferencesController, animated: true)
+            } else {
+                present(preferencesController, animated: true)
+            }
+        } else {
+            // For iPhone, use navigation push
+            navigationController?.pushViewController(preferencesController, animated: true)
+        }
     }
+    
+
     
     // Add an IBAction method that we can connect directly to the gear button
     @IBAction func preferencesButtonTapped(_ sender: Any) {
@@ -1934,12 +2064,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshDataWithBackgroundUpdate(reason: "Push notification received")
     }
     
-    @objc func handleAppWillEnterForeground() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.refreshDataWithBackgroundUpdate(reason: "App will enter foreground")
-            DispatchQueue.main.async {
-                self?.tableView.reloadData()
-            }
+    // App foreground handling moved to AppDelegate for global application-level handling
+    
+    /// Clears all cached data arrays in MasterViewController - should be called during year changes
+    func clearMasterViewCachedData() {
+        print("[YEAR_CHANGE_DEBUG] Clearing MasterViewController cached data arrays")
+        objects.removeAllObjects()
+        bands.removeAll()
+        bandsByTime.removeAll()
+        bandsByName.removeAll()
+        
+        // Also clear the table view data
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
         }
     }
     
