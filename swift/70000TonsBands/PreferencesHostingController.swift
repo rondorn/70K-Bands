@@ -9,15 +9,43 @@
 import UIKit
 import SwiftUI
 
-class PreferencesHostingController: UIHostingController<PreferencesView> {
+class PreferencesHostingController: UIHostingController<AnyView> {
     
     init() {
-        super.init(rootView: PreferencesView())
+        // Determine if we need NavigationView based on device and presentation
+        let rootView: AnyView
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: Wrap in NavigationView for modal presentation
+            rootView = AnyView(
+                NavigationView {
+                    PreferencesView()
+                }
+                .navigationViewStyle(StackNavigationViewStyle())
+            )
+        } else {
+            // iPhone: Use plain view (will be pushed onto existing navigation stack)
+            rootView = AnyView(PreferencesView())
+        }
+        
+        super.init(rootView: rootView)
         setupController()
     }
     
     @MainActor required dynamic init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder, rootView: PreferencesView())
+        // Same logic for coder init
+        let rootView: AnyView
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            rootView = AnyView(
+                NavigationView {
+                    PreferencesView()
+                }
+                .navigationViewStyle(StackNavigationViewStyle())
+            )
+        } else {
+            rootView = AnyView(PreferencesView())
+        }
+        
+        super.init(coder: aDecoder, rootView: rootView)
         setupController()
     }
     
