@@ -1750,7 +1750,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if UIDevice.current.userInterfaceIdiom == .pad {
             // For iPad split view, use a well-sized modal that doesn't obscure everything
             preferencesController.modalPresentationStyle = .formSheet
-            preferencesController.preferredContentSize = CGSize(width: 540, height: 700)
+            // Increased height to accommodate all sections without scrolling
+            // Based on actual content: Expired(~80), Attended(~80), Alerts(~450), Details(~80), Misc(~150), Navigation(~70), Padding(~40) = ~950
+            // Adding extra buffer for safe area and spacing
+            preferencesController.preferredContentSize = CGSize(width: 540, height: 1000)
             
             // Present from the split view controller to center it properly
             if let splitVC = splitViewController {

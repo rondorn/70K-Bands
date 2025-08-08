@@ -14,201 +14,266 @@ struct PreferencesView: View {
     @State private var minutesText: String = ""
     
     var body: some View {
+        mainContent
+            .modifier(NavigationModifier())
+            .modifier(AlertModifiers(viewModel: viewModel, minutesText: $minutesText))
+            .modifier(LifecycleModifiers(viewModel: viewModel, minutesText: $minutesText, presentationMode: presentationMode))
+            .overlay(loadingOverlay)
+    }
+    
+    private var mainContent: some View {
         Form {
-                // Show/Hide Expired Section
-                Section(NSLocalizedString("showHideExpiredLabel", comment: "")) {
-                    Toggle(NSLocalizedString("hideExpiredEvents", comment: ""), isOn: $viewModel.hideExpiredEvents)
-                }
-                
-                // Prompt For Attended Status Section
-                Section("Prompt For Attended Status") {
-                    Toggle("Prompt For Attended Status", isOn: $viewModel.promptForAttended)
-                }
-                
-                // Alert Preferences Section
-                Section(NSLocalizedString("AlertPreferences", comment: "")) {
-                    Toggle("Alert On Must See Bands", isOn: $viewModel.alertOnMustSee)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert On Might See Bands", isOn: $viewModel.alertOnMightSee)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert Only for Will Attend Events", isOn: $viewModel.alertOnlyForWillAttend)
-                    
-                    HStack {
-                        Text("Minutes Before Event to Alert")
-                        Spacer()
-                        TextField("Minutes", text: $minutesText)
-                            .keyboardType(.numberPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .frame(width: 60)
-                            .onChange(of: minutesText) { newValue in
-                                if let intValue = Int(newValue), intValue >= 0 && intValue <= 60 {
-                                    viewModel.minutesBeforeAlert = intValue
-                                }
-                            }
-                    }
-                    
-                    Toggle("Alert For Shows", isOn: $viewModel.alertForShows)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert For Special Events", isOn: $viewModel.alertForSpecialEvents)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert For Unofficial Events", isOn: $viewModel.alertForCruiserOrganized)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert For Meeting and Greet Events", isOn: $viewModel.alertForMeetAndGreet)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert For Clinics", isOn: $viewModel.alertForClinics)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                    
-                    Toggle("Alert For Album Listening Events", isOn: $viewModel.alertForAlbumListening)
-                        .disabled(viewModel.alertOnlyForWillAttend)
-                        .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
-                }
-                
-                // Detail Screen Section
-                Section(NSLocalizedString("DetailScreenSection", comment: "")) {
-                    Toggle(NSLocalizedString("NoteFontSize", comment: ""), isOn: $viewModel.noteFontSizeLarge)
-                }
-                
-                // Misc Section
-                Section(NSLocalizedString("MiscSection", comment: "")) {
-                    HStack {
-                        Text(NSLocalizedString("SelectYearLabel", comment: ""))
-                        Spacer()
-                        Menu(viewModel.selectedYear) {
-                            ForEach(viewModel.availableYears, id: \.self) { year in
-                                Button(year) {
-                                    viewModel.selectYear(year)
-                                }
-                            }
-                        }
-                        .foregroundColor(.blue)
-                        .disabled(viewModel.isLoadingData)
-                    }
-                    
-                    if viewModel.isLoadingData {
-                        HStack {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                            Text("Loading data...")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("UserID: \(viewModel.userId)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("Build: \(viewModel.buildInfo)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
+            expiredEventsSection
+            promptForAttendedSection
+            alertPreferencesSection
+            detailScreenSection
+            miscSection
         }
-        .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            // Only show close button on iPad split view (modal presentation)
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(NSLocalizedString("Ok", comment: "")) {
-                        // Send notification to dismiss preferences
-                        NotificationCenter.default.post(name: Notification.Name("DismissPreferencesScreen"), object: nil)
+    }
+    
+    private var loadingOverlay: some View {
+        Group {
+            if viewModel.isLoadingData {
+                ZStack {
+                    Color.black.opacity(0.8)
+                        .edgesIgnoringSafeArea(.all)
+                    
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(2.0)
+                        
+                        Text(NSLocalizedString("waiting_for_data", comment: ""))
+                            .foregroundColor(.white)
+                            .font(.system(size: 22, weight: .medium, design: .default))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
                     }
-                    .fontWeight(.semibold)
                 }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.isLoadingData)
             }
         }
-        .preferredColorScheme(.dark)
-        .environment(\.colorScheme, .dark)
-        .background(Color.black.edgesIgnoringSafeArea(.all))
-        .onAppear {
-            viewModel.refreshAvailableYears()
-            viewModel.loadCurrentPreferences()
-            minutesText = String(viewModel.minutesBeforeAlert)
+    }
+    
+    // MARK: - View Components
+    
+    private var expiredEventsSection: some View {
+        Section(NSLocalizedString("showHideExpiredLabel", comment: "")) {
+            Toggle(NSLocalizedString("hideExpiredEvents", comment: ""), isOn: $viewModel.hideExpiredEvents)
         }
-        .onDisappear {
-            viewModel.refreshDataAndNotifications()
+    }
+    
+    private var promptForAttendedSection: some View {
+        Section("Prompt For Attended Status") {
+            Toggle("Prompt For Attended Status", isOn: $viewModel.promptForAttended)
         }
-        .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showYearChangeConfirmation) {
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                viewModel.cancelYearChange()
+    }
+    
+    private var alertPreferencesSection: some View {
+        Section(NSLocalizedString("AlertPreferences", comment: "")) {
+            Toggle("Alert On Must See Bands", isOn: $viewModel.alertOnMustSee)
+                .disabled(viewModel.alertOnlyForWillAttend)
+                .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
+            
+            Toggle("Alert On Might See Bands", isOn: $viewModel.alertOnMightSee)
+                .disabled(viewModel.alertOnlyForWillAttend)
+                .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
+            
+            Toggle("Alert Only for Will Attend Events", isOn: $viewModel.alertOnlyForWillAttend)
+            
+            minutesBeforeAlertView
+            
+            alertTogglesView
+        }
+    }
+    
+    private var minutesBeforeAlertView: some View {
+        HStack {
+            Text("Minutes Before Event to Alert")
+            Spacer()
+            TextField("Minutes", text: $minutesText)
+                .keyboardType(.numberPad)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .frame(width: 60)
+                .onChange(of: minutesText) { newValue in
+                    if let intValue = Int(newValue), intValue >= 0 && intValue <= 60 {
+                        viewModel.minutesBeforeAlert = intValue
+                    }
+                }
+        }
+    }
+    
+    private var alertTogglesView: some View {
+        Group {
+            alertToggleRow("Alert For Shows", binding: $viewModel.alertForShows)
+            alertToggleRow("Alert For Special Events", binding: $viewModel.alertForSpecialEvents)
+            alertToggleRow("Alert For Unofficial Events", binding: $viewModel.alertForCruiserOrganized)
+            alertToggleRow("Alert For Meeting and Greet Events", binding: $viewModel.alertForMeetAndGreet)
+            alertToggleRow("Alert For Clinics", binding: $viewModel.alertForClinics)
+            alertToggleRow("Alert For Album Listening Events", binding: $viewModel.alertForAlbumListening)
+        }
+    }
+    
+    private func alertToggleRow(_ title: String, binding: Binding<Bool>) -> some View {
+        Toggle(title, isOn: binding)
+            .disabled(viewModel.alertOnlyForWillAttend)
+            .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
+    }
+    
+    private var detailScreenSection: some View {
+        Section(NSLocalizedString("DetailScreenSection", comment: "")) {
+            Toggle(NSLocalizedString("NoteFontSize", comment: ""), isOn: $viewModel.noteFontSizeLarge)
+        }
+    }
+    
+    private var miscSection: some View {
+        Section(NSLocalizedString("MiscSection", comment: "")) {
+            yearSelectionView
+            
+            if viewModel.isLoadingData {
+                loadingIndicatorView
             }
-            Button(NSLocalizedString("Ok", comment: "")) {
-                viewModel.confirmYearChange()
-            }
-        } message: {
-            Text(NSLocalizedString("restartMessage", comment: ""))
+            
+            buildInfoView
         }
-        .alert("Invalid Input", isPresented: $viewModel.showValidationError) {
-            Button("OK") {
+    }
+    
+    private var yearSelectionView: some View {
+        HStack {
+            Text(NSLocalizedString("SelectYearLabel", comment: ""))
+            Spacer()
+            Menu(viewModel.selectedYear) {
+                ForEach(viewModel.availableYears, id: \.self) { year in
+                    Button(year) {
+                        viewModel.selectYear(year)
+                    }
+                }
+            }
+            .foregroundColor(.blue)
+            .disabled(viewModel.isLoadingData)
+        }
+    }
+    
+    private var loadingIndicatorView: some View {
+        HStack {
+            ProgressView()
+                .scaleEffect(0.8)
+            Text("Loading data...")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var buildInfoView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("UserID: \(viewModel.userId)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text("Build: \(viewModel.buildInfo)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Custom ViewModifiers
+
+struct NavigationModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .modifier(ConditionalToolbarModifier())
+            .preferredColorScheme(.dark)
+            .environment(\.colorScheme, .dark)
+            .background(Color.black.edgesIgnoringSafeArea(.all))
+    }
+}
+
+struct AlertModifiers: ViewModifier {
+    @ObservedObject var viewModel: PreferencesViewModel
+    @Binding var minutesText: String
+    
+    func body(content: Content) -> some View {
+        content
+            .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showYearChangeConfirmation) {
+                Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
+                    viewModel.cancelYearChange()
+                }
+                Button(NSLocalizedString("Ok", comment: "")) {
+                    viewModel.confirmYearChange()
+                }
+            } message: {
+                Text(NSLocalizedString("restartMessage", comment: ""))
+            }
+            .alert("Invalid Input", isPresented: $viewModel.showValidationError) {
+                Button("OK") {
+                    minutesText = String(viewModel.minutesBeforeAlert)
+                }
+            } message: {
+                Text("Minutes must be a value between 0 and 60.")
+            }
+            .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showBandEventChoice) {
+                Button(NSLocalizedString("bandListButton", comment: "")) {
+                    viewModel.selectBandList()
+                }
+                Button(NSLocalizedString("eventListButton", comment: "")) {
+                    viewModel.selectEventList()
+                }
+            } message: {
+                Text(NSLocalizedString("eventOrBandPrompt", comment: ""))
+            }
+            .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showNetworkError) {
+                Button(NSLocalizedString("Ok", comment: "")) {
+                    viewModel.dismissNetworkError()
+                }
+            } message: {
+                Text(NSLocalizedString("yearChangeAborted", comment: ""))
+            }
+    }
+}
+
+struct LifecycleModifiers: ViewModifier {
+    let viewModel: PreferencesViewModel
+    @Binding var minutesText: String
+    let presentationMode: Binding<PresentationMode>
+    
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                viewModel.refreshAvailableYears()
+                viewModel.loadCurrentPreferences()
                 minutesText = String(viewModel.minutesBeforeAlert)
             }
-        } message: {
-            Text("Minutes must be a value between 0 and 60.")
-        }
-        .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showBandEventChoice) {
-            Button(NSLocalizedString("bandListButton", comment: "")) {
-                viewModel.selectBandList()
+            .onDisappear {
+                viewModel.refreshDataAndNotifications()
             }
-            Button(NSLocalizedString("eventListButton", comment: "")) {
-                viewModel.selectEventList()
+            .onChange(of: viewModel.minutesBeforeAlert) { newValue in
+                minutesText = String(newValue)
             }
-        } message: {
-            Text(NSLocalizedString("eventOrBandPrompt", comment: ""))
-        }
-        .alert(NSLocalizedString("changeYearDialogBoxTitle", comment: ""), isPresented: $viewModel.showNetworkError) {
-            Button(NSLocalizedString("Ok", comment: "")) {
-                viewModel.dismissNetworkError()
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreen"))) { _ in
+                presentationMode.wrappedValue.dismiss()
             }
-        } message: {
-            Text(NSLocalizedString("yearChangeAborted", comment: ""))
-        }
-        .onChange(of: viewModel.minutesBeforeAlert) { newValue in
-            minutesText = String(newValue)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreen"))) { _ in
-            // This will be handled by MasterViewController for in-frame display
-            presentationMode.wrappedValue.dismiss()
-        }
-        .overlay(
-            // Fullscreen loading overlay
-            Group {
-                if viewModel.isLoadingData {
-                    ZStack {
-                        Color.black.opacity(0.8)
-                            .edgesIgnoringSafeArea(.all)
-                        
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(2.0)
-                            
-                            Text(NSLocalizedString("waiting_for_data", comment: ""))
-                                .foregroundColor(.white)
-                                .font(.title2)
-                                .fontWeight(.medium)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
+    }
+}
+
+struct ConditionalToolbarModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            content
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(NSLocalizedString("Close", comment: "")) {
+                            // Send notification to dismiss preferences
+                            NotificationCenter.default.post(name: Notification.Name("DismissPreferencesScreen"), object: nil)
                         }
+                        .font(.system(size: 17, weight: .semibold, design: .default))
                     }
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.3), value: viewModel.isLoadingData)
                 }
-            }
-        )
+        } else {
+            content
+        }
     }
 }
 
