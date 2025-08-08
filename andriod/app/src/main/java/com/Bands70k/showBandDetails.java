@@ -98,6 +98,13 @@ public class showBandDetails extends Activity {
     private TextView countryValue, genreValue, lastCruiseValue, noteValue;
     private LinearLayout countryRow, genreRow, lastCruiseRow, noteRow;
     private Button unknownButton, mustButton, mightButton, wontButton;
+    
+    // Translation components
+    private LinearLayout translationButtonContainer;
+    private Button translationButton;
+    private BandDescriptionTranslator translator;
+    private String originalEnglishText;
+    private String currentTranslatedText;
     private ImageView rankingIcon;
     private ProgressBar loadingProgressBar;
     private ScrollView contentScrollView;
@@ -1117,6 +1124,13 @@ public class showBandDetails extends Activity {
         contentScrollView = findViewById(R.id.content_scroll_view);
         contentContainer = findViewById(R.id.content_container);
         
+        // Translation components
+        translationButtonContainer = findViewById(R.id.translation_button_container);
+        translationButton = findViewById(R.id.translation_button);
+        
+        // Initialize translation functionality
+        translator = BandDescriptionTranslator.getInstance(this);
+        
         // Swipe gestures are handled at the activity level via dispatchTouchEvent
         
         // Set up click listeners
@@ -1371,6 +1385,11 @@ public class showBandDetails extends Activity {
         mustButton.setOnClickListener(v -> handleRankingClick(staticVariables.mustSeeKey));
         mightButton.setOnClickListener(v -> handleRankingClick(staticVariables.mightSeeKey));
         wontButton.setOnClickListener(v -> handleRankingClick(staticVariables.wontSeeKey));
+        
+        // Translation button click listener
+        if (translationButton != null) {
+            translationButton.setOnClickListener(v -> handleTranslationButtonClick());
+        }
         
         // Notes edit listener - make note content double-tap in native view
         if (noteValue != null) {
@@ -1706,6 +1725,93 @@ public class showBandDetails extends Activity {
         
         // Update the button states immediately without restarting activity
         setupRankingButtons();
+    }
+    
+    /**
+     * Handles translation button clicks
+     */
+    private void handleTranslationButtonClick() {
+        if (translator == null) {
+            Log.e("Translation", "Translator not initialized");
+            return;
+        }
+        
+        String currentText = noteValue.getText().toString();
+        
+        // Check if we need to translate or restore
+        if (translator.isCurrentTextTranslated(currentText)) {
+            // Restore to English
+            if (originalEnglishText != null && !originalEnglishText.isEmpty()) {
+                noteValue.setText(originalEnglishText);
+                updateTranslationButton();
+                showToast("Restored to English");
+            }
+        } else {
+            // Translate to local language
+            originalEnglishText = currentText; // Store original
+            
+            translator.translateTextDirectly(currentText, translator.getCurrentLanguageCode(), BandInfo.getSelectedBand(), new BandDescriptionTranslator.TranslationCallback() {
+                @Override
+                public void onTranslationComplete(String translatedText) {
+                    runOnUiThread(() -> {
+                        if (translatedText != null && !translatedText.isEmpty()) {
+                            currentTranslatedText = translatedText;
+                            noteValue.setText(translatedText);
+                            updateTranslationButton();
+                            showToast("Translated to " + translator.getCurrentLanguageCode().toUpperCase());
+                        } else {
+                            showToast("Translation failed");
+                        }
+                    });
+                }
+                
+                @Override
+                public void onTranslationError(String error) {
+                    runOnUiThread(() -> {
+                        Log.e("Translation", "Translation error: " + error);
+                        showToast("Translation error: " + error);
+                    });
+                }
+            });
+        }
+    }
+    
+    /**
+     * Updates the translation button text and visibility
+     */
+    private void updateTranslationButton() {
+        if (translator == null || translationButton == null || translationButtonContainer == null) {
+            return;
+        }
+        
+        // Check if translation is supported
+        if (!translator.isTranslationSupported()) {
+            translationButtonContainer.setVisibility(View.GONE);
+            return;
+        }
+        
+        // Show the container
+        translationButtonContainer.setVisibility(View.VISIBLE);
+        
+        // Update button text based on current state
+        String currentText = noteValue.getText().toString();
+        String languageCode = translator.getCurrentLanguageCode();
+        if (translator.isCurrentTextTranslated(currentText)) {
+            translationButton.setText(translator.getLocalizedRestoreButtonText(languageCode));
+            translationButton.setBackgroundColor(getResources().getColor(android.R.color.holo_orange_dark));
+        } else {
+            translationButton.setText(translator.getLocalizedTranslateButtonText(languageCode));
+            translationButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark));
+        }
+    }
+    
+    /**
+     * Shows a toast message
+     */
+    private void showToast(String message) {
+        runOnUiThread(() -> {
+            android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show();
+        });
     }
     
     /**
@@ -2341,6 +2447,9 @@ public class showBandDetails extends Activity {
             
             noteRow.setVisibility(View.VISIBLE);
             hasExtraData = true;
+            
+            // Update translation button after note content is set
+            updateTranslationButton();
         } else {
             noteRow.setVisibility(View.GONE);
         }

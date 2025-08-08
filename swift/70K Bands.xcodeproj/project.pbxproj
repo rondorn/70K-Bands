@@ -33,6 +33,10 @@
 		11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		1115BAE21C978E88008F01BE /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
+		114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
+		114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
+		114B5C0C2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */; };
+		114B5C0D2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
 		114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
 		115213292A69E23C0017DD9F /* variableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115213282A69E23C0017DD9F /* variableStore.swift */; };
@@ -175,6 +179,8 @@
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		114976C51C838D87003316D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandDescriptionTranslator.swift; sourceTree = "<group>"; };
+		114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUITranslationHelper.swift; sourceTree = "<group>"; };
 		114CC0711C79204100CF5BF1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		114F63AB1A84678D00584AD0 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		115213282A69E23C0017DD9F /* variableStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = variableStore.swift; sourceTree = "<group>"; };
@@ -344,14 +350,13 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */,
-				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
-				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
-				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
+				114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
+				114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
+				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
@@ -375,7 +380,6 @@
 				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
-				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -383,11 +387,15 @@
 				1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */,
 				11FBBE1D232F26E000109035 /* NotificationPayload.apns */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
+				11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */,
+				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
+				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
+				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
@@ -789,6 +797,7 @@
 				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
+				114B5C0C2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */,
 				110E08502AECB6E200075618 /* DropDown.swift in Sources */,
 				11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */,
 				110FA1622E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
@@ -797,6 +806,7 @@
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
+				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				11615BB72E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
@@ -840,6 +850,7 @@
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				1155E3B21A8B126500D51ED9 /* DetailViewController.swift in Sources */,
+				114B5C0D2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				110E08512AECB6E200075618 /* DropDown.swift in Sources */,
 				1155E3A41A8B0A0700D51ED9 /* bandNamesTest.swift in Sources */,
@@ -848,6 +859,7 @@
 				110E08532AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
+				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				11615BB42E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
