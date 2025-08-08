@@ -25,6 +25,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     var dataViewNumber = CGFloat(0)
     var notesViewNumber = CGFloat(0)
     
+    // Break area constants for spacing around links section
+    let linkBreakAreaTop = CGFloat(10)    // Space above links section
+    let linkBreakAreaBottom = CGFloat(10) // Space below links section
+    
     var mainConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     var notesViewConstraints:[NSLayoutConstraint] = [NSLayoutConstraint]()
     
@@ -319,17 +323,19 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         LastOnCruise.isHidden = false
         NoteWorthy.isHidden = false
         
-        dataViewTopSpacingConstraint.constant = dataViewNumber
-        linkViewTopSpacingConstraint.constant = linkViewNumber
+        // Apply break areas around links section
+        dataViewTopSpacingConstraint.constant = dataViewNumber + linkBreakAreaBottom
+        linkViewTopSpacingConstraint.constant = linkViewNumber + linkBreakAreaTop
+        
         if (everyOtherFlag == false){
             everyOtherFlag = true
-            notesViewTopSpacingConstraint.constant = notesViewNumber + 1
+            notesViewTopSpacingConstraint.constant = notesViewNumber + linkBreakAreaBottom + 1
             print ("Notes hight is \(notesViewNumber) 3")
             print ("Notes hight is \(linkViewNumber) 3-linkViewNumber")
             print ("Notes hight is \(dataViewNumber) 3-dataViewNumber")
         } else {
             everyOtherFlag = false
-            notesViewTopSpacingConstraint.constant = notesViewNumber - 1
+            notesViewTopSpacingConstraint.constant = notesViewNumber + linkBreakAreaBottom - 1
             print ("Notes hight is \(notesViewNumber) 4")
             print ("Notes hight is \(linkViewNumber) 4-linkViewNumber")
             print ("Notes hight is \(dataViewNumber) 4-dataViewNumber")
@@ -467,7 +473,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             linkGroup.isHidden = true
             vistLinksLable.isHidden = true;
             LinksSection.isHidden = true;
-            notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - 65
+            // Adjust for both the links section height and break areas when hidden
+            notesViewTopSpacingConstraint.constant = notesViewTopSpacingConstraint.constant - (65 + linkBreakAreaTop + linkBreakAreaBottom)
         } else {
             officialUrlButton.isHidden = false;
             wikipediaUrlButton.isHidden = false;
