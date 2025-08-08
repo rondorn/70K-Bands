@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.io.FileNotFoundException;
+import android.content.Context;
 
 
 /**
@@ -318,7 +319,7 @@ public class CustomerDescriptionHandler {
                     }
                 }
             }
-
+            br.close();
         } catch (FileNotFoundException fnfe) {
             Log.e("General Exception", "Description map file not found, attempting to download it", fnfe);
             // File was deleted after check, try to download it again
@@ -869,6 +870,9 @@ public class CustomerDescriptionHandler {
                 isRunning.set(false);
                 backgroundLoadingActive.set(false);
                 Log.d("CustomerDescriptionHandler", "Background loading completed");
+                
+                // Start translation pre-caching for offline use
+                startTranslationPreCaching();
             }
         }
 
@@ -909,6 +913,70 @@ public class CustomerDescriptionHandler {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
 
+        }
+    }
+    
+    /**
+     * Starts translation pre-caching for offline use at sea
+     */
+    private void startTranslationPreCaching() {
+        // Get application context - we need to find a way to get context
+        // This will be called from the async task, so we need to get context differently
+        try {
+            // We'll use the static context from staticVariables if available
+            Context context = staticVariables.context;
+            if (context == null) {
+                Log.d("TranslationCache", "No context available, skipping translation pre-caching");
+                return;
+            }
+            
+            BandDescriptionTranslator translator = BandDescriptionTranslator.getInstance(context);
+            
+            // Check if translation is supported
+            if (!translator.isTranslationSupported()) {
+                Log.d("TranslationCache", "Translation not supported for current language, skipping pre-caching");
+                return;
+            }
+            
+            // Get all band descriptions for caching
+            Map<String, String> allDescriptions = new HashMap<>();
+            if (descriptionMapData != null) {
+                for (String bandName : descriptionMapData.keySet()) {
+                    String description = getDescription(bandName);
+                    if (description != null && !description.trim().isEmpty() && 
+                        !description.contains("Comment text is not available yet")) {
+                        allDescriptions.put(bandName, description);
+                    }
+                }
+            }
+            
+            if (allDescriptions.isEmpty()) {
+                Log.d("TranslationCache", "No descriptions available for translation caching");
+                return;
+            }
+            
+            Log.d("TranslationCache", "Starting translation pre-caching for " + allDescriptions.size() + " bands");
+            
+            // Start bulk translation caching
+            translator.preCacheTranslationsForOffline(allDescriptions, new BandDescriptionTranslator.BulkTranslationCallback() {
+                @Override
+                public void onProgress(int completed, int total) {
+                    Log.d("TranslationCache", "Translation caching progress: " + completed + "/" + total);
+                }
+                
+                @Override
+                public void onComplete() {
+                    Log.d("TranslationCache", "Translation pre-caching completed successfully! Ready for offline use at sea.");
+                }
+                
+                @Override
+                public void onError(String error) {
+                    Log.e("TranslationCache", "Translation pre-caching failed: " + error);
+                }
+            });
+            
+        } catch (Exception e) {
+            Log.e("TranslationCache", "Error starting translation pre-caching", e);
         }
     }
 }

@@ -11,7 +11,7 @@
         android:id="@+id/content_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_ranking_buttons"
+        android:layout_above="@+id/translation_button_container"
         android:fillViewport="true"
         android:scrollbars="none">
 
@@ -314,6 +314,38 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <!-- Translation Button Container -->
+    <LinearLayout
+        android:id="@+id/translation_button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/bottom_ranking_buttons"
+        android:orientation="horizontal"
+        android:background="@android:color/black"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <!-- Translation Button -->
+        <Button
+            android:id="@+id/translation_button"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:text="Translate Note"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:background="@android:color/holo_blue_dark"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp" />
+
+    </LinearLayout>
 
     <!-- Bottom Ranking Buttons -->
     <LinearLayout
