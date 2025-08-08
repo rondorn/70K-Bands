@@ -276,9 +276,16 @@ open class scheduleHandler {
             httpData = getUrlData(urlString: scheduleUrl)
             print("This will be making HTTP Calls for schedule " + httpData);
             
-            if (httpData.isEmpty == false && httpData.count > 100) {
+            // Check if data contains valid CSV headers (schedule file with headers but no data is valid)
+            let hasValidHeaders = httpData.contains("Band,Location,Date,Day,Start Time,End Time,Type")
+            
+            if (httpData.isEmpty == false && (httpData.count > 100 || hasValidHeaders)) {
                 success = true
-                print("Schedule data downloaded successfully on attempt \(retryCount)")
+                if hasValidHeaders && httpData.count <= 100 {
+                    print("Schedule data downloaded successfully on attempt \(retryCount) - headers only (valid for future years)")
+                } else {
+                    print("Schedule data downloaded successfully on attempt \(retryCount)")
+                }
             } else {
                 print("Schedule download attempt \(retryCount) failed: Data is empty or invalid")
                 if retryCount < maxRetries {
@@ -307,8 +314,9 @@ open class scheduleHandler {
             }
         }
         
-        // Only write new data if it's not empty and appears valid
-        if (httpData.isEmpty == false && httpData.count > 100) { // Basic validation
+        // Only write new data if it's not empty and appears valid (headers-only files are valid)
+        let hasValidHeaders = httpData.contains("Band,Location,Date,Day,Start Time,End Time,Type")
+        if (httpData.isEmpty == false && (httpData.count > 100 || hasValidHeaders)) { // Accept headers-only files
             do {
                 try httpData.write(toFile: scheduleFile, atomically: false, encoding: String.Encoding.utf8)
                 // If write succeeds, remove the .old file
@@ -333,7 +341,12 @@ open class scheduleHandler {
                 }
             }
         } else {
-            print ("No valid data downloaded for schedule file, keeping existing data.")
+            let hasValidHeaders = httpData.contains("Band,Location,Date,Day,Start Time,End Time,Type")
+            if hasValidHeaders {
+                print("Schedule file has valid headers but was rejected due to size - this should not happen")
+            } else {
+                print ("No valid data downloaded for schedule file, keeping existing data.")
+            }
             // Restore the old file if no valid data was downloaded
             if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
                 do {

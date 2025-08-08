@@ -120,13 +120,6 @@ struct PreferencesView: View {
             }
             .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-            }
         }
         .preferredColorScheme(.dark)
         .environment(\.colorScheme, .dark)
