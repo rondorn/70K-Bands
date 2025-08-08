@@ -53,6 +53,7 @@ class CombinedImageListHandler {
             
             // Get all band names and their image URLs
             let bandNames = bandNameHandle.getBandNames()
+            print("Processing \(bandNames.count) artists for image consolidation")
             for bandName in bandNames {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
@@ -63,6 +64,12 @@ class CombinedImageListHandler {
             
             // Get all event names and their image URLs from schedule data
             let scheduleData = scheduleHandle.schedulingData
+            print("Processing \(scheduleData.count) bands from schedule data for image consolidation")
+            
+            if scheduleData.isEmpty {
+                print("Schedule data is empty - this is valid (headers only or future year). Proceeding with artist images only.")
+            }
+            
             for (bandName, events) in scheduleData {
                 for (_, eventData) in events {
                     // Check for ImageURL first (higher priority), then Description URL
@@ -106,7 +113,67 @@ class CombinedImageListHandler {
     /// - Parameter name: The name to look up
     /// - Returns: The image URL or empty string if not found
     func getImageUrl(for name: String) -> String {
-        let url = combinedImageList[name] ?? ""
+        let currentList = combinedImageList
+        
+        // If the list is empty and this is the first request, try to generate it immediately
+        if currentList.isEmpty {
+            print("CombinedImageListHandler: Image list is empty for '\(name)', attempting immediate generation")
+            
+            // Try to generate the list synchronously using available handlers
+            let bandNameHandle = bandNamesHandler()
+            let scheduleHandle = scheduleHandler()
+            
+            // Check if we have data to work with
+            let bandNames = bandNameHandle.getBandNames()
+            if !bandNames.isEmpty {
+                print("CombinedImageListHandler: Found \(bandNames.count) artists, generating list immediately")
+                
+                // Generate synchronously for immediate use
+                var newCombinedList: [String: String] = [:]
+                
+                // Process band names
+                for bandName in bandNames {
+                    let imageUrl = bandNameHandle.getBandImageUrl(bandName)
+                    if !imageUrl.isEmpty {
+                        newCombinedList[bandName] = imageUrl
+                    }
+                }
+                
+                // Process schedule data
+                let scheduleData = scheduleHandle.schedulingData
+                for (bandName, events) in scheduleData {
+                    for (_, eventData) in events {
+                        // Check for ImageURL first (higher priority), then Description URL
+                        if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
+                            // Only add if not already present (artist takes priority)
+                            if newCombinedList[bandName] == nil {
+                                newCombinedList[bandName] = imageUrl
+                            }
+                        } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
+                            // Only add if not already present (artist takes priority)
+                            if newCombinedList[bandName] == nil {
+                                newCombinedList[bandName] = descriptionUrl
+                            }
+                        }
+                    }
+                }
+                
+                // Update the list and save it
+                combinedImageList = newCombinedList
+                saveCombinedImageList()
+                
+                print("CombinedImageListHandler: Emergency generation completed with \(newCombinedList.count) entries")
+                
+                // Now try to get the URL again
+                let url = combinedImageList[name] ?? ""
+                print("CombinedImageListHandler: After generation, getting image URL for '\(name)': \(url)")
+                return url
+            } else {
+                print("CombinedImageListHandler: No artist data available for emergency generation")
+            }
+        }
+        
+        let url = currentList[name] ?? ""
         print("CombinedImageListHandler: Getting image URL for '\(name)': \(url)")
         return url
     }
@@ -118,6 +185,12 @@ class CombinedImageListHandler {
     /// - Returns: True if regeneration is needed, false otherwise
     func needsRegeneration(bandNameHandle: bandNamesHandler, scheduleHandle: scheduleHandler) -> Bool {
         let currentList = combinedImageList
+        
+        // If the combined list is empty, we need to generate it (first launch case)
+        if currentList.isEmpty {
+            print("Combined image list is empty, regeneration needed for first launch")
+            return true
+        }
         
         // Check if any new artists have been added
         let bandNames = bandNameHandle.getBandNames()
@@ -131,6 +204,7 @@ class CombinedImageListHandler {
         
         // Check if any new events have been added
         let scheduleData = scheduleHandle.schedulingData
+        // Note: Empty schedule data is valid (headers only or future year)
         for (bandName, events) in scheduleData {
             for (_, eventData) in events {
                 // Check for ImageURL first (higher priority), then Description URL
