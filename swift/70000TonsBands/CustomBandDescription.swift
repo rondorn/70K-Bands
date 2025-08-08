@@ -316,7 +316,7 @@ open class CustomBandDescription {
     }
     
     
-    func removeSpecialCharsFromString(text: String) -> String {
+    public func removeSpecialCharsFromString(text: String) -> String {
         
         var newText = text;
         newText = text.replacingOccurrences(of: "\r", with: "\n")
