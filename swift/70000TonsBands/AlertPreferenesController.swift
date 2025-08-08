@@ -368,10 +368,15 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
         updateScrollViewContentSize()
         
         if let uidString = UIDevice.current.identifierForVendor?.uuidString {
-            userIDLabel.text = "UserID:\t" + uidString + "\nBuild:\t" + versionInformation + "\nVersion: "
-            userIDLabel.text = userIDLabel.text! + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String)
-            userIDLabel.numberOfLines = 2
-            userIDLabel.adjustsFontSizeToFitWidth = true
+            // Construct the UserID and Build text for display
+            let userIDPart = "UserID: " + uidString
+            let buildPart = "Build: " + versionInformation
+            let fullText = userIDPart + "\n" + buildPart
+            
+            userIDLabel.text = fullText
+            userIDLabel.numberOfLines = 0  // Allow unlimited lines
+            userIDLabel.lineBreakMode = .byWordWrapping  // Use word wrapping for long UUIDs
+            userIDLabel.adjustsFontSizeToFitWidth = false  // Don't shrink text - use line wrapping instead
         } else {
             print("AlertPreferenesController: ERROR - UIDevice identifierForVendor is nil, cannot set uidString")
         }
@@ -443,7 +448,8 @@ class AlertPreferenesController: UIViewController, UITextFieldDelegate {
             PromptForAttendedLabel,
             PromptForAttendedSwitchLabel,
             selectYearLable,
-            DetailScreenSection
+            DetailScreenSection,
+            userIDLabel  // Added to support dynamic font sizing and multiline text
         ]
         
         // Configure each label for multiline text and dynamic font sizing
