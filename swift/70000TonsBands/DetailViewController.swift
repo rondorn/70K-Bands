@@ -44,6 +44,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     @IBOutlet weak var customNotesButton: UIButton!
     @IBOutlet weak var customNotesText: UITextView!
     
+    // Language toggle buttons (will be created programmatically)
+    var languageToggleStackView: UIStackView?
+    var englishButton: UIButton?
+    var localLanguageButton: UIButton?
+    
     
     @IBOutlet var mainView: UIView!
     @IBOutlet weak var LinksSection: UIView!
@@ -78,6 +83,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     var backgroundNotesText = "";
     var bandName :String!
+    
+    // Store both English and translated descriptions
+    var englishDescriptionText = ""
+    var translatedDescriptionText = ""
     var schedule = scheduleHandler()
     let dataHandle = dataHandler()
     var bandNameHandle = bandNamesHandler()
@@ -198,6 +207,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             setButtonNames()
             
+            // Setup language toggle buttons if translation is supported
+            setupLanguageToggleButtons()
+            
             if #available(iOS 26.0, *) {
                 //topNavView.leftBarButtonItem?.hidesSharedBackground = true
             }
@@ -287,6 +299,296 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                     self.imageSizeController(special: "")
                 }
             }
+        }
+    }
+    
+    /// Checks if the current text is actually translated (not English)
+    @available(iOS 18.0, *)
+    private func isCurrentTextTranslated(currentText: String) -> Bool {
+        // If we don't have English text to compare with, assume current text is English
+        guard !englishDescriptionText.isEmpty else {
+            return false
+        }
+        
+        // If current text is empty, it's not translated
+        guard !currentText.isEmpty else {
+            return false
+        }
+        
+        // If current text matches English text exactly, it's not translated
+        if currentText.trimmingCharacters(in: .whitespacesAndNewlines) == 
+           englishDescriptionText.trimmingCharacters(in: .whitespacesAndNewlines) {
+            return false
+        }
+        
+        // Check if current text contains "Translated from English" in various languages
+        let translatedFromEnglishTexts = [
+            "Translated from English",      // English fallback
+            "Aus dem Englischen übersetzt", // German
+            "Vertaald uit het Engels",      // Dutch
+            "Traduit de l'anglais",         // French
+            "Käännetty englannista",        // Finnish
+            "Traduzido do inglês",          // Portuguese
+            "Traducido del inglés"          // Spanish
+        ]
+        
+        for translatedText in translatedFromEnglishTexts {
+            if currentText.contains(translatedText) {
+                print("DEBUG: Found translation marker: \(translatedText)")
+                return true
+            }
+        }
+        
+        // Legacy check for old translation markers (for backward compatibility)
+        let legacyMarkers = ["[DE]", "[ES]", "[FR]", "[PT]", "[DA]", "[FI]", "🌐 Translation"]
+        for marker in legacyMarkers {
+            if currentText.contains(marker) {
+                print("DEBUG: Found legacy translation marker: \(marker)")
+                return true
+            }
+        }
+        
+        // If text is significantly different from English and we have a translation preference set
+        let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+        if currentLangCode != "EN" && 
+           BandDescriptionTranslator.shared.currentLanguagePreference != "EN" &&
+            currentText.count > englishDescriptionText.count * Int(0.7) { // At least 70% of original length
+            return true
+        }
+        
+        return false
+    }
+
+    /// Sets up the translation buttons if translation is supported
+    func setupLanguageToggleButtons() {
+        guard #available(iOS 18.0, *) else {
+            return // BandDescriptionTranslator requires iOS 18.0+
+        }
+        
+        guard BandDescriptionTranslator.shared.isTranslationSupported() else {
+            return // Don't show if translation isn't supported
+        }
+        
+        guard let safeBandName = bandName else { 
+            print("DEBUG: No band name available")
+            return 
+        }
+        
+        let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+        let hasBeenTranslated = BandDescriptionTranslator.shared.hasBandBeenTranslated(safeBandName)
+        
+        // Check if we have a translated cache file
+        let hasTranslatedCache = (currentLangCode != "EN") && 
+                                BandDescriptionTranslator.shared.hasTranslatedCacheFile(for: safeBandName, targetLanguage: currentLangCode)
+        
+        // Check if the current text is actually translated by comparing with English text
+        let currentText = customNotesText?.text ?? ""
+        let isCurrentTextActuallyTranslated = isCurrentTextTranslated(currentText: currentText) || hasTranslatedCache
+        
+        print("DEBUG: Band: \(safeBandName)")
+        print("DEBUG: Language: \(currentLangCode)")
+        print("DEBUG: Has been translated: \(hasBeenTranslated)")
+        print("DEBUG: Current text is actually translated: \(isCurrentTextActuallyTranslated)")
+        print("DEBUG: English text length: \(englishDescriptionText.count)")
+        print("DEBUG: Current text length: \(currentText.count)")
+        
+        // Remove ALL existing buttons if they exist
+        languageToggleStackView?.removeFromSuperview()
+        englishButton?.removeFromSuperview()
+        localLanguageButton?.removeFromSuperview()
+        englishButton = nil
+        localLanguageButton = nil
+        
+        // Also remove any buttons that might be directly added to notesSection
+        for subview in notesSection.subviews {
+            if let button = subview as? UIButton {
+                print("DEBUG: Removing old button: \(button.titleLabel?.text ?? "unknown")")
+                button.removeFromSuperview()
+            }
+            if let stackView = subview as? UIStackView {
+                for arrangedSubview in stackView.arrangedSubviews {
+                    if let button = arrangedSubview as? UIButton {
+                        print("DEBUG: Removing old button from stack: \(button.titleLabel?.text ?? "unknown")")
+                        button.removeFromSuperview()
+                    }
+                }
+                if stackView != languageToggleStackView {
+                    print("DEBUG: Removing old stack view")
+                    stackView.removeFromSuperview()
+                }
+            }
+        }
+        
+        // Create container for the single button
+        languageToggleStackView = UIStackView()
+        guard let stackView = languageToggleStackView else { return }
+        
+        stackView.axis = .horizontal
+        stackView.distribution = .fill
+        stackView.spacing = 0
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Determine which button to show based on ACTUAL current text state
+        if isCurrentTextActuallyTranslated {
+            print("DEBUG: Showing RESTORE button - text is currently translated")
+            // Show "Restore to English" button
+            let restoreButton = UIButton(type: .system)
+            restoreButton.setTitle(BandDescriptionTranslator.shared.getLocalizedRestoreButtonText(for: currentLangCode), for: .normal)
+            restoreButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            restoreButton.backgroundColor = UIColor.systemOrange
+            restoreButton.setTitleColor(.white, for: .normal)
+            restoreButton.layer.cornerRadius = 8
+            restoreButton.addTarget(self, action: #selector(restoreToEnglishTapped), for: .touchUpInside)
+            
+            stackView.addArrangedSubview(restoreButton)
+            englishButton = restoreButton // Store reference
+            
+        } else {
+            print("DEBUG: Showing TRANSLATE button - text is currently in English")
+            // Show "Translate to [Language]" button
+            let translateButton = UIButton(type: .system)
+            translateButton.setTitle(BandDescriptionTranslator.shared.getLocalizedTranslateButtonText(for: currentLangCode), for: .normal)
+            translateButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+            translateButton.backgroundColor = UIColor.systemBlue
+            translateButton.setTitleColor(.white, for: .normal)
+            translateButton.layer.cornerRadius = 8
+            translateButton.addTarget(self, action: #selector(translateButtonTapped), for: .touchUpInside)
+            
+            stackView.addArrangedSubview(translateButton)
+            localLanguageButton = translateButton // Store reference
+        } 
+        
+        // Only add stack view if we have a button to show
+        if !stackView.arrangedSubviews.isEmpty {
+            // Add stack view to the main view, positioned above the priority buttons
+            view.addSubview(stackView)
+            
+            // Set up constraints - position above the priority buttons widget
+            NSLayoutConstraint.activate([
+                stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+                stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+                stackView.bottomAnchor.constraint(equalTo: priorityButtons.topAnchor, constant: -16),
+                stackView.heightAnchor.constraint(equalToConstant: 44)
+            ])
+        }
+    }
+    
+    /// Updates the notes text view constraints to make room for translation button
+    func updateNotesTextViewConstraints() {
+        // No longer needed since button is positioned outside the notes section
+        // Button is now positioned above the priority buttons widget
+    }
+    
+    /// Updates the translation button display (replaced old two-button system)
+    func updateLanguageButtonStates() {
+        // This method now just refreshes the single button setup
+        setupLanguageToggleButtons()
+    }
+    
+    @objc func englishButtonTapped() {
+        // This method is now an alias for restoreToEnglishTapped for compatibility
+        restoreToEnglishTapped()
+    }
+    
+    @objc func translateButtonTapped() {
+        guard #available(iOS 18.0, *) else { return }
+        
+        guard let textView = customNotesText, let safeBandName = bandName else { return }
+        
+        print("DEBUG: Starting translation for band: \(safeBandName)")
+        
+        // Show Apple's translation overlay
+        BandDescriptionTranslator.shared.showTranslationOverlay(for: textView, in: self) { [weak self] (success: Bool) in
+            DispatchQueue.main.async {
+                if success {
+                    print("DEBUG: Translation completed successfully")
+                    // Force a button refresh after a small delay to ensure text is updated
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        self?.setupLanguageToggleButtons()
+                    }
+                } else {
+                    print("DEBUG: Translation failed")
+                }
+            }
+        }
+    }
+    
+    @objc func restoreToEnglishTapped() {
+        guard #available(iOS 18.0, *) else { return }
+        
+        guard let safeBandName = bandName else { return }
+        
+        print("DEBUG: Restoring to English for band: \(safeBandName)")
+        
+        // Get the current language code to know which cache to delete
+        let currentLanguageCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+        
+        // Delete the translated cache file
+        if currentLanguageCode != "EN" {
+            BandDescriptionTranslator.shared.deleteTranslatedCacheFromDisk(for: safeBandName, targetLanguage: currentLanguageCode)
+        }
+        
+        // Reset language preference to English FIRST
+        BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
+        
+        // Restore to English text (this should be the original cached English text)
+        customNotesText?.text = englishDescriptionText
+        
+        print("DEBUG: Text restored to English, preference reset to EN, translated cache deleted")
+        
+        // Force a button refresh after a small delay to ensure state is updated
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupLanguageToggleButtons()
+        }
+        
+        showToast(message: "✅ Restored to English")
+    }
+    
+    @objc func localLanguageButtonTapped() {
+        // This method is kept for compatibility but now calls translateButtonTapped
+        translateButtonTapped()
+    }
+    
+    /// Displays the description in the currently selected language
+    func displayDescriptionInCurrentLanguage() {
+        guard let safeBandName = bandName else { return }
+        
+        if #available(iOS 18.0, *) {
+            let currentLanguageCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+            
+            // First, check if we have a translated cache file for the user's language
+            if currentLanguageCode != "EN" && 
+               BandDescriptionTranslator.shared.hasTranslatedCacheFile(for: safeBandName, targetLanguage: currentLanguageCode) {
+                
+                print("DEBUG: Found translated cache file for \(safeBandName) in \(currentLanguageCode)")
+                
+                // Load the translated text from cache
+                BandDescriptionTranslator.shared.loadTranslatedTextFromDisk(for: safeBandName, targetLanguage: currentLanguageCode) { [weak self] translatedText in
+                    if let translatedText = translatedText {
+                        self?.customNotesText.text = translatedText
+                        // Set preference to match the cached language
+                        BandDescriptionTranslator.shared.currentLanguagePreference = currentLanguageCode
+                        print("DEBUG: Loaded translated text from cache for \(safeBandName)")
+                        
+                        // Update buttons to reflect translated state
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            self?.setupLanguageToggleButtons()
+                        }
+                    } else {
+                        // Cache file exists but couldn't load, fall back to English
+                        self?.customNotesText.text = self?.englishDescriptionText
+                        BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
+                    }
+                }
+            } else {
+                // No translated cache file, show English
+                customNotesText.text = englishDescriptionText
+                BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
+                print("DEBUG: No translated cache found for \(safeBandName), showing English")
+            }
+        } else {
+            // iOS < 18.0, always show English
+            customNotesText.text = englishDescriptionText
         }
     }
     
@@ -635,6 +937,8 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         // First try to load from cache
         let noteText = bandNotes.getDescription(bandName: safeBandName)
+        englishDescriptionText = noteText // Store the English version
+        
         customNotesText.text = noteText
         customNotesText.textColor = UIColor.white
         setNotesHeight()
@@ -650,6 +954,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if (bandNameHandle.getBandNoteWorthy(safeBandName).isEmpty == false){
             customNotesText.text = "\n" + customNotesText.text
+            englishDescriptionText = "\n" + englishDescriptionText // Update stored English text too
         }
         
         // Check if we need to download description from URL
@@ -657,6 +962,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         if shouldDownloadDescription(noteText: noteText, noteUrl: noteUrl) {
             downloadAndDisplayDescription(bandName: safeBandName, noteUrl: noteUrl)
+        } else {
+            // If we have text and translation is supported, check current language preference
+            if #available(iOS 18.0, *) {
+                if BandDescriptionTranslator.shared.isTranslationSupported() {
+                    displayDescriptionInCurrentLanguage()
+                }
+            }
         }
     }
     
@@ -726,12 +1038,20 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 if self.bandName == bandName {
                     // Process the downloaded text the same way as cached text
                     let processedText = self.bandNotes.removeSpecialCharsFromString(text: descriptionText)
+                    self.englishDescriptionText = processedText // Store English version
                     self.customNotesText.text = processedText
                     self.setNotesHeight()
                     self.showBandDetails()
                     self.customNotesText.setNeedsDisplay()
                     self.customNotesText.layoutIfNeeded()
                     print("Updated description for \(bandName)")
+                    
+                    // Check if we should display in translated language
+                    if #available(iOS 18.0, *) {
+                        if BandDescriptionTranslator.shared.isTranslationSupported() {
+                            self.displayDescriptionInCurrentLanguage()
+                        }
+                    }
                 }
             }
         }.resume()
