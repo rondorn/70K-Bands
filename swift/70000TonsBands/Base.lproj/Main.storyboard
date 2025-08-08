@@ -1153,7 +1153,7 @@
                         <barButtonItem key="rightBarButtonItem" image="icon-gear-alt-Raw" id="R14-lg-DDg" userLabel="Setting Item">
                             <color key="tintColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
-                                <segue destination="wME-gs-GWB" kind="show" id="Inr-4y-5qN"/>
+                                <action selector="preferencesButtonTapped:" destination="7bK-jq-Zjz" id="pref-button-action"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>

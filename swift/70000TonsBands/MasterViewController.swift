@@ -1331,6 +1331,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        print("🔍 prepare(for:sender:) called with identifier: \(segue.identifier ?? "nil"), destination: \(type(of: segue.destination))")
+        
+        // Intercept the preferences segue and show SwiftUI instead
+        if segue.identifier == "Inr-4y-5qN" || segue.destination is AlertPreferenesController {
+            print("🎯 INTERCEPTED in prepare(for:sender:) - this segue should have been cancelled")
+            // This segue will be cancelled by shouldPerformSegue, but handle it here too
+            return
+        }
+        
         print("Getting Details")
         print("bands type in prepare(for:sender:):", type(of: bands))
         currentBandList = self.bands
@@ -1602,6 +1611,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     //iCloud data loading
     @objc func onSettingsChanged(_ notification: Notification) {
         //iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
+    }
+    
+    // MARK: - Segue Handling
+    // Note: prepare(for:sender:) is already implemented elsewhere in this class
+    
+    override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
+        print("🔍 shouldPerformSegue called with identifier: \(identifier)")
+        
+        // Intercept the preferences segue
+        if identifier == "Inr-4y-5qN" {
+            print("🎯 INTERCEPTED preferences segue - showing SwiftUI preferences")
+            // Show SwiftUI preferences instead
+            showSwiftUIPreferences()
+            return false
+        }
+        
+        print("🔄 Allowing segue to proceed normally")
+        return super.shouldPerformSegue(withIdentifier: identifier, sender: sender)
+    }
+    
+    private func showSwiftUIPreferences() {
+        print("🎯 Showing SwiftUI preferences screen")
+        PreferencesHostingController.pushPreferences(from: self)
+    }
+    
+    // Add an IBAction method that we can connect directly to the gear button
+    @IBAction func preferencesButtonTapped(_ sender: Any) {
+        print("🎯 Preferences button tapped directly!")
+        showSwiftUIPreferences()
     }
 
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
