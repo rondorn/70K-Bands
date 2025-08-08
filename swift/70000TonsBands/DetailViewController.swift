@@ -717,7 +717,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             DispatchQueue.main.async {
                 // Only update if still showing the same band
                 if self.bandName == bandName {
-                    self.customNotesText.text = descriptionText
+                    // Process the downloaded text the same way as cached text
+                    let processedText = self.bandNotes.removeSpecialCharsFromString(text: descriptionText)
+                    self.customNotesText.text = processedText
                     self.setNotesHeight()
                     self.showBandDetails()
                     self.customNotesText.setNeedsDisplay()
