@@ -68,6 +68,12 @@
 		115A52B11CF4B80F00A22B53 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */; };
 		115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
 		115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
+		11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */; };
+		11615BB42E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */; };
+		11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB12E4644ED007BD3D5 /* PreferencesView.swift */; };
+		11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */; };
+		11615BB72E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */; };
+		11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB12E4644ED007BD3D5 /* PreferencesView.swift */; };
 		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
@@ -193,6 +199,9 @@
 		1156B4F21A660BE500D48D12 /* guiIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = guiIcons.swift; sourceTree = "<group>"; };
 		1156B4F41A6613E700D48D12 /* urlStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = urlStorage.swift; sourceTree = "<group>"; };
 		115A52AF1CF4B80F00A22B53 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesHostingController.swift; sourceTree = "<group>"; };
+		11615BB12E4644ED007BD3D5 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesViewModel.swift; sourceTree = "<group>"; };
 		1169374420F555CD00038DA5 /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -338,6 +347,9 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */,
+				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
+				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
@@ -790,6 +802,9 @@
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
+				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
+				11615BB72E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
+				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
 				1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */,
@@ -839,6 +854,9 @@
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
+				11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
+				11615BB42E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
+				11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */,
 				1155E3AF1A8B121000D51ED9 /* webViewController.swift in Sources */,
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,
