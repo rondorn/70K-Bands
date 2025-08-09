@@ -136,6 +136,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         print ("Notes hight is \(dataViewNumber) 2-dataViewNumber")
         customNotesText.textColor = UIColor.white
         
+        // Add Done button to keyboard for iPhone
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            addDoneButtonToKeyboard()
+        }
+        
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
         attendedHandle.loadShowsAttended()
@@ -523,25 +528,39 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         // Get the current language code to know which cache to delete
         let currentLanguageCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
         
-        // Delete the translated cache file
-        if currentLanguageCode != "EN" {
-            BandDescriptionTranslator.shared.deleteTranslatedCacheFromDisk(for: safeBandName, targetLanguage: currentLanguageCode)
+        // Show loading indicator
+        showToast(message: "🔄 Restoring to English...")
+        
+        // Use the comprehensive restore method
+        BandDescriptionTranslator.shared.restoreToEnglish(
+            for: safeBandName,
+            currentLanguage: currentLanguageCode,
+            bandNotes: bandNotes
+        ) { [weak self] englishText in
+            guard let self = self else { return }
+            
+            // Reset language preference to English FIRST
+            BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
+            
+            if let englishText = englishText {
+                // Update both the display text and stored English text
+                self.customNotesText?.text = englishText
+                self.englishDescriptionText = englishText
+                
+                print("DEBUG: Successfully restored to English for \(safeBandName)")
+                self.showToast(message: "✅ Restored to English")
+            } else {
+                // Fallback to existing English text if download failed
+                self.customNotesText?.text = self.englishDescriptionText
+                print("DEBUG: Fallback to existing English text for \(safeBandName)")
+                self.showToast(message: "⚠️ Restored to cached English")
+            }
+            
+            // Force a button refresh after a small delay to ensure state is updated
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.setupLanguageToggleButtons()
+            }
         }
-        
-        // Reset language preference to English FIRST
-        BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
-        
-        // Restore to English text (this should be the original cached English text)
-        customNotesText?.text = englishDescriptionText
-        
-        print("DEBUG: Text restored to English, preference reset to EN, translated cache deleted")
-        
-        // Force a button refresh after a small delay to ensure state is updated
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.setupLanguageToggleButtons()
-        }
-        
-        showToast(message: "✅ Restored to English")
     }
     
     @objc func localLanguageButtonTapped() {
@@ -1075,6 +1094,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 
             } else if (bandNotes.custMatchesDefault(customNote: customNotesText.text, bandName: bandName) == true){
                 print ("Description has not changed");
+                
+            } else if #available(iOS 18.0, *), isCurrentTextTranslated(currentText: customNotesText.text) {
+                print ("DEBUG: Text is translated - NOT saving as custom English description");
+                print ("DEBUG: Translated text should only be saved in translation cache files, not as custom English")
+                // Don't save translated text as custom English description
                 
             } else {
                 print ("saving commentFile");
@@ -1880,6 +1904,91 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         }, completion: {(isCompleted) in
             toastLabel.removeFromSuperview()
         })
+    }
+    
+    /// Adds text editing buttons and dismiss button to the keyboard toolbar
+    func addDoneButtonToKeyboard() {
+        let toolbar = UIToolbar()
+        toolbar.sizeToFit()
+        toolbar.barStyle = .black
+        toolbar.tintColor = .white
+        
+        // Create buttons for text editing
+        let selectAllButton = UIBarButtonItem(
+            title: NSLocalizedString("Select All", comment: "Select all text button"),
+            style: .plain,
+            target: self,
+            action: #selector(selectAllText)
+        )
+        
+        let copyButton = UIBarButtonItem(
+            title: NSLocalizedString("Copy", comment: "Copy text button"),
+            style: .plain,
+            target: self,
+            action: #selector(copyText)
+        )
+        
+        let pasteButton = UIBarButtonItem(
+            title: NSLocalizedString("Paste", comment: "Paste text button"),
+            style: .plain,
+            target: self,
+            action: #selector(pasteText)
+        )
+        
+        let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let fixedSpace = UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil)
+        fixedSpace.width = 10
+        
+        // Use existing "Close" key from localization
+        let dismissButton = UIBarButtonItem(
+            title: NSLocalizedString("Close", comment: "Close keyboard button"),
+            style: .plain,
+            target: self,
+            action: #selector(dismissKeyboard)
+        )
+        
+        // Arrange buttons: [Select All] [Copy] [Paste] [flexible space] [Dismiss]
+        toolbar.items = [selectAllButton, fixedSpace, copyButton, fixedSpace, pasteButton, flexSpace, dismissButton]
+        customNotesText.inputAccessoryView = toolbar
+    }
+    
+    /// Selects all text in the notes text view
+    @objc func selectAllText() {
+        customNotesText.selectAll(nil)
+    }
+    
+    /// Copies selected text to clipboard
+    @objc func copyText() {
+        if let selectedText = customNotesText.text {
+            let selectedRange = customNotesText.selectedRange
+            if selectedRange.length > 0 {
+                // Copy selected text
+                let startIndex = selectedText.index(selectedText.startIndex, offsetBy: selectedRange.location)
+                let endIndex = selectedText.index(startIndex, offsetBy: selectedRange.length)
+                let textToCopy = String(selectedText[startIndex..<endIndex])
+                UIPasteboard.general.string = textToCopy
+                showToast(message: "📋 Text copied")
+            } else {
+                // If no selection, copy all text
+                UIPasteboard.general.string = selectedText
+                showToast(message: "📋 All text copied")
+            }
+        }
+    }
+    
+    /// Pastes text from clipboard at current cursor position
+    @objc func pasteText() {
+        if let clipboardText = UIPasteboard.general.string {
+            customNotesText.paste(nil)
+            showToast(message: "📋 Text pasted")
+        } else {
+            showToast(message: "📋 Nothing to paste")
+        }
+    }
+    
+    /// Dismisses the keyboard when Dismiss button is tapped
+    @objc func dismissKeyboard() {
+        customNotesText.resignFirstResponder()
     }
 
 }
