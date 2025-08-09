@@ -287,6 +287,106 @@ class BandDescriptionTranslator {
         }
     }
     
+    /// Restores text to English by: 1) Deleting foreign cache, 2) Loading English cache, 3) Downloading fresh if needed
+    func restoreToEnglish(for bandName: String, currentLanguage: String, bandNotes: CustomBandDescription, completion: @escaping (String?) -> Void) {
+        print("DEBUG: Starting restore to English for \(bandName) from \(currentLanguage)")
+        
+        // Step 1: Delete foreign translation cache file
+        if currentLanguage != "EN" {
+            deleteTranslatedCacheFromDisk(for: bandName, targetLanguage: currentLanguage)
+        }
+        
+        // Step 2: Try to load English cache file
+        DispatchQueue.global(qos: .userInitiated).async {
+            let englishText = bandNotes.getDescription(bandName: bandName)
+            
+            // Step 3: Check if we have valid English text or need to download fresh
+            if !englishText.isEmpty && !englishText.contains("Comment text is not available yet") {
+                print("DEBUG: Found English cache for \(bandName)")
+                DispatchQueue.main.async {
+                    completion(englishText)
+                }
+            } else {
+                // Step 4: Download fresh English version from URL
+                print("DEBUG: English cache not available, downloading fresh for \(bandName)")
+                let descriptionUrl = bandNotes.getDescriptionUrl(bandName)
+                
+                if !descriptionUrl.isEmpty {
+                    self.downloadFreshEnglishDescription(bandName: bandName, url: descriptionUrl, bandNotes: bandNotes, completion: completion)
+                } else {
+                    print("DEBUG: No URL available for \(bandName)")
+                    DispatchQueue.main.async {
+                        completion(englishText.isEmpty ? "No description available" : englishText)
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Downloads fresh English description from URL
+    private func downloadFreshEnglishDescription(bandName: String, url: String, bandNotes: CustomBandDescription, completion: @escaping (String?) -> Void) {
+        guard let downloadUrl = URL(string: url) else {
+            print("ERROR: Invalid URL for \(bandName): \(url)")
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+            return
+        }
+        
+        print("DEBUG: Downloading fresh English description for \(bandName) from \(url)")
+        
+        URLSession.shared.dataTask(with: downloadUrl) { data, response, error in
+            if let error = error {
+                print("ERROR: Download failed for \(bandName): \(error)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let data = data,
+                  let descriptionText = String(data: data, encoding: .utf8) else {
+                print("ERROR: Invalid response for \(bandName)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            // Don't save if it's an HTML error page
+            guard !descriptionText.starts(with: "<!DOCTYPE") else {
+                print("ERROR: Received HTML error page for \(bandName)")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            // Cache the downloaded description
+            let commentFileName = bandNotes.getNoteFileName(bandName: bandName)
+            let commentFile = directoryPath.appendingPathComponent(commentFileName)
+            
+            do {
+                try descriptionText.write(to: commentFile, atomically: false, encoding: .utf8)
+                print("DEBUG: Successfully cached fresh English description for \(bandName)")
+                
+                // Process the text the same way as the existing system
+                let processedText = bandNotes.removeSpecialCharsFromString(text: descriptionText)
+                
+                DispatchQueue.main.async {
+                    completion(processedText)
+                }
+            } catch {
+                print("ERROR: Failed to cache English description for \(bandName): \(error)")
+                DispatchQueue.main.async {
+                    completion(descriptionText) // Return unprocessed text as fallback
+                }
+            }
+        }.resume()
+    }
+    
 
     
 

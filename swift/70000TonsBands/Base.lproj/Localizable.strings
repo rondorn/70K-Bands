@@ -208,3 +208,8 @@
 "Events" = "Events";
 
 "SearchCriteria" = "Search Criteria";
+
+// Keyboard toolbar buttons
+"Select All" = "Select All";
+"Copy" = "Copy";
+"Paste" = "Paste";
