@@ -1124,12 +1124,8 @@ public class showBandDetails extends Activity {
         contentScrollView = findViewById(R.id.content_scroll_view);
         contentContainer = findViewById(R.id.content_container);
         
-        // Translation components
-        translationButtonContainer = findViewById(R.id.translation_button_container);
-        translationButton = findViewById(R.id.translation_button);
-        
-        // Initialize translation functionality
-        translator = BandDescriptionTranslator.getInstance(this);
+        // Initialize translation components
+        initializeTranslationComponents();
         
         // Swipe gestures are handled at the activity level via dispatchTouchEvent
         
@@ -1386,10 +1382,7 @@ public class showBandDetails extends Activity {
         mightButton.setOnClickListener(v -> handleRankingClick(staticVariables.mightSeeKey));
         wontButton.setOnClickListener(v -> handleRankingClick(staticVariables.wontSeeKey));
         
-        // Translation button click listener
-        if (translationButton != null) {
-            translationButton.setOnClickListener(v -> handleTranslationButtonClick());
-        }
+        // Translation button click listener is handled in initializeTranslationComponents()
         
         // Notes edit listener - make note content double-tap in native view
         if (noteValue != null) {
@@ -1679,6 +1672,9 @@ public class showBandDetails extends Activity {
         Log.d("WebView", "Restoring band details content");
             setContentView(R.layout.band_details_native);
         
+        // Reinitialize components after setContentView
+        initializeTranslationComponents();
+        
         // Reinitialize swipe gesture detector
         initializeSwipeGestureDetector();
         
@@ -1731,44 +1727,93 @@ public class showBandDetails extends Activity {
      * Handles translation button clicks
      */
     private void handleTranslationButtonClick() {
+        Log.d("Translation", "=== TRANSLATION BUTTON CLICKED ===");
+        
         if (translator == null) {
             Log.e("Translation", "Translator not initialized");
+            showToast("Translation not available");
             return;
         }
         
         String currentText = noteValue.getText().toString();
+        Log.d("Translation", "Current text length: " + currentText.length());
+        Log.d("Translation", "Current text preview: " + (currentText.length() > 100 ? currentText.substring(0, 100) + "..." : currentText));
         
         // Check if we need to translate or restore
-        if (translator.isCurrentTextTranslated(currentText)) {
+        boolean isTranslated = translator.isCurrentTextTranslated(currentText, originalEnglishText);
+        Log.d("Translation", "Is current text translated: " + isTranslated);
+        
+        if (isTranslated) {
             // Restore to English
+            Log.d("Translation", "Restoring to English");
             if (originalEnglishText != null && !originalEnglishText.isEmpty()) {
                 noteValue.setText(originalEnglishText);
+                
+                // Save user preference for English
+                String bandName = BandInfo.getSelectedBand();
+                translator.saveUserLanguagePreference(bandName, "en");
+                
                 updateTranslationButton();
-                showToast("Restored to English");
+                String toastMessage = translator.getLocalizedRestoreCompleteMessage(translator.getCurrentLanguageCode());
+                showToast(toastMessage);
+            } else {
+                Log.e("Translation", "No original English text stored!");
+                showToast("Error: No original text available");
             }
         } else {
             // Translate to local language
+            Log.d("Translation", "Starting translation process");
             originalEnglishText = currentText; // Store original
+            String bandName = BandInfo.getSelectedBand();
+            String languageCode = translator.getCurrentLanguageCode();
             
-            translator.translateTextDirectly(currentText, translator.getCurrentLanguageCode(), BandInfo.getSelectedBand(), new BandDescriptionTranslator.TranslationCallback() {
+            Log.d("Translation", "Band name: " + bandName);
+            Log.d("Translation", "Target language: " + languageCode);
+            
+            // Check if we have a cached translation first
+            if (translator.hasCachedTranslation(bandName)) {
+                Log.d("Translation", "Using cached translation for " + bandName);
+            } else {
+                Log.d("Translation", "No cached translation found, translating online for " + bandName);
+            }
+            
+            translator.translateTextDirectly(currentText, languageCode, bandName, new BandDescriptionTranslator.TranslationCallback() {
                 @Override
                 public void onTranslationComplete(String translatedText) {
+                    Log.d("Translation", "Translation completed: " + (translatedText != null ? translatedText.substring(0, Math.min(100, translatedText.length())) : "null"));
                     runOnUiThread(() -> {
                         if (translatedText != null && !translatedText.isEmpty()) {
                             currentTranslatedText = translatedText;
-                            noteValue.setText(translatedText);
+                            
+                            // Don't apply additional formatting cleanup that might strip newlines
+                            // Just add translation header 
+                            String translationHeader = translator.getLocalizedTranslationHeaderText(languageCode);
+                            String formattedText = translationHeader + "\n\n" + translatedText;
+                            
+                            // Debug: Log the final text with visible newlines
+                            Log.d("Translation", "Final formatted text with newlines: " + formattedText.replace("\n", "[\\n]").substring(0, Math.min(300, formattedText.length())));
+                            
+                            noteValue.setText(formattedText);
+                            
+                            // Save user preference for translated language
+                            translator.saveUserLanguagePreference(bandName, languageCode);
+                            
                             updateTranslationButton();
-                            showToast("Translated to " + translator.getCurrentLanguageCode().toUpperCase());
+                            
+                            // Show simple toast in native language
+                            String toastMessage = translator.getLocalizedTranslationCompleteMessage(languageCode);
+                            showToast(toastMessage);
                         } else {
-                            showToast("Translation failed");
+                            Log.e("Translation", "Translation returned empty result");
+                            showToast("Translation failed - empty result");
                         }
                     });
                 }
                 
                 @Override
                 public void onTranslationError(String error) {
+                    Log.e("Translation", "Translation error: " + error);
                     runOnUiThread(() -> {
-                        Log.e("Translation", "Translation error: " + error);
                         showToast("Translation error: " + error);
                     });
                 }
@@ -1777,31 +1822,165 @@ public class showBandDetails extends Activity {
     }
     
     /**
+     * Initializes translation components after setContentView
+     */
+    private void initializeTranslationComponents() {
+        // Translation components
+        translationButtonContainer = findViewById(R.id.translation_button_container);
+        translationButton = findViewById(R.id.translation_button);
+        
+        Log.d("Translation", "Translation components initialized:");
+        Log.d("Translation", "translationButtonContainer: " + translationButtonContainer);
+        Log.d("Translation", "translationButton: " + translationButton);
+        
+        // Initialize translation functionality if not already done
+        if (translator == null) {
+            // Early check: Only initialize translator if we might need translation
+            // Check device language first to avoid unnecessary initialization
+            String deviceLanguage = java.util.Locale.getDefault().getLanguage();
+            Log.d("Translation", "Device language: " + deviceLanguage);
+            
+            // Only initialize if device language is potentially supported
+            if ("de".equals(deviceLanguage) || "es".equals(deviceLanguage) || "fr".equals(deviceLanguage) || 
+                "pt".equals(deviceLanguage) || "da".equals(deviceLanguage) || "fi".equals(deviceLanguage)) {
+                
+                translator = BandDescriptionTranslator.getInstance(this);
+                Log.d("Translation", "translator initialized for supported language: " + translator);
+                
+                // Test translation support immediately
+                if (translator != null) {
+                    Log.d("Translation", "Testing translation support:");
+                    translator.isTranslationSupported();
+                }
+            } else {
+                Log.d("Translation", "Device language not supported for translation, skipping initialization");
+                return; // Exit early, no need to set up UI components
+            }
+        }
+        
+        // Set up click listener
+        if (translationButton != null) {
+            Log.d("Translation", "Setting up translation button click listener");
+            translationButton.setOnClickListener(v -> {
+                Log.d("Translation", "Click listener triggered!");
+                handleTranslationButtonClick();
+            });
+        } else {
+            Log.e("Translation", "Translation button is null, cannot set click listener");
+        }
+    }
+    
+    /**
      * Updates the translation button text and visibility
      */
     private void updateTranslationButton() {
         if (translator == null || translationButton == null || translationButtonContainer == null) {
+            Log.d("Translation", "updateTranslationButton: Missing components - translator=" + translator + 
+                  ", translationButton=" + translationButton + ", translationButtonContainer=" + translationButtonContainer);
+            // Hide the button container if translation is not supported/available
+            if (translationButtonContainer != null) {
+                translationButtonContainer.setVisibility(View.GONE);
+            }
             return;
         }
         
-        // Check if translation is supported
-        if (!translator.isTranslationSupported()) {
-            translationButtonContainer.setVisibility(View.GONE);
-            return;
-        }
+        // Debug logging
+        String deviceLanguage = java.util.Locale.getDefault().getLanguage().toLowerCase();
+        String currentLang = translator.getCurrentLanguageCode();
+        boolean isSupported = translator.isTranslationSupported();
         
-        // Show the container
+        Log.d("Translation", "Device language: " + deviceLanguage);
+        Log.d("Translation", "Current language code: " + currentLang);
+        Log.d("Translation", "Translation supported: " + isSupported);
+        
+        // Always show the container for now (since we know the UI works)
+        Log.d("Translation", "Showing translation button container");
         translationButtonContainer.setVisibility(View.VISIBLE);
         
         // Update button text based on current state
         String currentText = noteValue.getText().toString();
         String languageCode = translator.getCurrentLanguageCode();
-        if (translator.isCurrentTextTranslated(currentText)) {
-            translationButton.setText(translator.getLocalizedRestoreButtonText(languageCode));
+        
+        Log.d("Translation", "Current text starts with: " + (currentText.length() > 50 ? currentText.substring(0, 50) + "..." : currentText));
+        Log.d("Translation", "Is current text translated: " + translator.isCurrentTextTranslated(currentText, originalEnglishText));
+        
+        if (translator.isCurrentTextTranslated(currentText, originalEnglishText)) {
+            String restoreText = translator.getLocalizedRestoreButtonText(languageCode);
+            Log.d("Translation", "Setting restore button text: " + restoreText);
+            translationButton.setText(restoreText);
             translationButton.setBackgroundColor(getResources().getColor(android.R.color.holo_orange_dark));
         } else {
-            translationButton.setText(translator.getLocalizedTranslateButtonText(languageCode));
+            String translateText = translator.getLocalizedTranslateButtonText(languageCode);
+            Log.d("Translation", "Setting translate button text: " + translateText);
+            translationButton.setText(translateText);
             translationButton.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark));
+        }
+    }
+    
+    /**
+     * Auto-loads the user's preferred language for this band
+     */
+    private void autoLoadUserPreferredLanguage() {
+        if (translator == null || !translator.isTranslationSupported()) {
+            Log.d("Translation", "Translation not supported, skipping auto-load");
+            return;
+        }
+        
+        String bandName = BandInfo.getSelectedBand();
+        if (bandName == null || bandName.trim().isEmpty()) {
+            Log.d("Translation", "No band selected, skipping auto-load");
+            return;
+        }
+        
+        // Check if user prefers translated content for this band
+        if (translator.shouldShowTranslatedContent(bandName)) {
+            Log.d("Translation", "Auto-loading translated content for " + bandName);
+            
+            String currentText = noteValue.getText().toString();
+            String languageCode = translator.getCurrentLanguageCode();
+            
+            // Check if we already have a cached translation
+            if (translator.hasCachedTranslation(bandName)) {
+                Log.d("Translation", "Loading cached translation for " + bandName);
+                
+                // Store original English text
+                originalEnglishText = currentText;
+                
+                // Load cached translation directly
+                translator.translateTextDirectly(currentText, languageCode, bandName, new BandDescriptionTranslator.TranslationCallback() {
+                    @Override
+                    public void onTranslationComplete(String translatedText) {
+                        runOnUiThread(() -> {
+                            if (translatedText != null && !translatedText.isEmpty()) {
+                                currentTranslatedText = translatedText;
+                                
+                                                            // Don't apply additional formatting cleanup that might strip newlines
+                            // Just add translation header
+                            String translationHeader = translator.getLocalizedTranslationHeaderText(languageCode);
+                            String formattedText = translationHeader + "\n\n" + translatedText;
+                            
+                            // Debug: Log the final text with visible newlines
+                            Log.d("Translation", "Auto-load final text with newlines: " + formattedText.replace("\n", "[\\n]").substring(0, Math.min(300, formattedText.length())));
+                            
+                            noteValue.setText(formattedText);
+                                
+                                updateTranslationButton();
+                                Log.d("Translation", "Auto-loaded cached translation for " + bandName);
+                            }
+                        });
+                    }
+                    
+                    @Override
+                    public void onTranslationError(String error) {
+                        Log.e("Translation", "Error auto-loading translation: " + error);
+                    }
+                });
+            } else {
+                Log.d("Translation", "No cached translation available for auto-load of " + bandName);
+                // Don't auto-translate if no cache - user can manually translate if they want
+            }
+        } else {
+            Log.d("Translation", "User prefers English for " + bandName + ", showing original content");
         }
     }
     
@@ -2450,8 +2629,13 @@ public class showBandDetails extends Activity {
             
             // Update translation button after note content is set
             updateTranslationButton();
+            
+            // Auto-load user's preferred language for this band
+            autoLoadUserPreferredLanguage();
         } else {
             noteRow.setVisibility(View.GONE);
+            // Even if no note content, still check if we should show translation button
+            updateTranslationButton();
         }
         
         // Show/hide the entire extra data section
@@ -2568,6 +2752,9 @@ public class showBandDetails extends Activity {
         super.onResume();
             setContentView(R.layout.band_details_native);
         
+        // Reinitialize components after setContentView
+        initializeTranslationComponents();
+        
         // Reinitialize swipe gesture detector
         initializeSwipeGestureDetector();
         
@@ -2611,6 +2798,16 @@ public class showBandDetails extends Activity {
             inLink = false;
         }
         
+        // Cancel any ongoing translation operations to prevent memory issues
+        if (translator != null) {
+            try {
+                // Note: ML Kit doesn't have a direct cancel method, but cleanup will handle resources
+                Log.d("Translation", "Preparing to clean up translation resources on back press");
+            } catch (Exception e) {
+                Log.e("Translation", "Error preparing translation cleanup", e);
+            }
+        }
+        
         Log.d("WebView", "Standard back navigation to bands list");
         SystemClock.sleep(70);
         setResult(RESULT_OK, null);
@@ -2630,6 +2827,16 @@ public class showBandDetails extends Activity {
         // Clean up other WebView references
         if (webViewProgressBar != null) {
             webViewProgressBar = null;
+        }
+        
+        // Clean up translation resources to prevent memory leaks
+        if (translator != null) {
+            try {
+                translator.cleanup();
+            } catch (Exception e) {
+                Log.e("Translation", "Error cleaning up translator resources", e);
+            }
+            translator = null;
         }
         
         // Background loading is controlled by app lifecycle (onPause/onResume), not details screen
