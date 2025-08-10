@@ -116,6 +116,18 @@ public class CustomerDescriptionHandler {
     }
 
     /**
+     * Cancels any ongoing background loading task.
+     */
+    public void cancelBackgroundTask() {
+        if (currentBackgroundTask != null && !currentBackgroundTask.isCancelled()) {
+            Log.d("CustomerDescriptionHandler", "Cancelling background task");
+            currentBackgroundTask.cancel(true);
+            isRunning.set(false);
+            backgroundLoadingActive.set(false);
+        }
+    }
+
+    /**
      * Checks if year has changed and resets state if needed.
      * @return True if year changed, false otherwise.
      */
@@ -357,12 +369,20 @@ public class CustomerDescriptionHandler {
     /**
      * Starts background loading of all descriptions with proper synchronization.
      * This method should only be called when the app is moved to background.
+     * DEPRECATED: Use startBackgroundLoadingOnPause() instead to ensure proper background-only execution.
      */
+    @Deprecated
     public void getAllDescriptions(){
         synchronized (lock) {
             // Check if already running
             if (isRunning.get()) {
                 Log.d("CustomerDescriptionHandler", "Background loading already running, skipping");
+                return;
+            }
+            
+            // SAFETY CHECK: Only allow bulk downloads when app is in background
+            if (!showBands.inBackground) {
+                Log.d("CustomerDescriptionHandler", "BLOCKED: Bulk download attempted when app is NOT in background - this should not happen!");
                 return;
             }
             
@@ -382,6 +402,19 @@ public class CustomerDescriptionHandler {
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
+            Log.d("CustomerDescriptionHandler", "startBackgroundLoadingOnPause called - inBackground: " + showBands.inBackground);
+            
+            // SAFETY CHECK: Only proceed if app is actually in background AND fully initialized
+            if (!showBands.inBackground) {
+                Log.d("CustomerDescriptionHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT in background!");
+                return;
+            }
+            
+            if (!showBands.appFullyInitialized) {
+                Log.d("CustomerDescriptionHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT fully initialized!");
+                return;
+            }
+            
             // Check if it's too soon after a year change (prevent bulk loading for 10 seconds)
             long timeSinceYearChange = System.currentTimeMillis() - lastYearChangeTime.get();
             if (timeSinceYearChange < 10000) { // 10 seconds
@@ -401,10 +434,17 @@ public class CustomerDescriptionHandler {
 
     /**
      * Starts the background loading task.
+     * ONLY runs when app is in background to prevent inappropriate bulk downloads.
      */
     private void startBackgroundLoading() {
+        // Double-check that app is in background before starting bulk download
+        if (!showBands.inBackground) {
+            Log.d("CustomerDescriptionHandler", "BLOCKED: startBackgroundLoading called when app is NOT in background!");
+            return;
+        }
+        
         if (isRunning.compareAndSet(false, true)) {
-            Log.d("CustomerDescriptionHandler", "Starting background loading");
+            Log.d("CustomerDescriptionHandler", "Starting background loading (app is in background)");
             backgroundLoadingActive.set(true);
             
             currentBackgroundTask = new AsyncAllDescriptionLoader();
@@ -815,10 +855,29 @@ public class CustomerDescriptionHandler {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            
+            // SAFETY CHECK: Cancel task immediately if app is not in background or not fully initialized
+            if (!showBands.inBackground || !showBands.appFullyInitialized) {
+                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader.onPreExecute() - app is NOT in background (" + showBands.inBackground + ") or not fully initialized (" + showBands.appFullyInitialized + "), cancelling task");
+                cancel(true);
+                synchronized (lock) {
+                    isRunning.set(false);
+                    backgroundLoadingActive.set(false);
+                }
+                return;
+            }
+            
+            Log.d("AsyncTask", "AsyncAllDescriptionLoader.onPreExecute() - app is in background, proceeding");
         }
 
         @Override
         protected ArrayList<String> doInBackground(String... params) {
+            
+            // SAFETY CHECK: Immediately stop if app is not in background or not fully initialized
+            if (!showBands.inBackground || !showBands.appFullyInitialized) {
+                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader started but app is NOT in background (" + showBands.inBackground + ") or not fully initialized (" + showBands.appFullyInitialized + ") - stopping immediately");
+                return result;
+            }
 
             CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -844,10 +903,22 @@ public class CustomerDescriptionHandler {
                         break;
                     }
                     
+                    // SAFETY CHECK: Stop bulk downloading if app comes back to foreground
+                    if (!showBands.inBackground) {
+                        Log.d("AsyncTask", "BLOCKED: App returned to foreground, stopping bulk downloads");
+                        break;
+                    }
+                    
                     // Check if paused (details screen active)
                     while (isPaused.get() && !isCancelled()) {
                         Log.d("AsyncTask", "Paused due to details screen, waiting...");
                         SystemClock.sleep(1000);
+                        
+                        // Also check background status while paused
+                        if (!showBands.inBackground) {
+                            Log.d("AsyncTask", "BLOCKED: App returned to foreground while paused, stopping bulk downloads");
+                            return result;
+                        }
                     }
                     
                     if (isCancelled()) {
@@ -871,8 +942,13 @@ public class CustomerDescriptionHandler {
                 backgroundLoadingActive.set(false);
                 Log.d("CustomerDescriptionHandler", "Background loading completed");
                 
-                // Start translation pre-caching for offline use
-                startTranslationPreCaching();
+                // SAFETY CHECK: Only start translation pre-caching if still in background
+                if (showBands.inBackground) {
+                    Log.d("CustomerDescriptionHandler", "Starting translation pre-caching (app still in background)");
+                    startTranslationPreCaching();
+                } else {
+                    Log.d("CustomerDescriptionHandler", "BLOCKED: Translation pre-caching skipped - app returned to foreground");
+                }
             }
         }
 
@@ -918,8 +994,15 @@ public class CustomerDescriptionHandler {
     
     /**
      * Starts translation pre-caching for offline use at sea
+     * ONLY runs when app is in background to prevent inappropriate bulk downloads.
      */
     private void startTranslationPreCaching() {
+        // SAFETY CHECK: Only run translation caching when app is in background
+        if (!showBands.inBackground) {
+            Log.d("TranslationCache", "BLOCKED: Translation pre-caching attempted when app is NOT in background!");
+            return;
+        }
+        
         // Get application context - we need to find a way to get context
         // This will be called from the async task, so we need to get context differently
         try {
@@ -957,21 +1040,35 @@ public class CustomerDescriptionHandler {
             
             Log.d("TranslationCache", "Starting translation pre-caching for " + allDescriptions.size() + " bands");
             
-            // Start bulk translation caching
-            translator.preCacheTranslationsForOffline(allDescriptions, new BandDescriptionTranslator.BulkTranslationCallback() {
+            // First ensure translation model is downloaded, then start bulk translation caching
+            Log.d("TranslationCache", "Ensuring translation model is downloaded before bulk caching");
+            translator.ensureTranslationModelDownloaded(new BandDescriptionTranslator.TranslationCallback() {
                 @Override
-                public void onProgress(int completed, int total) {
-                    Log.d("TranslationCache", "Translation caching progress: " + completed + "/" + total);
+                public void onTranslationComplete(String result) {
+                    Log.d("TranslationCache", "Translation model ready, starting bulk translation caching for " + allDescriptions.size() + " bands");
+                    
+                    // Now start bulk translation caching
+                    translator.preCacheTranslationsForOffline(allDescriptions, new BandDescriptionTranslator.BulkTranslationCallback() {
+                        @Override
+                        public void onProgress(int completed, int total) {
+                            Log.d("TranslationCache", "Translation caching progress: " + completed + "/" + total);
+                        }
+                        
+                        @Override
+                        public void onComplete() {
+                            Log.d("TranslationCache", "Translation pre-caching completed successfully! Ready for offline use at sea.");
+                        }
+                        
+                        @Override
+                        public void onError(String error) {
+                            Log.e("TranslationCache", "Translation pre-caching failed: " + error);
+                        }
+                    });
                 }
                 
                 @Override
-                public void onComplete() {
-                    Log.d("TranslationCache", "Translation pre-caching completed successfully! Ready for offline use at sea.");
-                }
-                
-                @Override
-                public void onError(String error) {
-                    Log.e("TranslationCache", "Translation pre-caching failed: " + error);
+                public void onTranslationError(String error) {
+                    Log.e("TranslationCache", "Failed to download translation model, skipping bulk translation caching: " + error);
                 }
             });
             

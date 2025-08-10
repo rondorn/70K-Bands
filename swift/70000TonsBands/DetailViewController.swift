@@ -81,6 +81,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     var blockSwiping = false;
     
+    // Loading state management
+    var isDataFullyLoaded = false
+    var dataLoadingTasks = 0
+    var loadingIndicator: UIActivityIndicatorView?
+    
     var backgroundNotesText = "";
     var bandName :String!
     
@@ -177,26 +182,26 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
+            // Start loading state management
+            startLoadingTask() // Band metadata loading
+            startLoadingTask() // Image loading
+            startLoadingTask() // Comments loading
+            
             // Use combined image list instead of just band image URL
             let imageURL = CombinedImageListHandler.shared.getImageUrl(for: self.bandName)
             print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
             
             // Load image with proper UI refresh
-            loadBandImage(imageURL: imageURL, bandName: self.bandName)
+            loadBandImageWithCallback(imageURL: imageURL, bandName: self.bandName)
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(dataHandle.getPriorityData(bandName))
             
-            print ("showFullSchedule");
-            showFullSchedule()
-            
-            
-            print ("showBandDetails");
-            showBandDetails()
+            // Load band metadata asynchronously (schedule will be shown after loading completes)
+            loadBandMetadataAsync()
             
             print ("Checking button status:" + bandName)
             disableButtonsIfNeeded()
-            disableLinksWithEmptyData();
             
             if (getNotesFontSizeLargeValue() == true){
                 customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
@@ -207,7 +212,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             setupSwipeGenstures()
             customNotesText.setContentOffset(.zero, animated: true)
             customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-            loadComments()
+            loadCommentsWithCallback()
             rotationChecking()
             
             setButtonNames()
@@ -1989,6 +1994,229 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     /// Dismisses the keyboard when Dismiss button is tapped
     @objc func dismissKeyboard() {
         customNotesText.resignFirstResponder()
+    }
+    
+    // MARK: - Loading State Management
+    
+    /// Shows loading indicator and hides main content
+    func showLoadingState() {
+        print("ShowLoadingState: Showing loading indicator")
+        
+        // Create loading indicator if it doesn't exist
+        if loadingIndicator == nil {
+            loadingIndicator = UIActivityIndicatorView(style: .large)
+            loadingIndicator?.color = .white
+            loadingIndicator?.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+            loadingIndicator?.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(loadingIndicator!)
+            
+            // Center the loading indicator and make it more visible
+            NSLayoutConstraint.activate([
+                loadingIndicator!.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                loadingIndicator!.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                loadingIndicator!.widthAnchor.constraint(equalToConstant: 100),
+                loadingIndicator!.heightAnchor.constraint(equalToConstant: 100)
+            ])
+            
+            loadingIndicator?.layer.cornerRadius = 10
+        }
+        
+        // Show loading indicator
+        loadingIndicator?.startAnimating()
+        loadingIndicator?.isHidden = false
+        
+        // Hide main content during loading but keep band name and logo visible
+        LinksSection?.isHidden = true
+        extraData?.isHidden = true
+        notesSection?.isHidden = true
+        EventView1?.isHidden = true
+        EventView2?.isHidden = true
+        EventView3?.isHidden = true
+        EventView4?.isHidden = true
+        EventView5?.isHidden = true
+        priorityButtons?.isHidden = true
+        PriorityIcon?.isHidden = true
+        
+        // Hide translation button during loading
+        if #available(iOS 18.0, *) {
+            languageToggleStackView?.isHidden = true
+        }
+        
+        isDataFullyLoaded = false
+    }
+    
+    /// Hides loading indicator and shows main content
+    func hideLoadingState() {
+        print("HideLoadingState: Hiding loading indicator and showing content")
+        
+        loadingIndicator?.stopAnimating()
+        loadingIndicator?.isHidden = true
+        isDataFullyLoaded = true
+        
+        // Show main content
+        showBandDetails() // This will properly show/hide sections based on available data
+        disableLinksWithEmptyData()
+        
+        // Restore schedule events - these were hidden during loading
+        showFullSchedule() // Re-run to ensure events are visible
+        
+        // Show all event views that have data
+        if !eventView1Hidden {
+            EventView1?.isHidden = false
+        }
+        if !eventView2Hidden {
+            EventView2?.isHidden = false
+        }
+        if !eventView3Hidden {
+            EventView3?.isHidden = false
+        }
+        if !eventView4Hidden {
+            EventView4?.isHidden = false
+        }
+        if !eventView5Hidden {
+            EventView5?.isHidden = false
+        }
+        
+        // Always show priority buttons
+        priorityButtons?.isHidden = false
+        PriorityIcon?.isHidden = false
+        
+        // Show translation button if available
+        if #available(iOS 18.0, *) {
+            setupLanguageToggleButtons()
+        }
+        
+        // Ensure notes section is visible
+        notesSection?.isHidden = false
+        
+        print("HideLoadingState: Content restoration complete")
+    }
+    
+    /// Increments loading task counter
+    func startLoadingTask() {
+        dataLoadingTasks += 1
+        if dataLoadingTasks == 1 {
+            showLoadingState()
+        }
+    }
+    
+    /// Decrements loading task counter and hides loading when all tasks complete
+    func finishLoadingTask() {
+        dataLoadingTasks = max(0, dataLoadingTasks - 1)
+        if dataLoadingTasks == 0 {
+            DispatchQueue.main.async {
+                self.hideLoadingState()
+            }
+        }
+    }
+    
+    /// Loads band metadata (country, genre, links) asynchronously
+    func loadBandMetadataAsync() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self, let safeBandName = self.bandName else {
+                self?.finishLoadingTask()
+                return
+            }
+            
+            // Check if this is a Community Organized event (these don't have normal band data)
+            if safeBandName.lowercased().contains("community") || 
+               safeBandName.lowercased().contains("cruiser") ||
+               safeBandName.lowercased().contains("organized") {
+                print("LoadBandMetadata: Community/Cruiser event detected, skipping band data wait")
+                DispatchQueue.main.async {
+                    self.finishLoadingTask()
+                }
+                return
+            }
+            
+            // Check if there's only 1 event - these are usually special events without normal band data
+            DispatchQueue.main.async {
+                // Get event count from schedule data
+                self.schedule.getCachedData()
+                scheduleQueue.sync {
+                    let eventCount = self.schedule.schedulingData[safeBandName]?.keys.count ?? 0
+                    print("LoadBandMetadata: Found \(eventCount) events for \(safeBandName)")
+                    
+                    if eventCount == 1 {
+                        print("LoadBandMetadata: Single event detected, skipping band data wait")
+                        self.finishLoadingTask()
+                        return
+                    }
+                    
+                    // For multiple events or no events, continue with normal data loading
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        // Give the data handler time to load if needed
+                        var retryCount = 0
+                        let maxRetries = 25 // Reduced from 50 for faster response
+                        
+                        while retryCount < maxRetries {
+                            // Check if band data handler has loaded its data
+                            let country = self.bandNameHandle.getBandCountry(safeBandName)
+                            let genre = self.bandNameHandle.getBandGenre(safeBandName)
+                            let officialPage = self.bandNameHandle.getofficalPage(safeBandName)
+                            let noteWorthy = self.bandNameHandle.getBandNoteWorthy(safeBandName)
+                            
+                            // More comprehensive check - look for ANY band data
+                            let hasCountry = !country.isEmpty
+                            let hasGenre = !genre.isEmpty
+                            let hasOfficialPage = !officialPage.isEmpty && officialPage != "Unavailable"
+                            let hasNoteWorthy = !noteWorthy.isEmpty
+                            
+                            // Also check if this band exists in the data at all
+                            let bandNames = self.bandNameHandle.getBandNames()
+                            let bandExists = bandNames.contains(safeBandName)
+                            
+                            print("LoadBandMetadata retry \(retryCount): country='\(country)', genre='\(genre)', page='\(officialPage)', exists=\(bandExists)")
+                            
+                            // If band exists in data OR we have some actual data, proceed
+                            if bandExists || hasCountry || hasGenre || hasOfficialPage || hasNoteWorthy {
+                                print("LoadBandMetadata: Found data for \(safeBandName), proceeding")
+                                break
+                            }
+                            
+                            // For the first few retries, wait shorter time
+                            if retryCount < 5 {
+                                Thread.sleep(forTimeInterval: 0.1)
+                            } else {
+                                Thread.sleep(forTimeInterval: 0.2)
+                            }
+                            retryCount += 1
+                        }
+                        
+                        if retryCount >= maxRetries {
+                            print("LoadBandMetadata: Timeout waiting for data for \(safeBandName) - proceeding anyway")
+                        }
+                        
+                        DispatchQueue.main.async {
+                            self.finishLoadingTask()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Loads band image with callback
+    func loadBandImageWithCallback(imageURL: String, bandName: String) {
+        // Use existing loadBandImage but add callback
+        loadBandImage(imageURL: imageURL, bandName: bandName)
+        
+        // For now, just finish the task after a short delay
+        // The existing image loading is already async
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.finishLoadingTask()
+        }
+    }
+    
+    /// Loads comments with callback
+    func loadCommentsWithCallback() {
+        // Call existing loadComments
+        loadComments()
+        
+        // Finish loading task after comments are processed
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.finishLoadingTask()
+        }
     }
 
 }

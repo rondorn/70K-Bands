@@ -107,7 +107,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public Button filterMenuButton;
     public Button willAttendFilterButton;
 
-    public static Boolean inBackground = true;
+    public static Boolean inBackground = false;
+    public static Boolean appFullyInitialized = false;
     
     // Flag to track when returning from stats page to avoid blocking refresh
     private static Boolean returningFromStatsPage = false;
@@ -1079,6 +1080,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void onStop() {
         super.onStop();
         inBackground = true;
+        Log.d("BackgroundFlag", "inBackground set to TRUE in onStop()");
         
         // Start background loading when app truly goes to background (not just switching activities)
         Log.d("BackgroundLoading", "App going to background, starting bulk downloads");
@@ -1458,6 +1460,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     bandNamesList.setVisibility(View.VISIBLE);
                     staticVariables.disableListAnimations = false;
                 }
+                
+                // BLANK LIST FIX: Additional safety check for adapter
+                if (adapter != null && adapter.getCount() > 0 && bandNamesList.getCount() == 0) {
+                    Log.d("BlankListFix", "Detected blank list with valid adapter data - refreshing adapter");
+                    bandNamesList.setAdapter(adapter);
+                    bandNamesList.invalidateViews();
+                }
             }
         }, 500); // 500ms timeout
 
@@ -1539,6 +1548,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d("DisplayListData", "On Resume refreshNewData");
         inBackground = false;
+        appFullyInitialized = true;
+        Log.d("BackgroundFlag", "inBackground set to FALSE in onResume(), appFullyInitialized = TRUE");
 
         Log.d(TAG, notificationTag + " In onResume - 2");
         
@@ -1572,6 +1583,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
 
         Log.d(TAG, notificationTag + " In onResume - 3");
+        
+        // BLANK LIST FIX: Final safety check to ensure list is populated after resume
+        bandNamesList.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (bandNamesList != null && adapter != null) {
+                    if (bandNamesList.getVisibility() != View.VISIBLE) {
+                        Log.d("BlankListFix", "onResume safety: List not visible, making visible");
+                        bandNamesList.setVisibility(View.VISIBLE);
+                    }
+                    if (adapter.getCount() > 0 && bandNamesList.getCount() == 0) {
+                        Log.d("BlankListFix", "onResume safety: Adapter has data but list is empty, refreshing");
+                        bandNamesList.setAdapter(adapter);
+                        bandNamesList.invalidateViews();
+                    }
+                }
+            }
+        }, 200); // Quick check after resume completes
         bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             // argument position gives the index of item which is clicked
             public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
@@ -1619,6 +1648,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("BackgroundLoading", "App coming to foreground from background, pausing bulk downloads");
             CustomerDescriptionHandler.pauseBackgroundLoading();
             ImageHandler.pauseBackgroundLoading();
+            
+            // Cancel any ongoing bulk downloads immediately
+            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+            descHandler.cancelBackgroundTask();
+            
             inBackground = false; // Reset the flag
         }
 
