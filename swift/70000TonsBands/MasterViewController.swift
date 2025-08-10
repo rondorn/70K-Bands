@@ -287,13 +287,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         self.bandNameHandle.forceReadBandFileAndPopulateCache {
                             self.refreshBandList(reason: "First launch - offline mode")
                             
-                            // Show offline message if no data available
+                            // Show offline message if no data available and no valid schedule
                             let noBands = self.bands.isEmpty
                             let noEvents = eventCount == 0
-                            if noBands && noEvents {
+                            let noValidSchedule = !scheduleReleased
+                            if noBands && noEvents && noValidSchedule {
                                 let alert = UIAlertController(title: "Offline Mode", message: "No internet connection detected. The app will work with cached data when available.", preferredStyle: .alert)
                                 alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
                                 self.present(alert, animated: true, completion: nil)
+                            } else if noBands && noEvents && scheduleReleased {
+                                print("Offline mode: Schedule file available but no events yet - this is normal before events are announced")
                             }
                         }
                     }
@@ -329,9 +332,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         // Always call refreshBandList, even if data is empty
                         self.refreshBandList(reason: "First launch blocking download complete")
                         // If both band and schedule data are empty, show an alert
+                        // But don't show retry dialog if schedule is released (valid headers downloaded)
                         let noBands = self.bands.isEmpty
                         let noEvents = eventCount == 0
-                        if noBands && noEvents {
+                        let noValidSchedule = !scheduleReleased
+                        if noBands && noEvents && noValidSchedule {
                             let alert = UIAlertController(title: "No Data Loaded", message: "Unable to load band or event data. Please check your internet connection and try again.", preferredStyle: .alert)
                             alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
                                 // Retry logic: re-run viewDidLoad's first-launch block
@@ -340,6 +345,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                             })
                             alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
                             self.present(alert, animated: true, completion: nil)
+                        } else if noBands && noEvents && scheduleReleased {
+                            print("Schedule file downloaded successfully but contains no data yet - this is normal before events are announced")
                         }
                     }
                 }

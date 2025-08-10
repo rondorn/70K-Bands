@@ -251,6 +251,14 @@
     <string name="UrlToBackupFile">Provide The URL To The Backup File</string>
 
     <string name="SearchCritiera">Search Criteria</string>
+    
+    <!-- Missing preference screen translations -->
+    <string name="DetailsScreen">Details Screen</string>
+    <string name="NoteFontSizeLarge">Note Font Size Large</string>
+    <string name="Misc">Misc</string>
+    <string name="Information">Information</string>
+    <string name="UserIdentifier">User Identifier</string>
+    <string name="Build">Build</string>
 </resources>
 
 

@@ -47,6 +47,8 @@ public class preferencesHandler {
 
     private Boolean hideExpiredEvents = true;
     private Boolean promptForAttendedStatus = true;
+    
+    private Boolean noteFontSizeLarge = false;
 
     private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
@@ -201,6 +203,11 @@ public class preferencesHandler {
 
                         case "eventYearToLoad":
                             setEventYearToLoad(String.valueOf(RowData[1]));
+                            break;
+
+                        case "noteFontSizeLarge":
+                            setNoteFontSizeLarge(Boolean.valueOf(RowData[1]));
+                            break;
 
                     }
                 }
@@ -260,6 +267,7 @@ public class preferencesHandler {
         dataString += "sortByTime," + sortByTime.toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
+        dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";
         dataString += "eventYearToLoad," + eventYearToLoad.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
@@ -523,5 +531,16 @@ public class preferencesHandler {
 
     public void setDescriptionMapUrl(String descriptionMapUrl) {
         this.descriptionMapUrl = descriptionMapUrl;
+    }
+
+    public Boolean getNoteFontSizeLarge() {
+        if (noteFontSizeLarge == null) {
+            noteFontSizeLarge = false;
+        }
+        return noteFontSizeLarge;
+    }
+
+    public void setNoteFontSizeLarge(Boolean noteFontSizeLarge) {
+        this.noteFontSizeLarge = noteFontSizeLarge;
     }
 }

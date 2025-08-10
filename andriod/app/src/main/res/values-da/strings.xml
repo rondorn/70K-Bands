@@ -243,4 +243,12 @@
     <string name="UrlToBackupFile">Angiv URL\'en til Backup-filen</string>
 
     <string name="SearchCritiera">Søgekriterier</string>
+    
+    <!-- Missing preference screen translations -->
+    <string name="DetailsScreen">Detalje skærm</string>
+    <string name="NoteFontSizeLarge">Stor skriftstørrelse for noter</string>
+    <string name="Misc">Diverse</string>
+    <string name="Information">Information</string>
+    <string name="UserIdentifier">Bruger-ID</string>
+    <string name="Build">Build</string>
 </resources>

@@ -89,8 +89,10 @@ open class scheduleHandler {
                 }
             }
             
-            if self.schedulingData.isEmpty && !cacheVariables.justLaunched {
-                print("Skipping schedule cache population: schedulingData is empty and app is not just launched.")
+            // Only skip cache population if we don't have a valid schedule file at all
+            // If scheduleReleased is true, it means we have a valid file (even if just headers)
+            if self.schedulingData.isEmpty && !cacheVariables.justLaunched && !scheduleReleased {
+                print("Skipping schedule cache population: schedulingData is empty, app is not just launched, and no valid schedule file.")
                 return
             }
             staticSchedule.sync {
@@ -136,6 +138,13 @@ open class scheduleHandler {
         if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {
             print("[YEAR_CHANGE_DEBUG] Schedule file loaded successfully, size: \(csvDataString.count) characters")
             
+            // Check if file has valid headers - this is a valid state even without data
+            let hasValidHeaders = csvDataString.contains("Band,Location,Date,Day,Start Time,End Time,Type")
+            if hasValidHeaders {
+                scheduleReleased = true
+                print("[YEAR_CHANGE_DEBUG] Schedule file has valid headers - marking as released even if no data rows")
+            }
+            
             var unuiqueIndex = Dictionary<TimeInterval, Int>()
             var csvData: CSV
             
@@ -160,7 +169,6 @@ open class scheduleHandler {
                     
                     print("Adding index for band " + lineData[bandField]! + " ")
                     print (dateIndex)
-                    scheduleReleased = true
                     if (schedulingData[lineData[bandField]!] == nil){
                         self.schedulingData[lineData[bandField]!] = [TimeInterval : [String : String]]()
         
