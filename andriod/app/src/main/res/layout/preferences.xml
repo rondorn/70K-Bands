@@ -2,684 +2,927 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:fitsSystemWindows="true"
-    android:background="@color/common_google_signin_btn_text_dark_focused">
-
-<RelativeLayout
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/common_google_signin_btn_text_dark_focused"
-    android:nestedScrollingEnabled="true">
+    android:fitsSystemWindows="true"
+    android:background="#1C1C1E">
 
-    <!-- main header -->
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentLeft="false"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/preferenceHeader"
-            android:paddingTop="10dp"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:background="@color/common_google_signin_btn_text_dark_focused"
-            android:gravity="center_horizontal"
-            android:text="@string/PreferenceHeader"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-
-
-    <!-- expired events header -->
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"
-        android:layout_alignParentLeft="false">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/showHideExpiredLabel"
-            android:layout_marginLeft="10dp"
-            android:id="@+id/headerTextExpiredEvents"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:gravity="center_horizontal"
-            android:textStyle="bold" />
-    </LinearLayout>
-    <!-- expired events preferences -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="70dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_alignParentLeft="false">
+        android:padding="0dp">
 
-        <TableLayout
+        <!-- Main Header -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:stretchColumns="1"
-            android:background="@color/common_google_signin_btn_text_dark_focused"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            >
-            <TableRow
-                android:layout_width="fill_parent">
-        <TextView
-            android:text="@string/hideExpiredEvents"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:layout_column="9"
-            android:layout_gravity="left"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:width="255dp" />
-
-
-        <Switch
-            android:id="@+id/hideExpiredEvents"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="27"
-            android:buttonTint="@color/common_google_signin_btn_text_dark"
-            android:enabled="true"
-            android:layout_marginRight="80dp"
-            android:layout_gravity="left"
-            />
-    </TableRow>
-    </TableLayout>
-    </LinearLayout>
-
-    <!-- prompt for attended status header -->
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:layout_alignParentLeft="false">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/PromptForAttendedStatusHeader"
-            android:layout_marginLeft="10dp"
-            android:id="@+id/headerTextPromptForAttended"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:gravity="center_horizontal"
-            android:textStyle="bold" />
-    </LinearLayout>
-    <!-- prompt for attended status preferences -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="130dp"
-        android:orientation="vertical"
-        android:layout_alignParentLeft="false">
-
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:stretchColumns="1"
-            android:background="@color/common_google_signin_btn_text_dark_focused"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            >
-            <TableRow
-                android:layout_width="fill_parent">
-                <TextView
-                    android:text="@string/PromptForAttendedStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/promptForAttendedStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_marginRight="80dp"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-        </TableLayout>
-    </LinearLayout>
-
-    <!-- alert preferences header -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="160dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/AlertPreferences"
-            android:id="@+id/headerText"
-            android:layout_marginLeft="10dp"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:gravity="center_horizontal"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <!-- alert preferences -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="180dp"
-        android:orientation="vertical"
-        android:layout_alignParentLeft="false">
-
-        <TableLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:stretchColumns="1"
-            android:layout_marginLeft="20dp"
-            android:background="@color/common_google_signin_btn_text_dark_focused"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            >
-            <TableRow
-                android:layout_width="fill_parent">
-
-                <TextView
-                    android:text="@string/AlertOnMustSeeBands"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp"
-
-                    />
-
-
-                <Switch
-                    android:id="@+id/mustSeecheckBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_marginRight="80dp"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertOnMightSeeBands"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-                <Switch
-                    android:id="@+id/mightSeecheckBox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/alertOnlyForShowWillAttend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/alertOnlyForShowWillAttendSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/MinutesBeforeEventtoAlert"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-                <EditText
-                    android:layout_width="80dp"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:ems="10"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:id="@+id/minBeforeEvent"
-                    android:layout_column="27"
-                    android:enabled="true"
-                    />
-
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForShows"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-                <Switch
-                    android:id="@+id/alertForShows"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForSpecialEvents"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/alertForSpecialEvents"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForUnoffical"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/alertForUnofficalEvents"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForMeetingandGreetEvents"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-                <Switch
-                    android:id="@+id/alertForMeetAndGreet"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForClinics"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/alertForClinics"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:text="@string/AlertForAlbumListeningEvents"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:layout_column="9"
-                    android:layout_gravity="left"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default"
-                    android:width="255dp" />
-
-
-                <Switch
-                    android:id="@+id/alertForAlbumListen"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="27"
-                    android:buttonTint="@color/common_google_signin_btn_text_dark"
-                    android:enabled="true"
-                    android:layout_gravity="left"
-                    />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-            </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:id="@+id/selectYearLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="9"
-                    android:paddingTop="4pt"
-                    android:text="@string/UseLastYearsData"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <Button
-                    android:id="@+id/eventYearButton"
-                    android:layout_width="40pt"
-                    android:layout_height="25pt"
-                    android:layout_column="9"
-                    android:text="Current" />
-
-
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:id="@+id/importDataBackupLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_column="9"
-                    android:paddingTop="4pt"
-                    android:text="@string/importButtonName"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="@color/common_google_signin_btn_text_dark_default" />
-            </TableRow>
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <Button
-                    android:id="@+id/ImportDataBackup"
-                    android:layout_width="40pt"
-                    android:layout_height="25pt"
-                    android:layout_column="9"
-                    android:text="@string/ImportDataBackup" />
-
-
-            </TableRow>
-        </TableLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/LastYearsFeatureExplication"
-            android:gravity="center_horizontal"
-            android:textStyle="bold"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="3sp"
-            android:autoSizeMaxTextSize="15sp"
-            android:autoSizeStepGranularity="1sp"
-            android:maxLines="4"
-            android:layout_below="@+id/linearLayout"
-            android:layout_centerHorizontal="true"
-            android:layout_marginLeft="10dp"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="false"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="1030dp"
-        android:orientation="vertical"
-        android:layout_alignParentLeft="false">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="match_parent"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/AdvancedPreferences"
-            android:id="@+id/headerBandCount"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:textAlignment="center"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="10sp"
-            android:autoSizeMaxTextSize="15sp"
-            android:autoSizeStepGranularity="1sp"
-            android:maxLines="2"
-            android:gravity="center|bottom"/>
-
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true">
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            android:background="#1C1C1E">
+            
             <TextView
+                android:id="@+id/preferenceHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="User Identifier"
-                android:layout_column="9"
-                android:textColor="@color/common_google_signin_btn_text_dark_default"
-                android:layout_marginLeft="10dp" />
+                android:text="@string/PreferenceHeader"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="center" />
+        </LinearLayout>
 
+        <!-- SHOW/HIDE EXPIRED Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="20dp">
+
+            <!-- Section Header -->
             <TextView
-                android:layout_width="200dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:id="@+id/userIdentifier"
-                android:layout_marginLeft="10dp"
-                android:textColor="@color/common_google_signin_btn_text_dark_default"
-                android:layout_column="27" />
-        </TableRow>
+                android:text="@string/showHideExpiredLabel"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Bands URL"
-            android:layout_column="9"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:layout_marginLeft="10dp" />
-
-        <EditText
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:id="@+id/bandsUrl"
-            android:layout_marginLeft="10dp"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:layout_column="27"
-            android:editable="true"
-            android:inputType="textNoSuggestions" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Schedule URL"
-            android:layout_column="9"
-            android:textColor="@color/common_google_signin_btn_text_dark_default"
-            android:layout_marginLeft="10dp" />
-
-            <EditText
-                android:layout_width="200dp"
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:id="@+id/scheduleUrl"
-                android:textColor="@color/common_google_signin_btn_text_dark_default"
-                android:layout_marginLeft="10dp"
-                android:layout_column="27"
-                android:editable="true"
-                android:inputType="textNoSuggestions" />
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
 
-        </TableRow>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
 
-        <TableRow
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/hideExpiredEvents"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/hideExpiredEvents"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- PROMPT FOR ATTENDED STATUS Section -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
 
+            <!-- Section Header -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Pointer URL"
-                android:layout_column="9"
-                android:textColor="@color/common_google_signin_btn_text_dark_default"
-                android:layout_marginLeft="10dp" />
+                android:text="@string/PromptForAttendedStatusHeader"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
 
-            <EditText
-                android:layout_width="200dp"
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:id="@+id/pointerUrl"
-                android:textColor="@color/common_google_signin_btn_text_dark_default"
-                android:layout_marginLeft="10dp"
-                android:layout_column="27"
-                android:editable="true"
-                android:inputType="textNoSuggestions" />
-        </TableRow>
-    </TableLayout>
-  </LinearLayout>
-</RelativeLayout>
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/PromptForAttendedStatus"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/promptForAttendedStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ALERT PREFERENCES Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
+
+            <!-- Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/AlertPreferences"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <!-- Alert On Must See Bands -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertOnMustSeeBands"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/mustSeecheckBox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert On Might See Bands -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertOnMightSeeBands"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/mightSeecheckBox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert Only for Will Attend Events -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/alertOnlyForShowWillAttend"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertOnlyForShowWillAttendSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Minutes Before Event to Alert -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/MinutesBeforeEventtoAlert"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="#1C1C1E"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp">
+
+                        <EditText
+                            android:id="@+id/minBeforeEvent"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:textSize="17sp"
+                            android:textColor="#FFFFFF"
+                            android:textColorHint="#8E8E93"
+                            android:background="@android:color/transparent"
+                            android:gravity="center"
+                            android:maxLength="3" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Shows -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForShows"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForShows"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Special Events -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForSpecialEvents"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForSpecialEvents"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Unofficial Events -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForUnoffical"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForUnofficalEvents"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Meeting and Greet Events -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForMeetingandGreetEvents"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForMeetAndGreet"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Clinics -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForClinics"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForClinics"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Alert For Album Listening Events -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/AlertForAlbumListeningEvents"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/alertForAlbumListen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- DETAILS SCREEN Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
+
+            <!-- Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/DetailsScreen"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/NoteFontSizeLarge"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Switch
+                        android:id="@+id/noteFontSizeLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:theme="@style/ModernSwitch" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- MISC Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
+
+            <!-- Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Misc"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <!-- Select The Year To Display -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/SelectYearLabel"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Button
+                        android:id="@+id/eventYearButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Current"
+                        android:textSize="17sp"
+                        android:textColor="#007AFF"
+                        android:background="@android:color/transparent"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingLeft="0dp"
+                        android:paddingRight="0dp" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Import Data Backup (Android Exclusive) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/importButtonName"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <Button
+                        android:id="@+id/ImportDataBackup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ImportDataBackup"
+                        android:textSize="17sp"
+                        android:textColor="#007AFF"
+                        android:background="@android:color/transparent"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:paddingLeft="0dp"
+                        android:paddingRight="0dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Explanation text -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/LastYearsFeatureExplication"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingTop="8dp"
+                android:lineSpacingMultiplier="1.2" />
+        </LinearLayout>
+
+        <!-- Information Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
+
+            <!-- Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Information"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <!-- User Identifier -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/UserIdentifier"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/userIdentifier"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#8E8E93" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Build Number -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Build"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/buildNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#8E8E93" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Advanced Settings Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp">
+
+            <!-- Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/AdvancedPreferences"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <!-- Section Content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <!-- Bands URL -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Bands URL"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/bandsUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@android:color/transparent"
+                        android:inputType="textNoSuggestions" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Schedule URL -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Schedule URL"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/scheduleUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@android:color/transparent"
+                        android:inputType="textNoSuggestions" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Pointer URL -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Pointer URL"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/pointerUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:background="@android:color/transparent"
+                        android:inputType="textNoSuggestions" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Bottom Spacing -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="35dp" />
+
+    </LinearLayout>
 </ScrollView>

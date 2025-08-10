@@ -247,4 +247,12 @@
     <string name="UrlToBackupFile">Fournissez l\'URL du fichier de sauvegarde</string>
 
     <string name="SearchCritiera">Critères de recherche</string>
+    
+    <!-- Missing preference screen translations -->
+    <string name="DetailsScreen">Écran de détails</string>
+    <string name="NoteFontSizeLarge">Grande taille de police pour les notes</string>
+    <string name="Misc">Divers</string>
+    <string name="Information">Information</string>
+    <string name="UserIdentifier">Identifiant utilisateur</string>
+    <string name="Build">Build</string>
 </resources>

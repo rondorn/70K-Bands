@@ -70,6 +70,7 @@ public class preferenceLayout  extends Activity {
 
     private Switch hideExpiredEvents;
     private Switch promptForAttendedStatus;
+    private Switch noteFontSizeLarge;
 
     private Switch mustSee;
     private Switch mightSee;
@@ -100,16 +101,18 @@ public class preferenceLayout  extends Activity {
         setContentView(R.layout.preferences);
 
         //staticVariables.preferences.loadData();
-        setValues();
-        setLabels();
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-
+        
+        // Get version string first before setting labels
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             versionString = pInfo.versionName;
         } catch (Exception error) {
-            //do nothing
+            versionString = "Unknown";
         }
+        
+        setValues();
+        setLabels();
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         dataImportButton = (Button) findViewById(R.id.ImportDataBackup);
         dataImportButton.setOnClickListener(new View.OnClickListener() {
@@ -123,8 +126,7 @@ public class preferenceLayout  extends Activity {
 
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
-
-        headerText.setText( getResources().getString(R.string.PreferenceHeader) + "\nBuild:" + versionString);
+        headerText.setText(getResources().getString(R.string.PreferenceHeader));
 
     }
 
@@ -365,12 +367,14 @@ public class preferenceLayout  extends Activity {
 
         TextView userIdentifier = (TextView) findViewById(R.id.userIdentifier);
         userIdentifier.setText(staticVariables.userID);
-        userIdentifier.setTextColor(Color.WHITE);
-        userIdentifier.setBackgroundColor(Color.parseColor("#505050"));
-        userIdentifier.setGravity(Gravity.CENTER);
 
-        TextView selectYearLabel = (TextView) findViewById(R.id.selectYearLabel);
-        selectYearLabel.setText(getResources().getString(R.string.SelectYearLabel));
+        TextView buildNumber = (TextView) findViewById(R.id.buildNumber);
+        if (buildNumber != null) {
+            String buildText = (versionString != null && !versionString.isEmpty()) ? versionString : "Unknown";
+            buildNumber.setText(buildText);
+        }
+
+        // selectYearLabel removed in new layout design - year selection is now integrated into MISC section
 
         eventYearButton = findViewById(R.id.eventYearButton);
     }
@@ -467,7 +471,19 @@ public class preferenceLayout  extends Activity {
 
                         Log.d("preferenceLayout", "Testing network connection, passed");
                         //staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
-                        staticVariables.preferences.setEventYearToLoad(String.valueOf(eventYearButton.getText()));
+                        String selectedYear = String.valueOf(eventYearButton.getText());
+                        staticVariables.preferences.setEventYearToLoad(selectedYear);
+                        
+                        // Auto-enable "Hide Expired Events" when year is set to "Current"
+                        if (selectedYear.equals("Current") || selectedYear.equals(localCurrentEventYear)) {
+                            staticVariables.preferences.setHideExpiredEvents(true);
+                            // Update the UI switch if it exists
+                            if (hideExpiredEvents != null) {
+                                hideExpiredEvents.setChecked(true);
+                            }
+                            Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year");
+                        }
+                        
                         staticVariables.preferences.resetMainFilters();
                         staticVariables.preferences.saveData();
                         staticVariables.artistURL = null;
@@ -534,7 +550,19 @@ public class preferenceLayout  extends Activity {
         restartDialog.setNegativeButton(getResources().getString(R.string.Cancel),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        staticVariables.preferences.setEventYearToLoad(String.valueOf(eventYearButton.getText()));
+                        String selectedYear = String.valueOf(eventYearButton.getText());
+                        staticVariables.preferences.setEventYearToLoad(selectedYear);
+                        
+                        // Auto-enable "Hide Expired Events" when year is set to "Current"
+                        if (selectedYear.equals("Current") || selectedYear.equals(localCurrentEventYear)) {
+                            staticVariables.preferences.setHideExpiredEvents(true);
+                            // Update the UI switch if it exists
+                            if (hideExpiredEvents != null) {
+                                hideExpiredEvents.setChecked(true);
+                            }
+                            staticVariables.preferences.saveData();
+                            Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year (cancel dialog)");
+                        }
                     }
                 });
 
@@ -704,6 +732,16 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setPromptForAttendedStatus(promptForAttendedStatus.isChecked());
+            }
+        });
+        
+        noteFontSizeLarge = (Switch)findViewById(R.id.noteFontSizeLarge);
+        noteFontSizeLarge.setChecked(staticVariables.preferences.getNoteFontSizeLarge());
+        noteFontSizeLarge.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setNoteFontSizeLarge(noteFontSizeLarge.isChecked());
             }
         });
 

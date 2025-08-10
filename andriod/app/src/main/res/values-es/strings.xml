@@ -233,4 +233,12 @@
     <string name="UrlToBackupFile">Proporcione la URL al archivo de copia de seguridad</string>
 
     <string name="SearchCritiera">Criterios de búsqueda</string>
+    
+    <!-- Missing preference screen translations -->
+    <string name="DetailsScreen">Pantalla de detalles</string>
+    <string name="NoteFontSizeLarge">Tamaño de fuente grande para notas</string>
+    <string name="Misc">Varios</string>
+    <string name="Information">Información</string>
+    <string name="UserIdentifier">Identificador de usuario</string>
+    <string name="Build">Build</string>
 </resources>

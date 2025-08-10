@@ -247,4 +247,12 @@
     <string name="UrlToBackupFile">Anna varmuuskopiotiedoston URL-osoite</string>
 
     <string name="SearchCritiera">Hakukriteerit</string>
+    
+    <!-- Missing preference screen translations -->
+    <string name="DetailsScreen">Tietonäyttö</string>
+    <string name="NoteFontSizeLarge">Suuri fonttikoko muistiinpanoille</string>
+    <string name="Misc">Sekalaiset</string>
+    <string name="Information">Tiedot</string>
+    <string name="UserIdentifier">Käyttäjätunnus</string>
+    <string name="Build">Versio</string>
 </resources>

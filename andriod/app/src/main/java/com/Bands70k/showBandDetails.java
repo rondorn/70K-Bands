@@ -1200,9 +1200,30 @@ public class showBandDetails extends Activity {
         // Show loading placeholders for key sections
         if (noteValue != null) {
             noteValue.setText("Loading notes...");
+            // Apply font size preference
+            applyNoteFontSize();
         }
         
         Log.d("initializeUIComponents", "Immediate UI setup complete - screen ready");
+    }
+    
+    /**
+     * Applies the font size preference to the note TextView.
+     * When Note Font Size Large is enabled, increases font size by 2sp from default.
+     */
+    private void applyNoteFontSize() {
+        if (noteValue != null && staticVariables.preferences != null) {
+            boolean useLargeFont = staticVariables.preferences.getNoteFontSizeLarge();
+            
+            // Default font size for notes (can be adjusted if needed)
+            float defaultFontSize = 16f; // sp
+            float largeFontSize = defaultFontSize + 2f; // +2sp as requested
+            
+            float fontSize = useLargeFont ? largeFontSize : defaultFontSize;
+            noteValue.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, fontSize);
+            
+            Log.d("NoteFontSize", "Applied font size: " + fontSize + "sp (Large font: " + useLargeFont + ")");
+        }
     }
     
     /**
@@ -2614,6 +2635,9 @@ public class showBandDetails extends Activity {
             noteValue.setSingleLine(false);
             noteValue.setMaxLines(Integer.MAX_VALUE);
             noteValue.setHorizontallyScrolling(false);
+            
+            // Apply font size preference before setting text
+            applyNoteFontSize();
             
             // Process URLs and make them clickable (handles both !!!! format and HTML <a> tags)
             if (noteText.contains("!!!!https://") || noteText.contains("<a ") || noteText.contains("https://")) {
