@@ -13,6 +13,7 @@ import Firebase
 import FirebaseCore
 import FirebaseMessaging
 import Foundation
+import SwiftUI
 
 let appDelegate : AppDelegate? = UIApplication.shared.delegate as? AppDelegate
 
@@ -211,34 +212,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
     
-        // Manually create the window and set the root view controller from the storyboard.
+        // Create the window and set the root view controller using SwiftUI
         self.window = UIWindow(frame: UIScreen.main.bounds)
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
-            self.window?.rootViewController = splitViewController
-            // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                self.window?.makeKeyAndVisible()
-            }
-            if let navigationController = splitViewController.viewControllers.last as? UINavigationController {
-                splitViewController.delegate = self
-                setupDefaults()
-                
-                // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
-                // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
-                
-                if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-                   let controller = masterNavigationController.viewControllers.first as? MasterViewController {
-                    controller.managedObjectContext = self.managedObjectContext
-                } else {
-                    print("Error: Could not get MasterViewController from navigation stack.")
-                }
-            } else {
-                print("Error: Could not get UINavigationController from splitViewController.")
-            }
-        } else {
-            print("Error: Could not instantiate UISplitViewController from storyboard.")
-        }
+        
+        // Create SwiftUI root view controller
+        let swiftUIRootController = SwiftUIAppHostingController.createRootViewController()
+        self.window?.rootViewController = swiftUIRootController
+        
+        // Make window key and visible
+        self.window?.makeKeyAndVisible()
+        
+        // Setup defaults (moved here since we no longer have storyboard setup)
+        setupDefaults()
+        
+        print("✅ SwiftUI app initialized successfully")
         
         // Register default UserDefaults values including iCloud setting
         let defaults = ["artistUrl": "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1",
@@ -602,14 +589,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Use the centralized full data refresh method
         print("AppDelegate: App entering foreground - using centralized refresh")
-        if let masterViewController = masterView {
-            masterViewController.performFullDataRefresh(reason: "App entering foreground")
-        } else {
-            print("App foreground: Could not get master view controller reference, using notification fallback")
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
-            }
-        }
+        masterView.performFullDataRefresh(reason: "App entering foreground")
     }
 
     @objc func iCloudKeysChanged(_ notification: Notification) {

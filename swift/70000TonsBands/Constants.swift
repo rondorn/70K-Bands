@@ -11,6 +11,7 @@ import CoreData
 import SystemConfiguration
 import UIKit
 import Network
+import SwiftUI
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
 
@@ -247,7 +248,59 @@ var unfilteredEventCount = 0
 var unfilteredCruiserEventCount = 0
 var unfilteredCurrentEventCount = 0
 
-var masterView: MasterViewController!
+// Legacy MasterViewController reference - now using SwiftUI compatibility wrapper
+var masterView: MasterViewCompatibilityWrapper = {
+    return MasterViewCompatibilityWrapper()
+}()
+
+/// Global Compatibility Wrapper for SwiftUI Bridge
+/// This allows existing code that references `masterView` to continue working
+class MasterViewCompatibilityWrapper {
+    // Create instances of the data handlers directly to avoid circular dependencies
+    let schedule = scheduleHandler()
+    let bandNameHandle = bandNamesHandler()
+    let bandDescriptions = CustomBandDescription()
+    
+    func refreshData(isUserInitiated: Bool) {
+        // Perform data refresh operations
+        if isUserInitiated {
+            let iCloudHandle = iCloudDataHandler()
+            iCloudHandle.readAllPriorityData()
+            iCloudHandle.readAllScheduleData()
+        }
+        
+        // Refresh data
+        bandNameHandle.gatherData()
+        schedule.populateSchedule(forceDownload: isUserInitiated)
+        bandDescriptions.getAllDescriptions()
+        
+        // Notify UI to refresh
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("RefreshDisplay"), object: nil)
+        }
+    }
+    
+    func performFullDataRefresh(reason: String) {
+        print("🔄 MasterViewCompatibilityWrapper: Performing full data refresh - \(reason)")
+        refreshData(isUserInitiated: true)
+    }
+    
+    func clearMasterViewCachedData() {
+        // Clear handler caches
+        bandNameHandle.clearCachedData()
+        let dataHandle = dataHandler()
+        dataHandle.clearCachedData()
+        schedule.clearCache()
+        
+        // Clear static caches
+        staticSchedule.sync {
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+            cacheVariables.bandNamesStaticCache = [:]
+            cacheVariables.bandNamesArrayStaticCache = []
+        }
+    }
+}
 
 var googleCloudID = "Nothing";
 var currentPointerKey = ""
@@ -619,12 +672,11 @@ func checkAndHandleYearChange(newYear: String) {
         // Purge all caches
         bandNamesHandler().clearCachedData()
         dataHandler().clearCachedData()
-        if let masterView = masterView {
-            masterView.schedule.clearCache()
-            
-            // Clear MasterViewController's cached data arrays
-            masterView.clearMasterViewCachedData()
-        }
+        // Clear master view caches (masterView is no longer optional)
+        masterView.schedule.clearCache()
+        
+        // Clear MasterViewController's cached data arrays
+        masterView.clearMasterViewCachedData()
         
         // Clear static caches
         staticSchedule.sync {

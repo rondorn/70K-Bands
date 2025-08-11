@@ -360,7 +360,8 @@ class PreferencesViewModel: ObservableObject {
         
         // STEP 2: Test internet connection
         let netTest = NetworkTesting()
-        let internetAvailable = netTest.forgroundNetworkTest(callingGui: masterView)
+        // Use a simple network test since we don't have a UIViewController reference
+        let internetAvailable = isInternetAvailable()
         
         if !internetAvailable {
             print("🚫 No internet connection available, cannot switch years")
@@ -435,7 +436,7 @@ class PreferencesViewModel: ObservableObject {
         
         // Trigger immediate cache refresh on main screen (no delay)
         DispatchQueue.main.async {
-            masterView.refreshBandList(reason: "Year change to \(self.eventYearChangeAttempt) - immediate cache refresh")
+            masterView.performFullDataRefresh(reason: "Year change to \(self.eventYearChangeAttempt) - immediate cache refresh")
         }
         
         // Start background data loading immediately (no artificial delays)
@@ -458,7 +459,8 @@ class PreferencesViewModel: ObservableObject {
                 
                 // Clear handler-specific caches
                 masterView.bandNameHandle.clearCachedData()
-                masterView.dataHandle.clearCachedData()
+                let dataHandler = dataHandler()
+                dataHandler.clearCachedData()
                 masterView.schedule.clearCache()
                 
                 // Clear MasterViewController cached arrays
@@ -490,8 +492,7 @@ class PreferencesViewModel: ObservableObject {
                 print("🔍 - bandNamesArrayStaticCache count: \(cacheVariables.bandNamesArrayStaticCache.count)")
                 print("🔍 - bandDescriptionUrlCache count: \(cacheVariables.bandDescriptionUrlCache.count)")
                 print("🔍 - attendedStaticCache count: \(cacheVariables.attendedStaticCache.count)")
-                print("🔍 - masterView.objects count: \(masterView.objects.count)")
-                print("🔍 - masterView.bands count: \(masterView.bands.count)")
+                print("🔍 - Cache clearing completed for year change")
                 
                 // Use a dispatch group to track completion without artificial delays
                 let dataLoadGroup = DispatchGroup()

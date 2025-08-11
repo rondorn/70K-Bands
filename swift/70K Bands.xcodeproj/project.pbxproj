@@ -37,6 +37,20 @@
 		114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		114B5C0C2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */; };
 		114B5C0D2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */; };
+		114B5C152E4A40210030CA9D /* MasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C102E4A40210030CA9D /* MasterView.swift */; };
+		114B5C162E4A40210030CA9D /* SwiftUIBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C132E4A40210030CA9D /* SwiftUIBridge.swift */; };
+		114B5C172E4A40210030CA9D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0F2E4A40210030CA9D /* DetailViewModel.swift */; };
+		114B5C182E4A40210030CA9D /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C112E4A40210030CA9D /* MasterViewModel.swift */; };
+		114B5C192E4A40210030CA9D /* SwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C122E4A40210030CA9D /* SwiftUIApp.swift */; };
+		114B5C1A2E4A40210030CA9D /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0E2E4A40210030CA9D /* DetailView.swift */; };
+		114B5C1B2E4A40210030CA9D /* SwiftUIWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C142E4A40210030CA9D /* SwiftUIWebView.swift */; };
+		114B5C1C2E4A40210030CA9D /* MasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C102E4A40210030CA9D /* MasterView.swift */; };
+		114B5C1D2E4A40210030CA9D /* SwiftUIBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C132E4A40210030CA9D /* SwiftUIBridge.swift */; };
+		114B5C1E2E4A40210030CA9D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0F2E4A40210030CA9D /* DetailViewModel.swift */; };
+		114B5C1F2E4A40210030CA9D /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C112E4A40210030CA9D /* MasterViewModel.swift */; };
+		114B5C202E4A40210030CA9D /* SwiftUIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C122E4A40210030CA9D /* SwiftUIApp.swift */; };
+		114B5C212E4A40210030CA9D /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C0E2E4A40210030CA9D /* DetailView.swift */; };
+		114B5C222E4A40210030CA9D /* SwiftUIWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C142E4A40210030CA9D /* SwiftUIWebView.swift */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
 		114CC0781C7921E000CF5BF1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
 		115213292A69E23C0017DD9F /* variableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115213282A69E23C0017DD9F /* variableStore.swift */; };
@@ -181,6 +195,13 @@
 		114976C51C838D87003316D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandDescriptionTranslator.swift; sourceTree = "<group>"; };
 		114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUITranslationHelper.swift; sourceTree = "<group>"; };
+		114B5C0E2E4A40210030CA9D /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
+		114B5C0F2E4A40210030CA9D /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
+		114B5C102E4A40210030CA9D /* MasterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterView.swift; sourceTree = "<group>"; };
+		114B5C112E4A40210030CA9D /* MasterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewModel.swift; sourceTree = "<group>"; };
+		114B5C122E4A40210030CA9D /* SwiftUIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIApp.swift; sourceTree = "<group>"; };
+		114B5C132E4A40210030CA9D /* SwiftUIBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIBridge.swift; sourceTree = "<group>"; };
+		114B5C142E4A40210030CA9D /* SwiftUIWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIWebView.swift; sourceTree = "<group>"; };
 		114CC0711C79204100CF5BF1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		114F63AB1A84678D00584AD0 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		115213282A69E23C0017DD9F /* variableStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = variableStore.swift; sourceTree = "<group>"; };
@@ -350,6 +371,13 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				114B5C0E2E4A40210030CA9D /* DetailView.swift */,
+				114B5C0F2E4A40210030CA9D /* DetailViewModel.swift */,
+				114B5C102E4A40210030CA9D /* MasterView.swift */,
+				114B5C112E4A40210030CA9D /* MasterViewModel.swift */,
+				114B5C122E4A40210030CA9D /* SwiftUIApp.swift */,
+				114B5C132E4A40210030CA9D /* SwiftUIBridge.swift */,
+				114B5C142E4A40210030CA9D /* SwiftUIWebView.swift */,
 				114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
@@ -803,6 +831,13 @@
 				110FA1622E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
 				11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */,
 				110E08522AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
+				114B5C152E4A40210030CA9D /* MasterView.swift in Sources */,
+				114B5C162E4A40210030CA9D /* SwiftUIBridge.swift in Sources */,
+				114B5C172E4A40210030CA9D /* DetailViewModel.swift in Sources */,
+				114B5C182E4A40210030CA9D /* MasterViewModel.swift in Sources */,
+				114B5C192E4A40210030CA9D /* SwiftUIApp.swift in Sources */,
+				114B5C1A2E4A40210030CA9D /* DetailView.swift in Sources */,
+				114B5C1B2E4A40210030CA9D /* SwiftUIWebView.swift in Sources */,
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
@@ -856,6 +891,13 @@
 				1155E3A41A8B0A0700D51ED9 /* bandNamesTest.swift in Sources */,
 				110FA1612E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
 				1155E3AD1A8B121000D51ED9 /* urlStorage.swift in Sources */,
+				114B5C1C2E4A40210030CA9D /* MasterView.swift in Sources */,
+				114B5C1D2E4A40210030CA9D /* SwiftUIBridge.swift in Sources */,
+				114B5C1E2E4A40210030CA9D /* DetailViewModel.swift in Sources */,
+				114B5C1F2E4A40210030CA9D /* MasterViewModel.swift in Sources */,
+				114B5C202E4A40210030CA9D /* SwiftUIApp.swift in Sources */,
+				114B5C212E4A40210030CA9D /* DetailView.swift in Sources */,
+				114B5C222E4A40210030CA9D /* SwiftUIWebView.swift in Sources */,
 				110E08532AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,

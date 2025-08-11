@@ -127,7 +127,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.navigationItem.backBarButtonItem = backItem
         
         //have a reference to this controller for external refreshes
-        masterView = self;
+        // Note: masterView is now a MasterViewCompatibilityWrapper for SwiftUI compatibility
         
         // Do any additional setup after loading the view, typically from a nib.
         if UIDevice.current.userInterfaceIdiom == .pad {
