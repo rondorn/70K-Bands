@@ -564,22 +564,115 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
-        let localNotication = localNoticationHandler()
-        localNotication.clearNotifications()
-        localNotication.addNotifications()
-        DispatchQueue.global(qos: .background).async {
+        print("🔄 App entering background - starting bulk loading process")
+        
+        // Request background execution time from iOS
+        var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+        backgroundTask = application.beginBackgroundTask(withName: "BulkDataLoading") {
+            // This block is called if the background task is about to expire
+            print("⚠️ Background task time expired, ending task")
+            application.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
+        
+        // Move notification processing to background to avoid blocking main thread
+        DispatchQueue.global(qos: .utility).async {
+            let localNotication = localNoticationHandler()
+            localNotication.clearNotifications()
+            localNotication.addNotifications()
+            print("📱 Local notifications processing completed")
+        }
+        
+        // iCloud data sync
+        DispatchQueue.global(qos: .userInitiated).async {
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.writeAllPriorityData()
             iCloudHandle.writeAllScheduleData()
+            print("☁️ iCloud sync completed")
         }
-        DispatchQueue.global(qos: .background).async {
+        
+        // Bulk image loading
+        print("🔄 About to dispatch image loading to background queue")
+        DispatchQueue.global(qos: .userInitiated).async {
+            print("🖼️ Image loading background queue started")
             let imageHandler = imageHandler()
-            imageHandler.getAllImages()
+            let combinedImageList = CombinedImageListHandler.shared.combinedImageList
+            print("🖼️ Starting bulk image loading with \(combinedImageList.count) images")
+            
+            if combinedImageList.isEmpty {
+                print("⚠️ Combined image list is empty - forcing regeneration")
+                
+                // Create handlers needed for image list generation
+                let bandNameHandle = bandNamesHandler()
+                let scheduleHandle = scheduleHandler()
+                
+                CombinedImageListHandler.shared.generateCombinedImageList(
+                    bandNameHandle: bandNameHandle,
+                    scheduleHandle: scheduleHandle
+                ) {
+                    let updatedList = CombinedImageListHandler.shared.combinedImageList
+                    print("🖼️ After regeneration: \(updatedList.count) images available")
+                    
+                    // Proceed with bulk loading after regeneration
+                    imageHandler.getAllImages()
+                    print("🖼️ Bulk image loading completed")
+                }
+            } else {
+                // Proceed directly with bulk loading if list already exists
+                imageHandler.getAllImages()
+                print("🖼️ Bulk image loading completed")
+            }
         }
-        DispatchQueue.global(qos: .background).async {
+        
+        // Bulk description loading
+        print("🔄 About to dispatch description loading to background queue")
+        DispatchQueue.global(qos: .userInitiated).async {
+            print("📝 Description loading background queue started")
             let noteHandle = CustomBandDescription()
+            print("📝 Starting bulk description loading")
+            
+            // Check internet availability before proceeding
+            let internetAvailable = isInternetAvailable()
+            print("📝 Internet available: \(internetAvailable)")
+            
+            if !internetAvailable {
+                print("⚠️ No internet available - waiting 5 seconds for network test to complete")
+                sleep(5) // Wait for network test to complete
+                let internetAfterWait = isInternetAvailable()
+                print("📝 Internet available after wait: \(internetAfterWait)")
+                
+                if !internetAfterWait {
+                    print("⚠️ Still no internet - skipping description bulk loading")
+                    return
+                }
+            }
+            
+            // Ensure description map is loaded before bulk loading
+            print("📝 Loading description map file...")
+            noteHandle.getDescriptionMapFile()
+            print("📝 Parsing description map...")
+            noteHandle.getDescriptionMap()
+            
+            print("📝 Description map contains \(noteHandle.bandDescriptionUrl.count) entries")
+            if noteHandle.bandDescriptionUrl.isEmpty {
+                print("⚠️ Description URL map is empty - bulk loading will be skipped")
+                return
+            }
+            
+            print("📝 Starting bulk download of \(noteHandle.bandDescriptionUrl.count) descriptions")
             noteHandle.getAllDescriptions()
+            print("📝 Bulk description loading completed")
         }
+        
+        // End background task after a delay (give time for operations to complete)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            if backgroundTask != .invalid {
+                print("🔄 Ending background task")
+                application.endBackgroundTask(backgroundTask)
+                backgroundTask = .invalid
+            }
+        }
+        
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
         reportData()

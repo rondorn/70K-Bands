@@ -9,7 +9,7 @@
 import UIKit
 import CoreData
 
-class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate{
+class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate{
     
     @IBOutlet weak var linkGroup: UIStackView!
     
@@ -81,11 +81,6 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     
     var blockSwiping = false;
     
-    // Loading state management
-    var isDataFullyLoaded = false
-    var dataLoadingTasks = 0
-    var loadingIndicator: UIActivityIndicatorView?
-    
     var backgroundNotesText = "";
     var bandName :String!
     
@@ -141,6 +136,10 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         print ("Notes hight is \(dataViewNumber) 2-dataViewNumber")
         customNotesText.textColor = UIColor.white
         
+        // Ensure text view scrolling is enabled
+        customNotesText.isScrollEnabled = true
+        customNotesText.isUserInteractionEnabled = true
+        
         // Add Done button to keyboard for iPhone
         if UIDevice.current.userInterfaceIdiom == .phone {
             addDoneButtonToKeyboard()
@@ -182,26 +181,25 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         //bandSelected = bandName
         if (bandName != nil && bandName.isEmpty == false && bandName != "None") {
             
-            // Start loading state management
-            startLoadingTask() // Band metadata loading
-            startLoadingTask() // Image loading
-            startLoadingTask() // Comments loading
-            
             // Use combined image list instead of just band image URL
             let imageURL = CombinedImageListHandler.shared.getImageUrl(for: self.bandName)
             print ("urlString is - Sending imageURL of \(imageURL) for band \(String(describing: bandName))")
             
             // Load image with proper UI refresh
-            loadBandImageWithCallback(imageURL: imageURL, bandName: self.bandName)
+            loadBandImage(imageURL: imageURL, bandName: self.bandName)
             
             print ("Priority for bandName " + bandName + " ", terminator: "")
             print(dataHandle.getPriorityData(bandName))
             
-            // Load band metadata asynchronously (schedule will be shown after loading completes)
-            loadBandMetadataAsync()
+            print ("showFullSchedule");
+            showFullSchedule()
+            
+            print ("showBandDetails");
+            showBandDetails()
             
             print ("Checking button status:" + bandName)
             disableButtonsIfNeeded()
+            disableLinksWithEmptyData();
             
             if (getNotesFontSizeLargeValue() == true){
                 customNotesText.font = UIFont(name: customNotesText.font!.fontName, size: 20)
@@ -210,9 +208,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             
             setupEventAttendClicks()
             setupSwipeGenstures()
-            customNotesText.setContentOffset(.zero, animated: true)
-            customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-            loadCommentsWithCallback()
+            // Only reset scroll position on initial load, not when user is actively scrolling
+            customNotesText.setContentOffset(.zero, animated: false)
+            loadComments()
             rotationChecking()
             
             setButtonNames()
@@ -409,6 +407,9 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         englishButton = nil
         localLanguageButton = nil
         
+        // Reset notes text view constraints when removing buttons
+        updateNotesTextViewConstraints(hasTranslationButton: false)
+        
         // Also remove any buttons that might be directly added to notesSection
         for subview in notesSection.subviews {
             if let button = subview as? UIButton {
@@ -480,13 +481,28 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
                 stackView.bottomAnchor.constraint(equalTo: priorityButtons.topAnchor, constant: -16),
                 stackView.heightAnchor.constraint(equalToConstant: 44)
             ])
+            
+            // Adjust notes section to not be hidden behind translation button
+            updateNotesTextViewConstraints(hasTranslationButton: true)
+        } else {
+            // No translation button, reset notes section
+            updateNotesTextViewConstraints(hasTranslationButton: false)
         }
     }
     
     /// Updates the notes text view constraints to make room for translation button
-    func updateNotesTextViewConstraints() {
-        // No longer needed since button is positioned outside the notes section
-        // Button is now positioned above the priority buttons widget
+    func updateNotesTextViewConstraints(hasTranslationButton: Bool) {
+        // Adjust the notes section bottom constraint based on translation button presence
+        if hasTranslationButton {
+            // Add bottom margin to prevent text from being hidden behind translation button
+            // Translation button is 44pt high + 16pt margin above priority buttons + 16pt buffer = ~76pt
+            customNotesText.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 76, right: 0)
+            customNotesText.scrollIndicatorInsets = customNotesText.contentInset
+        } else {
+            // Reset to default when no translation button
+            customNotesText.contentInset = UIEdgeInsets.zero
+            customNotesText.scrollIndicatorInsets = UIEdgeInsets.zero
+        }
     }
     
     /// Updates the translation button display (replaced old two-button system)
@@ -620,10 +636,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         
         var swipeRight = UISwipeGestureRecognizer(target: self, action: "swipeRightAction:")
         swipeRight.direction = UISwipeGestureRecognizer.Direction.right
+        swipeRight.delegate = self
         self.mainView.addGestureRecognizer(swipeRight)
         
         var swipeLeft = UISwipeGestureRecognizer(target: self, action: "swipeLeftAction:")
         swipeLeft.direction = UISwipeGestureRecognizer.Direction.left
+        swipeLeft.delegate = self
         self.mainView.addGestureRecognizer(swipeLeft)
         
     }
@@ -750,9 +768,58 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         backItem.title = "Back"
         self.navigationItem.backBarButtonItem = backItem
         
-        loadComments()
+        // Force refresh of all UI elements to handle year switching issues
+        refreshAllUIElements()
+        
         super.viewDidAppear(animated)
                 
+    }
+    
+    func refreshAllUIElements() {
+        print("🔄 Refreshing all UI elements in DetailViewController")
+        
+        // Ensure data handlers are ready before accessing data
+        ensureDataReadyAndRefreshUI()
+    }
+    
+    func ensureDataReadyAndRefreshUI() {
+        // Check if background data loading is in progress
+        if MasterViewController.isRefreshingBandList {
+            print("🔄 Background data refresh in progress, waiting...")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.ensureDataReadyAndRefreshUI()
+            }
+            return
+        }
+        
+        // Force data handlers to load if not ready
+        if bandNameHandle.getBandNames().isEmpty {
+            print("🔄 Band data not ready, forcing load...")
+            bandNameHandle.gatherData()
+        }
+        
+        // Proceed with UI refresh
+        performUIRefresh()
+    }
+    
+    func performUIRefresh() {
+        print("🔄 Performing UI refresh with available data")
+        
+        // Reload all data and UI elements
+        showBandDetails()
+        disableLinksWithEmptyData()
+        loadComments()
+        
+        // Refresh translation buttons if needed
+        setupLanguageToggleButtons()
+        
+        // Ensure priority buttons are visible and configured
+        if !bandName.isEmpty {
+            priorityButtons.isHidden = false
+            PriorityIcon.isHidden = false
+        }
+        
+        print("🔄 UI refresh completed")
     }
     
     func imageSizeController(special: String){
@@ -974,6 +1041,7 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             customNotesText.isEditable = false
             customNotesText.isSelectable = true
             customNotesText.isUserInteractionEnabled = true
+            customNotesText.isScrollEnabled = true // Ensure scrolling works even with links
         }
         
         if (bandNameHandle.getBandNoteWorthy(safeBandName).isEmpty == false){
@@ -1226,9 +1294,11 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
     }
     
     func setNotesHeight(){
-
-        customNotesText.scrollRangeToVisible(NSRange(location:0, length:0))
-
+        // Allow user to scroll freely - don't force scroll to top
+        // This was preventing users from scrolling through long descriptions
+        
+        // Ensure content size is properly calculated for scrolling
+        customNotesText.layoutIfNeeded()
     }
     
     func setButtonNames(){
@@ -1299,6 +1369,12 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             return
         }
         
+        // Prevent rapid-fire swipes by temporarily blocking
+        blockSwiping = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.blockSwiping = false
+        }
+        
         //build universal list of bands for all view types
         print ("Checking next bandName currentBandList is \(currentBandList)")
         for index in currentBandList {
@@ -1333,12 +1409,13 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
             if (index == nil){
                 continue;
             }
-            if (isGetFilteredBands == true){
-                while (isGetFilteredBands == true){
-                    print ("Encountred a conflict...need to sleep")
-                    sleep(1);
-                }
-            }
+            // Remove blocking mechanism that can cause UI freezing
+            // if (isGetFilteredBands == true){
+            //     while (isGetFilteredBands == true){
+            //         print ("Encountred a conflict...need to sleep")
+            //         sleep(1);
+            //     }
+            // }
             var scheduleIndex = timeIndexMap[index]
             
             counter = counter + 1
@@ -1996,227 +2073,28 @@ class DetailViewController: UIViewController, UITextViewDelegate, UITextFieldDel
         customNotesText.resignFirstResponder()
     }
     
-    // MARK: - Loading State Management
+
     
-    /// Shows loading indicator and hides main content
-    func showLoadingState() {
-        print("ShowLoadingState: Showing loading indicator")
-        
-        // Create loading indicator if it doesn't exist
-        if loadingIndicator == nil {
-            loadingIndicator = UIActivityIndicatorView(style: .large)
-            loadingIndicator?.color = .white
-            loadingIndicator?.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-            loadingIndicator?.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview(loadingIndicator!)
-            
-            // Center the loading indicator and make it more visible
-            NSLayoutConstraint.activate([
-                loadingIndicator!.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                loadingIndicator!.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                loadingIndicator!.widthAnchor.constraint(equalToConstant: 100),
-                loadingIndicator!.heightAnchor.constraint(equalToConstant: 100)
-            ])
-            
-            loadingIndicator?.layer.cornerRadius = 10
-        }
-        
-        // Show loading indicator
-        loadingIndicator?.startAnimating()
-        loadingIndicator?.isHidden = false
-        
-        // Hide main content during loading but keep band name and logo visible
-        LinksSection?.isHidden = true
-        extraData?.isHidden = true
-        notesSection?.isHidden = true
-        EventView1?.isHidden = true
-        EventView2?.isHidden = true
-        EventView3?.isHidden = true
-        EventView4?.isHidden = true
-        EventView5?.isHidden = true
-        priorityButtons?.isHidden = true
-        PriorityIcon?.isHidden = true
-        
-        // Hide translation button during loading
-        if #available(iOS 18.0, *) {
-            languageToggleStackView?.isHidden = true
-        }
-        
-        isDataFullyLoaded = false
-    }
+    // MARK: - UIGestureRecognizerDelegate
     
-    /// Hides loading indicator and shows main content
-    func hideLoadingState() {
-        print("HideLoadingState: Hiding loading indicator and showing content")
-        
-        loadingIndicator?.stopAnimating()
-        loadingIndicator?.isHidden = true
-        isDataFullyLoaded = true
-        
-        // Show main content
-        showBandDetails() // This will properly show/hide sections based on available data
-        disableLinksWithEmptyData()
-        
-        // Restore schedule events - these were hidden during loading
-        showFullSchedule() // Re-run to ensure events are visible
-        
-        // Show all event views that have data
-        if !eventView1Hidden {
-            EventView1?.isHidden = false
-        }
-        if !eventView2Hidden {
-            EventView2?.isHidden = false
-        }
-        if !eventView3Hidden {
-            EventView3?.isHidden = false
-        }
-        if !eventView4Hidden {
-            EventView4?.isHidden = false
-        }
-        if !eventView5Hidden {
-            EventView5?.isHidden = false
+    /// Allows swipe gestures to work alongside text view scrolling
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Only allow simultaneous recognition between swipe gestures and scroll view gestures
+        // Don't allow multiple swipe gestures to fire at the same time
+        if gestureRecognizer is UISwipeGestureRecognizer && otherGestureRecognizer is UISwipeGestureRecognizer {
+            return false
         }
         
-        // Always show priority buttons
-        priorityButtons?.isHidden = false
-        PriorityIcon?.isHidden = false
-        
-        // Show translation button if available
-        if #available(iOS 18.0, *) {
-            setupLanguageToggleButtons()
+        // Allow swipe gestures to work with text view scrolling (pan gestures)
+        if gestureRecognizer is UISwipeGestureRecognizer && otherGestureRecognizer is UIPanGestureRecognizer {
+            return true
         }
         
-        // Ensure notes section is visible
-        notesSection?.isHidden = false
+        if gestureRecognizer is UIPanGestureRecognizer && otherGestureRecognizer is UISwipeGestureRecognizer {
+            return true
+        }
         
-        print("HideLoadingState: Content restoration complete")
-    }
-    
-    /// Increments loading task counter
-    func startLoadingTask() {
-        dataLoadingTasks += 1
-        if dataLoadingTasks == 1 {
-            showLoadingState()
-        }
-    }
-    
-    /// Decrements loading task counter and hides loading when all tasks complete
-    func finishLoadingTask() {
-        dataLoadingTasks = max(0, dataLoadingTasks - 1)
-        if dataLoadingTasks == 0 {
-            DispatchQueue.main.async {
-                self.hideLoadingState()
-            }
-        }
-    }
-    
-    /// Loads band metadata (country, genre, links) asynchronously
-    func loadBandMetadataAsync() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self, let safeBandName = self.bandName else {
-                self?.finishLoadingTask()
-                return
-            }
-            
-            // Check if this is a Community Organized event (these don't have normal band data)
-            if safeBandName.lowercased().contains("community") || 
-               safeBandName.lowercased().contains("cruiser") ||
-               safeBandName.lowercased().contains("organized") {
-                print("LoadBandMetadata: Community/Cruiser event detected, skipping band data wait")
-                DispatchQueue.main.async {
-                    self.finishLoadingTask()
-                }
-                return
-            }
-            
-            // Check if there's only 1 event - these are usually special events without normal band data
-            DispatchQueue.main.async {
-                // Get event count from schedule data
-                self.schedule.getCachedData()
-                scheduleQueue.sync {
-                    let eventCount = self.schedule.schedulingData[safeBandName]?.keys.count ?? 0
-                    print("LoadBandMetadata: Found \(eventCount) events for \(safeBandName)")
-                    
-                    if eventCount == 1 {
-                        print("LoadBandMetadata: Single event detected, skipping band data wait")
-                        self.finishLoadingTask()
-                        return
-                    }
-                    
-                    // For multiple events or no events, continue with normal data loading
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        // Give the data handler time to load if needed
-                        var retryCount = 0
-                        let maxRetries = 25 // Reduced from 50 for faster response
-                        
-                        while retryCount < maxRetries {
-                            // Check if band data handler has loaded its data
-                            let country = self.bandNameHandle.getBandCountry(safeBandName)
-                            let genre = self.bandNameHandle.getBandGenre(safeBandName)
-                            let officialPage = self.bandNameHandle.getofficalPage(safeBandName)
-                            let noteWorthy = self.bandNameHandle.getBandNoteWorthy(safeBandName)
-                            
-                            // More comprehensive check - look for ANY band data
-                            let hasCountry = !country.isEmpty
-                            let hasGenre = !genre.isEmpty
-                            let hasOfficialPage = !officialPage.isEmpty && officialPage != "Unavailable"
-                            let hasNoteWorthy = !noteWorthy.isEmpty
-                            
-                            // Also check if this band exists in the data at all
-                            let bandNames = self.bandNameHandle.getBandNames()
-                            let bandExists = bandNames.contains(safeBandName)
-                            
-                            print("LoadBandMetadata retry \(retryCount): country='\(country)', genre='\(genre)', page='\(officialPage)', exists=\(bandExists)")
-                            
-                            // If band exists in data OR we have some actual data, proceed
-                            if bandExists || hasCountry || hasGenre || hasOfficialPage || hasNoteWorthy {
-                                print("LoadBandMetadata: Found data for \(safeBandName), proceeding")
-                                break
-                            }
-                            
-                            // For the first few retries, wait shorter time
-                            if retryCount < 5 {
-                                Thread.sleep(forTimeInterval: 0.1)
-                            } else {
-                                Thread.sleep(forTimeInterval: 0.2)
-                            }
-                            retryCount += 1
-                        }
-                        
-                        if retryCount >= maxRetries {
-                            print("LoadBandMetadata: Timeout waiting for data for \(safeBandName) - proceeding anyway")
-                        }
-                        
-                        DispatchQueue.main.async {
-                            self.finishLoadingTask()
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    /// Loads band image with callback
-    func loadBandImageWithCallback(imageURL: String, bandName: String) {
-        // Use existing loadBandImage but add callback
-        loadBandImage(imageURL: imageURL, bandName: bandName)
-        
-        // For now, just finish the task after a short delay
-        // The existing image loading is already async
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.finishLoadingTask()
-        }
-    }
-    
-    /// Loads comments with callback
-    func loadCommentsWithCallback() {
-        // Call existing loadComments
-        loadComments()
-        
-        // Finish loading task after comments are processed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.finishLoadingTask()
-        }
+        return false
     }
 
 }
