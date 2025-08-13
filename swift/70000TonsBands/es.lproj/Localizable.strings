@@ -209,3 +209,13 @@
 "Events" = "Eventos";
 
 "SearchCriteria" = "Criterios de búsqueda";
+
+// Keyboard toolbar buttons
+"Select All" = "Seleccionar todo";
+"Copy" = "Copiar";
+"Paste" = "Pegar";
+
+// Information section
+"Information" = "Información";
+"User Identifier" = "Identificador de usuario";
+"Build" = "Versión";
