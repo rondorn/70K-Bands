@@ -28,6 +28,7 @@ struct PreferencesView: View {
             alertPreferencesSection
             detailScreenSection
             miscSection
+            informationSection
         }
     }
     
@@ -127,6 +128,25 @@ struct PreferencesView: View {
         }
     }
     
+    private var informationSection: some View {
+        Section(NSLocalizedString("Information", comment: "")) {
+            informationRowView(label: NSLocalizedString("User Identifier", comment: ""), value: viewModel.userId)
+            informationRowView(label: NSLocalizedString("Build", comment: ""), value: viewModel.buildInfo)
+        }
+    }
+    
+    private func informationRowView(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.body)
+            Spacer()
+            Text(value)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+    
     private var miscSection: some View {
         Section(NSLocalizedString("MiscSection", comment: "")) {
             yearSelectionView
@@ -134,8 +154,6 @@ struct PreferencesView: View {
             if viewModel.isLoadingData {
                 loadingIndicatorView
             }
-            
-            buildInfoView
         }
     }
     
@@ -160,17 +178,6 @@ struct PreferencesView: View {
             ProgressView()
                 .scaleEffect(0.8)
             Text("Loading data...")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    private var buildInfoView: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("UserID: \(viewModel.userId)")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Text("Build: \(viewModel.buildInfo)")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

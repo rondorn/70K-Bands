@@ -213,3 +213,8 @@
 "Select All" = "Select All";
 "Copy" = "Copy";
 "Paste" = "Paste";
+
+// Information section
+"Information" = "Information";
+"User Identifier" = "User Identifier";
+"Build" = "Build";
