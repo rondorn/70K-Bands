@@ -81,6 +81,12 @@
 		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
+		1175C93B2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
+		1175C93C2E4D2C5A0074E2F2 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
+		1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
+		1175C93E2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
+		1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
+		1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
 		117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -214,6 +220,9 @@
 		1172A2311B5AB18E00C28AB3 /* es-MX */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-MX"; path = "es-MX.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		1172A2341B5AB22100C28AB3 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2361B5AB29000C28AB3 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
+		1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailHostingController.swift; sourceTree = "<group>"; };
+		1175C9392E4D2C5A0074E2F2 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
+		1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
@@ -350,6 +359,9 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
+				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
+				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
 				114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
@@ -806,6 +818,9 @@
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
+				1175C93E2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
+				1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
+				1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
 				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				11615BB72E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
@@ -859,6 +874,9 @@
 				110E08532AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
+				1175C93B2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
+				1175C93C2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
+				1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
 				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
