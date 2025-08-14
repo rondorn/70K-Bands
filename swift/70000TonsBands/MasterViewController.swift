@@ -50,7 +50,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleButtonArea: UINavigationItem!
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
-    var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
     
     var sharedMessage = ""
@@ -97,6 +96,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // Flag to ensure snap-to-top after pull-to-refresh is not overridden
     var shouldSnapToTopAfterRefresh = false
+    
+    // Flag to prevent endless auto-selection loops on iPad
+    var hasAutoSelectedForIPad = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -812,6 +814,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // Centralized refresh method for band list
     func refreshBandList(reason: String = "", scrollToTop: Bool = false, isPullToRefresh: Bool = false) {
+        print("DEBUG: refreshBandList called with reason: '\(reason)'")
         if MasterViewController.isRefreshingBandList {
             print("[YEAR_CHANGE_DEBUG] Global: Band list refresh already in progress. Skipping. Reason: \(reason)")
             return
@@ -891,6 +894,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             self.tableView.reloadData()
             self.updateCountLable()
+            
+            // Auto-select first band for iPad after data is loaded (only once and only on initial load)
+            if UIDevice.current.userInterfaceIdiom == .pad && !self.bands.isEmpty && !self.hasAutoSelectedForIPad && reason.contains("Initial") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    self.autoSelectFirstValidBandForIPad()
+                }
+            }
             if shouldSnapToTopAfterRefresh {
                 shouldSnapToTopAfterRefresh = false
                 self.tableView.setContentOffset(.zero, animated: false)
@@ -1391,6 +1401,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let visibleLocation = CGRect(origin: self.mainTableView.contentOffset, size: self.mainTableView.bounds.size)
                 ToastMessages(message).show(self, cellLocation: placementOfCell!,  placeHigh: false)
                 isLoadingBandData = false
+                
+                // Refresh iPad detail view if this band is currently displayed
+                let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
+                print("DEBUG: Swipe action - cellBandName from data: '\(String(cellBandName))', bandName from index: '\(bandName)'")
+                print("DEBUG: Swipe action - calling refreshIPadDetailViewIfNeeded for band: '\(bandName)'")
+                self.refreshIPadDetailViewIfNeeded(for: bandName)
                 self.quickRefresh()
             } else {
                 let message =  "No Show Is Associated With This Entry"
@@ -1406,6 +1422,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print ("Offline is offline");
             isLoadingBandData = false
             self.quickRefresh()
+            
+            // Refresh iPad detail view if this band is currently displayed
+            self.refreshIPadDetailViewIfNeeded(for: bandName)
 
         })
         
@@ -1420,6 +1439,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             isLoadingBandData = false
             self.quickRefresh()
             
+            // Refresh iPad detail view if this band is currently displayed
+            self.refreshIPadDetailViewIfNeeded(for: bandName)
+            
         })
         
         mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
@@ -1432,6 +1454,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             isLoadingBandData = false
             self.quickRefresh()
             
+            // Refresh iPad detail view if this band is currently displayed
+            self.refreshIPadDetailViewIfNeeded(for: bandName)
+            
         })
         
         wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
@@ -1443,6 +1468,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.dataHandle.addPriorityData(bandName, priority: 0);
             isLoadingBandData = false
             self.quickRefresh()
+            
+            // Refresh iPad detail view if this band is currently displayed
+            self.refreshIPadDetailViewIfNeeded(for: bandName)
             
         })
         setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
@@ -1496,11 +1524,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         self.extendedLayoutIncludesOpaqueBars = true
         
-        if segue.identifier == "showDetail" {
-            // Prevent the storyboard segue from executing - we handle navigation in SwiftUI now
-            print("Preventing storyboard segue - using SwiftUI navigation instead")
-            return
-        }
+        // Note: "showDetail" segue has been replaced with SwiftUI navigation
         updateCountLable()
 
         tableView.reloadData()
@@ -1547,6 +1571,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         sharedMessage = "Start"
         
         let alert = UIAlertController.init(title: "Share Type", message: "", preferredStyle: .actionSheet)
+        
+        // Configure popover for iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.view
+            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
         let reportHandler = showAttendenceReport()
         
         let mustMightShare = UIAlertAction.init(title: NSLocalizedString("ShareBandChoices", comment: ""), style: .default) { _ in
@@ -1597,6 +1629,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
                
                 let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
+                
+                // Configure popover for iPad
+                if let popover = alert.popoverPresentationController {
+                    if let cell = tableView.cellForRow(at: indexPath) {
+                        popover.sourceView = cell
+                        popover.sourceRect = cell.bounds
+                    } else {
+                        popover.sourceView = self.view
+                        popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+                    }
+                    popover.permittedArrowDirections = [.up, .down]
+                }
                
                 let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
                    print("Go To Details - SwiftUI")
@@ -1609,7 +1653,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawAllStatus){
                    let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
                       print("You Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus, correctBandName: bandName)
                    }
                    alert.addAction(attendChoice)
                 }
@@ -1617,7 +1661,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
                    let partialAttend = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
                        print("You Partially Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus, correctBandName: bandName)
                    }
                    alert.addAction(partialAttend)
                 }
@@ -1625,7 +1669,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawNoneStatus){
                    let notAttend = UIAlertAction.init(title: NSLocalizedString("None Of Event", comment: ""), style: .default) { _ in
                        print("You will not Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus, correctBandName: bandName)
                    }
                    alert.addAction(notAttend)
                 }
@@ -1669,6 +1713,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
                
                 let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
+                
+                // Configure popover for iPad
+                if let popover = alert.popoverPresentationController {
+                    if let cell = tableView.cellForRow(at: indexPath) {
+                        popover.sourceView = cell
+                        popover.sourceRect = cell.bounds
+                    } else {
+                        popover.sourceView = self.view
+                        popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+                    }
+                    popover.permittedArrowDirections = [.up, .down]
+                }
                
                 let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
                    print("Go To Details - SwiftUI")
@@ -1681,7 +1737,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawAllStatus){
                    let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
                       print("You Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus, correctBandName: bandName)
                    }
                    alert.addAction(attendChoice)
                 }
@@ -1689,7 +1745,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
                    let attendSomeChoice = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
                       print("You Attended Some")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus, correctBandName: bandName)
                    }
                    alert.addAction(attendSomeChoice)
                 }
@@ -1697,7 +1753,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if (currentAttendedStatus != sawNoneStatus){
                    let didNotAttendChoice = UIAlertAction.init(title: NSLocalizedString("Did Not Attend", comment: ""), style: .default) { _ in
                       print("You Did Not Attend")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus)
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus, correctBandName: bandName)
                    }
                    alert.addAction(didNotAttendChoice)
                 }
@@ -1805,7 +1861,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    func markAttendingStatus (cellDataText :String, status: String){
+    func markAttendingStatus (cellDataText :String, status: String, correctBandName: String? = nil){
         
         var cellData = cellDataText.split(separator: ";")
         if (cellData.count == 4){
@@ -1823,6 +1879,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             isLoadingBandData = false
             self.quickRefresh()
+            
+            // Refresh iPad detail view if this band is currently displayed
+            let bandNameForRefresh = correctBandName ?? getNameFromSortable(cellBandName, sortedBy: sortedBy)
+            print("DEBUG: Action sheet - cellBandName from data: '\(cellBandName)', correctBandName: '\(correctBandName ?? "nil")', final: '\(bandNameForRefresh)'")
+            print("DEBUG: Action sheet - calling refreshIPadDetailViewIfNeeded for band: '\(bandNameForRefresh)'")
+            self.refreshIPadDetailViewIfNeeded(for: bandNameForRefresh)
+            
             print ("Cell data is marked show attended \(message)");
             
         }
@@ -1868,6 +1931,153 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //iCloudDataHandle.writeiCloudData(dataHandle: dataHandle, attendedHandle: attendedHandle)
     }
     
+    // MARK: - iPad Auto-Selection
+    
+    func autoSelectFirstBandForIPad() {
+        guard UIDevice.current.userInterfaceIdiom == .pad else { return }
+        guard !bands.isEmpty else {
+            print("DEBUG: No bands available for auto-selection")
+            return
+        }
+        
+        let firstBandEntry = bands[0]
+        let sortedBy = getSortedBy()
+        let firstBandName = getNameFromSortable(firstBandEntry, sortedBy: sortedBy)
+        
+        print("DEBUG: Auto-selecting first band for iPad - entry: '\(firstBandEntry)', clean name: '\(firstBandName)'")
+        let indexPath = IndexPath(row: 0, section: 0)
+        
+        // Select the first row in the table
+        tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+        
+        // Navigate to the first band (use clean band name)
+        goToDetailsScreenSwiftUI(bandName: firstBandName, indexPath: indexPath)
+    }
+    
+    func autoSelectFirstValidBandForIPad() {
+        guard UIDevice.current.userInterfaceIdiom == .pad else { return }
+        guard !bands.isEmpty else {
+            print("DEBUG: No bands available for auto-selection")
+            return
+        }
+        
+        // Prevent multiple auto-selections
+        guard !hasAutoSelectedForIPad else {
+            print("DEBUG: Auto-selection already performed, skipping")
+            return
+        }
+        
+        print("DEBUG: Starting auto-selection for iPad")
+        hasAutoSelectedForIPad = true
+        
+        // Find first band that is not a Cruise Organized event
+        var selectedIndex = 0
+        let sortedBy = getSortedBy()
+        
+        for (index, bandEntry) in bands.enumerated() {
+            let bandName = getNameFromSortable(bandEntry, sortedBy: sortedBy)
+            
+            // Check if this band has any Cruise Organized events
+            if !isCruiseOrganizedEvent(bandEntry: bandEntry, bandName: bandName) {
+                selectedIndex = index
+                break
+            }
+            
+            print("DEBUG: Skipping Cruise Organized event at index \(index): \(bandName)")
+        }
+        
+        if selectedIndex < bands.count {
+            let selectedBandEntry = bands[selectedIndex]
+            let selectedBandName = getNameFromSortable(selectedBandEntry, sortedBy: sortedBy)
+            let indexPath = IndexPath(row: selectedIndex, section: 0)
+            
+            print("DEBUG: Auto-selecting first valid band for iPad at index \(selectedIndex): \(selectedBandName)")
+            
+            // Select the row in the table
+            tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+            
+            // Navigate to the selected band (use the clean band name, not the full entry)
+            print("DEBUG: About to navigate to SwiftUI detail view for: \(selectedBandName)")
+            print("DEBUG: selectedBandEntry (raw): '\(selectedBandEntry)', selectedBandName (clean): '\(selectedBandName)'")
+            goToDetailsScreenSwiftUI(bandName: selectedBandName, indexPath: indexPath)
+            print("DEBUG: Navigation to SwiftUI detail view completed")
+        } else {
+            print("DEBUG: All entries are Cruise Organized events, selecting first one anyway")
+            autoSelectFirstBandForIPad()
+        }
+    }
+    
+    private func isCruiseOrganizedEvent(bandEntry: String, bandName: String) -> Bool {
+        // Skip non-band schedule events (like "Mon-Monday Metal Madness", "Tue-Live Concert Event")
+        if bandName.contains("-") && (bandName.contains("Mon-") || bandName.contains("Tue-") || bandName.contains("Wed-") || bandName.contains("Thu-") || bandName.contains("Fri-") || bandName.contains("Sat-") || bandName.contains("Sun-")) {
+            print("DEBUG: Skipping schedule event: \(bandName)")
+            return true
+        }
+        
+        // Check if this band only has Cruise Organized events
+        schedule.getCachedData()
+        
+        guard let bandSchedule = schedule.schedulingData[bandName], !bandSchedule.isEmpty else {
+            // If no schedule data, assume it's a regular band
+            return false
+        }
+        
+        // Check if ALL events for this band are Cruise Organized
+        // bandSchedule is [TimeInterval : [String : String]]
+        // Each value is a dictionary containing event details
+        let allEventTypes = bandSchedule.values.compactMap { eventDict -> String? in
+            return eventDict[typeField] // typeField should contain the event type
+        }
+        
+        // If all events are "Cruiser Organized", skip this band
+        let cruiseOrganizedCount = allEventTypes.filter { $0 == "Cruiser Organized" || $0 == "Cruise Organized" }.count
+        let isCruiseOnly = cruiseOrganizedCount > 0 && cruiseOrganizedCount == allEventTypes.count
+        
+        if isCruiseOnly {
+            print("DEBUG: Band \(bandName) has only Cruise Organized events (\(cruiseOrganizedCount)/\(allEventTypes.count))")
+        }
+        
+        return isCruiseOnly
+    }
+    
+    func refreshIPadDetailViewIfNeeded(for bandName: String) {
+        print("DEBUG: refreshIPadDetailViewIfNeeded called for band: '\(bandName)'")
+        
+        guard UIDevice.current.userInterfaceIdiom == .pad else {
+            print("DEBUG: Not iPad, skipping refresh")
+            return
+        }
+        
+        // Check if the detail view is currently showing this band
+        guard let splitVC = splitViewController else {
+            print("DEBUG: No split view controller found")
+            return
+        }
+        
+        guard let detailNavController = splitVC.viewControllers.last as? UINavigationController else {
+            print("DEBUG: No detail navigation controller found")
+            return
+        }
+        
+        guard let detailHostingController = detailNavController.topViewController as? DetailHostingController else {
+            print("DEBUG: No DetailHostingController found, current controller: \(type(of: detailNavController.topViewController))")
+            return
+        }
+        
+        let currentBandName = detailHostingController.getCurrentBandName()
+        print("DEBUG: Current detail view band: '\(currentBandName)', requested refresh for: '\(bandName)'")
+        print("DEBUG: Band name comparison - current: '\(currentBandName)', requested: '\(bandName)', equal: \(currentBandName == bandName)")
+        
+        // Check if this is the same band currently displayed
+        if currentBandName == bandName {
+            print("DEBUG: Band matches, refreshing iPad detail view for band: \(bandName)")
+            // Trigger a data refresh which will reload priority and other data
+            detailHostingController.refreshDetailData()
+        } else {
+            print("DEBUG: Band doesn't match, not refreshing")
+        }
+    }
+    
     // MARK: - Segue Handling
     // Note: prepare(for:sender:) is already implemented elsewhere in this class
     
@@ -1875,8 +2085,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔍 shouldPerformSegue called with identifier: \(identifier)")
         
         if identifier == "showDetail" {
-            print("Preventing storyboard segue - using SwiftUI navigation instead")
-            return false // Prevent the storyboard segue from executing
+            // showDetail segue has been replaced with SwiftUI navigation
+            return false
         }
         
         print("🔄 Allowing segue to proceed normally")

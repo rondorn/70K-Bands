@@ -10,7 +10,7 @@
 
 "Close"="Fermer";
 
-
+"SelectBandMessage"="Sélectionnez un groupe dans la liste pour voir les détails";
 
 "Must" = "Oui";
 "Might" = "Peut Être";

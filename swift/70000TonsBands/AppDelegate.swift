@@ -216,25 +216,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
             self.window?.rootViewController = splitViewController
+            
+            // Set up split view controller
+            splitViewController.delegate = self
+            splitViewController.preferredDisplayMode = .oneBesideSecondary
+            
             // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
             if UIDevice.current.userInterfaceIdiom == .pad {
                 self.window?.makeKeyAndVisible()
             }
-            if let navigationController = splitViewController.viewControllers.last as? UINavigationController {
-                splitViewController.delegate = self
+            
+            // Set up master view controller
+            if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+               let controller = masterNavigationController.viewControllers.first as? MasterViewController {
+                controller.managedObjectContext = self.managedObjectContext
                 setupDefaults()
-                
-                // The following line crashes if topViewController is nil. Commenting out to prevent the crash.
-                // navigationController.topViewController!.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
-                
-                if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-                   let controller = masterNavigationController.viewControllers.first as? MasterViewController {
-                    controller.managedObjectContext = self.managedObjectContext
-                } else {
-                    print("Error: Could not get MasterViewController from navigation stack.")
-                }
             } else {
-                print("Error: Could not get UINavigationController from splitViewController.")
+                print("Error: Could not get MasterViewController from navigation stack.")
+            }
+            
+            // Set up detail view controller - auto-select first band for iPad
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                // Create a placeholder detail view controller for iPad initially
+                let placeholderDetailController = createPlaceholderDetailViewController()
+                let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
+                
+                // Configure navigation controller to be completely transparent to avoid white bar
+                detailNavigationController.navigationBar.isTranslucent = true
+                detailNavigationController.navigationBar.backgroundColor = UIColor.clear
+                detailNavigationController.navigationBar.barTintColor = UIColor.clear
+                detailNavigationController.navigationBar.shadowImage = UIImage()
+                detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+                detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+                
+                // If there's already a detail view controller, replace it
+                if splitViewController.viewControllers.count > 1 {
+                    splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]
+                } else {
+                    splitViewController.viewControllers.append(detailNavigationController)
+                }
+                
+                // Auto-selection now happens after data is loaded in refreshBandList
             }
         } else {
             print("Error: Could not instantiate UISplitViewController from storyboard.")
@@ -758,17 +780,49 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         self.saveContext()
     }
 
+    // MARK: - Helper Methods
+    
+    private func createPlaceholderDetailViewController() -> UIViewController {
+        let placeholderController = UIViewController()
+        // Match the dark theme used in DetailView
+        placeholderController.view.backgroundColor = UIColor.black
+        
+        // Add a label to show instructions
+        let label = UILabel()
+        label.text = NSLocalizedString("SelectBandMessage", comment: "Message shown in detail view when no band is selected")
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        label.textColor = UIColor.white // White text on black background
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        placeholderController.view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: placeholderController.view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: placeholderController.view.centerYAnchor),
+            label.leadingAnchor.constraint(greaterThanOrEqualTo: placeholderController.view.leadingAnchor, constant: 20),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: placeholderController.view.trailingAnchor, constant: -20)
+        ])
+        
+        placeholderController.title = "Band Details"
+        return placeholderController
+    }
+
     // MARK: - Split view
 
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool {
+        // Since we're now using SwiftUI navigation instead of DetailViewController,
+        // we can use a simpler approach for split view collapse behavior
         if let secondaryAsNavController = secondaryViewController as? UINavigationController {
-            if let topAsDetailController = secondaryAsNavController.topViewController as? DetailViewController {
-                //if (topAsDetailController != nil){
-                    if topAsDetailController.detailItem == nil {
-                        // Return true to indicate that we have handled the collapse by doing nothing; the secondary controller will be discarded.
-                        return true
-                    }
-                //}
+            // If there's no meaningful content to show (placeholder or no controller), collapse the secondary view
+            if secondaryAsNavController.topViewController == nil {
+                return true
+            }
+            
+            // If it's our placeholder controller, also collapse
+            if secondaryAsNavController.topViewController?.title == "Band Details" &&
+               secondaryAsNavController.topViewController?.children.isEmpty == true {
+                return true
             }
         }
         return false

@@ -44,7 +44,6 @@
 		1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60B1A575893003F4764 /* AppDelegate.swift */; };
 		1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */; };
 		1154F6111A575893003F4764 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6101A575893003F4764 /* MasterViewController.swift */; };
-		1154F6131A575893003F4764 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6121A575893003F4764 /* DetailViewController.swift */; };
 		1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */; };
 		1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6301A5758BF003F4764 /* imageHandler.swift */; };
 		1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNamesHandler.swift */; };
@@ -59,7 +58,6 @@
 		1155E3AF1A8B121000D51ED9 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
 		1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60B1A575893003F4764 /* AppDelegate.swift */; };
 		1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
-		1155E3B21A8B126500D51ED9 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6121A575893003F4764 /* DetailViewController.swift */; };
 		1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6301A5758BF003F4764 /* imageHandler.swift */; };
 		1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
 		1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6101A575893003F4764 /* MasterViewController.swift */; };
@@ -195,7 +193,6 @@
 		1154F60B1A575893003F4764 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1154F60E1A575893003F4764 /* _0000TonsBands.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = _0000TonsBands.xcdatamodel; sourceTree = "<group>"; };
 		1154F6101A575893003F4764 /* MasterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
-		1154F6121A575893003F4764 /* DetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
 		1154F6171A575893003F4764 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		1154F61A1A575893003F4764 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/UILaunchScreen.xib; sourceTree = "<group>"; };
 		1154F6201A575893003F4764 /* 70K BandsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "70K BandsTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -359,10 +356,6 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
-				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
-				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
-				114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -376,7 +369,9 @@
 				119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */,
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
-				1154F6121A575893003F4764 /* DetailViewController.swift */,
+				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
+				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
+				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
 				110E08492AECB6E100075618 /* DPDKeyboardListener.swift */,
 				110E084C2AECB6E200075618 /* DPDUIView+Extension.swift */,
@@ -410,6 +405,7 @@
 				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
+				114B5C0B2E46B9790030CA9D /* SwiftUITranslationHelper.swift */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
@@ -838,7 +834,6 @@
 				11F033401AB3B27F00AA29B8 /* InterfaceController.swift in Sources */,
 				110E08582AECB6E200075618 /* DPDUIView+Extension.swift in Sources */,
 				1156B4F31A660BE500D48D12 /* guiIcons.swift in Sources */,
-				1154F6131A575893003F4764 /* DetailViewController.swift in Sources */,
 				11E4EDAA2ACBAE5E0036D002 /* Settings70k.swift in Sources */,
 				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
@@ -864,7 +859,6 @@
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
-				1155E3B21A8B126500D51ED9 /* DetailViewController.swift in Sources */,
 				114B5C0D2E46B9790030CA9D /* SwiftUITranslationHelper.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				110E08512AECB6E200075618 /* DropDown.swift in Sources */,

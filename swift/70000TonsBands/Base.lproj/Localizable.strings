@@ -13,6 +13,8 @@
 "Wont"="Wont";
 "Unknown" = "Unknown";
 
+"SelectBandMessage"="Select a band from the list to view details";
+
 "Ok"="Ok";
 "Cancel"="Cancel";
 

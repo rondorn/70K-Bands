@@ -144,19 +144,46 @@ class DetailViewModel: ObservableObject {
     init(bandName: String) {
         self.bandName = bandName
         loadInitialData()
+        
+        // Listen for force refresh notifications
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ForceDetailRefresh"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let userInfo = notification.userInfo,
+                  let notificationBandName = userInfo["bandName"] as? String,
+                  notificationBandName == self.bandName else { return }
+            
+            print("🔄 DetailViewModel received force refresh notification for band: \(notificationBandName)")
+            print("🔄 DetailViewModel - current band: \(self.bandName), notification band: \(notificationBandName)")
+            self.loadBandData()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ForceDetailRefresh"), object: nil)
     }
     
     // MARK: - Public Methods
     
     func loadBandData() {
-        loadBandImage()
-        loadBandDetails()
-        loadBandLinks()
-        loadScheduleEvents()
-        loadNotes()
-        loadPriority()
-        setupTranslationButton()
-        updateNavigationState()
+        print("DEBUG: loadBandData() called for band: '\(bandName)'")
+        
+        // Ensure we're on the main thread for UI updates
+        DispatchQueue.main.async {
+            self.loadBandImage()
+            self.loadBandDetails()
+            self.loadBandLinks()
+            self.loadScheduleEvents()
+            self.loadNotes()
+            self.loadPriority()
+            self.setupTranslationButton()
+            self.updateNavigationState()
+            
+            print("DEBUG: loadBandData() completed for band: '\(self.bandName)'")
+        }
     }
     
     func navigateToPrevious() {
@@ -553,38 +580,51 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadBandDetails() {
+        print("DEBUG: loadBandDetails() called for band: '\(bandName)'")
+        
         // Only show details in portrait or on iPad
         if UIApplication.shared.statusBarOrientation == .portrait || UIDevice.current.userInterfaceIdiom == .pad {
             country = bandNameHandle.getBandCountry(bandName)
             genre = bandNameHandle.getBandGenre(bandName)
             lastOnCruise = bandNameHandle.getPriorYears(bandName)
             noteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
+            
+            print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)'")
         } else {
             // Hide details in landscape on iPhone
             country = ""
             genre = ""
             lastOnCruise = ""
             noteWorthy = ""
+            print("DEBUG: loadBandDetails() for '\(bandName)' - hiding details in landscape")
         }
     }
     
     private func loadBandLinks() {
+        print("DEBUG: loadBandLinks() called for band: '\(bandName)'")
+        
         let officialPage = bandNameHandle.getofficalPage(bandName)
         if !officialPage.isEmpty && officialPage != "Unavailable" {
             officialUrl = officialPage
             wikipediaUrl = bandNameHandle.getWikipediaPage(bandName)
             youtubeUrl = bandNameHandle.getYouTubePage(bandName)
             metalArchivesUrl = bandNameHandle.getMetalArchives(bandName)
+            
+            print("DEBUG: loadBandLinks() for '\(bandName)' - official: '\(officialUrl)', wikipedia: '\(wikipediaUrl)', youtube: '\(youtubeUrl)', metalArchives: '\(metalArchivesUrl)'")
         } else {
             officialUrl = ""
             wikipediaUrl = ""
             youtubeUrl = ""
             metalArchivesUrl = ""
+            
+            print("DEBUG: loadBandLinks() for '\(bandName)' - no links available (official page: '\(officialPage)')")
         }
     }
     
     private func loadScheduleEvents() {
         print("DEBUG: loadScheduleEvents() called for band: \(bandName)")
+        print("DEBUG: loadScheduleEvents() - reloading attended data first")
+        attendedHandle.loadShowsAttended()  // Force reload of attended data
         scheduleEvents = []
         
         schedule.getCachedData()
@@ -612,6 +652,7 @@ class DetailViewModel: ObservableObject {
                     eventType: eventType,
                     eventYearString: String(eventYear)
                 )
+                print("DEBUG: loadScheduleEvents() - attended status for \(bandName) at \(location): '\(attendedStatus)'")
                 
                 let attendedIcon: UIImage = {
                     switch attendedStatus {
@@ -785,11 +826,18 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadPriority() {
+        print("DEBUG: loadPriority() called for band: '\(bandName)'")
+        
+        // Always reload priority data from the global data source to get latest changes
+        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
+        
         if let priority = bandPriorityStorage[bandName] {
             selectedPriority = priority
+            print("DEBUG: loadPriority() for '\(bandName)' - found priority: \(priority)")
         } else {
             selectedPriority = 0
             bandPriorityStorage[bandName] = 0
+            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, defaulting to 0")
         }
     }
     
@@ -1058,5 +1106,16 @@ class DetailViewModel: ObservableObject {
     
     private func showToast(message: String) {
         toastManager.show(message: message, placeHigh: false)
+    }
+}
+
+// MARK: - String Extensions
+extension String {
+    var isNumeric: Bool {
+        return Double(self) != nil
+    }
+    
+    func isDouble() -> Bool {
+        return Double(self) != nil
     }
 }
