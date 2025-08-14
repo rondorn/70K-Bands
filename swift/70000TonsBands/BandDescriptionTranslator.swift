@@ -144,8 +144,9 @@ class BandDescriptionTranslator {
     
 
     
-    /// Shows Apple's native translation using SwiftUI translationTask (iOS 18.0+ only)
-    /// Uses hidden SwiftUI view to perform translation, saves result to disk
+    /// DEPRECATED: This method was used with the old UIKit DetailViewController
+    /// Translation is now handled directly in SwiftUI DetailView using .translationPresentation()
+    /*
     func showTranslationOverlay(for textView: UITextView, in viewController: UIViewController, completion: @escaping (Bool) -> Void) {
         
         let targetLanguageCode = getCurrentLanguageCode()
@@ -220,6 +221,7 @@ class BandDescriptionTranslator {
             }
         }
     }
+    */
     
     /// Loads translated text from disk
     func loadTranslatedTextFromDisk(for bandName: String, targetLanguage: String, completion: @escaping (String?) -> Void) {
