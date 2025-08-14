@@ -1497,37 +1497,49 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.extendedLayoutIncludesOpaqueBars = true
         
         if segue.identifier == "showDetail" {
-            if let indexPath = self.tableView.indexPathForSelectedRow {
-                guard let cell = self.tableView.cellForRow(at: indexPath) else {
-                    print("Error: Could not get cell for selected row.")
-                    return
-                }
-                guard let bandNameView = cell.viewWithTag(2) as? UILabel else {
-                    print("Error: Could not get bandNameView.")
-                    return
-                }
-                guard let bandNameNoSchedule = cell.viewWithTag(12) as? UILabel else {
-                    print("Error: Could not get bandNameNoSchedule.")
-                    return
-                }
-                guard let cellDataView = cell.viewWithTag(1) as? UILabel else {
-                    print("Error: Could not get cellDataView.")
-                    return
-                }
-                let cellDataText = cellDataView.text ?? "";
-                eventSelectedIndex = cellDataView.text ?? ""
-                var bandName = bandNameNoSchedule.text ?? ""
-                if (bandName.isEmpty == true){
-                    bandName = bandNameView.text ?? ""
-                }
-                print ("BandName for Details is \(bandName)")
-                detailMenuChoices(cellDataText: cellDataText, bandName: bandName, segue: segue, indexPath: indexPath)
-            }
+            // Prevent the storyboard segue from executing - we handle navigation in SwiftUI now
+            print("Preventing storyboard segue - using SwiftUI navigation instead")
+            return
         }
         updateCountLable()
 
         tableView.reloadData()
 
+    }
+    
+    // MARK: - Table View Selection
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // Handle cell selection for SwiftUI navigation
+        guard let cell = tableView.cellForRow(at: indexPath) else {
+            print("Error: Could not get cell for selected row.")
+            return
+        }
+        guard let bandNameView = cell.viewWithTag(2) as? UILabel else {
+            print("Error: Could not get bandNameView.")
+            return
+        }
+        guard let bandNameNoSchedule = cell.viewWithTag(12) as? UILabel else {
+            print("Error: Could not get bandNameNoSchedule.")
+            return
+        }
+        guard let cellDataView = cell.viewWithTag(1) as? UILabel else {
+            print("Error: Could not get cellDataView.")
+            return
+        }
+        
+        let cellDataText = cellDataView.text ?? ""
+        eventSelectedIndex = cellDataView.text ?? ""
+        var bandName = bandNameNoSchedule.text ?? ""
+        if bandName.isEmpty {
+            bandName = bandNameView.text ?? ""
+        }
+        
+        print("BandName for SwiftUI Details is \(bandName)")
+        detailMenuChoicesSwiftUI(cellDataText: cellDataText, bandName: bandName, indexPath: indexPath)
+        
+        // Deselect the row
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     func detailShareChoices(){
@@ -1587,8 +1599,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
                
                 let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
-                   print("Go To Deatails")
-                   self.goToDetailsScreen(segue: segue, bandName: bandName, indexPath: indexPath);
+                   print("Go To Details - SwiftUI")
+                   self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
                 }
                 alert.addAction(goToDeatils)
 
@@ -1638,47 +1650,159 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
 
            } else {
-               print ("Going strait to the details screen")
-               
-               let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
+               print ("Go straight to the SwiftUI details screen")
+               goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
+           }
+       }
+       
+       /// SwiftUI version of detailMenuChoices (replaces storyboard segue version)
+       func detailMenuChoicesSwiftUI(cellDataText: String, bandName: String, indexPath: IndexPath) {
            
-               print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
-                
-               controller.detailItem = bandName as AnyObject
-               controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
-               controller.navigationItem.leftItemsSupplementBackButton = true
+           var cellData = cellDataText.split(separator: ";")
+           if (cellData.count == 4 && getPromptForAttended() == true){
+               
+                let cellBandName = String(cellData[0])
+                let cellLocation = String(cellData[1])
+                let cellEventType  = String(cellData[2])
+                let cellStartTime = String(cellData[3])
+
+                let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
+               
+                let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
+               
+                let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
+                   print("Go To Details - SwiftUI")
+                   self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
+                }
+                alert.addAction(goToDeatils)
+
+                let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
+
+                if (currentAttendedStatus != sawAllStatus){
+                   let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
+                      print("You Attended")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus)
+                   }
+                   alert.addAction(attendChoice)
+                }
+
+                if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
+                   let attendSomeChoice = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
+                      print("You Attended Some")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus)
+                   }
+                   alert.addAction(attendSomeChoice)
+                }
+
+                if (currentAttendedStatus != sawNoneStatus){
+                   let didNotAttendChoice = UIAlertAction.init(title: NSLocalizedString("Did Not Attend", comment: ""), style: .default) { _ in
+                      print("You Did Not Attend")
+                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus)
+                   }
+                   alert.addAction(didNotAttendChoice)
+                }
+
+                let cancelAction = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+                   print("Cancel")
+                }
+                alert.addAction(cancelAction)
+               
+                self.present(alert, animated: true, completion: nil)
+               
+           } else {
+               print ("Go straight to the SwiftUI details screen")
+               goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
            }
        }
        
     func goToDetailsScreen(segue :UIStoryboardSegue, bandName :String, indexPath :IndexPath){
         
-         print ("bandName = \(bandName) and segue \(segue)")
+         print ("bandName = \(bandName) - migrating to SwiftUI DetailView")
          if (bandName.isEmpty == false){
             
             bandSelected = bandName;
             bandListIndexCache = indexPath.row
-            guard let navController = segue.destination as? UINavigationController else {
-                print("Error: segue.destination is not UINavigationController")
-                return
-            }
-            guard let controller = navController.topViewController as? DetailViewController else {
-                print("Error: topViewController is not DetailViewController")
-                return
-            }
-        
+            
             print ("Bands size is " + String(bands.count) + " Index is  " + String(indexPath.row))
 
-            controller.detailItem = bandName as AnyObject
-            controller.navigationItem.leftBarButtonItem = self.splitViewController?.displayModeButtonItem
-            controller.navigationItem.leftItemsSupplementBackButton = true
-        
-            performSegue(withIdentifier: segue.identifier!, sender: self)
+            // Create SwiftUI DetailHostingController instead of using storyboard segue
+            let detailController = DetailHostingController(bandName: bandName)
+            
+            // Configure for split view if needed
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                detailController.configureSplitViewPresentation()
+            }
+            
+            // Push the SwiftUI detail view controller
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                // iPad: Replace detail view in split view
+                if let splitVC = self.splitViewController,
+                   let navController = splitVC.viewControllers.last as? UINavigationController {
+                    navController.setViewControllers([detailController], animated: true)
+                } else {
+                    self.navigationController?.pushViewController(detailController, animated: true)
+                }
+            } else {
+                // iPhone: Push onto navigation stack
+                self.navigationController?.pushViewController(detailController, animated: true)
+            }
             
         } else {
             print ("Found an issue with the selection 1");
             return
         }
 
+    }
+    
+    /// New SwiftUI-based detail navigation (replaces storyboard segue)
+    func goToDetailsScreenSwiftUI(bandName: String, indexPath: IndexPath) {
+        print("goToDetailsScreenSwiftUI: bandName = \(bandName)")
+        
+        guard !bandName.isEmpty else {
+            print("Found an issue with the selection - empty band name")
+            return
+        }
+        
+        bandSelected = bandName
+        bandListIndexCache = indexPath.row
+        
+        print("Bands size is \(bands.count) Index is \(indexPath.row)")
+        
+        // IMPORTANT: Populate currentBandList for swipe navigation (same as prepare(for:sender:))
+        currentBandList = self.bands
+        print("DEBUG: Set currentBandList for SwiftUI navigation - count: \(currentBandList.count)")
+        
+        if currentBandList.count == 0 {
+            var attempts = 0
+            while(currentBandList.count == 0 && attempts < 3){
+                print("goToDetailsScreenSwiftUI: Attempt \(attempts+1) to refresh band list")
+                refreshBandList(reason: "Cache refresh")
+                currentBandList = self.bands
+                attempts += 1
+            }
+            if currentBandList.count == 0 {
+                print("goToDetailsScreenSwiftUI: Band list still empty after 3 attempts")
+            }
+        }
+        
+        // Create SwiftUI DetailHostingController
+        let detailController = DetailHostingController(bandName: bandName)
+        
+        // Configure for split view if needed
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            detailController.configureSplitViewPresentation()
+            
+            // iPad: Replace detail view in split view
+            if let splitVC = self.splitViewController,
+               let navController = splitVC.viewControllers.last as? UINavigationController {
+                navController.setViewControllers([detailController], animated: true)
+            } else {
+                self.navigationController?.pushViewController(detailController, animated: true)
+            }
+        } else {
+            // iPhone: Push onto navigation stack
+            self.navigationController?.pushViewController(detailController, animated: true)
+        }
     }
     
     func markAttendingStatus (cellDataText :String, status: String){
@@ -1750,7 +1874,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
         print("🔍 shouldPerformSegue called with identifier: \(identifier)")
         
-
+        if identifier == "showDetail" {
+            print("Preventing storyboard segue - using SwiftUI navigation instead")
+            return false // Prevent the storyboard segue from executing
+        }
         
         print("🔄 Allowing segue to proceed normally")
         return super.shouldPerformSegue(withIdentifier: identifier, sender: sender)
