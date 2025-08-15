@@ -12,19 +12,19 @@ import CoreData
 
 
 open class imageHandler {
+    var downloadingAllImages = false
+    private var activeDownloads = 0
+    private let maxConcurrentDownloads = 3
+    private let downloadQueue = DispatchQueue(label: "imageDownloadQueue", qos: .utility)
     
     /// Analyzes a URL to determine if image inversion should be applied
     /// - Parameter urlString: The URL string to analyze
     /// - Returns: True if inversion should be applied, false otherwise
     func shouldApplyInversion(urlString: String) -> Bool {
-        // Don't apply inversion for Dropbox URLs or empty URLs
-        if urlString.contains("www.dropbox.com") || urlString.isEmpty {
-            print("Image URL does not require inversion: \(urlString)")
-            return false
-        } else {
-            print("Image URL requires inversion: \(urlString)")
-            return true
-        }
+        // DISABLED: Image inversion is not needed for the new SwiftUI details screen
+        // The inversion logic was causing brightness/whitening issues when attendance status changed
+        print("Image inversion disabled - no-op for URL: \(urlString)")
+        return false
     }
     
     /// Loads and processes an image from cache or downloads it if needed
@@ -60,17 +60,36 @@ open class imageHandler {
     ///   - bandName: The name of the band
     ///   - completion: Completion handler called with the processed image
     func downloadAndCacheImage(urlString: String, bandName: String, completion: @escaping (UIImage?) -> Void) {
+        // Check if we're at the concurrent download limit
+        if activeDownloads >= maxConcurrentDownloads {
+            print("⏸️ Download limit reached (\(activeDownloads)/\(maxConcurrentDownloads)) - queuing download for \(bandName)")
+            downloadQueue.async {
+                self.downloadAndCacheImage(urlString: urlString, bandName: bandName, completion: completion)
+            }
+            return
+        }
+        
         guard let url = URL(string: urlString) else {
             print("Invalid URL for \(bandName): \(urlString)")
             completion(nil)
             return
         }
         
-        print("Downloading image for \(bandName) from \(urlString)")
+        activeDownloads += 1
+        print("🔄 Downloading image for \(bandName) from \(urlString) (active: \(activeDownloads)/\(maxConcurrentDownloads))")
         
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        // Create a URLRequest with timeout for slow connections
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 30.0 // 30 second timeout
+        request.cachePolicy = .returnCacheDataElseLoad // Use cache when available
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                self?.activeDownloads -= 1
+            }
+            
             if let error = error {
-                print("Error downloading image for \(bandName): \(error)")
+                print("❌ Error downloading image for \(bandName): \(error)")
                 completion(nil)
                 return
             }
@@ -81,21 +100,20 @@ open class imageHandler {
                   mimeType.hasPrefix("image"),
                   let data = data,
                   let image = UIImage(data: data) else {
-                print("Invalid response for \(bandName) image download")
+                print("❌ Invalid response for \(bandName) image download")
                 completion(nil)
                 return
             }
             
-            // Analyze URL for inversion requirement
-            let shouldInvert = self.shouldApplyInversion(urlString: urlString)
-            let processedImage = shouldInvert ? (image.inverseImage(cgResult: true) ?? image) : image
+            // No image processing needed - use original image
+            let processedImage = image
             
-            // Cache the processed image
-            let imageStoreFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + ".png"))
+            // Cache the processed image as PNG to preserve quality (v2 = high quality PNG)
+            let imageStoreFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + "_v2.png"))
             do {
-                let imageData = processedImage.jpegData(compressionQuality: 0.75)
+                let imageData = processedImage.pngData()
                 try imageData?.write(to: imageStoreFile, options: [.atomic])
-                print("Successfully cached processed image for \(bandName)")
+                print("Successfully cached processed image for \(bandName) as PNG")
             } catch {
                 print("Error caching image for \(bandName): \(error)")
             }
@@ -104,21 +122,14 @@ open class imageHandler {
         }.resume()
     }
     
-    /// Processes an image (applies inversion if needed based on URL analysis)
+    /// Processes an image (no processing needed for SwiftUI interface)
     /// - Parameters:
     ///   - image: The image to process
-    ///   - urlString: The URL string to analyze for inversion requirement
-    /// - Returns: The processed image
+    ///   - urlString: The URL string (unused, kept for compatibility)
+    /// - Returns: The original image without any processing
     func processImage(_ image: UIImage, urlString: String) -> UIImage {
-        let shouldInvert = shouldApplyInversion(urlString: urlString)
-        
-        if shouldInvert {
-            print("Applying inversion to image for URL: \(urlString)")
-            return image.inverseImage(cgResult: true) ?? image
-        } else {
-            print("No inversion needed for URL: \(urlString)")
-            return image
-        }
+        print("No image processing needed for URL: \(urlString)")
+        return image
     }
 
     func getAllImages(bandNameHandle: bandNamesHandler? = nil){
@@ -129,27 +140,78 @@ open class imageHandler {
             // Use the combined image list instead of just band names
             let combinedImageList = CombinedImageListHandler.shared.combinedImageList
             
-            print("Loading all images from combined image list with \(combinedImageList.count) entries")
+            print("🖼️ Starting throttled bulk image loading with \(combinedImageList.count) entries")
             
-            for (bandName, imageURL) in combinedImageList {
-                let imageStoreName = bandName + ".png"
-                let imageStoreFile = directoryPath.appendingPathComponent( imageStoreName)
-
-                if (FileManager.default.fileExists(atPath: imageStoreFile.path) == false){
-                    print ("Downloading and caching image for \(bandName) from \(imageURL)");
-                    downloadAndCacheImage(urlString: imageURL, bandName: bandName) { downloadedImage in
-                        if downloadedImage != nil {
-                            print("Successfully downloaded and cached image for \(bandName)")
-                        } else {
-                            print("Failed to download image for \(bandName)")
-                        }
+            // Convert to array for batch processing
+            let imageEntries = Array(combinedImageList)
+            
+            // Process images in batches to avoid overwhelming slow networks
+            processBulkImagesInBatches(imageEntries: imageEntries, batchSize: 3, delay: 0.5)
+        }
+    }
+    
+    private func processBulkImagesInBatches(imageEntries: [(String, String)], batchSize: Int, delay: TimeInterval) {
+        guard !imageEntries.isEmpty else {
+            print("🖼️ Bulk image loading completed - all batches processed")
+            downloadingAllImages = false
+            return
+        }
+        
+        // Take the next batch
+        let currentBatch = Array(imageEntries.prefix(batchSize))
+        let remainingEntries = Array(imageEntries.dropFirst(batchSize))
+        
+        print("🖼️ Processing batch of \(currentBatch.count) images (remaining: \(remainingEntries.count))")
+        
+        let group = DispatchGroup()
+        
+        // Process current batch
+        for (bandName, imageURL) in currentBatch {
+            let oldImageStoreName = bandName + ".png"        // Old cache format
+            let newImageStoreName = bandName + "_v2.png"     // New cache format (high quality PNG)
+            let oldImageStoreFile = directoryPath.appendingPathComponent(oldImageStoreName)
+            let newImageStoreFile = directoryPath.appendingPathComponent(newImageStoreName)
+            
+            // Check if we already have the new high-quality cache
+            if FileManager.default.fileExists(atPath: newImageStoreFile.path) {
+                print("⏭️ Skipping \(bandName) - already have high-quality cache")
+            } else {
+                // Check if we have old cache that should be upgraded
+                if FileManager.default.fileExists(atPath: oldImageStoreFile.path) {
+                    print("🔄 Upgrading old cache for \(bandName) - deleting old and downloading new")
+                    do {
+                        try FileManager.default.removeItem(at: oldImageStoreFile)
+                        print("✅ Deleted old cached image for \(bandName)")
+                    } catch {
+                        print("❌ Error deleting old cached image for \(bandName): \(error)")
                     }
-                } else {
-                    print("Image already cached for \(bandName)")
+                }
+                
+                // Download and cache with new format
+                group.enter()
+                print("🖼️ Downloading high-quality image for \(bandName) from \(imageURL)")
+                downloadAndCacheImage(urlString: imageURL, bandName: bandName) { downloadedImage in
+                    if downloadedImage != nil {
+                        print("✅ Successfully downloaded and cached high-quality image for \(bandName)")
+                    } else {
+                        print("❌ Failed to download image for \(bandName)")
+                    }
+                    group.leave()
                 }
             }
         }
-        downloadingAllImages = false
+        
+        // Wait for current batch to complete, then process next batch after delay
+        group.notify(queue: .global(qos: .background)) {
+            if !remainingEntries.isEmpty {
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + delay) {
+                    self.processBulkImagesInBatches(imageEntries: remainingEntries, batchSize: batchSize, delay: delay)
+                }
+            } else {
+                print("🖼️ Bulk image loading completed - all images processed")
+                self.downloadingAllImages = false
+            }
+        }
     }
 
 }

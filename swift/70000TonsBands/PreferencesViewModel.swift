@@ -43,15 +43,26 @@ class PreferencesViewModel: ObservableObject {
     }
     @Published var minutesBeforeAlert: Int = 10 {
         didSet {
+            let previousValue = oldValue
+            
+            // Check if the value actually changed
+            if minutesBeforeAlert == previousValue {
+                print("🚫 Minutes before alert unchanged: \(minutesBeforeAlert)")
+                return
+            }
+            
             // Validate range 0-60
             if minutesBeforeAlert >= 0 && minutesBeforeAlert <= 60 {
+                print("🎯 Minutes before alert changed: \(previousValue) -> \(minutesBeforeAlert)")
                 setMinBeforeAlertValue(minutesBeforeAlert)
                 // Reset notifications when minutes change
                 let localNotification = localNoticationHandler()
                 localNotification.clearNotifications()
+                localNotification.addNotifications()
             } else {
                 // Revert to previous valid value
-                minutesBeforeAlert = getMinBeforeAlertValue()
+                print("🚫 Invalid minutes value: \(minutesBeforeAlert), reverting to: \(previousValue)")
+                minutesBeforeAlert = previousValue
                 showValidationError = true
             }
         }
@@ -167,6 +178,14 @@ class PreferencesViewModel: ObservableObject {
     }
     
     func selectYear(_ year: String) {
+        // Prevent selecting the same year as currently set
+        guard year != selectedYear else {
+            print("🚫 Year selection ignored: '\(year)' is already selected")
+            return
+        }
+        
+        print("🎯 Year selection: '\(year)' (previous: '\(selectedYear)')")
+        
         // Find the original year value from eventYearArray that matches the display year
         let originalYear = findOriginalYear(for: year)
         eventYearChangeAttempt = originalYear
@@ -406,7 +425,7 @@ class PreferencesViewModel: ObservableObject {
         print("🎯 STEP 4: Clearing all caches and preparing for data refresh")
         
         // Clear static caches
-        bandNamesHandler().clearCachedData()
+        bandNamesHandler.shared.clearCachedData()
         dataHandler().clearCachedData()
         masterView.schedule.clearCache()
         

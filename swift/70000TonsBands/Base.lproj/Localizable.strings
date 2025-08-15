@@ -8,6 +8,7 @@
 
 
 "Close"="Close";
+"Done"="Done";
 "Must"="Must";
 "Might"="Might";
 "Wont"="Wont";
@@ -31,9 +32,9 @@
 "Sorting Chronologically"="Sorting Chronologically";
 "Sorting Alphabetically"="Sorting Alphabetically";
 
-"All Of Event"="Attending all of this event";
-"Part Of Event"="Attending some of this event";
-"None Of Event"="I will not see this event";
+"All Of Event"="Attending This Event";
+"Part Of Event"="Attending Some Of This Event";
+"None Of Event"="I Will Not See This Event";
 
 "Prompt For Attended Status Header"="Prompt For Attended Status";
 "Prompt For Attended Status"="Prompt For Attended Status";
@@ -213,8 +214,10 @@
 
 // Keyboard toolbar buttons
 "Select All" = "Select All";
+"Cut" = "Cut";
 "Copy" = "Copy";
 "Paste" = "Paste";
+"Close" = "Close";
 
 // Information section
 "Information" = "Information";

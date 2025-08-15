@@ -33,16 +33,56 @@ struct DetailView: View {
                 
                 // Toast overlay stays fixed and hovers over animation
                 ToastOverlayView(toastManager: viewModel.toastManager)
+                
+                // Loading overlay for missing essential data
+                if viewModel.isLoadingEssentialData {
+                    loadingDataOverlay
+                }
             }
-            .translationPresentation(
-                isPresented: $viewModel.showTranslationUI,
-                text: viewModel.customNotes
-            ) { translatedText in
-                viewModel.onTranslationComplete(translatedText: translatedText)
-            }
+            .ignoresSafeArea(.keyboard)
         } else {
             // Fallback on earlier versions
         }
+    }
+    
+    // MARK: - Loading Data Overlay
+    private var loadingDataOverlay: some View {
+        ZStack {
+            // Semi-transparent background
+            Color.black.opacity(0.7)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 16) {
+                // Spinner
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
+                
+                // Loading message
+                Text("Loading band data...")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                Text("Please wait while we fetch the latest information")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.9))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 40)
+        }
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.3), value: viewModel.isLoadingEssentialData)
     }
     
     private var mainContent: some View {
@@ -265,26 +305,36 @@ struct DetailView: View {
                     .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15)) // Reduced by 1pt
                     .foregroundColor(.white)
                     .background(Color.black)
-                    .apply { textEditor in
-                        if #available(iOS 16.0, *) {
-                            textEditor.scrollContentBackground(.hidden)
-                        } else {
-                            textEditor
-                        }
-                    }
+                    .modifier(ConditionalScrollContentBackground())
                     .padding(.horizontal, 14)
                     .padding(.top, 0)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            keyboardToolbarButtons
+                        }
+                    }
             } else {
-                // Read-only Text for content with links in ScrollView
+                // Read-only Text with hyperlink support in ScrollView
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(viewModel.customNotes.isEmpty ? "" : viewModel.customNotes)
-                            .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15)) // Reduced by 1pt
-                            .foregroundColor(.white)
+                        if viewModel.customNotes.isEmpty {
+                            Text("")
+                                .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 14)
+                                .padding(.top, 0)
+                        } else {
+                            // Use hyperlink text parsing for !!!!https:// links
+                            HyperlinkTextView(
+                                text: viewModel.customNotes,
+                                fontSize: viewModel.noteFontSizeLarge ? 19 : 15
+                            )
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.top, 0)
-                            .textSelection(.enabled) // Allow text selection for links
+                            .textSelection(.enabled) // Allow text selection for non-link text
+                        }
                         
                         // Add bottom padding to account for pinned sections
                         Spacer(minLength: viewModel.showTranslationButton ? 140 : 80)
@@ -346,6 +396,61 @@ struct DetailView: View {
             Spacer()
         }
         .padding(.vertical, 16)
+    }
+    
+    // MARK: - Keyboard Toolbar
+    
+    private var keyboardToolbarButtons: some View {
+        HStack {
+            // Select All button
+            Button(NSLocalizedString("Select All", comment: "")) {
+                // Select all text in the notes field
+                UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
+            }
+            .foregroundColor(.blue)
+            
+            Spacer()
+            
+            // Done button
+            Button(NSLocalizedString("Done", comment: "")) {
+                // Dismiss keyboard
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+            .foregroundColor(.blue)
+            .modifier(ConditionalFontWeight())
+        }
+        .padding(.horizontal, 16)
+    }
+}
+
+// MARK: - View Extensions
+
+extension View {
+    @ViewBuilder
+    func apply<Content: View>(@ViewBuilder _ transform: (Self) -> Content) -> Content {
+        transform(self)
+    }
+}
+
+// MARK: - View Modifiers
+
+struct ConditionalScrollContentBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.scrollContentBackground(Visibility.hidden)
+        } else {
+            content
+        }
+    }
+}
+
+struct ConditionalFontWeight: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.fontWeight(.semibold)
+        } else {
+            content.font(.system(size: 17, weight: .semibold))
+        }
     }
 }
 
@@ -474,7 +579,7 @@ struct LinkIconButton: View {
     
     var body: some View {
         Button(action: {
-            viewModel.openInternalBrowser(url: url)
+            viewModel.openExternalBrowser(url: url)
         }) {
             iconView
                 .frame(width: 30, height: 30)
@@ -615,10 +720,149 @@ struct DetailLifecycleModifiers: ViewModifier {
     }
 }
 
-// MARK: - View Extensions
-extension View {
-    @ViewBuilder
-    func apply<Content: View>(@ViewBuilder _ transform: (Self) -> Content) -> Content {
-        transform(self)
+// MARK: - Hyperlink Text View
+struct HyperlinkTextView: View {
+    let text: String
+    let fontSize: CGFloat
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(parseTextWithLinks(), id: \.id) { segment in
+                if segment.isLink, let url = segment.url, let displayText = segment.displayText {
+                    Button(action: {
+                        openInExternalBrowser(url)
+                    }) {
+                        Text(displayText)
+                            .font(.system(size: fontSize))
+                            .foregroundColor(.blue)
+                            .underline()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(segment.text)
+                        .font(.system(size: fontSize))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+    
+    private func parseTextWithLinks() -> [TextSegment] {
+        let pattern = "(!!!!https://|https://)[^\\s]+"
+        
+        do {
+            let regex = try NSRegularExpression(pattern: pattern, options: [])
+            let range = NSRange(location: 0, length: text.utf16.count)
+            let matches = regex.matches(in: text, options: [], range: range)
+            
+            var segments: [TextSegment] = []
+            var lastIndex = 0
+            
+            for match in matches {
+                let matchRange = match.range
+                
+                // Add text before the link
+                if lastIndex < matchRange.location {
+                    let beforeRange = NSRange(location: lastIndex, length: matchRange.location - lastIndex)
+                    if let beforeText = Range(beforeRange, in: text) {
+                        let textContent = String(text[beforeText])
+                        if !textContent.isEmpty {
+                            segments.append(TextSegment(text: textContent, isLink: false))
+                        }
+                    }
+                }
+                
+                // Add the link
+                if let linkRange = Range(matchRange, in: text) {
+                    let fullLink = String(text[linkRange])
+                    
+                    // Handle both !!!!https:// and regular https:// URLs
+                    let cleanUrl: String
+                    let displayText: String
+                    
+                    if fullLink.hasPrefix("!!!!https://") {
+                        // Remove the !!!! prefix for the actual URL
+                        cleanUrl = String(fullLink.dropFirst(4)) // Remove "!!!!"
+                        displayText = cleanUrl // Show the clean URL as display text
+                    } else {
+                        // Regular https:// URL - use as is
+                        cleanUrl = fullLink
+                        displayText = fullLink
+                    }
+                    
+                    segments.append(TextSegment(
+                        text: displayText,
+                        isLink: true,
+                        url: cleanUrl,
+                        displayText: displayText
+                    ))
+                }
+                
+                lastIndex = matchRange.location + matchRange.length
+            }
+            
+            // Add remaining text after the last link
+            if lastIndex < text.count {
+                let remainingRange = NSRange(location: lastIndex, length: text.count - lastIndex)
+                if let remainingTextRange = Range(remainingRange, in: text) {
+                    let remainingText = String(text[remainingTextRange])
+                    if !remainingText.isEmpty {
+                        segments.append(TextSegment(text: remainingText, isLink: false))
+                    }
+                }
+            }
+            
+            // If no links were found, return the original text as a single segment
+            if segments.isEmpty {
+                segments.append(TextSegment(text: text, isLink: false))
+            }
+            
+            return segments
+            
+        } catch {
+            print("ERROR: Failed to parse hyperlinks: \(error)")
+            // Fallback to original text if regex fails
+            return [TextSegment(text: text, isLink: false)]
+        }
+    }
+    
+    private func openInExternalBrowser(_ urlString: String) {
+        guard let url = URL(string: urlString) else {
+            print("ERROR: Invalid URL: \(urlString)")
+            return
+        }
+        
+        print("Opening URL in external browser: \(urlString)")
+        
+        // Use UIApplication to open in external browser (Safari)
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    print("Successfully opened URL in external browser")
+                } else {
+                    print("Failed to open URL in external browser")
+                }
+            }
+        } else {
+            print("Cannot open URL: \(urlString)")
+        }
     }
 }
+
+// MARK: - Text Segment Model
+struct TextSegment: Identifiable {
+    let id = UUID()
+    let text: String
+    let isLink: Bool
+    let url: String?
+    let displayText: String?
+    
+    init(text: String, isLink: Bool, url: String? = nil, displayText: String? = nil) {
+        self.text = text
+        self.isLink = isLink
+        self.url = url
+        self.displayText = displayText
+    }
+}
+

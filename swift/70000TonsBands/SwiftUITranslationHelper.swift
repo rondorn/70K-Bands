@@ -29,8 +29,12 @@ struct SwiftUITranslationHelper: View {
     var body: some View {
         // Hidden view - zero size
         Color.clear
-            .frame(width: 0, height: 0)
+            .frame(width: 1, height: 1)
+            .onAppear {
+                print("DEBUG: SwiftUITranslationHelper onAppear called for band: \(bandName)")
+            }
             .translationTask(configuration) { session in
+                print("DEBUG: translationTask started for band: \(bandName)")
                 do {
                     print("DEBUG: Starting translation for band: \(bandName)")
                     print("DEBUG: Source text preview: \(String(sourceText.prefix(100)))...")
@@ -70,20 +74,24 @@ struct SwiftUITranslationHelper: View {
     }
     
     private func startTranslation() {
+        print("DEBUG: startTranslation() called for band: \(bandName)")
+        
         // Create explicit language configuration to avoid auto-detection issues
         if configuration == nil {
             let sourceLanguage = Locale.Language(identifier: "en") // Always English source
             let targetLanguageIdentifier = targetLanguage.lowercased()
             let targetLang = Locale.Language(identifier: targetLanguageIdentifier)
             
+            print("DEBUG: Creating translation configuration EN -> \(targetLanguageIdentifier)")
             configuration = TranslationSession.Configuration(
                 source: sourceLanguage,
                 target: targetLang
             )
-            print("DEBUG: Created translation configuration EN -> \(targetLanguageIdentifier)")
+            print("DEBUG: Translation configuration created successfully")
             return
         }
         
+        print("DEBUG: Configuration already exists, invalidating...")
         configuration?.invalidate()
     }
     

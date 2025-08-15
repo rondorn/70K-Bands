@@ -14,7 +14,7 @@ class firebaseEventDataWrite {
     var ref: DatabaseReference!
     var eventCompareFile = "eventCompare.data"
     var firebaseShowsAttendedArray = [String : String]();
-    var schedule = scheduleHandler()
+    var schedule = scheduleHandler.shared
     let attended = ShowsAttended()
     let variableStoreHandle = variableStore();
     

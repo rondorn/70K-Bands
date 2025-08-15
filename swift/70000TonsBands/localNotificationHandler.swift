@@ -12,7 +12,7 @@ import UserNotifications
 
 class localNoticationHandler {
     
-    var schedule = scheduleHandler()
+    var schedule = scheduleHandler.shared
     var alertTextMessage = String()
     let attendedHandle = ShowsAttended()
     var dataHandle = dataHandler()

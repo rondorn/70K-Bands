@@ -535,15 +535,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationDidBecomeActive(_ application: UIApplication) {
         connectToFcm()
         
-        // Force iCloud synchronization when app becomes active
-        print("iCloud: App became active, forcing iCloud synchronization")
-        NSUbiquitousKeyValueStore.default.synchronize()
-        
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        
-        let userDataHandle = userDataHandler()
-        let userDataReportHandle = firebaseUserWrite()
-        userDataReportHandle.writeData()
+        // Move all potentially blocking operations to background thread
+        DispatchQueue.global(qos: .utility).async {
+            // Force iCloud synchronization when app becomes active
+            print("iCloud: App became active, forcing iCloud synchronization in background")
+            NSUbiquitousKeyValueStore.default.synchronize()
+            
+            // Perform network operations in background
+            let userDataHandle = userDataHandler()
+            let userDataReportHandle = firebaseUserWrite()
+            userDataReportHandle.writeData()
+            
+            // Post refresh notification on main thread after background operations complete
+            DispatchQueue.main.async {
+                print("iCloud: Background sync complete, posting refresh notification")
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            }
+        }
     }
     // [END connect_on_active]
         
@@ -587,14 +595,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func applicationDidEnterBackground(_ application: UIApplication) {
         print("🔄 App entering background - starting bulk loading process")
+        print("🔍 DEBUG: App state: \(application.applicationState.rawValue)")
+        print("🔍 DEBUG: Active scenes: \(UIApplication.shared.connectedScenes.count)")
         
-        // Request background execution time from iOS
+        // Add safeguard: Only proceed if app is actually in background
+        guard application.applicationState == .background else {
+            print("⚠️ BLOCKED: applicationDidEnterBackground called but app state is not background (\(application.applicationState.rawValue))")
+            return
+        }
+        
+        // Additional check: Don't run bulk loading if there's a modal presented
+        if let rootViewController = application.windows.first?.rootViewController {
+            if rootViewController.presentedViewController != nil {
+                print("⚠️ BLOCKED: Modal view controller is presented - not truly in background")
+                return
+            }
+        }
+        
+        // Request background execution time from iOS for all bulk operations
         var backgroundTask: UIBackgroundTaskIdentifier = .invalid
         backgroundTask = application.beginBackgroundTask(withName: "BulkDataLoading") {
             // This block is called if the background task is about to expire
             print("⚠️ Background task time expired, ending task")
-            application.endBackgroundTask(backgroundTask)
-            backgroundTask = .invalid
+            if backgroundTask != .invalid {
+                application.endBackgroundTask(backgroundTask)
+                backgroundTask = .invalid
+            }
         }
         
         // Move notification processing to background to avoid blocking main thread
@@ -613,20 +639,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("☁️ iCloud sync completed")
         }
         
-        // Bulk image loading
+        // Bulk image loading - ensure this runs in parallel with other background tasks
         print("🔄 About to dispatch image loading to background queue")
         DispatchQueue.global(qos: .userInitiated).async {
             print("🖼️ Image loading background queue started")
-            let imageHandler = imageHandler()
+            
+            // Use a dedicated imageHandler instance for background processing
+            let imageHandlerInstance = imageHandler()
             let combinedImageList = CombinedImageListHandler.shared.combinedImageList
             print("🖼️ Starting bulk image loading with \(combinedImageList.count) images")
             
             if combinedImageList.isEmpty {
                 print("⚠️ Combined image list is empty - forcing regeneration")
                 
-                // Create handlers needed for image list generation
-                let bandNameHandle = bandNamesHandler()
-                let scheduleHandle = scheduleHandler()
+                // Use singleton handlers for image list generation
+                let bandNameHandle = bandNamesHandler.shared
+                let scheduleHandle = scheduleHandler.shared
                 
                 CombinedImageListHandler.shared.generateCombinedImageList(
                     bandNameHandle: bandNameHandle,
@@ -636,14 +664,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     print("🖼️ After regeneration: \(updatedList.count) images available")
                     
                     // Proceed with bulk loading after regeneration
-                    imageHandler.getAllImages()
-                    print("🖼️ Bulk image loading completed")
+                    print("🖼️ Calling getAllImages() for bulk download...")
+                    imageHandlerInstance.getAllImages()
+                    print("🖼️ getAllImages() call completed")
                 }
             } else {
                 // Proceed directly with bulk loading if list already exists
-                imageHandler.getAllImages()
-                print("🖼️ Bulk image loading completed")
+                print("🖼️ Calling getAllImages() for bulk download...")
+                imageHandlerInstance.getAllImages()
+                print("🖼️ getAllImages() call completed")
             }
+            
+            print("🖼️ Background image loading completed")
         }
         
         // Bulk description loading
@@ -682,8 +714,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
             
             print("📝 Starting bulk download of \(noteHandle.bandDescriptionUrl.count) descriptions")
+            print("📝 Calling getAllDescriptions() for allINotes bulk download...")
             noteHandle.getAllDescriptions()
-            print("📝 Bulk description loading completed")
+            print("📝 getAllDescriptions() allINotes call completed")
         }
         
         // End background task after a delay (give time for operations to complete)
@@ -711,17 +744,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
-        // Force iCloud synchronization when app enters foreground
-        print("iCloud: App entering foreground, forcing iCloud synchronization")
-        NSUbiquitousKeyValueStore.default.synchronize()
+        print("AppDelegate: App entering foreground - performing background data refresh")
         
-        // Use the centralized full data refresh method
-        print("AppDelegate: App entering foreground - using centralized refresh")
-        if let masterViewController = masterView {
-            masterViewController.performFullDataRefresh(reason: "App entering foreground")
-        } else {
-            print("App foreground: Could not get master view controller reference, using notification fallback")
+        // Move all potentially blocking operations to background thread
+        DispatchQueue.global(qos: .utility).async {
+            // Force iCloud synchronization when app enters foreground
+            print("iCloud: App entering foreground, forcing iCloud synchronization in background")
+            NSUbiquitousKeyValueStore.default.synchronize()
+            
+            // Post background data refresh notification on main thread after sync completes
             DispatchQueue.main.async {
+                print("iCloud: Foreground sync complete, posting background data refresh notification")
                 NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
             }
         }

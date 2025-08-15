@@ -10,6 +10,9 @@ import Foundation
 
 open class scheduleHandler {
     
+    // Singleton instance
+    static let shared = scheduleHandler()
+    
     // Thread-safe queue for all scheduling data access
     private let scheduleHandlerQueue = DispatchQueue(label: "com.yourapp.scheduleHandlerQueue", attributes: .concurrent)
     
@@ -47,8 +50,8 @@ open class scheduleHandler {
         }
     }
 
-    init() {
-        print ("Loading schedule Data")
+    private init() {
+        print ("🔄 scheduleHandler singleton initialized - Loading schedule Data")
         getCachedData()
     }
     
@@ -234,7 +237,7 @@ open class scheduleHandler {
         // Check if combined image list needs regeneration after schedule data is loaded
         if forceDownload {
             print("[YEAR_CHANGE_DEBUG] Schedule data downloaded from URL, checking if combined image list needs regeneration")
-            let bandNameHandle = bandNamesHandler()
+            let bandNameHandle = bandNamesHandler.shared
             if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: bandNameHandle, scheduleHandle: self) {
                 print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new schedule data")
                 CombinedImageListHandler.shared.generateCombinedImageList(
