@@ -9,13 +9,16 @@
 import Foundation
 
 open class bandNamesHandler {
-
+    
+    // Singleton instance
+    static let shared = bandNamesHandler()
+    
     // These must only be accessed inside staticBandName queue
     var bandNames =  [String :[String : String]]()
     var bandNamesArray = [String]()
     
-    init(){
-        print ("Loading bandName Data")
+    private init(){
+        print ("🔄 bandNamesHandler singleton initialized - Loading bandName Data")
         getCachedData()
     }
     
@@ -197,7 +200,7 @@ open class bandNamesHandler {
             // Check if combined image list needs regeneration after artist data is loaded
             if newDataDownloaded {
                 print("[YEAR_CHANGE_DEBUG] Artist data downloaded from URL, checking if combined image list needs regeneration")
-                let scheduleHandle = scheduleHandler()
+                let scheduleHandle = scheduleHandler.shared
                 if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: self, scheduleHandle: scheduleHandle) {
                     print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new artist data")
                     CombinedImageListHandler.shared.generateCombinedImageList(
@@ -238,6 +241,10 @@ open class bandNamesHandler {
             }
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .bandNamesCacheReady, object: nil)
+                
+                // Safely check if combined image list needs refresh (delayed to avoid deadlock)
+                CombinedImageListHandler.shared.checkAndRefreshWhenReady()
+                
                 completion?()
             }
         }
@@ -403,7 +410,7 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["bandImageUrl"] ?? ""
         }
-        print ("Getting image for band \(band) will return \(result)")
+        print ("🔗 URL lookup for band \(band): \(result.isEmpty ? "no URL available" : result)")
         return result
     }
 

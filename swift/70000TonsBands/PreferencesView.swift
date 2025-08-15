@@ -163,8 +163,17 @@ struct PreferencesView: View {
             Spacer()
             Menu(viewModel.selectedYear) {
                 ForEach(viewModel.availableYears, id: \.self) { year in
-                    Button(year) {
+                    Button(action: {
                         viewModel.selectYear(year)
+                    }) {
+                        HStack {
+                            Text(year)
+                            if year == viewModel.selectedYear {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                            }
+                        }
                     }
                 }
             }

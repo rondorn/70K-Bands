@@ -65,7 +65,7 @@ class iCloudDataHandler {
                 iCloudDataisLoading = true;
                 print("iCloudPriority: Set iCloudDataisLoading to true")
                 
-                let bandNameHandle = bandNamesHandler()
+                let bandNameHandle = bandNamesHandler.shared
                 let bandNames = bandNameHandle.getBandNames()
                 
                 let priorityHandler = dataHandler()
@@ -350,10 +350,10 @@ class iCloudDataHandler {
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 print("iCloudSchedule: Initializing handlers for schedule data read")
                 
-                let scheduleHandle = scheduleHandler()
+                let scheduleHandle = scheduleHandler.shared
                 scheduleHandle.buildTimeSortedSchedulingData();
                 
-                let bandNameHandle = bandNamesHandler()
+                let bandNameHandle = bandNamesHandler.shared
                 let bandNames = bandNameHandle.getBandNames()
                 
                 let attendedHandle = ShowsAttended()

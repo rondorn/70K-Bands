@@ -617,7 +617,7 @@ func checkAndHandleYearChange(newYear: String) {
         localNotification.clearNotifications()
         
         // Purge all caches
-        bandNamesHandler().clearCachedData()
+        bandNamesHandler.shared.clearCachedData()
         dataHandler().clearCachedData()
         if let masterView = masterView {
             masterView.schedule.clearCache()
