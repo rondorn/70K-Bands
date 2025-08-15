@@ -19,10 +19,16 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Ensure back button always says "Back"
-        let backItem = UIBarButtonItem()
-        backItem.title = "Back"
-        self.navigationItem.backBarButtonItem = backItem
+        // Add close button for modal presentation
+        if navigationController == nil || presentingViewController != nil {
+            let closeButton = UIBarButtonItem(title: "Close", style: .done, target: self, action: #selector(closeButtonTapped))
+            navigationItem.leftBarButtonItem = closeButton
+        } else {
+            // Ensure back button always says "Back" for navigation controller context
+            let backItem = UIBarButtonItem()
+            backItem.title = "Back"
+            self.navigationItem.backBarButtonItem = backItem
+        }
         
         // Style the navigation bar to match the rest of the app
         if let navController = self.navigationController {
@@ -141,6 +147,11 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     @IBAction func swipeLeftAction(_ sender: Any) {
         print ("WebView Go Forward")
         webDisplay.goForward()
+    }
+    
+    @objc func closeButtonTapped() {
+        print("WebView Close button tapped")
+        dismiss(animated: true, completion: nil)
     }
 }
 

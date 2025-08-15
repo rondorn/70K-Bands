@@ -86,7 +86,7 @@ open class ShowsAttended {
      Loads show attendance data from persistent storage and updates the static cache.
      */
     func loadShowsAttended(){
-        let bandNameHandle = bandNamesHandler()
+        let bandNameHandle = bandNamesHandler.shared
         let allBands = bandNameHandle.getBandNames()
         let artistUrl = getScheduleUrl()
         var unuiqueSpecial = [String]()
@@ -200,19 +200,29 @@ open class ShowsAttended {
         print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
         var value = ""
         let currentStatus = getShowAttendedStatusRaw(index: index)
-        if (currentArray.isEmpty == true || currentStatus == nil) {
-            // First click on a new event - set to "Will Attend"
+        print("DEBUG: addShowsAttended - currentStatus: '\(String(describing: currentStatus))', currentArray.isEmpty: \(currentArray.isEmpty)")
+        
+        // Treat nil and sawNoneStatus as the same thing - both represent "Will Not Attend"
+        if (currentArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus) {
+            // Null or "Will Not Attend" -> "Will Attend"
             value = sawAllStatus
-        } else if (currentStatus == sawNoneStatus) {
-            // Will Not Attend -> Will Attend
-            value = sawAllStatus
+            print("DEBUG: addShowsAttended - Setting to Will Attend (sawAllStatus)")
         } else if (currentStatus == sawAllStatus && eventType == showType ){
+            // "Will Attend" -> "Will Attend Some" (only for shows, not other event types)
             value = sawSomeStatus
+            print("DEBUG: addShowsAttended - Setting to Will Attend Some (sawSomeStatus)")
         } else if (currentStatus == sawSomeStatus){
-            value = sawNoneStatus;
+            // "Will Attend Some" -> "Will Not Attend"
+            value = sawNoneStatus
+            print("DEBUG: addShowsAttended - Setting to Will Not Attend (sawNoneStatus)")
+        } else if (currentStatus == sawAllStatus) {
+            // "Will Attend" for non-show events -> "Will Not Attend"
+            value = sawNoneStatus
+            print("DEBUG: addShowsAttended - Setting to Will Not Attend (sawNoneStatus) for non-show event")
         } else {
-            // fallback - treats any unrecognized value as "Will Not Attend"
-            value = sawNoneStatus;
+            // fallback - treats any unrecognized value as "Will Not Attend" -> "Will Attend"
+            value = sawAllStatus
+            print("DEBUG: addShowsAttended - Fallback: unrecognized status '\(String(describing: currentStatus))', setting to Will Attend")
         }
         let timestamp = String(format: "%.0f", Date().timeIntervalSince1970)
         changeShowAttendedStatus(index: index, status: value + ":" + timestamp)

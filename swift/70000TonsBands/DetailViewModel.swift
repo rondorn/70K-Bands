@@ -8,7 +8,9 @@
 
 import Foundation
 import SwiftUI
+import Translation
 import UIKit
+import WebKit
 
 // MARK: - Toast Manager
 
@@ -91,7 +93,9 @@ class DetailViewModel: ObservableObject {
     @Published var isCurrentTextTranslated: Bool = false
     @Published var translateButtonText: String = ""
     @Published var restoreButtonText: String = ""
-    @Published var showTranslationUI: Bool = false
+    
+    // Store reference to prevent deallocation of translation controller
+    private var currentTranslationController: Any?
     
     // Notes editing
     @Published var isNotesEditable: Bool = true
@@ -102,6 +106,9 @@ class DetailViewModel: ObservableObject {
     
     // Toast messaging
     @Published var toastManager = ToastManager()
+    
+    // Loading state for missing essential data
+    @Published var isLoadingEssentialData: Bool = false
     
     // Swipe navigation state
     private var blockSwiping: Bool = false
@@ -115,6 +122,43 @@ class DetailViewModel: ObservableObject {
         !country.isEmpty || !genre.isEmpty || !lastOnCruise.isEmpty || !noteWorthy.isEmpty
     }
     
+    // Detects if essential data is missing (only for bands that should have this data)
+    var isEssentialDataMissing: Bool {
+        // Don't show loading if we're in landscape mode on iPhone - data is intentionally hidden
+        let isLandscapeOnPhone = UIApplication.shared.statusBarOrientation != .portrait && UIDevice.current.userInterfaceIdiom != .pad
+        if isLandscapeOnPhone {
+            return false // Don't show loading in landscape - data is intentionally hidden
+        }
+        
+        // Check if this is a single-event band (likely won't have full profile data)
+        let eventCount = scheduleEvents.count
+        let isSingleEventBand = eventCount == 1
+        
+        if isSingleEventBand {
+            print("DEBUG: Single-event band '\(bandName)' with \(eventCount) event - skipping loading (profile data not expected)")
+            return false // Don't show loading for single-event bands - they often don't have profile data
+        }
+        
+        // Also check if we have events but no profile data - this could indicate a band that legitimately has no profile
+        let hasEvents = eventCount > 0
+        let hasNoProfileData = !hasAnyLinks && !hasBandDetails
+        
+        if hasEvents && hasNoProfileData && eventCount <= 2 {
+            print("DEBUG: Band '\(bandName)' has \(eventCount) events but no profile data - likely doesn't have full band info")
+            return false // Don't show loading for bands with few events and no existing profile data
+        }
+        
+        // Only consider data missing if we have no links AND no band details AND not currently loading
+        // This prevents showing loading for bands that legitimately don't have this data
+        let missing = !hasAnyLinks && !hasBandDetails && !isLoadingEssentialData
+        
+        if missing {
+            print("DEBUG: isEssentialDataMissing=true for '\(bandName)' (events: \(eventCount)) - hasAnyLinks: \(hasAnyLinks), hasBandDetails: \(hasBandDetails), isLoadingEssentialData: \(isLoadingEssentialData)")
+        }
+        
+        return missing
+    }
+    
     var priorityImageName: String {
         return getPriorityGraphic(selectedPriority)
     }
@@ -125,8 +169,8 @@ class DetailViewModel: ObservableObject {
     
     // MARK: - Private Properties
     private let dataHandle = dataHandler()
-    private let bandNameHandle = bandNamesHandler()
-    private let schedule = scheduleHandler()
+    private let bandNameHandle = bandNamesHandler.shared
+    private let schedule = scheduleHandler.shared
     private let attendedHandle = ShowsAttended()
     private let bandNotes = CustomBandDescription()
     private var bandPriorityStorage: [String: Int] = [:]
@@ -160,10 +204,42 @@ class DetailViewModel: ObservableObject {
             print("🔄 DetailViewModel - current band: \(self.bandName), notification band: \(notificationBandName)")
             self.loadBandData()
         }
+        
+        // Listen for iCloud/remote data loading completion
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("RefreshDisplay"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // If we're currently showing loading indicator, check if data is now available
+            if self.isLoadingEssentialData {
+                print("🔄 Received RefreshDisplay notification while loading data for '\(self.bandName)'")
+                self.checkForDataAfterRefresh()
+            }
+        }
+        
+        // Listen for band names cache ready (more specific and faster than RefreshDisplay)
+        NotificationCenter.default.addObserver(
+            forName: .bandNamesCacheReady,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // If we're currently showing loading indicator, check if data is now available
+            if self.isLoadingEssentialData {
+                print("🔄 Received bandNamesCacheReady notification while loading data for '\(self.bandName)'")
+                self.checkForDataAfterRefresh()
+            }
+        }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ForceDetailRefresh"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshDisplay"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: .bandNamesCacheReady, object: nil)
     }
     
     // MARK: - Public Methods
@@ -182,7 +258,171 @@ class DetailViewModel: ObservableObject {
             self.setupTranslationButton()
             self.updateNavigationState()
             
+            // Check if essential data is still missing after initial load
+            self.checkAndHandleMissingData()
+            
             print("DEBUG: loadBandData() completed for band: '\(self.bandName)'")
+        }
+    }
+    
+    private func checkAndHandleMissingData() {
+        print("DEBUG: checkAndHandleMissingData for '\(bandName)' - hasAnyLinks: \(hasAnyLinks), hasBandDetails: \(hasBandDetails)")
+        print("DEBUG: Current data state - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
+        print("DEBUG: Current links - official: '\(officialUrl)', wikipedia: '\(wikipediaUrl)', youtube: '\(youtubeUrl)', metalArchives: '\(metalArchivesUrl)'")
+        
+        if isEssentialDataMissing {
+            print("DEBUG: ⚠️ Essential data missing for '\(bandName)', starting loading indicator and retry")
+            isLoadingEssentialData = true
+            
+            // Retry loading data after a delay to allow background data loading to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.retryLoadingEssentialData()
+            }
+        } else {
+            print("DEBUG: ✅ Essential data present for '\(bandName)', no loading needed")
+        }
+    }
+    
+    private func retryLoadingEssentialData() {
+        print("DEBUG: 🔄 First retry loading essential data for '\(bandName)'")
+        print("DEBUG: Before retry - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
+        print("DEBUG: Before retry - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
+        
+        // First check if the bandNames dictionary has been populated at all
+        let bandNamesCount = bandNameHandle.getBandNames().count
+        print("DEBUG: BandNames dictionary contains \(bandNamesCount) bands")
+        
+        if bandNamesCount == 0 {
+            print("DEBUG: ⚠️ BandNames dictionary is empty - data still loading from background")
+            // Don't bother checking individual band data if the entire dictionary is empty
+            // Continue retry - data is still loading
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.finalRetryLoadingEssentialData()
+            }
+            return
+        }
+        
+        // Check if the underlying data source is available for this specific band
+        let testCountry = bandNameHandle.getBandCountry(bandName)
+        let testGenre = bandNameHandle.getBandGenre(bandName)
+        let testPriorYears = bandNameHandle.getPriorYears(bandName)
+        let testOfficial = bandNameHandle.getofficalPage(bandName)
+        let testWiki = bandNameHandle.getWikipediaPage(bandName)
+        let testYoutube = bandNameHandle.getYouTubePage(bandName)
+        let testMetal = bandNameHandle.getMetalArchives(bandName)
+        
+        print("DEBUG: Direct data source check - country: '\(testCountry)', genre: '\(testGenre)', priorYears: '\(testPriorYears)'")
+        print("DEBUG: Direct links check - official: '\(testOfficial)', wiki: '\(testWiki)', youtube: '\(testYoutube)', metal: '\(testMetal)'")
+        
+        // Check if data source has any data at all for this band
+        let hasAnySourceData = !testCountry.isEmpty || !testGenre.isEmpty || !testPriorYears.isEmpty || 
+                               !testOfficial.isEmpty || !testWiki.isEmpty || !testYoutube.isEmpty || !testMetal.isEmpty
+        print("DEBUG: Data source has any data for '\(bandName)': \(hasAnySourceData)")
+        
+        // Reload the essential data
+        loadBandDetails()
+        loadBandLinks()
+        
+        print("DEBUG: After retry - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
+        print("DEBUG: After retry - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
+        
+        // Check if we now have data
+        if hasAnyLinks || hasBandDetails {
+            print("DEBUG: ✅ Essential data loaded successfully on first retry for '\(bandName)'")
+            isLoadingEssentialData = false
+        } else if !hasAnySourceData {
+            print("DEBUG: ❌ No source data available for '\(bandName)' - stopping loading (band may not exist in database)")
+            isLoadingEssentialData = false
+        } else {
+            print("DEBUG: ⚠️ Source has data but first retry failed, scheduling final retry for '\(bandName)'")
+            // Try one more time after a longer delay to give more time for data loading
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                self.finalRetryLoadingEssentialData()
+            }
+        }
+    }
+    
+    private func finalRetryLoadingEssentialData() {
+        print("DEBUG: 🔄 Final retry to load essential data for '\(bandName)'")
+        
+        // First check if the bandNames dictionary has been populated at all
+        let bandNamesCount = bandNameHandle.getBandNames().count
+        print("DEBUG: Final retry - BandNames dictionary contains \(bandNamesCount) bands")
+        
+        if bandNamesCount == 0 {
+            print("DEBUG: ❌ BandNames dictionary still empty on final retry - background loading may have failed")
+            isLoadingEssentialData = false
+            return
+        }
+        
+        // Check data source for this specific band
+        let testCountry = bandNameHandle.getBandCountry(bandName)
+        let testGenre = bandNameHandle.getBandGenre(bandName)
+        let testPriorYears = bandNameHandle.getPriorYears(bandName)
+        let testOfficial = bandNameHandle.getofficalPage(bandName)
+        let testWiki = bandNameHandle.getWikipediaPage(bandName)
+        let testYoutube = bandNameHandle.getYouTubePage(bandName)
+        let testMetal = bandNameHandle.getMetalArchives(bandName)
+        
+        print("DEBUG: Final retry - direct source check: country='\(testCountry)', genre='\(testGenre)', priorYears='\(testPriorYears)'")
+        print("DEBUG: Final retry - direct links check: official='\(testOfficial)', wiki='\(testWiki)', youtube='\(testYoutube)', metal='\(testMetal)'")
+        
+        let hasAnySourceData = !testCountry.isEmpty || !testGenre.isEmpty || !testPriorYears.isEmpty || 
+                               !testOfficial.isEmpty || !testWiki.isEmpty || !testYoutube.isEmpty || !testMetal.isEmpty
+        print("DEBUG: Final retry - data source has any data for '\(bandName)': \(hasAnySourceData)")
+        
+        // Final attempt to load data
+        loadBandDetails()
+        loadBandLinks()
+        
+        print("DEBUG: Final retry results - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
+        print("DEBUG: Final retry results - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
+        
+        if hasAnyLinks || hasBandDetails {
+            print("DEBUG: ✅ Essential data loaded on final retry for '\(bandName)'")
+        } else if !hasAnySourceData {
+            print("DEBUG: ❌ No source data available for '\(bandName)' - band may not exist in database")
+        } else {
+            print("DEBUG: ❌ Source has data but final retry failed for '\(bandName)' - possible loading issue")
+        }
+        
+        // Stop loading regardless of outcome
+        isLoadingEssentialData = false
+    }
+    
+    private func checkForDataAfterRefresh() {
+        print("DEBUG: 🔔 Checking for data after refresh notification for '\(bandName)'")
+        
+        // Check if the bandNames dictionary is now populated
+        let bandNamesCount = bandNameHandle.getBandNames().count
+        print("DEBUG: After notification - BandNames dictionary contains \(bandNamesCount) bands")
+        
+        if bandNamesCount == 0 {
+            print("DEBUG: ⚠️ BandNames dictionary still empty after notification - waiting longer")
+            return // Keep loading indicator, data still not ready
+        }
+        
+        // Check data source directly first
+        let testCountry = bandNameHandle.getBandCountry(bandName)
+        let testGenre = bandNameHandle.getBandGenre(bandName)
+        let testPriorYears = bandNameHandle.getPriorYears(bandName)
+        let testOfficial = bandNameHandle.getofficalPage(bandName)
+        
+        print("DEBUG: After notification - direct source check: country='\(testCountry)', genre='\(testGenre)', priorYears='\(testPriorYears)', official='\(testOfficial)'")
+        
+        // Reload the essential data
+        loadBandDetails()
+        loadBandLinks()
+        
+        print("DEBUG: After notification reload - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
+        print("DEBUG: After notification reload - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
+        
+        // Check if we now have data
+        if hasAnyLinks || hasBandDetails {
+            print("DEBUG: ✅ Essential data loaded after refresh notification for '\(bandName)'")
+            isLoadingEssentialData = false
+        } else {
+            print("DEBUG: ⚠️ Data still missing after refresh notification for '\(bandName)'")
         }
     }
     
@@ -260,85 +500,223 @@ class DetailViewModel: ObservableObject {
             self.loadBandData()
         }
         
-        // Post notifications for UI refresh (same as original DetailViewController)
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        // Post targeted notification for UI refresh (avoid full data reload)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+        // Only post RefreshDisplay if we're not just updating attendance status
+        // NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         print("DEBUG: toggleAttendedStatus completed successfully")
     }
     
     func translateText() {
-        guard #available(iOS 18.0, *) else { return }
-        
-        print("DEBUG: Starting native SwiftUI translation for band: \(bandName)")
-        
-        // Set flag to show translation UI
-        showTranslationUI = true
+        // Only allow translation if fully supported
+        if #available(iOS 18.0, *) {
+            guard BandDescriptionTranslator.shared.isTranslationSupported() else { 
+                print("DEBUG: Translation not supported - ignoring translate request")
+                return 
+            }
+            
+            print("DEBUG: Starting SwiftUI translation helper for band: \(bandName)")
+            
+            let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+            let textToTranslate = englishDescriptionText
+            
+            // Show localized loading toast
+            let translatingMessage = BandDescriptionTranslator.shared.getTranslatingMessage(for: currentLangCode)
+            toastManager.show(message: translatingMessage, placeHigh: false)
+            
+            // Use the master branch SwiftUI translation helper approach
+            showSwiftUITranslationHelper(text: textToTranslate, targetLanguage: currentLangCode)
+        } else {
+            print("DEBUG: Translation not supported - iOS version < 18.0")
+        }
     }
     
-    func onTranslationComplete(translatedText: String) {
-        print("DEBUG: Translation completed with text length: \(translatedText.count)")
-        
-        // Update the notes with translated text
-        customNotes = translatedText
-        
-        // Mark as translated and update language preference
-        if #available(iOS 18.0, *) {
+    @available(iOS 18.0, *)
+    private func showSwiftUITranslationHelper(text: String, targetLanguage: String) {
+        guard !text.isEmpty else {
+            print("DEBUG: No text to translate")
             let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
-            BandDescriptionTranslator.shared.currentLanguagePreference = currentLangCode
-            BandDescriptionTranslator.shared.markBandAsTranslated(bandName)
+            let noTextMessage = BandDescriptionTranslator.shared.getTranslationFailedMessage(for: currentLangCode)
+            toastManager.show(message: noTextMessage, placeHigh: false)
+            return
         }
         
-        // Update button state
-        updateTranslationButtonState()
+        print("DEBUG: Creating SwiftUI translation helper for band: \(bandName), target language: \(targetLanguage)")
+        print("DEBUG: Text to translate length: \(text.count)")
         
-        // Hide translation UI
-        showTranslationUI = false
+        // Create the hidden SwiftUI translation helper using the UIHostingController directly
+        let translationHelper = SwiftUITranslationHelper(
+            sourceText: text,
+            bandName: bandName,
+            targetLanguage: targetLanguage
+        ) { [weak self] success in
+            print("DEBUG: Translation completion callback called with success: \(success)")
+            DispatchQueue.main.async {
+                if success {
+                    print("DEBUG: Translation succeeded, loading from disk...")
+                    // Load the translated text from disk and update UI
+                    self?.loadTranslatedTextFromDisk(targetLanguage: targetLanguage)
+                    
+                    // Show localized success message
+                    let successMessage = BandDescriptionTranslator.shared.getTranslatedSuccessMessage(for: targetLanguage)
+                    self?.toastManager.show(message: successMessage, placeHigh: false)
+                } else {
+                    print("DEBUG: Translation failed")
+                    // Show localized failure message
+                    let failureMessage = BandDescriptionTranslator.shared.getTranslationFailedMessage(for: targetLanguage)
+                    self?.toastManager.show(message: failureMessage, placeHigh: false)
+                }
+            }
+        }
         
-        // Show success toast
-        toastManager.show(message: "✅ Translation completed", placeHigh: false)
+        // Create hosting controller and make it visible but tiny to ensure SwiftUI lifecycle
+        let hostingController = UIHostingController(rootView: translationHelper)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        hostingController.view.alpha = 0.01 // Almost invisible but still rendered
+        
+        print("DEBUG: Created SwiftUI translation hosting controller for \(bandName)")
+        
+        // Try to add it to a window to ensure proper SwiftUI lifecycle
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.addSubview(hostingController.view)
+            print("DEBUG: Added translation helper to window")
+        }
+        
+        // Store reference to prevent deallocation
+        self.currentTranslationController = hostingController
+        
+        print("DEBUG: Translation helper setup complete, waiting for translation to finish...")
+        
+        // Remove after a delay to allow translation to complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            print("DEBUG: Cleaning up translation controller after 30 seconds")
+            if let controller = self?.currentTranslationController as? UIHostingController<SwiftUITranslationHelper> {
+                controller.view.removeFromSuperview()
+            }
+            self?.currentTranslationController = nil
+        }
     }
     
-    func restoreToEnglish() {
-        guard #available(iOS 18.0, *) else { return }
-        
-        print("DEBUG: Restoring to English for band: \(bandName)")
-        
-        // Get the current language code to know which cache to delete
-        let currentLanguageCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
-        
-        // Show loading toast
-        toastManager.show(message: "🔄 Restoring to English...", placeHigh: false)
-        
-        // Use the comprehensive restore method
-        BandDescriptionTranslator.shared.restoreToEnglish(
-            for: bandName,
-            currentLanguage: currentLanguageCode,
-            bandNotes: bandNotes
-        ) { [weak self] englishText in
+
+    
+    @available(iOS 18.0, *)
+    private func loadTranslatedTextFromDisk(targetLanguage: String) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Reset language preference to English FIRST
-            BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
-            
-            if let englishText = englishText {
-                // Update both the display text and stored English text
-                self.customNotes = englishText
-                self.englishDescriptionText = englishText
+            do {
+                // Get the documents directory
+                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 
-                print("DEBUG: Successfully restored to English for \(self.bandName)")
-                self.toastManager.show(message: "✅ Restored to English", placeHigh: false)
-            } else {
-                // Fallback to existing English text if download failed
-                self.customNotes = self.englishDescriptionText
-                print("DEBUG: Fallback to existing English text for \(self.bandName)")
-                self.toastManager.show(message: "⚠️ Restored to cached English", placeHigh: false)
+                // Create filename for translated text
+                let normalizedBandName = BandDescriptionTranslator.shared.normalizeBandName(self.bandName)
+                let fileName = "\(normalizedBandName)_comment.note-translated-\(targetLanguage.uppercased())"
+                let fileURL = documentsPath.appendingPathComponent(fileName)
+                
+                // Load from disk
+                let translatedText = try String(contentsOf: fileURL, encoding: .utf8)
+                
+                DispatchQueue.main.async {
+                    // Update the text
+                    self.customNotes = translatedText
+                    
+                    // Set user preference to show they want translated version for this band
+                    BandDescriptionTranslator.shared.setUserPreferredLanguage(for: self.bandName, languageCode: targetLanguage)
+                    
+                    // Update button state to show "Restore to English"
+                    self.updateTranslationButtonState()
+                    
+                    print("DEBUG: Successfully loaded translated text and updated button state")
+                }
+                
+            } catch {
+                print("DEBUG: Could not load translated text from disk: \(error)")
+            }
+        }
+    }
+    
+    @available(iOS 18.0, *)
+    private func loadTranslatedTextFromDiskWithFallback(targetLanguage: String) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                // Get the documents directory
+                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                
+                // Create filename for translated text
+                let normalizedBandName = BandDescriptionTranslator.shared.normalizeBandName(self.bandName)
+                let fileName = "\(normalizedBandName)_comment.note-translated-\(targetLanguage.uppercased())"
+                let fileURL = documentsPath.appendingPathComponent(fileName)
+                
+                // Load from disk
+                let translatedText = try String(contentsOf: fileURL, encoding: .utf8)
+                
+                DispatchQueue.main.async {
+                    // Update the text
+                    self.customNotes = translatedText
+                    
+                    // Set user preference to show they want translated version for this band
+                    BandDescriptionTranslator.shared.setUserPreferredLanguage(for: self.bandName, languageCode: targetLanguage)
+                    
+                    // Update button state to show "Restore to English"
+                    self.updateTranslationButtonState()
+                    
+                    print("DEBUG: Successfully loaded cached translated text and updated button state")
+                }
+                
+            } catch {
+                print("DEBUG: No cached translation found, showing English: \(error)")
+                DispatchQueue.main.async {
+                    // No cached translation, show English and set preference back to English
+                    self.customNotes = self.englishDescriptionText
+                    BandDescriptionTranslator.shared.setUserPreferredLanguage(for: self.bandName, languageCode: "EN")
+                    self.updateTranslationButtonState()
+                }
+            }
+        }
+    }
+    
+
+    
+
+    
+
+    
+    func restoreToEnglish() {
+        // Only allow restore if translation is supported
+        if #available(iOS 18.0, *) {
+            guard BandDescriptionTranslator.shared.isTranslationSupported() else { 
+                print("DEBUG: Translation not supported - ignoring restore request")
+                return 
             }
             
-            // Force a button refresh
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.updateTranslationButtonState()
+            print("DEBUG: Restoring to English for band: \(bandName)")
+            
+            // Set user preference back to English for this band
+            BandDescriptionTranslator.shared.setUserPreferredLanguage(for: bandName, languageCode: "EN")
+            
+            // Restore to English text (use cached if available, otherwise current englishDescriptionText)
+            if let cachedEnglish = BandDescriptionTranslator.shared.getEnglishDescription(for: bandName) {
+                customNotes = cachedEnglish
+            } else {
+                customNotes = englishDescriptionText
             }
+            
+            // Update button state
+            updateTranslationButtonState()
+            
+            // Show localized restore success message
+            let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+            let restoreMessage = BandDescriptionTranslator.shared.getRestoredToEnglishMessage(for: currentLangCode)
+            toastManager.show(message: restoreMessage, placeHigh: false)
+            
+            print("DEBUG: Successfully restored to English for \(bandName)")
+        } else {
+            print("DEBUG: Translation not supported - iOS version < 18.0")
         }
     }
     
@@ -528,6 +906,7 @@ class DetailViewModel: ObservableObject {
         print("Loading image for \(bandName) from URL: \(imageURL)")
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
+            // No valid URL - show placeholder
             DispatchQueue.main.async {
                 self.bandImage = UIImage(named: "70000TonsLogo")
             }
@@ -536,17 +915,67 @@ class DetailViewModel: ObservableObject {
         
         let imageHandle = imageHandler()
         
-        if isInternetAvailable() {
-            let cachedImage = imageHandle.displayImage(urlString: imageURL, bandName: bandName)
+        // Check if cached image exists first (without returning placeholder)
+        // Use versioned cache naming to distinguish old (low quality) from new (high quality) images
+        let dirs = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+        let directoryPath = URL(fileURLWithPath: dirs[0])
+        let oldImageStore = directoryPath.appendingPathComponent(bandName + ".png")      // Old cache format
+        let newImageStore = directoryPath.appendingPathComponent(bandName + "_v2.png")  // New cache format (PNG, no inversion)
+        
+        // Check for new cache first
+        if let newCachedImageData = UIImage(contentsOfFile: newImageStore.path) {
+            // New cache exists - use it immediately
+            print("✅ Using new cached image for \(bandName) - no placeholder needed")
             DispatchQueue.main.async {
-                self.bandImage = cachedImage
+                self.bandImage = newCachedImageData
+            }
+            return
+        }
+        
+        // Check for old cache
+        if FileManager.default.fileExists(atPath: oldImageStore.path) {
+            print("⚠️ Found old cached image for \(bandName)")
+            
+            if isInternetAvailable() {
+                // Internet available - delete old cache and re-download with new format
+                print("🔄 Internet available - deleting old cache and re-downloading for \(bandName)")
+                do {
+                    try FileManager.default.removeItem(at: oldImageStore)
+                    print("✅ Deleted old cached image for \(bandName)")
+                } catch {
+                    print("❌ Error deleting old cached image for \(bandName): \(error)")
+                }
+                // Fall through to download fresh image
+            } else {
+                // No internet - use old cache as fallback
+                print("📡 No internet - using old cached image as fallback for \(bandName)")
+                if let oldCachedImageData = UIImage(contentsOfFile: oldImageStore.path) {
+                    DispatchQueue.main.async {
+                        self.bandImage = oldCachedImageData
+                    }
+                    return
+                }
+            }
+        }
+        
+        // No cache exists - decide whether to show placeholder
+        if isInternetAvailable() {
+            // Show placeholder only while downloading
+            DispatchQueue.main.async {
+                self.bandImage = UIImage(named: "70000TonsLogo")
             }
             
-            if cachedImage == UIImage(named: "70000TonsLogo") {
+            // Only download individual images if not currently doing bulk downloads
+            if !imageHandle.downloadingAllImages {
                 downloadAndCacheImage(imageURL: imageURL, imageHandle: imageHandle)
+            } else {
+                print("⏸️ Skipping individual image download for \(bandName) - bulk download in progress")
             }
         } else {
-            loadImageFromCache(imageURL: imageURL, imageHandle: imageHandle)
+            // No internet and no cache - show placeholder
+            DispatchQueue.main.async {
+                self.bandImage = UIImage(named: "70000TonsLogo")
+            }
         }
     }
     
@@ -564,8 +993,14 @@ class DetailViewModel: ObservableObject {
         }
     }
     
+    private func clearAllCachedImages() {
+        // This method is now deprecated in favor of versioned cache naming
+        // Old images are handled individually when encountered
+        print("⚠️ clearAllCachedImages called but using versioned cache approach instead")
+    }
+    
     private func loadImageFromCache(imageURL: String, imageHandle: imageHandler) {
-        let imageStore = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + ".png"))
+        let imageStore = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + "_v2.png"))
         
         if let imageData = UIImage(contentsOfFile: imageStore.path) {
             let processedImage = imageHandle.processImage(imageData, urlString: imageURL)
@@ -582,8 +1017,16 @@ class DetailViewModel: ObservableObject {
     private func loadBandDetails() {
         print("DEBUG: loadBandDetails() called for band: '\(bandName)'")
         
+        let currentOrientation = UIApplication.shared.statusBarOrientation
+        let deviceType = UIDevice.current.userInterfaceIdiom
+        let isPortrait = currentOrientation == .portrait
+        let isPad = deviceType == .pad
+        let shouldShowData = isPortrait || isPad
+        
+        print("DEBUG: Device check - orientation: \(currentOrientation.rawValue), isPortrait: \(isPortrait), deviceType: \(deviceType.rawValue), isPad: \(isPad), shouldShowData: \(shouldShowData)")
+        
         // Only show details in portrait or on iPad
-        if UIApplication.shared.statusBarOrientation == .portrait || UIDevice.current.userInterfaceIdiom == .pad {
+        if shouldShowData {
             country = bandNameHandle.getBandCountry(bandName)
             genre = bandNameHandle.getBandGenre(bandName)
             lastOnCruise = bandNameHandle.getPriorYears(bandName)
@@ -591,12 +1034,12 @@ class DetailViewModel: ObservableObject {
             
             print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)'")
         } else {
-            // Hide details in landscape on iPhone
+            // Hide details in landscape on iPhone only (iPads always show data)
             country = ""
             genre = ""
             lastOnCruise = ""
             noteWorthy = ""
-            print("DEBUG: loadBandDetails() for '\(bandName)' - hiding details in landscape")
+            print("DEBUG: loadBandDetails() for '\(bandName)' - hiding details (iPhone in landscape)")
         }
     }
     
@@ -799,29 +1242,31 @@ class DetailViewModel: ObservableObject {
     }
     
     private func displayDescriptionInCurrentLanguage() {
-        guard #available(iOS 18.0, *) else { return }
-        
-        let currentLanguageCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
-        
-        if currentLanguageCode != "EN" &&
-           BandDescriptionTranslator.shared.hasTranslatedCacheFile(for: bandName, targetLanguage: currentLanguageCode) {
-            
-            BandDescriptionTranslator.shared.loadTranslatedTextFromDisk(for: bandName, targetLanguage: currentLanguageCode) { [weak self] translatedText in
-                if let translatedText = translatedText {
-                    self?.customNotes = translatedText
-                    BandDescriptionTranslator.shared.currentLanguagePreference = currentLanguageCode
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        self?.updateTranslationButtonState()
-                    }
-                } else {
-                    self?.customNotes = self?.englishDescriptionText ?? ""
-                    BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
-                }
+        // If translation is not supported, always show English and exit early
+        if #available(iOS 18.0, *) {
+            guard BandDescriptionTranslator.shared.isTranslationSupported() else {
+                customNotes = englishDescriptionText
+                return
             }
+            
+            // Store English version for future use
+            BandDescriptionTranslator.shared.storeEnglishDescription(for: bandName, text: englishDescriptionText)
+            
+            // Get user's preferred language for this specific band (defaults to English)
+            let userPreferredLang = BandDescriptionTranslator.shared.getUserPreferredLanguage(for: bandName)
+            
+            if userPreferredLang == "EN" {
+                // User prefers English for this band
+                customNotes = englishDescriptionText
+                updateTranslationButtonState()
+                return
+            }
+            
+            // User prefers translated version - check if we have cached translation on disk
+            loadTranslatedTextFromDiskWithFallback(targetLanguage: userPreferredLang)
         } else {
+            // iOS < 18.0, always show English
             customNotes = englishDescriptionText
-            BandDescriptionTranslator.shared.currentLanguagePreference = "EN"
         }
     }
     
@@ -845,8 +1290,9 @@ class DetailViewModel: ObservableObject {
         bandPriorityStorage[bandName] = selectedPriority
         dataHandle.addPriorityData(bandName, priority: selectedPriority)
         
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        // Post targeted notification for priority changes (avoid full data reload)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+        // NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         if UIDevice.current.userInterfaceIdiom == .pad {
             masterView?.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
@@ -854,18 +1300,12 @@ class DetailViewModel: ObservableObject {
     }
     
     private func setupTranslationButton() {
-        guard #available(iOS 18.0, *) else {
+        // Use comprehensive support check that handles iOS version, language, and feature availability
+        if #available(iOS 18.0, *) {
+            showTranslationButton = BandDescriptionTranslator.shared.isTranslationSupported()
+        } else {
             showTranslationButton = false
-            return
         }
-        
-        guard BandDescriptionTranslator.shared.isTranslationSupported() else {
-            showTranslationButton = false
-            return
-        }
-        
-        let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
-        showTranslationButton = currentLangCode != "EN"
         
         if showTranslationButton {
             updateTranslationButtonState()
@@ -873,18 +1313,29 @@ class DetailViewModel: ObservableObject {
     }
     
     private func updateTranslationButtonState() {
-        guard #available(iOS 18.0, *) else { return }
-        
-        let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
-        let currentText = customNotes
-        
-        isCurrentTextTranslated = isCurrentTextActuallyTranslated(currentText: currentText) ||
-                                  (currentLangCode != "EN" && BandDescriptionTranslator.shared.hasTranslatedCacheFile(for: bandName, targetLanguage: currentLangCode))
-        
-        if isCurrentTextTranslated {
-            restoreButtonText = BandDescriptionTranslator.shared.getLocalizedRestoreButtonText(for: currentLangCode)
-        } else {
-            translateButtonText = BandDescriptionTranslator.shared.getLocalizedTranslateButtonText(for: currentLangCode)
+        // Only update button state if translation is supported
+        if #available(iOS 18.0, *) {
+            guard BandDescriptionTranslator.shared.isTranslationSupported() else { return }
+            
+            let currentLangCode = BandDescriptionTranslator.shared.getCurrentLanguageCode()
+            
+            // Check if the current text is actually translated by looking for translation headers
+            isCurrentTextTranslated = isCurrentTextActuallyTranslated(currentText: customNotes)
+            
+            print("DEBUG: updateTranslationButtonState - isCurrentTextTranslated: \(isCurrentTextTranslated)")
+            print("DEBUG: Current customNotes preview: '\(String(customNotes.prefix(100)))...'")
+            
+            if isCurrentTextTranslated {
+                // Currently showing translated text - show restore button
+                restoreButtonText = BandDescriptionTranslator.shared.getLocalizedRestoreButtonText(for: currentLangCode)
+                translateButtonText = "" // Clear translate button text
+                print("DEBUG: Button state: RESTORE - '\(restoreButtonText)'")
+            } else {
+                // Currently showing English text - show translate button
+                translateButtonText = BandDescriptionTranslator.shared.getLocalizedTranslateButtonText(for: currentLangCode)
+                restoreButtonText = "" // Clear restore button text
+                print("DEBUG: Button state: TRANSLATE - '\(translateButtonText)'")
+            }
         }
     }
     
@@ -901,11 +1352,11 @@ class DetailViewModel: ObservableObject {
         let translatedFromEnglishTexts = [
             "Translated from English",
             "Aus dem Englischen übersetzt",
-            "Vertaald uit het Engels",
             "Traduit de l'anglais",
             "Käännetty englannista",
             "Traduzido do inglês",
-            "Traducido del inglés"
+            "Traducido del inglés",
+            "Oversat fra engelsk"
         ]
         
         for translatedText in translatedFromEnglishTexts {
@@ -1094,9 +1545,9 @@ class DetailViewModel: ObservableObject {
                 self.objectWillChange.send()
             }
             
-            // Post notifications for UI refresh
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            // Post targeted notification for notes changes (avoid full data reload)
             NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
+            // NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         }
     }
     
@@ -1106,6 +1557,208 @@ class DetailViewModel: ObservableObject {
     
     private func showToast(message: String) {
         toastManager.show(message: message, placeHigh: false)
+    }
+    
+    // MARK: - Web Browser Methods
+    
+    /// Opens a URL in SwiftUI web view for detail links
+    func openExternalBrowser(url: String) {
+        guard !url.isEmpty else {
+            print("ERROR: Attempted to open empty URL")
+            return
+        }
+        
+        print("DEBUG: Opening URL in SwiftUI web view: \(url)")
+        
+        // Get the hosting controller from the view hierarchy
+        guard let hostingController = getHostingController() else {
+            print("ERROR: Could not find hosting controller to present web view")
+            return
+        }
+        
+        // Create the appropriate SwiftUI web view based on URL
+        guard let urlObject = URL(string: url) else {
+            print("ERROR: Invalid URL: \(url)")
+            return
+        }
+        
+        let title: String
+        if url.contains("metal-archives.com") || url.contains("metallum") {
+            title = "Metal Archives"
+        } else if url.contains("wikipedia.org") {
+            title = "Wikipedia"
+        } else if url.contains("youtube.com") || url.contains("youtu.be") {
+            title = "YouTube"
+        } else {
+            title = "Official Website"
+        }
+        
+        // Create SwiftUI web view directly
+        let swiftUIWebView = SwiftUIWebView(url: urlObject, title: title)
+        
+        // Present the SwiftUI web view
+        let hostingWebViewController = UIHostingController(rootView: swiftUIWebView)
+        hostingWebViewController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
+        
+        // Ensure dark navigation bar appearance on the hosting controller
+        hostingWebViewController.overrideUserInterfaceStyle = .dark
+        
+        hostingController.present(hostingWebViewController, animated: true)
+        
+        print("Successfully presented SwiftUI web view for: \(url)")
+    }
+    
+    /// Opens URL in external browser (Safari) - used for hyperlinks in notes
+    func openInExternalBrowser(url: String) {
+        guard !url.isEmpty else {
+            print("ERROR: Attempted to open empty URL")
+            return
+        }
+        
+        print("DEBUG: Opening URL in external browser: \(url)")
+        
+        guard let urlObject = URL(string: url) else {
+            print("ERROR: Invalid URL: \(url)")
+            return
+        }
+        
+        if UIApplication.shared.canOpenURL(urlObject) {
+            UIApplication.shared.open(urlObject, options: [:]) { success in
+                if success {
+                    print("Successfully opened URL in external browser: \(url)")
+                } else {
+                    print("Failed to open URL in external browser: \(url)")
+                }
+            }
+        } else {
+            print("Cannot open URL: \(url)")
+        }
+    }
+    
+    /// Opens stats report in SwiftUI web view with proper caching behavior
+    func openStatsReport(languageCode: String = "en") {
+        print("DEBUG: Opening stats report for language: \(languageCode)")
+        
+        // Get the hosting controller from the view hierarchy
+        guard let hostingController = getHostingController() else {
+            print("ERROR: Could not find hosting controller to present stats")
+            return
+        }
+        
+        // Get the cache file path for stats
+        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("ERROR: Could not access documents directory")
+            return
+        }
+        
+        let cacheFileName = "stats_report_\(languageCode).html"
+        let cacheFileURL = documentsPath.appendingPathComponent(cacheFileName)
+        
+        // STEP 1: Display cached version immediately if available
+        let hasCachedContent = FileManager.default.fileExists(atPath: cacheFileURL.path)
+        
+        if hasCachedContent {
+            print("📄 Displaying cached stats report immediately")
+            presentStatsWebView(url: cacheFileURL.absoluteString, title: "Stats Report")
+        } else {
+            print("📄 No cached stats available, will show content after download")
+        }
+        
+        // STEP 2: Download latest version in background
+        downloadLatestStatsReport(languageCode: languageCode, cacheFileURL: cacheFileURL, hasCachedContent: hasCachedContent)
+    }
+    
+    /// Downloads the latest stats report and refreshes the display
+    private func downloadLatestStatsReport(languageCode: String, cacheFileURL: URL, hasCachedContent: Bool) {
+        // Get the remote stats URL based on language
+        let statsUrlKey = languageCode == "en" ? "reportUrl" : "reportUrl-\(languageCode)"
+        let remoteStatsUrl = getPointerUrlData(keyValue: statsUrlKey)
+        
+        guard !remoteStatsUrl.isEmpty, let url = URL(string: remoteStatsUrl) else {
+            print("⚠️ No valid stats URL found for language: \(languageCode)")
+            if !hasCachedContent {
+                showToast(message: "Stats not available for \(languageCode.uppercased())")
+            }
+            return
+        }
+        
+        print("🔄 Downloading latest stats from: \(remoteStatsUrl)")
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Failed to download stats: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    if !hasCachedContent {
+                        self.showToast(message: "Failed to load stats")
+                    }
+                }
+                return
+            }
+            
+            guard let data = data else {
+                print("❌ No data received for stats")
+                return
+            }
+            
+            // STEP 3: Save to cache and refresh display
+            do {
+                try data.write(to: cacheFileURL)
+                print("✅ Stats cache updated successfully")
+                
+                DispatchQueue.main.async {
+                    if hasCachedContent {
+                        // Refresh existing web view
+                        self.refreshCurrentStatsWebView(with: cacheFileURL)
+                    } else {
+                        // Show web view for the first time
+                        self.presentStatsWebView(url: cacheFileURL.absoluteString, title: "Stats Report")
+                    }
+                }
+            } catch {
+                print("❌ Failed to save stats cache: \(error.localizedDescription)")
+            }
+        }
+        
+        task.resume()
+    }
+    
+    /// Presents the stats web view
+    private func presentStatsWebView(url: String, title: String) {
+        guard let hostingController = getHostingController() else {
+            print("ERROR: Could not find hosting controller to present stats")
+            return
+        }
+        
+        guard let fileURL = URL(string: url) else {
+            print("ERROR: Invalid stats URL: \(url)")
+            return
+        }
+        
+        let statsWebView = SwiftUIWebView(url: fileURL, title: title)
+        let hostingWebViewController = UIHostingController(rootView: statsWebView)
+        hostingWebViewController.modalPresentationStyle = UIModalPresentationStyle.pageSheet
+        hostingWebViewController.overrideUserInterfaceStyle = .dark
+        
+        hostingController.present(hostingWebViewController, animated: true)
+        print("✅ Successfully presented SwiftUI stats web view")
+    }
+    
+    /// Refreshes the currently displayed stats web view
+    private func refreshCurrentStatsWebView(with fileURL: URL) {
+        // Find the currently presented web view and refresh it
+        guard let hostingController = getHostingController(),
+              let presentedController = hostingController.presentedViewController as? UIHostingController<SwiftUIWebView> else {
+            print("⚠️ No current stats web view found to refresh")
+            return
+        }
+        
+        print("🔄 Refreshing current stats web view with updated content")
+        
+        // Create a new SwiftUI view with the updated URL
+        let refreshedWebView = SwiftUIWebView(url: fileURL, title: "Stats Report")
+        presentedController.rootView = refreshedWebView
     }
 }
 
@@ -1117,5 +1770,229 @@ extension String {
     
     func isDouble() -> Bool {
         return Double(self) != nil
+    }
+}
+
+// MARK: - SwiftUI Web View
+struct SwiftUIWebView: View {
+    let url: URL
+    let title: String
+    @State private var webView: WKWebView = WKWebView()
+    @State private var isLoading: Bool = true
+    @State private var progress: Double = 0.0
+    @State private var canGoBack: Bool = false
+    @State private var canGoForward: Bool = false
+    @Environment(\.presentationMode) var presentationMode
+    
+    init(url: URL, title: String) {
+        self.url = url
+        self.title = title
+        
+        // Set navigation bar appearance immediately on init
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.black
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().tintColor = UIColor.white
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Progress Bar
+                if isLoading && progress < 1.0 {
+                    ProgressView(value: progress)
+                        .progressViewStyle(.linear)
+                        .tint(.green)
+                        .frame(height: 2)
+                }
+                
+                // WebView
+                WebViewRepresentable(
+                    webView: webView,
+                    url: url,
+                    isLoading: $isLoading,
+                    progress: $progress,
+                    canGoBack: $canGoBack,
+                    canGoForward: $canGoForward
+                )
+                .equatable() // Prevent unnecessary updates
+                .background(Color.black)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(.white)
+                    .font(.system(size: 17, weight: .semibold))
+                    .background(Color.clear)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: 16) {
+                        // Back button
+                        Button(action: {
+                            webView.goBack()
+                        }) {
+                            Image(systemName: "chevron.backward")
+                                .foregroundColor(canGoBack ? .white : .gray)
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .disabled(!canGoBack)
+                        
+                        // Forward button
+                        Button(action: {
+                            webView.goForward()
+                        }) {
+                            Image(systemName: "chevron.forward")
+                                .foregroundColor(canGoForward ? .white : .gray)
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        .disabled(!canGoForward)
+                        
+                        // Reload button
+                        Button(action: {
+                            webView.reload()
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(.white)
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                    }
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
+        .preferredColorScheme(.dark)
+    }
+}
+
+// MARK: - WebKit UIViewRepresentable
+struct WebViewRepresentable: UIViewRepresentable, Equatable {
+    let webView: WKWebView
+    let url: URL
+    @Binding var isLoading: Bool
+    @Binding var progress: Double
+    @Binding var canGoBack: Bool
+    @Binding var canGoForward: Bool
+    
+    // Equatable implementation to prevent unnecessary updates
+    static func == (lhs: WebViewRepresentable, rhs: WebViewRepresentable) -> Bool {
+        return lhs.url == rhs.url // Only update if URL actually changes
+    }
+    
+    func makeUIView(context: Context) -> WKWebView {
+        webView.navigationDelegate = context.coordinator
+        webView.allowsBackForwardNavigationGestures = true
+        webView.scrollView.backgroundColor = .black
+        webView.backgroundColor = .black
+        
+        // Configure user agent for better compatibility
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        
+        // Add observers for loading state and progress
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.isLoading), options: .new, context: nil)
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.canGoBack), options: .new, context: nil)
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.canGoForward), options: .new, context: nil)
+        
+        // Create request with proper headers
+        var request = URLRequest(url: url)
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        
+        // Load the URL once
+        print("DEBUG: Loading URL in WKWebView: \(url.absoluteString)")
+        webView.load(request)
+        
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        // Don't reload - the URL is loaded once in makeUIView
+        // Reloading here causes infinite loops
+        print("DEBUG: SwiftUI called updateUIView (but not reloading)")
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: WebViewRepresentable
+        
+        init(_ parent: WebViewRepresentable) {
+            self.parent = parent
+        }
+        
+        deinit {
+            // Clean up observers
+            parent.webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.isLoading))
+            parent.webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
+            parent.webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.canGoBack))
+            parent.webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.canGoForward))
+        }
+        
+        // Observe changes in WKWebView properties
+        override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            DispatchQueue.main.async {
+                if keyPath == #keyPath(WKWebView.isLoading) {
+                    self.parent.isLoading = self.parent.webView.isLoading
+                } else if keyPath == #keyPath(WKWebView.estimatedProgress) {
+                    self.parent.progress = self.parent.webView.estimatedProgress
+                } else if keyPath == #keyPath(WKWebView.canGoBack) {
+                    self.parent.canGoBack = self.parent.webView.canGoBack
+                } else if keyPath == #keyPath(WKWebView.canGoForward) {
+                    self.parent.canGoForward = self.parent.webView.canGoForward
+                }
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = true
+                self.parent.progress = 0.0
+            }
+            print("DEBUG: WebView started loading: \(webView.url?.absoluteString ?? "unknown")")
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = false
+                self.parent.progress = 1.0
+            }
+            print("DEBUG: WebView finished loading: \(webView.url?.absoluteString ?? "unknown")")
+        }
+        
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = false
+            }
+            print("ERROR: WebView provisional navigation failed: \(error.localizedDescription)")
+            print("ERROR: Failed URL: \(webView.url?.absoluteString ?? "unknown")")
+            if let nsError = error as NSError? {
+                print("ERROR: Error code: \(nsError.code), domain: \(nsError.domain)")
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            DispatchQueue.main.async {
+                self.parent.isLoading = false
+            }
+            print("ERROR: WebView navigation failed: \(error.localizedDescription)")
+            print("ERROR: Failed URL: \(webView.url?.absoluteString ?? "unknown")")
+            if let nsError = error as NSError? {
+                print("ERROR: Error code: \(nsError.code), domain: \(nsError.domain)")
+            }
+        }
     }
 }

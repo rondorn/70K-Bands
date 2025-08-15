@@ -37,8 +37,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var bandSearch: UISearchBar!
         
-    let schedule = scheduleHandler()
-    let bandNameHandle = bandNamesHandler()
+    let schedule = scheduleHandler.shared
+    let bandNameHandle = bandNamesHandler.shared
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
@@ -1642,11 +1642,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     popover.permittedArrowDirections = [.up, .down]
                 }
                
-                let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
+                let goToDetails = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
                    print("Go To Details - SwiftUI")
                    self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
                 }
-                alert.addAction(goToDeatils)
+                alert.addAction(goToDetails)
 
                 let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
 
@@ -1726,11 +1726,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     popover.permittedArrowDirections = [.up, .down]
                 }
                
-                let goToDeatils = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
+                let goToDetails = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
                    print("Go To Details - SwiftUI")
                    self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
                 }
-                alert.addAction(goToDeatils)
+                alert.addAction(goToDetails)
 
                 let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
 
@@ -1751,12 +1751,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
 
                 if (currentAttendedStatus != sawNoneStatus){
-                   let didNotAttendChoice = UIAlertAction.init(title: NSLocalizedString("Did Not Attend", comment: ""), style: .default) { _ in
+                   let didNotAttendChoice = UIAlertAction.init(title: NSLocalizedString("None Of Event", comment: ""), style: .default) { _ in
                       print("You Did Not Attend")
                        self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus, correctBandName: bandName)
                    }
                    alert.addAction(didNotAttendChoice)
                 }
+                
+                let disablePrompt = UIAlertAction.init(title: NSLocalizedString("disableAttendedPrompt", comment: ""), style: .default) { _ in
+                    setPromptForAttended(false)
+                }
+                alert.addAction(disablePrompt)
 
                 let cancelAction = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
                    print("Cancel")
