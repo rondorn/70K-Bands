@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 open class bandNamesHandler {
     
@@ -90,7 +91,32 @@ open class bandNamesHandler {
         }
     }
     
+    /// Calculates SHA256 checksum of a string
+    private func calculateChecksum(_ data: String) -> String {
+        let inputData = Data(data.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.compactMap { String(format: "%02x", $0) }.joined()
+    }
+    
+    /// Gets the stored checksum for the current band data file
+    private func getStoredChecksum() -> String? {
+        let checksumFile = getDocumentsDirectory().appendingPathComponent("bandFile.checksum")
+        return try? String(contentsOfFile: checksumFile, encoding: .utf8)
+    }
+    
+    /// Stores the checksum for the band data file
+    private func storeChecksum(_ checksum: String) {
+        let checksumFile = getDocumentsDirectory().appendingPathComponent("bandFile.checksum")
+        do {
+            try checksum.write(toFile: checksumFile, atomically: true, encoding: .utf8)
+            print("✅ Stored band data checksum: \(String(checksum.prefix(8)))...")
+        } catch {
+            print("❌ Error storing band data checksum: \(error)")
+        }
+    }
+    
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
+    /// Uses checksum comparison to avoid unnecessary cache rebuilds when data hasn't changed.
     /// Calls completion handler when done.
     func gatherData(completion: (() -> Void)? = nil) {
         // Prevent concurrent band data loading
@@ -101,32 +127,57 @@ open class bandNamesHandler {
         }
         
         isLoadingBandData = true
-        var newDataDownloaded = false
+        var dataChanged = false
         var newDataValid = false
         
         if isInternetAvailable() == true {
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
-            print ("Loading bandName Data gatherData")
+            print ("🔄 Loading bandName Data gatherData with checksum validation")
             var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-            print ("Getting band data from " + artistUrl);
+            print ("📥 Downloading band data from " + artistUrl);
             let httpData = getUrlData(urlString: artistUrl)
-            print ("Getting band data of " + httpData);
+            print ("📊 Downloaded band data size: \(httpData.count) characters");
             
-            // Only write new data if it's not empty and appears valid
+            // Only proceed if data appears valid
             if (httpData.isEmpty == false && httpData.count > 100) { // Basic validation
-                newDataDownloaded = true
                 newDataValid = true
-                writeBandFile(httpData);
-                print("Successfully downloaded and wrote new band data")
+                
+                // Calculate checksum of new data
+                let newChecksum = calculateChecksum(httpData)
+                let storedChecksum = getStoredChecksum()
+                
+                print ("🔍 New data checksum: \(String(newChecksum.prefix(8)))...")
+                if let stored = storedChecksum {
+                    print ("🔍 Stored checksum: \(String(stored.prefix(8)))...")
+                } else {
+                    print ("🔍 No stored checksum found (first run or missing)")
+                }
+                
+                // Compare checksums to determine if data has changed
+                if storedChecksum != newChecksum {
+                    print("✅ Data has changed - updating cache and files")
+                    dataChanged = true
+                    
+                    // Write new data to permanent location
+                    writeBandFile(httpData)
+                    
+                    // Store new checksum
+                    storeChecksum(newChecksum)
+                    
+                    print("📝 Successfully updated band data and stored new checksum")
+                } else {
+                    print("⏭️ Data unchanged - skipping cache rebuild (checksum match)")
+                    dataChanged = false
+                }
             } else {
-                print ("Internet is down or data is invalid, keeping existing data")
-                newDataDownloaded = false
+                print ("❌ Internet is down or data is invalid, keeping existing data")
                 newDataValid = false
+                dataChanged = false
             }
         } else {
-            print("No internet available, keeping existing data")
-            newDataDownloaded = false
+            print("📡 No internet available, keeping existing data")
             newDataValid = false
+            dataChanged = false
         }
         
         // Always read the band file (either new or existing)
@@ -195,14 +246,17 @@ open class bandNamesHandler {
         if !isEmpty {
             print("Band data available (new or existing), setting justLaunched to false.")
             cacheVariables.justLaunched = false
-            populateCache(completion: completion)
             
-            // Check if combined image list needs regeneration after artist data is loaded
-            if newDataDownloaded {
-                print("[YEAR_CHANGE_DEBUG] Artist data downloaded from URL, checking if combined image list needs regeneration")
+            // Only rebuild cache if data actually changed
+            if dataChanged {
+                print("🔄 Data changed - rebuilding cache")
+                populateCache(completion: completion)
+                
+                // Check if combined image list needs regeneration after artist data is loaded
+                print("[CHECKSUM_DEBUG] Artist data changed, checking if combined image list needs regeneration")
                 let scheduleHandle = scheduleHandler.shared
                 if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: self, scheduleHandle: scheduleHandle) {
-                    print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new artist data")
+                    print("[CHECKSUM_DEBUG] Regenerating combined image list due to changed artist data")
                     CombinedImageListHandler.shared.generateCombinedImageList(
                         bandNameHandle: self,
                         scheduleHandle: scheduleHandle
@@ -210,6 +264,10 @@ open class bandNamesHandler {
                         print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after artist data load")
                     }
                 }
+            } else {
+                print("⏭️ Data unchanged - using existing cache")
+                // Data hasn't changed, just call completion
+                completion?()
             }
         } else if !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")
