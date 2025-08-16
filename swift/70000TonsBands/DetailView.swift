@@ -209,10 +209,10 @@ struct DetailView: View {
                     .frame(maxHeight: 90) // 25% smaller (120 * 0.75 = 90)
                     .frame(maxWidth: .infinity)
             } else {
-                Image("70000TonsLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxHeight: 90) // 25% smaller (120 * 0.75 = 90)
+                // Keep image area empty (no placeholder) - let the space exist but be invisible
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(maxHeight: 90)
                     .frame(maxWidth: .infinity)
             }
         }

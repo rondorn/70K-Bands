@@ -906,7 +906,8 @@ class DetailViewModel: ObservableObject {
         print("Loading image for \(bandName) from URL: \(imageURL)")
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
-            // No valid URL - show placeholder
+            // No valid URL - show placeholder only if absolutely necessary
+            print("❌ No valid URL for \(bandName) - showing placeholder")
             DispatchQueue.main.async {
                 self.bandImage = UIImage(named: "70000TonsLogo")
             }
@@ -958,35 +959,37 @@ class DetailViewModel: ObservableObject {
             }
         }
         
-        // No cache exists - decide whether to show placeholder
+        // No cache exists - attempt download without showing placeholder first
         if isInternetAvailable() {
-            // Show placeholder only while downloading
-            DispatchQueue.main.async {
-                self.bandImage = UIImage(named: "70000TonsLogo")
-            }
-            
             // Only download individual images if not currently doing bulk downloads
             if !imageHandle.downloadingAllImages {
+                print("🔄 No cache found - attempting download for \(bandName)")
                 downloadAndCacheImage(imageURL: imageURL, imageHandle: imageHandle)
             } else {
                 print("⏸️ Skipping individual image download for \(bandName) - bulk download in progress")
+                // Don't show placeholder during bulk download - let it load when bulk completes
             }
         } else {
-            // No internet and no cache - show placeholder
-            DispatchQueue.main.async {
-                self.bandImage = UIImage(named: "70000TonsLogo")
-            }
+            // No internet and no cache - keep image area empty for now
+            // Only show placeholder if user explicitly needs visual feedback
+            print("📡 No internet and no cache for \(bandName) - keeping image area empty")
+            // Don't set bandImage to anything - let it remain nil (empty)
         }
     }
     
     private func downloadAndCacheImage(imageURL: String, imageHandle: imageHandler) {
+        // Keep image area empty during download - don't set bandImage to anything initially
+        print("🔄 Starting download for \(bandName) - keeping image area empty")
+        
         imageHandle.downloadAndCacheImage(urlString: imageURL, bandName: bandName) { [weak self] processedImage in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
                 if let image = processedImage {
+                    print("✅ Download successful for \(self.bandName) - displaying image")
                     self.bandImage = image
                 } else {
+                    print("❌ Download failed for \(self.bandName) - showing placeholder")
                     self.bandImage = UIImage(named: "70000TonsLogo")
                 }
             }
