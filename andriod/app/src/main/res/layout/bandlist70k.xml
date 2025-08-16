@@ -41,7 +41,7 @@
         android:layout_height="35dp"
         android:width="35dp"
         android:height="35dp"
-        android:layout_marginLeft="300dp"
+        android:layout_marginLeft="350dp"
         android:layout_marginTop="19dp"
         android:background="#FF000000"
         android:src="@drawable/icon_going_yes"
@@ -66,7 +66,7 @@
         android:maxLines="1"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        app:layout_widthPercent="80%"
+        app:layout_widthPercent="70%"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="1dp" />
 
@@ -148,8 +148,8 @@
         android:layout_alignParentTop="true"
         android:layout_marginTop="8dp"
         android:height="30dp"
-        android:autoSizeMaxTextSize="100sp"
-        android:autoSizeMinTextSize="10sp"
+        android:autoSizeMaxTextSize="90sp"
+        android:autoSizeMinTextSize="9sp"
         android:autoSizeStepGranularity="2sp"
         android:autoSizeTextType="uniform"
         android:ellipsize="end"
@@ -161,9 +161,9 @@
         android:textColor="#FFFFFF"
         android:textSize="8pt"
         android:textStyle="bold"
-        app:layout_widthPercent="22%"
+        app:layout_widthPercent="25%"
         android:layout_alignParentLeft="true"
-        android:layout_marginLeft="237dp" />
+        android:layout_marginLeft="247dp" />
 
     <TextView
         android:id="@+id/endTimeInCell"
@@ -173,8 +173,8 @@
         android:layout_alignParentTop="true"
         android:layout_marginTop="35dp"
         android:height="30dp"
-        android:autoSizeMaxTextSize="100sp"
-        android:autoSizeMinTextSize="10sp"
+        android:autoSizeMaxTextSize="90sp"
+        android:autoSizeMinTextSize="9sp"
         android:autoSizeStepGranularity="2sp"
         android:autoSizeTextType="uniform"
         android:ellipsize="end"
@@ -186,9 +186,9 @@
         android:textColor="#5d5d5d"
         android:textSize="8pt"
         android:textStyle="bold"
-        app:layout_widthPercent="22%"
+        app:layout_widthPercent="25%"
         android:layout_alignParentLeft="true"
-        android:layout_marginLeft="237dp" />
+        android:layout_marginLeft="247dp" />
 
     <TextView
         android:id="@+id/dayLabelInCell"
