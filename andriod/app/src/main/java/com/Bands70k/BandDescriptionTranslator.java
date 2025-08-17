@@ -1059,7 +1059,7 @@ public class BandDescriptionTranslator {
         
         for (String bandName : bandNames) {
             // SAFETY CHECK: Stop bulk translation if app comes back to foreground
-            if (!showBands.inBackground) {
+            if (!Bands70k.isAppInBackground()) {
                 Log.d("TranslationCache", "BLOCKED: App returned to foreground, stopping bulk translation");
                 callback.onError("Bulk translation stopped - app returned to foreground");
                 return;

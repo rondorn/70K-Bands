@@ -321,11 +321,13 @@ public class BandInfo {
 
     /**
      * Downloads the band file and parses it, also downloads the schedule file.
+     * Uses hash-based caching to only process files when content has changed.
      * @return ArrayList of band names.
      */
     public ArrayList<String> DownloadBandFile(){
 
         getDownloadtUrls();
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
 
         System.out.println("in DownloadBandFile " +  isRunningInTestHarness());
         if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper())
@@ -337,6 +339,11 @@ public class BandInfo {
                 getDownloadtUrls();
             }
             System.out.println("inside DownloadBandFile " + downloadUrls.get("artistUrl"));
+            
+            // Create temp file for hash comparison
+            File tempBandInfo = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandInfo.csv.temp");
+            boolean downloadSuccessful = false;
+            
             try {
                 URL u = new URL(downloadUrls.get("artistUrl"));
                 InputStream is = u.openStream();
@@ -346,11 +353,17 @@ public class BandInfo {
                 byte[] buffer = new byte[1024];
                 int length;
 
-                FileOutputStream fos = new FileOutputStream(FileHandler70k.bandInfo);
+                // Download to temp file first
+                FileOutputStream fos = new FileOutputStream(tempBandInfo);
                 while ((length = dis.read(buffer)) > 0) {
                     fos.write(buffer, 0, length);
                 }
-
+                fos.close();
+                dis.close();
+                is.close();
+                
+                downloadSuccessful = true;
+                Log.d("BandInfo", "Successfully downloaded band data to temp file");
 
             } catch (MalformedURLException mue) {
                 Log.e("SYNC getUpdate", "malformed url error", mue);
@@ -358,9 +371,23 @@ public class BandInfo {
                 Log.e("SYNC getUpdate", "io error", ioe);
             } catch (SecurityException se) {
                 Log.e("SYNC getUpdate", "security error", se);
-
             } catch (Exception generalError) {
                 Log.e("General Exception", "Downloading bandData", generalError);
+            }
+            
+            // Process temp file only if download was successful and content changed
+            if (downloadSuccessful) {
+                boolean dataChanged = cacheManager.processIfChanged(tempBandInfo, FileHandler70k.bandInfo, "bandInfo");
+                if (dataChanged) {
+                    Log.i("BandInfo", "Band data has changed, processed new file");
+                } else {
+                    Log.i("BandInfo", "Band data unchanged, using cached version");
+                }
+            } else {
+                // Clean up temp file on download failure
+                if (tempBandInfo.exists()) {
+                    tempBandInfo.delete();
+                }
             }
         }
 

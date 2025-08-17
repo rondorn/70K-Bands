@@ -107,7 +107,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public Button filterMenuButton;
     public Button willAttendFilterButton;
 
-    public static Boolean inBackground = false;
+    // Background detection is now handled at Application level using ActivityLifecycleCallbacks
     public static Boolean appFullyInitialized = false;
     
     // Flag to track when returning from stats page to avoid blocking refresh
@@ -292,6 +292,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         bandNamesPullRefresh.setRefreshing(true);
                         bandInfo = new BandInfo();
                         staticVariables.loadingNotes = false;
+                        
+                        // Refresh description map cache on pull to refresh
+                        // This updates the cache with band names and description URLs (not actual descriptions)
+                        Log.d("DescriptionMap", "Refreshing description map cache on pull to refresh");
+                        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                        descHandler.getDescriptionMap();
+                        
                         refreshNewData();
                         reloadData();
 
@@ -1045,16 +1052,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         scheduleAlertHandler alerts = new scheduleAlertHandler();
         alerts.execute();
 
-        // Generate combined image list after data is loaded (lightweight URL list creation)
-        // This is metadata processing, not actual image downloading
-        Log.d("refreshNewData", "Generating combined image list (URLs only, no downloads)");
-        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
-        combinedHandler.generateCombinedImageList(bandInfo, new Runnable() {
-            @Override
-            public void run() {
-                Log.d("refreshNewData", "Combined image list generation completed (no downloads)");
-            }
-        });
+        // Combined image list regeneration is now handled automatically when band/schedule data changes
+        // This prevents unnecessary regeneration when data hasn't actually changed
+        Log.d("refreshNewData", "Combined image list will be regenerated only if underlying data changed");
 
         Log.d("refreshNewData", "refreshNewData - 3");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
@@ -1079,17 +1079,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     @Override
     public void onStop() {
         super.onStop();
-        inBackground = true;
-        Log.d("BackgroundFlag", "inBackground set to TRUE in onStop()");
         
-        // Start background loading when app truly goes to background (not just switching activities)
-        Log.d("BackgroundLoading", "App going to background, starting bulk downloads");
-        CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
-        descriptionHandler.startBackgroundLoadingOnPause();
+        Log.d("BackgroundFlag", "onStop() called - using proper Application-level background detection");
         
-        ImageHandler imageHandler = ImageHandler.getInstance();
-        imageHandler.startBackgroundLoadingOnPause();
+        // Background detection is now handled properly at the Application level using ActivityLifecycleCallbacks
+        // This prevents inappropriate bulk loading during internal navigation (main list ↔ details screen)
+        // and only starts bulk loading when the ENTIRE app goes to background
         
+        // Only run essential background tasks
         FireBaseAsyncBandEventWrite backgroundTask = new FireBaseAsyncBandEventWrite();
         backgroundTask.execute();
     }
@@ -1547,9 +1544,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         super.onResume();
 
         Log.d("DisplayListData", "On Resume refreshNewData");
-        inBackground = false;
+        
         appFullyInitialized = true;
-        Log.d("BackgroundFlag", "inBackground set to FALSE in onResume(), appFullyInitialized = TRUE");
+        Log.d("BackgroundFlag", "appFullyInitialized = TRUE (background detection handled at Application level)");
 
         Log.d(TAG, notificationTag + " In onResume - 2");
         
@@ -1643,18 +1640,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d(TAG, notificationTag + " In onResume - 8");
 
-        // Pause background loading when app comes to foreground from background
-        if (inBackground) {
-            Log.d("BackgroundLoading", "App coming to foreground from background, pausing bulk downloads");
-            CustomerDescriptionHandler.pauseBackgroundLoading();
-            ImageHandler.pauseBackgroundLoading();
-            
-            // Cancel any ongoing bulk downloads immediately
-            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-            descHandler.cancelBackgroundTask();
-            
-            inBackground = false; // Reset the flag
-        }
+        // Background loading management is now handled at the Application level
+        // Dimageescription map cache refresh on return to foreground
+        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+        Log.d("DescriptionMap", "Refreshing description map cache on return to foreground");
+        descHandler.getDescriptionMap();
 
     }
 

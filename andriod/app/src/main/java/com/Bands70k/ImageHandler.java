@@ -105,23 +105,34 @@ public class ImageHandler {
      * Pauses the background loading (called when entering details screen).
      */
     public static void pauseBackgroundLoading() {
-        Log.d("ImageHandler", "Pausing background loading");
-        isPaused.set(true);
-        detailsScreenActive.set(true);
+        Log.d("ImageHandler", "pauseBackgroundLoading() called - DISABLED (using Application-level background detection)");
+        // DISABLED: With proper Application-level background detection, we don't need screen-specific pausing
+        // Bulk loading is now controlled entirely by whether the entire app is in background
+        // isPaused.set(true);
+        // detailsScreenActive.set(true);
     }
 
     /**
      * Resumes the background loading (called when exiting details screen).
+     * Does NOT automatically restart bulk loading - that should only happen when app goes to background.
      */
     public static void resumeBackgroundLoading() {
-        Log.d("ImageHandler", "Resuming background loading");
-        isPaused.set(false);
-        detailsScreenActive.set(false);
-        
-        // Restart background loading if it was active
-        if (backgroundLoadingActive.get()) {
-            ImageHandler handler = getInstance();
-            handler.startBackgroundLoading();
+        Log.d("ImageHandler", "resumeBackgroundLoading() called - DISABLED (using Application-level background detection)");
+        // DISABLED: With proper Application-level background detection, we don't need screen-specific pausing/resuming
+        // Bulk loading is now controlled entirely by whether the entire app is in background
+        // isPaused.set(false);
+        // detailsScreenActive.set(false);
+    }
+
+    /**
+     * Cancels any ongoing background loading task.
+     */
+    public void cancelBackgroundTask() {
+        if (currentBackgroundTask != null && !currentBackgroundTask.isCancelled()) {
+            Log.d("ImageHandler", "Cancelling background task");
+            currentBackgroundTask.cancel(true);
+            isRunning.set(false);
+            backgroundLoadingActive.set(false);
         }
     }
 
@@ -345,6 +356,19 @@ public class ImageHandler {
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
+            Log.d("ImageHandler", "startBackgroundLoadingOnPause called - isAppInBackground: " + Bands70k.isAppInBackground());
+            
+            // CRITICAL SAFETY CHECK: Only proceed if app is actually in background AND fully initialized
+            if (!Bands70k.isAppInBackground()) {
+                Log.d("ImageHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT in background!");
+                return;
+            }
+            
+            if (!showBands.appFullyInitialized) {
+                Log.d("ImageHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT fully initialized!");
+                return;
+            }
+            
             // Check if it's too soon after a year change (prevent bulk loading for 10 seconds)
             long timeSinceYearChange = System.currentTimeMillis() - lastYearChangeTime.get();
             if (timeSinceYearChange < 10000) { // 10 seconds
@@ -469,11 +493,9 @@ class AsyncAllImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
                 break;
             }
             
-            // Check if paused (details screen active)
-            while (ImageHandler.isPaused() && !isCancelled()) {
-                Log.d("AsyncTask", "Paused due to details screen, waiting...");
-                SystemClock.sleep(1000);
-            }
+            // REMOVED: Old flawed logic that paused for details screen
+            // With proper Application-level background detection, bulk loading should proceed 
+            // when app is in background regardless of which screen was active when backgrounding occurred
             
             if (isCancelled()) {
                 break;
