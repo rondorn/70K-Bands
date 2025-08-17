@@ -881,9 +881,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             let sortedBy = getSortedBy()
             if sortedBy == "name" {
-                bandsResult.sort { getNameFromSortable($0, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable($1, sortedBy: sortedBy)) == .orderedAscending }
+                bandsResult.sort { item1, item2 in
+                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                    
+                    // Events always come before band names only
+                    if isEvent1 && !isEvent2 {
+                        return true
+                    } else if !isEvent1 && isEvent2 {
+                        return false
+                    } else {
+                        // Both are same type, sort alphabetically
+                        return getNameFromSortable(item1, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: sortedBy)) == .orderedAscending
+                    }
+                }
             } else if sortedBy == "time" {
-                bandsResult.sort { getTimeFromSortable($0, sortBy: sortedBy) < getTimeFromSortable($1, sortBy: sortedBy) }
+                bandsResult.sort { item1, item2 in
+                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                    
+                    // Events always come before band names only
+                    if isEvent1 && !isEvent2 {
+                        return true
+                    } else if !isEvent1 && isEvent2 {
+                        return false
+                    } else {
+                        // Both are same type, sort by time or alphabetically for band names
+                        return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+                    }
+                }
             }
             print("[YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             self.bands = bandsResult
@@ -911,7 +937,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             } else {
                 self.tableView.setContentOffset(previousOffset, animated: false)
             }
-            // Set separator style: none for bands view, singleLine for schedule view
+            // Always show separators when we have mixed content, per-cell logic will hide them for band names
             if eventCount == 0 {
                 self.tableView.separatorStyle = .none
             } else {
@@ -930,7 +956,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("Schedule is empty, hide separators")
             mainTableView.separatorStyle = .none
         } else {
-            print("Schedule present, show separators")
+            print("Schedule present, show separators (per-cell logic will hide for band names)")
             mainTableView.separatorStyle = .singleLine
         }
         refreshBandList(reason: "Sorting changed")
@@ -1490,6 +1516,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //viewableCell = cell
         print ("Toast cell location - Current cell index is \(indexPath.row)")
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        
+        // Hide separator for band names only (plain strings without time index)
+        let bandEntry = bands[indexPath.row]
+        let isScheduledEvent = bandEntry.contains(":") && bandEntry.components(separatedBy: ":").first?.doubleValue != nil
+        
+        if !isScheduledEvent {
+            // This is a band name only - hide separator
+            cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
+        } else {
+            // This is a scheduled event - show separator normally
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+        }
         
     }
     
