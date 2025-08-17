@@ -912,14 +912,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
             print("[YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
+            
+            // Update bands array and table view atomically to prevent race conditions
             self.bands = bandsResult
             self.bandsByName = bandsResult
+            
+            // Ensure table view knows the correct number of rows before reloading
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+                self.updateCountLable()
+            }
+            
             // Move attendedHandle.getCachedData() to background to avoid blocking GUI
             DispatchQueue.global(qos: .utility).async {
                 self.attendedHandle.getCachedData()
             }
-            self.tableView.reloadData()
-            self.updateCountLable()
             
             // Auto-select first band for iPad after data is loaded (only once and only on initial load)
             if UIDevice.current.userInterfaceIdiom == .pad && !self.bands.isEmpty && !self.hasAutoSelectedForIPad && reason.contains("Initial") {
@@ -1265,13 +1272,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var labeleCounter = Int()
         
         print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
-        if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
+        
+        // Check if we have a mixture of events and bands, but ALL events are cruiser organized
+        let hasEvents = eventCount > 0
+        let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
+        let allEventsAreCruiserOrganized = eventCounterUnoffical > 0 && eventCounterUnoffical == eventCount
+        
+        if (hasEvents && hasBands && allEventsAreCruiserOrganized) {
+            // Mixed list with only cruiser organized events - show only band count
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            sortedBy = "time"
+        } else if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
+            // Mixed event types (not all cruiser organized) - show event count
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
+            // Default case - show band count
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
@@ -1373,8 +1396,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var bandName = "";
     
         print ("SelfBandCount is " + String(self.bands.count) + " rowNumber is " + String(rowNumber));
-        if (self.bands.count > rowNumber){
+        if (self.bands.count > rowNumber && rowNumber >= 0){
             bandName = self.bands[rowNumber]
+        } else {
+            print("ERROR: Invalid rowNumber \(rowNumber) for bands array (count: \(self.bands.count))")
         }
         
         return bandName
@@ -1515,6 +1540,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         //viewableCell = cell
         print ("Toast cell location - Current cell index is \(indexPath.row)")
+        
+        // Add bounds checking to prevent crash
+        guard indexPath.row < bands.count else {
+            print("ERROR: Index \(indexPath.row) out of bounds for bands array (count: \(bands.count))")
+            // Set default separator style and return early
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+            return
+        }
+        
         getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
         
         // Hide separator for band names only (plain strings without time index)
@@ -1572,6 +1606,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - Table View Selection
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // Add bounds checking to prevent crash
+        guard indexPath.row < bands.count else {
+            print("ERROR: Selected index \(indexPath.row) out of bounds for bands array (count: \(bands.count))")
+            tableView.deselectRow(at: indexPath, animated: true)
+            return
+        }
+        
         // Handle cell selection for SwiftUI navigation
         guard let cell = tableView.cellForRow(at: indexPath) else {
             print("Error: Could not get cell for selected row.")
