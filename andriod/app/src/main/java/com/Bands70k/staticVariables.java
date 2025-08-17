@@ -581,13 +581,24 @@ public class staticVariables {
                     eventYearIndex = "Current";
                     preferences.setEventYearToLoad("Current");
                 }
+                
+                // DEBUG: Log what year is selected by user
+                Log.d("70K_NOTE_DEBUG", "User selected eventYearIndex: " + eventYearIndex);
+                Log.d("70K_NOTE_DEBUG", "Available years in pointer file: " + eventYearArray.toString());
 
                 Log.d("pointerUrl", "eventYearIndex equals " + eventYearIndex);
                 String data = "";
                 String line;
 
                 URL url = new URL(pointerUrl);
-                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                
+                // Handle HTTP redirects properly for Dropbox URLs
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(10000); // 10 seconds
+                connection.setReadTimeout(30000); // 30 seconds
+                
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 while ((line = in.readLine()) != null) {
                     data += line + "\n";
                 }
@@ -617,6 +628,11 @@ public class staticVariables {
                 Log.d("pointerUrl", "scheduleURL = " + scheduleURL);
                 Log.d("pointerUrl", "descriptionMap = " + descriptionMap);
                 Log.d("pointerUrl", "eventYearRaw = " + eventYearRaw);
+                
+                // Additional 70K_NOTE_DEBUG logging
+                Log.d("70K_NOTE_DEBUG", "Final URLs set - artistURL: " + artistURL);
+                Log.d("70K_NOTE_DEBUG", "Final URLs set - descriptionMap: " + descriptionMap);
+                Log.d("70K_NOTE_DEBUG", "Final URLs set - eventYearRaw: " + eventYearRaw);
             } catch (Exception error) {
                 Log.d("pointerUrl Error", error.getMessage());
                 Log.d("pointerUrl Error", String.valueOf(error.getCause()));

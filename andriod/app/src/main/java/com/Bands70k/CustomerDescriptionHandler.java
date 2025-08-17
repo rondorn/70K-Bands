@@ -14,6 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Date;
@@ -59,8 +60,11 @@ public class CustomerDescriptionHandler {
 
     /**
      * Private constructor for singleton pattern.
+     * Loads description map on launch to populate cache with band/event names and URLs.
      */
     private CustomerDescriptionHandler(){
+        // Load description map on launch to cache band names and description URLs
+        // This downloads the mapping file but NOT the actual descriptions
         descriptionMapData = this.getDescriptionMap();
     }
 
@@ -95,24 +99,23 @@ public class CustomerDescriptionHandler {
      * Pauses the background loading (called when entering details screen).
      */
     public static void pauseBackgroundLoading() {
-        Log.d("CustomerDescriptionHandler", "Pausing background loading");
-        isPaused.set(true);
-        detailsScreenActive.set(true);
+        Log.d("CustomerDescriptionHandler", "pauseBackgroundLoading() called - DISABLED (using Application-level background detection)");
+        // DISABLED: With proper Application-level background detection, we don't need screen-specific pausing
+        // Bulk loading is now controlled entirely by whether the entire app is in background
+        // isPaused.set(true);
+        // detailsScreenActive.set(true);
     }
 
     /**
      * Resumes the background loading (called when exiting details screen).
+     * Does NOT automatically restart bulk loading - that should only happen when app goes to background.
      */
     public static void resumeBackgroundLoading() {
-        Log.d("CustomerDescriptionHandler", "Resuming background loading");
-        isPaused.set(false);
-        detailsScreenActive.set(false);
-        
-        // Restart background loading if it was active
-        if (backgroundLoadingActive.get()) {
-            CustomerDescriptionHandler handler = getInstance();
-            handler.startBackgroundLoading();
-        }
+        Log.d("CustomerDescriptionHandler", "resumeBackgroundLoading() called - DISABLED (using Application-level background detection)");
+        // DISABLED: With proper Application-level background detection, we don't need screen-specific pausing/resuming
+        // Bulk loading is now controlled entirely by whether the entire app is in background
+        // isPaused.set(false);
+        // detailsScreenActive.set(false);
     }
 
     /**
@@ -161,6 +164,12 @@ public class CustomerDescriptionHandler {
                 Log.d("CustomerDescriptionHandler", "Deleted description map file for year change");
             }
             
+            // Clear cached hash for description map to force download of new year's data
+            // The description map will be downloaded when needed (details screen or background loading)
+            CacheHashManager cacheManager = CacheHashManager.getInstance();
+            cacheManager.clearHash("descriptionMap");
+            Log.d("CustomerDescriptionHandler", "Cleared description map hash for year change - will download when needed");
+            
             // Cancel current background task if running
             if (currentBackgroundTask != null && !currentBackgroundTask.isCancelled()) {
                 currentBackgroundTask.cancel(true);
@@ -182,6 +191,7 @@ public class CustomerDescriptionHandler {
 
     /**
      * Downloads the description map file from the server if online.
+     * Uses hash-based caching to only process files when content has changed.
      */
     public void getDescriptionMapFile(){
 
@@ -189,23 +199,52 @@ public class CustomerDescriptionHandler {
         bandInfo.getDownloadtUrls();
 
         String descriptionMapURL = staticVariables.descriptionMap;
+        Log.d("70K_NOTE_DEBUG", "getDescriptionMapFile using URL: " + descriptionMapURL);
+        Log.d("70K_NOTE_DEBUG", "eventYear: " + staticVariables.eventYear + ", eventYearRaw: " + staticVariables.eventYearRaw);
+        Log.d("70K_NOTE_DEBUG", "eventYearIndex: " + staticVariables.eventYearIndex);
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
 
         if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
+            
+            // TEMPORARY DEBUG: Force fresh download by clearing cache
+            Log.d("70K_NOTE_DEBUG", "Clearing description map cache to force fresh download");
+            cacheManager.clearHash("descriptionMap");
+            if (FileHandler70k.descriptionMapFile.exists()) {
+                FileHandler70k.descriptionMapFile.delete();
+                Log.d("70K_NOTE_DEBUG", "Deleted existing description map file");
+            }
+            
+            // Create temp file for hash comparison
+            File tempDescriptionMap = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandDescriptionMap.csv.temp");
+            boolean downloadSuccessful = false;
+            
             try {
 
                 URL u = new URL(descriptionMapURL);
-                InputStream is = u.openStream();
-
+                
+                // Handle HTTP redirects properly for Dropbox URLs
+                HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(10000); // 10 seconds
+                connection.setReadTimeout(30000); // 30 seconds
+                
+                InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
 
                 byte[] buffer = new byte[1024];
                 int length;
 
-                FileOutputStream fos = new FileOutputStream(FileHandler70k.descriptionMapFile);
+                // Download to temp file first
+                FileOutputStream fos = new FileOutputStream(tempDescriptionMap);
                 while ((length = dis.read(buffer)) > 0) {
                     fos.write(buffer, 0, length);
                 }
-
+                fos.close();
+                dis.close();
+                is.close();
+                
+                downloadSuccessful = true;
+                Log.d("descriptionMapFile", "Description map downloaded to temp file");
 
             } catch (MalformedURLException mue) {
                 Log.e("SYNC getUpdate", "descriptionMapFile malformed url error", mue);
@@ -213,12 +252,37 @@ public class CustomerDescriptionHandler {
                 Log.e("SYNC getUpdate", "descriptionMapFile io error", ioe);
             } catch (SecurityException se) {
                 Log.e("SYNC getUpdate", "descriptionMapFile security error", se);
-
             } catch (Exception generalError) {
                 Log.e("General Exception", "Downloading descriptionMapFile", generalError);
             }
+            
+            // Process temp file only if download was successful and content changed
+            if (downloadSuccessful) {
+                Log.d("70K_NOTE_DEBUG", "Download successful, checking if content changed");
+                Log.d("70K_NOTE_DEBUG", "Temp file size: " + tempDescriptionMap.length() + " bytes");
+                Log.d("70K_NOTE_DEBUG", "Existing file size: " + (FileHandler70k.descriptionMapFile.exists() ? FileHandler70k.descriptionMapFile.length() : 0) + " bytes");
+                
+                boolean dataChanged = cacheManager.processIfChanged(tempDescriptionMap, FileHandler70k.descriptionMapFile, "descriptionMap");
+                Log.d("70K_NOTE_DEBUG", "processIfChanged returned: " + dataChanged);
+                
+                if (dataChanged) {
+                    Log.i("CustomerDescriptionHandler", "Description map data has changed, processed new file");
+                    Log.d("70K_NOTE_DEBUG", "Final file size after processing: " + FileHandler70k.descriptionMapFile.length() + " bytes");
+                    // Clear cached data to force reload of new description map
+                    descriptionMapData.clear();
+                    staticVariables.descriptionMapModData.clear();
+                } else {
+                    Log.i("CustomerDescriptionHandler", "Description map data unchanged, using cached version");
+                    Log.d("70K_NOTE_DEBUG", "File was not updated due to hash comparison");
+                }
+            } else {
+                // Clean up temp file on download failure
+                if (tempDescriptionMap.exists()) {
+                    tempDescriptionMap.delete();
+                }
+            }
 
-            Log.d("descriptionMapFile", "descriptionMapFile Downloaded!");
+            Log.d("descriptionMapFile", "descriptionMapFile processing completed!");
         }
     }
     
@@ -233,28 +297,54 @@ public class CustomerDescriptionHandler {
         bandInfo.getDownloadtUrls();
 
         String descriptionMapURL = staticVariables.descriptionMap;
-        Log.d("SKILTRON_DEBUG", "Description map URL being used: " + descriptionMapURL);
+        Log.d("70K_NOTE_DEBUG", "getDescriptionMapFileImmediate using URL: " + descriptionMapURL);
+        Log.d("70K_NOTE_DEBUG", "eventYear: " + staticVariables.eventYear + ", eventYearRaw: " + staticVariables.eventYearRaw);
+        Log.d("70K_NOTE_DEBUG", "eventYearIndex: " + staticVariables.eventYearIndex);
+
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
 
         if (OnlineStatus.isOnline() == true) {
+            
+            // TEMPORARY DEBUG: Force fresh download by clearing cache
+            Log.d("70K_NOTE_DEBUG", "Clearing description map cache to force fresh download");
+            cacheManager.clearHash("descriptionMap");
+            if (FileHandler70k.descriptionMapFile.exists()) {
+                FileHandler70k.descriptionMapFile.delete();
+                Log.d("70K_NOTE_DEBUG", "Deleted existing description map file");
+            }
+            
+            // Create temp file for hash comparison
+            File tempDescriptionMap = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandDescriptionMap.csv.temp");
+            boolean downloadSuccessful = false;
+            
             try {
                 Log.d("70K_NOTE_DEBUG", "Downloading description map immediately from: " + descriptionMapURL);
                 
                 URL u = new URL(descriptionMapURL);
-                InputStream is = u.openStream();
-
+                
+                // Handle HTTP redirects properly for Dropbox URLs
+                HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(10000); // 10 seconds
+                connection.setReadTimeout(30000); // 30 seconds
+                
+                InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
 
                 byte[] buffer = new byte[1024];
                 int length;
 
-                FileOutputStream fos = new FileOutputStream(FileHandler70k.descriptionMapFile);
+                // Download to temp file first
+                FileOutputStream fos = new FileOutputStream(tempDescriptionMap);
                 while ((length = dis.read(buffer)) > 0) {
                     fos.write(buffer, 0, length);
                 }
-                dis.close();
                 fos.close();
-
-                Log.d("70K_NOTE_DEBUG", "Description map file downloaded successfully");
+                dis.close();
+                is.close();
+                
+                downloadSuccessful = true;
+                Log.d("70K_NOTE_DEBUG", "Description map downloaded to temp file successfully");
 
             } catch (MalformedURLException mue) {
                 Log.e("70K_NOTE_DEBUG", "descriptionMapFile malformed url error", mue);
@@ -264,6 +354,32 @@ public class CustomerDescriptionHandler {
                 Log.e("70K_NOTE_DEBUG", "descriptionMapFile security error", se);
             } catch (Exception generalError) {
                 Log.e("70K_NOTE_DEBUG", "Error downloading descriptionMapFile immediately", generalError);
+            }
+            
+            // Process temp file only if download was successful and content changed
+            if (downloadSuccessful) {
+                Log.d("70K_NOTE_DEBUG", "Download successful (immediate), checking if content changed");
+                Log.d("70K_NOTE_DEBUG", "Temp file size: " + tempDescriptionMap.length() + " bytes");
+                Log.d("70K_NOTE_DEBUG", "Existing file size: " + (FileHandler70k.descriptionMapFile.exists() ? FileHandler70k.descriptionMapFile.length() : 0) + " bytes");
+                
+                boolean dataChanged = cacheManager.processIfChanged(tempDescriptionMap, FileHandler70k.descriptionMapFile, "descriptionMap");
+                Log.d("70K_NOTE_DEBUG", "processIfChanged (immediate) returned: " + dataChanged);
+                
+                if (dataChanged) {
+                    Log.i("70K_NOTE_DEBUG", "Description map data has changed, processed new file");
+                    Log.d("70K_NOTE_DEBUG", "Final file size after processing: " + FileHandler70k.descriptionMapFile.length() + " bytes");
+                    // Clear cached data to force reload of new description map
+                    descriptionMapData.clear();
+                    staticVariables.descriptionMapModData.clear();
+                } else {
+                    Log.i("70K_NOTE_DEBUG", "Description map data unchanged, using cached version");
+                    Log.d("70K_NOTE_DEBUG", "File was not updated due to hash comparison (immediate)");
+                }
+            } else {
+                // Clean up temp file on download failure
+                if (tempDescriptionMap.exists()) {
+                    tempDescriptionMap.delete();
+                }
             }
         } else {
             Log.d("70K_NOTE_DEBUG", "Not online, cannot download description map file immediately");
@@ -318,12 +434,27 @@ public class CustomerDescriptionHandler {
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
-
+            int lineCount = 0;
+            int processedCount = 0;
+            
+            // Read all lines into a list first to ensure we get everything
+            java.util.List<String> allLines = new java.util.ArrayList<>();
             while ((line = br.readLine()) != null) {
-                String[] rowData = line.split(",");
+                allLines.add(line);
+            }
+            br.close();
+            
+            Log.d("70K_NOTE_DEBUG", "Read " + allLines.size() + " total lines from file");
+
+            // Now process all the lines
+            for (String currentLine : allLines) {
+                lineCount++;
+                Log.d("70K_NOTE_DEBUG", "Reading CSV line " + lineCount + ": " + currentLine);
+                String[] rowData = currentLine.split(",");
                 if (!"Band".equals(rowData[0])) {
+                    processedCount++;
                     String normalizedBandName = normalizeBandName(rowData[0]);
-                    Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                    Log.d("70K_NOTE_DEBUG", "Processing band " + processedCount + ": " + rowData[0] + " -> " + normalizedBandName + " -> " + rowData[1]);
                     descriptionMapData.put(normalizedBandName, rowData[1]);
                     if (rowData.length > 2){
                         Log.d("descriptionMapFile", "Date value is " + rowData[2]);
@@ -331,7 +462,9 @@ public class CustomerDescriptionHandler {
                     }
                 }
             }
-            br.close();
+            
+            Log.d("70K_NOTE_DEBUG", "CSV parsing complete - read " + lineCount + " lines, processed " + processedCount + " bands");
+            Log.d("70K_NOTE_DEBUG", "Final descriptionMapData size: " + descriptionMapData.size());
         } catch (FileNotFoundException fnfe) {
             Log.e("General Exception", "Description map file not found, attempting to download it", fnfe);
             // File was deleted after check, try to download it again
@@ -342,11 +475,27 @@ public class CustomerDescriptionHandler {
                 if (file.exists()) {
                     BufferedReader br = new BufferedReader(new FileReader(file));
                     String line;
+                    int retryLineCount = 0;
+                    int retryProcessedCount = 0;
+                    
+                    // Read all lines into a list first to ensure we get everything
+                    java.util.List<String> allLines = new java.util.ArrayList<>();
                     while ((line = br.readLine()) != null) {
-                        String[] rowData = line.split(",");
-                        if (rowData[0] != "Band") {
+                        allLines.add(line);
+                    }
+                    br.close();
+                    
+                    Log.d("70K_NOTE_DEBUG", "Read " + allLines.size() + " total lines from file (retry)");
+
+                    // Now process all the lines
+                    for (String currentLine : allLines) {
+                        retryLineCount++;
+                        Log.d("70K_NOTE_DEBUG", "Reading CSV line (retry) " + retryLineCount + ": " + currentLine);
+                        String[] rowData = currentLine.split(",");
+                        if (!"Band".equals(rowData[0])) {
+                            retryProcessedCount++;
                             String normalizedBandName = normalizeBandName(rowData[0]);
-                            Log.d("descriptionMapFile", "Adding " + normalizedBandName + "-" + rowData[1]);
+                            Log.d("70K_NOTE_DEBUG", "Processing band (retry) " + retryProcessedCount + ": " + rowData[0] + " -> " + normalizedBandName + " -> " + rowData[1]);
                             descriptionMapData.put(normalizedBandName, rowData[1]);
                             if (rowData.length > 2){
                                 Log.d("descriptionMapFile", "Date value is " + rowData[2]);
@@ -354,7 +503,8 @@ public class CustomerDescriptionHandler {
                             }
                         }
                     }
-                    br.close();
+                    
+                    Log.d("70K_NOTE_DEBUG", "CSV parsing (retry) complete - read " + retryLineCount + " lines, processed " + retryProcessedCount + " bands");
                 }
             } catch (Exception retryError) {
                 Log.e("General Exception", "Failed to read description map file after retry", retryError);
@@ -381,7 +531,7 @@ public class CustomerDescriptionHandler {
             }
             
             // SAFETY CHECK: Only allow bulk downloads when app is in background
-            if (!showBands.inBackground) {
+            if (!Bands70k.isAppInBackground()) {
                 Log.d("CustomerDescriptionHandler", "BLOCKED: Bulk download attempted when app is NOT in background - this should not happen!");
                 return;
             }
@@ -402,10 +552,10 @@ public class CustomerDescriptionHandler {
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
-            Log.d("CustomerDescriptionHandler", "startBackgroundLoadingOnPause called - inBackground: " + showBands.inBackground);
+            Log.d("CustomerDescriptionHandler", "startBackgroundLoadingOnPause called - isAppInBackground: " + Bands70k.isAppInBackground());
             
             // SAFETY CHECK: Only proceed if app is actually in background AND fully initialized
-            if (!showBands.inBackground) {
+            if (!Bands70k.isAppInBackground()) {
                 Log.d("CustomerDescriptionHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT in background!");
                 return;
             }
@@ -438,7 +588,7 @@ public class CustomerDescriptionHandler {
      */
     private void startBackgroundLoading() {
         // Double-check that app is in background before starting bulk download
-        if (!showBands.inBackground) {
+        if (!Bands70k.isAppInBackground()) {
             Log.d("CustomerDescriptionHandler", "BLOCKED: startBackgroundLoading called when app is NOT in background!");
             return;
         }
@@ -598,13 +748,11 @@ public class CustomerDescriptionHandler {
             getDescriptionMapFile();
         }
 
-        // Ensure description map file exists before trying to read it
+        // Always download description map to check for updates
         boolean mapFileWasDownloaded = false;
-        if (!FileHandler70k.descriptionMapFile.exists()) {
-            Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it immediately");
-            getDescriptionMapFileImmediate();
-            mapFileWasDownloaded = true;
-        }
+        Log.d("70K_NOTE_DEBUG", "Downloading description map to check for updates");
+        getDescriptionMapFileImmediate();
+        mapFileWasDownloaded = true;
 
         // If no custom note, try to load from description map
         // Read the map file directly without triggering bulk downloads
@@ -719,7 +867,13 @@ public class CustomerDescriptionHandler {
                 return;
             }
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            // Handle HTTP redirects properly for Dropbox URLs
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(10000); // 10 seconds
+            connection.setReadTimeout(30000); // 30 seconds
+            
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String line;
             String bandNote = "";
             while ((line = in.readLine()) != null) {
@@ -823,7 +977,13 @@ public class CustomerDescriptionHandler {
                 return;
             }
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            // Handle HTTP redirects properly for Dropbox URLs
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(10000); // 10 seconds
+            connection.setReadTimeout(30000); // 30 seconds
+            
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String line;
             String bandNote = "";
             while ((line = in.readLine()) != null) {
@@ -857,8 +1017,8 @@ public class CustomerDescriptionHandler {
             super.onPreExecute();
             
             // SAFETY CHECK: Cancel task immediately if app is not in background or not fully initialized
-            if (!showBands.inBackground || !showBands.appFullyInitialized) {
-                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader.onPreExecute() - app is NOT in background (" + showBands.inBackground + ") or not fully initialized (" + showBands.appFullyInitialized + "), cancelling task");
+            if (!Bands70k.isAppInBackground() || !showBands.appFullyInitialized) {
+                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader.onPreExecute() - app is NOT in background (" + Bands70k.isAppInBackground() + ") or not fully initialized (" + showBands.appFullyInitialized + "), cancelling task");
                 cancel(true);
                 synchronized (lock) {
                     isRunning.set(false);
@@ -874,8 +1034,8 @@ public class CustomerDescriptionHandler {
         protected ArrayList<String> doInBackground(String... params) {
             
             // SAFETY CHECK: Immediately stop if app is not in background or not fully initialized
-            if (!showBands.inBackground || !showBands.appFullyInitialized) {
-                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader started but app is NOT in background (" + showBands.inBackground + ") or not fully initialized (" + showBands.appFullyInitialized + ") - stopping immediately");
+            if (!Bands70k.isAppInBackground() || !showBands.appFullyInitialized) {
+                Log.d("AsyncTask", "BLOCKED: AsyncAllDescriptionLoader started but app is NOT in background (" + Bands70k.isAppInBackground() + ") or not fully initialized (" + showBands.appFullyInitialized + ") - stopping immediately");
                 return result;
             }
 
@@ -904,22 +1064,14 @@ public class CustomerDescriptionHandler {
                     }
                     
                     // SAFETY CHECK: Stop bulk downloading if app comes back to foreground
-                    if (!showBands.inBackground) {
+                    if (!Bands70k.isAppInBackground()) {
                         Log.d("AsyncTask", "BLOCKED: App returned to foreground, stopping bulk downloads");
                         break;
                     }
                     
-                    // Check if paused (details screen active)
-                    while (isPaused.get() && !isCancelled()) {
-                        Log.d("AsyncTask", "Paused due to details screen, waiting...");
-                        SystemClock.sleep(1000);
-                        
-                        // Also check background status while paused
-                        if (!showBands.inBackground) {
-                            Log.d("AsyncTask", "BLOCKED: App returned to foreground while paused, stopping bulk downloads");
-                            return result;
-                        }
-                    }
+                    // REMOVED: Old flawed logic that paused for details screen
+                    // With proper Application-level background detection, bulk loading should proceed 
+                    // when app is in background regardless of which screen was active when backgrounding occurred
                     
                     if (isCancelled()) {
                         break;
@@ -943,7 +1095,7 @@ public class CustomerDescriptionHandler {
                 Log.d("CustomerDescriptionHandler", "Background loading completed");
                 
                 // SAFETY CHECK: Only start translation pre-caching if still in background
-                if (showBands.inBackground) {
+                if (Bands70k.isAppInBackground()) {
                     Log.d("CustomerDescriptionHandler", "Starting translation pre-caching (app still in background)");
                     startTranslationPreCaching();
                 } else {
@@ -998,7 +1150,7 @@ public class CustomerDescriptionHandler {
      */
     private void startTranslationPreCaching() {
         // SAFETY CHECK: Only run translation caching when app is in background
-        if (!showBands.inBackground) {
+        if (!Bands70k.isAppInBackground()) {
             Log.d("TranslationCache", "BLOCKED: Translation pre-caching attempted when app is NOT in background!");
             return;
         }

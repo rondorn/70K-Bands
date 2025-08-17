@@ -135,7 +135,9 @@ public class showBandDetails extends Activity {
         // Initialize swipe gesture detector
         initializeSwipeGestureDetector();
 
-        // Background loading continues while in details screen
+        // Background loading is now properly managed at the Application level
+        // Individual descriptions and images can still be loaded as needed for this specific band
+        Log.d("DetailsScreen", "Details screen opened - background loading managed at Application level");
 
         View view = getWindow().getDecorView();
 
@@ -2863,7 +2865,9 @@ public class showBandDetails extends Activity {
             translator = null;
         }
         
-        // Background loading is controlled by app lifecycle (onPause/onResume), not details screen
+        // Background loading is now properly managed at the Application level
+        Log.d("DetailsScreen", "Details screen closed - background loading managed at Application level");
+        
         super.onDestroy();
     }
 

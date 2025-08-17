@@ -46,6 +46,7 @@ open class CustomBandDescription {
     }
     
     /// Loads the band description map file from disk or cache.
+    /// Only updates the file if the content has changed to avoid unnecessary updates.
     func getDescriptionMapFile(){
         
         if (isInternetAvailable() == false){
@@ -57,19 +58,43 @@ open class CustomBandDescription {
         
         print ("commentFile Map url is \(mapUrl)")
         print ("commentFile Map url Data is \(httpData)")
+        
         if (httpData.isEmpty == false){
-            do {
-                try FileManager.default.removeItem(atPath: descriptionMapFile)
-                
-            } catch let error as NSError {
-                print ("commentFile Encountered an error removing old descriptionMap file " + error.debugDescription)
-            }
-            do {
-                try httpData.write(toFile: descriptionMapFile, atomically: false, encoding: String.Encoding.utf8)
-            } catch let error as NSError {
-                print ("commentFile Encountered an error writing descriptionMap file " + error.debugDescription)
+            // Check if local file exists and compare content
+            var shouldUpdateFile = true
+            
+            if FileManager.default.fileExists(atPath: descriptionMapFile) {
+                do {
+                    let existingData = try String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8)
+                    if existingData == httpData {
+                        shouldUpdateFile = false
+                        print("commentFile Description map content unchanged, skipping update")
+                    } else {
+                        print("commentFile Description map content changed, updating file")
+                    }
+                } catch {
+                    print("commentFile Error reading existing description map file: \(error.localizedDescription)")
+                    // If we can't read the existing file, update it
+                    shouldUpdateFile = true
+                }
+            } else {
+                print("commentFile Description map file doesn't exist, creating new file")
             }
             
+            if shouldUpdateFile {
+                do {
+                    try FileManager.default.removeItem(atPath: descriptionMapFile)
+                } catch let error as NSError {
+                    print ("commentFile Encountered an error removing old descriptionMap file " + error.debugDescription)
+                }
+                
+                do {
+                    try httpData.write(toFile: descriptionMapFile, atomically: false, encoding: String.Encoding.utf8)
+                    print("commentFile Description map file updated successfully")
+                } catch let error as NSError {
+                    print ("commentFile Encountered an error writing descriptionMap file " + error.debugDescription)
+                }
+            }
         }
     }
     

@@ -2518,6 +2518,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     print("MasterViewController: Schedule data refreshed from URL in background")
                 }
                 self.schedule.populateSchedule(forceDownload: false)
+                
+                // Refresh description map data from URL
+                print("MasterViewController: Refreshing description map from URL in background")
+                self.bandDescriptions.getDescriptionMapFile()
+                self.bandDescriptions.getDescriptionMap()
+                print("MasterViewController: Description map refreshed from URL in background")
             }
             
             // Refresh the UI on main thread after background data loading

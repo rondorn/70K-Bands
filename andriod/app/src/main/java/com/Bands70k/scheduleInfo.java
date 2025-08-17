@@ -31,6 +31,12 @@ public class scheduleInfo {
         if ((OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper())
                 ||  staticVariables.inUnitTests == true
                 || FileHandler70k.schedule.exists() == false) {
+                
+            CacheHashManager cacheManager = CacheHashManager.getInstance();
+            // Create temp file for hash comparison
+            File tempSchedule = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kScheduleInfo.csv.temp");
+            boolean downloadSuccessful = false;
+            
             try {
                 Log.d("ScheduleLine", "DownloadScheduleFile - 2 URL=" + scheduleUrl);
                 URL u = new URL(scheduleUrl);
@@ -41,20 +47,41 @@ public class scheduleInfo {
                 byte[] buffer = new byte[1024];
                 int length;
 
-                FileOutputStream fos = new FileOutputStream(FileHandler70k.schedule);
+                // Download to temp file first
+                FileOutputStream fos = new FileOutputStream(tempSchedule);
                 while ((length = dis.read(buffer)) > 0) {
                     fos.write(buffer, 0, length);
                 }
-                Log.d("ScheduleLine", "DownloadScheduleFile - 3");
+                fos.close();
+                dis.close();
+                is.close();
+                
+                downloadSuccessful = true;
+                Log.d("ScheduleLine", "DownloadScheduleFile - 3 - Downloaded to temp file");
+                
             } catch (MalformedURLException mue) {
                 Log.e("SYNC getUpdate", "DownloadScheduleFile malformed url error", mue);
             } catch (IOException ioe) {
                 Log.e("SYNC getUpdate", "DownloadScheduleFile io error", ioe);
             } catch (SecurityException se) {
                 Log.e("SYNC getUpdate", "DownloadScheduleFile security error", se);
-
             } catch (Exception generalError) {
                 Log.e("General Exception", "DownloadScheduleFile Downloading bandData", generalError);
+            }
+            
+            // Process temp file only if download was successful and content changed
+            if (downloadSuccessful) {
+                boolean dataChanged = cacheManager.processIfChanged(tempSchedule, FileHandler70k.schedule, "scheduleInfo");
+                if (dataChanged) {
+                    Log.i("ScheduleInfo", "Schedule data has changed, processed new file");
+                } else {
+                    Log.i("ScheduleInfo", "Schedule data unchanged, using cached version");
+                }
+            } else {
+                // Clean up temp file on download failure
+                if (tempSchedule.exists()) {
+                    tempSchedule.delete();
+                }
             }
         }
 
