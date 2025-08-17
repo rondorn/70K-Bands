@@ -337,6 +337,12 @@ func getPointerUrlData(keyValue: String) -> String {
                     for record in dataArray {
                         pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
                     }
+                    
+                    // Save eventYearArray to disk once after processing all cached records (synchronous to ensure year is written before further processing)
+                    print("eventYearsInfoFile: Saving after processing cached pointer data")
+                    let variableStoreHandle = variableStore()
+                    variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+                    
                     dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
                     
                     // Cache the result in memory for future use
@@ -377,6 +383,11 @@ func getPointerUrlData(keyValue: String) -> String {
                 pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
             }
             
+            // Save eventYearArray to disk once after processing all HTTP records (synchronous to ensure year is written before further processing)
+            print("eventYearsInfoFile: Saving after processing HTTP pointer data")
+            let variableStoreHandle = variableStore()
+            variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+            
             dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
             
             // Cache the pointer data to disk for future offline use
@@ -401,6 +412,12 @@ func getPointerUrlData(keyValue: String) -> String {
                     for record in dataArray {
                         pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
                     }
+                    
+                    // Save eventYearArray to disk once after processing all fallback cached records (synchronous to ensure year is written before further processing)
+                    print("eventYearsInfoFile: Saving after processing fallback cached pointer data")
+                    let variableStoreHandle = variableStore()
+                    variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+                    
                     dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
                 } catch {
                     print("getPointerUrlData: Failed to read cached pointer data: \(error)")
@@ -526,13 +543,10 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
         if (currentIndex != "Default" && currentIndex != "lastYear"){
             if (eventYearArray.contains(currentIndex) == false){
                 eventYearArray.append(currentIndex)
+                // Only log when we actually add a new year, don't save to disk yet
+                print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
             }
         }
-        
-        print ("eventYearsInfoFile: file is saving");
-        let variableStoreHandle = variableStore();
-        variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
-        //print ("eventYearsInfoFile: file is saved \(eventYearArray)");
         
         if (currentIndex == pointerIndex){
             let currentKey = valueArray[1]
