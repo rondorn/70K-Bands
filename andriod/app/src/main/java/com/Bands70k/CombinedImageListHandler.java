@@ -79,6 +79,11 @@ public class CombinedImageListHandler {
                 Log.d(TAG, "Deleted combined image list cache file for year change");
             }
             
+            // Clear source data hash to force regeneration with new year's data
+            CacheHashManager cacheManager = CacheHashManager.getInstance();
+            cacheManager.clearHash("combinedImageListSource");
+            Log.d(TAG, "Cleared combined image list source hash for year change");
+            
             return true;
         }
         
@@ -246,7 +251,8 @@ public class CombinedImageListHandler {
     }
     
     /**
-     * Saves the combined image list to disk.
+     * Saves the combined image list to disk using hash-based caching.
+     * Only writes to disk if the content has actually changed.
      */
     private void saveCombinedImageList() {
         try {
@@ -257,11 +263,22 @@ public class CombinedImageListHandler {
                 }
             }
             
-            FileWriter writer = new FileWriter(combinedImageListFile);
+            // Write to temp file first for hash comparison
+            File tempFile = new File(combinedImageListFile.getPath() + ".temp");
+            FileWriter writer = new FileWriter(tempFile);
             writer.write(jsonObject.toString());
             writer.close();
             
-            Log.d(TAG, "Combined image list saved to disk");
+            // Use hash manager to only update if content changed
+            CacheHashManager cacheManager = CacheHashManager.getInstance();
+            boolean dataChanged = cacheManager.processIfChanged(tempFile, combinedImageListFile, "combinedImageList");
+            
+            if (dataChanged) {
+                Log.d(TAG, "Combined image list content changed, saved to disk");
+            } else {
+                Log.d(TAG, "Combined image list content unchanged, skipped disk write");
+            }
+            
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Error saving combined image list: " + e.getMessage());
         }
@@ -298,24 +315,49 @@ public class CombinedImageListHandler {
      * @param bandInfo Handler for band/artist data
      */
     public void regenerateAfterDataChange(BandInfo bandInfo) {
-        Log.d(TAG, "Regenerating combined image list after data change (URLs only, no downloads)");
+        Log.d(TAG, "Checking if combined image list needs regeneration after data change");
         
-        // Check for year change
+        // Check for year change first
         boolean yearChanged = checkYearChange();
         
-        // Always regenerate if year changed, or if current list is empty
-        boolean shouldRegenerate = yearChanged || combinedImageList.isEmpty() || needsRegeneration(bandInfo);
+        // Check if band or schedule data has actually changed using hash comparison
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        String currentBandHash = cacheManager.getCachedHash("bandInfo");
+        String currentScheduleHash = cacheManager.getCachedHash("scheduleInfo");
         
-        if (shouldRegenerate) {
-            Log.d(TAG, "Regeneration needed - year changed: " + yearChanged + ", list empty: " + combinedImageList.isEmpty());
+        // Create a combined hash of band + schedule data to compare against last generation
+        final String newSourceDataHash;
+        if (currentBandHash != null && currentScheduleHash != null) {
+            newSourceDataHash = (currentBandHash + "|" + currentScheduleHash);
+        } else {
+            newSourceDataHash = "";
+        }
+        
+        // Get the hash that was used for the last combined image list generation
+        String lastSourceDataHash = cacheManager.getCachedHash("combinedImageListSource");
+        
+        boolean dataChanged = yearChanged || 
+                             combinedImageList.isEmpty() || 
+                             !newSourceDataHash.equals(lastSourceDataHash) ||
+                             newSourceDataHash.isEmpty();
+        
+        if (dataChanged) {
+            Log.i(TAG, "Regeneration needed - year changed: " + yearChanged + 
+                      ", list empty: " + combinedImageList.isEmpty() + 
+                      ", data hash changed: " + !newSourceDataHash.equals(lastSourceDataHash));
+            
             generateCombinedImageList(bandInfo, new Runnable() {
                 @Override
                 public void run() {
+                    // Store the source data hash used for this generation
+                    if (!newSourceDataHash.isEmpty()) {
+                        cacheManager.saveCachedHash("combinedImageListSource", newSourceDataHash);
+                    }
                     Log.d(TAG, "Combined image list regenerated after data change (URLs only, no downloads)");
                 }
             });
         } else {
-            Log.d(TAG, "No regeneration needed - combined list is current");
+            Log.i(TAG, "No regeneration needed - underlying band and schedule data unchanged");
         }
     }
     

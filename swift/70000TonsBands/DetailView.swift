@@ -171,9 +171,9 @@ struct DetailView: View {
             offset = slideOutTarget
         }
         
-        // Phase 2: Update data and slide new content in from opposite side
+        // Phase 2: Update data after slide-out completes, then slide new content in
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // Update the data
+            // Update the data first (this will cause schedule events to re-render)
             if swipeDistance > 0 {
                 print("DEBUG: Navigating to previous")
                 self.viewModel.navigateToPrevious()
@@ -182,18 +182,21 @@ struct DetailView: View {
                 self.viewModel.navigateToNext()
             }
             
-            // Position new content on opposite side
-            let slideInStart: CGFloat = swipeDistance > 0 ? -screenWidth : screenWidth
-            self.offset = slideInStart
-            
-            // Slide new content in
-            withAnimation(.easeOut(duration: 0.4)) {
-                self.offset = 0
-            }
-            
-            // Re-enable swiping
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                self.blockSwiping = false
+            // Wait a brief moment for the data update to complete and UI to re-render
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                // Position new content on opposite side (off-screen)
+                let slideInStart: CGFloat = swipeDistance > 0 ? -screenWidth : screenWidth
+                self.offset = slideInStart
+                
+                // Slide new content in
+                withAnimation(.easeOut(duration: 0.4)) {
+                    self.offset = 0
+                }
+                
+                // Re-enable swiping
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    self.blockSwiping = false
+                }
             }
         }
     }
@@ -556,11 +559,11 @@ struct ScheduleEventView: View {
                         .frame(height: 25)
                 }
                 .frame(width: 35, height: 50)
-                .background(Color.gray.opacity(0.6))
+                .background(Color.gray.opacity(0.2))
             }
         }
         .frame(height: 50)
-        .background(Color.gray.opacity(0.15))
+        .background(Color.black)
         .cornerRadius(6)
         .onTapGesture {
             viewModel.toggleAttendedStatus(for: event)
