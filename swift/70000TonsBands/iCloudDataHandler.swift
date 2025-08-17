@@ -59,9 +59,14 @@ class iCloudDataHandler {
     func readAllPriorityData(){
         print("iCloudPriority: Starting readAllPriorityData operation")
         
-        if (checkForIcloud() == true){
-            print("iCloudPriority: iCloud data not currently loading, proceeding with read")
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+        // Return immediately if already loading to prevent multiple concurrent operations
+        guard checkForIcloud() == true else {
+            print("iCloudPriority: iCloud data currently loading, skipping read operation")
+            return
+        }
+        
+        print("iCloudPriority: iCloud data not currently loading, proceeding with read")
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 iCloudDataisLoading = true;
                 print("iCloudPriority: Set iCloudDataisLoading to true")
                 
@@ -73,9 +78,29 @@ class iCloudDataHandler {
                 
                 print("iCloudPriority: Reading priority data for \(bandNames.count) bands")
                 
-                for bandName in bandNames{
-                    print("iCloudPriority: Processing priority read for band: \(bandName)")
-                    self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
+                // Process bands in batches to avoid blocking for too long
+                let batchSize = 50
+                let totalBands = bandNames.count
+                
+                for batchStart in stride(from: 0, to: totalBands, by: batchSize) {
+                    let batchEnd = min(batchStart + batchSize, totalBands)
+                    let batch = Array(bandNames[batchStart..<batchEnd])
+                    
+                    print("iCloudPriority: Processing batch \(batchStart/batchSize + 1) (\(batch.count) bands)")
+                    
+                    for bandName in batch {
+                        // Check if we should continue processing
+                        if iCloudDataisLoading == false {
+                            print("iCloudPriority: Operation cancelled, stopping batch processing")
+                            return
+                        }
+                        self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
+                    }
+                    
+                    // Add a small delay between batches to prevent overwhelming the system
+                    if batchEnd < totalBands {
+                        usleep(10000) // 10ms delay between batches
+                    }
                 }
                 
                 iCloudDataisLoading = false;
@@ -85,9 +110,6 @@ class iCloudDataHandler {
                     NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
                 }
             }
-        } else {
-            print("iCloudPriority: iCloud data currently loading, skipping read operation")
-        }
         
         print("iCloudPriority: readAllPriorityData operation completed")
     }

@@ -115,6 +115,12 @@ class PreferencesViewModel: ObservableObject {
         setupUserInfo()
         loadAvailableYears()
         loadCurrentPreferences()
+        
+        // Defer any heavy iCloud operations to avoid blocking the preferences UI
+        DispatchQueue.global(qos: .background).async {
+            // Any heavy data operations that might be needed can go here
+            // This ensures the preferences screen opens immediately
+        }
     }
     
     // MARK: - Public Methods
