@@ -529,6 +529,10 @@ class PreferencesViewModel: ObservableObject {
                         return
                     }
                     let iCloudHandle = iCloudDataHandler()
+                    // First write local data to iCloud to ensure it's backed up
+                    iCloudHandle.writeAllPriorityData()
+                    iCloudHandle.writeAllScheduleData()
+                    // Then read any remote changes from iCloud
                     iCloudHandle.readAllPriorityData()
                     iCloudHandle.readAllScheduleData()
                     dataLoadGroup.leave()

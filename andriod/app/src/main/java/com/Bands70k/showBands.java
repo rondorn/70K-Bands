@@ -826,7 +826,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 sharingIntent.setType("text/plain");
 
                 String shareBody = buildShareMessage();
-                String subject = "Bands I MUST see on 70,000 Tons";
+                String subject = "70K Bands Choices";
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -843,7 +843,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 showsAttendedReport reportHandler = new showsAttendedReport();
                 reportHandler.assembleReport();
                 String shareBody = reportHandler.buildMessage();
-                String subject = "These are the events I attended on the 70,000 Tons Cruise";
+                String subject = "70K Bands - Events Attended";
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -995,26 +995,47 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private String buildShareMessage() {
 
-        String message = mustSeeIcon + " These are the bands I MUST see on the 70,000 Tons Cruise\n\n";
+        String message = "🤘 70K Bands Choices\n\n";
+        
+        // Collect must-see and might-see bands
+        java.util.List<String> mustSeeBands = new java.util.ArrayList<>();
+        java.util.List<String> mightSeeBands = new java.util.ArrayList<>();
 
         for (String band : bandNames) {
             String bandRank = rankStore.getRankForBand(band);
             Log.d("BandRank", bandRank);
             if (bandRank.equals(mustSeeIcon)) {
-                message += "\t\t" + band + "\n";
+                mustSeeBands.add(band);
+            } else if (bandRank.equals(mightSeeIcon)) {
+                mightSeeBands.add(band);
             }
         }
-        message += "\n" + mightSeeIcon + " These are the bands I might see\n\n";
-
-        for (String band : bandNames) {
-            String bandRank = rankStore.getRankForBand(band);
-            Log.d("BandRank", bandRank);
-            if (bandRank.equals(mightSeeIcon)) {
-                message += "\t\t" + band + "\n";
+        
+        // Format must-see section
+        message += "🟢 Must See Bands (" + mustSeeBands.size() + "):\n";
+        if (!mustSeeBands.isEmpty()) {
+            for (int i = 0; i < mustSeeBands.size(); i++) {
+                message += "• " + mustSeeBands.get(i);
+                if (i < mustSeeBands.size() - 1) {
+                    message += " ";
+                }
             }
+            message += "\n";
+        }
+        
+        // Format might-see section
+        message += "\n🟡 Might See Bands (" + mightSeeBands.size() + "):\n";
+        if (!mightSeeBands.isEmpty()) {
+            for (int i = 0; i < mightSeeBands.size(); i++) {
+                message += "• " + mightSeeBands.get(i);
+                if (i < mightSeeBands.size() - 1) {
+                    message += " ";
+                }
+            }
+            message += "\n";
         }
 
-        message += "\n\nhttp://www.facebook.com/70kBands";
+        message += "\n\n📱 http://www.facebook.com/70kBands";
         return message;
     }
 
@@ -2006,3 +2027,4 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
     }
 }
+
