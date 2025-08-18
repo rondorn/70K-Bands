@@ -62,6 +62,14 @@ class showAttendenceReport {
                 
                 let indexArray = index.key.split(separator: ":")
                 
+                print("ShareDebug: Processing attended event key: '\(index.key)'")
+                print("ShareDebug: Split into \(indexArray.count) components: \(indexArray)")
+                
+                guard indexArray.count >= 6 else {
+                    print("ShareDebug: Skipping key with insufficient components: \(indexArray.count)")
+                    continue
+                }
+                
                 let bandName = String(indexArray[0])
                 let location = String(indexArray[1])
                 let hour = String(indexArray[2])
@@ -70,48 +78,77 @@ class showAttendenceReport {
                 let year = String(indexArray[5])
                 let status = String(showsAttendedArray[index.key]!)
                 
+                print("ShareDebug: Parsed - band: '\(bandName)', location: '\(location)', time: '\(hour):\(min)', eventType: '\(eventType)', year: '\(year)', status: '\(status)'")
+                print("ShareDebug: Current eventYear: \(eventYear), comparing with parsed year: '\(year)'")
+                
                 if (year != String(eventYear)){
+                    print("ShareDebug: Skipping event due to year mismatch: '\(year)' != '\(String(eventYear))'")
                     continue
                 }
                 if (status == "sawNone"){
+                    print("ShareDebug: Skipping event due to sawNone status")
                     continue
                 }
+                
+                print("ShareDebug: Event passed filters - processing for report")
+                
+                // Extract just the status without timestamp
+                let statusOnly = String(status.split(separator: ":")[0])
+                print("ShareDebug: Status extracted - original: '\(status)', statusOnly: '\(statusOnly)'")
                 
                 if (bandName == "Vio-Lence"){
                     print ("Violence data is \(location) - \(hour) - \(min) - \(eventType) - \(year) - \(status)")
                 }
                 var validateEvent = false
+                print("ShareDebug: Checking if band '\(bandName)' exists in scheduleData...")
                 if scheduleData.index(forKey: bandName) != nil {
+                    print("ShareDebug: Band '\(bandName)' found in scheduleData")
+                    validateEvent = true
+                } else {
+                    print("ShareDebug: Band '\(bandName)' NOT found in scheduleData - available bands: \(Array(scheduleData.keys).prefix(10))")
+                }
+                
+                if validateEvent {
+                    // Do additional time-based validation
+                    var timeValidated = false
                     for timeIndex in scheduleData[bandName]!.keys {
-                        print ("scheduleData[bandName] \(scheduleData[bandName]?[timeIndex])")
+                        print ("ShareDebug: Checking timeIndex in scheduleData[bandName]: \(scheduleData[bandName]?[timeIndex])")
                         if (scheduleData[bandName]?[timeIndex]?["Location"] == location &&
                             scheduleData[bandName]?[timeIndex]?["Type"] == eventType &&
                             scheduleData[bandName]?[timeIndex]?["Start Time"] == hour + ":" + min){
-                            validateEvent = true;
-                            continue
+                            timeValidated = true
+                            break
                         }
-                        
                     }
-                }
-                
-                if (validateEvent == false){
+                    
+                    if timeValidated {
+                        print("ShareDebug: Event time validated, calling getEventTypeCounts and getBandCounts")
+                        getEventTypeCounts(eventType: eventType, sawStatus: statusOnly)
+                        getBandCounts(eventType: eventType, bandName: bandName, sawStatus: statusOnly)
+                        tempEventCount += 1
+                        print("ShareDebug: Event processed successfully, tempEventCount now: \(tempEventCount)")
+                    } else {
+                        print("ShareDebug: Event time validation failed - skipping event")
+                        continue
+                    }
+                } else {
+                    print("ShareDebug: Event validation failed - skipping event")
                     continue
                 }
                 
+                // Additional band validation (for special events not in main band list)
                 if (allBands.contains(bandName) == false &&
                     eventType != unofficalEventType &&
                     eventType != karaokeEventType &&
                     eventType != specialEventType &&
                     eventType != unofficalEventTypeOld){
 
+                    print("ShareDebug: Band '\(bandName)' not in main band list and not a special event type - skipping")
                     continue
                 }
-                tempEventCount = tempEventCount + 1
-                print ("tempEventCount is \(tempEventCount) - \(year) - \(bandName) - \(location) = \(status)")
                 
-                print ("eventType = \(eventType) - \(index.value) - \(indexArray)")
-                getEventTypeCounts(eventType: eventType, sawStatus: index.value)
-                getBandCounts(eventType: eventType, bandName: bandName, sawStatus: index.value)
+                // This validation and counting is already handled above in the new debug code
+                // No need to duplicate the processing here
                 
             }
         } else {
@@ -155,69 +192,7 @@ class showAttendenceReport {
             message = buildMustMightReport();
             
         } else if (type == "Events"){
-            message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n"
-            var eventCountExists : [String: Bool] = [String: Bool]();
-            
-            assembleReport()
-            
-            for index in eventCounts {
-                
-                let eventType = index.key
-
-                let sawAllCount = index.value[sawAllStatus]
-                let sawSomeCount = index.value[sawSomeStatus]
-
-                if (sawAllCount != nil && sawAllCount! >= 1){
-                    eventCountExists[eventType] = true
-                    let sawAllCountString = String(sawAllCount!)
-                    message += "Saw " + sawAllCountString + " " + eventType + addPlural(count: sawAllCount!, eventType: eventType)
-                }
-                if (sawSomeCount != nil && sawSomeCount! >= 1){
-                    eventCountExists[eventType] = true
-                    let sawSomeCountString = String(sawSomeCount!)
-                    message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(count: sawSomeCount!, eventType: eventType)
-                }
-            }
-            
-            message += "\n"
-            for index in bandCounts {
-                let eventType = index.key
-                var sawSomeCount = 0
-                
-                let sortedBandNames = Array(index.value.keys).sorted()
-                
-                if (eventCountExists[eventType] == true){
-                    message += "For " + eventType + addPlural(count: 1, eventType: eventType)
-                    
-                    for bandName in sortedBandNames {
-
-                        var sawCount = 0
-                        if (bandCounts[index.key]![bandName]![sawAllStatus] != nil){
-                            sawCount = sawCount + bandCounts[index.key]![bandName]![sawAllStatus]!
-                        }
-                        if (bandCounts[index.key]![bandName]![sawSomeStatus] != nil){
-                            sawCount = sawCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
-                            sawSomeCount = sawSomeCount + bandCounts[index.key]![bandName]![sawSomeStatus]!
-                        }
-                        if (sawCount >= 1){
-                            let sawCountString = String(sawCount)
-                            if (eventType == showType){
-                                message += "     " + bandName + " " + sawCountString + " time" + addPlural(count: sawCount, eventType: eventType)
-                            } else {
-                                message += "     " + bandName + "\n";
-                            }
-                        }
-                    }
-                    if (sawSomeCount >= 1){
-                        let sawSomeCountString = String(sawSomeCount)
-                        if (sawSomeCount == 1){
-                                message += sawSomeCountString + " of those was a partial show\n"
-                        } else {
-                            message += sawSomeCountString + " of those were partial shows\n"
-                        }
-                    }
-                }
-            }
+            message = buildEventsAttendedReport()
         }
         
         message +=  "\nhttp://www.facebook.com/70kBands"
@@ -233,22 +208,158 @@ class showAttendenceReport {
      */
     func buildMustMightReport()->String {
         
-        var intro = "These are the bands I MUST see on the 70,000 Tons Cruise\n"
+        var intro = "🤘 70K Bands Choices\n\n"
+        var mustSeeBands: [String] = []
+        var mightSeeBands: [String] = []
+        
         let bands = bandNamesHandle.getBandNames()
+        
+        // Collect must-see bands
         for band in bands {
             if (dataHandle.getPriorityData(band) == 1){
                 print ("Adding band " + band)
-                intro += "\t\t" +  band + "\n"
+                mustSeeBands.append(band)
             }
         }
-        intro += "\n\n" + "These are the bands I might see\n"
+        
+        // Collect might-see bands
         for band in bands {
             if (dataHandle.getPriorityData(band) == 2){
                 print ("Adding band " + band)
-                intro += "\t\t" +  band + "\n"
+                mightSeeBands.append(band)
             }
         }
+        
+        // Format must-see section
+        intro += "🟢 Must See Bands (\(mustSeeBands.count)):\n"
+        if !mustSeeBands.isEmpty {
+            let formattedMustSee = mustSeeBands.map { "• \($0)" }.joined(separator: " ")
+            intro += formattedMustSee + "\n"
+        }
+        
+        intro += "\n🟡 Might See Bands (\(mightSeeBands.count)):\n"
+        if !mightSeeBands.isEmpty {
+            let formattedMightSee = mightSeeBands.map { "• \($0)" }.joined(separator: " ")
+            intro += formattedMightSee + "\n"
+        }
+        
+        intro += "\n\n📱 http://www.facebook.com/70kBands"
          return intro
+    }
+    
+    /**
+     Builds an enhanced events attended report with venue information and emojis.
+     - Returns: The formatted events attended report as a string.
+     */
+    func buildEventsAttendedReport() -> String {
+        var message = "🤘 70K Bands - Events Attended\n\n"
+        
+        assembleReport()
+        
+        print("ShareDebug: After assembleReport - eventCounts: \(eventCounts)")
+        print("ShareDebug: After assembleReport - bandCounts: \(bandCounts)")
+        print("ShareDebug: After assembleReport - isReportEmpty: \(isReportEmpty)")
+        
+        // Define event type order and emojis
+        let eventTypeOrder = ["Show", "Meet and Greet", "Clinic", "Special Event", "Cruiser Organized", "Unofficial Event"]
+        let eventTypeEmojis = [
+            "Show": "🎵",
+            "Meet and Greet": "🤝", 
+            "Clinic": "🎸",
+            "Special Event": "🎪",
+            "Cruiser Organized": "🚢",
+            "Unofficial Event": "🔥"
+        ]
+        let eventTypeLabels = [
+            "Show": "Shows",
+            "Meet and Greet": "Meet & Greets",
+            "Clinic": "Clinics", 
+            "Special Event": "Special Events",
+            "Cruiser Organized": "Cruise Events",
+            "Unofficial Event": "Unofficial Events"
+        ]
+        
+        // Process each event type in order
+        for eventType in eventTypeOrder {
+            guard let eventTypeData = bandCounts[eventType],
+                  !eventTypeData.isEmpty else { continue }
+            
+            let emoji = eventTypeEmojis[eventType] ?? "🎯"
+            let label = eventTypeLabels[eventType] ?? eventType
+            let totalCount = calculateTotalEventsForType(eventType: eventType)
+            
+            if totalCount > 0 {
+                message += "\(emoji) \(label) (\(totalCount)):\n"
+                
+                // Get all bands/events for this type with venue info
+                var eventEntries: [String] = []
+                let sortedBandNames = Array(eventTypeData.keys).sorted()
+                
+                for bandName in sortedBandNames {
+                    if let bandData = eventTypeData[bandName],
+                       let sawAllCount = bandData[sawAllStatus],
+                       sawAllCount > 0 {
+                        
+                        // Get venue info for this band/event
+                        let venue = getVenueForBandEvent(bandName: bandName, eventType: eventType)
+                        let venueInfo = venue.isEmpty ? "" : " (\(venue))"
+                        
+                        eventEntries.append("• \(bandName)\(venueInfo)")
+                    }
+                }
+                
+                // Join entries with bullet separation for compact display
+                if !eventEntries.isEmpty {
+                    message += eventEntries.joined(separator: " ") + "\n\n"
+                }
+            }
+        }
+        
+        return message
+    }
+    
+    /**
+     Calculates the total number of events attended for a specific event type.
+     - Parameter eventType: The event type to count.
+     - Returns: Total count of events attended for this type.
+     */
+    private func calculateTotalEventsForType(eventType: String) -> Int {
+        guard let eventTypeData = bandCounts[eventType] else { return 0 }
+        
+        var total = 0
+        for (_, bandData) in eventTypeData {
+            if let sawAllCount = bandData[sawAllStatus] {
+                total += sawAllCount
+            }
+            if let sawSomeCount = bandData[sawSomeStatus] {
+                total += sawSomeCount
+            }
+        }
+        return total
+    }
+    
+    /**
+     Gets the venue information for a specific band/event.
+     - Parameters:
+     - bandName: The name of the band or event.
+     - eventType: The type of event.
+     - Returns: The venue name, or empty string if not found.
+     */
+    private func getVenueForBandEvent(bandName: String, eventType: String) -> String {
+        let scheduleData = schedule.getBandSortedSchedulingData()
+        
+        guard let bandSchedule = scheduleData[bandName] else { return "" }
+        
+        // Look for matching event type and return the location
+        for (_, eventData) in bandSchedule {
+            if let location = eventData["Location"],
+               let type = eventData["Type"],
+               type == eventType {
+                return location
+            }
+        }
+        
+        return ""
     }
     
     /**
@@ -292,3 +403,4 @@ class showAttendenceReport {
         }
     }
 }
+
