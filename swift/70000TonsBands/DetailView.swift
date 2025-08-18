@@ -211,6 +211,19 @@ struct DetailView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(maxHeight: 90) // 25% smaller (120 * 0.75 = 90)
                     .frame(maxWidth: .infinity)
+            } else if viewModel.isLoadingImage {
+                // Show small loading indicator when image is being loaded
+                ZStack {
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(maxHeight: 90)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Small centered loading spinner
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.8) // Make it smaller than the main loading overlay
+                }
             } else {
                 // Keep image area empty (no placeholder) - let the space exist but be invisible
                 Rectangle()

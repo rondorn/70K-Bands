@@ -129,6 +129,12 @@ open class scheduleHandler {
         print ("[YEAR_CHANGE_DEBUG] Loading schedule data for year \(eventYear), forceDownload: \(forceDownload)")
         isLoadingSchedule = true;
         
+        // Ensure isLoadingSchedule is always reset, even if there are errors
+        defer {
+            isLoadingSchedule = false
+            print("[YEAR_CHANGE_DEBUG] Schedule loading completed, isLoadingSchedule reset to false")
+        }
+        
         self.schedulingData = [:]
         self.schedulingDataByTime = [:]
     
@@ -248,8 +254,6 @@ open class scheduleHandler {
                 }
             }
         }
-        
-        isLoadingSchedule = false
 
     }
     
@@ -321,7 +325,7 @@ open class scheduleHandler {
                 didRenameOld = true
             } catch let error as NSError {
                 print ("Encountered an error renaming old schedule file " + error.debugDescription)
-                isLoadingBandData = false
+                isLoadingSchedule = false
             }
         }
         
@@ -337,7 +341,7 @@ open class scheduleHandler {
                 print("Successfully downloaded and wrote new schedule data")
             } catch let error as NSError {
                 print ("Encountered an error writing schedule file " + error.debugDescription)
-                isLoadingBandData = false
+                isLoadingSchedule = false
                 // Restore the old file if write fails
                 if didRenameOld && FileManager.default.fileExists(atPath: oldScheduleFile) {
                     do {

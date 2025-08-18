@@ -54,6 +54,28 @@ class dataHandler {
         }
     }
 
+    /// Adds or updates the priority data for a band with a specific timestamp (SILENT VERSION - no iCloud write).
+    /// This version is used when applying iCloud data to prevent infinite loops.
+    /// - Parameters:
+    ///   - bandName: The name of the band.
+    ///   - priority: The priority value to set.
+    ///   - timestamp: The timestamp of the update.
+    func addPriorityDataWithTimestampSilent(_ bandname: String, priority: Int, timestamp: Double) {
+        print ("addPriorityDataWithTimestampSilent for \(bandname) = \(priority) at \(timestamp)")
+        staticData.async(flags: .barrier) {
+            self.bandPriorityStorage[bandname] = priority
+            self.bandPriorityTimestamps[bandname] = timestamp
+            cacheVariables.bandPriorityStorageCache[bandname] = priority
+        }
+        staticLastModifiedDate.async(flags: .barrier) {
+            cacheVariables.lastModifiedDate = Date()
+        }
+        // Only write to local file - NO iCloud or Firebase writes to prevent loops
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            self.writeFile()
+        }
+    }
+    
     /// Adds or updates the priority data for a band with a specific timestamp.
     /// - Parameters:
     ///   - bandName: The name of the band.

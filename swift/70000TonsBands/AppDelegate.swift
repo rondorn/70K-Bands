@@ -327,7 +327,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         printFCMToken()
         
-        // Remove the old DispatchQueue.main.async block and replace with background thread for iCloud data loading
+        // Defer iCloud sync until after bands and schedule data are loaded
+        // This ensures iCloud priority/attendance data is applied to already-loaded band/schedule data
         DispatchQueue.global(qos: .background).async {
             let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
             if isFirstLaunch {
@@ -336,13 +337,49 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("First launch detected, waiting 20 seconds before loading iCloud data...")
                 Thread.sleep(forTimeInterval: 20.0)
             }
+            
+            // Wait for bands and schedule data to be loaded before syncing iCloud
+            print("iCloud: Waiting for bands and schedule data to load before syncing iCloud...")
+            
+            var waitTime: Double = 0
+            let maxWaitTime: Double = 60 // Maximum 60 seconds wait
+            
+            // Wait for band names to be ready (not loading and has data)
+            while isLoadingBandData || bandNamesHandler.shared.getBandNames().isEmpty {
+                Thread.sleep(forTimeInterval: 0.5)
+                waitTime += 0.5
+                print("iCloud: Still waiting for band names to load... (\(waitTime)s)")
+                
+                if waitTime >= maxWaitTime {
+                    print("iCloud: Timeout waiting for band names, proceeding with available data")
+                    break
+                }
+            }
+            
+            waitTime = 0 // Reset for schedule wait
+            
+            // Wait for schedule data to be ready (not loading - empty schedule with headers only is valid)
+            while isLoadingSchedule {
+                Thread.sleep(forTimeInterval: 0.5)
+                waitTime += 0.5
+                print("iCloud: Still waiting for schedule data to load... (\(waitTime)s)")
+                
+                if waitTime >= maxWaitTime {
+                    print("iCloud: Timeout waiting for schedule data, proceeding anyway")
+                    break
+                }
+            }
+            
+            print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
+            
             let iCloudHandle = iCloudDataHandler()
             // IMPORTANT: Check for old iCloud data format and migrate if needed
             // This must happen BEFORE reading iCloud data to prevent conflicts
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
-            let notes = CustomBandDescription()
-            notes.getAllDescriptions()
+            
+            print("iCloud: Launch sync completed, refreshing display...")
+            
             // Refresh the display on the main thread
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
@@ -789,7 +826,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("iCloud: Changed keys: \(changedKeys)")
         }
         
-        DispatchQueue.main.async {
+        // Move external iCloud change processing to background to avoid blocking main thread
+        DispatchQueue.global(qos: .utility).async {
             if iCloudDataisLoading || iCloudScheduleDataisLoading {
                 print("iCloud: Skipping iCloud data sync because a read operation is already in progress.")
                 return
@@ -798,11 +836,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
             
-            // Refresh the UI after loading new data
-            print("iCloud: Sending GUI refresh")
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "iCloudRefresh"), object: nil)
+            print("iCloud: External change processing completed, refreshing GUI...")
             
-            print("iCloud: External change processing completed")
+            // Refresh the UI on main thread after background processing
+            DispatchQueue.main.async {
+                print("iCloud: Sending GUI refresh")
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "iCloudRefresh"), object: nil)
+            }
         }
     }
     

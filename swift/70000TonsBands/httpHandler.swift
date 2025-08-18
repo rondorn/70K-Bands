@@ -58,6 +58,12 @@ func getUrlData(urlString: String) -> String{
         if (urlString == "Unable to communicate with Drop Box!"){
                 results = urlString
         } else {
+            // IMPORTANT: Only allow synchronous URL loading on background threads
+            if Thread.isMainThread {
+                print ("⚠️ WARNING: getUrlData called on main thread for \(urlString) - returning empty to prevent UI hang")
+                return ""
+            }
+            
             do {
                 print ("Problem URL string is \(urlString)")
                 //create the url with NSURL

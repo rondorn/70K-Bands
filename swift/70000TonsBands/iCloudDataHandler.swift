@@ -11,6 +11,15 @@ import UIKit
 
 let uidString: String? = UIDevice.current.identifierForVendor?.uuidString
 
+// Extension for array chunking to support batch processing
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
+
 class iCloudDataHandler {
     
     /// Initializes the iCloudDataHandler class
@@ -57,7 +66,7 @@ class iCloudDataHandler {
     /// Reads all priority data from iCloud and syncs to local storage
     /// Iterates through all bands and attempts to read their priority data from iCloud
     func readAllPriorityData(){
-        print("iCloudPriority: Starting readAllPriorityData operation")
+        print("iCloudPriority: Starting optimized readAllPriorityData operation")
         
         // Return immediately if already loading to prevent multiple concurrent operations
         guard checkForIcloud() == true else {
@@ -65,53 +74,149 @@ class iCloudDataHandler {
             return
         }
         
-        print("iCloudPriority: iCloud data not currently loading, proceeding with read")
+        print("iCloudPriority: iCloud data not currently loading, proceeding with optimized read")
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                iCloudDataisLoading = true;
-                print("iCloudPriority: Set iCloudDataisLoading to true")
-                
-                let bandNameHandle = bandNamesHandler.shared
-                let bandNames = bandNameHandle.getBandNames()
-                
-                let priorityHandler = dataHandler()
-                priorityHandler.refreshData()
-                
-                print("iCloudPriority: Reading priority data for \(bandNames.count) bands")
-                
-                // Process bands in batches to avoid blocking for too long
-                let batchSize = 50
-                let totalBands = bandNames.count
-                
-                for batchStart in stride(from: 0, to: totalBands, by: batchSize) {
-                    let batchEnd = min(batchStart + batchSize, totalBands)
-                    let batch = Array(bandNames[batchStart..<batchEnd])
-                    
-                    print("iCloudPriority: Processing batch \(batchStart/batchSize + 1) (\(batch.count) bands)")
-                    
-                    for bandName in batch {
-                        // Check if we should continue processing
-                        if iCloudDataisLoading == false {
-                            print("iCloudPriority: Operation cancelled, stopping batch processing")
-                            return
-                        }
-                        self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
-                    }
-                    
-                    // Add a small delay between batches to prevent overwhelming the system
-                    if batchEnd < totalBands {
-                        usleep(10000) // 10ms delay between batches
-                    }
-                }
-                
-                iCloudDataisLoading = false;
-                print("iCloudPriority: Set iCloudDataisLoading to false, read operation completed")
-                // Notify UI that iCloud data is ready
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+            iCloudDataisLoading = true;
+            print("iCloudPriority: Set iCloudDataisLoading to true")
+            
+            let bandNameHandle = bandNamesHandler.shared
+            let bandNames = bandNameHandle.getBandNames()
+            
+            let priorityHandler = dataHandler()
+            priorityHandler.refreshData()
+            
+            print("iCloudPriority: Reading priority data for \(bandNames.count) bands using optimized bulk processing")
+            
+            // Pre-compute common values to avoid repeated calculations
+            guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else {
+                print("iCloudPriority: Could not get device UID, aborting")
+                iCloudDataisLoading = false
+                return
+            }
+            
+            // Bulk read all priority keys from iCloud
+            let allPriorityKeys = bandNames.map { "bandName:\($0)" }
+            var bulkResults: [(String, String)] = []
+            
+            print("iCloudPriority: Bulk reading \(allPriorityKeys.count) keys from iCloud...")
+            for key in allPriorityKeys {
+                if let value = NSUbiquitousKeyValueStore.default.string(forKey: key), !value.isEmpty {
+                    bulkResults.append((key, value))
                 }
             }
+            
+            print("iCloudPriority: Retrieved \(bulkResults.count) non-empty values from iCloud")
+            
+            // Process results in parallel with controlled concurrency
+            let batchSize = 25 // Smaller batches for parallel processing
+            let batches = bulkResults.chunked(into: batchSize)
+            let concurrentQueue = DispatchQueue(label: "iCloudPriorityProcessing", qos: .utility, attributes: .concurrent)
+            let semaphore = DispatchSemaphore(value: 4) // Limit to 4 concurrent operations
+            
+            var priorityUpdates: [(String, Int, Double)] = []
+            let updatesLock = DispatchQueue(label: "updatesLock")
+            
+            print("iCloudPriority: Processing \(batches.count) batches in parallel...")
+            
+            DispatchQueue.concurrentPerform(iterations: batches.count) { batchIndex in
+                semaphore.wait()
+                defer { semaphore.signal() }
+                
+                // Check if operation was cancelled
+                guard iCloudDataisLoading else { return }
+                
+                let batch = batches[batchIndex]
+                var batchUpdates: [(String, Int, Double)] = []
+                
+                for (key, value) in batch {
+                    // Extract band name from key
+                    let bandName = String(key.dropFirst("bandName:".count))
+                    
+                    // Process priority data
+                    if let update = self.processPriorityRecord(bandName: bandName, value: value, currentUid: currentUid, priorityHandler: priorityHandler) {
+                        batchUpdates.append(update)
+                    }
+                }
+                
+                // Thread-safe addition to updates array
+                updatesLock.sync {
+                    priorityUpdates.append(contentsOf: batchUpdates)
+                }
+                
+                print("iCloudPriority: Completed batch \(batchIndex + 1)/\(batches.count) (\(batch.count) items, \(batchUpdates.count) updates)")
+            }
+            
+            // Apply all updates in batch using SILENT version to prevent iCloud write loops
+            print("iCloudPriority: Applying \(priorityUpdates.count) priority updates...")
+            for (bandName, priority, timestamp) in priorityUpdates {
+                priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: priority, timestamp: timestamp)
+            }
+            
+            iCloudDataisLoading = false;
+            print("iCloudPriority: Optimized read operation completed with \(priorityUpdates.count) updates applied")
+            
+            // Notify UI that iCloud data is ready
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+            }
+        }
         
         print("iCloudPriority: readAllPriorityData operation completed")
+    }
+    
+    /// Processes a single priority record efficiently for bulk operations
+    /// - Parameters:
+    ///   - bandName: The name of the band
+    ///   - value: The iCloud value string
+    ///   - currentUid: The current device UID
+    ///   - priorityHandler: The data handler for priority operations
+    /// - Returns: Tuple of (bandName, priority, timestamp) if update is needed, nil otherwise
+    private func processPriorityRecord(bandName: String, value: String, currentUid: String, priorityHandler: dataHandler) -> (String, Int, Double)? {
+        guard !value.isEmpty && value != "5" else { 
+            print("iCloudPriority: Skipping \(bandName) - empty or no data (\(value))")
+            return nil 
+        }
+        
+        let tempData = value.split(separator: ":")
+        
+        // Handle new format: priority:uid:timestamp (3 parts)
+        guard tempData.count == 3,
+              let newPriority = Int(tempData[0]),
+              let timestampValue = Double(tempData[2]) else {
+            print("iCloudPriority: Invalid format for band \(bandName): \(value)")
+            return nil
+        }
+        
+        let uidValue = String(tempData[1])
+        let currentPriority = priorityHandler.getPriorityData(bandName)
+        
+        print("iCloudPriority: Processing \(bandName) - iCloud: \(newPriority):\(uidValue):\(timestampValue), local: \(currentPriority), currentUID: \(currentUid)")
+        
+        // RULE 1: Never overwrite local data if UID matches current device
+        if uidValue == currentUid {
+            print("iCloudPriority: Skipping \(bandName) - UID matches current device (\(uidValue) == \(currentUid))")
+            return nil
+        }
+        
+        // RULE 2: Only update if iCloud data is newer than local data
+        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+        
+        print("iCloudPriority: Timestamp comparison for \(bandName) - local: \(localTimestamp), iCloud: \(timestampValue)")
+        
+        if localTimestamp > 0 {
+            // Only update if iCloud timestamp is NEWER (>) than local timestamp
+            guard timestampValue > localTimestamp else { 
+                print("iCloudPriority: Skipping \(bandName) - iCloud timestamp not newer (\(timestampValue) <= \(localTimestamp))")
+                return nil 
+            }
+        } else if currentPriority != 0 {
+            // Local data exists but no timestamp - be conservative
+            print("iCloudPriority: Skipping \(bandName) - local data exists but no timestamp, being conservative")
+            return nil
+        }
+        
+        print("iCloudPriority: Update needed for \(bandName): \(currentPriority) -> \(newPriority) (timestamp: \(timestampValue))")
+        return (bandName, newPriority, timestampValue)
     }
     
     /// Reads a single priority record from iCloud for a specific band
@@ -156,7 +261,7 @@ class iCloudDataHandler {
                             // Only update if iCloud timestamp is NEWER (>) than local timestamp
                             if (timestampValue > localTimestamp){
                                 print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
-                                priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                                priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
                                 print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
                             } else {
                                 print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
@@ -164,7 +269,7 @@ class iCloudDataHandler {
                         } else {
                             // No local timestamp exists, safe to update with iCloud data
                             print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
-                            priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                            priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
                             print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
                         }
                     } else if (tempData.count == 2) {
@@ -176,7 +281,7 @@ class iCloudDataHandler {
                         print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
 
                         // Always update local data, since we can't compare timestamps
-                        priorityHandler.addPriorityDataWithTimestamp(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                        priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
                         print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
 
                         // Now update iCloud with the new format (priority:uid:currentTime)
@@ -366,11 +471,11 @@ class iCloudDataHandler {
     var iCloudScheduleDataisLoading = false;
     func readAllScheduleData(){
         if (checkForIcloud() == true){
-            print("iCloudSchedule: Starting readAllScheduleData operation")
+            print("iCloudSchedule: Starting optimized readAllScheduleData operation")
 
             iCloudScheduleDataisLoading = true;
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                print("iCloudSchedule: Initializing handlers for schedule data read")
+                print("iCloudSchedule: Initializing handlers for optimized schedule data read")
                 
                 let scheduleHandle = scheduleHandler.shared
                 scheduleHandle.buildTimeSortedSchedulingData();
@@ -386,33 +491,97 @@ class iCloudDataHandler {
                 
                 let scheduleData = scheduleHandle.getBandSortedSchedulingData()
                 
-                print("iCloudSchedule: Processing schedule data for \(scheduleData.count) bands")
+                print("iCloudSchedule: Processing schedule data for \(scheduleData.count) bands using optimized approach")
                 
                 if (scheduleData.count > 0){
+                    // Pre-flatten the nested schedule structure for efficient processing
+                    var flatScheduleItems: [(String, String, String, String)] = []
+                    var bandsNotInList: [String] = []
+                    
+                    print("iCloudSchedule: Flattening schedule data structure...")
                     for bandName in scheduleData.keys {
-                        print("iCloudSchedule: Processing schedule data for band: \(bandName)")
-                        if (scheduleData.isEmpty == false){
-                            for timeIndex in scheduleData[bandName]!.keys {
-                                if scheduleData[bandName] != nil {
-                                    if (scheduleData[bandName]![timeIndex] != nil){
-                                        if (scheduleData[bandName]![timeIndex]![locationField] != nil){
-                                            let location = scheduleData[bandName]![timeIndex]![locationField]!
-                                            let startTime = scheduleData[bandName]![timeIndex]![startTimeField]!
-                                            let eventType = scheduleData[bandName]![timeIndex]![typeField]!
-                                            
-                                            print("iCloudSchedule: Reading schedule record for band: \(bandName), location: \(location), startTime: \(startTime)")
-                                            
-                                            self.readAScheduleRecord(bandName: bandName,location: location,startTime: startTime,eventType: eventType, attendedHandle: attendedHandle, bandNames: bandNames)
-                                        }
-                                    }
+                        // Track bands not in main list for priority reading
+                        if !bandNames.contains(bandName) {
+                            bandsNotInList.append(bandName)
+                        }
+                        
+                        if let timeSlots = scheduleData[bandName] {
+                            for timeIndex in timeSlots.keys {
+                                if let eventData = timeSlots[timeIndex],
+                                   let location = eventData[locationField],
+                                   let startTime = eventData[startTimeField],
+                                   let eventType = eventData[typeField] {
+                                    flatScheduleItems.append((bandName, location, startTime, eventType))
                                 }
                             }
                         }
-                        if (bandNames.contains(bandName) == false){
-                            print("iCloudSchedule: Band not in band names list, reading priority: \(bandName)")
+                    }
+                    
+                    print("iCloudSchedule: Flattened \(flatScheduleItems.count) schedule items, \(bandsNotInList.count) bands need priority reading")
+                    
+                    // Bulk read all schedule keys from iCloud
+                    let eventYearString = String(eventYear)
+                    let allScheduleKeys = flatScheduleItems.map { (bandName, location, startTime, eventType) in
+                        return "eventName:\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
+                    }
+                    
+                    var bulkScheduleResults: [(String, String)] = []
+                    print("iCloudSchedule: Bulk reading \(allScheduleKeys.count) schedule keys from iCloud...")
+                    
+                    for key in allScheduleKeys {
+                        if let value = NSUbiquitousKeyValueStore.default.string(forKey: key), !value.isEmpty {
+                            bulkScheduleResults.append((key, value))
+                        }
+                    }
+                    
+                    print("iCloudSchedule: Retrieved \(bulkScheduleResults.count) non-empty schedule values from iCloud")
+                    
+                    // Process schedule results in parallel
+                    let batchSize = 20 // Smaller batches for schedule processing
+                    let batches = bulkScheduleResults.chunked(into: batchSize)
+                    let semaphore = DispatchSemaphore(value: 3) // Limit concurrent operations
+                    
+                    var scheduleUpdates: [(String, String)] = []
+                    let updatesLock = DispatchQueue(label: "scheduleUpdatesLock")
+                    
+                    print("iCloudSchedule: Processing \(batches.count) schedule batches in parallel...")
+                    
+                    DispatchQueue.concurrentPerform(iterations: batches.count) { batchIndex in
+                        semaphore.wait()
+                        defer { semaphore.signal() }
+                        
+                        let batch = batches[batchIndex]
+                        var batchUpdates: [(String, String)] = []
+                        
+                        for (key, value) in batch {
+                            if let update = self.processScheduleRecord(key: key, value: value, attendedHandle: attendedHandle, bandNames: bandNames) {
+                                batchUpdates.append(update)
+                            }
+                        }
+                        
+                        // Thread-safe addition to updates array
+                        updatesLock.sync {
+                            scheduleUpdates.append(contentsOf: batchUpdates)
+                        }
+                        
+                        print("iCloudSchedule: Completed batch \(batchIndex + 1)/\(batches.count) (\(batch.count) items, \(batchUpdates.count) updates)")
+                    }
+                    
+                    // Apply all schedule updates in batch
+                    print("iCloudSchedule: Applying \(scheduleUpdates.count) schedule updates...")
+                    for (eventIndex, status) in scheduleUpdates {
+                        attendedHandle.changeShowAttendedStatus(index: eventIndex, status: status)
+                    }
+                    
+                    // Handle bands not in main list (read their priorities)
+                    if !bandsNotInList.isEmpty {
+                        print("iCloudSchedule: Reading priorities for \(bandsNotInList.count) bands not in main list...")
+                        for bandName in bandsNotInList {
                             self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
                         }
                     }
+                    
+                    print("iCloudSchedule: Optimized processing completed with \(scheduleUpdates.count) updates applied")
                 } else {
                     print("iCloudSchedule: No schedule data found to process")
                 }
@@ -429,6 +598,67 @@ class iCloudDataHandler {
         } else {
             print("iCloudSchedule: iCloud disabled, skipping schedule data read")
         }
+    }
+    
+    /// Processes a single schedule record efficiently for bulk operations
+    /// - Parameters:
+    ///   - key: The iCloud key
+    ///   - value: The iCloud value
+    ///   - attendedHandle: The attended shows handler
+    ///   - bandNames: Array of band names
+    /// - Returns: Tuple of (eventIndex, status) if update is needed, nil otherwise
+    private func processScheduleRecord(key: String, value: String, attendedHandle: ShowsAttended, bandNames: [String]) -> (String, String)? {
+        // Extract components from key: "eventName:bandName:location:startTime:eventType:eventYear"
+        let keyComponents = key.components(separatedBy: ":")
+        guard keyComponents.count >= 6,
+              keyComponents[0] == "eventName" else {
+            print("iCloudSchedule: Invalid key format: \(key)")
+            return nil
+        }
+        
+        let bandName = keyComponents[1]
+        let location = keyComponents[2]
+        let startTime = keyComponents[3]
+        let eventType = keyComponents[4]
+        let eventYearString = keyComponents[5]
+        
+        let eventIndex = key  // Use the full key as eventIndex
+        
+        // Parse iCloud value (format: "status:uid:timestamp")
+        let valueComponents = value.components(separatedBy: ":")
+        guard valueComponents.count >= 3,
+              let timestamp = Double(valueComponents[2]) else {
+            print("iCloudSchedule: Invalid value format for \(eventIndex): \(value)")
+            return nil
+        }
+        
+        let iCloudStatus = valueComponents[0]
+        let uidValue = valueComponents[1]
+        
+        // Get current device UID
+        guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else {
+            return nil
+        }
+        
+        // RULE 1: Never overwrite local data if UID matches current device
+        if uidValue == currentUid {
+            return nil
+        }
+        
+        // RULE 2: Only update if iCloud data is newer than local data
+        let localStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+        let localTimestamp = attendedHandle.getShowAttendedLastChange(index: eventIndex)
+        
+        if localTimestamp > 0 {
+            // Only update if iCloud timestamp is NEWER than local timestamp
+            guard timestamp > localTimestamp else { return nil }
+        } else if localStatus != "0" {
+            // Local data exists but no timestamp - be conservative
+            return nil
+        }
+        
+        print("iCloudSchedule: Update needed for \(eventIndex): \(localStatus) -> \(iCloudStatus)")
+        return (eventIndex, iCloudStatus)
     }
     
     /// Reads a single schedule record from iCloud
