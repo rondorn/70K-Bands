@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 
 open class CustomBandDescription {
@@ -50,6 +51,7 @@ open class CustomBandDescription {
     func getDescriptionMapFile(){
         
         if (isInternetAvailable() == false){
+            print("commentFile No internet available for description map download")
             return;
         }
         
@@ -95,6 +97,9 @@ open class CustomBandDescription {
                     print ("commentFile Encountered an error writing descriptionMap file " + error.debugDescription)
                 }
             }
+        } else {
+            print("commentFile Warning: Failed to download description map data - httpData is empty")
+            print("commentFile This could be due to network issues or main thread restrictions")
         }
     }
     
@@ -111,11 +116,20 @@ open class CustomBandDescription {
     }
     
     /// Loads all band descriptions from the description map file.
+    /// WARNING: This function performs heavy I/O and network operations.
+    /// It should ONLY be called when the app is in the background state.
     func getAllDescriptions(){
+        
+        // Ensure this is only called when app is in background
+        guard UIApplication.shared.applicationState == .background else {
+            print("⚠️ BLOCKED: getAllDescriptions() called while app is in foreground - this should only run in background")
+            return
+        }
         
         if (downloadingAllComments == false){
             downloadingAllComments = true
-            print ("commentFile looping through bands")
+            print ("commentFile looping through bands (background state confirmed)")
+            
             for record in self.bandDescriptionUrl{
                 let bandName = record.key
                 print ("commentFile working on bandName " + bandName)
@@ -123,8 +137,10 @@ open class CustomBandDescription {
                     _ = self.getDescription(bandName: bandName)
                 }
             }
+            
+            downloadingAllComments = false
+            print ("commentFile processing completed (background state)")
         }
-        downloadingAllComments = false
     }
     
     func doesDescriptionFileExists(bandName: String) -> Bool {
@@ -381,6 +397,7 @@ open class CustomBandDescription {
             print ("commentFile looking for descriptionMapFile")
             
             if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
+                print("commentFile Description map file doesn't exist, attempting to download")
                 getDescriptionMapFile();
             }
             
@@ -408,7 +425,14 @@ open class CustomBandDescription {
                     print("Error: Failed to parse CSV data in getDescriptionMap.")
                 }
             } else {
+                let fileExists = FileManager.default.fileExists(atPath: descriptionMapFile)
                 print ("commentFile Encountered an error could not open descriptionMap file - \(descriptionMapFile)")
+                print ("commentFile File exists: \(fileExists)")
+                if !fileExists {
+                    print ("commentFile This is likely due to failed download - check network connectivity and URL validity")
+                } else {
+                    print ("commentFile File exists but cannot be read - check file permissions and encoding")
+                }
             }
             
             descriptionLock = false;
