@@ -65,6 +65,7 @@ class DetailViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var bandName: String
     @Published var bandImage: UIImage?
+    @Published var isLoadingImage: Bool = false
     @Published var customNotes: String = ""
     @Published var isEditingNotes: Bool = false
     @Published var selectedPriority: Int = 0 {
@@ -902,6 +903,9 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadBandImage() {
+        // Reset loading state at the start
+        isLoadingImage = false
+        
         let imageURL = CombinedImageListHandler.shared.getImageUrl(for: bandName)
         print("Loading image for \(bandName) from URL: \(imageURL)")
         
@@ -909,6 +913,7 @@ class DetailViewModel: ObservableObject {
             // No valid URL - show placeholder only if absolutely necessary
             print("❌ No valid URL for \(bandName) - showing placeholder")
             DispatchQueue.main.async {
+                self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = UIImage(named: "70000TonsLogo")
             }
             return
@@ -928,6 +933,7 @@ class DetailViewModel: ObservableObject {
             // New cache exists - use it immediately
             print("✅ Using new cached image for \(bandName) - no placeholder needed")
             DispatchQueue.main.async {
+                self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = newCachedImageData
             }
             return
@@ -952,6 +958,7 @@ class DetailViewModel: ObservableObject {
                 print("📡 No internet - using old cached image as fallback for \(bandName)")
                 if let oldCachedImageData = UIImage(contentsOfFile: oldImageStore.path) {
                     DispatchQueue.main.async {
+                        self.isLoadingImage = false // Ensure loading state is cleared
                         self.bandImage = oldCachedImageData
                     }
                     return
@@ -981,10 +988,18 @@ class DetailViewModel: ObservableObject {
         // Keep image area empty during download - don't set bandImage to anything initially
         print("🔄 Starting download for \(bandName) - keeping image area empty")
         
+        // Show loading indicator
+        DispatchQueue.main.async {
+            self.isLoadingImage = true
+        }
+        
         imageHandle.downloadAndCacheImage(urlString: imageURL, bandName: bandName) { [weak self] processedImage in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
+                // Hide loading indicator
+                self.isLoadingImage = false
+                
                 if let image = processedImage {
                     print("✅ Download successful for \(self.bandName) - displaying image")
                     self.bandImage = image
@@ -1008,10 +1023,12 @@ class DetailViewModel: ObservableObject {
         if let imageData = UIImage(contentsOfFile: imageStore.path) {
             let processedImage = imageHandle.processImage(imageData, urlString: imageURL)
             DispatchQueue.main.async {
+                self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = processedImage
             }
         } else {
             DispatchQueue.main.async {
+                self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = UIImage(named: "70000TonsLogo")
             }
         }
@@ -1535,6 +1552,8 @@ class DetailViewModel: ObservableObject {
             // Update to the new band (like original: immediate update)
             bandSelected = nextBandName
             bandName = nextBandName
+            isLoadingImage = false // Reset image loading state for new band
+            bandImage = nil // Clear previous band's image
             print("DEBUG: Updated bandName from '\(currentBand)' to '\(self.bandName)'")
             
             toastManager.show(message: message, placeHigh: false)
