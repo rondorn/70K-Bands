@@ -463,6 +463,8 @@ class iCloudDataHandler {
             } else {
                 print("iCloudSchedule: ERROR - UIDevice identifierForVendor is nil, cannot write schedule record for event: \(eventIndex)")
             }
+        } else {
+            print("iCloudSchedule: iCloud disabled or unavailable, cannot write schedule record for event: \(eventIndex)")
         }
     }
         
@@ -772,8 +774,9 @@ class iCloudDataHandler {
                     
                     // Overwrite all iCloud data with local data
                     self.writeAllPriorityData()
+                    self.writeAllScheduleData()  // Also ensure schedule data is written during migration
                     
-                    print("iCloudPriority: Migration completed - all iCloud priority data updated to new format")
+                    print("iCloudPriority: Migration completed - all iCloud priority and schedule data updated to new format")
                 } else {
                     print("iCloudPriority: No old priority data format detected, no migration needed")
                 }

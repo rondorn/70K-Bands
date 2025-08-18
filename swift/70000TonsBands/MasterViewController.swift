@@ -1080,10 +1080,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Use a dispatch group to track when all data loading is complete
             let dataLoadGroup = DispatchGroup()
             
-            // Load iCloud data
+            // Load iCloud data (both read and write to ensure sync)
             dataLoadGroup.enter()
             DispatchQueue.global(qos: .utility).async {
                 let iCloudHandle = iCloudDataHandler()
+                // First write local data to iCloud to ensure it's backed up
+                iCloudHandle.writeAllPriorityData()
+                iCloudHandle.writeAllScheduleData()
+                // Then read any remote changes from iCloud
                 iCloudHandle.readAllPriorityData()
                 iCloudHandle.readAllScheduleData()
                 dataLoadGroup.leave()

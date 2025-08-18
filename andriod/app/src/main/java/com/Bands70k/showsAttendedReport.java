@@ -67,83 +67,135 @@ public class showsAttendedReport {
     }
 
     public String buildMessage() {
-
-        String message = "These are the events I attended on the 70,000 Tons Of Metal Cruise\n\n";
-
-        Map<String, Boolean> eventCountExists = new HashMap<String, Boolean>();
-
-        Set<String> sortedBandEvents = eventCounts.keySet();
-        List<String> sortedBandEventsArray = new ArrayList<String>();
-        sortedBandEventsArray.addAll(sortedBandEvents);
-        Collections.sort(sortedBandEventsArray);
-
-        for (String eventType : sortedBandEventsArray) {
-
-            Integer sawAllCount = eventCounts.get(eventType).get(staticVariables.sawAllStatus);
-            Integer sawSomeCount = eventCounts.get(eventType).get(staticVariables.sawSomeStatus);
-
-            Log.d("ShareMessag", "sawAllCount is " + sawAllCount);
-
-            if (sawAllCount != null && sawAllCount >= 1) {
-                eventCountExists.put(eventType, true);
-                String sawAllCountString = sawAllCount.toString();
-                message += "Saw " + sawAllCountString + " " + eventType + addPlural(sawAllCount, eventType) + "\n";
+        return buildEventsAttendedReport();
+    }
+    
+    /**
+     * Builds an enhanced events attended report with venue information and emojis.
+     * @return The formatted events attended report as a string.
+     */
+    private String buildEventsAttendedReport() {
+        String message = "🤘 70K Bands - Events Attended\n\n";
+        
+        // Define event type order and emojis
+        String[] eventTypeOrder = {"Show", "Meet and Greet", "Clinic", "Special Event", "Cruiser Organized", "Unofficial Event"};
+        Map<String, String> eventTypeEmojis = new HashMap<>();
+        eventTypeEmojis.put("Show", "🎵");
+        eventTypeEmojis.put("Meet and Greet", "🤝");
+        eventTypeEmojis.put("Clinic", "🎸");
+        eventTypeEmojis.put("Special Event", "🎪");
+        eventTypeEmojis.put("Cruiser Organized", "🚢");
+        eventTypeEmojis.put("Unofficial Event", "🔥");
+        
+        Map<String, String> eventTypeLabels = new HashMap<>();
+        eventTypeLabels.put("Show", "Shows");
+        eventTypeLabels.put("Meet and Greet", "Meet & Greets");
+        eventTypeLabels.put("Clinic", "Clinics");
+        eventTypeLabels.put("Special Event", "Special Events");
+        eventTypeLabels.put("Cruiser Organized", "Cruise Events");
+        eventTypeLabels.put("Unofficial Event", "Unofficial Events");
+        
+        // Process each event type in order
+        for (String eventType : eventTypeOrder) {
+            if (!bandCounts.containsKey(eventType) || bandCounts.get(eventType).isEmpty()) {
+                continue;
             }
-            if (sawSomeCount != null && sawSomeCount >= 1) {
-                eventCountExists.put(eventType, true);
-                String sawSomeCountString = sawSomeCount.toString();
-                message += "Saw part of " + sawSomeCountString + " " + eventType + addPlural(sawSomeCount, eventType) + "\n";
-            }
-        }
-
-        message += "\n\n";
-
-        for (String eventType : bandCounts.keySet()) {
-
-            Integer sawSomeCount = 0;
-
-            Set<String> sortedBandNames = bandCounts.get(eventType).keySet();
-            List<String> sortedBandNamesArray = new ArrayList<String>();
-            sortedBandNamesArray.addAll(sortedBandNames);
-            Collections.sort(sortedBandNamesArray);
-
-            if (eventCountExists.containsKey(eventType) == true){
-
-                message += "\nFor " + eventType + addPlural(1, eventType);
-
-                for (String bandName : sortedBandNamesArray){
-
-                    Integer sawCount = 0;
-                    if (bandCounts.get(eventType).get(bandName).get(staticVariables.sawAllStatus) != null){
-                        sawCount = sawCount + bandCounts.get(eventType).get(bandName).get(staticVariables.sawAllStatus);
-                    }
-                    if (bandCounts.get(eventType).get(bandName).get(staticVariables.sawSomeStatus) != null){
-                        sawSomeCount = sawSomeCount + bandCounts.get(eventType).get(bandName).get(staticVariables.sawSomeStatus);
-                    }
-
-                    if (sawCount >= 1){
-                        String sawCountString = sawCount.toString();
-                        if (eventType.equals(staticVariables.show)){
-                            message += "\n     " + bandName + " " + sawCountString + " time" + addPlural(sawCount, "");
-                        } else {
-                            message += "\n      " + bandName;
-                        }
+            
+            String emoji = eventTypeEmojis.getOrDefault(eventType, "🎯");
+            String label = eventTypeLabels.getOrDefault(eventType, eventType);
+            int totalCount = calculateTotalEventsForType(eventType);
+            
+            if (totalCount > 0) {
+                message += emoji + " " + label + " (" + totalCount + "):\n";
+                
+                // Get all bands/events for this type with venue info
+                List<String> eventEntries = new ArrayList<>();
+                
+                Set<String> bandNames = bandCounts.get(eventType).keySet();
+                List<String> sortedBandNames = new ArrayList<>(bandNames);
+                Collections.sort(sortedBandNames);
+                
+                for (String bandName : sortedBandNames) {
+                    Map<String, Integer> bandData = bandCounts.get(eventType).get(bandName);
+                    Integer sawAllCount = bandData.get(staticVariables.sawAllStatus);
+                    
+                    if (sawAllCount != null && sawAllCount > 0) {
+                        // Get venue info for this band/event
+                        String venue = getVenueForBandEvent(bandName, eventType);
+                        String venueInfo = venue.isEmpty() ? "" : " (" + venue + ")";
+                        
+                        eventEntries.add("• " + bandName + venueInfo);
                     }
                 }
-                if (sawSomeCount >= 1){
-                    String sawSomeCountString = sawSomeCount.toString();
-                    if (sawSomeCount == 1){
-                        message += "\n" + sawSomeCountString + " of those was a partial show";
-                    } else {
-                        message += "\n" + sawSomeCountString + " of those were partial shows";
-                    }
+                
+                // Join entries with bullet separation for compact display
+                if (!eventEntries.isEmpty()) {
+                    message += String.join(" ", eventEntries) + "\n\n";
                 }
             }
-
         }
-
-        message +=  "\n\nhttp://www.facebook.com/70kBands\n";
+        
+        message += "\n📱 http://www.facebook.com/70kBands";
         return message;
+    }
+    
+    /**
+     * Calculates the total number of events attended for a specific event type.
+     * @param eventType The event type to count.
+     * @return Total count of events attended for this type.
+     */
+    private int calculateTotalEventsForType(String eventType) {
+        if (!bandCounts.containsKey(eventType)) {
+            return 0;
+        }
+        
+        int total = 0;
+        Map<String, Map<String, Integer>> eventTypeData = bandCounts.get(eventType);
+        
+        for (Map<String, Integer> bandData : eventTypeData.values()) {
+            Integer sawAllCount = bandData.get(staticVariables.sawAllStatus);
+            Integer sawSomeCount = bandData.get(staticVariables.sawSomeStatus);
+            
+            if (sawAllCount != null) {
+                total += sawAllCount;
+            }
+            if (sawSomeCount != null) {
+                total += sawSomeCount;
+            }
+        }
+        return total;
+    }
+    
+    /**
+     * Gets the venue information for a specific band/event.
+     * @param bandName The name of the band or event.
+     * @param eventType The type of event.
+     * @return The venue name, or empty string if not found.
+     */
+    private String getVenueForBandEvent(String bandName, String eventType) {
+        try {
+            // Use the Android schedule data access pattern
+            if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
+                mainListHandler listHandler = new mainListHandler();
+                
+                // Get all time indices for this band
+                Map<Long, scheduleHandler> bandSchedule = BandInfo.scheduleRecords.get(bandName).scheduleByTime;
+                
+                // Look for matching event type and return the location
+                for (Long timeIndex : bandSchedule.keySet()) {
+                    String type = listHandler.getEventType(bandName, timeIndex);
+                    
+                    if (type != null && type.equals(eventType)) {
+                        String location = listHandler.getLocation(bandName, timeIndex);
+                        return location != null ? location : "";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("getVenueForBandEvent", "Error getting venue for " + bandName + ": " + e.getMessage());
+        }
+        
+        return "";
     }
 
     public void getEventTypeCounts (String eventType, String sawStatus){
