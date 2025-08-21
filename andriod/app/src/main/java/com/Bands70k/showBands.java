@@ -1035,7 +1035,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             message += "\n";
         }
 
-        message += "\n\n📱 http://www.facebook.com/70kBands";
+        message += "\n\nhttp://www.facebook.com/70kBands";
         return message;
     }
 
