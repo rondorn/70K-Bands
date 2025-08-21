@@ -89,6 +89,15 @@
     <string name="Choices">Choices</string>
     <string name="MustSeeBands">Must See Bands</string>
     <string name="MightSeeBands">Might See Bands</string>
+    
+    <!-- Event sharing localization -->
+    <string name="EventsAttended">Events Attended</string>
+    <string name="ShowsPlural">Shows</string>
+    <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
+    <string name="ClinicsPlural">Clinics</string>
+    <string name="SpecialEventsPlural">Special Events</string>
+    <string name="CruiseEventsPlural">Cruise Events</string>
+    <string name="UnofficialEventsPlural">Unofficial Events</string>
 
     <string name="visitBands">Links</string>
     <string name="country">Country</string>

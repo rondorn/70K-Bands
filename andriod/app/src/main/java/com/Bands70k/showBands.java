@@ -852,7 +852,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 showsAttendedReport reportHandler = new showsAttendedReport();
                 reportHandler.assembleReport();
                 String shareBody = reportHandler.buildMessage();
-                String subject = "70K Bands - Events Attended";
+                String subject = "70K Bands - " + getString(R.string.EventsAttended);
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
