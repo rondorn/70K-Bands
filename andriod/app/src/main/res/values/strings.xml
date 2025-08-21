@@ -84,6 +84,11 @@
     <string name="ShareBandChoices">Share Band Choices</string>
     <string name="ShareShowChoices">Share Show Choices</string>
     <string name="ExportUserData">Export User Data</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Choices</string>
+    <string name="MustSeeBands">Must See Bands</string>
+    <string name="MightSeeBands">Might See Bands</string>
 
     <string name="visitBands">Links</string>
     <string name="country">Country</string>

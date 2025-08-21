@@ -255,4 +255,10 @@
     <string name="Information">Information</string>
     <string name="UserIdentifier">Identifiant utilisateur</string>
     <string name="Build">Build</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Choix</string>
+    <string name="MustSeeBands">Groupes À Voir Absolument</string>
+    <string name="MightSeeBands">Groupes À Voir Peut-Être</string>
+
 </resources>

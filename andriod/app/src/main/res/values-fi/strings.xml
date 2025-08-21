@@ -255,4 +255,10 @@
     <string name="Information">Tiedot</string>
     <string name="UserIdentifier">Käyttäjätunnus</string>
     <string name="Build">Versio</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Valinnat</string>
+    <string name="MustSeeBands">Pakollisia Bändejä</string>
+    <string name="MightSeeBands">Mahdollisia Bändejä</string>
+
 </resources>

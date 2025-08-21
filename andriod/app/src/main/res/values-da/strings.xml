@@ -251,4 +251,10 @@
     <string name="Information">Information</string>
     <string name="UserIdentifier">Bruger-ID</string>
     <string name="Build">Build</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Valg</string>
+    <string name="MustSeeBands">Skal Se Bands</string>
+    <string name="MightSeeBands">Måske Se Bands</string>
+
 </resources>

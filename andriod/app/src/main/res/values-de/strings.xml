@@ -253,4 +253,10 @@
     <string name="Information">Information</string>
     <string name="UserIdentifier">Benutzerkennung</string>
     <string name="Build">Build</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Auswahl</string>
+    <string name="MustSeeBands">Muss Sehen Bands</string>
+    <string name="MightSeeBands">Könnte Sehen Bands</string>
+
 </resources>
