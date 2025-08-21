@@ -251,4 +251,10 @@
     <string name="Information">Informação</string>
     <string name="UserIdentifier">Identificador do usuário</string>
     <string name="Build">Build</string>
+    
+    <!-- Localized share text -->
+    <string name="Choices">Escolhas</string>
+    <string name="MustSeeBands">Bandas Obrigatórias</string>
+    <string name="MightSeeBands">Bandas Possíveis</string>
+
 </resources>
