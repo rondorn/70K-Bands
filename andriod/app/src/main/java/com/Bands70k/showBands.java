@@ -806,6 +806,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         saveData.setText(getString(R.string.ExportUserData));
         na1.setVisibility(View.INVISIBLE);
         na2.setVisibility(View.INVISIBLE);
+        
+        // Check if Share Show Choice should be enabled
+        boolean hasScheduleData = BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty();
+        boolean hasAttendanceData = hasUserAttendanceData();
+        
+        if (!hasScheduleData || !hasAttendanceData) {
+            shareShowChoices.setEnabled(false);
+            shareShowChoices.setAlpha(0.5f); // Visual indication that it's disabled
+        }
 
         // add a button
         builder.setPositiveButton(getString(R.string.Cancel), new DialogInterface.OnClickListener() {
@@ -826,7 +835,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 sharingIntent.setType("text/plain");
 
                 String shareBody = buildShareMessage();
-                String subject = "70K Bands Choices";
+                String subject = "70K Bands " + getString(R.string.Choices);
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -995,7 +1004,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private String buildShareMessage() {
 
-        String message = "🤘 70K Bands Choices\n\n";
+        String message = "🤘 70K Bands " + getString(R.string.Choices) + "\n\n";
         
         // Collect must-see and might-see bands
         java.util.List<String> mustSeeBands = new java.util.ArrayList<>();
@@ -1011,8 +1020,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         
-        // Format must-see section
-        message += "🟢 Must See Bands (" + mustSeeBands.size() + "):\n";
+        // Format must-see section with localized text
+        message += "🟢 " + getString(R.string.MustSeeBands) + " (" + mustSeeBands.size() + "):\n";
         if (!mustSeeBands.isEmpty()) {
             for (int i = 0; i < mustSeeBands.size(); i++) {
                 message += "• " + mustSeeBands.get(i);
@@ -1023,8 +1032,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             message += "\n";
         }
         
-        // Format might-see section
-        message += "\n🟡 Might See Bands (" + mightSeeBands.size() + "):\n";
+        // Format might-see section with localized text
+        message += "\n🟡 " + getString(R.string.MightSeeBands) + " (" + mightSeeBands.size() + "):\n";
         if (!mightSeeBands.isEmpty()) {
             for (int i = 0; i < mightSeeBands.size(); i++) {
                 message += "• " + mightSeeBands.get(i);
@@ -1037,6 +1046,41 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         message += "\n\nhttp://www.facebook.com/70kBands";
         return message;
+    }
+    
+    /**
+     * Checks if the user has indicated attendance for at least one event
+     * @return true if user has attendance data, false otherwise
+     */
+    private boolean hasUserAttendanceData() {
+        try {
+            showsAttended attendedHandler = new showsAttended();
+            attendedHandler.loadShowsAttended();
+            Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+            
+            if (showsAttendedArray == null || showsAttendedArray.isEmpty()) {
+                return false;
+            }
+            
+            // Check if user has indicated attendance for any event in current year
+            for (String index : showsAttendedArray.keySet()) {
+                String[] indexArray = index.split(":");
+                if (indexArray.length >= 6) {
+                    Integer eventYear = Integer.valueOf(indexArray[5]);
+                    String attendanceStatus = showsAttendedArray.get(index);
+                    
+                    if (eventYear.equals(staticVariables.eventYear) && 
+                        (attendanceStatus.equals(staticVariables.sawAllStatus) || 
+                         attendanceStatus.equals(staticVariables.sawSomeStatus))) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            Log.e("hasUserAttendanceData", "Error checking attendance data", e);
+            return false;
+        }
     }
 
     public void populateBandList() {

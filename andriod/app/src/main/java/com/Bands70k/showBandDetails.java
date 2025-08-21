@@ -896,7 +896,11 @@ public class showBandDetails extends Activity {
         BandInfo.setSelectedBand(currentBand);
         
         // Update the band name and refresh content with slide animation
-            bandName = currentBand;
+        bandName = currentBand;
+        
+        // CRITICAL FIX: Recreate bandHandler with new band name so descriptions update properly
+        bandHandler = new BandNotes(bandName);
+        
         animateContentTransition(direction);
     }
     
