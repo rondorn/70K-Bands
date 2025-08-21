@@ -135,7 +135,7 @@ public class showsAttendedReport {
             }
         }
         
-        message += "\n📱 http://www.facebook.com/70kBands";
+        message += "\nhttp://www.facebook.com/70kBands";
         return message;
     }
     

@@ -195,8 +195,6 @@ class showAttendenceReport {
             message = buildEventsAttendedReport()
         }
         
-        message +=  "\nhttp://www.facebook.com/70kBands"
-        
         print ("shows attended message = \(message)")
         
         return message
@@ -243,7 +241,7 @@ class showAttendenceReport {
             intro += formattedMightSee + "\n"
         }
         
-        intro += "\n\n📱 http://www.facebook.com/70kBands"
+        intro += "\n\nhttp://www.facebook.com/70kBands"
          return intro
     }
     
@@ -315,6 +313,7 @@ class showAttendenceReport {
             }
         }
         
+        message += "\n\nhttp://www.facebook.com/70kBands"
         return message
     }
     

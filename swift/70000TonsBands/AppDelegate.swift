@@ -334,8 +334,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             if isFirstLaunch {
                 UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
                 UserDefaults.standard.synchronize()
-                print("First launch detected, waiting 20 seconds before loading iCloud data...")
-                Thread.sleep(forTimeInterval: 20.0)
+                print("First launch detected, proceeding with iCloud data loading...")
+                // Removed unnecessary 20-second delay - the polling loops below ensure proper synchronization
             }
             
             // Wait for bands and schedule data to be loaded before syncing iCloud
