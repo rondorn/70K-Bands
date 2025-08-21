@@ -111,6 +111,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Check if this is first install - if so, delay country dialog until data loads
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
+        // Preload country data in background to ensure it's always available
+        countryHandler.shared.loadCountryData { 
+            print("[MasterViewController] Country data preloaded successfully")
+        }
+        
         if !hasRunBefore {
             shouldShowCountryDialogAfterDataLoad = true
             print("[MasterViewController] First install detected - delaying country dialog until data loads")
@@ -406,7 +411,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func iCloudRefresh() {
-        refreshDataWithBackgroundUpdate(reason: "iCloud refresh")
+        // Move to background to prevent GUI blocking during iCloud operations
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            self?.refreshDataWithBackgroundUpdate(reason: "iCloud refresh")
+        }
     }
     
     @objc func refreshMainDisplayAfterRefresh() {
@@ -489,34 +497,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func chooseCountry(){
         
-        let countryHandle = countryHandler()
-        countryHandle.loadCountryData()
-        let defaultCountry = NSLocale.current.regionCode ?? "US"
-        var countryLongShort = countryHandle.getCountryLongShort()
-
+        let countryHandle = countryHandler.shared
         
-        let alertController = UIAlertController(title: "Choose Country", message: nil, preferredStyle: .actionSheet)
-        var sortedKeys = countryLongShort.keys.sorted()
-        for keyValue in sortedKeys {
-            alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
-                do {
-                    let finalCountyValue = countryLongShort[keyValue] ?? "Unknown"
-                    print ("countryValue writing Acceptable country of " + finalCountyValue + " found")
-                    try finalCountyValue.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
-                } catch {
-                    print ("countryValue Error writing Acceptable country of " + countryLongShort[keyValue]! + " found " + error.localizedDescription)
-                }
-            }))
+        // Load country data asynchronously to avoid blocking main thread
+        countryHandle.loadCountryData { [weak self] in
+            guard let self = self else { return }
+            
+            let defaultCountry = NSLocale.current.regionCode ?? "US"
+            var countryLongShort = countryHandle.getCountryLongShort()
+
+            let alertController = UIAlertController(title: "Choose Country", message: nil, preferredStyle: .actionSheet)
+            var sortedKeys = countryLongShort.keys.sorted()
+            for keyValue in sortedKeys {
+                alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
+                    do {
+                        let finalCountyValue = countryLongShort[keyValue] ?? "Unknown"
+                        print ("countryValue writing Acceptable country of " + finalCountyValue + " found")
+                        try finalCountyValue.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+                    } catch {
+                        print ("countryValue Error writing Acceptable country of " + countryLongShort[keyValue]! + " found " + error.localizedDescription)
+                    }
+                }))
+            }
+
+            if let popoverController = alertController.popoverPresentationController {
+                popoverController.sourceView = self.view
+                popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+                popoverController.permittedArrowDirections = []
+           }
+       
+          self.present(alertController, animated: true, completion: nil)
         }
-
-        if let popoverController = alertController.popoverPresentationController {
-            popoverController.sourceView = self.view
-            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
-            popoverController.permittedArrowDirections = []
-       }
-   
-
-      present(alertController, animated: true, completion: nil)
     }
     
     /// Shows the waiting message immediately on first install only, before data loading begins
@@ -549,57 +560,68 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             //do nothing
         }
 
+        // Use shared country handler with background loading to prevent GUI blocking
+        let countryHandle = countryHandler.shared
+        
+        // Load country data in background (uses cache if available)
+        countryHandle.loadCountryData { [weak self] in
+            guard let self = self else { return }
             
-        let countryHandle = countryHandler()
-        countryHandle.loadCountryData()
-        let defaultCountry = NSLocale.current.regionCode ?? "United States"
-        let countryShortLong = countryHandle.getCountryShortLong()
-        let countryLongShort = countryHandle.getCountryLongShort()
-        let defaultLongCountry = countryShortLong[defaultCountry] ?? "Unknown"
-        
-        //UIAlertControllerStyleAlert
-        let alert = UIAlertController.init(title: NSLocalizedString("verifyCountry", comment: ""), message: NSLocalizedString("correctCountryDescription", comment: ""), preferredStyle: UIAlertController.Style.alert)
-        
-        
-        alert.addTextField { (textField) in
-            textField.text = defaultLongCountry
-            textField.isEnabled = false
-        }
-
-        let correctButton = UIAlertAction.init(title: NSLocalizedString("correctCountry", comment: ""), style: .default) { _ in
-            alert.dismiss(animated: true)
-            self.chooseCountry();
-        }
-        alert.addAction(correctButton)
-        
-        let OkButton = UIAlertAction.init(title: NSLocalizedString("confirmCountry", comment: ""), style: .default) { _ in
-            var countryValue = countryLongShort[alert.textFields![0].text!]
-            print ("countryValue Acceptable country of " + countryValue! + " found")
+            // This completion block runs on main thread
+            let defaultCountry = NSLocale.current.regionCode ?? "United States"
+            let countryShortLong = countryHandle.getCountryShortLong()
+            let countryLongShort = countryHandle.getCountryLongShort()
+            let defaultLongCountry = countryShortLong[defaultCountry] ?? "Unknown"
             
-            do {
-                //let countryFileUrl = URL(string: countryFile)
-                print ("countryValue writing Acceptable country of " + countryValue! + " found")
-                try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
-            } catch {
-                print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
+            //UIAlertControllerStyleAlert
+            let alert = UIAlertController.init(title: NSLocalizedString("verifyCountry", comment: ""), message: NSLocalizedString("correctCountryDescription", comment: ""), preferredStyle: UIAlertController.Style.alert)
+            
+            
+            alert.addTextField { (textField) in
+                textField.text = defaultLongCountry
+                textField.isEnabled = false
             }
+
+            let correctButton = UIAlertAction.init(title: NSLocalizedString("correctCountry", comment: ""), style: .default) { _ in
+                alert.dismiss(animated: true)
+                self.chooseCountry();
+            }
+            alert.addAction(correctButton)
+            
+            let OkButton = UIAlertAction.init(title: NSLocalizedString("confirmCountry", comment: ""), style: .default) { _ in
+                var countryValue = countryLongShort[alert.textFields![0].text!]
+                print ("countryValue Acceptable country of " + countryValue! + " found")
+                
+                do {
+                    //let countryFileUrl = URL(string: countryFile)
+                    print ("countryValue writing Acceptable country of " + countryValue! + " found")
+                    try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
+                } catch {
+                    print ("countryValue Error writing Acceptable country of " + countryValue! + " found " + error.localizedDescription)
+                }
+            }
+            alert.addAction(OkButton)
+            
+            
+            if let popoverController = alert.popoverPresentationController {
+                popoverController.sourceView = self.view
+                popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
+                popoverController.permittedArrowDirections = []
+           }
+       
+           self.present(alert, animated: true, completion: nil)
         }
-        alert.addAction(OkButton)
-        
-        
-        if let popoverController = alert.popoverPresentationController {
-            popoverController.sourceView = self.view
-            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
-            popoverController.permittedArrowDirections = []
-       }
-   
-       present(alert, animated: true, completion: nil)
         
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        let countryHandle = countryHandler()
-        countryHandle.loadCountryData()
+        let countryHandle = countryHandler.shared
+        
+        // Only use autocomplete if country data is already loaded (don't block main thread)
+        guard !countryHandle.getCountryShortLong().isEmpty else {
+            return true  // Allow typing but no autocomplete until data is loaded
+        }
+        
         let countryShortLong = countryHandle.getCountryShortLong()
         var autoCompletionPossibilities = [String]()
         
@@ -728,8 +750,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isLoadingBandData = false
         writeFiltersFile()
         
-        // Use centralized background refresh
-        refreshDataWithBackgroundUpdate(reason: "Return from details")
+        // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
+        // This ensures the UI remains responsive when returning from background/details
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Perform data refresh entirely in background
+            self.refreshDataWithBackgroundUpdate(reason: "Return from details")
+        }
         
         finishedPlaying() // Defensive: ensure no video is left over
     }
@@ -796,7 +824,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func refreshDisplayAfterWake(){
-        self.refreshDataWithBackgroundUpdate(reason: "Display after wake")
+        // Move to background to prevent GUI blocking when waking from sleep
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            self?.refreshDataWithBackgroundUpdate(reason: "Display after wake")
+        }
         //createrFilterMenu(controller: self)
     }
     
@@ -2505,7 +2536,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handlePushNotificationReceived() {
-        refreshDataWithBackgroundUpdate(reason: "Push notification received")
+        // Move to background to prevent GUI blocking when handling push notifications
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            self?.refreshDataWithBackgroundUpdate(reason: "Push notification received")
+        }
     }
     
     // App foreground handling moved to AppDelegate for global application-level handling

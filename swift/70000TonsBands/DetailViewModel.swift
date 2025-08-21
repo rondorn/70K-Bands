@@ -178,6 +178,9 @@ class DetailViewModel: ObservableObject {
     private var englishDescriptionText: String = ""
     private var doNotSaveText: Bool = false
     
+    // Track original priority to prevent unwanted saves
+    private var originalPriority: Int? = nil
+    
     // Directory path for saving custom notes
     private var directoryPath: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -1298,17 +1301,30 @@ class DetailViewModel: ObservableObject {
         
         if let priority = bandPriorityStorage[bandName] {
             selectedPriority = priority
+            originalPriority = priority
             print("DEBUG: loadPriority() for '\(bandName)' - found priority: \(priority)")
         } else {
             selectedPriority = 0
+            originalPriority = nil  // Track that this was originally null/unset
             bandPriorityStorage[bandName] = 0
-            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, defaulting to 0")
+            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, defaulting to 0 (originalPriority=nil)")
         }
     }
     
     private func savePriority() {
+        // Check if user is trying to set "Won't Attend" (3) when previous value was null
+        // This prevents accidental saves that interfere with iCloud data loading
+        if selectedPriority == 3 && originalPriority == nil {
+            print("DEBUG: savePriority() - Preventing save of 'Won't Attend' when original priority was null for band: '\(bandName)'")
+            // Revert to the original state (0 for Unknown)
+            selectedPriority = 0
+            return
+        }
+        
         bandPriorityStorage[bandName] = selectedPriority
         dataHandle.addPriorityData(bandName, priority: selectedPriority)
+        
+        print("DEBUG: savePriority() - Saved priority \(selectedPriority) for band: '\(bandName)' (originalPriority: \(originalPriority?.description ?? "nil"))")
         
         // Post targeted notification for priority changes (avoid full data reload)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
