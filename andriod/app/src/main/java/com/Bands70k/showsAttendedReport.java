@@ -71,11 +71,11 @@ public class showsAttendedReport {
     }
     
     /**
-     * Builds an enhanced events attended report with venue information and emojis.
+     * Builds an enhanced events attended report with venue information and emojis using localized strings.
      * @return The formatted events attended report as a string.
      */
     private String buildEventsAttendedReport() {
-        String message = "🤘 70K Bands - Events Attended\n\n";
+        String message = "🤘 70K Bands - " + staticVariables.context.getString(R.string.EventsAttended) + "\n\n";
         
         // Define event type order and emojis
         String[] eventTypeOrder = {"Show", "Meet and Greet", "Clinic", "Special Event", "Cruiser Organized", "Unofficial Event"};
@@ -88,12 +88,12 @@ public class showsAttendedReport {
         eventTypeEmojis.put("Unofficial Event", "🔥");
         
         Map<String, String> eventTypeLabels = new HashMap<>();
-        eventTypeLabels.put("Show", "Shows");
-        eventTypeLabels.put("Meet and Greet", "Meet & Greets");
-        eventTypeLabels.put("Clinic", "Clinics");
-        eventTypeLabels.put("Special Event", "Special Events");
-        eventTypeLabels.put("Cruiser Organized", "Cruise Events");
-        eventTypeLabels.put("Unofficial Event", "Unofficial Events");
+        eventTypeLabels.put("Show", staticVariables.context.getString(R.string.ShowsPlural));
+        eventTypeLabels.put("Meet and Greet", staticVariables.context.getString(R.string.MeetAndGreetsPlural));
+        eventTypeLabels.put("Clinic", staticVariables.context.getString(R.string.ClinicsPlural));
+        eventTypeLabels.put("Special Event", staticVariables.context.getString(R.string.SpecialEventsPlural));
+        eventTypeLabels.put("Cruiser Organized", staticVariables.context.getString(R.string.CruiseEventsPlural));
+        eventTypeLabels.put("Unofficial Event", staticVariables.context.getString(R.string.UnofficialEventsPlural));
         
         // Process each event type in order
         for (String eventType : eventTypeOrder) {

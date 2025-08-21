@@ -256,5 +256,14 @@
     <string name="Choices">Valg</string>
     <string name="MustSeeBands">Skal Se Bands</string>
     <string name="MightSeeBands">Måske Se Bands</string>
+    
+    <!-- Event sharing localization -->
+    <string name="EventsAttended">Arrangementer Deltaget</string>
+    <string name="ShowsPlural">Shows</string>
+    <string name="MeetAndGreetsPlural">Møde &amp; Hilsner</string>
+    <string name="ClinicsPlural">Klinikker</string>
+    <string name="SpecialEventsPlural">Specielle Begivenheder</string>
+    <string name="CruiseEventsPlural">Krydstogt Begivenheder</string>
+    <string name="UnofficialEventsPlural">Uofficielle Begivenheder</string>
 
 </resources>

@@ -260,5 +260,14 @@
     <string name="Choices">Valinnat</string>
     <string name="MustSeeBands">Pakollisia Bändejä</string>
     <string name="MightSeeBands">Mahdollisia Bändejä</string>
+    
+    <!-- Event sharing localization -->
+    <string name="EventsAttended">Osallistutut Tapahtumat</string>
+    <string name="ShowsPlural">Showt</string>
+    <string name="MeetAndGreetsPlural">Tapaamiset &amp; Tervehdykset</string>
+    <string name="ClinicsPlural">Kliinikat</string>
+    <string name="SpecialEventsPlural">Erikoistapahtumat</string>
+    <string name="CruiseEventsPlural">Risteilytapahtumat</string>
+    <string name="UnofficialEventsPlural">Epäviralliset Tapahtumat</string>
 
 </resources>

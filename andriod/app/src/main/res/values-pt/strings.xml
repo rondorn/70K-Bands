@@ -256,5 +256,14 @@
     <string name="Choices">Escolhas</string>
     <string name="MustSeeBands">Bandas Obrigatórias</string>
     <string name="MightSeeBands">Bandas Possíveis</string>
+    
+    <!-- Event sharing localization -->
+    <string name="EventsAttended">Eventos Participados</string>
+    <string name="ShowsPlural">Shows</string>
+    <string name="MeetAndGreetsPlural">Encontros &amp; Cumprimentos</string>
+    <string name="ClinicsPlural">Clínicas</string>
+    <string name="SpecialEventsPlural">Eventos Especiais</string>
+    <string name="CruiseEventsPlural">Eventos do Cruzeiro</string>
+    <string name="UnofficialEventsPlural">Eventos Não Oficiais</string>
 
 </resources>
