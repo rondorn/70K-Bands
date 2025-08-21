@@ -258,5 +258,14 @@
     <string name="Choices">Auswahl</string>
     <string name="MustSeeBands">Muss Sehen Bands</string>
     <string name="MightSeeBands">Könnte Sehen Bands</string>
+    
+    <!-- Event sharing localization -->
+    <string name="EventsAttended">Besuchte Veranstaltungen</string>
+    <string name="ShowsPlural">Shows</string>
+    <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
+    <string name="ClinicsPlural">Workshops</string>
+    <string name="SpecialEventsPlural">Spezielle Veranstaltungen</string>
+    <string name="CruiseEventsPlural">Kreuzfahrt Veranstaltungen</string>
+    <string name="UnofficialEventsPlural">Inoffizielle Veranstaltungen</string>
 
 </resources>
