@@ -206,7 +206,7 @@ class showAttendenceReport {
      */
     func buildMustMightReport()->String {
         
-        var intro = "🤘 70K Bands Choices\n\n"
+        var intro = "🤘 70K Bands " + NSLocalizedString("Choices", comment: "") + "\n\n"
         var mustSeeBands: [String] = []
         var mightSeeBands: [String] = []
         
@@ -228,14 +228,14 @@ class showAttendenceReport {
             }
         }
         
-        // Format must-see section
-        intro += "🟢 Must See Bands (\(mustSeeBands.count)):\n"
+        // Format must-see section with localized text
+        intro += "🟢 " + NSLocalizedString("MustSeeBands", comment: "") + " (\(mustSeeBands.count)):\n"
         if !mustSeeBands.isEmpty {
             let formattedMustSee = mustSeeBands.map { "• \($0)" }.joined(separator: " ")
             intro += formattedMustSee + "\n"
         }
         
-        intro += "\n🟡 Might See Bands (\(mightSeeBands.count)):\n"
+        intro += "\n🟡 " + NSLocalizedString("MightSeeBands", comment: "") + " (\(mightSeeBands.count)):\n"
         if !mightSeeBands.isEmpty {
             let formattedMightSee = mightSeeBands.map { "• \($0)" }.joined(separator: " ")
             intro += formattedMightSee + "\n"
@@ -250,7 +250,7 @@ class showAttendenceReport {
      - Returns: The formatted events attended report as a string.
      */
     func buildEventsAttendedReport() -> String {
-        var message = "🤘 70K Bands - Events Attended\n\n"
+        var message = "🤘 70K Bands - " + NSLocalizedString("EventsAttended", comment: "") + "\n\n"
         
         assembleReport()
         
@@ -269,12 +269,12 @@ class showAttendenceReport {
             "Unofficial Event": "🔥"
         ]
         let eventTypeLabels = [
-            "Show": "Shows",
-            "Meet and Greet": "Meet & Greets",
-            "Clinic": "Clinics", 
-            "Special Event": "Special Events",
-            "Cruiser Organized": "Cruise Events",
-            "Unofficial Event": "Unofficial Events"
+            "Show": NSLocalizedString("ShowsPlural", comment: ""),
+            "Meet and Greet": NSLocalizedString("MeetAndGreetsPlural", comment: ""),
+            "Clinic": NSLocalizedString("ClinicsPlural", comment: ""), 
+            "Special Event": NSLocalizedString("SpecialEventsPlural", comment: ""),
+            "Cruiser Organized": NSLocalizedString("CruiseEventsPlural", comment: ""),
+            "Unofficial Event": NSLocalizedString("UnofficialEventsPlural", comment: "")
         ]
         
         // Process each event type in order

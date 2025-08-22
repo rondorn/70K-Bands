@@ -901,6 +901,12 @@ public class showBandDetails extends Activity {
         // CRITICAL FIX: Recreate bandHandler with new band name so descriptions update properly
         bandHandler = new BandNotes(bandName);
         
+        // Update activity title immediately to show new band name
+        setTitle(bandName);
+        
+        // Update band name TextView in the UI immediately
+        updateBandNameInUI();
+        
         animateContentTransition(direction);
     }
     
@@ -952,6 +958,10 @@ public class showBandDetails extends Activity {
                                 // Ensure final state is clean
                                 contentContainer.setTranslationX(0f);
                                 contentContainer.setAlpha(1.0f);
+                                
+                                // Ensure title and band name TextView are updated after animation completes
+                                setTitle(bandName);
+                                updateBandNameInUI();
                             }
                         })
                         .start();
@@ -1023,6 +1033,10 @@ public class showBandDetails extends Activity {
             public void onAnimationEnd(Animation animation) {
                 Log.d("SwipeAnimation", "Classic slide-in animation completed");
                 contentContainer.clearAnimation();
+                
+                // Ensure title and band name TextView are updated after animation completes
+                setTitle(bandName);
+                updateBandNameInUI();
             }
             
             @Override
@@ -1082,6 +1096,21 @@ public class showBandDetails extends Activity {
         HelpMessageHandler.showMessage(directionMessage + " " + currentBand);
         changeBand(currentBand, direction);
 
+    }
+    
+    /**
+     * Updates the band name TextView in the UI
+     */
+    private void updateBandNameInUI() {
+        try {
+            TextView bandNameText = findViewById(R.id.band_name_text);
+            if (bandNameText != null && bandName != null) {
+                bandNameText.setText(bandName);
+                Log.d("UIUpdate", "Band name TextView updated to: " + bandName);
+            }
+        } catch (Exception e) {
+            Log.e("UIUpdate", "Error updating band name TextView", e);
+        }
     }
     
     /**

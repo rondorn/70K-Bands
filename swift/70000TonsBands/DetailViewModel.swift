@@ -70,7 +70,10 @@ class DetailViewModel: ObservableObject {
     @Published var isEditingNotes: Bool = false
     @Published var selectedPriority: Int = 0 {
         didSet {
-            savePriority()
+            // Only save if we're not currently loading data
+            if !isLoadingPriority {
+                savePriority()
+            }
         }
     }
     
@@ -181,6 +184,9 @@ class DetailViewModel: ObservableObject {
     // Track original priority to prevent unwanted saves
     private var originalPriority: Int? = nil
     
+    // Flag to prevent didSet from triggering during data loading
+    private var isLoadingPriority: Bool = false
+    
     // Directory path for saving custom notes
     private var directoryPath: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -191,7 +197,7 @@ class DetailViewModel: ObservableObject {
     
     init(bandName: String) {
         self.bandName = bandName
-        loadInitialData()
+        loadBandData()
         
         // Listen for force refresh notifications
         NotificationCenter.default.addObserver(
@@ -1296,6 +1302,9 @@ class DetailViewModel: ObservableObject {
     private func loadPriority() {
         print("DEBUG: loadPriority() called for band: '\(bandName)'")
         
+        // Set flag to prevent didSet from triggering saves during data loading
+        isLoadingPriority = true
+        
         // Always reload priority data from the global data source to get latest changes
         bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         
@@ -1306,9 +1315,13 @@ class DetailViewModel: ObservableObject {
         } else {
             selectedPriority = 0
             originalPriority = nil  // Track that this was originally null/unset
-            bandPriorityStorage[bandName] = 0
-            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, defaulting to 0 (originalPriority=nil)")
+            // CRITICAL FIX: Do NOT overwrite bandPriorityStorage here - just set UI state
+            // The original bug was: bandPriorityStorage[bandName] = 0
+            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, setting UI to 0 but NOT overwriting storage (originalPriority=nil)")
         }
+        
+        // Clear the flag after loading is complete
+        isLoadingPriority = false
     }
     
     private func savePriority() {
