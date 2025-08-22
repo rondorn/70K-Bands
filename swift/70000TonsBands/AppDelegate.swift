@@ -214,30 +214,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
-            self.window?.rootViewController = splitViewController
-            
-            // Set up split view controller
-            splitViewController.delegate = self
-            splitViewController.preferredDisplayMode = .oneBesideSecondary
-            
-            // Only call makeKeyAndVisible on iPad to prevent crashes on iPhone
-            if UIDevice.current.userInterfaceIdiom == .pad {
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: Use split view controller for optimal experience
+            if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
+                self.window?.rootViewController = splitViewController
+                
+                // Set up split view controller
+                splitViewController.delegate = self
+                splitViewController.preferredDisplayMode = .oneBesideSecondary
+                
                 self.window?.makeKeyAndVisible()
-            }
-            
-            // Set up master view controller
-            if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-               let controller = masterNavigationController.viewControllers.first as? MasterViewController {
-                controller.managedObjectContext = self.managedObjectContext
-                setupDefaults()
-            } else {
-                print("Error: Could not get MasterViewController from navigation stack.")
-            }
-            
-            // Set up detail view controller - auto-select first band for iPad
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                // Create a placeholder detail view controller for iPad initially
+                
+                // Set up master view controller
+                if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+                   let controller = masterNavigationController.viewControllers.first as? MasterViewController {
+                    controller.managedObjectContext = self.managedObjectContext
+                    setupDefaults()
+                } else {
+                    print("Error: Could not get MasterViewController from navigation stack.")
+                }
+                
+                // Set up detail view controller - create placeholder for iPad initially
                 let placeholderDetailController = createPlaceholderDetailViewController()
                 let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
                 
@@ -257,9 +255,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 }
                 
                 // Auto-selection now happens after data is loaded in refreshBandList
+            } else {
+                print("Error: Could not instantiate UISplitViewController from storyboard.")
             }
         } else {
-            print("Error: Could not instantiate UISplitViewController from storyboard.")
+            // iPhone (including Max models): Use simple navigation controller to avoid split view issues
+            if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController,
+               let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+               let masterViewController = masterNavigationController.viewControllers.first as? MasterViewController {
+                
+                // Extract the master view controller and use it as the root of a standard navigation controller
+                let navigationController = UINavigationController(rootViewController: masterViewController)
+                self.window?.rootViewController = navigationController
+                
+                // Configure the master view controller
+                masterViewController.managedObjectContext = self.managedObjectContext
+                setupDefaults()
+                
+                self.window?.makeKeyAndVisible()
+                print("iPhone: Using standard navigation controller instead of split view for better experience")
+            } else {
+                print("Error: Could not extract MasterViewController from storyboard for iPhone setup.")
+            }
         }
         
         // Register default UserDefaults values including iCloud setting

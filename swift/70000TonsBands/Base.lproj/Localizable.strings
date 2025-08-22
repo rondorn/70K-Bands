@@ -92,6 +92,20 @@
 "ShareBandChoices" = "Share Band Choices";
 "ShareShowChoices" = "Share Show Choices";
 
+// Localized share text
+"Choices" = "Choices";
+"MustSeeBands" = "Must See Bands";
+"MightSeeBands" = "Might See Bands";
+
+// Event sharing localization
+"EventsAttended" = "Events Attended";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Meet & Greets";
+"ClinicsPlural" = "Clinics";
+"SpecialEventsPlural" = "Special Events";
+"CruiseEventsPlural" = "Cruise Events";
+"UnofficialEventsPlural" = "Unofficial Events";
+
 "visitBands" = "Links";
 "country" = "Country";
 "genre" = "Genre";

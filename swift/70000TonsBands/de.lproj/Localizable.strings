@@ -219,4 +219,18 @@
 "Information" = "Information";
 "User Identifier" = "Benutzerkennung";
 "Build" = "Build";
+
+// Localized share text
+"Choices" = "Auswahl";
+"MustSeeBands" = "Muss Sehen Bands";
+"MightSeeBands" = "Könnte Sehen Bands";
+
+// Event sharing localization
+"EventsAttended" = "Besuchte Veranstaltungen";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Meet & Greets";
+"ClinicsPlural" = "Workshops";
+"SpecialEventsPlural" = "Spezielle Veranstaltungen";
+"CruiseEventsPlural" = "Kreuzfahrt Veranstaltungen";
+"UnofficialEventsPlural" = "Inoffizielle Veranstaltungen";
   

@@ -206,3 +206,17 @@
 "Events" = "Begivenheder";
 
 "SearchCriteria" = "Søgekriterier";
+
+// Localized share text
+"Choices" = "Valg";
+"MustSeeBands" = "Skal Se Bands";
+"MightSeeBands" = "Måske Se Bands";
+
+// Event sharing localization
+"EventsAttended" = "Arrangementer Deltaget";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Møde & Hilsner";
+"ClinicsPlural" = "Klinikker";
+"SpecialEventsPlural" = "Specielle Begivenheder";
+"CruiseEventsPlural" = "Krydstogt Begivenheder";
+"UnofficialEventsPlural" = "Uofficielle Begivenheder";
