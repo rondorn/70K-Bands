@@ -212,6 +212,20 @@
 
 "SearchCriteria" = "Critérios de pesquisa";
 
+// Localized share text
+"Choices" = "Escolhas";
+"MustSeeBands" = "Bandas Obrigatórias";
+"MightSeeBands" = "Bandas Possíveis";
+
+// Event sharing localization
+"EventsAttended" = "Eventos Participados";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Encontros & Cumprimentos";
+"ClinicsPlural" = "Clínicas";
+"SpecialEventsPlural" = "Eventos Especiais";
+"CruiseEventsPlural" = "Eventos do Cruzeiro";
+"UnofficialEventsPlural" = "Eventos Não Oficiais";
+
 // Keyboard toolbar buttons
 "Select All" = "Selecionar tudo";
 "Copy" = "Copiar";

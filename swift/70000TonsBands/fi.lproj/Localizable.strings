@@ -213,3 +213,17 @@
 "Events" = "Tapahtumat";
 
 "SearchCriteria" = "Hakukriteerit";
+
+// Localized share text
+"Choices" = "Valinnat";
+"MustSeeBands" = "Pakollisia Bändejä";
+"MightSeeBands" = "Mahdollisia Bändejä";
+
+// Event sharing localization
+"EventsAttended" = "Osallistutut Tapahtumat";
+"ShowsPlural" = "Showt";
+"MeetAndGreetsPlural" = "Tapaamiset & Tervehdykset";
+"ClinicsPlural" = "Kliinikat";
+"SpecialEventsPlural" = "Erikoistapahtumat";
+"CruiseEventsPlural" = "Risteilytapahtumat";
+"UnofficialEventsPlural" = "Epäviralliset Tapahtumat";
