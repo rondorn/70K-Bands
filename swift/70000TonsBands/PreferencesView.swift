@@ -198,7 +198,7 @@ struct PreferencesView: View {
 struct NavigationModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .navigationTitle(NSLocalizedString("PreferenceHeader", comment: ""))
+            .navigationTitle("\(FestivalConfig.current.appName) \(NSLocalizedString("Preferences", comment: ""))")
             .navigationBarTitleDisplayMode(.inline)
             .modifier(ConditionalToolbarModifier())
             .preferredColorScheme(.dark)

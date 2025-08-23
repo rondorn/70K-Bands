@@ -17,6 +17,28 @@ open class imageHandler {
     private let maxConcurrentDownloads = 3
     private let downloadQueue = DispatchQueue(label: "imageDownloadQueue", qos: .utility)
     
+    /// Returns the festival-specific default logo
+    /// - Returns: UIImage of the festival logo, or a system default if loading fails
+    private func getFestivalDefaultLogo() -> UIImage {
+        // Use the festival-specific logo from configuration
+        let logoName = FestivalConfig.current.logoUrl
+        
+        if let logo = UIImage(named: logoName) {
+            print("Using festival logo: \(logoName)")
+            return logo
+        }
+        
+        // Fallback to 70K logo if festival logo not found
+        if logoName != "70000TonsLogo", let fallbackLogo = UIImage(named: "70000TonsLogo") {
+            print("Festival logo '\(logoName)' not found, using 70K fallback")
+            return fallbackLogo
+        }
+        
+        // Ultimate fallback - system image
+        print("No bundled logos found, using system fallback")
+        return UIImage(systemName: "music.note") ?? UIImage()
+    }
+    
     /// Analyzes a URL to determine if image inversion should be applied
     /// - Parameter urlString: The URL string to analyze
     /// - Returns: True if inversion should be applied, false otherwise
@@ -45,13 +67,13 @@ open class imageHandler {
         
         // Check for invalid URLs
         if urlString.isEmpty || urlString == "http://" {
-            print("Invalid URL, using default logo")
-            return UIImage(named: "70000TonsLogo")!
+            print("Invalid URL, using festival-specific default logo")
+            return getFestivalDefaultLogo()
         }
         
-        // If no cached image and no valid URL, return default
+        // If no cached image and no valid URL, return festival-specific default
         print("No cached image and no valid URL for \(bandName)")
-        return UIImage(named: "70000TonsLogo")!
+        return getFestivalDefaultLogo()
     }
     
     /// Downloads an image from URL and caches it with proper inversion analysis

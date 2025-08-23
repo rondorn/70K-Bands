@@ -280,8 +280,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         
         // Register default UserDefaults values including iCloud setting
-        let defaults = ["artistUrl": "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1",
-                        "scheduleUrl": "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1",
+        let defaults = ["artistUrl": FestivalConfig.current.artistUrlDefault,
+                        "scheduleUrl": FestivalConfig.current.scheduleUrlDefault,
                         "iCloud": "YES",
                         "mustSeeAlert": "YES", 
                         "mightSeeAlert": "YES",
@@ -294,7 +294,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         "validateScheduleFile": "NO"]
         UserDefaults.standard.register(defaults: defaults)
         
-        FirebaseApp.configure()
+        // Configure Firebase with festival-specific config file
+        if let path = Bundle.main.path(forResource: FestivalConfig.current.firebaseConfigFile, ofType: "plist"),
+           let options = FirebaseOptions(contentsOfFile: path) {
+            FirebaseApp.configure(options: options)
+        } else {
+            // Fallback to default configuration
+            FirebaseApp.configure()
+        }
         FirebaseConfiguration.shared.setLoggerLevel(.min)
         
         let iCloudHandle = iCloudDataHandler()

@@ -198,9 +198,9 @@ let sawNoneStatus = "sawNone";
 var eventYearArray = [String]();
 
 //alert topics
-let subscriptionTopic = "global"
-let subscriptionTopicTest = "Testing20250801"
-let subscriptionUnofficalTopic = "unofficalEvents"
+let subscriptionTopic = FestivalConfig.current.subscriptionTopic
+let subscriptionTopicTest = FestivalConfig.current.subscriptionTopicTest
+let subscriptionUnofficalTopic = FestivalConfig.current.subscriptionUnofficalTopic
 
 //file names
 let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
@@ -215,8 +215,7 @@ let eventYearsInfoFile = "eventYearsInfoFile"
 var eventYear:Int = 0
 
 //defaults preferences
-var artistUrlDefault = ""
-var scheduleUrlDefault = ""
+// artistUrlDefault and scheduleUrlDefault are now defined in preferenceDefault.swift using FestivalConfig
 
 let defaultPrefsValue = "Default";
 
@@ -224,8 +223,8 @@ let testingSetting = "Testing"
 
 var userCountry = ""
 var didNotFindMarkedEventsCount = 0
-var defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1"
-let defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
+var defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
+let defaultStorageUrlTest = FestivalConfig.current.defaultStorageUrlTest
 let statsUrl = getPointerUrlData(keyValue: "reportUrl")
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
@@ -299,7 +298,7 @@ func getPointerUrlData(keyValue: String) -> String {
     }
     
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
-        defaultStorageUrl = defaultStorageUrlTest
+        defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
         inTestEnvironment = true;
         
     }
@@ -691,33 +690,21 @@ func setupCurrentYearUrls() {
     let filePath = defaultUrlConverFlagUrl.path
     if(FileManager.default.fileExists(atPath: filePath)){
         print ("setupCurrentYearUrls: Followup run of setupCurrentYearUrls routine")
-        artistUrlDefault = getArtistUrl()
-        scheduleUrlDefault = getScheduleUrl()
+        let currentArtistUrl = getArtistUrl()
+        let currentScheduleUrl = getScheduleUrl()
         
-        print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
-        print ("setupCurrentYearUrls: scheduleUrlDefault is \(scheduleUrlDefault)")
+        print ("setupCurrentYearUrls: artistUrlDefault is \(currentArtistUrl)")
+        print ("setupCurrentYearUrls: scheduleUrlDefault is \(currentScheduleUrl)")
     } else {
         print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine")
-       artistUrlDefault = defaultPrefsValue
-       scheduleUrlDefault = defaultPrefsValue
-       let flag = ""
+        // Note: URLs are now managed by FestivalConfig, not modified at runtime
+        let flag = ""
         do {
             try flag.write(to: defaultUrlConverFlagUrl, atomically: false, encoding: .utf8)
         }
         catch {print ("setupCurrentYearUrls: First run of setupCurrentYearUrls routine Failed!")}
     }
-    /*
-    print ("setupCurrentYearUrls: artistUrlDefault \(artistUrlDefault) - \(defaultPrefsValue)")
-    if (artistUrlDefault == defaultPrefsValue){
-        //setArtistUrl(defaultPrefsValue)
-    }
-    
-    print ("setupCurrentYearUrls: scheduleUrlDefault \(scheduleUrlDefault) - \(defaultPrefsValue)")
-    //if (scheduleUrlDefault == defaultPrefsValue){
-        //setScheduleUrl(defaultPrefsValue)
-    //}
-    print ("setupCurrentYearUrls: artistUrlDefault is \(artistUrlDefault)")
-    */
+    // Legacy code removed - URLs are now managed by FestivalConfig
     
 }
 

@@ -9,8 +9,8 @@
 import Foundation
 
 
-let artistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
-let scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
+let artistUrlDefault = FestivalConfig.current.artistUrlDefault
+let scheduleUrlDefault = FestivalConfig.current.scheduleUrlDefault
 let iCloudDefault = "YES"
 let mustSeeAlertDefault = "YES"
 let mightSeeAlertDefault = "YES"

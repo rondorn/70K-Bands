@@ -920,10 +920,10 @@ class DetailViewModel: ObservableObject {
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
             // No valid URL - show placeholder only if absolutely necessary
-            print("❌ No valid URL for \(bandName) - showing placeholder")
+            print("❌ No valid URL for \(bandName) - showing festival-specific placeholder")
             DispatchQueue.main.async {
                 self.isLoadingImage = false // Ensure loading state is cleared
-                self.bandImage = UIImage(named: "70000TonsLogo")
+                self.bandImage = self.getFestivalDefaultLogo()
             }
             return
         }
@@ -1013,11 +1013,33 @@ class DetailViewModel: ObservableObject {
                     print("✅ Download successful for \(self.bandName) - displaying image")
                     self.bandImage = image
                 } else {
-                    print("❌ Download failed for \(self.bandName) - showing placeholder")
-                    self.bandImage = UIImage(named: "70000TonsLogo")
+                    print("❌ Download failed for \(self.bandName) - showing festival-specific placeholder")
+                    self.bandImage = self.getFestivalDefaultLogo()
                 }
             }
         }
+    }
+    
+    /// Returns the festival-specific default logo
+    /// - Returns: UIImage of the festival logo, or a system default if loading fails
+    private func getFestivalDefaultLogo() -> UIImage {
+        // Use the festival-specific logo from configuration
+        let logoName = FestivalConfig.current.logoUrl
+        
+        if let logo = UIImage(named: logoName) {
+            print("Using festival logo: \(logoName)")
+            return logo
+        }
+        
+        // Fallback to 70K logo if festival logo not found
+        if logoName != "70000TonsLogo", let fallbackLogo = UIImage(named: "70000TonsLogo") {
+            print("Festival logo '\(logoName)' not found, using 70K fallback")
+            return fallbackLogo
+        }
+        
+        // Ultimate fallback - system image
+        print("No bundled logos found, using system fallback")
+        return UIImage(systemName: "music.note") ?? UIImage()
     }
     
     private func clearAllCachedImages() {
@@ -1038,7 +1060,7 @@ class DetailViewModel: ObservableObject {
         } else {
             DispatchQueue.main.async {
                 self.isLoadingImage = false // Ensure loading state is cleared
-                self.bandImage = UIImage(named: "70000TonsLogo")
+                self.bandImage = self.getFestivalDefaultLogo()
             }
         }
     }
@@ -2047,3 +2069,4 @@ struct WebViewRepresentable: UIViewRepresentable, Equatable {
         }
     }
 }
+
