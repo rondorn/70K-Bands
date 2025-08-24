@@ -66,7 +66,7 @@ public class MyFcmListenerService extends FirebaseMessagingService {
         notificationBuilder.setLights(Color.YELLOW, 1000, 300);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationBuilder.setChannelId(staticVariables.notificationChannelID);
+            notificationBuilder.setChannelId(staticVariables.getNotificationChannelID());
         }
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, notificationBuilder.build());

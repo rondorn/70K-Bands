@@ -32,13 +32,13 @@ class MyInstanceIDListenerServicex extends FirebaseMessagingService {
             sendRegistrationToServer(refreshedToken);
 
             Log.d(TAG, "Subscribing to topics");
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getMainAlertChannel());
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getTestAlertChannel());
 
             if (staticVariables.preferences.getAlertForUnofficalEvents() == true) {
-                FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+                FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getUnofficialAlertChannel());
             } else {
-                FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+                FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.getUnofficialAlertChannel());
             }
         } catch (Exception error){
             onTokenRefresh();

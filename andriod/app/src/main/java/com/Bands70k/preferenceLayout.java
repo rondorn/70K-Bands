@@ -126,7 +126,10 @@ public class preferenceLayout  extends Activity {
 
         disableAlertButtonsIfNeeded();
         TextView headerText = (TextView) this.findViewById(R.id.preferenceHeader);
-        headerText.setText(getResources().getString(R.string.PreferenceHeader));
+        // Use dynamic preference header based on festival
+        String appName = FestivalConfig.getInstance().appName;
+        String preferencesText = getResources().getString(R.string.Preferences);
+        headerText.setText(appName + " " + preferencesText);
 
     }
 

@@ -81,6 +81,10 @@
 "PreferenceHeader" = "70K Bands Preferences";
 "Preferences" = "Preferences";
 
+// Default description text
+"DefaultDescription70K" = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+"DefaultDescriptionMDF" = "No notes are available, right now, feel free to add your own.";
+
 "disableAttendedPrompt" = "Disable This Prompt";
 
 "EndofList" = "End of List";

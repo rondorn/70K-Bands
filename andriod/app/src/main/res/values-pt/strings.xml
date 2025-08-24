@@ -60,6 +60,7 @@
 
     <string name="AlertPreferences">Preferências de Alerta</string>
     <string name="PreferenceHeader">70K Bands Preferências</string>
+    <string name="Preferences">Preferências</string>
 
     <string name="officialWebSiteLinkHelp">Levando você para o Site Oficial</string>
     <string name="WikipediaLinkHelp">Pesquisando na Wikipedia</string>
@@ -265,5 +266,10 @@
     <string name="SpecialEventsPlural">Eventos Especiais</string>
     <string name="CruiseEventsPlural">Eventos do Cruzeiro</string>
     <string name="UnofficialEventsPlural">Eventos Não Oficiais</string>
+
+    
+    <!-- Default description text -->
+    <string name="DefaultDescription70K">O texto do comentário ainda não está disponível. Por favor, aguarde Aaron adicionar sua descrição. Você pode adicionar a sua se desejar, mas quando a dele estiver disponível, ela não substituirá seus dados e não será exibida.</string>
+    <string name="DefaultDescriptionMDF">Nenhuma nota está disponível no momento, sinta-se à vontade para adicionar as suas.</string>
 
 </resources>

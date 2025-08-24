@@ -127,4 +127,15 @@ struct FestivalConfig {
         return false
         #endif
     }
+    
+    /// Returns the localized default description text for the current festival
+    func getDefaultDescriptionText() -> String {
+        #if FESTIVAL_70K
+        return NSLocalizedString("DefaultDescription70K", comment: "Default description for 70K festival")
+        #elseif FESTIVAL_MDF
+        return NSLocalizedString("DefaultDescriptionMDF", comment: "Default description for MDF festival")
+        #else
+        return NSLocalizedString("DefaultDescription70K", comment: "Default description fallback")
+        #endif
+    }
 }

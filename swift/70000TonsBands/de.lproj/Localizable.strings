@@ -79,6 +79,10 @@
 "PreferenceHeader" = "70K Bands Préférences";
 "Preferences" = "Einstellungen";
 
+// Default description text
+"DefaultDescription70K" = "Kommentartext ist noch nicht verfügbar. Bitte warten Sie, bis Aaron seine Beschreibung hinzufügt. Sie können Ihre eigene hinzufügen, wenn Sie möchten, aber wenn seine verfügbar wird, wird sie Ihre Daten nicht überschreiben und nicht angezeigt werden.";
+"DefaultDescriptionMDF" = "Keine Notizen sind derzeit verfügbar, fügen Sie gerne Ihre eigenen hinzu.";
+
 "disableAttendedPrompt" = "Deaktivieren Sie diese Eingabeaufforderung";
 
 "EndofList" = "Ende der Liste";

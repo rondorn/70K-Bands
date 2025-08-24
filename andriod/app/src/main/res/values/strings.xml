@@ -39,6 +39,7 @@
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Advanced Preference.\nDo not modify unless you know what your doing!</string>
     <string name="PreferenceHeader">70K Bands Preferences</string>
+    <string name="Preferences">Preferences</string>
 
     <string name="importMessage">This change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
 
@@ -273,6 +274,10 @@
     <string name="Information">Information</string>
     <string name="UserIdentifier">User Identifier</string>
     <string name="Build">Build</string>
+    
+    <!-- Default description text -->
+    <string name="DefaultDescription70K">Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.</string>
+    <string name="DefaultDescriptionMDF">No notes are available, right now, feel free to add your own.</string>
 </resources>
 
 

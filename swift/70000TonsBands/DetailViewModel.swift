@@ -743,7 +743,7 @@ class DetailViewModel: ObservableObject {
         let custCommentFile = directoryPath.appendingPathComponent("\(bandName)_comment.note-cust")
         
         // Check various conditions that prevent saving (matching original logic)
-        if customNotes.starts(with: "Comment text is not available yet") {
+        if customNotes.starts(with: FestivalConfig.current.getDefaultDescriptionText()) {
             print("DEBUG: Removing default waiting message")
             removeBadNote(commentFile: custCommentFile)
             
@@ -784,7 +784,7 @@ class DetailViewModel: ObservableObject {
         let custCommentFile = directoryPath.appendingPathComponent("\(specificBandName)_comment.note-cust")
         
         // Check various conditions that prevent saving (matching original logic)
-        if customNotes.starts(with: "Comment text is not available yet") {
+        if customNotes.starts(with: FestivalConfig.current.getDefaultDescriptionText()) {
             print("DEBUG: Removing default waiting message for \(specificBandName)")
             removeBadNote(commentFile: custCommentFile)
             
@@ -1250,7 +1250,7 @@ class DetailViewModel: ObservableObject {
     
     private func shouldDownloadDescription(noteText: String, noteUrl: String) -> Bool {
         let needsDownload = noteText.isEmpty ||
-                           noteText.starts(with: "Comment text is not available yet") ||
+                           noteText.starts(with: FestivalConfig.current.getDefaultDescriptionText()) ||
                            noteText.starts(with: "Comment text is not available yet. Please wait")
         
         return needsDownload && !noteUrl.isEmpty && isInternetAvailable()
