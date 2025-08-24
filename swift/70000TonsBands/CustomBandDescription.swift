@@ -213,7 +213,7 @@ open class CustomBandDescription {
             // Check if internet is available
             guard isInternetAvailable() else {
                 print("No internet available for \(bandName) description download")
-                return "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
+                return FestivalConfig.current.getDefaultDescriptionText()
             }
             
             let httpData = getUrlData(urlString: descriptionUrl);
@@ -266,7 +266,7 @@ open class CustomBandDescription {
             
             var isDefaultNote = self.custMatchesDefault(customNote: oldCommentText, bandName: bandName)
             
-            if (oldCommentText.starts(with: "Comment text is not available yet") == false && isDefaultNote == false){
+            if (oldCommentText.starts(with: FestivalConfig.current.getDefaultDescriptionText()) == false && isDefaultNote == false){
                 do {
                     try oldCommentText.write(to: newCustCommentFile, atomically: false, encoding: String.Encoding.utf8)
                 } catch {
@@ -292,7 +292,7 @@ open class CustomBandDescription {
         convertOldData(bandName: bandName)
         let normalizedBandName = normalizeBandName(bandName)
         print ("DEBUG_commentFile:  lookup for \(bandName) (normalized: \(normalizedBandName))")
-        var commentText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
+        var commentText = FestivalConfig.current.getDefaultDescriptionText()
         
         let commentFileName = self.getNoteFileName(bandName: bandName)
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
@@ -344,7 +344,7 @@ open class CustomBandDescription {
         //remove leading space
         commentText = commentText.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
         
-        if (commentText.contains("Comment text is not available yet. Please wait")){
+        if (commentText.contains(FestivalConfig.current.getDefaultDescriptionText())){
             do {
                 print ("commentFile being deleted \(commentFile) -! - \(commentText)")
                 try FileManager.default.removeItem(atPath: commentFile.path)

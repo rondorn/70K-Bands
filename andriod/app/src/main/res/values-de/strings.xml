@@ -59,6 +59,7 @@
 
     <string name="AlertPreferences">Benachrichtigungseinstellungen</string>
     <string name="PreferenceHeader">70K Badns Präferenzen</string>
+    <string name="Preferences">Einstellungen</string>
 
     <string name="officialWebSiteLinkHelp">Weiterleitung zur offiziellen Website</string>
     <string name="WikipediaLinkHelp">Wikipedia durchsuchen</string>
@@ -267,5 +268,9 @@
     <string name="SpecialEventsPlural">Spezielle Veranstaltungen</string>
     <string name="CruiseEventsPlural">Kreuzfahrt Veranstaltungen</string>
     <string name="UnofficialEventsPlural">Inoffizielle Veranstaltungen</string>
+    
+    <!-- Default description text -->
+    <string name="DefaultDescription70K">Kommentartext ist noch nicht verfügbar. Bitte warten Sie, bis Aaron seine Beschreibung hinzufügt. Sie können Ihre eigene hinzufügen, wenn Sie möchten, aber wenn seine verfügbar wird, wird sie Ihre Daten nicht überschreiben und nicht angezeigt werden.</string>
+    <string name="DefaultDescriptionMDF">Keine Notizen sind derzeit verfügbar, fügen Sie gerne Ihre eigenen hinzu.</string>
 
 </resources>

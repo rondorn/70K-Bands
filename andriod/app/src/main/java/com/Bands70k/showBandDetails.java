@@ -2089,12 +2089,12 @@ public class showBandDetails extends Activity {
                     String originalDefaultNote = getOriginalDefaultNote(bandName);
                     
                     if (originalDefaultNote != null && !originalDefaultNote.trim().isEmpty() && 
-                        !originalDefaultNote.contains("Comment text is not available yet")) {
+                        !FestivalConfig.getInstance().isDefaultDescriptionText(originalDefaultNote)) {
                         // Use the original default comment
                         noteText = originalDefaultNote;
                     } else {
                         // Use the exact same waiting message as CustomerDescriptionHandler
-                        noteText = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+                        noteText = FestivalConfig.getInstance().getDefaultDescriptionText(context);
                     }
                 }
                 
@@ -2220,7 +2220,7 @@ public class showBandDetails extends Activity {
             BandNotes bandHandler = new BandNotes(bandName);
             String customNote = bandHandler.getBandNoteFromFile();
             if (customNote != null && !customNote.trim().isEmpty() && 
-                !customNote.contains("Comment text is not available yet")) {
+                !FestivalConfig.getInstance().isDefaultDescriptionText(customNote)) {
                 Log.d("RawBandNote", "Returning custom note for " + bandName);
                 return customNote;
             }
@@ -2234,7 +2234,7 @@ public class showBandDetails extends Activity {
             
         } catch (Exception e) {
             Log.e("RawBandNote", "Error getting raw band note for " + bandName, e);
-            return "Comment text is not available yet. Please wait for Aaron to add his description.";
+            return FestivalConfig.getInstance().getDefaultDescriptionText(this);
         }
     }
     

@@ -171,7 +171,7 @@ public class BandNotes {
 
         Log.d("70K_NOTE_DEBUG", "saveDefaultBandNote called for " + bandName + ", data: " + notesData);
 
-        if (notesData.startsWith("Comment text is not available yet") == false &&
+        if (!FestivalConfig.getInstance().isDefaultDescriptionText(notesData) &&
                 notesData.length() > 2 && bandCustNoteFile.exists() == false) {
 
             // Preserve line breaks for native TextView display instead of converting to HTML
@@ -221,7 +221,7 @@ public class BandNotes {
 
         Log.d("70K_NOTE_DEBUG", "Comparing defaultNote (stripped): '" + strippedDefaultNote + "' to customNote (stripped): '" + strippedCustomNote + "'");
 
-        if (notesData.startsWith("Comment text is not available yet") == false &&
+        if (!FestivalConfig.getInstance().isDefaultDescriptionText(notesData) &&
                 notesData.length() > 2 && strippedDefaultNote.equals(strippedCustomNote) == false) {
 
             // Preserve line breaks for native TextView display

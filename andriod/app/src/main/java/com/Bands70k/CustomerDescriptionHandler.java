@@ -613,7 +613,7 @@ public class CustomerDescriptionHandler {
 
         String bandName = bandNameValue;
         String normalizedBandName = normalizeBandName(bandName);
-        String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+        String bandNoteDefault = FestivalConfig.getInstance().getDefaultDescriptionText(staticVariables.context);
         String bandNote = bandNoteDefault;
 
         Log.d("70K_NOTE_DEBUG", "descriptionMapData: " + descriptionMapData);
@@ -730,7 +730,7 @@ public class CustomerDescriptionHandler {
 
         String bandName = bandNameValue;
         String normalizedBandName = normalizeBandName(bandName);
-        String bandNoteDefault = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
+        String bandNoteDefault = FestivalConfig.getInstance().getDefaultDescriptionText(staticVariables.context);
         String bandNote = bandNoteDefault;
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
@@ -1179,7 +1179,7 @@ public class CustomerDescriptionHandler {
                 for (String bandName : descriptionMapData.keySet()) {
                     String description = getDescription(bandName);
                     if (description != null && !description.trim().isEmpty() && 
-                        !description.contains("Comment text is not available yet")) {
+                        !FestivalConfig.getInstance().isDefaultDescriptionText(description)) {
                         allDescriptions.put(bandName, description);
                     }
                 }

@@ -7,13 +7,41 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.Bands70k"
+        // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
         versionCode 302508212
         versionName "302508212"
         android.compileOptions.incremental = false
         multiDexEnabled false
+    }
+
+    // Product flavors for different festivals
+    flavorDimensions "festival"
+    productFlavors {
+        bands70k {
+            dimension "festival"
+            applicationId "com.Bands70k"
+            versionNameSuffix "-70k"
+            buildConfigField "String", "FESTIVAL_TYPE", '"70K"'
+            resValue "string", "app_name", "70K Bands"
+            resValue "string", "app_icon", "@drawable/ic_launcher"
+            resValue "string", "notification_icon", "@drawable/new_bands_70k_icon"
+            resValue "string", "authorities", "com.Bands70k"
+            resValue "string", "notification_publisher", "com.Bands70k.NotificationPublisher"
+        }
+        
+        mdfbands {
+            dimension "festival"
+            applicationId "com.mdfbands"
+            versionNameSuffix "-mdf"
+            buildConfigField "String", "FESTIVAL_TYPE", '"MDF"'
+            resValue "string", "app_name", "MDF Bands"
+            resValue "string", "app_icon", "@drawable/mdf_bands_icon"
+            resValue "string", "notification_icon", "@drawable/mdf_bands_icon"
+            resValue "string", "authorities", "com.mdfbands"
+            resValue "string", "notification_publisher", "com.mdfbands.NotificationPublisher"
+        }
     }
 
     buildTypes {

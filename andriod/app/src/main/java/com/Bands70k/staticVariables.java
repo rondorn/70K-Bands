@@ -72,10 +72,16 @@ public class staticVariables {
     public static Integer unfilteredBandCount = 0;
 
     public static String userID = "";
-    //firebase channels
-    public final static String mainAlertChannel = "global";
-    public final static String testAlertChannel = "Testing20240212";
-    public final static String unofficalAlertChannel = "unofficalEvents";
+    //firebase channels - now using FestivalConfig
+    public static String getMainAlertChannel() {
+        return FestivalConfig.getInstance().subscriptionTopic;
+    }
+    public static String getTestAlertChannel() {
+        return FestivalConfig.getInstance().subscriptionTopicTest;
+    }
+    public static String getUnofficialAlertChannel() {
+        return FestivalConfig.getInstance().subscriptionUnofficalTopic;
+    }
 
     //shows attended
     public static String sawAllIcon = "\uD83C\uDFC3\u200D";
@@ -98,9 +104,16 @@ public class staticVariables {
     public final static String sawSomeStatus = "sawSome";
     public final static String sawNoneStatus = "sawNone";
 
-    public static String notificationChannelID = "70KBandsCustomSound1";
-    public static CharSequence notificationChannelName = "70KBandsCustomSound1";
-    public static String notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
+    // Notification channel settings - now using FestivalConfig
+    public static String getNotificationChannelID() {
+        return FestivalConfig.getInstance().notificationChannelId;
+    }
+    public static CharSequence getNotificationChannelName() {
+        return FestivalConfig.getInstance().notificationChannelName;
+    }
+    public static String getNotificationChannelDescription() {
+        return FestivalConfig.getInstance().notificationChannelDescription;
+    }
     public final static Uri alarmSound = Uri.parse("android.resource://com.Bands70k/" + R.raw.onmywaytodeath);
 
     public final static String poolVenueText = "Pool";
@@ -142,8 +155,13 @@ public class staticVariables {
     public final static String wontSeeKey = "wontSee";
     public final static String unknownKey = "unknown";
 
-    public final static String defaultUrls = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1";
-    public final static String defaultUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1";
+    // Default URLs - now using FestivalConfig
+    public static String getDefaultUrls() {
+        return FestivalConfig.getInstance().defaultStorageUrl;
+    }
+    public static String getDefaultUrlTest() {
+        return FestivalConfig.getInstance().defaultStorageUrlTest;
+    }
 
     public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
     public final static String networkTestingUrl = "https://www.dropbox.com";
@@ -563,9 +581,9 @@ public class staticVariables {
      */
     public static void lookupUrls(){
 
-        String pointerUrl = staticVariables.defaultUrls;
+        String pointerUrl = getDefaultUrls();
         if (preferences.getPointerUrl().equals("Testing")){
-            pointerUrl = staticVariables.defaultUrlTest;
+            pointerUrl = getDefaultUrlTest();
         }
 
         Log.d("pointerUrl", "pointerUrl equals " + pointerUrl + " - OnlineStatus is " + OnlineStatus.isOnline());
@@ -715,9 +733,9 @@ public class staticVariables {
             Log.d("getPointerUrlData", "Cache is empty, making network call for " + actualKeyValue);
             if (OnlineStatus.isOnline()) {
                 try {
-                    String pointerUrl = defaultUrls;
+                    String pointerUrl = getDefaultUrls();
                     if (preferences.getPointerUrl().equals("Testing")) {
-                        pointerUrl = defaultUrlTest;
+                        pointerUrl = getDefaultUrlTest();
                     }
                     
                     Log.d("getPointerUrlData", "Fetching pointer data from: " + pointerUrl);
