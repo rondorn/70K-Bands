@@ -64,13 +64,13 @@ public class FestivalConfig {
             this.packageName = "com.mdfbands";
             
             this.defaultStorageUrl = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1";
-            this.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1"; // Using same for now
+            this.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/erdm6rrda8kku1svq8jwk/mdf_productionPointer_test.txt?rlkey=fhjftwb1uakiy83axcpfwrh1e&raw=1";
             
             this.firebaseConfigFile = "google-services-mdf.json"; // Will use placeholder for now
             
-            this.subscriptionTopic = "mdf_global";
-            this.subscriptionTopicTest = "mdf_testing";
-            this.subscriptionUnofficalTopic = "mdf_unofficalEvents";
+            this.subscriptionTopic = "global";
+            this.subscriptionTopicTest = "Testing20250824";
+            this.subscriptionUnofficalTopic = "unofficalEvents";
             
             // MDF-specific URLs (will be configured via pointer file)
             this.artistUrlDefault = "https://www.dropbox.com/scl/fi/6eg74y11n070airoewsfz/mdf_artistLineup_2026.csv?rlkey=35i20kxtc6pc6v673dnmp1465&raw=1";
@@ -97,7 +97,7 @@ public class FestivalConfig {
             this.firebaseConfigFile = "google-services-70k.json";
             
             this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20240212";
+            this.subscriptionTopicTest = "Testing20250824";
             this.subscriptionUnofficalTopic = "unofficalEvents";
             
             // 70K URLs will be determined by pointer file, these are fallbacks

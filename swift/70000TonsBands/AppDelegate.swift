@@ -472,6 +472,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Connect to FCM since connection may have failed when attempted before having a token.
         connectToFcm()
+        
+        // Debug Firebase setup (can be removed in production)
+        debugFirebaseSetup()
     }
     
     
@@ -484,6 +487,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("Your FCM token is \(token)")
         }
 
+    }
+    
+    /// Debug function to print Firebase configuration and subscription topics
+    func debugFirebaseSetup() {
+        print("=== Firebase Debug Info ===")
+        print("App Name: \(FestivalConfig.current.appName)")
+        print("Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
+        print("Firebase Config File: \(FestivalConfig.current.firebaseConfigFile)")
+        print("Subscription Topics:")
+        print("  - Main: \(subscriptionTopic)")
+        print("  - Test: \(subscriptionTopicTest)")
+        print("  - Unofficial: \(subscriptionUnofficalTopic)")
+        
+        Messaging.messaging().token { token, error in
+            if let error = error {
+                print("FCM Token Error: \(error)")
+            } else if let token = token {
+                print("FCM Token: \(token)")
+            } else {
+                print("FCM Token: nil")
+            }
+        }
+        print("========================")
     }
 
     

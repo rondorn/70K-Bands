@@ -1472,12 +1472,54 @@ public class showBandDetails extends Activity {
         String webUrl = getWebUrl(linkType);
         Log.d("webLink", "Going to weblinks Start " + webUrl);
 
-        // Show in-app WebView for external link browsing
+        // Check if this is a YouTube link and user prefers to open in YouTube app
+        if (linkType.equals("youTube") && staticVariables.preferences.getOpenYouTubeApp()) {
+            Log.d("YouTube", "YouTube URL detected: " + webUrl);
+            Log.d("YouTube", "Open YouTube App preference is: " + staticVariables.preferences.getOpenYouTubeApp());
+            
+            // Open YouTube URLs externally when preference is enabled
+            // This allows Android to choose YouTube app or browser
+            Log.d("YouTube", "Opening YouTube URL externally (Android will choose YouTube app or browser)");
+            openYouTubeExternally(webUrl);
+            return; // Exit early - don't use internal web view
+        } else if (linkType.equals("youTube")) {
+            Log.d("YouTube", "YouTube app preference is disabled, using internal web view");
+        }
+
+        // Show in-app WebView for non-YouTube URLs or when YouTube app preference is disabled
         showInAppWebView(webUrl, linkType);
     }
     
+    /**
+     * Opens a YouTube URL externally (in YouTube app or browser)
+     * @param youtubeUrl The YouTube URL to open
+     */
+    private void openYouTubeExternally(String youtubeUrl) {
+        try {
+            Log.d("YouTube", "Opening YouTube URL externally: " + youtubeUrl);
+            
+            // Create intent to open URL externally
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl));
+            
+            // Add flags to ensure it opens in external app, not internal web view
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            
+            // Check if there's an app that can handle this intent
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+                Log.d("YouTube", "Successfully opened YouTube URL externally");
+            } else {
+                Log.d("YouTube", "No app available to handle YouTube URL, trying default browser");
+                // If no specific app can handle it, try opening with default browser
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e("YouTube", "Error opening YouTube URL externally: " + e.getMessage());
+            // Even if there's an error, we don't fall back to internal web view when preference is enabled
+        }
+    }
 
-    
     /**
      * Shows a web URL in an in-app WebView using the normal screen area
      */
