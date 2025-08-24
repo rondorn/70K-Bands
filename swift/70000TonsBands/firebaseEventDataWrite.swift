@@ -33,6 +33,17 @@ class firebaseEventDataWrite {
         
         return firebaseShowsAttendedArray
     }
+    
+    /// Sanitizes strings for use as Firebase database path components
+    /// Firebase paths cannot contain: . # $ [ ]
+    private func sanitizeForFirebase(_ input: String) -> String {
+        return input
+            .replacingOccurrences(of: ".", with: "_")
+            .replacingOccurrences(of: "#", with: "_")
+            .replacingOccurrences(of: "$", with: "_")
+            .replacingOccurrences(of: "[", with: "_")
+            .replacingOccurrences(of: "]", with: "_")
+    }
             
     func writeEvent(index: String, status: String){
         
@@ -50,7 +61,11 @@ class firebaseEventDataWrite {
             self.firebaseShowsAttendedArray = self.loadCompareFile();
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
-            self.ref.child("showData/").child(uid).child(String(year)).child(index).setValue([
+            
+            // Sanitize index for Firebase path (contains band name which may have invalid characters)
+            let sanitizedIndex = self.sanitizeForFirebase(index)
+            
+            self.ref.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
                 "bandName": bandName,
                 "location": location,
                 "startTimeHour": startTimeHour,

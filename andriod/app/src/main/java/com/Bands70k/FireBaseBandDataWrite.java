@@ -31,6 +31,21 @@ public class FireBaseBandDataWrite {
             mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
+    /**
+     * Sanitizes band names for use as Firebase database path components.
+     * Firebase paths cannot contain: . # $ [ ]
+     * @param bandName The band name to sanitize
+     * @return Sanitized band name safe for Firebase paths
+     */
+    private String sanitizeBandNameForFirebase(String bandName) {
+        return bandName
+                .replace(".", "_")
+                .replace("#", "_")
+                .replace("$", "_")
+                .replace("[", "_")
+                .replace("]", "_");
+    }
+
 
     /**
      * Writes band ranking data to Firebase if data has changed.
@@ -58,7 +73,9 @@ public class FireBaseBandDataWrite {
 
                     Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString());
                     try {
-                        mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(bandName).setValue(bandData);
+                        // Sanitize band name for Firebase path
+                        String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
+                        mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(sanitizedBandName).setValue(bandData);
                     } catch (Exception error){
                         Log.e("FireBaseBandDataWrite", "Writing band data Failed" + error.toString());
                     }

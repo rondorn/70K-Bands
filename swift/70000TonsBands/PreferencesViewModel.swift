@@ -90,6 +90,9 @@ class PreferencesViewModel: ObservableObject {
     @Published var noteFontSizeLarge: Bool = false {
         didSet { setNotesFontSizeLargeValue(noteFontSizeLarge) }
     }
+    @Published var openYouTubeApp: Bool = true {
+        didSet { setOpenYouTubeAppValue(openYouTubeApp) }
+    }
     
     // Year Selection and UI State
     @Published var selectedYear: String = "Current"
@@ -141,6 +144,7 @@ class PreferencesViewModel: ObservableObject {
         let listening = getAlertForListeningEvents()
         
         let fontLarge = getNotesFontSizeLargeValue()
+        let youtubeApp = getOpenYouTubeAppValue()
         
         currentYearSetting = getScheduleUrl()
         var displayYear = currentYearSetting
@@ -162,6 +166,7 @@ class PreferencesViewModel: ObservableObject {
         alertForClinics = clinics
         alertForAlbumListening = listening
         noteFontSizeLarge = fontLarge
+        openYouTubeApp = youtubeApp
         selectedYear = displayYear
     }
     
