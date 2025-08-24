@@ -37,6 +37,17 @@ class firebaseBandDataWrite {
         return firebaseBandAttendedArray
     }
     
+    /// Sanitizes band names for use as Firebase database path components
+    /// Firebase paths cannot contain: . # $ [ ]
+    private func sanitizeBandNameForFirebase(_ bandName: String) -> String {
+        return bandName
+            .replacingOccurrences(of: ".", with: "_")
+            .replacingOccurrences(of: "#", with: "_")
+            .replacingOccurrences(of: "$", with: "_")
+            .replacingOccurrences(of: "[", with: "_")
+            .replacingOccurrences(of: "]", with: "_")
+    }
+    
     func writeSingleRecord(dataHandle: dataHandler, bandName: String, ranking: String){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
@@ -49,7 +60,11 @@ class firebaseBandDataWrite {
             if (bandName == nil || bandName.isEmpty == true){
                 return
             }
-            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(bandName).setValue([
+            
+            // Sanitize band name for Firebase path
+            let sanitizedBandName = self.sanitizeBandNameForFirebase(bandName)
+            
+            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(sanitizedBandName).setValue([
                 "bandName": bandName,
                 "ranking": ranking,
                 "userID": uid,

@@ -71,6 +71,7 @@ public class preferenceLayout  extends Activity {
     private Switch hideExpiredEvents;
     private Switch promptForAttendedStatus;
     private Switch noteFontSizeLarge;
+    private Switch openYouTubeApp;
 
     private Switch mustSee;
     private Switch mightSee;
@@ -745,6 +746,16 @@ public class preferenceLayout  extends Activity {
             @Override
             public void onClick(View v) {
                 staticVariables.preferences.setNoteFontSizeLarge(noteFontSizeLarge.isChecked());
+            }
+        });
+
+        openYouTubeApp = (Switch)findViewById(R.id.openYouTubeApp);
+        openYouTubeApp.setChecked(staticVariables.preferences.getOpenYouTubeApp());
+        openYouTubeApp.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                staticVariables.preferences.setOpenYouTubeApp(openYouTubeApp.isChecked());
             }
         });
 

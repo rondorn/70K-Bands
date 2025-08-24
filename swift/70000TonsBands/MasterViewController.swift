@@ -103,6 +103,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Set initial title to app name before data loads
+        titleButton.title = FestivalConfig.current.appName
+        
         bandSearch.placeholder = NSLocalizedString("SearchCriteria", comment: "")
         //bandSearch.backgroundImage = UIImage(named: "70KSearch")!
         //bandSearch.setImage(UIImage(named: "70KSearch")!, for: <#UISearchBar.Icon#>, state: UIControl.State.normal)

@@ -36,6 +36,7 @@ var alertForClinicEvents = false
 var alertForListeningEvents = false
 
 var notesFontSizeLargeValue = false
+var openYouTubeAppValue = true
 
 var minBeforeAlertValue = 10
 
@@ -79,6 +80,13 @@ func setNotesFontSizeLargeValue(_ value: Bool){
 }
 func getNotesFontSizeLargeValue()->Bool{
     return notesFontSizeLargeValue
+}
+
+func setOpenYouTubeAppValue(_ value: Bool){
+    openYouTubeAppValue = value
+}
+func getOpenYouTubeAppValue()->Bool{
+    return openYouTubeAppValue
 }
 
 func setAlertForListeningEvents(_ value: Bool){
@@ -303,6 +311,7 @@ func writeFiltersFile(){
         prefsString += "alertForListeningEvents:" + boolToString(getAlertForListeningEvents()) + ";"
         
         prefsString += "notesFontSizeLargeValue:" + boolToString(getNotesFontSizeLargeValue()) + ";"
+        prefsString += "openYouTubeAppValue:" + boolToString(getOpenYouTubeAppValue()) + ";"
         
         prefsString += "minBeforeAlertValue:" + String(getMinBeforeAlertValue()) + ";"
 
@@ -421,6 +430,9 @@ func readFiltersFile(){
             case "notesFontSizeLargeValue":
                 setNotesFontSizeLargeValue(stringToBool(valueArray[1]))
             
+            case "openYouTubeAppValue":
+                setOpenYouTubeAppValue(stringToBool(valueArray[1]))
+            
             case "promptForAttended":
                 setPromptForAttended(stringToBool(valueArray[1]))
                 
@@ -475,6 +487,7 @@ func establishDefaults(){
     setAlertForClinicEvents(false)
     setAlertForUnofficalEventsValue(true)
     setNotesFontSizeLargeValue(false)
+    setOpenYouTubeAppValue(true)
     setPromptForAttended(true)
     setMinBeforeAlertValue(10)
 }

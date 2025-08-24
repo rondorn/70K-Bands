@@ -1661,13 +1661,45 @@ class DetailViewModel: ObservableObject {
         } else if url.contains("wikipedia.org") {
             title = "Wikipedia"
         } else if url.contains("youtube.com") || url.contains("youtu.be") {
-            title = "YouTube"
+            // Check if user prefers to open YouTube in the YouTube app
+            let openInApp = getOpenYouTubeAppValue()
+            print("DEBUG: YouTube URL detected: \(url)")
+            print("DEBUG: Open YouTube App preference is: \(openInApp)")
+            
+            if openInApp {
+                // Open YouTube URLs externally when preference is enabled
+                // This allows the system to choose YouTube app or Safari
+                print("DEBUG: Opening YouTube URL externally (system will choose YouTube app or Safari)")
+                
+                if UIApplication.shared.canOpenURL(urlObject) {
+                    UIApplication.shared.open(urlObject, options: [:]) { success in
+                        if success {
+                            print("Successfully opened YouTube URL externally: \(url)")
+                        } else {
+                            print("Failed to open YouTube URL externally: \(url)")
+                        }
+                    }
+                } else {
+                    print("Cannot open YouTube URL externally: \(url)")
+                }
+                return // Exit early - don't use internal web view
+            } else {
+                print("DEBUG: YouTube app preference is disabled, using internal web view")
+                title = "YouTube"
+                // Fall through to internal web view
+            }
         } else {
             title = "Official Website"
         }
         
+        // Present web view for non-YouTube URLs or when YouTube app preference is disabled
+        presentWebView(url: urlObject, title: title, hostingController: hostingController)
+    }
+    
+    /// Helper function to present web view
+    private func presentWebView(url: URL, title: String, hostingController: UIViewController) {
         // Create SwiftUI web view directly
-        let swiftUIWebView = SwiftUIWebView(url: urlObject, title: title)
+        let swiftUIWebView = SwiftUIWebView(url: url, title: title)
         
         // Present the SwiftUI web view
         let hostingWebViewController = UIHostingController(rootView: swiftUIWebView)
@@ -1678,7 +1710,7 @@ class DetailViewModel: ObservableObject {
         
         hostingController.present(hostingWebViewController, animated: true)
         
-        print("Successfully presented SwiftUI web view for: \(url)")
+        print("Successfully presented SwiftUI web view for: \(url.absoluteString)")
     }
     
     /// Opens URL in external browser (Safari) - used for hyperlinks in notes

@@ -50,7 +50,7 @@ struct FestivalConfig {
         self.firebaseConfigFile = "GoogleService-Info-70K"
         
         self.subscriptionTopic = "global"
-        self.subscriptionTopicTest = "Testing20250801"
+        self.subscriptionTopicTest = "Testing20250824"
         self.subscriptionUnofficalTopic = "unofficalEvents"
         
         self.artistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
@@ -66,13 +66,13 @@ struct FestivalConfig {
         self.bundleIdentifier = "com.rdorn.mdfbands"
         
         self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1"
-        self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1" // Using same for now
+        self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/erdm6rrda8kku1svq8jwk/mdf_productionPointer_test.txt?rlkey=fhjftwb1uakiy83axcpfwrh1e&raw=1"
         
         self.firebaseConfigFile = "GoogleService-Info-MDF" // Will use placeholder for now
         
-        self.subscriptionTopic = "mdf_global"
-        self.subscriptionTopicTest = "mdf_testing"
-        self.subscriptionUnofficalTopic = "mdf_unofficalEvents"
+        self.subscriptionTopic = "global"
+        self.subscriptionTopicTest = "Testing20250824"
+        self.subscriptionUnofficalTopic = "unofficalEvents"
         
         // MDF-specific URLs (will be configured via pointer file)
         self.artistUrlDefault = "https://www.dropbox.com/scl/fi/6eg74y11n070airoewsfz/mdf_artistLineup_2026.csv?rlkey=35i20kxtc6pc6v673dnmp1465&raw=1"

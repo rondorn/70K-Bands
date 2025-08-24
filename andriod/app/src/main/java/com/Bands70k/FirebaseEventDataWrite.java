@@ -31,6 +31,21 @@ public class FirebaseEventDataWrite {
         mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
+    /**
+     * Sanitizes strings for use as Firebase database path components.
+     * Firebase paths cannot contain: . # $ [ ]
+     * @param input The string to sanitize
+     * @return Sanitized string safe for Firebase paths
+     */
+    private String sanitizeForFirebase(String input) {
+        return input
+                .replace(".", "_")
+                .replace("#", "_")
+                .replace("$", "_")
+                .replace("[", "_")
+                .replace("]", "_");
+    }
+
 
     /**
      * Writes attended event data to Firebase if data has changed.
@@ -83,7 +98,9 @@ public class FirebaseEventDataWrite {
 
                     Log.d("FireBaseBandDataWrite", "Writing band event data - " + index + "-" + eventData.toString());
 
-                    mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(index).setValue(eventData);
+                    // Sanitize index for Firebase path (contains band name which may have invalid characters)
+                    String sanitizedIndex = sanitizeForFirebase(index);
+                    mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(sanitizedIndex).setValue(eventData);
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }

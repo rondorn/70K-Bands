@@ -270,6 +270,7 @@
     <!-- Missing preference screen translations -->
     <string name="DetailsScreen">Details Screen</string>
     <string name="NoteFontSizeLarge">Note Font Size Large</string>
+    <string name="OpenYouTubeApp">Open YouTube App</string>
     <string name="Misc">Misc</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">User Identifier</string>

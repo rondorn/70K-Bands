@@ -360,6 +360,7 @@
 		11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CustomListEntry.xib; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
+		11F565752E5B75D600621A2A /* MDF-Bands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "MDF-Bands.entitlements"; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
 		720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
@@ -472,6 +473,7 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11F565752E5B75D600621A2A /* MDF-Bands.entitlements */,
 				1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */,
 				1172EE512E5A292E006E3596 /* ConfigurationTest.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
@@ -1675,7 +1677,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250821003;
+				CURRENT_PROJECT_VERSION = 20250824005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1683,7 +1685,7 @@
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MDF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "70K Bands";
+				INFOPLIST_KEY_CFBundleDisplayName = "MDF Bands";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
@@ -1696,7 +1698,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250821003;
+				MARKETING_VERSION = 20250824005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1752,7 +1754,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250821003;
+				CURRENT_PROJECT_VERSION = 20250824005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1764,7 +1766,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MDF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "70K Bands";
+				INFOPLIST_KEY_CFBundleDisplayName = "MDF Bands";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
@@ -1777,7 +1779,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250821003;
+				MARKETING_VERSION = 20250824005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

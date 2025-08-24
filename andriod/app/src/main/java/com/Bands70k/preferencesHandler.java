@@ -49,6 +49,7 @@ public class preferencesHandler {
     private Boolean promptForAttendedStatus = true;
     
     private Boolean noteFontSizeLarge = false;
+    private Boolean openYouTubeApp = true;
 
     private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
@@ -209,6 +210,10 @@ public class preferencesHandler {
                             setNoteFontSizeLarge(Boolean.valueOf(RowData[1]));
                             break;
 
+                        case "openYouTubeApp":
+                            setOpenYouTubeApp(Boolean.valueOf(RowData[1]));
+                            break;
+
                     }
                 }
             } catch (Exception error) {
@@ -268,6 +273,7 @@ public class preferencesHandler {
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
         dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";
+        dataString += "openYouTubeApp," + openYouTubeApp.toString() + "\n";
         dataString += "eventYearToLoad," + eventYearToLoad.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
@@ -542,5 +548,16 @@ public class preferencesHandler {
 
     public void setNoteFontSizeLarge(Boolean noteFontSizeLarge) {
         this.noteFontSizeLarge = noteFontSizeLarge;
+    }
+
+    public Boolean getOpenYouTubeApp() {
+        if (openYouTubeApp == null) {
+            openYouTubeApp = true;
+        }
+        return openYouTubeApp;
+    }
+
+    public void setOpenYouTubeApp(Boolean openYouTubeApp) {
+        this.openYouTubeApp = openYouTubeApp;
     }
 }
