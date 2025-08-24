@@ -425,9 +425,9 @@ public class WebViewActivity extends Activity {
             }
             
             // If no cached URL, make independent network call
-            String pointerUrl = staticVariables.defaultUrls;
+            String pointerUrl = staticVariables.getDefaultUrls();
             if (staticVariables.preferences.getPointerUrl().equals("Testing")) {
-                pointerUrl = staticVariables.defaultUrlTest;
+                pointerUrl = staticVariables.getDefaultUrlTest();
             }
             
             // Make independent HTTP call

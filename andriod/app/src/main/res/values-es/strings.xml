@@ -29,6 +29,7 @@
     <string name="LastYearsFeatureExplication"/>
     <string name="AdvancedPreferences">Preferencia avanzada\n¡No lo modifique a menos que sepa lo que está haciendo!</string>
     <string name="PreferenceHeader">70K Bands Preferencias</string>
+    <string name="Preferences">Preferencias</string>
     <string name="importMessage">Este cambio requiere resetear la aplicación.\n70K Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
 
     <string name="ImportDataBackup">Importar copia de seguridad de datos</string>
@@ -255,5 +256,10 @@
     <string name="SpecialEventsPlural">Eventos Especiales</string>
     <string name="CruiseEventsPlural">Eventos del Crucero</string>
     <string name="UnofficialEventsPlural">Eventos No Oficiales</string>
+
+    
+    <!-- Default description text -->
+    <string name="DefaultDescription70K">El texto del comentario aún no está disponible. Por favor, espera a que Aaron agregue su descripción. Puedes agregar la tuya si lo deseas, pero cuando la suya esté disponible, no sobrescribirá tus datos y no se mostrará.</string>
+    <string name="DefaultDescriptionMDF">No hay notas disponibles en este momento, siéntete libre de agregar las tuyas.</string>
 
 </resources>

@@ -218,6 +218,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
 
+        // DEBUG: Log current festival configuration
+        ConfigDebugger.logCurrentConfig();
+
         if (staticVariables.preferences == null) {
             staticVariables.preferences = new preferencesHandler();
             staticVariables.preferences.loadData();
@@ -1902,14 +1905,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void subscribeToAlerts() {
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.mainAlertChannel);
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.testAlertChannel);
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getMainAlertChannel());
+        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getTestAlertChannel());
         if (staticVariables.preferences.getAlertForUnofficalEvents() == true) {
-            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.unofficalAlertChannel);
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.unofficalAlertChannel);
+            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.getUnofficialAlertChannel());
+            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getUnofficialAlertChannel());
         } else {
-            //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.unofficalAlertChannel);
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.unofficalAlertChannel);
+            //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.getUnofficialAlertChannel());
+            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.getUnofficialAlertChannel());
         }
     }
 

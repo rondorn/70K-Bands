@@ -55,8 +55,8 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
                     .build();
 
             int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel mChannel = new NotificationChannel(staticVariables.notificationChannelID, staticVariables.notificationChannelName, importance);
-            mChannel.setDescription(staticVariables.notificationChannelDescription);
+            NotificationChannel mChannel = new NotificationChannel(staticVariables.getNotificationChannelID(), staticVariables.getNotificationChannelName(), importance);
+            mChannel.setDescription(staticVariables.getNotificationChannelDescription());
             mChannel.setSound(staticVariables.alarmSound, att);
             mChannel.enableLights(true);
             mChannel.setLightColor(Color.RED);
@@ -249,7 +249,7 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         builder.setAutoCancel(true);
         builder.setVibrate(new long[]{1000,1000,1000,1000});
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setChannelId(staticVariables.notificationChannelID);
+            builder.setChannelId(staticVariables.getNotificationChannelID());
         }
 
         return builder.build();

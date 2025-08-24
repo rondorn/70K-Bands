@@ -77,6 +77,10 @@
 "PreferenceHeader" = "70K Bands Præferencer";
 "Preferences" = "Præferencer";
 
+// Default description text
+"DefaultDescription70K" = "Kommentartekst er endnu ikke tilgængelig. Vent venligst på, at Aaron tilføjer sin beskrivelse. Du kan tilføje din egen, hvis du ønsker det, men når hans bliver tilgængelig, vil den ikke overskrive dine data og vil ikke blive vist.";
+"DefaultDescriptionMDF" = "Ingen noter er tilgængelige lige nu, du er velkommen til at tilføje dine egne.";
+
 "disableAttendedPrompt" = "Deaktiver denne prompt";
 
 "EndofList" = "Slut på listen";
