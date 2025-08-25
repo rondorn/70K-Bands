@@ -206,7 +206,7 @@ class showAttendenceReport {
      */
     func buildMustMightReport()->String {
         
-        var intro = "🤘 70K Bands " + NSLocalizedString("Choices", comment: "") + "\n\n"
+        var intro = "🤘 " + FestivalConfig.current.appName + " " + NSLocalizedString("Choices", comment: "") + "\n\n"
         var mustSeeBands: [String] = []
         var mightSeeBands: [String] = []
         
@@ -241,7 +241,7 @@ class showAttendenceReport {
             intro += formattedMightSee + "\n"
         }
         
-        intro += "\n\nhttp://www.facebook.com/70kBands"
+        intro += "\n\n" + FestivalConfig.current.shareUrl
          return intro
     }
     
@@ -250,7 +250,7 @@ class showAttendenceReport {
      - Returns: The formatted events attended report as a string.
      */
     func buildEventsAttendedReport() -> String {
-        var message = "🤘 70K Bands - " + NSLocalizedString("EventsAttended", comment: "") + "\n\n"
+        var message = "🤘 " + FestivalConfig.current.appName + " - " + NSLocalizedString("EventsAttended", comment: "") + "\n\n"
         
         assembleReport()
         
@@ -313,7 +313,7 @@ class showAttendenceReport {
             }
         }
         
-        message += "\n\nhttp://www.facebook.com/70kBands"
+        message += "\n\n" + FestivalConfig.current.shareUrl
         return message
     }
     

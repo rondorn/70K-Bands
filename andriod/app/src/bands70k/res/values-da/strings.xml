@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">70K Bands</string>
+    <string name="PreferenceHeader">70K Bands Præferencer</string>
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\n70K Bands vil nu holde op. Genstart for at se den nye data</string>
+</resources>

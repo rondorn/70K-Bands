@@ -1031,9 +1031,9 @@ class DetailViewModel: ObservableObject {
             return logo
         }
         
-        // Fallback to 70K logo if festival logo not found
-        if logoName != "70000TonsLogo", let fallbackLogo = UIImage(named: "70000TonsLogo") {
-            print("Festival logo '\(logoName)' not found, using 70K fallback")
+        // Fallback to default festival logo if festival logo not found
+        if logoName != FestivalConfig.current.logoUrl, let fallbackLogo = UIImage(named: FestivalConfig.current.logoUrl) {
+            print("Festival logo '\(logoName)' not found, using \(FestivalConfig.current.festivalShortName) fallback")
             return fallbackLogo
         }
         

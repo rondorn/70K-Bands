@@ -40,7 +40,7 @@
     <string name="AdvancedPreferences">Avanceret præference.\nRediger ikke, medmindre du ved, hvad du laver!</string>
     <string name="PreferenceHeader">70K Bands Præferencer</string>
     <string name="Preferences">Præferencer</string>
-    <string name="importMessage">Denne ændring kræver genstart af programmet.\n70k Bands vil nu holde op. Genstart for at se den nye data</string>
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\n70K Bands vil nu holde op. Genstart for at se den nye data</string>
     <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
     <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 

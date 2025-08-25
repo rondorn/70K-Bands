@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MDF Bands</string>
+    <string name="PreferenceHeader">MDF Bands Präferenzen</string>
+    <string name="importMessage">Diese Änderung erfordert einen Neustart der App.\nMDF Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
+</resources>

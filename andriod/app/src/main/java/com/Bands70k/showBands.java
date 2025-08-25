@@ -838,7 +838,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 sharingIntent.setType("text/plain");
 
                 String shareBody = buildShareMessage();
-                String subject = "70K Bands " + getString(R.string.Choices);
+                String subject = FestivalConfig.getInstance().appName + " " + getString(R.string.Choices);
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -855,7 +855,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 showsAttendedReport reportHandler = new showsAttendedReport();
                 reportHandler.assembleReport();
                 String shareBody = reportHandler.buildMessage();
-                String subject = "70K Bands - " + getString(R.string.EventsAttended);
+                String subject = FestivalConfig.getInstance().appName + " - " + getString(R.string.EventsAttended);
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -927,7 +927,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             } else {
                 Log.d(TAG, notificationTag + " messageString displayed");
                 new AlertDialog.Builder(this)
-                        .setTitle("70K Bands Message")
+                        .setTitle(FestivalConfig.getInstance().appName + " Message")
                         .setMessage(messageString)
                         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
@@ -1007,7 +1007,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private String buildShareMessage() {
 
-        String message = "🤘 70K Bands " + getString(R.string.Choices) + "\n\n";
+        String message = "🤘 " + FestivalConfig.getInstance().appName + " " + getString(R.string.Choices) + "\n\n";
         
         // Collect must-see and might-see bands
         java.util.List<String> mustSeeBands = new java.util.ArrayList<>();
@@ -1047,7 +1047,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             message += "\n";
         }
 
-        message += "\n\nhttp://www.facebook.com/70kBands";
+        message += "\n\n" + FestivalConfig.getInstance().shareUrl;
         return message;
     }
     
@@ -1130,7 +1130,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("DisplayListData", "finished display header " + headerText);
 
         Log.d("refreshNewData", "refreshNewData - 4");
-        if (headerText.equals("70,000 Tons")) {
+        if (headerText.equals(FestivalConfig.getInstance().festivalName)) {
             Log.d("DisplayListData", "running extra refresh");
             // UNIVERSAL SCROLL PRESERVATION: Save position before extra refresh
             if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
