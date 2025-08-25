@@ -46,6 +46,8 @@ public class FestivalConfig {
     public final String notificationChannelName;
     public final String notificationChannelDescription;
     
+    public final String shareUrl;
+    
     /**
      * Private constructor that initializes configuration based on build variant
      */
@@ -84,6 +86,8 @@ public class FestivalConfig {
             this.notificationChannelName = "MDFBandsCustomSound1";
             this.notificationChannelDescription = "Channel for the MDF Bands local show alerts with custom sound";
             
+            this.shareUrl = "http://www.facebook.com/MDFBands";
+            
         } else {
             // Default to 70K configuration
             this.festivalName = "70,000 Tons of Metal";
@@ -111,6 +115,8 @@ public class FestivalConfig {
             this.notificationChannelId = "70KBandsCustomSound1";
             this.notificationChannelName = "70KBandsCustomSound1";
             this.notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
+            
+            this.shareUrl = "http://www.facebook.com/70kBands";
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");

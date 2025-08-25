@@ -443,7 +443,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func displayNotification (message: String){
         
         //if (notificationDisplayed == false){
-        let alertCtrl = UIAlertController(title: "70K Bands", message: message, preferredStyle: UIAlertController.Style.alert)
+        let alertCtrl = UIAlertController(title: FestivalConfig.current.appName, message: message, preferredStyle: UIAlertController.Style.alert)
         alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
         var presentedVC = self.window?.rootViewController
