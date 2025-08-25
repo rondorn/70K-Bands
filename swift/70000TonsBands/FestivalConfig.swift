@@ -35,6 +35,7 @@ struct FestivalConfig {
     
     // App-specific branding
     let logoUrl: String
+    let shareUrl: String
     
     private init() {
         #if FESTIVAL_70K
@@ -57,6 +58,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
         
         self.logoUrl = "70000TonsLogo"
+        self.shareUrl = "http://www.facebook.com/70kBands"
         
         #elseif FESTIVAL_MDF
         // Maryland Death Fest configuration
@@ -79,6 +81,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = "https://www.dropbox.com/scl/fi/3u1sr1312az0wd3dcpbfe/mdf_artistsSchedule2026_test.csv?rlkey=t96hj530o46q9fzz83ei7fllj&raw=1"
         
         self.logoUrl = "mdf_logo"
+        self.shareUrl = "http://www.facebook.com/MDFBands"
         
         #else
         // Default to 70K configuration if no macro is defined
@@ -100,6 +103,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
         
         self.logoUrl = "70000TonsLogo"
+        self.shareUrl = "http://www.facebook.com/70kBands"
         #endif
     }
     

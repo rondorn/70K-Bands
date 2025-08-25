@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MDF Bands</string>
+    <string name="PreferenceHeader">MDF Bands Præferencer</string>
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\nMDF Bands vil nu holde op. Genstart for at se den nye data</string>
+</resources>

@@ -19,7 +19,7 @@ func showAlert (_ message: String, title:String){
         if (title.isEmpty == false){
             alert.title = title
         } else {
-            alert.title = "70K Bands"
+            alert.title = FestivalConfig.current.appName
         }
         
         alert.message = message
