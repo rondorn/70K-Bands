@@ -244,12 +244,24 @@ class DetailViewModel: ObservableObject {
                 self.checkForDataAfterRefresh()
             }
         }
+        
+        // Listen for image list updates to refresh band images when async generation completes
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ImageListUpdated"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            print("🖼️ DetailViewModel: Image list updated, refreshing image for '\(self.bandName)'")
+            self.loadBandImage()
+        }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ForceDetailRefresh"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshDisplay"), object: nil)
         NotificationCenter.default.removeObserver(self, name: .bandNamesCacheReady, object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("ImageListUpdated"), object: nil)
     }
     
     // MARK: - Public Methods
@@ -919,8 +931,8 @@ class DetailViewModel: ObservableObject {
         print("Loading image for \(bandName) from URL: \(imageURL)")
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
-            // No valid URL - show placeholder only if absolutely necessary
-            print("❌ No valid URL for \(bandName) - showing festival-specific placeholder")
+            // No valid URL - could be due to async generation in progress or genuinely no image
+            print("❌ No valid URL for \(bandName) - showing festival-specific placeholder (async generation may be in progress)")
             DispatchQueue.main.async {
                 self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = self.getFestivalDefaultLogo()
@@ -1347,15 +1359,6 @@ class DetailViewModel: ObservableObject {
     }
     
     private func savePriority() {
-        // Check if user is trying to set "Won't Attend" (3) when previous value was null
-        // This prevents accidental saves that interfere with iCloud data loading
-        if selectedPriority == 3 && originalPriority == nil {
-            print("DEBUG: savePriority() - Preventing save of 'Won't Attend' when original priority was null for band: '\(bandName)'")
-            // Revert to the original state (0 for Unknown)
-            selectedPriority = 0
-            return
-        }
-        
         bandPriorityStorage[bandName] = selectedPriority
         dataHandle.addPriorityData(bandName, priority: selectedPriority)
         
@@ -1363,10 +1366,10 @@ class DetailViewModel: ObservableObject {
         
         // Post targeted notification for priority changes (avoid full data reload)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
-        // NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         if UIDevice.current.userInterfaceIdiom == .pad {
-            masterView?.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
+            // Use lightweight refresh instead of heavy background update for priority changes
+            masterView?.refreshBandListOnly(reason: "Detail view priority update")
         }
     }
     

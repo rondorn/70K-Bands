@@ -4,3 +4,5 @@
     <string name="PreferenceHeader">MDF Bands Préférences</string>
     <string name="importMessage">Ce changement nécessite le redémarrage de l\'application. MDF Bands vont maintenant se terminer.\nRelancer pour voir les nouvelles données</string>
 </resources>
+
+
