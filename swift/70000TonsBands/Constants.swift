@@ -333,9 +333,8 @@ func getPointerUrlData(keyValue: String) -> String {
                     let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
                     print("getPointerUrlData: Using cached pointer data from disk")
                     let dataArray = cachedData.components(separatedBy: "\n")
-                    for record in dataArray {
-                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
-                    }
+                    // Optimize: Process only necessary data for current year to avoid excessive loading
+                    pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
                     
                     // Save eventYearArray to disk once after processing all cached records (synchronous to ensure year is written before further processing)
                     print("eventYearsInfoFile: Saving after processing cached pointer data")
@@ -378,9 +377,8 @@ func getPointerUrlData(keyValue: String) -> String {
         if (httpData.isEmpty == false){
             
             let dataArray = httpData.components(separatedBy: "\n")
-            for record in dataArray {
-                pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
-            }
+            // Optimize: Process only necessary data for current year to avoid excessive loading
+            pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
             
             // Save eventYearArray to disk once after processing all HTTP records (synchronous to ensure year is written before further processing)
             print("eventYearsInfoFile: Saving after processing HTTP pointer data")
@@ -408,9 +406,8 @@ func getPointerUrlData(keyValue: String) -> String {
                     let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
                     print("getPointerUrlData: Using cached pointer data from disk")
                     let dataArray = cachedData.components(separatedBy: "\n")
-                    for record in dataArray {
-                        pointerValues = readPointData(pointData: record, pointerValues: pointerValues, pointerIndex: pointerIndex)
-                    }
+                    // Optimize: Process only necessary data for current year to avoid excessive loading
+                    pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
                     
                     // Save eventYearArray to disk once after processing all fallback cached records (synchronous to ensure year is written before further processing)
                     print("eventYearsInfoFile: Saving after processing fallback cached pointer data")
@@ -563,6 +560,94 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
             }
         }
     }
+    
+    return newPointValues
+}
+
+/// Optimized version of readPointData that processes only necessary data for the selected year
+/// This prevents excessive loading of all historical years when only specific year data is needed
+/// Respects user's year preference setting (pointerIndex can be "Current", "2025", "2024", etc.)
+func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:String]], pointerIndex: String, targetKeyValue: String) -> [String:[String:String]] {
+    
+    var newPointValues = pointerValues
+    var foundTargetData = false
+    var processedSelectedYear = false
+    
+    // Define essential keys that we always need regardless of year
+    let essentialKeys = ["eventYear", "artistUrl", "scheduleUrl", "descriptionMap", "reportUrl"]
+    let isEssentialKey = essentialKeys.contains(targetKeyValue) || targetKeyValue.hasPrefix("reportUrl-")
+    
+    print("readPointDataOptimized: OPTIMIZED PROCESSING - Selected year: \(pointerIndex), targetKey: \(targetKeyValue), will SKIP all other years except for year collection")
+    
+    // Track which year indices we need to process
+    var targetIndices = Set<String>()
+    targetIndices.insert(pointerIndex) // Always process the selected year
+    if isEssentialKey {
+        targetIndices.insert("Default") // Process defaults for essential keys
+    }
+    
+    for record in dataArray {
+        var valueArray = record.components(separatedBy: "::")
+        
+        if (valueArray.isEmpty == false && valueArray.count >= 3){
+            let currentIndex = valueArray[0]
+            
+            // STEP 1: Always collect year information for the eventYearArray (need to know available years)
+            if (currentIndex != "Default" && currentIndex != "lastYear"){
+                if (eventYearArray.contains(currentIndex) == false){
+                    eventYearArray.append(currentIndex)
+                    print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
+                }
+            }
+            
+            // STEP 2: SKIP processing all data for years that are NOT the selected year preference
+            // Only process data for the selected year (pointerIndex) and essential defaults
+            if !targetIndices.contains(currentIndex) {
+                // PERFORMANCE OPTIMIZATION: Skip processing data for this year - not needed for selected year
+                continue // Skip this entire record - don't process any data for other years
+            }
+            
+            // STEP 3: Process data only for the selected year preference and essential defaults
+            let currentKey = valueArray[1]
+            let currentValue = valueArray[2]
+            
+            // For Default entries, store under the selected year (pointerIndex)
+            let storeIndex = (currentIndex == "Default") ? pointerIndex : currentIndex
+            
+            // Only store Default values if we don't already have this key for the selected year
+            let shouldStore = (currentIndex != "Default") || (newPointValues[storeIndex]?[currentKey] == nil)
+            
+            if shouldStore {
+                var tempHash = newPointValues[storeIndex] ?? [String:String]()
+                tempHash[currentKey] = currentValue
+                let sourceLabel = (currentIndex == "Default") ? "Default fallback" : "year-specific"
+                print ("readPointDataOptimized: Storing \(sourceLabel) \(storeIndex) - \(currentKey) - \(currentValue)")
+                newPointValues[storeIndex] = tempHash
+                
+                // Cache in memory for future use
+                storePointerLock.async(flags: .barrier) {
+                    do {
+                        try cacheVariables.storePointerData[currentKey] = currentValue;
+                    } catch let error as NSError {
+                        print ("readPointDataOptimized: Error caching data: \(error)")
+                    }
+                }
+                
+                // Check if we found the specific data we're looking for
+                if currentKey == targetKeyValue {
+                    foundTargetData = true
+                    print("readPointDataOptimized: Found target data: \(targetKeyValue) = \(currentValue)")
+                }
+            }
+            
+            if currentIndex == pointerIndex {
+                processedSelectedYear = true
+            }
+        }
+    }
+    
+    print("readPointDataOptimized: Completed processing for year '\(pointerIndex)'. Found target data: \(foundTargetData), Processed selected year: \(processedSelectedYear)")
+    print("readPointDataOptimized: Total years in eventYearArray: \(eventYearArray.count), but only processed data for: \(Array(targetIndices))")
     
     return newPointValues
 }

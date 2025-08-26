@@ -44,6 +44,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         ImageView eventTypeImage;
         ImageView attendedImage;
         ImageView rankImageNoSchedule;
+        ImageView rankingIconInDayArea;
 
         TextView bandName;
         TextView location;
@@ -129,6 +130,7 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.bottomSpacer =  row.findViewById(R.id.bottomSpacer);
             viewHolder.rankImageNoSchedule = row.findViewById(R.id.rankingInCellnoSchedule);
             viewHolder.bandNameNoSchedule =  row.findViewById(R.id.bandNameInCellNoSchedule);
+            viewHolder.rankingIconInDayArea = row.findViewById(R.id.rankingIconInDayArea);
             row.setTag(viewHolder);
         } else {
             viewHolder = (bandListHolder)row.getTag();
@@ -155,11 +157,13 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.rankImage.setVisibility(View.INVISIBLE);
             viewHolder.bandName.setVisibility(View.INVISIBLE);
 
-            viewHolder.rankImageNoSchedule.setVisibility(View.VISIBLE);
+            viewHolder.rankImageNoSchedule.setVisibility(View.INVISIBLE);
             viewHolder.bandNameNoSchedule.setVisibility(View.VISIBLE);
 
+            // Show ranking icon in day area for bands-only view
+            viewHolder.rankingIconInDayArea.setVisibility(View.VISIBLE);
+            viewHolder.rankingIconInDayArea.setImageResource(bandData.getRankImg());
 
-            viewHolder.rankImageNoSchedule.setImageResource(bandData.getRankImg());
             viewHolder.bandNameNoSchedule.setText(currentBandName);
 
             viewHolder.bottomSpacer.setVisibility(View.INVISIBLE);
@@ -185,6 +189,9 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
             viewHolder.rankImageNoSchedule.setVisibility(View.INVISIBLE);
             viewHolder.bandNameNoSchedule.setVisibility(View.INVISIBLE);
+            
+            // Hide ranking icon in day area for schedule view
+            viewHolder.rankingIconInDayArea.setVisibility(View.INVISIBLE);
 
             if (bandData.getRankImg() == 0){
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);

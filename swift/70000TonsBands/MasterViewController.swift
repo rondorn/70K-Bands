@@ -1032,6 +1032,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.tableView.reloadData()
     }
     
+    /// Lightweight refresh that only updates the band list UI without triggering data downloads or heavy processing.
+    /// Used for priority changes that only need UI updates, not full data reloads.
+    func refreshBandListOnly(reason: String) {
+        print("Lightweight refresh (\(reason)): Updating UI only")
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshBandList(reason: reason)
+        }
+    }
+    
 
     @objc func OnOrientationChange(){
         sleep(1)
@@ -1511,7 +1520,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.dataHandle.addPriorityData(bandName, priority: 1);
             print ("Offline is offline");
             isLoadingBandData = false
-            self.quickRefresh()
+            self.refreshBandListOnly(reason: "Priority changed to Must See")
             
             // Refresh iPad detail view if this band is currently displayed
             self.refreshIPadDetailViewIfNeeded(for: bandName)
@@ -1527,7 +1536,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             self.dataHandle.addPriorityData(bandName, priority: 2);
             isLoadingBandData = false
-            self.quickRefresh()
+            self.refreshBandListOnly(reason: "Priority changed to Might See")
             
             // Refresh iPad detail view if this band is currently displayed
             self.refreshIPadDetailViewIfNeeded(for: bandName)
@@ -1542,7 +1551,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             self.dataHandle.addPriorityData(bandName, priority: 3);
             isLoadingBandData = false
-            self.quickRefresh()
+            self.refreshBandListOnly(reason: "Priority changed to Won't See")
             
             // Refresh iPad detail view if this band is currently displayed
             self.refreshIPadDetailViewIfNeeded(for: bandName)
@@ -1557,7 +1566,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             self.dataHandle.addPriorityData(bandName, priority: 0);
             isLoadingBandData = false
-            self.quickRefresh()
+            self.refreshBandListOnly(reason: "Priority changed to Unknown")
             
             // Refresh iPad detail view if this band is currently displayed
             self.refreshIPadDetailViewIfNeeded(for: bandName)
@@ -2001,7 +2010,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
             
             isLoadingBandData = false
-            self.quickRefresh()
+            self.refreshBandListOnly(reason: "Show attendance status changed")
             
             // Refresh iPad detail view if this band is currently displayed
             let bandNameForRefresh = correctBandName ?? getNameFromSortable(cellBandName, sortedBy: sortedBy)
