@@ -594,6 +594,7 @@
 				1154F6021A575893003F4764 /* Sources */,
 				1154F6031A575893003F4764 /* Frameworks */,
 				11F033381AB3A77F00AA29B8 /* Embed Foundation Extensions */,
+				119717BC2E5E4ED000D500C9 /* Copy Firebase Config */,
 				114CC0731C79211200CF5BF1 /* Resources */,
 				12F0543C88C59132472E4C47 /* [CP] Embed Pods Frameworks */,
 			);
@@ -634,6 +635,7 @@
 				1172EDF72E5A1C4D006E3596 /* Sources */,
 				1172EE272E5A1C4D006E3596 /* Frameworks */,
 				1172EE342E5A1C4D006E3596 /* Embed Foundation Extensions */,
+				119717BD2E5E4F8400D500C9 /* Copy Firebase Config */,
 				1172EE352E5A1C4D006E3596 /* Resources */,
 				1172EE432E5A1C4D006E3596 /* [CP] Embed Pods Frameworks */,
 			);
@@ -853,6 +855,42 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		119717BC2E5E4ED000D500C9 /* Copy Firebase Config */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Firebase Config";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${SRCROOT}/copy-firebase-config.sh\n";
+		};
+		119717BD2E5E4F8400D500C9 /* Copy Firebase Config */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Firebase Config";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${SRCROOT}/copy-firebase-config.sh\n";
 		};
 		12F0543C88C59132472E4C47 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1371,7 +1409,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250821003;
+				CURRENT_PROJECT_VERSION = 20250826001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1399,7 +1437,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250821003;
+				MARKETING_VERSION = 20250826001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1455,7 +1493,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250821003;
+				CURRENT_PROJECT_VERSION = 20250826001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1480,7 +1518,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250821003;
+				MARKETING_VERSION = 20250826001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

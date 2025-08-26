@@ -4,3 +4,5 @@
     <string name="PreferenceHeader">70K Bands Preferences</string>
     <string name="importMessage">This change requires restarting the application.\n70K Bands will now quit. Relaunch to see the new data</string>
 </resources>
+
+

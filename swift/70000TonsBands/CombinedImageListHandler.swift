@@ -31,6 +31,9 @@ class CombinedImageListHandler {
     // File path for the combined image list cache
     private let combinedImageListFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent("combinedImageList.json"))
     
+    // Track if async generation is in progress to prevent multiple simultaneous generations
+    private var isGenerating = false
+    
     /// Singleton instance
     static let shared = CombinedImageListHandler()
     
@@ -115,67 +118,95 @@ class CombinedImageListHandler {
     func getImageUrl(for name: String) -> String {
         let currentList = combinedImageList
         
-        // If the list is empty and this is the first request, try to generate it immediately
+        // If the list is empty, trigger async generation but return immediately to avoid UI blocking
         if currentList.isEmpty {
-            print("CombinedImageListHandler: Image list is empty for '\(name)', attempting immediate generation")
+            print("CombinedImageListHandler: Image list is empty for '\(name)', triggering async generation")
             
-            // Try to generate the list synchronously using available handlers
-            let bandNameHandle = bandNamesHandler.shared
-            let scheduleHandle = scheduleHandler.shared
+            // CRITICAL: Start async generation but return immediately to prevent UI blocking
+            triggerAsyncGenerationIfNeeded()
             
-            // Check if we have data to work with
-            let bandNames = bandNameHandle.getBandNames()
-            if !bandNames.isEmpty {
-                print("CombinedImageListHandler: Found \(bandNames.count) artists, generating list immediately")
-                
-                // Generate synchronously for immediate use
-                var newCombinedList: [String: String] = [:]
-                
-                // Process band names
-                for bandName in bandNames {
-                    let imageUrl = bandNameHandle.getBandImageUrl(bandName)
-                    if !imageUrl.isEmpty {
-                        newCombinedList[bandName] = imageUrl
-                    }
-                }
-                
-                // Process schedule data
-                let scheduleData = scheduleHandle.schedulingData
-                for (bandName, events) in scheduleData {
-                    for (_, eventData) in events {
-                        // Check for ImageURL first (higher priority), then Description URL
-                        if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
-                            // Only add if not already present (artist takes priority)
-                            if newCombinedList[bandName] == nil {
-                                newCombinedList[bandName] = imageUrl
-                            }
-                        } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
-                            // Only add if not already present (artist takes priority)
-                            if newCombinedList[bandName] == nil {
-                                newCombinedList[bandName] = descriptionUrl
-                            }
-                        }
-                    }
-                }
-                
-                // Update the list and save it
-                combinedImageList = newCombinedList
-                saveCombinedImageList()
-                
-                print("CombinedImageListHandler: Emergency generation completed with \(newCombinedList.count) entries")
-                
-                // Now try to get the URL again
-                let url = combinedImageList[name] ?? ""
-                print("CombinedImageListHandler: After generation, getting image URL for '\(name)': \(url)")
-                return url
-            } else {
-                print("CombinedImageListHandler: No artist data available for emergency generation")
-            }
+            // Return empty immediately - UI should show placeholder until async generation completes
+            print("CombinedImageListHandler: Returning empty URL for '\(name)' - async generation in progress")
+            return ""
         }
         
         let url = currentList[name] ?? ""
         print("CombinedImageListHandler: Getting image URL for '\(name)': \(url)")
         return url
+    }
+    
+    /// Triggers async generation of the image list if not already in progress
+    private func triggerAsyncGenerationIfNeeded() {
+        // Prevent multiple simultaneous generations
+        guard !isGenerating else {
+            print("CombinedImageListHandler: Async generation already in progress, skipping")
+            return
+        }
+        
+        isGenerating = true
+        print("CombinedImageListHandler: Starting async image list generation")
+        
+        // Perform generation on background queue to avoid blocking UI
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else {
+                return
+            }
+            
+            let bandNameHandle = bandNamesHandler.shared
+            let scheduleHandle = scheduleHandler.shared
+            
+            // Check if we have data to work with
+            let bandNames = bandNameHandle.getBandNames()
+            guard !bandNames.isEmpty else {
+                print("CombinedImageListHandler: No artist data available for async generation")
+                self.isGenerating = false
+                return
+            }
+            
+            print("CombinedImageListHandler: Found \(bandNames.count) artists, generating list asynchronously")
+            
+            // Generate the combined list
+            var newCombinedList: [String: String] = [:]
+            
+            // Process band names
+            for bandName in bandNames {
+                let imageUrl = bandNameHandle.getBandImageUrl(bandName)
+                if !imageUrl.isEmpty {
+                    newCombinedList[bandName] = imageUrl
+                }
+            }
+            
+            // Process schedule data
+            let scheduleData = scheduleHandle.schedulingData
+            for (bandName, events) in scheduleData {
+                for (_, eventData) in events {
+                    // Check for ImageURL first (higher priority), then Description URL
+                    if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[bandName] == nil {
+                            newCombinedList[bandName] = imageUrl
+                        }
+                    } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[bandName] == nil {
+                            newCombinedList[bandName] = descriptionUrl
+                        }
+                    }
+                }
+            }
+            
+            // Update the list and save it (on main queue for thread safety)
+            DispatchQueue.main.async {
+                self.combinedImageList = newCombinedList
+                self.saveCombinedImageList()
+                self.isGenerating = false
+                
+                print("CombinedImageListHandler: Async generation completed with \(newCombinedList.count) entries")
+                
+                // Post notification that image list has been updated so UI can refresh
+                NotificationCenter.default.post(name: Notification.Name("ImageListUpdated"), object: nil)
+            }
+        }
     }
     
     /// Checks if the combined list needs to be regenerated based on new data
