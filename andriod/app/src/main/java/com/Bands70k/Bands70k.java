@@ -3,6 +3,7 @@ package com.Bands70k;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
@@ -22,6 +23,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     private static Context context;
     private int activityCount = 0;
     private static boolean isAppInBackground = false;
+    private NetworkStateReceiver networkStateReceiver;
 
     /**
      * Called when the application is created. Initializes context, online status, and proper background detection.
@@ -33,12 +35,44 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         Bands70k.context = getApplicationContext();
         OnlineStatus.isOnline();
         
+        // Register network state receiver for connectivity monitoring
+        registerNetworkStateReceiver();
+        
         // Register proper Android background detection
         registerActivityLifecycleCallbacks(this);
         Log.d("AppLifecycle", "Application created, lifecycle callbacks registered for proper background detection");
         
         SystemClock.sleep(3000);
 
+    }
+    
+    /**
+     * Registers the network state receiver to monitor connectivity changes
+     */
+    private void registerNetworkStateReceiver() {
+        try {
+            networkStateReceiver = new NetworkStateReceiver();
+            IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            registerReceiver(networkStateReceiver, filter);
+            Log.d("NetworkState", "Network state receiver registered successfully");
+        } catch (Exception e) {
+            Log.e("NetworkState", "Failed to register network state receiver", e);
+        }
+    }
+    
+    /**
+     * Unregisters the network state receiver
+     */
+    private void unregisterNetworkStateReceiver() {
+        try {
+            if (networkStateReceiver != null) {
+                unregisterReceiver(networkStateReceiver);
+                networkStateReceiver = null;
+                Log.d("NetworkState", "Network state receiver unregistered successfully");
+            }
+        } catch (Exception e) {
+            Log.e("NetworkState", "Failed to unregister network state receiver", e);
+        }
     }
 
     /**
@@ -122,6 +156,14 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     @Override
     public void onActivityDestroyed(Activity activity) {
         Log.d("AppLifecycle", "Activity destroyed: " + activity.getClass().getSimpleName());
+    }
+    
+    @Override
+    public void onTerminate() {
+        // Clean up network state receiver
+        unregisterNetworkStateReceiver();
+        Log.d("AppLifecycle", "Application terminating - cleanup completed");
+        super.onTerminate();
     }
 
 }

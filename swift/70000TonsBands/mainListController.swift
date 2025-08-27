@@ -42,12 +42,15 @@ func getBands() -> [String]{
 
 func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String]{
     
+    let startTime = CFAbsoluteTimeGetCurrent()
+    print("🕐 [\(String(format: "%.3f", startTime))] determineBandOrScheduleList START - processing \(allBands.count) bands")
+    
     numberOfFilteredRecords = 0
     var newAllBands = [String]()
     
     // If no band data is loaded yet, return empty array to trigger waiting message
     if allBands.isEmpty {
-        print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: No band data loaded, returning empty array for waiting message")
+        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] determineBandOrScheduleList: No band data loaded, returning empty array for waiting message")
         return []
     }
     
@@ -56,10 +59,11 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     attendingCount = 0
     unofficalEventCount = 0
     if (typeField.isEmpty == true){
+        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] determineBandOrScheduleList: typeField is empty, returning \(allBands.count) bands immediately")
         return allBands;
     }
     
-    print ("Locking object with newAllBands")
+    print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Locking object with newAllBands")
     eventCounter = 0
     eventCounterUnoffical = 0
     unfilteredBandCount = 0
@@ -68,13 +72,19 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     unfilteredCurrentEventCount = 0
     
     
-    print ("[YEAR_CHANGE_DEBUG] sortedBy = \(sortedBy)")
+    print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] sortedBy = \(sortedBy)")
+    
+    let buildStartTime = CFAbsoluteTimeGetCurrent()
+    print("🕐 [\(String(format: "%.3f", buildStartTime))] Starting buildTimeSortedSchedulingData")
     schedule.buildTimeSortedSchedulingData();
-    print ("[YEAR_CHANGE_DEBUG] Schedule data count: \(schedule.getTimeSortedSchedulingData().count) time-sorted, \(schedule.getBandSortedSchedulingData().count) band-sorted")
+    let buildEndTime = CFAbsoluteTimeGetCurrent()
+    print("🕐 [\(String(format: "%.3f", buildEndTime))] buildTimeSortedSchedulingData END - time: \(String(format: "%.3f", (buildEndTime - buildStartTime) * 1000))ms")
+    
+    print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] Schedule data count: \(schedule.getTimeSortedSchedulingData().count) time-sorted, \(schedule.getBandSortedSchedulingData().count) band-sorted")
     
     // Don't process schedule data if it's empty
     if schedule.getBandSortedSchedulingData().isEmpty && schedule.getTimeSortedSchedulingData().isEmpty {
-        print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Schedule data is empty, returning bands list")
+        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Schedule data is empty, returning bands list")
         newAllBands = allBands;
         newAllBands.sort();
         bandCount = newAllBands.count;
@@ -84,7 +94,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     }
     
     if (schedule.getBandSortedSchedulingData().count > 0 && sortedBy == "name"){
-        print ("Sorting by name!!!");
+        print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Sorting by name!!!");
         for bandName in schedule.getBandSortedSchedulingData().keys {
             unfilteredBandCount = unfilteredBandCount + 1
             if (schedule.getBandSortedSchedulingData().isEmpty == false){
@@ -126,8 +136,18 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         eventCount = newAllBands.count;
         
     } else if (schedule.getTimeSortedSchedulingData().count > 0 && sortedBy == "time"){
-        print ("[YEAR_CHANGE_DEBUG] Sorting by time!!! Time-sorted data count: \(schedule.getTimeSortedSchedulingData().count)");
+        print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] Sorting by time!!! Time-sorted data count: \(schedule.getTimeSortedSchedulingData().count)")
+        
+        let timeSortStartTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", timeSortStartTime))] Starting time-sorted processing loop for \(schedule.getTimeSortedSchedulingData().count) time indices")
+        
+        var processedCount = 0
         for timeIndex in schedule.getTimeSortedSchedulingData().keys {
+            processedCount += 1
+            if processedCount % 50 == 0 {
+                print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Processing time index \(processedCount)/\(schedule.getTimeSortedSchedulingData().count): \(timeIndex)")
+            }
+            
             print("[YEAR_CHANGE_DEBUG] Processing time index: \(timeIndex)")
             unfilteredEventCount = unfilteredEventCount + 1
             if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
@@ -172,11 +192,15 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                 print("[YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Time index \(timeIndex) has no band data")
             }
         }
+        
+        let timeSortEndTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", timeSortEndTime))] Time-sorted processing loop END - processed \(processedCount) time indices - time: \(String(format: "%.3f", (timeSortEndTime - timeSortStartTime) * 1000))ms")
+        
         bandCount = 0;
         eventCount = newAllBands.count;
     } else {
         
-        print ("[YEAR_CHANGE_DEBUG] returning Bands!!! Band-sorted count: \(schedule.getBandSortedSchedulingData().count), Time-sorted count: \(schedule.getTimeSortedSchedulingData().count), sortedBy: \(sortedBy)");
+        print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] returning Bands!!! Band-sorted count: \(schedule.getBandSortedSchedulingData().count), Time-sorted count: \(schedule.getTimeSortedSchedulingData().count), sortedBy: \(sortedBy)");
         //return immediatly. Dont need to do schedule sorting magic
         newAllBands = allBands;
         newAllBands.sort();
@@ -184,7 +208,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         eventCount = 0;
         bandCounter = allBands.count
         
-        print ("determineBandOrScheduleList is returning \(newAllBands.count) entries -1 ")
+        print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] determineBandOrScheduleList is returning \(newAllBands.count) entries -1 ")
         return newAllBands
     }
 
@@ -212,18 +236,26 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         }
     }
     
-    print ("determineBandOrScheduleList is returning \(newAllBands.count) entries")
+    let endTime = CFAbsoluteTimeGetCurrent()
+    print("🕐 [\(String(format: "%.3f", endTime))] determineBandOrScheduleList END - returning \(newAllBands.count) entries - total time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
     //unfilteredBandCount = unfilteredBandCount - unfilteredCruiserEventCount
     return newAllBands
 }
 
 func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended)-> Bool{
+    let startTime = CFAbsoluteTimeGetCurrent()
     var include = false;
     if (timeIndex.isZero == false){
+        let willAttendStartTime = CFAbsoluteTimeGetCurrent()
         if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle) == true){
             attendingCount = attendingCount + 1;
-            print ("attendingCount is \(attendingCount) after adding 1")
+            print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] attendingCount is \(attendingCount) after adding 1")
         }
+        let willAttendEndTime = CFAbsoluteTimeGetCurrent()
+        if (willAttendEndTime - willAttendStartTime) > 0.001 { // Only log if it takes more than 1ms
+            print("🕐 [\(String(format: "%.3f", willAttendEndTime))] willAttenedFilters for '\(bandName)' took \(String(format: "%.3f", (willAttendEndTime - willAttendStartTime) * 1000))ms")
+        }
+        
         if (getShowOnlyWillAttened() == true){
             include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle);
         } else {
@@ -248,18 +280,19 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
                             }
                             include = true
                         }
-                    } else {
-                        print("applyFilters: Missing or invalid location for band: \(bandName), timeIndex: \(timeIndex)")
                     }
                 }
             }
         }
     } else {
-        if (getShowOnlyWillAttened() == false){
-            include = rankFiltering(bandName, dataHandle: dataHandle);
-        }
+        include = true
     }
-    return include
+    
+    let endTime = CFAbsoluteTimeGetCurrent()
+    if (endTime - startTime) > 0.001 { // Only log if it takes more than 1ms
+        print("🕐 [\(String(format: "%.3f", endTime))] applyFilters for '\(bandName)' took \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
+    }
+    return include;
 }
 
 // Add a serial queue for filtering
@@ -274,17 +307,33 @@ func getFilteredBands(
     searchCriteria: String,
     completion: @escaping ([String]) -> Void
 ) {
+    let startTime = CFAbsoluteTimeGetCurrent()
+    print("🕐 [\(String(format: "%.3f", startTime))] getFilteredBands START")
+    
     filterQueue.async {
-    let allBands = bandNameHandle.getBandNames()
-    var sortedBy = getSortedBy()
-    if (sortedBy.isEmpty == true){
-        sortedBy = "time"
-    }
-    var filteredBands = [String]()
-    var newAllBands = [String]()
-    filteredBandCount = 0
-    unfilteredBandCount = 0
+        let queueStartTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", queueStartTime))] getFilteredBands filter queue START")
+        
+        let bandsStartTime = CFAbsoluteTimeGetCurrent()
+        let allBands = bandNameHandle.getBandNames()
+        let bandsEndTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", bandsEndTime))] getFilteredBands - got \(allBands.count) bands - time: \(String(format: "%.3f", (bandsEndTime - bandsStartTime) * 1000))ms")
+        
+        var sortedBy = getSortedBy()
+        if (sortedBy.isEmpty == true){
+            sortedBy = "time"
+        }
+        var filteredBands = [String]()
+        var newAllBands = [String]()
+        filteredBandCount = 0
+        unfilteredBandCount = 0
+        
+        let determineStartTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", determineStartTime))] getFilteredBands - starting determineBandOrScheduleList")
         newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
+        let determineEndTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", determineEndTime))] getFilteredBands - determineBandOrScheduleList END - got \(newAllBands.count) entries - time: \(String(format: "%.3f", (determineEndTime - determineStartTime) * 1000))ms")
+        
         if (getShowOnlyWillAttened() == true){
             filteredBands = newAllBands;
             if (searchCriteria != ""){
@@ -297,6 +346,8 @@ func getFilteredBands(
                 filteredBands = newFilteredBands
             }
         } else {
+            let priorityFilterStartTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", priorityFilterStartTime))] getFilteredBands - starting priority filtering for \(newAllBands.count) entries")
             for bandNameIndex in newAllBands {
                 let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy);
                 if (searchCriteria != ""){
@@ -326,19 +377,32 @@ func getFilteredBands(
                     print (dataHandle.getPriorityData(bandName))
                 }
             }
-    }
-    filteredBandCount = filteredBands.count
-    if (filteredBandCount == 0){
-            print ("mainListDebug: handleEmptryList: Why is this being called 1")
-        filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
-    } else {
-        bandCounter = filteredBands.count
-        listCount = filteredBands.count
-    }
-        print ("mainListDebug: listCount is \(listCount) - 2")
-        DispatchQueue.main.async {
-            completion(filteredBands)
+            let priorityFilterEndTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", priorityFilterEndTime))] getFilteredBands - priority filtering END - filtered to \(filteredBands.count) entries - time: \(String(format: "%.3f", (priorityFilterEndTime - priorityFilterStartTime) * 1000))ms")
         }
+        filteredBandCount = filteredBands.count
+        if (filteredBandCount == 0){
+            print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] mainListDebug: handleEmptryList: Why is this being called 1")
+            filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
+        } else {
+            bandCounter = filteredBands.count
+            listCount = filteredBands.count
+        }
+        print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] mainListDebug: listCount is \(listCount) - 2")
+        
+        let queueEndTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", queueEndTime))] getFilteredBands filter queue END - total time: \(String(format: "%.3f", (queueEndTime - queueStartTime) * 1000))ms")
+        
+        DispatchQueue.main.async {
+            let completionStartTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", completionStartTime))] getFilteredBands - calling completion with \(filteredBands.count) entries")
+            completion(filteredBands)
+            let completionEndTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", completionEndTime))] getFilteredBands - completion END - time: \(String(format: "%.3f", (completionEndTime - completionStartTime) * 1000))ms")
+        }
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        print("🕐 [\(String(format: "%.3f", endTime))] getFilteredBands END - total time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
     }
 }
 
@@ -434,30 +498,41 @@ func rankFiltering(_ bandName: String, dataHandle: dataHandler) -> Bool {
 }
 
 func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: scheduleHandler, attendedHandle: ShowsAttended) -> Bool{
+    let startTime = CFAbsoluteTimeGetCurrent()
     var showEvent = true
     guard
         let bandData = schedule.getBandSortedSchedulingData()[bandName],
         let timeData = bandData[timeIndex],
         let eventType = timeData[typeField],
         let location = timeData[locationField],
-        let startTime = timeData[startTimeField]
+        let startTimeValue = timeData[startTimeField]
     else {
-        print("willAttenedFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
+        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] willAttenedFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
         return false
     }
     if timeIndex.isZero {
         showEvent = false
     } else {
+        let attendedStartTime = CFAbsoluteTimeGetCurrent()
         let status = attendedHandle.getShowAttendedStatus(
             band: bandName,
             location: location,
-            startTime: startTime,
+            startTime: startTimeValue,
             eventType: eventType,
             eventYearString: String(eventYear)
         )
+        let attendedEndTime = CFAbsoluteTimeGetCurrent()
+        if (attendedEndTime - attendedStartTime) > 0.001 { // Only log if it takes more than 1ms
+            print("🕐 [\(String(format: "%.3f", attendedEndTime))] getShowAttendedStatus for '\(bandName)' took \(String(format: "%.3f", (attendedEndTime - attendedStartTime) * 1000))ms")
+        }
         if status == sawNoneStatus {
             showEvent = false
         }
+    }
+    
+    let endTime = CFAbsoluteTimeGetCurrent()
+    if (endTime - startTime) > 0.001 { // Only log if it takes more than 1ms
+        print("🕐 [\(String(format: "%.3f", endTime))] willAttenedFilters for '\(bandName)' took \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
     }
     return showEvent
 }
@@ -530,10 +605,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     if (bands.count <= indexRow || bands.count == 0){
         return
     }
-    print ("bands = \(bands)")
-    print ("indexRow = \(indexRow)")
-    
-    print ("count is \(bands.count) - \(indexRow)")
+    // Reduced debug logging for performance
+    // print ("bands = \(bands)")
+    // print ("indexRow = \(indexRow)")
+    // print ("count is \(bands.count) - \(indexRow)")
 
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
     
@@ -700,7 +775,6 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         //bandNameNoSchedule.isHidden = true
         
     } else {
-        rankLocationSchedule = false
         print ("Not display schedule for band " + bandName)
         scheduleButton = true
         locationView.isHidden = true
@@ -718,14 +792,15 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     
     indexForCell.text = indexText;
     
-    print ("Cell text for \(bandName) ranking is \(dataHandle.getPriorityData(bandName))")
-    // Avoid CUICatalog errors by checking for empty string before UIImage(named:)
-let priorityGraphicName = getPriorityGraphic(dataHandle.getPriorityData(bandName))
-if priorityGraphicName.isEmpty {
-    rankGraphic = UIImageView(image: UIImage())
-} else {
-    rankGraphic = UIImageView(image: UIImage(named: priorityGraphicName) ?? UIImage())
-}
+    // Reduced debug logging for performance
+    // print ("Cell text for \(bandName) ranking is \(dataHandle.getPriorityData(bandName))")
+    let priorityValue = dataHandle.getPriorityData(bandName)
+    let priorityGraphicName = getPriorityGraphic(priorityValue)
+    if priorityGraphicName.isEmpty {
+        rankGraphic = UIImageView(image: UIImage())
+    } else {
+        rankGraphic = UIImageView(image: UIImage(named: priorityGraphicName) ?? UIImage())
+    }
     
     if (timeIndex > 1 && sortBy == "name" && bandName == previousBandName){
         rankGraphic.image = nil

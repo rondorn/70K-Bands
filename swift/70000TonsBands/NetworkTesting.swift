@@ -84,16 +84,13 @@ class NetworkStatusManager {
             return
         }
         
-        // Only perform actual network test if OS reports connectivity
-        let result = networkTesting.isInternetAvailableSynchronous()
+        // Use the new asynchronous network testing approach
+        // This prevents blocking the main thread
+        networkTesting.performAsyncNetworkTest()
         
-        _lock.lock()
-        _isInternetAvailable = result
-        _lastTestTime = Date()
-        _isCurrentlyTesting = false
-        _lock.unlock()
-        
-        print("NetworkStatusManager: Network test completed: \(result)")
+        // Note: The result will be updated asynchronously when the test completes
+        // For now, we'll keep the current cached value
+        print("NetworkStatusManager: Network test started asynchronously")
     }
     
     // Force immediate network test (for testing purposes)
@@ -115,16 +112,18 @@ class NetworkStatusManager {
                 return
             }
             
-            // Only perform actual network test if OS reports connectivity
-            let result = networkTesting.isInternetAvailableSynchronous()
+            // Use the new asynchronous network testing approach
+            // This prevents blocking the background thread
+            networkTesting.performAsyncNetworkTest()
             
+            // For now, return the current cached value
+            // The completion will be called when the test completes
             self?._lock.lock()
-            self?._isInternetAvailable = result
-            self?._lastTestTime = Date()
+            let currentResult = self?._isInternetAvailable ?? false
             self?._lock.unlock()
             
             DispatchQueue.main.async {
-                completion(result)
+                completion(currentResult)
             }
         }
     }
@@ -141,6 +140,10 @@ open class NetworkTesting {
     var internetCurrentlyTesting = false
     var testResults = false
     var haveresults = false
+    
+    // Add missing cache variables
+    var internetCheckCache = "true"
+    var internetCheckCacheDate: TimeInterval = 0
     
     init(){
     }
@@ -160,21 +163,32 @@ open class NetworkTesting {
         
         // Cache expired or not available, need to test
         print("NetworkTesting: Cache expired or not available, testing network")
-        return false // Will be updated by the test
+        
+        // CRITICAL FIX: Instead of returning false, trigger a test and return cached value
+        // This prevents the app from thinking internet is down when cache expires
+        let networkTesting = NetworkTesting()
+        networkTesting.performAsyncNetworkTest()
+        
+        // Return the last known cached value instead of false
+        let cachedResult = cachedNetworkAvailable ?? true // Default to true if no cache
+        print("NetworkTesting: Cache expired, returning last known value: \(cachedResult)")
+        return cachedResult
     }
     
     // Force a network test and update cache
     static func forceNetworkTest() -> Bool {
         let networkTesting = NetworkTesting()
-        let result = networkTesting.isInternetAvailableSynchronous()
         
+        // Use the new asynchronous approach instead of blocking synchronous call
+        networkTesting.performAsyncNetworkTest()
+        
+        // Return cached value immediately
         networkTestLock.lock()
-        cachedNetworkAvailable = result
-        lastNetworkTestTime = Date()
+        let cachedResult = cachedNetworkAvailable ?? false
         networkTestLock.unlock()
         
-        print("NetworkTesting: Force test completed, cache updated: \(result)")
-        return result
+        print("NetworkTesting: Force test started asynchronously, returning cached value: \(cachedResult)")
+        return cachedResult
     }
     
     // New main entry point - always returns cached value and triggers background refresh
@@ -184,97 +198,105 @@ open class NetworkTesting {
 
     func isInternetAvailableSynchronous() -> Bool {
         
-        var returnState = false
+        // CRITICAL FIX: This method was blocking the main thread with busy-wait loops
+        // Now it returns immediately with cached value and triggers background test
         
         if (isInternetAvailableBasic() == true){
             if (internetCurrentlyTesting == false){
                 internetCurrentlyTesting = true
                 
-                // Try multiple test URLs to ensure reliable network detection
-                let testUrls = [
-                    "https://www.dropbox.com"
-                ]
-                
-                var testUrl = testUrls[0] // Default to first URL
-                guard let url = URL(string: testUrl) else { return false}
-                var request = URLRequest(url: url)
-                request.timeoutInterval = 4.0 // 4 second timeout for faster failure
-                request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
-                
-                var wait = true
-                var startTime = Date()
-                
-                let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                    let elapsedTime = Date().timeIntervalSince(startTime)
-                    print("Internet test completed in \(elapsedTime)s")
-                    
-                    if let error = error {
-                        print("Internet Found error: \(error.localizedDescription)")
-                        returnState = false
-                    } else if let httpResponse = response as? HTTPURLResponse {
-                        print("Internet Found statusCode: \(httpResponse.statusCode)")
-                        if httpResponse.statusCode == 200{
-                            returnState = true
-                            print ("Internet Found returnState = \(returnState)")
-                        } else {
-                            print("Internet Found is not 200 status \(httpResponse.statusCode)")
-                            returnState = false
-                        }
-                    } else {
-                        print ("Internet Found no response")
-                        returnState = false
-                    }
-                    wait = false
+                // Start the network test in background and return cached value immediately
+                DispatchQueue.global(qos: .utility).async { [weak self] in
+                    self?.performAsyncNetworkTest()
                 }
                 
-                task.resume()
-                
-                // Add a maximum wait time to prevent infinite waiting
-                let maxWaitTime: TimeInterval = 4.0 // 4 seconds max
-                let waitStartTime = Date()
-                
-                while (wait == true){
-                    let elapsedWaitTime = Date().timeIntervalSince(waitStartTime)
-                    if elapsedWaitTime >= maxWaitTime {
-                        print("Internet Found timeout after \(elapsedWaitTime)s")
-                        returnState = false
-                        wait = false
-                        break
-                    }
-                    print ("Internet Found Waiting (\(elapsedWaitTime)s)")
-                    usleep(100000); // 0.1 second intervals
-                }
-                
-                if (returnState == false){
-                    internetCheckCache = "false"
+                // Return cached value immediately instead of blocking
+                if internetCheckCache == "false" {
+                    return false
                 } else {
-                    internetCheckCache = "true"
+                    return true
                 }
-                internetCurrentlyTesting = false
             } else {
                 print ("Internet already being tested")
                 if internetCheckCache == "false" {
-                    returnState = false
+                    return false
                 } else {
-                    returnState = true
+                    return true
                 }
-                return returnState
             }
         } else {
             print ("Internet Found is airplane mode...not even testing")
+            return false
+        }
+    }
+    
+    // New method to perform network test asynchronously
+    func performAsyncNetworkTest() {
+        let testUrls = [
+            "https://www.dropbox.com"
+        ]
+        
+        let testUrl = testUrls[0] // Default to first URL
+        guard let url = URL(string: testUrl) else { 
+            self.updateInternetCache(false)
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 4.0 // 4 second timeout for faster failure
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
+        
+        let startTime = Date()
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            let elapsedTime = Date().timeIntervalSince(startTime)
+            print("Internet test completed in \(elapsedTime)s")
+            
+            var returnState = false
+            
+            if let error = error {
+                print("Internet Found error: \(error.localizedDescription)")
+                returnState = false
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("Internet Found statusCode: \(httpResponse.statusCode)")
+                if httpResponse.statusCode == 200{
+                    returnState = true
+                    print ("Internet Found returnState = \(returnState)")
+                } else {
+                    print("Internet Found is not 200 status \(httpResponse.statusCode)")
+                    returnState = false
+                }
+            } else {
+                print ("Internet Found no response")
+                returnState = false
+            }
+            
+            // Update cache and reset testing flag
+            self?.updateInternetCache(returnState)
+        }
+        
+        task.resume()
+    }
+    
+    // Helper method to update internet cache
+    private func updateInternetCache(_ result: Bool) {
+        if result == false {
+            internetCheckCache = "false"
+        } else {
+            internetCheckCache = "true"
         }
         
         internetCheckCacheDate = NSDate().timeIntervalSince1970 + 15
         
         // Update global cache
         NetworkTesting.networkTestLock.lock()
-        NetworkTesting.cachedNetworkAvailable = returnState
+        NetworkTesting.cachedNetworkAvailable = result
         NetworkTesting.lastNetworkTestTime = Date()
         NetworkTesting.networkTestLock.unlock()
         
-        print ("Internet Found is \(returnState)")
-        return returnState
+        internetCurrentlyTesting = false
         
+        print ("Internet Found is \(result)")
     }
 
     func isInternetAvailableBasic() -> Bool {
@@ -306,24 +328,23 @@ open class NetworkTesting {
             return true
         }
         
-        // If cache says false or expired, perform test
-        self.testResults = false
-
-        let semaphore = DispatchSemaphore(value: 0)
-
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            self.testResults = self.isInternetAvailableSynchronous()
-            semaphore.signal()
-        }
-
-        // Wait with timeout to prevent infinite hanging
-        let timeoutResult = semaphore.wait(timeout: .now() + 5.0)
-        if timeoutResult == .timedOut {
-            print("Network test semaphore timed out after 5 seconds")
-            return false
+        // If cache says false or expired, trigger background test and return cached value
+        // This prevents blocking the main thread
+        if !internetCurrentlyTesting {
+            internetCurrentlyTesting = true
+            
+            // Start background test
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                self?.performAsyncNetworkTest()
+            }
         }
         
-        return testResults
+        // Return cached value immediately instead of waiting
+        if internetCheckCache == "false" {
+            return false
+        } else {
+            return true
+        }
     }
 
 }
