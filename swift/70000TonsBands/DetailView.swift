@@ -324,6 +324,9 @@ struct DetailView: View {
                     .modifier(ConditionalScrollContentBackground())
                     .padding(.horizontal, 14)
                     .padding(.top, 0)
+                    .onChange(of: viewModel.customNotes) { _ in
+                        viewModel.notesDidChange()
+                    }
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
                             keyboardToolbarButtons

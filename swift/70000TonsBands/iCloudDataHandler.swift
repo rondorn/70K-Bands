@@ -22,6 +22,9 @@ extension Array {
 
 class iCloudDataHandler {
     
+    /// Static flag to prevent multiple simultaneous executions of attended data processing
+    static var isProcessingAttendedData = false
+    
     /// Initializes the iCloudDataHandler class
     /// Sets up the handler for managing iCloud data synchronization
     init(){
@@ -600,6 +603,315 @@ class iCloudDataHandler {
         } else {
             print("iCloudSchedule: iCloud disabled, skipping schedule data read")
         }
+    }
+    
+    /// Cleans up malformed keys in iCloud that could cause infinite loops
+    private func cleanupMalformedICloudKeys() {
+        let ubiquitousStore = NSUbiquitousKeyValueStore.default
+        let allKeys = ubiquitousStore.dictionaryRepresentation.keys
+        let malformedKeys = allKeys.filter { key in
+            key.contains("eventName:eventName:") || key.contains("::") || key.components(separatedBy: ":").count < 6
+        }
+        
+        print("iCloudAttended: Cleanup - Total iCloud keys: \(allKeys.count)")
+        print("iCloudAttended: Cleanup - Keys with 'eventName:' prefix: \(allKeys.filter { $0.hasPrefix("eventName:") }.count)")
+        
+        if !malformedKeys.isEmpty {
+            print("iCloudAttended: Found \(malformedKeys.count) malformed keys to clean up")
+            for key in malformedKeys {
+                print("iCloudAttended: Removing malformed key: \(key)")
+                ubiquitousStore.removeObject(forKey: key)
+            }
+            ubiquitousStore.synchronize()
+            print("iCloudAttended: Cleaned up \(malformedKeys.count) malformed keys")
+        } else {
+            print("iCloudAttended: No malformed keys found, iCloud data appears clean")
+        }
+    }
+    
+    /// Reads all attended data from iCloud and restores it to local storage
+    /// This method specifically handles attended status data restoration
+    func readCloudAttendedData(attendedHandle: ShowsAttended) {
+        // Prevent multiple simultaneous executions across all instances
+        if iCloudDataHandler.isProcessingAttendedData {
+            print("iCloudAttended: Already processing attended data, skipping duplicate call")
+            return
+        }
+        
+        iCloudDataHandler.isProcessingAttendedData = true
+        defer { iCloudDataHandler.isProcessingAttendedData = false }
+        
+        // Log where this method is being called from
+        let callStack = Thread.callStackSymbols
+        let caller = callStack.count > 1 ? callStack[1] : "Unknown"
+        print("iCloudAttended: Called from: \(caller)")
+        
+                   if (checkForIcloud() == true) {
+               print("iCloudAttended: Starting attended data restoration from iCloud")
+               
+               // First, clean up any malformed keys in iCloud
+               print("iCloudAttended: Starting cleanup of malformed keys...")
+               let cleanupStartTime = Date()
+               cleanupMalformedICloudKeys()
+               let cleanupTime = Date().timeIntervalSince(cleanupStartTime)
+               print("iCloudAttended: Cleanup completed in \(String(format: "%.2f", cleanupTime)) seconds, proceeding with data restoration...")
+       
+               DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                print("iCloudAttended: Processing started on background queue")
+                
+                // Add a timeout mechanism to prevent infinite processing
+                let startTime = Date()
+                let timeoutInterval: TimeInterval = 30.0 // 30 seconds timeout
+                
+                                   // Get all keys from iCloud that start with "eventName:"
+                   let ubiquitousStore = NSUbiquitousKeyValueStore.default
+                   let allKeys = ubiquitousStore.dictionaryRepresentation.keys
+                   let attendedKeys = allKeys.filter { $0.hasPrefix("eventName:") }
+       
+                   print("iCloudAttended: Found \(attendedKeys.count) attended keys in iCloud")
+                   print("iCloudAttended: Total iCloud keys: \(allKeys.count)")
+                
+                                   // Check for duplicate keys that might cause infinite loops
+                   let uniqueKeys = Array(Set(attendedKeys))
+                   if uniqueKeys.count != attendedKeys.count {
+                       print("iCloudAttended: WARNING - Found \(attendedKeys.count - uniqueKeys.count) duplicate keys. Using deduplicated set of \(uniqueKeys.count) keys.")
+                       print("iCloudAttended: Duplicate count: \(attendedKeys.count - uniqueKeys.count)")
+                   } else {
+                       print("iCloudAttended: No duplicate keys found, all \(uniqueKeys.count) keys are unique")
+                   }
+                
+                                   // Debug: Log a few sample keys to help identify format issues
+                   if !uniqueKeys.isEmpty {
+                       let sampleKeys = Array(uniqueKeys.prefix(3))
+                       print("iCloudAttended: Sample keys: \(sampleKeys)")
+                       
+                       // Also log the key format breakdown for the first key
+                       if let firstKey = sampleKeys.first {
+                           let components = firstKey.components(separatedBy: ":")
+                           print("iCloudAttended: First key breakdown - Components: \(components.count), Format: \(components)")
+                       }
+                   }
+                
+                // Add a safety check to prevent infinite loops
+                if uniqueKeys.count > 1000 {
+                    print("iCloudAttended: WARNING - Found \(uniqueKeys.count) keys, this seems excessive. Aborting to prevent infinite loop.")
+                    return
+                }
+
+                var restoredCount = 0
+                var skippedCount = 0
+                var processedCount = 0
+                let totalKeys = uniqueKeys.count
+                let maxIterations = min(totalKeys * 2, 10000) // Safety limit to prevent infinite loops
+                var iterationCount = 0
+
+                for key in uniqueKeys {
+                    iterationCount += 1
+                    processedCount += 1
+                    
+                    // Final safety check - prevent infinite loops
+                    if iterationCount > maxIterations {
+                        print("iCloudAttended: ERROR - Maximum iteration limit reached (\(maxIterations)). Aborting to prevent infinite loop.")
+                        break
+                    }
+                    
+                                               // Check for timeout
+                           if Date().timeIntervalSince(startTime) > timeoutInterval {
+                               print("iCloudAttended: WARNING - Processing timeout reached (\(timeoutInterval) seconds). Aborting to prevent infinite loop.")
+                               break
+                           }
+                           
+                           // Log the current key being processed
+                           print("iCloudAttended: Processing key \(processedCount)/\(totalKeys): \(key)")
+                    
+                                               // Progress logging every 100 keys
+                           if processedCount % 100 == 0 {
+                               print("iCloudAttended: Processed \(processedCount)/\(totalKeys) keys...")
+                           }
+                           
+                           // Progress logging every 10 keys for better visibility
+                           if processedCount % 10 == 0 {
+                               print("iCloudAttended: Progress - \(processedCount)/\(totalKeys) keys processed, \(restoredCount) restored, \(skippedCount) skipped")
+                           }
+                    
+                    // Safety check to prevent infinite loops
+                    if processedCount > totalKeys {
+                        print("iCloudAttended: ERROR - Processed more keys than expected. Aborting to prevent infinite loop.")
+                        break
+                    }
+                    
+                    if let value = ubiquitousStore.string(forKey: key), !value.isEmpty {
+                        // Parse the iCloud value (format: "status:uid:timestamp")
+                        let valueComponents = value.components(separatedBy: ":")
+                        guard valueComponents.count >= 3,
+                              let timestamp = Double(valueComponents[2]) else {
+                            print("iCloudAttended: Invalid value format for \(key): \(value)")
+                            skippedCount += 1
+                            continue
+                        }
+
+                        let iCloudStatus = valueComponents[0]
+                        let uidValue = valueComponents[1]
+
+                        // Get current device UID
+                        guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else {
+                            print("iCloudAttended: Unable to get current device UID")
+                            skippedCount += 1
+                            continue
+                        }
+
+                        // Parse the key to extract event details
+                        let keyComponents = key.components(separatedBy: ":")
+                        guard keyComponents.count >= 6,
+                              keyComponents[0] == "eventName" else {
+                            print("iCloudAttended: Invalid key format: \(key)")
+                            skippedCount += 1
+                            continue
+                        }
+
+                        // Additional safety check for malformed keys
+                        if key.contains("eventName:eventName:") {
+                            print("iCloudAttended: WARNING - Malformed key detected (double eventName prefix): \(key)")
+                            skippedCount += 1
+                            continue
+                        }
+                        
+                                                   // Additional validation for key components
+                           if keyComponents.count < 6 {
+                               print("iCloudAttended: WARNING - Key has insufficient components (\(keyComponents.count)/6): \(key)")
+                               print("iCloudAttended: Key components: \(keyComponents)")
+                               skippedCount += 1
+                               continue
+                           }
+                           
+                           // Validate that key components are not empty
+                           if keyComponents[1].isEmpty || keyComponents[2].isEmpty || keyComponents[3].isEmpty || 
+                              keyComponents[4].isEmpty || keyComponents[5].isEmpty {
+                               print("iCloudAttended: WARNING - Key has empty components: \(key)")
+                               print("iCloudAttended: Empty components at indices: \(keyComponents.enumerated().compactMap { $0.element.isEmpty ? $0.offset : nil })")
+                               skippedCount += 1
+                               continue
+                           }
+                           
+                           // Additional check for keys that might cause infinite loops
+                           if key.contains("eventName:eventName:") || key.contains("::") {
+                               print("iCloudAttended: WARNING - Malformed key detected (double prefix or empty components): \(key)")
+                               print("iCloudAttended: Key contains problematic patterns: eventName:eventName: = \(key.contains("eventName:eventName:")), :: = \(key.contains("::"))")
+                               skippedCount += 1
+                               continue
+                           }
+                           
+                           // Skip keys that are clearly malformed (should have been cleaned up, but double-check)
+                           if key.hasPrefix("eventName:eventName:") {
+                               print("iCloudAttended: WARNING - Key still has double prefix after cleanup: \(key)")
+                               print("iCloudAttended: This key should have been removed during cleanup - possible cleanup failure")
+                               skippedCount += 1
+                               continue
+                           }
+
+                        let bandName = keyComponents[1]
+                        let location = keyComponents[2]
+                        let startTime = keyComponents[3]
+                        let eventType = keyComponents[4]
+                        let eventYearString = keyComponents[5]
+
+                        // RULE 1: Never overwrite local data if UID matches current device
+                        if uidValue == currentUid {
+                            print("iCloudAttended: Skipping \(key) - matches current device UID")
+                            print("iCloudAttended: UID match: iCloud UID '\(uidValue)' matches current device UID '\(currentUid)'")
+                            skippedCount += 1
+                            continue
+                        }
+
+                        // RULE 2: Only update if iCloud data is newer than local data
+                        let localStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+                        
+                        // Extract the local index (remove "eventName:" prefix)
+                        let localIndex = String(key.dropFirst("eventName:".count))
+                        let localTimestamp = attendedHandle.getShowAttendedLastChange(index: localIndex)
+                        
+                        print("iCloudAttended: Checking \(key) - localStatus: '\(localStatus)', localTimestamp: \(localTimestamp), iCloudStatus: '\(iCloudStatus)', iCloudTimestamp: \(timestamp)")
+
+                        if localTimestamp > 0 {
+                            // Only update if iCloud timestamp is NEWER than local timestamp
+                            guard timestamp > localTimestamp else {
+                                print("iCloudAttended: Skipping \(key) - local data is newer")
+                                print("iCloudAttended: Timestamp comparison: iCloud \(timestamp) vs Local \(localTimestamp) (iCloud older)")
+                                skippedCount += 1
+                                continue
+                            }
+                            print("iCloudAttended: Timestamp comparison: iCloud \(timestamp) vs Local \(localTimestamp) (iCloud newer)")
+                        } else if localStatus != "0" {
+                            // Local data exists but no timestamp - be less conservative
+                            // If local status is different from "0" (not attended), allow iCloud to override
+                            // This handles cases where local data was created before timestamp tracking
+                            print("iCloudAttended: Local data exists without timestamp, allowing iCloud override for \(key)")
+                            print("iCloudAttended: Local status '\(localStatus)' (not '0') with no timestamp - allowing override")
+                        } else {
+                            // Local status is "0" (not attended) and no timestamp - definitely allow iCloud to override
+                            print("iCloudAttended: Local status is '0' with no timestamp, allowing iCloud override for \(key)")
+                            print("iCloudAttended: Local status is '0' (not attended) with no timestamp - definitely allowing override")
+                        }
+
+                        // Apply the iCloud status to local storage
+                        // Store only the status locally (not the full iCloud format with UID)
+                        let localStatusWithTimestamp = iCloudStatus + ":" + String(format: "%.0f", timestamp)
+                        print("iCloudAttended: Restoring \(localIndex): \(localStatus) -> \(iCloudStatus) (storing as \(localStatusWithTimestamp))")
+                        print("iCloudAttended: Restoration details - Band: \(bandName), Location: \(location), Time: \(startTime), Type: \(eventType), Year: \(eventYearString)")
+                        attendedHandle.changeShowAttendedStatus(index: localIndex, status: localStatusWithTimestamp, skipICloud: true)
+                        restoredCount += 1
+                        
+                        // Log successful restoration details
+                        print("iCloudAttended: Successfully restored \(bandName) at \(location) (\(startTime) - \(eventType)) for year \(eventYearString)")
+                    }
+                }
+
+                print("iCloudAttended: Restoration completed - \(restoredCount) restored, \(skippedCount) skipped")
+                print("iCloudAttended: Summary - Total keys found: \(totalKeys), Processed: \(processedCount), Restored: \(restoredCount), Skipped: \(skippedCount)")
+                
+                if restoredCount == 0 {
+                    print("iCloudAttended: WARNING - No data was restored. This might indicate:")
+                    print("iCloudAttended: - All local data is newer than iCloud data")
+                    print("iCloudAttended: - All keys are malformed or invalid")
+                    print("iCloudAttended: - Local data exists for all events")
+                    print("iCloudAttended: - UID conflicts preventing restoration")
+                    print("iCloudAttended: - All events were skipped due to validation failures")
+                } else {
+                    print("iCloudAttended: SUCCESS - \(restoredCount) events were restored from iCloud")
+                    print("iCloudAttended: Restoration rate: \(String(format: "%.1f", Double(restoredCount) / Double(totalKeys) * 100))%")
+                }
+
+                // Force migration of all attended data to ensure consistent format
+                attendedHandle.forceMigrationOfAllAttendedData()
+                
+                // Save the restored data to local storage
+                attendedHandle.saveShowsAttended()
+
+                // Notify that attended data has been restored
+                DispatchQueue.main.async {
+                    print("iCloudAttended: Processing completed successfully, posting notification")
+                    NotificationCenter.default.post(name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
+                }
+                
+                let totalTime = Date().timeIntervalSince(startTime)
+                if totalTime >= timeoutInterval {
+                    print("iCloudAttended: WARNING - Processing completed but took \(String(format: "%.1f", totalTime)) seconds (approaching timeout limit)")
+                } else {
+                    print("iCloudAttended: Processing completed successfully in \(String(format: "%.1f", totalTime)) seconds")
+                }
+                
+                print("iCloudAttended: Background processing completed successfully")
+                
+                // Final safety check - ensure we're not stuck
+                if processedCount != totalKeys {
+                    print("iCloudAttended: WARNING - Processed \(processedCount) keys but expected \(totalKeys). This might indicate an issue.")
+                }
+            }
+        } else {
+            print("iCloudAttended: iCloud disabled, skipping attended data restoration")
+        }
+        
+        print("iCloudAttended: Method completed")
     }
     
     /// Processes a single schedule record efficiently for bulk operations

@@ -28,8 +28,10 @@ func HTTPsendRequest(_ request: URLRequest,
 
 func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
     
+    // Use cached network status instead of blocking synchronous call
     let netTest = NetworkTesting()
-    internetAvailble = netTest.isInternetAvailableSynchronous(); //isInternetAvailable();
+    internetAvailble = netTest.isInternetAvailable(); // Use non-blocking method
+    
     if (url.isEmpty == false && url != " " && internetAvailble == true){
         print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)

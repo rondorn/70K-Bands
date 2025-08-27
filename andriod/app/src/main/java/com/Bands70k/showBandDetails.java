@@ -2865,6 +2865,14 @@ public class showBandDetails extends Activity {
         // ONRESUME FIX: Immediately restore cached image if available to prevent disappearing image
         restoreCachedImageImmediately();
         
+        // NETWORK STATUS FIX: Smart refresh network status when resuming from sleep
+        // This assumes connectivity hasn't changed and restores previous state immediately
+        // Background verification will confirm our assumption without blocking the UI
+        OnlineStatus.smartRefreshNetworkStatus();
+        
+        // Refresh UI elements based on current online status
+        refreshUIForOnlineStatus();
+        
         // PROGRESSIVE LOADING: Load content in background (likely cached by now)
         loadAllContentProgressively();
         inLink = false;
@@ -3050,9 +3058,45 @@ public class showBandDetails extends Activity {
         return image;
     }
 
-
-
-
+    /**
+     * Refreshes the UI elements based on current online status
+     * This ensures icons are properly enabled/disabled when network status changes
+     * Uses cached status to avoid unnecessary UI updates
+     */
+    private void refreshUIForOnlineStatus() {
+        // Use the cached status to avoid unnecessary network calls
+        // The smart refresh method assumes connectivity hasn't changed
+        String cachedStatus = staticVariables.internetCheckCache;
+        boolean isOnline = "true".equals(cachedStatus);
+        
+        // Only update UI if we have a valid cached status
+        if (!"Unknown".equals(cachedStatus)) {
+            // Update link buttons based on cached online status
+            if (websiteLink != null) {
+                websiteLink.setEnabled(isOnline);
+                websiteLink.setAlpha(isOnline ? 1.0f : 0.5f);
+            }
+            
+            if (metalArchivesLink != null) {
+                metalArchivesLink.setEnabled(isOnline);
+                metalArchivesLink.setAlpha(isOnline ? 1.0f : 0.5f);
+            }
+            
+            if (wikipediaLink != null) {
+                wikipediaLink.setEnabled(isOnline);
+                wikipediaLink.setAlpha(isOnline ? 1.0f : 0.5f);
+            }
+            
+            if (youtubeLink != null) {
+                youtubeLink.setEnabled(isOnline);
+                youtubeLink.setAlpha(isOnline ? 1.0f : 0.5f);
+            }
+            
+            Log.d("NetworkStatus", "UI refreshed using cached status - Online: " + isOnline);
+        } else {
+            Log.d("NetworkStatus", "No cached status available, UI refresh skipped");
+        }
+    }
 
 }
 

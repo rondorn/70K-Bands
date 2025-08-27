@@ -1,3 +1,6 @@
+// Note: To build mdfbands variant, you need to add com.rdorn.mdfbands to your google-services.json
+// or create a separate Firebase project for MDF bands
+
 apply plugin: 'com.android.application'
 
 android {
@@ -10,8 +13,8 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        versionCode 302508261
-        versionName "302508261"
+        versionCode 302508263
+        versionName "302508263"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -52,13 +55,17 @@ android {
         }
     }
 
-
     testOptions {
         unitTests.returnDefaultValues = true
     }
     compileSdk 35
     namespace 'com.Bands70k'
+}
 
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 configurations.all {
@@ -68,7 +75,6 @@ configurations.all {
 }
 
 dependencies {
-
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -96,36 +102,7 @@ dependencies {
     // Google ML Kit Translation
     implementation 'com.google.mlkit:translate:17.0.3'
     implementation 'com.google.mlkit:language-id:17.0.6'
-
 }
 
-buildscript {
-    ext.kotlin_version = '1.1.1'
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.5.1'
-        classpath 'com.google.gms:google-services:4.4.0'
-        //classpath 'gradle.plugin.com.onesignal:onesignal-gradle-plugin:0.14.0'
-    }
-
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-        maven { url 'https://jitpack.io' }
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        google()
-    }
-}
-
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
-    maven { url 'https://jitpack.io' }
-    maven {
-        url "https://plugins.gradle.org/m2/"
-    }
-    google()
-}
-
+// Apply Google Services plugin after android configuration
 apply plugin: 'com.google.gms.google-services'

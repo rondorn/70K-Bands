@@ -179,7 +179,7 @@ class DetailViewModel: ObservableObject {
     private let bandNotes = CustomBandDescription()
     private var bandPriorityStorage: [String: Int] = [:]
     private var englishDescriptionText: String = ""
-    private var doNotSaveText: Bool = false
+    @Published var doNotSaveText: Bool = false
     
     // Track original priority to prevent unwanted saves
     private var originalPriority: Int? = nil
@@ -192,6 +192,10 @@ class DetailViewModel: ObservableObject {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         return documentsPath
     }
+    
+    // Add change tracking to avoid unnecessary saves
+    private var originalNotes: String = ""
+    private var hasNotesChanged: Bool = false
     
     // MARK: - Initialization
     
@@ -750,6 +754,12 @@ class DetailViewModel: ObservableObject {
     func saveNotes() {
         guard !bandName.isEmpty else { return }
         
+        // Only save if notes have actually been modified
+        guard notesHaveChanged() else {
+            print("DEBUG: Notes unchanged for band: \(bandName) - skipping save")
+            return
+        }
+        
         print("DEBUG: Saving notes for band: \(bandName)")
         
         let custCommentFile = directoryPath.appendingPathComponent("\(bandName)_comment.note-cust")
@@ -790,6 +800,12 @@ class DetailViewModel: ObservableObject {
     
     func saveNotesForBand(_ specificBandName: String) {
         guard !specificBandName.isEmpty else { return }
+        
+        // Only save if notes have actually been modified
+        guard notesHaveChanged() else {
+            print("DEBUG: Notes unchanged for band: \(specificBandName) - skipping save")
+            return
+        }
         
         print("DEBUG: Saving notes for specific band: \(specificBandName)")
         
@@ -1223,8 +1239,11 @@ class DetailViewModel: ObservableObject {
         let noteText = bandNotes.getDescription(bandName: bandName)
         englishDescriptionText = noteText
         customNotes = noteText
+        // Store original notes for change tracking
+        originalNotes = noteText
+        hasNotesChanged = false
         
-        print("DEBUG: Loaded notes for '\(bandName)': '\(noteText.prefix(50))...' (length: \(noteText.count))")
+        print("DEBUG: Loaded notes for '\(self.bandName)': '\(noteText.prefix(50))...' (length: \(noteText.count))")
         
         // Check for links that make text non-editable (matching original logic)
         if customNotes.contains("!!!!https://") {
@@ -1282,7 +1301,7 @@ class DetailViewModel: ObservableObject {
             
             // Cache the downloaded description
             let commentFileName = self.bandNotes.getNoteFileName(bandName: self.bandName)
-            let commentFile = directoryPath.appendingPathComponent(commentFileName)
+            let commentFile = self.directoryPath.appendingPathComponent(commentFileName)
             
             do {
                 try descriptionText.write(to: commentFile, atomically: false, encoding: .utf8)
@@ -1867,6 +1886,16 @@ class DetailViewModel: ObservableObject {
         // Create a new SwiftUI view with the updated URL
         let refreshedWebView = SwiftUIWebView(url: fileURL, title: "Stats Report")
         presentedController.rootView = refreshedWebView
+    }
+    
+    /// Called when the user modifies the notes to track changes
+    func notesDidChange() {
+        hasNotesChanged = true
+    }
+    
+    /// Check if notes have been modified since they were loaded
+    private func notesHaveChanged() -> Bool {
+        return hasNotesChanged && customNotes != originalNotes
     }
 }
 

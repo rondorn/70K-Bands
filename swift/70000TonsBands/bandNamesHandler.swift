@@ -67,18 +67,24 @@ open class bandNamesHandler {
             if (!cacheVariables.justLaunched && !forceNetwork) {
                 print("Triggering background update for band data")
                 DispatchQueue.global(qos: .background).async {
-                    self.gatherData()
+                    self.gatherData(forceDownload: false)
                 }
+            } else if cacheVariables.justLaunched {
+                print("First app launch - deferring background update to proper loading sequence")
             }
         } else if needsNetworkFetch || forceNetwork {
             // If we need to fetch from network (first launch or forced refresh), block UI and fetch
             if cacheVariables.justLaunched {
-                print("First app launch detected - downloading band data from network. This may take a moment...")
+                print("First app launch detected - deferring network download to proper loading sequence")
+                print("This prevents infinite retry loops when network is unavailable")
+                // Don't automatically download on first launch - wait for proper sequence
+                completion?()
+                return
             } else {
                 print("No cached/disk data, fetching from network (blocking UI)")
             }
             DispatchQueue.global(qos: .default).async {
-                self.gatherData(completion: completion)
+                self.gatherData(forceDownload: false, completion: completion)
             }
         }
         print("Done Loading bandName Data cache")
@@ -118,7 +124,8 @@ open class bandNamesHandler {
     /// Gathers band data from the internet if available, writes it to file, and populates the cache.
     /// Uses checksum comparison to avoid unnecessary cache rebuilds when data hasn't changed.
     /// Calls completion handler when done.
-    func gatherData(completion: (() -> Void)? = nil) {
+    /// - Parameter forceDownload: If true, forces download from network. If false, only reads from cache.
+    func gatherData(forceDownload: Bool = false, completion: (() -> Void)? = nil) {
         // Prevent concurrent band data loading
         if isLoadingBandData {
             print("[YEAR_CHANGE_DEBUG] Band data loading already in progress, skipping duplicate request")
@@ -130,7 +137,8 @@ open class bandNamesHandler {
         var dataChanged = false
         var newDataValid = false
         
-        if isInternetAvailable() == true {
+        // Only download from network if explicitly forced
+        if forceDownload && isInternetAvailable() == true {
             eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
             print ("🔄 Loading bandName Data gatherData with checksum validation")
             var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
@@ -174,6 +182,8 @@ open class bandNamesHandler {
                 newDataValid = false
                 dataChanged = false
             }
+        } else if !forceDownload {
+            print("📖 gatherData called without forceDownload - only reading from cache")
         } else {
             print("📡 No internet available, keeping existing data")
             newDataValid = false
@@ -188,8 +198,8 @@ open class bandNamesHandler {
         }
         
         // Enhanced retry logic for band data
-        if isEmpty {
-            print("Band file is empty. Attempting retry with enhanced logic.")
+        if isEmpty && forceDownload {
+            print("Band file is empty and forceDownload is true. Attempting retry with enhanced logic.")
             let maxRetries = 3
             var retryCount = 0
             var success = false
@@ -240,6 +250,8 @@ open class bandNamesHandler {
             print("No band data available after \(maxRetries) retries. Giving up and calling completion.")
             completion?()
             return
+        } else if isEmpty && !forceDownload {
+            print("Band file is empty but forceDownload is false. Skipping retry logic.")
         }
         
         // If we have data (either new or existing), proceed

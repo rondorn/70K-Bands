@@ -126,7 +126,8 @@ class dataHandler {
     /// - Parameter bandName: The name of the band.
     /// - Returns: The priority value for the band, or 0 if not found.
     func getPriorityData(_ bandname: Any) -> Int {
-        print("DEBUG: getPriorityData called with value: \(bandname) (\(type(of: bandname)))")
+        // Reduced debug logging for performance
+        // print("DEBUG: getPriorityData called with value: \(bandname) (\(type(of: bandname)))")
         guard let bandnameStr = bandname as? String else {
             assertionFailure("getPriorityData called with non-String key: \(bandname) (\(type(of: bandname)))")
             print("ERROR: getPriorityData called with non-String key: \(bandname) (\(type(of: bandname)))")
@@ -139,6 +140,23 @@ class dataHandler {
             }
         }
         return priority
+    }
+    
+    /// Returns priority data for multiple bands in a single operation for better performance.
+    /// - Parameter bandNames: Array of band names to get priority data for.
+    /// - Returns: Dictionary mapping band names to their priority values.
+    func getPriorityDataForBands(_ bandNames: [String]) -> [String: Int] {
+        var result: [String: Int] = [:]
+        staticData.sync {
+            for bandName in bandNames {
+                if let priority = bandPriorityStorage[bandName] {
+                    result[bandName] = priority
+                } else {
+                    result[bandName] = 0
+                }
+            }
+        }
+        return result
     }
     
     /// Returns the last change timestamp for a band's priority data.

@@ -44,9 +44,34 @@ open class ShowsAttended {
             } else {
                 staticCacheUsed = true
                 self.showsAttendedArray = cacheVariables.attendedStaticCache
+                
+                // Even when using static cache, check if migration is needed
+                let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+                var needsMigration = false
+                let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
+                
+                for (key, value) in currentArray {
+                    let parts = value.split(separator: ":")
+                    if parts.count == 1 {
+                        mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
+                        needsMigration = true
+                    }
+                }
+                
+                if needsMigration {
+                    print("Migrated old attendance data from static cache to new format with timestamps.")
+                    saveShowsAttended()
+                    // Update the static cache with migrated data
+                    staticAttended.async(flags: .barrier) {
+                        for (key, value) in self.showsAttendedArray {
+                            cacheVariables.attendedStaticCache[key] = value
+                        }
+                    }
+                }
             }
         }
-        //iCloudHandle.readCloudAttendedData(attendedHandle: self);
+        // Note: iCloud attended data restoration is now handled centrally in MasterViewController
+        // to prevent multiple simultaneous executions
     }
     
     /**
@@ -255,6 +280,34 @@ open class ShowsAttended {
     }
     
     /**
+     Changes the attended status for a show with an option to skip iCloud writing
+     - Parameters:
+        - index: The event index
+        - status: The attendance status
+        - skipICloud: If true, skips writing to iCloud (useful during restoration)
+     */
+    func changeShowAttendedStatus(index: String, status: String, skipICloud: Bool) {
+        print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status), skipICloud: \(skipICloud)")
+        mutateShowsAttendedArray { arr in arr[index] = status }
+        let firebaseEventWrite = firebaseEventDataWrite();
+        firebaseEventWrite.writeEvent(index: index, status: status)
+        staticAttended.async(flags: .barrier) {
+            cacheVariables.attendedStaticCache[index] = status
+        }
+        saveShowsAttended()
+        
+        if !skipICloud {
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+                let iCloudHandle = iCloudDataHandler()
+                iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
+                NSUbiquitousKeyValueStore.default.synchronize()
+            }
+        } else {
+            print("Skipping iCloud write for \(index) during restoration")
+        }
+    }
+    
+    /**
      Returns the attendance icon for a specific show.
      - Parameters:
         - band: The band name.
@@ -447,6 +500,48 @@ open class ShowsAttended {
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         return getShowAttendedLastChange(index: index)
+    }
+    
+    /**
+     Forces migration of all attended data to ensure proper timestamp format.
+     This method should be called when restoring data from iCloud to ensure consistency.
+     */
+    func forceMigrationOfAllAttendedData() {
+        print("ShowsAttended: Starting forced migration of all attended data")
+        let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+        var needsMigration = false
+        let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
+        
+        for (key, value) in currentArray {
+            let parts = value.split(separator: ":")
+            if parts.count == 1 {
+                // Old format: just status -> add timestamp
+                mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
+                needsMigration = true
+                print("ShowsAttended: Migrated \(key) from old format to \(value):\(currentTimestamp)")
+            } else if parts.count == 3 {
+                // iCloud format: status:uid:timestamp -> convert to local format: status:timestamp
+                let status = String(parts[0])
+                let timestamp = String(parts[2])
+                let localFormat = status + ":" + timestamp
+                mutateShowsAttendedArray { arr in arr[key] = localFormat }
+                needsMigration = true
+                print("ShowsAttended: Migrated \(key) from iCloud format to local format: \(localFormat)")
+            }
+        }
+        
+        if needsMigration {
+            print("ShowsAttended: Forced migration completed, saving changes")
+            saveShowsAttended()
+            // Update the static cache with migrated data
+            staticAttended.async(flags: .barrier) {
+                for (key, value) in self.showsAttendedArray {
+                    cacheVariables.attendedStaticCache[key] = value
+                }
+            }
+        } else {
+            print("ShowsAttended: No migration needed")
+        }
     }
     
 }
