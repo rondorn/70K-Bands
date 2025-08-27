@@ -812,17 +812,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
         // This ensures the UI remains responsive when returning from background/details
+        // Simple cache refresh when returning from details - no background operations needed
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
             let backgroundStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Background refresh START - reason: Return from details")
+            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
             
-            // Perform data refresh entirely in background
-            self.refreshDataWithBackgroundUpdate(reason: "Return from details")
+            // Just refresh from cache - no network operations needed
+            self.refreshBandList(reason: "Return from details - cache refresh")
             
             let backgroundEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Background refresh END - reason: Return from details")
+            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
         }
         
         finishedPlaying() // Defensive: ensure no video is left over
@@ -861,6 +862,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             alert.addAction(dismissAction)
             self.present(alert, animated: true, completion: nil)
             isLoadingBandData = false
+            // Refresh data when showing alert - often means new data was announced
             refreshDataWithBackgroundUpdate(reason: "Show alert")
     }
     
@@ -877,7 +879,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         finishedPlaying()
-        // Move all data loading to background thread to avoid GUI blocking
+        // Simple cache refresh for screen navigation - no background operations needed
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -886,8 +888,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             // Update GUI on main thread after data loading is complete
             DispatchQueue.main.async {
-                // Force refresh when detail view updates priority data
-                self.refreshDataWithBackgroundUpdate(reason: "Detail view priority update")
+                // Simple cache refresh when detail view updates priority data
+                self.refreshBandList(reason: "Detail view priority update - cache refresh")
             }
         }
     }
