@@ -22,44 +22,117 @@ open class CustomBandDescription {
         
         let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
         
+        // Use a safer approach to cache refresh
         bandDescriptionLock.sync() {
+            // Check if we already have cached data
             if (cacheVariables.bandDescriptionUrlCache.isEmpty == false){
+                // Safely copy the cached data
                 bandDescriptionUrl = cacheVariables.bandDescriptionUrlCache
                 bandDescriptionUrlDate = cacheVariables.bandDescriptionUrlDateCache
+                print("commentFile refreshCache: Loaded from cache - \(bandDescriptionUrl.count) bands")
                 
             } else if (currentQueueLabel == "com.apple.main-thread"){
-                self.getDescriptionMap();
+                // Only load from file on main thread if we have internet AND prerequisite data is available
+                if isInternetAvailable() {
+                    // Check if prerequisite data (bands + schedule) is available before trying to load descriptions
+                    if hasPrerequisiteDataAvailable() {
+                        print("commentFile refreshCache: Loading from file on main thread (internet and prerequisite data available)")
+                        self.getDescriptionMap();
+                    } else {
+                        print("⚠️ commentFile refreshCache: Skipping file load on main thread - prerequisite data not ready yet")
+                    }
+                } else {
+                    print("⚠️ commentFile refreshCache: Skipping file load on main thread - no internet available")
+                }
                 
             } else {
-                print ("Cache did not load, loading from file desceriptionUrls")
-                refreshData()
+                // Background thread - only load from file if we have internet AND prerequisite data
+                if isInternetAvailable() {
+                    if hasPrerequisiteDataAvailable() {
+                        print ("commentFile refreshCache: Loading from file on background thread (internet and prerequisite data available)")
+                        refreshData()
+                    } else {
+                        print("⚠️ commentFile refreshCache: Skipping file load on background thread - prerequisite data not ready yet")
+                    }
+                } else {
+                    print("⚠️ commentFile refreshCache: Skipping file load on background thread - no internet available")
+                }
             }
         }
     }
     
     func refreshData(){
         
-        print ("commentFile performaing getAll")
-        print ("commentFile getDescriptionMapFile")
+        print ("commentFile refreshData: Starting data refresh")
+        
+        // Ensure we're not already refreshing
+        guard !descriptionLock else {
+            print("⚠️ commentFile refreshData: Already refreshing, skipping duplicate call")
+            return
+        }
+        
+        // Check internet availability before attempting downloads
+        guard isInternetAvailable() else {
+            print("⚠️ commentFile refreshData: No internet available, skipping data refresh")
+            return
+        }
+        
+        // Check if prerequisite data (bands + schedule) is available before attempting to load descriptions
+        guard hasPrerequisiteDataAvailable() else {
+            print("⚠️ commentFile refreshData: Prerequisite data not ready yet, skipping description refresh")
+            return
+        }
+        
+        print ("commentFile refreshData: Getting description map file")
         self.getDescriptionMapFile();
-        print ("commentFile getDescriptionMap")
+        print ("commentFile refreshData: Getting description map")
         self.getDescriptionMap();
+        
+        print ("commentFile refreshData: Data refresh complete")
     }
+    
+    // Add static variables to track failed attempts and prevent loops for file downloads
+    private static var lastFileDownloadFailureTime: TimeInterval = 0
+    private static var fileDownloadFailureCount: Int = 0
+    private static let maxFileDownloadFailures = 3
+    private static let fileDownloadFailureCooldown: TimeInterval = 60 // 60 seconds
     
     /// Loads the band description map file from disk or cache.
     /// Only updates the file if the content has changed to avoid unnecessary updates.
     func getDescriptionMapFile(){
         
-        if (isInternetAvailable() == false){
-            print("commentFile No internet available for description map download")
+        // Check if we've failed too many times recently
+        let currentTime = Date().timeIntervalSince1970
+        if CustomBandDescription.fileDownloadFailureCount >= CustomBandDescription.maxFileDownloadFailures {
+            if currentTime - CustomBandDescription.lastFileDownloadFailureTime < CustomBandDescription.fileDownloadFailureCooldown {
+                print("⚠️ getDescriptionMapFile: Too many recent download failures (\(CustomBandDescription.fileDownloadFailureCount)), cooling down for \(Int(CustomBandDescription.fileDownloadFailureCooldown - (currentTime - CustomBandDescription.lastFileDownloadFailureTime))) more seconds")
+                return
+            } else {
+                // Reset failure count after cooldown
+                CustomBandDescription.fileDownloadFailureCount = 0
+                print("getDescriptionMapFile: Download failure cooldown expired, retrying...")
+            }
+        }
+        
+        // Check internet availability first
+        guard isInternetAvailable() else {
+            print("commentFile getDescriptionMapFile: No internet available for description map download")
             return;
         }
         
         let mapUrl = getDefaultDescriptionMapUrl()
+        
+        // Validate URL
+        guard !mapUrl.isEmpty else {
+            print("⚠️ commentFile getDescriptionMapFile: Empty URL received")
+            return
+        }
+        
+        print ("commentFile getDescriptionMapFile: Map url is \(mapUrl)")
+        
         let httpData = getUrlData(urlString: mapUrl)
         
-        print ("commentFile Map url is \(mapUrl)")
-        print ("commentFile Map url Data is \(httpData)")
+        print ("commentFile getDescriptionMapFile: Map url Data length is \(httpData.count)")
         
         if (httpData.isEmpty == false){
             // Check if local file exists and compare content
@@ -70,36 +143,49 @@ open class CustomBandDescription {
                     let existingData = try String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8)
                     if existingData == httpData {
                         shouldUpdateFile = false
-                        print("commentFile Description map content unchanged, skipping update")
+                        print("commentFile getDescriptionMapFile: Description map content unchanged, skipping update")
                     } else {
-                        print("commentFile Description map content changed, updating file")
+                        print("commentFile getDescriptionMapFile: Description map content changed, updating file")
                     }
                 } catch {
-                    print("commentFile Error reading existing description map file: \(error.localizedDescription)")
+                    print("commentFile getDescriptionMapFile: Error reading existing description map file: \(error.localizedDescription)")
                     // If we can't read the existing file, update it
                     shouldUpdateFile = true
                 }
             } else {
-                print("commentFile Description map file doesn't exist, creating new file")
+                print("commentFile getDescriptionMapFile: Description map file doesn't exist, creating new file")
             }
             
             if shouldUpdateFile {
                 do {
-                    try FileManager.default.removeItem(atPath: descriptionMapFile)
-                } catch let error as NSError {
-                    print ("commentFile Encountered an error removing old descriptionMap file " + error.debugDescription)
-                }
-                
-                do {
+                    // Remove old file if it exists
+                    if FileManager.default.fileExists(atPath: descriptionMapFile) {
+                        try FileManager.default.removeItem(atPath: descriptionMapFile)
+                        print("commentFile getDescriptionMapFile: Removed old description map file")
+                    }
+                    
+                    // Write new file
                     try httpData.write(toFile: descriptionMapFile, atomically: false, encoding: String.Encoding.utf8)
-                    print("commentFile Description map file updated successfully")
+                    print("commentFile getDescriptionMapFile: Description map file updated successfully")
+                    
+                    // Success! Reset failure count
+                    CustomBandDescription.fileDownloadFailureCount = 0
                 } catch let error as NSError {
-                    print ("commentFile Encountered an error writing descriptionMap file " + error.debugDescription)
+                    print ("commentFile getDescriptionMapFile: Encountered an error writing descriptionMap file: \(error.debugDescription)")
+                    // Record failure
+                    CustomBandDescription.fileDownloadFailureCount += 1
+                    CustomBandDescription.lastFileDownloadFailureTime = currentTime
+                    print("⚠️ getDescriptionMapFile: Failure count: \(CustomBandDescription.fileDownloadFailureCount)/\(CustomBandDescription.maxFileDownloadFailures)")
                 }
             }
         } else {
-            print("commentFile Warning: Failed to download description map data - httpData is empty")
-            print("commentFile This could be due to network issues or main thread restrictions")
+            print("commentFile getDescriptionMapFile: Warning: Failed to download description map data - httpData is empty")
+            print("commentFile getDescriptionMapFile: This could be due to network issues or main thread restrictions")
+            
+            // Record failure
+            CustomBandDescription.fileDownloadFailureCount += 1
+            CustomBandDescription.lastFileDownloadFailureTime = currentTime
+            print("⚠️ getDescriptionMapFile: Failure count: \(CustomBandDescription.fileDownloadFailureCount)/\(CustomBandDescription.maxFileDownloadFailures)")
         }
     }
     
@@ -203,6 +289,17 @@ open class CustomBandDescription {
         print ("DEBUG_commentFile: lookup for \(bandName) via \(descriptionUrl)")
         var commentText = ""
         
+        // Validate inputs
+        guard !bandName.isEmpty else {
+            print("⚠️ DEBUG_commentFile: Empty band name provided")
+            return FestivalConfig.current.getDefaultDescriptionText()
+        }
+        
+        guard !descriptionUrl.isEmpty else {
+            print("⚠️ DEBUG_commentFile: Empty description URL provided for \(bandName)")
+            return FestivalConfig.current.getDefaultDescriptionText()
+        }
+        
         let commentFileName = getNoteFileName(bandName: bandName)
         let commentFile = directoryPath.appendingPathComponent( commentFileName)
         
@@ -234,6 +331,7 @@ open class CustomBandDescription {
             }
         }
 
+        // Safely read the file
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.count > 2){
                 commentText = data
@@ -289,6 +387,12 @@ open class CustomBandDescription {
     /// - Returns: The description string for the band.
     func getDescription(bandName: String) -> String {
         
+        // Validate input
+        guard !bandName.isEmpty else {
+            print("⚠️ DEBUG_commentFile: Empty band name provided to getDescription")
+            return FestivalConfig.current.getDefaultDescriptionText()
+        }
+        
         convertOldData(bandName: bandName)
         let normalizedBandName = normalizeBandName(bandName)
         print ("DEBUG_commentFile:  lookup for \(bandName) (normalized: \(normalizedBandName))")
@@ -329,6 +433,7 @@ open class CustomBandDescription {
         }
         
 
+        // Safely read the file
         if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
             if (data.count > 2){
                 commentText = data
@@ -368,8 +473,14 @@ open class CustomBandDescription {
     
     /// Normalizes a band name by removing invisible Unicode characters and trimming whitespace.
     /// - Parameter bandName: The band name to normalize.
-    /// - Returns: The normalized band name.
+    /// - Returns: The normalized band name, or the original name if normalization fails.
     func normalizeBandName(_ bandName: String) -> String {
+        // Ensure we have a valid input
+        guard !bandName.isEmpty else {
+            print("⚠️ normalizeBandName: Received empty band name")
+            return bandName
+        }
+        
         // Remove invisible Unicode characters and normalize
         let normalized = bandName.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "⁦", with: "") // Remove left-to-right mark
@@ -386,57 +497,162 @@ open class CustomBandDescription {
             .replacingOccurrences(of: "\u{2068}", with: "") // Remove first strong isolate
             .replacingOccurrences(of: "\u{2069}", with: "") // Remove pop directional isolate
         
+        // Ensure we don't return an empty string
+        if normalized.isEmpty {
+            print("⚠️ normalizeBandName: Normalization produced empty string for '\(bandName)', returning original")
+            return bandName
+        }
+        
         return normalized
     }
 
+    // Add static variables to track failed attempts and prevent loops
+    private static var lastFailureTime: TimeInterval = 0
+    private static var failureCount: Int = 0
+    private static let maxFailures = 3
+    private static let failureCooldown: TimeInterval = 30 // 30 seconds
+    
     func getDescriptionMap(){
         
-        if descriptionLock == false {
-            descriptionLock = true;
-            
-            print ("commentFile looking for descriptionMapFile")
-            
-            if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
-                print("commentFile Description map file doesn't exist, attempting to download")
-                getDescriptionMapFile();
-            }
-            
-            print ("commentFile looking for descriptionMapFile of \(descriptionMapFile)")
-            if let csvDataString = try? String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8) {
-                
-                var csvData: CSV
-                
-                if let csvData = try? CSV(csvStringToParse: csvDataString) {
-                    for lineData in csvData.rows {
-                        if (lineData[bandField] != nil && lineData[urlField] != nil &&  lineData[bandField]?.isEmpty == false && lineData[urlField]?.isEmpty == false){
-                            let normalizedBandName = normalizeBandName(lineData[bandField] ?? "")
-                            print ("commentFile descriptiopnMap Adding \(normalizedBandName) with url \(lineData[urlField].debugDescription)")
-                            bandDescriptionUrl[normalizedBandName] = lineData[urlField]
-                            bandDescriptionUrlDate[normalizedBandName] = lineData[urlDateField]
-                            bandDescriptionLock.async(flags: .barrier) {
-                                cacheVariables.bandDescriptionUrlCache[normalizedBandName] = lineData[urlField]
-                                cacheVariables.bandDescriptionUrlDateCache[normalizedBandName] = lineData[urlDateField]
-                            }
-                        } else {
-                            print ("commentFile  Unable to parse descriptionMap line \(lineData)")
-                        }
-                    }
-                } else {
-                    print("Error: Failed to parse CSV data in getDescriptionMap.")
-                }
+        // Check if we've failed too many times recently
+        let currentTime = Date().timeIntervalSince1970
+        if CustomBandDescription.failureCount >= CustomBandDescription.maxFailures {
+            if currentTime - CustomBandDescription.lastFailureTime < CustomBandDescription.failureCooldown {
+                print("⚠️ getDescriptionMap: Too many recent failures (\(CustomBandDescription.failureCount)), cooling down for \(Int(CustomBandDescription.failureCooldown - (currentTime - CustomBandDescription.lastFailureTime))) more seconds")
+                return
             } else {
-                let fileExists = FileManager.default.fileExists(atPath: descriptionMapFile)
-                print ("commentFile Encountered an error could not open descriptionMap file - \(descriptionMapFile)")
-                print ("commentFile File exists: \(fileExists)")
-                if !fileExists {
-                    print ("commentFile This is likely due to failed download - check network connectivity and URL validity")
-                } else {
-                    print ("commentFile File exists but cannot be read - check file permissions and encoding")
-                }
+                // Reset failure count after cooldown
+                CustomBandDescription.failureCount = 0
+                print("getDescriptionMap: Failure cooldown expired, retrying...")
             }
-            
-            descriptionLock = false;
         }
+        
+        // Ensure we're not already processing
+        guard !descriptionLock else {
+            print("⚠️ getDescriptionMap: Already processing, skipping duplicate call")
+            return
+        }
+        
+        descriptionLock = true;
+        
+        defer {
+            // Always ensure the lock is released, even if an error occurs
+            descriptionLock = false;
+            print("commentFile getDescriptionMap: Lock released")
+        }
+        
+        print ("commentFile looking for descriptionMapFile")
+        
+        // Check if file exists first
+        if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
+            print("commentFile Description map file doesn't exist, attempting to download")
+            
+            // Try to download the file
+            getDescriptionMapFile();
+            
+            // Check if download was successful
+            if (FileManager.default.fileExists(atPath: descriptionMapFile) == false){
+                print("⚠️ getDescriptionMap: Download failed, file still doesn't exist - skipping processing")
+                // Record failure
+                CustomBandDescription.failureCount += 1
+                CustomBandDescription.lastFailureTime = currentTime
+                print("⚠️ getDescriptionMap: Failure count: \(CustomBandDescription.failureCount)/\(CustomBandDescription.maxFailures)")
+                return
+            }
+        }
+        
+        print ("commentFile looking for descriptionMapFile of \(descriptionMapFile)")
+        
+        // Safely read the file
+        guard let csvDataString = try? String(contentsOfFile: descriptionMapFile, encoding: String.Encoding.utf8) else {
+            let fileExists = FileManager.default.fileExists(atPath: descriptionMapFile)
+            print ("commentFile Encountered an error could not open descriptionMap file - \(descriptionMapFile)")
+            print ("commentFile File exists: \(fileExists)")
+            if !fileExists {
+                print ("commentFile This is likely due to failed download - check network connectivity and URL validity")
+            } else {
+                print ("commentFile File exists but cannot be read - check file permissions and encoding")
+            }
+            // Record failure
+            CustomBandDescription.failureCount += 1
+            CustomBandDescription.lastFailureTime = currentTime
+            print("⚠️ getDescriptionMap: Failure count: \(CustomBandDescription.failureCount)/\(CustomBandDescription.maxFailures)")
+            return
+        }
+        
+        // Validate that we have content
+        guard !csvDataString.isEmpty else {
+            print("⚠️ getDescriptionMap: CSV file is empty")
+            // Record failure
+            CustomBandDescription.failureCount += 1
+            CustomBandDescription.lastFailureTime = currentTime
+            print("⚠️ getDescriptionMap: Failure count: \(CustomBandDescription.failureCount)/\(CustomBandDescription.maxFailures)")
+            return
+        }
+        
+        // Safely parse CSV data
+        guard let csvData = try? CSV(csvStringToParse: csvDataString) else {
+            print("Error: Failed to parse CSV data in getDescriptionMap.")
+            // Record failure
+            CustomBandDescription.failureCount += 1
+            CustomBandDescription.lastFailureTime = currentTime
+            print("⚠️ getDescriptionMap: Failure count: \(CustomBandDescription.failureCount)/\(CustomBandDescription.maxFailures)")
+            return
+        }
+        
+        // Success! Reset failure count
+        CustomBandDescription.failureCount = 0
+        
+        // Process each row safely
+        var processedCount = 0
+        var errorCount = 0
+        
+        for (index, lineData) in csvData.rows.enumerated() {
+            do {
+                // Safely extract and validate the data before using it
+                guard let bandName = lineData[bandField],
+                      let urlString = lineData[urlField],
+                      let urlDate = lineData[urlDateField],
+                      !bandName.isEmpty,
+                      !urlString.isEmpty,
+                      !urlDate.isEmpty else {
+                    print ("commentFile  Unable to parse descriptionMap line \(index): \(lineData)")
+                    errorCount += 1
+                    continue
+                }
+                
+                // Normalize the band name
+                let normalizedBandName = normalizeBandName(bandName)
+                
+                // Validate that normalization didn't produce an empty string
+                guard !normalizedBandName.isEmpty else {
+                    print ("commentFile  Skipping band with empty normalized name: '\(bandName)'")
+                    errorCount += 1
+                    continue
+                }
+                
+                print ("commentFile descriptiopnMap Adding \(normalizedBandName) with url \(urlString)")
+                
+                // Safely update the dictionaries
+                bandDescriptionUrl[normalizedBandName] = urlString
+                bandDescriptionUrlDate[normalizedBandName] = urlDate
+                
+                // Update cache variables safely
+                bandDescriptionLock.async(flags: .barrier) {
+                    cacheVariables.bandDescriptionUrlCache[normalizedBandName] = urlString
+                    cacheVariables.bandDescriptionUrlDateCache[normalizedBandName] = urlDate
+                }
+                
+                processedCount += 1
+                
+            } catch {
+                print("⚠️ getDescriptionMap: Error processing line \(index): \(error)")
+                errorCount += 1
+                continue
+            }
+        }
+        
+        print("commentFile getDescriptionMap: Processed \(processedCount) bands successfully, \(errorCount) errors")
     }
     
     func getDefaultDescriptionMapUrl() -> String{
@@ -465,6 +681,73 @@ open class CustomBandDescription {
     func getDescriptionDate(_ band: String) -> String {
         let normalizedBand = normalizeBandName(band)
         return bandDescriptionUrlDate[normalizedBand] ?? ""
+    }
+    
+    /// Check if band data is available before attempting to load descriptions
+    private func hasBandDataAvailable() -> Bool {
+        // Check if we already have any band data loaded
+        if !bandDescriptionUrl.isEmpty {
+            return true
+        }
+        
+        // Check if band file exists (indicating band data has been downloaded)
+        let bandFile = directoryPath.appendingPathComponent("bandFile")
+        if FileManager.default.fileExists(atPath: bandFile.path) {
+            // Check if the file has actual content
+            if let data = try? String(contentsOf: bandFile, encoding: .utf8), !data.isEmpty {
+                return true
+            }
+        }
+        
+        // Check if we have any cached band names in the static cache
+        let hasCachedBands = staticSchedule.sync {
+            return !cacheVariables.bandNamesStaticCache.isEmpty || !cacheVariables.bandNamesArrayStaticCache.isEmpty
+        }
+        
+        if hasCachedBands {
+            return true
+        }
+        
+        // If none of the above conditions are met, band data is not ready
+        return false
+    }
+    
+    /// Check if schedule data is available before attempting to load descriptions
+    private func hasScheduleDataAvailable() -> Bool {
+        // Check if we have any schedule data in the static cache
+        let hasCachedSchedule = staticSchedule.sync {
+            return !cacheVariables.scheduleStaticCache.isEmpty || !cacheVariables.scheduleTimeStaticCache.isEmpty
+        }
+        
+        if hasCachedSchedule {
+            return true
+        }
+        
+        // Check if schedule file exists
+        let scheduleFile = directoryPath.appendingPathComponent("scheduleFile")
+        if FileManager.default.fileExists(atPath: scheduleFile.path) {
+            // Check if the file has actual content
+            if let data = try? String(contentsOf: scheduleFile, encoding: .utf8), !data.isEmpty {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Check if both band and schedule data are available before attempting to load descriptions
+    private func hasPrerequisiteDataAvailable() -> Bool {
+        let bandsReady = hasBandDataAvailable()
+        let scheduleReady = hasScheduleDataAvailable()
+        
+        if !bandsReady {
+            print("⚠️ CustomBandDescription: Band data not ready yet, skipping description load")
+        }
+        if !scheduleReady {
+            print("⚠️ CustomBandDescription: Schedule data not ready yet, skipping description load")
+        }
+        
+        return bandsReady && scheduleReady
     }
 }
 

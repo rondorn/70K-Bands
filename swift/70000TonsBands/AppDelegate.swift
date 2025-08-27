@@ -363,50 +363,37 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
             
             // Wait for bands and schedule data to be loaded before syncing iCloud
-            print("iCloud: Waiting for bands and schedule data to load before syncing iCloud...")
+            print("iCloud: Checking if core data is ready for iCloud sync...")
             
-            var waitTime: Double = 0
-            let maxWaitTime: Double = 60 // Maximum 60 seconds wait
-            
-            // Wait for band names to be ready (not loading and has data)
-            while isLoadingBandData || bandNamesHandler.shared.getBandNames().isEmpty {
-                Thread.sleep(forTimeInterval: 0.5)
-                waitTime += 0.5
-                print("iCloud: Still waiting for band names to load... (\(waitTime)s)")
+            // Check if we actually have band data before proceeding
+            if !bandNamesHandler.shared.getBandNames().isEmpty && !isLoadingBandData {
+                print("iCloud: Core data is ready, proceeding with iCloud sync...")
                 
-                if waitTime >= maxWaitTime {
-                    print("iCloud: Timeout waiting for band names, proceeding with available data")
-                    break
+                // Wait for schedule data to be ready (not loading - empty schedule with headers only is valid)
+                if !isLoadingSchedule {
+                    print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
+                    
+                    let iCloudHandle = iCloudDataHandler()
+                    // IMPORTANT: Check for old iCloud data format and migrate if needed
+                    // This must happen BEFORE reading iCloud data to prevent conflicts
+                    iCloudHandle.readAllPriorityData()
+                    iCloudHandle.readAllScheduleData()
+                    // Note: Attended data restoration is now handled centrally in MasterViewController
+                    // to prevent duplicate processing and ensure proper sequencing
+                    
+                    print("iCloud: Launch sync completed, refreshing display...")
+                    
+                    // Refresh the display on the main thread
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                    }
+                } else {
+                    print("iCloud: Schedule still loading, deferring iCloud sync to proper sequence")
                 }
-            }
-            
-            waitTime = 0 // Reset for schedule wait
-            
-            // Wait for schedule data to be ready (not loading - empty schedule with headers only is valid)
-            while isLoadingSchedule {
-                Thread.sleep(forTimeInterval: 0.5)
-                waitTime += 0.5
-                print("iCloud: Still waiting for schedule data to load... (\(waitTime)s)")
-                
-                if waitTime >= maxWaitTime {
-                    print("iCloud: Timeout waiting for schedule data, proceeding anyway")
-                    break
-                }
-            }
-            
-            print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
-            
-            let iCloudHandle = iCloudDataHandler()
-            // IMPORTANT: Check for old iCloud data format and migrate if needed
-            // This must happen BEFORE reading iCloud data to prevent conflicts
-            iCloudHandle.readAllPriorityData()
-            iCloudHandle.readAllScheduleData()
-            
-            print("iCloud: Launch sync completed, refreshing display...")
-            
-            // Refresh the display on the main thread
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            } else {
+                print("iCloud: Core data not ready yet, deferring iCloud sync to proper sequence")
+                print("iCloud: This prevents the infinite waiting loop - iCloud will sync when data is actually available")
+                print("iCloud: The proper loading sequence will handle iCloud sync after core data is loaded")
             }
         }
         
@@ -885,6 +872,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             let iCloudHandle = iCloudDataHandler()
             iCloudHandle.readAllPriorityData()
             iCloudHandle.readAllScheduleData()
+            // Note: Attended data restoration is now handled centrally in MasterViewController
+            // to prevent duplicate processing and ensure proper sequencing
             
             print("iCloud: External change processing completed, refreshing GUI...")
             

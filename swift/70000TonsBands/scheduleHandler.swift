@@ -141,7 +141,13 @@ open class scheduleHandler {
         
         if (FileManager.default.fileExists(atPath: scheduleFile) == false || forceDownload){
             //print ("Sync: Loading schedule data 1")
-            DownloadCsv();
+            if forceDownload {
+                // Only download if explicitly forced - don't auto-download on first launch
+                DownloadCsv();
+            } else {
+                print("Schedule file not found - deferring download to proper loading sequence")
+                print("This prevents infinite retry loops when network is unavailable")
+            }
         }
         
         if let csvDataString = try? String(contentsOfFile: scheduleFile, encoding: String.Encoding.utf8) {

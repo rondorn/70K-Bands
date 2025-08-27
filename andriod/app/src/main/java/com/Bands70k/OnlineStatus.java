@@ -20,6 +20,86 @@ public class OnlineStatus {
 
     public static URL dnsResolveCache = null;
 
+    /**
+     * Smart network status refresh for device wake-up scenarios
+     * Assumes connectivity hasn't changed and restores previous state immediately
+     * Optionally verifies the assumption in the background
+     */
+    public static void smartRefreshNetworkStatus() {
+        Log.d("Internet Found", "Smart refresh network status - assuming connectivity unchanged");
+        
+        // Don't clear the cache immediately - assume the previous state is still valid
+        // This prevents UI flickering and immediate network tests
+        
+        // Schedule a background verification in a few seconds to confirm our assumption
+        scheduleBackgroundVerification();
+    }
+    
+    /**
+     * Force refresh the network status cache - useful when device wakes from sleep
+     * @deprecated Use smartRefreshNetworkStatus() instead for better UX
+     */
+    public static void forceRefreshNetworkStatus() {
+        Log.d("Internet Found", "Force refreshing network status cache");
+        // Clear the cache to force a fresh check
+        staticVariables.internetCheckCache = "Unknown";
+        staticVariables.internetCheckCacheDate = 0L;
+        // Clear DNS cache as well
+        dnsResolveCache = null;
+    }
+    
+    /**
+     * Manual network status refresh - called when user explicitly wants to check connectivity
+     * This will immediately test the network and update the UI
+     */
+    public static void manualRefreshNetworkStatus() {
+        Log.d("Internet Found", "Manual refresh network status - user requested");
+        
+        // Clear the cache to force an immediate check
+        staticVariables.internetCheckCache = "Unknown";
+        staticVariables.internetCheckCacheDate = 0L;
+        
+        // Do an immediate synchronous check
+        boolean actualStatus = testInternetAvailableSynchronous();
+        
+        // Update the cache with the actual result
+        staticVariables.internetCheckCache = String.valueOf(actualStatus);
+        staticVariables.internetCheckCacheDate = System.currentTimeMillis() / 1000L + 15;
+        
+        Log.d("Internet Found", "Manual refresh completed - Online: " + actualStatus);
+    }
+
+    /**
+     * Schedules a background verification of network status
+     * This runs after a delay to verify our assumption without blocking the UI
+     */
+    private static void scheduleBackgroundVerification() {
+        // Use a simple background thread with delay instead of AsyncTask
+        new Thread(() -> {
+            try {
+                // Wait 3 seconds to let the UI settle
+                Thread.sleep(3000);
+                
+                // Now do a background verification
+                Log.d("Internet Found", "Background verification of network status");
+                boolean actualStatus = testInternetAvailableSynchronous();
+                
+                // Only update cache if our assumption was wrong
+                if (actualStatus != Boolean.parseBoolean(staticVariables.internetCheckCache)) {
+                    Log.d("Internet Found", "Assumption was wrong! Updating cache from " + 
+                          staticVariables.internetCheckCache + " to " + actualStatus);
+                    staticVariables.internetCheckCache = String.valueOf(actualStatus);
+                    staticVariables.internetCheckCacheDate = System.currentTimeMillis() / 1000L + 15;
+                } else {
+                    Log.d("Internet Found", "Assumption was correct - connectivity unchanged");
+                }
+                
+            } catch (InterruptedException e) {
+                Log.d("Internet Found", "Background verification interrupted");
+            }
+        }).start();
+    }
+
     public static boolean isOnline() {
 
         Log.d("Internet Found", "Internet Found Checking Internet");
