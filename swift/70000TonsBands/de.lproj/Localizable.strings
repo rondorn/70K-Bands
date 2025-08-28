@@ -90,7 +90,7 @@
 "Next" = "Nächster";
 "Previous" = "Vorheriger";
 
-"NoteFontSize" = "Große Schrift verwenden";
+"NoteFontSize" = "Große Schriftgröße für Notizen";
 
 "ShareBandChoices" = "Bandauswahl teilen";
 "ShareShowChoices" = "Showauswahl teilen";
@@ -113,6 +113,7 @@
 "SelectYearLabel"="Wählen Sie das anzuzeigende Jahr aus";
 "NoteFontSize"="Große Notizschriftgröße";
 "OpenYouTubeApp"="YouTube-App öffnen";
+"AllLinksOpenInExternalBrowser"="Alle Links im externen Browser öffnen";
 "DetailScreenSection"="Detailbildschirm";
 "MiscSection"="Sonstiges";
 "restartTitle" = "Neustart erforderlich";

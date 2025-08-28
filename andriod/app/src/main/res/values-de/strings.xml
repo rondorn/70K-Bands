@@ -35,7 +35,7 @@
     <string name="unofficalEventLable">Cruiser organisiert</string>
 
     <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
-    <string name="LastYearsFeatureExplication"/>
+    <string name="LastYearsFeatureExplication">Verwenden Sie Daten aus den Vorjahren, wenn die Daten des aktuellen Jahres noch nicht verfügbar sind</string>
     <string name="AdvancedPreferences">Erweiterte Einstellungen.\nÄndern Sie nicht, wenn Sie nicht wissen, was Sie tun!</string>
     <string name="importMessage">Diese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
 
@@ -87,7 +87,7 @@
     <string name="country">Land</string>
     <string name="genre">Stil</string>
     <string name="LastOnCruise">Zuletzt auf Kreuzfahrt</string> <!--list of years a band was previously on -->
-    <string name="Note">Notiz</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
+    <string name="Note">Notiz</string> <!--something of note, like doing an album premier or the real or fake version of Batushka -->
 
     <string name="verify_country">Bestätigen Sie Ihr Land</string>
     <string name="correct_if_needed">Korrigieren Sie bei Bedarf Ihr Land</string>
@@ -250,6 +250,8 @@
     <!-- Missing preference screen translations -->
     <string name="DetailsScreen">Detailbildschirm</string>
     <string name="NoteFontSizeLarge">Große Schriftgröße für Notizen</string>
+    <string name="OpenYouTubeApp">YouTube-App öffnen</string>
+    <string name="AllLinksOpenInExternalBrowser">Alle Links im externen Browser öffnen</string>
     <string name="Misc">Verschiedenes</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">Benutzerkennung</string>

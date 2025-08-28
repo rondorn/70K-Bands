@@ -114,6 +114,7 @@
 "SelectYearLabel"="Sélectionnez l'année à afficher";
 "NoteFontSize"="Taille de police de note grande";
 "OpenYouTubeApp"="Ouvrir l'application YouTube";
+"AllLinksOpenInExternalBrowser"="Tous les liens s'ouvrent dans le navigateur externe";
 "DetailScreenSection"="Écran de détails";
 "MiscSection"="Divers";
 "restartTitle" = "Redémarrage Nécessaire";

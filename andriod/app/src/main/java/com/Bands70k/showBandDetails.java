@@ -1486,7 +1486,15 @@ public class showBandDetails extends Activity {
             Log.d("YouTube", "YouTube app preference is disabled, using internal web view");
         }
 
-        // Show in-app WebView for non-YouTube URLs or when YouTube app preference is disabled
+        // Check if user prefers to open all links in external browser
+        if (staticVariables.preferences.getAllLinksOpenInExternalBrowser()) {
+            Log.d("ExternalBrowser", "All Links Open In External Browser preference is enabled");
+            Log.d("ExternalBrowser", "Opening non-YouTube link externally: " + webUrl);
+            openLinkExternally(webUrl);
+            return; // Exit early - don't use internal web view
+        }
+
+        // Show in-app WebView for non-YouTube URLs when external browser preference is disabled
         showInAppWebView(webUrl, linkType);
     }
     
@@ -1516,6 +1524,36 @@ public class showBandDetails extends Activity {
             }
         } catch (Exception e) {
             Log.e("YouTube", "Error opening YouTube URL externally: " + e.getMessage());
+            // Even if there's an error, we don't fall back to internal web view when preference is enabled
+        }
+    }
+
+    /**
+     * Opens a non-YouTube URL externally (in default browser)
+     * @param url The URL to open
+     */
+    private void openLinkExternally(String url) {
+        try {
+            Log.d("ExternalBrowser", "Opening URL externally: " + url);
+            
+            // Create intent to open URL externally
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            
+            // Add flags to ensure it opens in external app, not internal web view
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            
+            // Check if there's an app that can handle this intent
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+                Log.d("ExternalBrowser", "Successfully opened URL externally");
+            } else {
+                Log.d("ExternalBrowser", "No app available to handle URL, trying default browser");
+                // If no specific app can handle it, try opening with default browser
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e("ExternalBrowser", "Error opening URL externally: " + e.getMessage());
             // Even if there's an error, we don't fall back to internal web view when preference is enabled
         }
     }

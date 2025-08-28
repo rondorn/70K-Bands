@@ -36,7 +36,7 @@
     <string name="unofficalEventLable">Cruiser Organiseret</string>
 
     <string name="UseLastYearsData">Brug sidste Ârs data</string>
-    <string name="LastYearsFeatureExplication"/>
+    <string name="LastYearsFeatureExplication">Brug data fra tidligere år, når data for det aktuelle år endnu ikke er tilgængelige</string>
     <string name="AdvancedPreferences">Avanceret præference.\nRediger ikke, medmindre du ved, hvad du laver!</string>
     <string name="PreferenceHeader">70K Bands Præferencer</string>
     <string name="Preferences">Præferencer</string>
@@ -87,7 +87,7 @@
     <string name="country">Land</string>
     <string name="genre">Køn</string>
     <string name="LastOnCruise">Sidst på krydstogt</string> <!--list of years a band was previously on -->
-    <string name="Note">Bemærk</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
+    <string name="Note">Bemærk</string> <!--something of note, like doing an album premier or the real or fake version of Batushka -->
 
     <string name="verify_country">Bekræft dit land</string>
     <string name="correct_if_needed">Ret dit land, hvis det er nødvendigt</string>
@@ -248,6 +248,8 @@
     <!-- Missing preference screen translations -->
     <string name="DetailsScreen">Detalje skærm</string>
     <string name="NoteFontSizeLarge">Stor skriftstørrelse for noter</string>
+    <string name="OpenYouTubeApp">Åbn YouTube-app</string>
+    <string name="AllLinksOpenInExternalBrowser">Alle links åbner i ekstern browser</string>
     <string name="Misc">Diverse</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">Bruger-ID</string>

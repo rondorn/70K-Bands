@@ -41,6 +41,11 @@
 "restarTitle" = "Restart Required";
 "restartMessage" = "NEDĚLEJTE TO na výletní. Interent SPOJENÍ REQUIRED. Tato změna vyžaduje restartování aplikace. 70k Kapely bude nyní ukončit. Restartováním vidět nové údaje";
 
+"NoteFontSize"="Velká velikost písma pro poznámky";
+"OpenYouTubeApp"="Otevřít aplikaci YouTube";
+"AllLinksOpenInExternalBrowser"="Všechny odkazy se otevírají v externím prohlížeči";
+"DetailScreenSection"="Obrazovka s detaily";
+
 
 
 

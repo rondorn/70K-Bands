@@ -1693,6 +1693,10 @@ class DetailViewModel: ObservableObject {
         
         print("DEBUG: Opening URL in SwiftUI web view: \(url)")
         
+        // Check if user prefers to open all links in external browser
+        let allLinksExternal = getAllLinksOpenInExternalBrowserValue()
+        print("DEBUG: All Links Open In External Browser preference is: \(allLinksExternal)")
+        
         // Get the hosting controller from the view hierarchy
         guard let hostingController = getHostingController() else {
             print("ERROR: Could not find hosting controller to present web view")
@@ -1742,7 +1746,25 @@ class DetailViewModel: ObservableObject {
             title = "Official Website"
         }
         
+        // Check if we should open in external browser based on preference
+        if allLinksExternal && !url.contains("youtube.com") && !url.contains("youtu.be") {
+            print("DEBUG: All Links Open In External Browser preference is enabled, opening in external browser: \(url)")
+            if UIApplication.shared.canOpenURL(urlObject) {
+                UIApplication.shared.open(urlObject, options: [:]) { success in
+                    if success {
+                        print("Successfully opened URL in external browser: \(url)")
+                    } else {
+                        print("Failed to open URL in external browser: \(url)")
+                    }
+                }
+            } else {
+                print("Cannot open URL in external browser: \(url)")
+            }
+            return // Exit early - don't use internal web view
+        }
+        
         // Present web view for non-YouTube URLs or when YouTube app preference is disabled
+        // or when allLinksOpenInExternalBrowser is false
         presentWebView(url: urlObject, title: title, hostingController: hostingController)
     }
     
