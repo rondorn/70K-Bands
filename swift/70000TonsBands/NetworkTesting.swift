@@ -11,6 +11,25 @@ import Network
 import SystemConfiguration
 import UIKit
 
+// ⚠️ IMPORTANT: Network Testing Guidelines ⚠️
+// 
+// This class has TWO types of network testing methods:
+//
+// 1. NON-BLOCKING methods (safe for general use):
+//    - forgroundNetworkTest() - Returns cached values immediately, never blocks GUI
+//    - isInternetAvailable() - Returns cached values immediately, never blocks GUI
+//    - isInternetAvailableBasic() - Fast OS check, never blocks GUI
+//    - performAsyncNetworkTest() - Background test, never blocks GUI
+//
+// 2. BLOCKING methods (ONLY for critical operations where delays are expected):
+//    - forceFreshNetworkTestForYearChange() - ⚠️ WILL block GUI for up to 6 seconds
+//    - liveNetworkTestForPullToRefresh() - ⚠️ WILL block GUI briefly, updates cache
+//    - performSynchronousNetworkTest() - ⚠️ Internal blocking method
+//
+// RULE: NEVER use blocking methods in regular app operations. Only use them for
+// year changes where the user explicitly expects to wait for network verification.
+// All other network operations must be completely non-blocking for smooth UX.
+
 // Global network status manager
 class NetworkStatusManager {
     static let shared = NetworkStatusManager()
@@ -339,12 +358,172 @@ open class NetworkTesting {
             }
         }
         
-        // Return cached value immediately instead of waiting
+                // Return cached value immediately instead of waiting
         if internetCheckCache == "false" {
             return false
         } else {
             return true
         }
     }
-
+    
+    // ⚠️ CRITICAL: This method is ONLY for year changes and other critical operations
+    // It WILL block the GUI for up to 6 seconds - use sparingly!
+    // This method COMPLETELY bypasses ALL caching and performs a REAL-TIME network test
+    func forceFreshNetworkTestForYearChange() -> Bool {
+        print("🚨 NetworkTesting: ⚠️ FORCING LIVE REAL-TIME BLOCKING network test for year change")
+        print("🚨 NetworkTesting: ⚠️ This will block the GUI for up to 6 seconds!")
+        print("🚨 NetworkTesting: ⚠️ BYPASSING ALL CACHES - LIVE TEST ONLY")
+        
+        // DO NOT touch any cache variables - completely bypass caching system
+        // Perform ONLY the live network test
+        return performLiveNetworkTestOnly()
+    }
+    
+    // ⚠️ LIVE NETWORK TEST FOR PULL-TO-REFRESH - Blocks GUI but updates cache
+    // This method performs a live test and then updates the cache with the result
+    func liveNetworkTestForPullToRefresh() -> Bool {
+        print("🔄 NetworkTesting: LIVE NETWORK TEST for Pull-to-Refresh")
+        print("🔄 NetworkTesting: This will block GUI briefly and update cache")
+        
+        // Perform the live test
+        let liveResult = performLiveNetworkTestOnly()
+        
+        // Update cache with the live result (unlike year change which doesn't update cache)
+        updateInternetCache(liveResult)
+        
+        print("🔄 NetworkTesting: Pull-to-refresh test completed: \(liveResult) - cache updated")
+        return liveResult
+    }
+    
+    // COMPLETELY ISOLATED LIVE NETWORK TEST - NO CACHING WHATSOEVER
+    // This method performs ONLY a real-time HTTP request and returns the actual result
+    private func performLiveNetworkTestOnly() -> Bool {
+        print("🔥 NetworkTesting: PERFORMING LIVE REAL-TIME NETWORK TEST - NO CACHING")
+        print("🔥 NetworkTesting: Testing URL: https://www.dropbox.com")
+        
+        // Create completely fresh URL and request - no cache involvement
+        guard let url = URL(string: "https://www.dropbox.com") else {
+            print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - Invalid URL")
+            return false
+        }
+        
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5.0 // 5 second timeout
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
+        request.httpMethod = "GET"
+        
+        // Use semaphore to make this synchronous
+        let semaphore = DispatchSemaphore(value: 0)
+        var liveTestResult = false
+        
+        print("🔥 NetworkTesting: Starting LIVE HTTP request...")
+        let startTime = Date()
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { semaphore.signal() }
+            
+            let elapsed = Date().timeIntervalSince(startTime)
+            print("🔥 NetworkTesting: LIVE HTTP request completed in \(elapsed)s")
+            
+            if let error = error {
+                print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - Network error: \(error.localizedDescription)")
+                liveTestResult = false
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("🔥 NetworkTesting: LIVE TEST got HTTP status: \(httpResponse.statusCode)")
+                if httpResponse.statusCode == 200 {
+                    print("🔥 NetworkTesting: ✅ LIVE TEST PASSED - Internet is working")
+                    liveTestResult = true
+                } else {
+                    print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - HTTP error \(httpResponse.statusCode)")
+                    liveTestResult = false
+                }
+            } else {
+                print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - No response received")
+                liveTestResult = false
+            }
+        }
+        
+        task.resume()
+        
+        // Wait for the live test to complete with timeout
+        let timeoutResult = semaphore.wait(timeout: .now() + 6.0) // 6 second total timeout
+        
+        if timeoutResult == .timedOut {
+            print("🔥 NetworkTesting: ❌ LIVE TEST TIMED OUT after 6 seconds")
+            task.cancel()
+            liveTestResult = false
+        }
+        
+        let totalElapsed = Date().timeIntervalSince(startTime)
+        print("🔥 NetworkTesting: 🎯 LIVE TEST FINAL RESULT: \(liveTestResult) (took \(totalElapsed)s)")
+        
+        // DO NOT UPDATE ANY CACHES - this is a pure live test
+        return liveTestResult
+    }
+    
+    // OLD METHOD - keeping for backward compatibility with non-year-change operations
+    private func performSynchronousNetworkTest() -> Bool {
+        print("NetworkTesting: ⚠️ Performing BLOCKING network test for year change")
+        
+        // SKIP basic connectivity check for year changes - do the real test
+        // Basic connectivity can report "connected" even when internet is down
+        print("NetworkTesting: Skipping basic check for year change - doing real internet test")
+        
+        // Perform the actual network test with a reasonable timeout
+        let testUrls = ["https://www.dropbox.com"]
+        let testUrl = testUrls[0]
+        
+        guard let url = URL(string: testUrl) else {
+            print("NetworkTesting: Invalid test URL")
+            updateInternetCache(false)
+            return false
+        }
+        
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5.0 // 5 second timeout
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        var testResult = false
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            defer { semaphore.signal() }
+            
+            if let error = error {
+                print("NetworkTesting: ❌ Network test FAILED with error: \(error.localizedDescription)")
+                testResult = false
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("NetworkTesting: Network test got HTTP status: \(httpResponse.statusCode)")
+                if httpResponse.statusCode == 200 {
+                    print("NetworkTesting: ✅ Network test PASSED")
+                    testResult = true
+                } else {
+                    print("NetworkTesting: ❌ Network test FAILED with HTTP \(httpResponse.statusCode)")
+                    testResult = false
+                }
+            } else {
+                print("NetworkTesting: ❌ Network test FAILED - no response")
+                testResult = false
+            }
+            
+            // Update cache with result
+            self?.updateInternetCache(testResult)
+        }
+        
+        task.resume()
+        
+        // Wait for test to complete with timeout
+        let timeoutResult = semaphore.wait(timeout: .now() + 6.0) // 6 second timeout
+        
+        if timeoutResult == .timedOut {
+            print("NetworkTesting: ❌ Network test TIMED OUT after 6 seconds")
+            task.cancel()
+            updateInternetCache(false)
+            return false
+        }
+        
+        print("NetworkTesting: 🎯 FINAL RESULT: Network test completed with result: \(testResult)")
+        return testResult
+    }
+ 
 }

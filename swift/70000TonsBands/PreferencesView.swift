@@ -273,6 +273,9 @@ struct LifecycleModifiers: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreen"))) { _ in
                 presentationMode.wrappedValue.dismiss()
             }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreenAfterYearChange"))) { _ in
+                presentationMode.wrappedValue.dismiss()
+            }
     }
 }
 

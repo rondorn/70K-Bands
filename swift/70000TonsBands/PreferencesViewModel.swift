@@ -399,17 +399,43 @@ class PreferencesViewModel: ObservableObject {
         }
         
         // STEP 2: Test internet connection
+        print("🎯 STEP 2: Testing internet connection before year change")
+        print("🎯 NOTE: This is a critical operation - using blocking network test")
+        
+        // Use a blocking network test specifically for year changes
         let netTest = NetworkTesting()
-        let internetAvailable = netTest.forgroundNetworkTest(callingGui: masterView)
+        
+        // Perform a BLOCKING network test for year change (this is the ONLY place we allow GUI blocking)
+        print("🎯 Performing BLOCKING network test for year change (will block GUI for up to 6 seconds)")
+        let internetAvailable = netTest.forceFreshNetworkTestForYearChange()
         
         if !internetAvailable {
-            print("🚫 No internet connection available, cannot switch years")
+            print("🚫 ❌ NETWORK TEST FAILED - No internet connection available, cannot switch years")
+            print("🚫 Network test failed - user will see 'yearChangeAborted' message")
+            
+            // CRITICAL: Revert year values back to previous state since network test failed
+            await revertYearChangeDueToNetworkFailure()
+            
             isLoadingData = false
             showNetworkError = true
             return
         }
         
-        // Check cancellation after network test
+        print("✅ ✅ NETWORK TEST PASSED - Internet connection verified - proceeding with year change")
+        
+        // Additional safety check: ensure masterView is initialized
+        guard masterView != nil else {
+            print("🚫 masterView is not initialized - cannot proceed with year change")
+            
+            // CRITICAL: Revert year values back to previous state since masterView is nil
+            await revertYearChangeDueToNetworkFailure()
+            
+            isLoadingData = false
+            showNetworkError = true
+            return
+        }
+        
+        // Check cancellation after network test and masterView check
         guard !Task.isCancelled else {
             print("🚫 Year change cancelled after network test")
             isLoadingData = false
@@ -681,6 +707,46 @@ class PreferencesViewModel: ObservableObject {
         }
     }
     
+    /// Reverts year change back to previous values when network test fails
+    @MainActor
+    private func revertYearChangeDueToNetworkFailure() async {
+        print("🔄 REVERTING year change due to network failure")
+        print("🔄 Reverting from attempted year: \(eventYearChangeAttempt)")
+        print("🔄 Reverting back to previous year: \(currentYearSetting)")
+        
+        // Revert URLs and pointers back to previous year
+        setArtistUrl(currentYearSetting)
+        setScheduleUrl(currentYearSetting)
+        writeFiltersFile()
+        
+        // Revert the eventYearFile back to previous year
+        let previousEventYear = Int(currentYearSetting) ?? 2024
+        do {
+            let yearString = String(previousEventYear)
+            try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
+            print("🔄 Reverted eventYearFile back to \(yearString)")
+        } catch {
+            print("⚠️ Failed to revert eventYearFile: \(error)")
+        }
+        
+        // Revert global year variables
+        eventYear = previousEventYear
+        
+        // Revert the UI display back to previous year
+        var displayYear = currentYearSetting
+        if !displayYear.isYearString {
+            displayYear = NSLocalizedString("Current", comment: "")
+        }
+        selectedYear = displayYear
+        
+        // Re-setup defaults to ensure consistency
+        setupCurrentYearUrls()
+        setupDefaults()
+        
+        print("✅ Year change successfully reverted back to \(currentYearSetting)")
+        print("🔄 UI should now show previous year: \(selectedYear)")
+    }
+    
     /// Ensures schedule data is properly loaded - called by both Band List and Event List choices
     private func ensureScheduleDataLoaded() async {
         print("🎯 Ensuring schedule data is loaded for year \(eventYearChangeAttempt)")
@@ -795,7 +861,8 @@ class PreferencesViewModel: ObservableObject {
 
     private func navigateBackToMainScreen() {
         // Dismiss the preferences screen and return to main screen
-        NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreen"), object: nil)
+        // Use a different notification name to indicate year change occurred (no additional refresh needed)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreenAfterYearChange"), object: nil)
     }
 }
 
