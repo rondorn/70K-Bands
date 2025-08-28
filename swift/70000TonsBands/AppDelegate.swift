@@ -756,8 +756,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🔄 About to dispatch description loading to background queue")
         DispatchQueue.global(qos: .userInitiated).async {
             print("📝 Description loading background queue started")
-            let noteHandle = CustomBandDescription()
             print("📝 Starting bulk description loading")
+            
+            // Download all missing descriptions and replace obsolete cached files
+            self.bandDescriptions.downloadAllDescriptionsOnAppExit()
             
             // Check internet availability before proceeding
             let internetAvailable = isInternetAvailable()
@@ -777,19 +779,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // Ensure description map is loaded before bulk loading
             print("📝 Loading description map file...")
-            noteHandle.getDescriptionMapFile()
+            self.bandDescriptions.getDescriptionMapFile()
             print("📝 Parsing description map...")
-            noteHandle.getDescriptionMap()
+            self.bandDescriptions.getDescriptionMap()
             
-            print("📝 Description map contains \(noteHandle.bandDescriptionUrl.count) entries")
-            if noteHandle.bandDescriptionUrl.isEmpty {
+            print("📝 Description map contains \(self.bandDescriptions.bandDescriptionUrl.count) entries")
+            if self.bandDescriptions.bandDescriptionUrl.isEmpty {
                 print("⚠️ Description URL map is empty - bulk loading will be skipped")
                 return
             }
             
-            print("📝 Starting bulk download of \(noteHandle.bandDescriptionUrl.count) descriptions")
+            print("📝 Starting bulk download of \(self.bandDescriptions.bandDescriptionUrl.count) descriptions")
             print("📝 Calling getAllDescriptions() for allINotes bulk download...")
-            noteHandle.getAllDescriptions()
+            self.bandDescriptions.getAllDescriptions()
             print("📝 getAllDescriptions() allINotes call completed")
         }
         
@@ -890,6 +892,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Saves changes in the application's managed object context before the application terminates.
 
         self.saveContext()
+        
+        // Download all missing descriptions and replace obsolete cached files
+        bandDescriptions.downloadAllDescriptionsOnAppExit()
     }
 
     // MARK: - Helper Methods
