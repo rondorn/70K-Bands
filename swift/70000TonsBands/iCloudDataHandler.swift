@@ -72,12 +72,18 @@ class iCloudDataHandler {
         print("iCloudPriority: Starting optimized readAllPriorityData operation")
         
         // Return immediately if already loading to prevent multiple concurrent operations
-        guard checkForIcloud() == true else {
+        guard !iCloudDataisLoading else {
             print("iCloudPriority: iCloud data currently loading, skipping read operation")
             return
         }
         
-        print("iCloudPriority: iCloud data not currently loading, proceeding with optimized read")
+        // Return immediately if iCloud is not enabled
+        guard checkForIcloud() == true else {
+            print("iCloudPriority: iCloud is not enabled, skipping read operation")
+            return
+        }
+        
+        print("iCloudPriority: iCloud enabled and not currently loading, proceeding with optimized read")
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             iCloudDataisLoading = true;
             print("iCloudPriority: Set iCloudDataisLoading to true")
@@ -97,14 +103,48 @@ class iCloudDataHandler {
                 return
             }
             
+            // DIAGNOSTIC: Let's see what's actually in iCloud
+            print("iCloudPriority: DIAGNOSTIC - Checking all keys in iCloud...")
+            
+            // Force a sync first
+            NSUbiquitousKeyValueStore.default.synchronize()
+            print("iCloudPriority: DIAGNOSTIC - Forced iCloud sync")
+            
+            let allICloudKeys = NSUbiquitousKeyValueStore.default.dictionaryRepresentation.keys
+            let priorityKeysInICloud = allICloudKeys.filter { $0.hasPrefix("bandName:") }
+            print("iCloudPriority: DIAGNOSTIC - Found \(priorityKeysInICloud.count) priority keys in iCloud: \(Array(priorityKeysInICloud).sorted())")
+            
+            // Show a few sample values
+            for key in priorityKeysInICloud.prefix(5) {
+                if let value = NSUbiquitousKeyValueStore.default.string(forKey: key) {
+                    print("iCloudPriority: DIAGNOSTIC - Key: \(key), Value: \(value)")
+                }
+            }
+            
+            // DIAGNOSTIC: Try to read a few specific keys to see if the issue is with dictionaryRepresentation
+            print("iCloudPriority: DIAGNOSTIC - Testing direct key reads...")
+            let testKeys = ["bandName:Test", "bandName:Metallica", "bandName:Iron Maiden"]
+            for testKey in testKeys {
+                if let testValue = NSUbiquitousKeyValueStore.default.string(forKey: testKey) {
+                    print("iCloudPriority: DIAGNOSTIC - Direct read success for \(testKey): \(testValue)")
+                } else {
+                    print("iCloudPriority: DIAGNOSTIC - Direct read failed for \(testKey)")
+                }
+            }
+            
             // Bulk read all priority keys from iCloud
             let allPriorityKeys = bandNames.map { "bandName:\($0)" }
+            print("iCloudPriority: DIAGNOSTIC - Looking for these keys: \(allPriorityKeys.prefix(5))... (total: \(allPriorityKeys.count))")
+            
             var bulkResults: [(String, String)] = []
             
             print("iCloudPriority: Bulk reading \(allPriorityKeys.count) keys from iCloud...")
             for key in allPriorityKeys {
                 if let value = NSUbiquitousKeyValueStore.default.string(forKey: key), !value.isEmpty {
                     bulkResults.append((key, value))
+                    print("iCloudPriority: DIAGNOSTIC - Found key: \(key) with value: \(value)")
+                } else {
+                    print("iCloudPriority: DIAGNOSTIC - Key not found or empty: \(key)")
                 }
             }
             
@@ -316,13 +356,66 @@ class iCloudDataHandler {
         if (checkForIcloud() == true){
             print("iCloudPriority: Internet available and iCloud enabled, proceeding with data write")
             let priorityHandler = dataHandler()
-            priorityHandler.refreshData()
+            
+            // CRITICAL FIX: First try to get cached data (synchronous), then refresh if needed
+            print("iCloudPriority: DIAGNOSTIC - Calling getCachedData()...")
+            priorityHandler.getCachedData()
+            
+            // Check initial cache state
+            let initialData = priorityHandler.getPriorityData()
+            print("iCloudPriority: DIAGNOSTIC - After getCachedData(): \(initialData.count) entries")
+            
+            // If cache is still empty, we need to wait for refreshData to complete
+            if initialData.isEmpty {
+                print("iCloudPriority: Cache was empty, waiting for refreshData to complete...")
+                let semaphore = DispatchSemaphore(value: 0)
+                
+                DispatchQueue.global(qos: DispatchQoS.QoSClass.utility).async {
+                    priorityHandler.refreshData()
+                    
+                    // Wait a moment for the async refresh to complete
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        semaphore.signal()
+                    }
+                }
+                
+                // Wait for the refresh to complete
+                _ = semaphore.wait(timeout: .now() + 5.0) // 5 second timeout
+                print("iCloudPriority: RefreshData completed, proceeding with data retrieval")
+                
+                // Check data after refresh
+                let afterRefreshData = priorityHandler.getPriorityData()
+                print("iCloudPriority: DIAGNOSTIC - After refreshData(): \(afterRefreshData.count) entries")
+            } else {
+                print("iCloudPriority: Using cached priority data")
+            }
+            
             let priorityData = priorityHandler.getPriorityData()
             
-            print("iCloudPriority: Retrieved priority data with \(priorityData.count ?? 0) entries")
+            print("iCloudPriority: Retrieved priority data with \(priorityData.count) entries")
             
-            if (priorityData != nil && priorityData.count > 0){
+            // DIAGNOSTIC: Let's see what priority data we actually have
+            print("iCloudPriority: DIAGNOSTIC - Priority data contents:")
+            if priorityData.isEmpty {
+                print("iCloudPriority: DIAGNOSTIC - WARNING: Priority data is empty! This suggests the data loading failed.")
+                print("iCloudPriority: DIAGNOSTIC - This could mean:")
+                print("iCloudPriority: DIAGNOSTIC - 1. The priority file doesn't exist")
+                print("iCloudPriority: DIAGNOSTIC - 2. The file is empty or corrupted")
+                print("iCloudPriority: DIAGNOSTIC - 3. The data loading failed")
+            } else {
+                for (bandName, priority) in priorityData.prefix(10) {
+                    print("iCloudPriority: DIAGNOSTIC - Band: \(bandName), Priority: \(priority)")
+                }
+                if priorityData.count > 10 {
+                    print("iCloudPriority: DIAGNOSTIC - ... and \(priorityData.count - 10) more entries")
+                }
+            }
+            
+            if (priorityData.count > 0){
                 print("iCloudPriority: Writing \(priorityData.count) priority records to iCloud (with timestamp check)")
+                var writeCount = 0
+                var skipCount = 0
+                
                 for (bandName, priority) in priorityData {
                     print("iCloudPriority: Processing priority record for band: \(bandName)")
                     let index = "bandName:" + bandName
@@ -346,11 +439,25 @@ class iCloudDataHandler {
                     if proposedTimestamp > iCloudTimestamp {
                         print("iCloudPriority: Proposed data is newer, writing to iCloud for band: \(bandName)")
                         writeAPriorityRecord(bandName: bandName, priority: priority)
+                        writeCount += 1
                     } else {
                         print("iCloudPriority: Skipping write for band: \(bandName) because iCloud data is newer or equal")
+                        skipCount += 1
                     }
                 }
+                
+                print("iCloudPriority: Write operation summary - Wrote: \(writeCount), Skipped: \(skipCount)")
+                
+                // Force synchronization and verify
+                print("iCloudPriority: Forcing iCloud synchronization...")
                 NSUbiquitousKeyValueStore.default.synchronize()
+                
+                // DIAGNOSTIC: Verify what was actually written
+                print("iCloudPriority: DIAGNOSTIC - Verifying written data...")
+                let allICloudKeys = NSUbiquitousKeyValueStore.default.dictionaryRepresentation.keys
+                let priorityKeysInICloud = allICloudKeys.filter { $0.hasPrefix("bandName:") }
+                print("iCloudPriority: DIAGNOSTIC - After write: Found \(priorityKeysInICloud.count) priority keys in iCloud: \(Array(priorityKeysInICloud.prefix(10)))")
+                
                 //writeLastiCloudDataWrite()
                 print("iCloudPriority: All priority data written and synchronized (with timestamp check)")
             } else {
@@ -391,9 +498,22 @@ class iCloudDataHandler {
                     print("iCloudPriority: Writing priority record - bandName: \(bandName), priority: \(priority), uid: \(currentUid), timestamp: \(timestampString)")
                     print("iCloudPriority: Full dataString: \(dataString)")
                     
-                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: "bandName:" + bandName)
+                    let key = "bandName:" + bandName
+                    print("iCloudPriority: DIAGNOSTIC - Setting key: '\(key)' with value: '\(dataString)'")
+                    
+                    NSUbiquitousKeyValueStore.default.set(dataString, forKey: key)
                     print("iCloudPriority: Priority record written for band: \(bandName)")
+                    
+                    // Force synchronization and verify
+                    print("iCloudPriority: DIAGNOSTIC - Forcing iCloud synchronization...")
                     NSUbiquitousKeyValueStore.default.synchronize()
+                    
+                    // DIAGNOSTIC: Verify the write
+                    if let writtenValue = NSUbiquitousKeyValueStore.default.string(forKey: key) {
+                        print("iCloudPriority: DIAGNOSTIC - Write verification successful: key '\(key)' contains '\(writtenValue)'")
+                    } else {
+                        print("iCloudPriority: DIAGNOSTIC - Write verification FAILED: key '\(key)' not found after write!")
+                    }
                 } else {
                     print("iCloudPriority: ERROR - UIDevice identifierForVendor is nil, cannot write priority record for band: \(bandName)")
                 }
@@ -1239,3 +1359,5 @@ class iCloudDataHandler {
     }
 
 }
+
+

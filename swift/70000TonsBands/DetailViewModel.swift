@@ -259,13 +259,41 @@ class DetailViewModel: ObservableObject {
             print("🖼️ DetailViewModel: Image list updated, refreshing image for '\(self.bandName)'")
             self.loadBandImage()
         }
+        
+        // Listen for band description updates to refresh the display when new content is downloaded
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("BandDescriptionUpdated"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let userInfo = notification.userInfo,
+                  let notificationBandName = userInfo["bandName"] as? String,
+                  notificationBandName == self.bandName else { return }
+            
+            print("📝 DetailViewModel received BandDescriptionUpdated notification for band: \(notificationBandName)")
+            print("📝 DetailViewModel - current band: \(self.bandName), notification band: \(notificationBandName)")
+            self.refreshBandDescription()
+        }
+        
+        // Listen for description map ready to refresh band descriptions when the map becomes available
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("DescriptionMapReady"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            
+            print("📝 DetailViewModel received DescriptionMapReady notification, refreshing band description for '\(self.bandName)'")
+            self.refreshBandDescription()
+        }
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("ForceDetailRefresh"), object: nil)
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("RefreshDisplay"), object: nil)
         NotificationCenter.default.removeObserver(self, name: .bandNamesCacheReady, object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ImageListUpdated"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("BandDescriptionUpdated"), object: nil)
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("DescriptionMapReady"), object: nil)
     }
     
     // MARK: - Public Methods
@@ -1896,6 +1924,47 @@ class DetailViewModel: ObservableObject {
     /// Check if notes have been modified since they were loaded
     private func notesHaveChanged() -> Bool {
         return hasNotesChanged && customNotes != originalNotes
+    }
+    
+    /// Refreshes the band description when a background download completes
+    private func refreshBandDescription() {
+        print("DEBUG: refreshBandDescription() called for band: '\(bandName)'")
+        
+        // Reload the notes from the updated file
+        let noteText = bandNotes.getDescription(bandName: bandName)
+        englishDescriptionText = noteText
+        customNotes = noteText
+        
+        print("DEBUG: Refreshed description for '\(bandName)': '\(noteText.prefix(50))...' (length: \(noteText.count))")
+        
+        // Check for links that make text non-editable (matching original logic)
+        if customNotes.contains("!!!!https://") {
+            doNotSaveText = true
+            isNotesEditable = false
+            customNotes = customNotes.replacingOccurrences(of: "!!!!https://", with: "https://")
+            print("DEBUG: Refreshed notes contain links - set to read-only for '\(bandName)'")
+        } else {
+            doNotSaveText = false
+            isNotesEditable = true
+            print("DEBUG: Refreshed notes are editable for '\(bandName)'")
+        }
+        
+        // Add noteworthy prefix if exists
+        if !noteWorthy.isEmpty {
+            customNotes = "\n" + customNotes
+            englishDescriptionText = "\n" + englishDescriptionText
+            print("DEBUG: Refreshed notes have noteworthy prefix for '\(bandName)'")
+        }
+        
+        // Handle translation if supported
+        if #available(iOS 18.0, *) {
+            if BandDescriptionTranslator.shared.isTranslationSupported() {
+                print("DEBUG: Displaying refreshed description in current language for '\(bandName)'")
+                displayDescriptionInCurrentLanguage()
+            }
+        }
+        
+        print("DEBUG: Final refreshed customNotes for '\(bandName)': '\(noteText.prefix(50))...' (length: \(noteText.count))")
     }
 }
 

@@ -310,6 +310,21 @@ func getFilteredBands(
     let startTime = CFAbsoluteTimeGetCurrent()
     print("🕐 [\(String(format: "%.3f", startTime))] getFilteredBands START")
     
+    // Ensure we're always on a background thread to prevent main thread blocking
+    if Thread.isMainThread {
+        DispatchQueue.global(qos: .userInitiated).async {
+            getFilteredBands(
+                bandNameHandle: bandNameHandle,
+                schedule: schedule,
+                dataHandle: dataHandle,
+                attendedHandle: attendedHandle,
+                searchCriteria: searchCriteria,
+                completion: completion
+            )
+        }
+        return
+    }
+    
     filterQueue.async {
         let queueStartTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", queueStartTime))] getFilteredBands filter queue START")

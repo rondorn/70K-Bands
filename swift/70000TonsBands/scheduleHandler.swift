@@ -478,6 +478,15 @@ open class scheduleHandler {
 
     func buildTimeSortedSchedulingData () {
         print("[YEAR_CHANGE_DEBUG] Building time-sorted scheduling data for year \(eventYear)")
+        
+        // Ensure we're always on a background thread to prevent main thread blocking
+        if Thread.isMainThread {
+            DispatchQueue.global(qos: .utility).async {
+                self.buildTimeSortedSchedulingData()
+            }
+            return
+        }
+        
         scheduleHandlerQueue.async(flags: .barrier) {
             self._schedulingDataByTime.removeAll()
             var timeSlotCount = 0
