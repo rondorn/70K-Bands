@@ -37,6 +37,7 @@ import android.view.WindowManager;
 
 import android.widget.ProgressBar;
 import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -98,6 +99,9 @@ public class showBandDetails extends Activity {
     private TextView countryValue, genreValue, lastCruiseValue, noteValue;
     private LinearLayout countryRow, genreRow, lastCruiseRow, noteRow;
     private Button unknownButton, mustButton, mightButton, wontButton;
+    
+    // WebView navigation text buttons
+    private TextView webViewCloseButton, webViewBackButton, webViewForwardButton, webViewRefreshButton;
     
     // Translation components
     private LinearLayout translationButtonContainer;
@@ -1587,6 +1591,121 @@ public class showBandDetails extends Activity {
         webViewProgressBar.setVisibility(View.VISIBLE);
         container.addView(webViewProgressBar);
         
+        // Create minimal navigation bar
+        LinearLayout navigationBar = new LinearLayout(this);
+        navigationBar.setOrientation(LinearLayout.HORIZONTAL);
+        navigationBar.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+        navigationBar.setBackgroundColor(Color.parseColor("#1A1A1A")); // Darker background for better contrast
+        navigationBar.setPadding(20, 16, 20, 16); // Increased padding for better presence
+        navigationBar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        
+        // Close button - Return to details screen
+        webViewCloseButton = new TextView(this);
+        webViewCloseButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f)); // Equal weight
+        webViewCloseButton.setPadding(20, 16, 20, 16); // Comfortable padding
+        webViewCloseButton.setText(getString(R.string.navigation_close)); // Localized text
+        webViewCloseButton.setTextSize(16); // Good readable size
+        webViewCloseButton.setBackgroundColor(Color.parseColor("#404040")); // Dark gray background
+        webViewCloseButton.setGravity(android.view.Gravity.CENTER); // Center the text
+        webViewCloseButton.setTextColor(Color.WHITE); // White text
+        webViewCloseButton.setContentDescription("Close browser and return to details");
+        webViewCloseButton.setClickable(true);
+        webViewCloseButton.setFocusable(true);
+        
+        webViewCloseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Return to the details screen by restoring the original content
+                exitInAppWebView();
+                Log.d("Navigation", "WebView closed, returning to details view");
+            }
+        });
+        
+        // Back button - Text-based design
+        webViewBackButton = new TextView(this);
+        webViewBackButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f)); // Equal weight
+        webViewBackButton.setPadding(20, 16, 20, 16); // Comfortable padding
+        webViewBackButton.setText(getString(R.string.navigation_back)); // Localized text
+        webViewBackButton.setTextSize(16); // Good readable size
+        webViewBackButton.setBackgroundColor(Color.parseColor("#404040")); // Dark gray background
+        webViewBackButton.setGravity(android.view.Gravity.CENTER); // Center the text
+        webViewBackButton.setTextColor(Color.WHITE); // White text
+        webViewBackButton.setContentDescription("Go back");
+        webViewBackButton.setClickable(true);
+        webViewBackButton.setFocusable(true);
+        
+        webViewBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (inAppWebView.canGoBack()) {
+                    inAppWebView.goBack();
+                    updateNavigationButtonStates();
+                }
+            }
+        });
+        
+        // Forward button - Text-based design
+        webViewForwardButton = new TextView(this);
+        webViewForwardButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f)); // Equal weight
+        webViewForwardButton.setPadding(20, 16, 20, 16); // Comfortable padding
+        webViewForwardButton.setText(getString(R.string.navigation_forward)); // Localized text
+        webViewForwardButton.setTextSize(16); // Good readable size
+        webViewForwardButton.setBackgroundColor(Color.parseColor("#404040")); // Dark gray background
+        webViewForwardButton.setGravity(android.view.Gravity.CENTER); // Center the text
+        webViewForwardButton.setTextColor(Color.WHITE); // White text
+        webViewForwardButton.setContentDescription("Go forward");
+        webViewForwardButton.setClickable(true);
+        webViewForwardButton.setFocusable(true);
+        
+        webViewForwardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (inAppWebView.canGoForward()) {
+                    inAppWebView.goForward();
+                    updateNavigationButtonStates();
+                }
+            }
+        });
+        
+        // Refresh button - Simple, reliable design
+        webViewRefreshButton = new TextView(this);
+        webViewRefreshButton.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f)); // Equal weight
+        webViewRefreshButton.setPadding(20, 16, 20, 16); // Comfortable padding
+        webViewRefreshButton.setText(getString(R.string.navigation_refresh)); // Localized text
+        webViewRefreshButton.setTextSize(16); // Good readable size
+        webViewRefreshButton.setBackgroundColor(Color.parseColor("#404040")); // Dark gray background
+        webViewRefreshButton.setGravity(android.view.Gravity.CENTER); // Center the text
+        webViewRefreshButton.setTextColor(Color.WHITE); // White text
+        webViewRefreshButton.setContentDescription("Refresh page");
+        webViewRefreshButton.setClickable(true);
+        webViewRefreshButton.setFocusable(true);
+        
+        webViewRefreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                inAppWebView.reload();
+            }
+        });
+        
+        // Add all buttons to navigation bar - equal weight handles spacing
+        navigationBar.addView(webViewCloseButton);
+        navigationBar.addView(webViewBackButton);
+        navigationBar.addView(webViewForwardButton);
+        navigationBar.addView(webViewRefreshButton);
+        
+        // Add navigation bar to container
+        container.addView(navigationBar);
+        
+        // Debug logging for navigation bar
+        Log.d("Navigation", "Navigation bar created with " + navigationBar.getChildCount() + " children");
+        Log.d("Navigation", "Close button: " + (webViewCloseButton != null ? "created" : "null"));
+        Log.d("Navigation", "Back button: " + (webViewBackButton != null ? "created" : "null"));
+        Log.d("Navigation", "Forward button: " + (webViewForwardButton != null ? "created" : "null"));
+        Log.d("Navigation", "Refresh button: " + (webViewRefreshButton != null ? "created" : "null"));
+        
         // Create WebView - takes remaining space in LinearLayout
         inAppWebView = new WebView(this);
         LinearLayout.LayoutParams webViewParams = new LinearLayout.LayoutParams(
@@ -1638,6 +1757,7 @@ public class showBandDetails extends Activity {
                 super.onPageFinished(view, url);
                 Log.d("WebView", "Page finished: " + url + ", canGoBack: " + view.canGoBack());
                 webViewProgressBar.setVisibility(View.GONE);
+                updateNavigationButtonStates();
             }
             
             @Override
@@ -1710,6 +1830,9 @@ public class showBandDetails extends Activity {
         
         container.addView(inAppWebView);
         
+        // Add method to update navigation button states
+        updateNavigationButtonStates();
+        
         // Replace current content with WebView (respects system UI)
         setContentView(container);
         
@@ -1759,6 +1882,25 @@ public class showBandDetails extends Activity {
         // Set flag that we're in web link mode
         inLink = true;
         Log.d("WebView", "inLink flag set to true");
+    }
+    
+    /**
+     * Updates the state of navigation buttons based on WebView history
+     */
+    private void updateNavigationButtonStates() {
+        if (webViewBackButton != null && webViewForwardButton != null && inAppWebView != null) {
+            // Update back button state
+            boolean canGoBack = inAppWebView.canGoBack();
+            webViewBackButton.setEnabled(canGoBack);
+            webViewBackButton.setAlpha(canGoBack ? 1.0f : 0.5f);
+            
+            // Update forward button state
+            boolean canGoForward = inAppWebView.canGoForward();
+            webViewForwardButton.setEnabled(canGoForward);
+            webViewForwardButton.setAlpha(canGoForward ? 1.0f : 0.5f);
+            
+            Log.d("Navigation", "Back enabled: " + canGoBack + ", Forward enabled: " + canGoForward);
+        }
     }
     
     /**
@@ -2931,6 +3073,8 @@ public class showBandDetails extends Activity {
             if (inAppWebView.canGoBack()) {
                 Log.d("WebView", "Going back in WebView history");
                 inAppWebView.goBack();
+                // Update navigation button states after going back
+                updateNavigationButtonStates();
                 return;
             } else {
                 Log.d("WebView", "No WebView history, exiting to band details");
