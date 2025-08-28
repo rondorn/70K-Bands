@@ -78,6 +78,13 @@ class PreferencesHostingController: UIHostingController<AnyView> {
             name: Notification.Name("DismissPreferencesScreen"),
             object: nil
         )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(dismissPreferences),
+            name: Notification.Name("DismissPreferencesScreenAfterYearChange"),
+            object: nil
+        )
     }
     
     @objc private func dismissPreferences() {
