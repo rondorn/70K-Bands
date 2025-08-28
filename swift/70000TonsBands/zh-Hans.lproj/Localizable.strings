@@ -42,6 +42,11 @@
 "restarTitle" = "需要重新启动d";
 "restartMessage" = "不要做这在巡航。 INTERENT连接所需。这种变化需要重新启动应用程序。 70K乐队现在将退出。重新启动，看看新的数据";
 
+"NoteFontSize"="笔记字体大小";
+"OpenYouTubeApp"="打开YouTube应用";
+"AllLinksOpenInExternalBrowser"="所有链接在外部浏览器中打开";
+"DetailScreenSection"="详情屏幕";
+
 
 
 

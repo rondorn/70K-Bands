@@ -39,3 +39,8 @@
 
 "restarTitle" = "Herstart Nodig";
 "restartMessage" = "Doe dit niet op de cruise. Interent AANSLUITING NODIG.\nDeze verandering vereist de toepassing opnieuw te starten.\n70K Bands zal nu stoppen. Relaunch om de nieuwe gegevens te zien";
+
+"NoteFontSize"="Grote lettergrootte voor notities";
+"OpenYouTubeApp"="YouTube-app openen";
+"AllLinksOpenInExternalBrowser"="Alle links openen in externe browser";
+"DetailScreenSection"="Detailscherm";

@@ -42,6 +42,11 @@
 "restarTitle" = "omstart krävs";
 "restartMessage" = "GÖR INTE DETTA på kryssningen. Rent krävs. Denna förändring kräver omstart av programmet. 70K Band kommer nu att sluta. Starta om för att se den nya data";
 
+"NoteFontSize"="Stor textstorlek för anteckningar";
+"OpenYouTubeApp"="Öppna YouTube-app";
+"AllLinksOpenInExternalBrowser"="Alla länkar öppnas i extern webbläsare";
+"DetailScreenSection"="Detaljskärm";
+
 
 
 

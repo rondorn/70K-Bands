@@ -93,6 +93,9 @@ class PreferencesViewModel: ObservableObject {
     @Published var openYouTubeApp: Bool = true {
         didSet { setOpenYouTubeAppValue(openYouTubeApp) }
     }
+    @Published var allLinksOpenInExternalBrowser: Bool = false {
+        didSet { setAllLinksOpenInExternalBrowserValue(allLinksOpenInExternalBrowser) }
+    }
     
     // Year Selection and UI State
     @Published var selectedYear: String = "Current"
@@ -146,6 +149,7 @@ class PreferencesViewModel: ObservableObject {
         
         let fontLarge = getNotesFontSizeLargeValue()
         let youtubeApp = getOpenYouTubeAppValue()
+        let allLinksExternal = getAllLinksOpenInExternalBrowserValue()
         
         currentYearSetting = getScheduleUrl()
         var displayYear = currentYearSetting
@@ -168,6 +172,7 @@ class PreferencesViewModel: ObservableObject {
         alertForAlbumListening = listening
         noteFontSizeLarge = fontLarge
         openYouTubeApp = youtubeApp
+        allLinksOpenInExternalBrowser = allLinksExternal
         selectedYear = displayYear
     }
     

@@ -90,25 +90,8 @@
 "Previous" = "Edellinen";
 
 "NoteFontSize" = "Suuri fonttikoko";
-
-"ShareBandChoices" = "Jaa bändivalinnat";
-"ShareShowChoices" = "Jaa esitysvalinnat";
-
-"visitBands" = "Linkit";
-"country" = "Maa";
-"genre" = "Tyylilaji";
-"Last On Cruise" = "Viimeinen risteilyllä"; //list of years a band was previously on
-"Note" = "Huomautus";  //something of note, like doing an album premier or the real or fake version of Batushka
-
-"verifyCountry" = "Vahvista maasi";
-"correctCountryDescription" = "Korjaa maasi tarvittaessa";
-"confirmCountry" = "Vahvista";
-"correctCountry" = "Muuta";
-
-"waiting_for_data" = "Ladataan tietoja, odota hetki....";
-"data_filter_issue" = "Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja";
-
-"SelectYearLabel"="Valitse näytettävä vuosi";
+"OpenYouTubeApp"="Avaa YouTube-sovellus";
+"AllLinksOpenInExternalBrowser"="Kaikki linkit avautuvat ulkoisessa selaimessa";
 "DetailScreenSection"="Yksityiskohtanäyttö";
 "MiscSection"="Muut";
 "NoteFontSize"="Suuri muistiinpanojen fonttikoko";

@@ -87,25 +87,8 @@
 "Previous" = "Anterior";
 
 "NoteFontSize" = "Ten en cuenta el tamaño de fuente grande";
-
-"ShareBandChoices" = "Compartir elecciones de bandas";
-"ShareShowChoices" = "Compartir elecciones de conciertos";
-
-"visitBands" = "Enlaces";
-"country" = "País";
-"genre" = "Género";
-"Last On Cruise" = "Última en crucero"; //list of years a band was previously on
-"Note" = "Nota";  //something of note, like doing an album premier or the real or fake version of Batushka
-
-"verifyCountry" = "Verifica tu país";
-"correctCountryDescription" = "Corrige tu país si es necesario";
-"confirmCountry" = "Confirmar";
-"correctCountry" = "Cambiar";
-
-"waiting_for_data" = "Esperando a que se carguen los datos, por favor, espera...";
-"data_filter_issue" = "Todos los datos están filtrados, elimina los filtros para ver los datos";
-
-"SelectYearLabel"="Selecciona el año para mostrar";
+"OpenYouTubeApp"="Abrir aplicación de YouTube";
+"AllLinksOpenInExternalBrowser"="Todos los enlaces se abren en el navegador externo";
 "DetailScreenSection"="Pantalla de detalles";
 "MiscSection"="Varios";
 "NoteFontSize"="Tamaño de fuente de nota grande";
