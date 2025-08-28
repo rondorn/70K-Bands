@@ -96,6 +96,12 @@
     <string name="waiting_for_data">Warten auf das Laden der Daten, bitte Standby....</string>
     <string name="data_filter_issue">Alle Daten werden herausgefiltert, bitte entfernen Sie die Filter, um die Daten anzuzeigen</string>
 
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Schließen</string>
+    <string name="navigation_back">Zurück</string>
+    <string name="navigation_forward">Vorwärts</string>
+    <string name="navigation_refresh">Aktualisieren</string>
+
     <string name="SelectYearLabel">Wählen Sie das anzuzeigende Jahr aus</string>
     <string name="restartTitle">Neustart erforderlich</string>
     <string name="restartMessage">NICHT WÄHREND DER CRUISE AUSFÜHREN, DA EINE INTERENTVERBINDUNG BENÖTIGT WIRD.</string>

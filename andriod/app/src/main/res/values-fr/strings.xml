@@ -98,6 +98,12 @@
     <string name="waiting_for_data">En attente de chargement des données, veuillez patienter....</string>
     <string name="data_filter_issue">Toutes les données sont filtrées, veuillez supprimer les filtres pour afficher les données</string>
 
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Fermer</string>
+    <string name="navigation_back">Retour</string>
+    <string name="navigation_forward">Avancer</string>
+    <string name="navigation_refresh">Actualiser</string>
+
     <string name="SelectYearLabel">Sélectionnez l\'année à afficher</string>
     <string name="restartTitle">Redémarrage Nécessaire</string>
     <string name="restartMessage">Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.</string>

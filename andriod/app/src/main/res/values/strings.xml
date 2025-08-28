@@ -98,6 +98,12 @@
     <string name="ClinicsPlural">Clinics</string>
     <string name="SpecialEventsPlural">Special Events</string>
     <string name="CruiseEventsPlural">Cruise Events</string>
+    
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Close</string>
+    <string name="navigation_back">Back</string>
+    <string name="navigation_forward">Forward</string>
+    <string name="navigation_refresh">Refresh</string>
     <string name="UnofficialEventsPlural">Unofficial Events</string>
 
     <string name="visitBands">Links</string>

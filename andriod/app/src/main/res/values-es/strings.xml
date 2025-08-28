@@ -90,6 +90,12 @@
     <string name="country_invalid">Cambiar</string>
     <string name="waiting_for_data">Esperando a que se carguen los datos, por favor, espera...</string>
     <string name="data_filter_issue">Todos los datos están filtrados, elimina los filtros para ver los datos</string>
+
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Cerrar</string>
+    <string name="navigation_back">Atrás</string>
+    <string name="navigation_forward">Adelante</string>
+    <string name="navigation_refresh">Actualizar</string>
     <string name="SelectYearLabel">Selecciona la edición para mostrar</string>
     <string name="restartTitle">Es necesario reiniciar</string>
     <string name="restartMessage">NO HAGAS ESTO EN EL CRUCERO. SE REQUIERE CONEXIÓN A INTERNET.</string>
