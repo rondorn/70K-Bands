@@ -31,31 +31,30 @@ open class CustomBandDescription {
                 bandDescriptionUrlDate = cacheVariables.bandDescriptionUrlDateCache
                 print("commentFile refreshCache: Loaded from cache - \(bandDescriptionUrl.count) bands")
                 
-            } else if (currentQueueLabel == "com.apple.main-thread"){
-                // Only load from file on main thread if we have internet AND prerequisite data is available
-                if isInternetAvailable() {
-                    // Check if prerequisite data (bands + schedule) is available before trying to load descriptions
-                    if hasPrerequisiteDataAvailable() {
-                        print("commentFile refreshCache: Loading from file on main thread (internet and prerequisite data available)")
-                        self.getDescriptionMap();
-                    } else {
-                        print("⚠️ commentFile refreshCache: Skipping file load on main thread - prerequisite data not ready yet")
-                    }
-                } else {
-                    print("⚠️ commentFile refreshCache: Skipping file load on main thread - no internet available")
-                }
-                
             } else {
-                // Background thread - only load from file if we have internet AND prerequisite data
-                if isInternetAvailable() {
+                // Always try to load from disk first, regardless of network status
+                print("commentFile refreshCache: Loading description map from disk")
+                self.getDescriptionMap();
+                
+                // Only attempt network operations if we still don't have data and internet is available
+                if bandDescriptionUrl.isEmpty && isInternetAvailable() {
                     if hasPrerequisiteDataAvailable() {
-                        print ("commentFile refreshCache: Loading from file on background thread (internet and prerequisite data available)")
-                        refreshData()
+                        print("commentFile refreshCache: Description map still empty after disk load, attempting network refresh")
+                        if currentQueueLabel == "com.apple.main-thread" {
+                            // On main thread, just trigger the download
+                            print("commentFile refreshCache: Triggering background download from main thread")
+                        } else {
+                            // On background thread, do the full refresh
+                            print("commentFile refreshCache: Performing full data refresh from background thread")
+                            refreshData()
+                        }
                     } else {
-                        print("⚠️ commentFile refreshCache: Skipping file load on background thread - prerequisite data not ready yet")
+                        print("⚠️ commentFile refreshCache: Prerequisite data not ready yet, skipping network refresh")
                     }
+                } else if bandDescriptionUrl.isEmpty {
+                    print("⚠️ commentFile refreshCache: No internet available and no data from disk")
                 } else {
-                    print("⚠️ commentFile refreshCache: Skipping file load on background thread - no internet available")
+                    print("commentFile refreshCache: Successfully loaded \(bandDescriptionUrl.count) bands from disk")
                 }
             }
         }
@@ -748,6 +747,82 @@ open class CustomBandDescription {
         }
         
         return bandsReady && scheduleReady
+    }
+    
+    /// Downloads all missing descriptions and replaces obsolete cached files
+    /// This method is called when the app is exiting to ensure all data is cached
+    func downloadAllDescriptionsOnAppExit() {
+        print("DEBUG_commentFile: Starting background download of all descriptions on app exit")
+        
+        // Ensure we have the description map first
+        if bandDescriptionUrl.isEmpty {
+            print("DEBUG_commentFile: Description map is empty, downloading it first")
+            getDescriptionMapFile()
+            getDescriptionMap()
+            return
+        }
+        
+        // Download all missing descriptions in the background
+        DispatchQueue.global(qos: .utility).async {
+            for (bandName, descriptionUrl) in self.bandDescriptionUrl {
+                // Check if we need to download this description
+                let commentFileName = self.getNoteFileName(bandName: bandName)
+                let commentFile = directoryPath.appendingPathComponent(commentFileName)
+                
+                // Download if file doesn't exist or if it's obsolete (contains default text)
+                if !FileManager.default.fileExists(atPath: commentFile.path) {
+                    print("DEBUG_commentFile: Downloading missing description for \(bandName)")
+                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
+                } else {
+                    // Check if existing file contains default text (obsolete)
+                    if let data = try? String(contentsOf: commentFile, encoding: .utf8) {
+                        if data.contains(FestivalConfig.current.getDefaultDescriptionText()) {
+                            print("DEBUG_commentFile: Replacing obsolete description for \(bandName)")
+                            do {
+                                try FileManager.default.removeItem(atPath: commentFile.path)
+                                self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
+                            } catch {
+                                print("DEBUG_commentFile: Error removing obsolete file for \(bandName): \(error)")
+                            }
+                        }
+                    }
+                }
+            }
+            print("DEBUG_commentFile: Completed background download of all descriptions on app exit")
+        }
+    }
+    
+    /// Handles data collection requests, including year changes
+    /// - Parameter eventYearOverride: If true, indicates this is a year change request
+    /// - Parameter completion: Completion handler called when the operation is complete
+    func requestDataCollection(eventYearOverride: Bool = false, completion: (() -> Void)? = nil) {
+        print("DEBUG_commentFile: requestDataCollection called with eventYearOverride: \(eventYearOverride)")
+        
+        if eventYearOverride {
+            // This is a year change - clear cached data and reload
+            print("DEBUG_commentFile: Year change detected, clearing cached description data")
+            
+            // Clear the cached description map data
+            bandDescriptionUrl.removeAll()
+            bandDescriptionUrlDate.removeAll()
+            
+            // Clear the static cache variables
+            bandDescriptionLock.async(flags: .barrier) {
+                cacheVariables.bandDescriptionUrlCache.removeAll()
+                cacheVariables.bandDescriptionUrlDateCache.removeAll()
+            }
+            
+            // Force a refresh to load the new year's description map
+            print("DEBUG_commentFile: Reloading description map for new year")
+            refreshCache()
+        } else {
+            // Normal data collection request
+            print("DEBUG_commentFile: Normal data collection request")
+            refreshCache()
+        }
+        
+        // Call completion immediately since refreshCache is synchronous for disk operations
+        completion?()
     }
 }
 

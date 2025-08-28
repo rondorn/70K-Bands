@@ -185,10 +185,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if shouldDoFullRefresh {
                 print("App launch: Been more than 24 hours since last launch, performing full data refresh")
-                performFullDataRefresh(reason: "App launch - full refresh")
+                // Move to background thread to prevent main thread blocking
+                DispatchQueue.global(qos: .userInitiated).async {
+                    self.performFullDataRefresh(reason: "App launch - full refresh")
+                }
             } else {
                 print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
-                refreshBandList(reason: "Initial launch")
+                // Move to background thread to prevent main thread blocking
+                DispatchQueue.global(qos: .userInitiated).async {
+                    self.refreshBandList(reason: "Initial launch")
+                }
             }
         }
         
