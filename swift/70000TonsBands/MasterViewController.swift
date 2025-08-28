@@ -280,6 +280,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Listen for when returning from preferences screen
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
         
+        // Listen for when returning from preferences screen after year change (no additional refresh needed)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferencesAfterYearChange), name: Notification.Name("DismissPreferencesScreenAfterYearChange"), object: nil)
+        
         // Defensive: trigger a delayed refresh to help with first-launch data population
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             print("Calling refreshBandList from delayed initial refresh with reason: Initial delayed refresh")
@@ -1223,14 +1226,59 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         checkForEasterEgg()
         print ("iCloud: pull to refresh, load in new iCloud data")
         
-        // Use the centralized method with pull-to-refresh specific settings
-        performFullDataRefresh(reason: "Pull to refresh", shouldScrollToTop: true, endRefreshControl: true)
+        // Use a specialized method for pull-to-refresh that includes live network testing
+        performPullToRefreshWithLiveNetworkTest()
     }
     
-    /// Called when returning from preferences screen
+    /// Specialized pull-to-refresh method with live network testing
+    /// This method is allowed to block the GUI briefly since users expect delays during pull-to-refresh
+    func performPullToRefreshWithLiveNetworkTest() {
+        print("🔄 Starting pull-to-refresh with live network test")
+        
+        // STEP 1: Refresh from cache first (immediate UI update)
+        print("🔄 Pull-to-refresh: Step 1 - Refreshing from cache")
+        refreshBandList(reason: "Pull-to-refresh - cache refresh")
+        
+        // STEP 2: Perform LIVE network test (this will block GUI briefly - acceptable for pull-to-refresh)
+        print("🔄 Pull-to-refresh: Step 2 - Performing LIVE network test")
+        
+        let networkTesting = NetworkTesting()
+        let hasNetwork = networkTesting.liveNetworkTestForPullToRefresh()
+        
+        if !hasNetwork {
+            print("🔄 Pull-to-refresh: ❌ Live network test failed - staying with cached data")
+            DispatchQueue.main.async {
+                self.refreshControl?.endRefreshing()
+            }
+            return
+        }
+        
+        print("🔄 Pull-to-refresh: ✅ Live network test passed - proceeding with data refresh")
+        
+        // STEP 3: Start background data refresh (same as regular performFullDataRefresh)
+        performBackgroundDataRefresh(reason: "Pull to refresh with live network test", endRefreshControl: true, shouldScrollToTop: true)
+    }
+    
+    /// Called when returning from preferences screen (no year change - only refresh if needed)
     @objc func handleReturnFromPreferences() {
-        print("Handling return from preferences screen")
-        performFullDataRefresh(reason: "Return from preferences")
+        print("Handling return from preferences screen - no year change occurred")
+        print("Performing light refresh (cache-based only, no network operations)")
+        
+        // Only refresh from cache - no network operations needed since no year change
+        refreshBandList(reason: "Return from preferences - cache refresh only")
+    }
+    
+    /// Called when returning from preferences screen after year change (data already refreshed)
+    @objc func handleReturnFromPreferencesAfterYearChange() {
+        print("Handling return from preferences screen after year change")
+        print("No additional refresh needed - data was already refreshed during year change")
+        
+        // No action needed - year change process already refreshed all data
+        // Just ensure the display is updated
+        DispatchQueue.main.async {
+            // Trigger a display refresh to ensure UI is in sync
+            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        }
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
