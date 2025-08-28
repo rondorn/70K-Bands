@@ -41,6 +41,11 @@
 "restarTitle" = "需要重新啟動";
 "restartMessage" = "不要做這在巡航。 INTERENT連接所需。這種變化需要重新啟動應用程序。 70K樂隊現在將退出。重新啟動，看看新的數據";
 
+"NoteFontSize"="筆記字體大小";
+"OpenYouTubeApp"="打開YouTube應用";
+"AllLinksOpenInExternalBrowser"="所有連結在外部瀏覽器中打開";
+"DetailScreenSection"="詳情螢幕";
+
 
 
 

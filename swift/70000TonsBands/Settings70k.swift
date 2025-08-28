@@ -37,6 +37,7 @@ var alertForListeningEvents = false
 
 var notesFontSizeLargeValue = false
 var openYouTubeAppValue = true
+var allLinksOpenInExternalBrowserValue = false
 
 var minBeforeAlertValue = 10
 
@@ -87,6 +88,13 @@ func setOpenYouTubeAppValue(_ value: Bool){
 }
 func getOpenYouTubeAppValue()->Bool{
     return openYouTubeAppValue
+}
+
+func setAllLinksOpenInExternalBrowserValue(_ value: Bool){
+    allLinksOpenInExternalBrowserValue = value
+}
+func getAllLinksOpenInExternalBrowserValue()->Bool{
+    return allLinksOpenInExternalBrowserValue
 }
 
 func setAlertForListeningEvents(_ value: Bool){
@@ -312,6 +320,7 @@ func writeFiltersFile(){
         
         prefsString += "notesFontSizeLargeValue:" + boolToString(getNotesFontSizeLargeValue()) + ";"
         prefsString += "openYouTubeAppValue:" + boolToString(getOpenYouTubeAppValue()) + ";"
+        prefsString += "allLinksOpenInExternalBrowserValue:" + boolToString(getAllLinksOpenInExternalBrowserValue()) + ";"
         
         prefsString += "minBeforeAlertValue:" + String(getMinBeforeAlertValue()) + ";"
 
@@ -433,6 +442,9 @@ func readFiltersFile(){
             case "openYouTubeAppValue":
                 setOpenYouTubeAppValue(stringToBool(valueArray[1]))
             
+            case "allLinksOpenInExternalBrowserValue":
+                setAllLinksOpenInExternalBrowserValue(stringToBool(valueArray[1]))
+            
             case "promptForAttended":
                 setPromptForAttended(stringToBool(valueArray[1]))
                 
@@ -488,6 +500,7 @@ func establishDefaults(){
     setAlertForUnofficalEventsValue(true)
     setNotesFontSizeLargeValue(false)
     setOpenYouTubeAppValue(true)
+    setAllLinksOpenInExternalBrowserValue(false)
     setPromptForAttended(true)
     setMinBeforeAlertValue(10)
 }

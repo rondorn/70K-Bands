@@ -26,7 +26,7 @@
     <string name="AlertForUnoffical">Alerta para eventos no oficiales</string>
 
     <string name="UseLastYearsData">Utilizar datos del año pasado</string>
-    <string name="LastYearsFeatureExplication"/>
+    <string name="LastYearsFeatureExplication">Usar datos de años anteriores cuando los datos del año actual no estén disponibles</string>
     <string name="AdvancedPreferences">Preferencia avanzada\n¡No lo modifique a menos que sepa lo que está haciendo!</string>
     <string name="PreferenceHeader">70K Bands Preferencias</string>
     <string name="Preferences">Preferencias</string>
@@ -82,7 +82,7 @@
     <string name="country">País</string>
     <string name="genre">Género</string>
     <string name="LastOnCruise">Última en crucero</string> <!--list of years a band was previously on -->
-    <string name="Note">Nota</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
+    <string name="Note">Nota</string> <!--something of note, like doing an album premier or the real or fake version of Batushka -->
 
 
     <string name="verify_country">Verifica tu país</string>
@@ -238,6 +238,8 @@
     <!-- Missing preference screen translations -->
     <string name="DetailsScreen">Pantalla de detalles</string>
     <string name="NoteFontSizeLarge">Tamaño de fuente grande para notas</string>
+    <string name="OpenYouTubeApp">Abrir aplicación de YouTube</string>
+    <string name="AllLinksOpenInExternalBrowser">Todos los enlaces se abren en el navegador externo</string>
     <string name="Misc">Varios</string>
     <string name="Information">Información</string>
     <string name="UserIdentifier">Identificador de usuario</string>

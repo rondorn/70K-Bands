@@ -126,6 +126,7 @@ struct PreferencesView: View {
         Section(NSLocalizedString("DetailScreenSection", comment: "")) {
             Toggle(NSLocalizedString("NoteFontSize", comment: ""), isOn: $viewModel.noteFontSizeLarge)
             Toggle(NSLocalizedString("OpenYouTubeApp", comment: ""), isOn: $viewModel.openYouTubeApp)
+            Toggle(NSLocalizedString("AllLinksOpenInExternalBrowser", comment: ""), isOn: $viewModel.allLinksOpenInExternalBrowser)
         }
     }
     

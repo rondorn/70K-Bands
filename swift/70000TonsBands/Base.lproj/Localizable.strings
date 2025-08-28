@@ -124,6 +124,7 @@
 "SelectYearLabel"="Select The Year To Display";
 "NoteFontSize"="Note Font Size Large";
 "OpenYouTubeApp"="Open YouTube App";
+"AllLinksOpenInExternalBrowser"="All Links Open In External Browser";
 "DetailScreenSection"="Details Screen";
 "MiscSection"="Misc";
 "restartTitle" = "Restart Required";

@@ -240,3 +240,8 @@
 "Information" = "Informação";
 "User Identifier" = "Identificador do usuário";
 "Build" = "Versão";
+
+"NoteFontSize"="Tamanho de fonte grande para notas";
+"OpenYouTubeApp"="Abrir aplicativo do YouTube";
+"AllLinksOpenInExternalBrowser"="Todos os links abrem no navegador externo";
+"DetailScreenSection"="Tela de detalhes";

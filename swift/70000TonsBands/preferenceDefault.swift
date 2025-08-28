@@ -21,6 +21,7 @@ let alertForMandGDefault = "NO"
 let alertForClinicsDefault = "NO"
 let alertForListeningDefault = "NO"
 let validateScheduleFileDefault = "NO"
+let allLinksOpenInExternalBrowserDefault = "NO"
 
 func setDefaults(){
     
@@ -31,7 +32,8 @@ func setDefaults(){
                     "minBeforeAlert": minBeforeAlertDefault, "alertForShows": alertForShowsDefault,
                     "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
                     "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
-                    "validateScheduleFile": validateScheduleFileDefault]
+                    "validateScheduleFile": validateScheduleFileDefault,
+                    "allLinksOpenInExternalBrowser": allLinksOpenInExternalBrowserDefault]
 
     UserDefaults.standard.register(defaults: defaults)
 }

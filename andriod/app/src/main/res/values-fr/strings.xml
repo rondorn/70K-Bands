@@ -252,6 +252,8 @@
     <!-- Missing preference screen translations -->
     <string name="DetailsScreen">Écran de détails</string>
     <string name="NoteFontSizeLarge">Grande taille de police pour les notes</string>
+    <string name="OpenYouTubeApp">Ouvrir l\'application YouTube</string>
+    <string name="AllLinksOpenInExternalBrowser">Tous les liens s\'ouvrent dans le navigateur externe</string>
     <string name="Misc">Divers</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">Identifiant utilisateur</string>

@@ -42,5 +42,10 @@
 "restarTitle" = "再起動が必要";
 "restartMessage" = "CRUISE上にはこの処置を行いません。\nINTERENT接続が必要です。この変更は、アプリケーションを再起動する必要があります。\n70Kバンドは現在、終了します。新しいデータを確認するために再起動";
 
+"NoteFontSize"="メモのフォントサイズを大きく";
+"OpenYouTubeApp"="YouTubeアプリを開く";
+"AllLinksOpenInExternalBrowser"="すべてのリンクを外部ブラウザで開く";
+"DetailScreenSection"="詳細画面";
+
 
 

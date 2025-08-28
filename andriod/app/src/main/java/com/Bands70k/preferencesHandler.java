@@ -50,6 +50,7 @@ public class preferencesHandler {
     
     private Boolean noteFontSizeLarge = false;
     private Boolean openYouTubeApp = true;
+    private Boolean allLinksOpenInExternalBrowser = false;
 
     private Boolean showWillAttend = false;
     private Boolean alertOnlyForShowWillAttend = false;
@@ -214,6 +215,10 @@ public class preferencesHandler {
                             setOpenYouTubeApp(Boolean.valueOf(RowData[1]));
                             break;
 
+                        case "allLinksOpenInExternalBrowser":
+                            setAllLinksOpenInExternalBrowser(Boolean.valueOf(RowData[1]));
+                            break;
+
                     }
                 }
             } catch (Exception error) {
@@ -274,6 +279,7 @@ public class preferencesHandler {
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
         dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";
         dataString += "openYouTubeApp," + openYouTubeApp.toString() + "\n";
+        dataString += "allLinksOpenInExternalBrowser," + allLinksOpenInExternalBrowser.toString() + "\n";
         dataString += "eventYearToLoad," + eventYearToLoad.toString() + "\n";
 
         FileHandler70k.saveData(dataString, FileHandler70k.bandPrefs);
@@ -559,5 +565,16 @@ public class preferencesHandler {
 
     public void setOpenYouTubeApp(Boolean openYouTubeApp) {
         this.openYouTubeApp = openYouTubeApp;
+    }
+
+    public Boolean getAllLinksOpenInExternalBrowser() {
+        if (allLinksOpenInExternalBrowser == null) {
+            allLinksOpenInExternalBrowser = false;
+        }
+        return allLinksOpenInExternalBrowser;
+    }
+
+    public void setAllLinksOpenInExternalBrowser(Boolean allLinksOpenInExternalBrowser) {
+        this.allLinksOpenInExternalBrowser = allLinksOpenInExternalBrowser;
     }
 }

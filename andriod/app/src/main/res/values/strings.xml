@@ -36,7 +36,7 @@
     <string name="unofficalEventLable">Cruiser Organized</string>
 
     <string name="UseLastYearsData">Use Last Years Data</string>
-    <string name="LastYearsFeatureExplication"/>
+    <string name="LastYearsFeatureExplication">Use data from previous years when current year data is not yet available</string>
     <string name="AdvancedPreferences">Advanced Preference.\nDo not modify unless you know what your doing!</string>
     <string name="PreferenceHeader">70K Bands Preferences</string>
     <string name="Preferences">Preferences</string>
@@ -104,7 +104,7 @@
     <string name="country">Country</string>
     <string name="genre">Genre</string>
     <string name="LastOnCruise">Last On Cruise</string> <!--list of years a band was previously on -->
-    <string name="Note">Note</string> = <!--something of note, like doing an album premier or the real or fake version of Batushka -->
+    <string name="Note">Note</string> <!--something of note, like doing an album premier or the real or fake version of Batushka -->
 
 
     <string name="verify_country">Verify Your Country</string>
@@ -271,6 +271,7 @@
     <string name="DetailsScreen">Details Screen</string>
     <string name="NoteFontSizeLarge">Note Font Size Large</string>
     <string name="OpenYouTubeApp">Open YouTube App</string>
+    <string name="AllLinksOpenInExternalBrowser">All Links Open In External Browser</string>
     <string name="Misc">Misc</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">User Identifier</string>
@@ -280,7 +281,3 @@
     <string name="DefaultDescription70K">Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.</string>
     <string name="DefaultDescriptionMDF">No notes are available, right now, feel free to add your own.</string>
 </resources>
-
-
-
-
