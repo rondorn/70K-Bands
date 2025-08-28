@@ -97,6 +97,12 @@
     <string name="waiting_for_data">Ladataan tietoja, odota hetki....</string>
     <string name="data_filter_issue">Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja</string>
 
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Sulje</string>
+    <string name="navigation_back">Takaisin</string>
+    <string name="navigation_forward">Eteenpäin</string>
+    <string name="navigation_refresh">Päivitä</string>
+
     <string name="SelectYearLabel">Valitse Näytettävä vuosi</string>
     <string name="restartTitle">Vaatii uudelleenkäynnistyksen</string>
     <string name="restartMessage">ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.</string>

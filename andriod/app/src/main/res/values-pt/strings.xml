@@ -96,6 +96,12 @@
 
     <string name="waiting_for_data">Aguardando o carregamento dos dados, por favor aguarde....</string>
     <string name="data_filter_issue">Todos os dados estão sendo filtrados, remova os filtros para visualizar os dados</string>
+
+    <!-- WebView Navigation Buttons -->
+    <string name="navigation_close">Fechar</string>
+    <string name="navigation_back">Voltar</string>
+    <string name="navigation_forward">Avançar</string>
+    <string name="navigation_refresh">Atualizar</string>
     
     <string name="SelectYearLabel">Selecione o ano para exibir</string>
     <string name="restartTitle">Necessário Reiniciar</string>
