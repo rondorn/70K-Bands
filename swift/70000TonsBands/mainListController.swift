@@ -425,7 +425,7 @@ func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
     
     var filteredBands = [String]()
     var localMessage = ""
-    if (bandNameHandle.bandNames.count == 0){
+    if (bandNameHandle.getBandNames().count == 0){
         localMessage = NSLocalizedString("waiting_for_data", comment: "")
     } else {
         localMessage = NSLocalizedString("data_filter_issue", comment: "")
