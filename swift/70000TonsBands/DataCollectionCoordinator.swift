@@ -235,10 +235,10 @@ class DataCollectionCoordinator {
             }
             
         case .dataHandler:
-            let dataHandle = dataHandler()
-            dataHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
-                completion()
-            }
+            // LEGACY: dataHandler no longer needs data collection - priorities handled by PriorityManager
+            // All priority data is now managed by Core Data, no remote data collection needed
+            print("[LEGACY] dataHandler.requestDataCollection - skipping (priorities now use Core Data)")
+            completion()
             
         case .showsAttended:
             let attendedHandle = ShowsAttended()

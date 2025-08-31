@@ -473,6 +473,7 @@ class PreferencesViewModel: ObservableObject {
         
         // Clear static caches
         bandNamesHandler.shared.clearCachedData()
+        // LEGACY: Priority cache clearing now handled by PriorityManager if needed
         dataHandler().clearCachedData()
         masterView.schedule.clearCache()
         
@@ -575,6 +576,7 @@ class PreferencesViewModel: ObservableObject {
                 let thisScheduleRequestID = PreferencesViewModel.currentScheduleDataRequestID
                 
                 print("📅 Starting schedule data loading for year \(self.eventYearChangeAttempt) (request \(thisScheduleRequestID))")
+                // LEGACY: Priority cache clearing now handled by PriorityManager if needed
                 let dataHandle = dataHandler()
                 dataHandle.clearCachedData()
                 dataHandle.readFile(dateWinnerPassed: "")
