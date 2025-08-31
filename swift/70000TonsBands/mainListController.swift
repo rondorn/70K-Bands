@@ -40,7 +40,7 @@ func getBands() -> [String]{
     return bands
 }
 
-func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended) -> [String]{
+func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedule: scheduleHandler, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended) -> [String]{
     
     let startTime = CFAbsoluteTimeGetCurrent()
     print("🕐 [\(String(format: "%.3f", startTime))] determineBandOrScheduleList START - processing \(allBands.count) bands")
@@ -118,7 +118,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                     if (eventEndTime > Date().timeIntervalSince1970  || getHideExpireScheduleData() == false){
                         totalUpcomingEvents += 1;
                         if (schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField] != nil){
-                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
+                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, priorityManager: PriorityManager(), attendedHandle: attendedHandle) == true){
                                 newAllBands.append(bandName + ":" + String(timeIndex));
                                 presentCheck.append(bandName);
                                 let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
@@ -171,7 +171,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                         unfilteredCurrentEventCount = unfilteredCurrentEventCount + 1
                         totalUpcomingEvents += 1;
                         if let typeValue = schedule.getBandSortedSchedulingData()[bandName]?[timeIndex]?[typeField], !typeValue.isEmpty {
-                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
+                            if (applyFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, dataHandle: dataHandle, priorityManager: PriorityManager(), attendedHandle: attendedHandle) == true){
                                 newAllBands.append(String(timeIndex) + ":" + bandName);
                                 presentCheck.append(bandName);
                                 
@@ -226,7 +226,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         for bandName in allBands {
             unfilteredBandCount = unfilteredBandCount + 1
             if (presentCheck.contains(bandName) == false){
-                if (applyFilters(bandName: bandName,timeIndex: 0, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle) == true){
+                if (applyFilters(bandName: bandName,timeIndex: 0, schedule: schedule, dataHandle: dataHandle, priorityManager: PriorityManager(), attendedHandle: attendedHandle) == true){
                     print("Adding!! bandName  " + bandName)
                     newAllBands.append(bandName);
                     presentCheck.append(bandName);
@@ -242,7 +242,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     return newAllBands
 }
 
-func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, attendedHandle: ShowsAttended)-> Bool{
+func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended)-> Bool{
     let startTime = CFAbsoluteTimeGetCurrent()
     var include = false;
     if (timeIndex.isZero == false){
@@ -274,7 +274,7 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
             if (eventTypeFiltering(eventType) == true){
                 if (!bandData.isEmpty) {
                     if let locationValue = timeData[locationField], venueFiltering(locationValue) == true {
-                        if (rankFiltering(bandName, dataHandle: dataHandle) == true){
+                        if (rankFiltering(bandName, priorityManager: PriorityManager()) == true){
                             if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
                                 unofficalEventCount = unofficalEventCount + 1
                             }
@@ -303,6 +303,7 @@ func getFilteredBands(
     bandNameHandle: bandNamesHandler,
     schedule: scheduleHandler,
     dataHandle: dataHandler,
+    priorityManager: PriorityManager,
     attendedHandle: ShowsAttended,
     searchCriteria: String,
     completion: @escaping ([String]) -> Void
@@ -317,6 +318,7 @@ func getFilteredBands(
                 bandNameHandle: bandNameHandle,
                 schedule: schedule,
                 dataHandle: dataHandle,
+                priorityManager: priorityManager,
                 attendedHandle: attendedHandle,
                 searchCriteria: searchCriteria,
                 completion: completion
@@ -345,7 +347,7 @@ func getFilteredBands(
         
         let determineStartTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", determineStartTime))] getFilteredBands - starting determineBandOrScheduleList")
-        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, attendedHandle: attendedHandle);
+        newAllBands = determineBandOrScheduleList(allBands, sortedBy: sortedBy, schedule: schedule, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle);
         let determineEndTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", determineEndTime))] getFilteredBands - determineBandOrScheduleList END - got \(newAllBands.count) entries - time: \(String(format: "%.3f", (determineEndTime - determineStartTime) * 1000))ms")
         
@@ -370,7 +372,7 @@ func getFilteredBands(
                         continue
                     }
                 }
-                switch dataHandle.getPriorityData(bandName) {
+                switch priorityManager.getPriority(for: bandName) {
                 case 1:
                     if (getMustSeeOn() == true){
                         filteredBands.append(bandNameIndex)
@@ -389,7 +391,7 @@ func getFilteredBands(
                     }
                 default:
                     print("Encountered unexpected value of ", terminator: "")
-                    print (dataHandle.getPriorityData(bandName))
+                    print (priorityManager.getPriority(for: bandName))
                 }
             }
             let priorityFilterEndTime = CFAbsoluteTimeGetCurrent()
@@ -481,26 +483,26 @@ extension String {
     }
 }
 
-func rankFiltering(_ bandName: String, dataHandle: dataHandler) -> Bool {
+func rankFiltering(_ bandName: String, priorityManager: PriorityManager) -> Bool {
     
     var showBand = true;
     
-    if (getMustSeeOn() == false && dataHandle.getPriorityData(bandName) == 1){
+    if (getMustSeeOn() == false && priorityManager.getPriority(for: bandName) == 1){
         showBand = false
         print ("numberOfFilteredRecords is  -2- \(bandName)")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
     
-    } else if (getMightSeeOn() == false && dataHandle.getPriorityData(bandName) == 2){
+    } else if (getMightSeeOn() == false && priorityManager.getPriority(for: bandName) == 2){
         showBand = false
         print ("numberOfFilteredRecords is  -3- \(bandName)")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         
-    } else if (getWontSeeOn() == false && dataHandle.getPriorityData(bandName) == 3){
+    } else if (getWontSeeOn() == false && priorityManager.getPriority(for: bandName) == 3){
         print ("numberOfFilteredRecords is  -4- \(bandName)")
         showBand = false
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         
-    } else if (getUnknownSeeOn() == false && dataHandle.getPriorityData(bandName) == 0){
+    } else if (getUnknownSeeOn() == false && priorityManager.getPriority(for: bandName) == 0){
         print ("numberOfFilteredRecords is  -5- \(bandName)")
         showBand = false
         numberOfFilteredRecords = numberOfFilteredRecords + 1
@@ -612,7 +614,7 @@ func venueFiltering(_ venue: String) -> Bool {
     return showVenue
 }
 
-func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, attendedHandle: ShowsAttended){
+func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended){
     
     var rankLocationSchedule = false
         
@@ -809,7 +811,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     
     // Reduced debug logging for performance
     // print ("Cell text for \(bandName) ranking is \(dataHandle.getPriorityData(bandName))")
-    let priorityValue = dataHandle.getPriorityData(bandName)
+    let priorityValue = priorityManager.getPriority(for: bandName)
     let priorityGraphicName = getPriorityGraphic(priorityValue)
     if priorityGraphicName.isEmpty {
         rankGraphic = UIImageView(image: UIImage())

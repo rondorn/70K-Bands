@@ -96,7 +96,8 @@ class firebaseBandDataWrite {
                 self.buildBandRankArray(dataHandle: dataHandle)
                 for bandName in self.bandRank.keys {
                     
-                    let rankingInteger = dataHandle.getPriorityData(bandName)
+                    let priorityManager = PriorityManager()
+                    let rankingInteger = priorityManager.getPriority(for: bandName)
                     let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
                     print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
                     if firebaseBandAttendedArray[bandName] != ranking || didVersionChange == true {
@@ -119,7 +120,8 @@ class firebaseBandDataWrite {
         let allBands = bandNameHandle.getBandNames()
         for bandName in allBands {
             
-            let rankingNumber = String(dataHandle.getPriorityData(bandName))
+            let priorityManager = PriorityManager()
+            let rankingNumber = String(priorityManager.getPriority(for: bandName))
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
             bandRank[bandName] = rankingString;

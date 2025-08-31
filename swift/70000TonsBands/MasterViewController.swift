@@ -66,6 +66,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleLabel: UINavigationItem!
     
     var dataHandle = dataHandler()
+    private let priorityManager = PriorityManager()
     
     var videoURL = URL("")
     var player = AVPlayer()
@@ -822,26 +823,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let filtersTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", filtersTime))] viewWillAppear - filters written, starting background refresh")
         
-        // OPTIMIZED: Skip unnecessary data refresh when returning from detail view
-        // The data hasn't changed while viewing a single band's details
-        // Only refresh the UI display without reloading data from files/cache
-        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Optimized return from details - UI refresh only")
-        
-        // Lightweight UI refresh without data reload
-        DispatchQueue.main.async { [weak self] in
+        // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
+        // This ensures the UI remains responsive when returning from background/details
+        // Simple cache refresh when returning from details - no background operations needed
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            let uiRefreshStart = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", uiRefreshStart))] UI-only refresh START")
+            let backgroundStartTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
             
-            // Just update the table view with existing data
-            self.tableView.reloadData()
+            // Just refresh from cache - no network operations needed
+            self.refreshBandList(reason: "Return from details - cache refresh")
             
-            // Update title if needed
-            self.updateScreenTitle()
-            
-            let uiRefreshEnd = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", uiRefreshEnd))] UI-only refresh END - time: \(String(format: "%.3f", (uiRefreshEnd - uiRefreshStart) * 1000))ms")
+            let backgroundEndTime = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
         }
         
         finishedPlaying() // Defensive: ensure no video is left over
@@ -1007,6 +1002,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     bandNameHandle: self.bandNameHandle,
                     schedule: self.schedule,
                     dataHandle: self.dataHandle,
+                    priorityManager: self.priorityManager,
                     attendedHandle: self.attendedHandle,
                     searchCriteria: self.bandSearch.text ?? ""
                 ) { [weak self] (filtered: [String]) in
@@ -1662,7 +1658,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 1);
+            self.priorityManager.setPriority(for: bandName, priority: 1)
             print ("Offline is offline");
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Must See")
@@ -1679,7 +1675,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 2);
+            self.priorityManager.setPriority(for: bandName, priority: 2)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Might See")
             
@@ -1694,7 +1690,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 3);
+            self.priorityManager.setPriority(for: bandName, priority: 3)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Won't See")
             
@@ -1709,7 +1705,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 0);
+            self.priorityManager.setPriority(for: bandName, priority: 0)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Unknown")
             
@@ -1754,7 +1750,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         
         // Configure cell on main thread for immediate display
-        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
         
         // Configure separator immediately to avoid async access issues
         // Hide separator for band names only (plain strings without time index)
@@ -2932,7 +2928,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Pre-load priority data for all bands in a single operation
         DispatchQueue.global(qos: .utility).async {
-            _ = self.dataHandle.getPriorityDataForBands(uniqueBandNames)
+            // Pre-load priority data for performance (Core Data handles caching automatically)
+            _ = self.priorityManager.getAllPriorities()
         }
     }
     

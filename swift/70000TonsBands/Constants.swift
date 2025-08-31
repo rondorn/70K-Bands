@@ -671,6 +671,10 @@ func setupDefaults() {
 
     print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
 
+    // Migrate priority data from legacy system to Core Data if needed
+    let migrationUtility = PriorityMigrationUtility()
+    migrationUtility.performMigrationIfNeeded()
+
     didVersionChangeFunction();
 }
 

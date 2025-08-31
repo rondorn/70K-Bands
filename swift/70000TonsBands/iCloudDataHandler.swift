@@ -25,9 +25,13 @@ class iCloudDataHandler {
     /// Static flag to prevent multiple simultaneous executions of attended data processing
     static var isProcessingAttendedData = false
     
+    /// Priority manager for Core Data operations
+    private let priorityManager: PriorityManager
+    
     /// Initializes the iCloudDataHandler class
     /// Sets up the handler for managing iCloud data synchronization
     init(){
+        self.priorityManager = PriorityManager()
         //print("iCloud: Initializing iCloudDataHandler")
     }
     
@@ -91,8 +95,7 @@ class iCloudDataHandler {
             let bandNameHandle = bandNamesHandler.shared
             let bandNames = bandNameHandle.getBandNames()
             
-            let priorityHandler = dataHandler()
-            priorityHandler.refreshData()
+            // No need to refresh data - Core Data handles this automatically
             
             print("iCloudPriority: Reading priority data for \(bandNames.count) bands using optimized bulk processing")
             
@@ -176,7 +179,7 @@ class iCloudDataHandler {
                     let bandName = String(key.dropFirst("bandName:".count))
                     
                     // Process priority data
-                    if let update = self.processPriorityRecord(bandName: bandName, value: value, currentUid: currentUid, priorityHandler: priorityHandler) {
+                    if let update = self.processPriorityRecord(bandName: bandName, value: value, currentUid: currentUid) {
                         batchUpdates.append(update)
                     }
                 }
@@ -189,10 +192,10 @@ class iCloudDataHandler {
                 print("iCloudPriority: Completed batch \(batchIndex + 1)/\(batches.count) (\(batch.count) items, \(batchUpdates.count) updates)")
             }
             
-            // Apply all updates in batch using SILENT version to prevent iCloud write loops
+            // Apply all updates in batch using Core Data PriorityManager
             print("iCloudPriority: Applying \(priorityUpdates.count) priority updates...")
             for (bandName, priority, timestamp) in priorityUpdates {
-                priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: priority, timestamp: timestamp)
+                self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: priority, timestamp: timestamp, deviceUID: currentUid)
             }
             
             iCloudDataisLoading = false;
@@ -212,9 +215,8 @@ class iCloudDataHandler {
     ///   - bandName: The name of the band
     ///   - value: The iCloud value string
     ///   - currentUid: The current device UID
-    ///   - priorityHandler: The data handler for priority operations
     /// - Returns: Tuple of (bandName, priority, timestamp) if update is needed, nil otherwise
-    private func processPriorityRecord(bandName: String, value: String, currentUid: String, priorityHandler: dataHandler) -> (String, Int, Double)? {
+    private func processPriorityRecord(bandName: String, value: String, currentUid: String) -> (String, Int, Double)? {
         guard !value.isEmpty && value != "5" else { 
             print("iCloudPriority: Skipping \(bandName) - empty or no data (\(value))")
             return nil 
@@ -231,7 +233,7 @@ class iCloudDataHandler {
         }
         
         let uidValue = String(tempData[1])
-        let currentPriority = priorityHandler.getPriorityData(bandName)
+        let currentPriority = self.priorityManager.getPriority(for: bandName)
         
         print("iCloudPriority: Processing \(bandName) - iCloud: \(newPriority):\(uidValue):\(timestampValue), local: \(currentPriority), currentUID: \(currentUid)")
         
@@ -242,7 +244,7 @@ class iCloudDataHandler {
         }
         
         // RULE 2: Only update if iCloud data is newer than local data
-        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+        let localTimestamp = self.priorityManager.getPriorityLastChange(for: bandName)
         
         print("iCloudPriority: Timestamp comparison for \(bandName) - local: \(localTimestamp), iCloud: \(timestampValue)")
         
@@ -265,8 +267,7 @@ class iCloudDataHandler {
     /// Reads a single priority record from iCloud for a specific band
     /// - Parameters:
     ///   - bandName: The name of the band to read
-    ///   - priorityHandler: The data handler for priority operations
-    func readAPriorityRecord(bandName: String, priorityHandler: dataHandler){
+    func readAPriorityRecord(bandName: String){
         
         if (checkForIcloud() == true){
             print("iCloudPriority: Starting readAPriorityRecord for band: \(bandName)")
@@ -285,7 +286,7 @@ class iCloudDataHandler {
                         let newPriority = tempData[0]
                         let uidValue = String(tempData[1])
                         let timestampValue = Double(tempData[2]) ?? 0
-                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        let currentPriority = self.priorityManager.getPriority(for: bandName)
                         
                         print("iCloudPriority: Parsed priority data (new format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: \(timestampValue), currentPriority: \(currentPriority)")
                         
@@ -296,7 +297,7 @@ class iCloudDataHandler {
                         }
                         
                         // RULE 2: Only update if iCloud data is newer than local data
-                        let localTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                        let localTimestamp = self.priorityManager.getPriorityLastChange(for: bandName)
                         
                         print("iCloudPriority: Comparing timestamps - localTimestamp: \(localTimestamp), iCloudTimestamp: \(timestampValue)")
                         
@@ -304,7 +305,8 @@ class iCloudDataHandler {
                             // Only update if iCloud timestamp is NEWER (>) than local timestamp
                             if (timestampValue > localTimestamp){
                                 print("iCloudPriority: iCloud data is newer (\(timestampValue) > \(localTimestamp)), updating local priority for band: \(bandName)")
-                                priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                                // Use PriorityManager's iCloud update method which handles conflict resolution
+                                self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue, deviceUID: uidValue)
                                 print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
                             } else {
                                 print("iCloudPriority: Local data is newer or equal (\(timestampValue) <= \(localTimestamp)), skipping update for band: \(bandName)")
@@ -312,7 +314,8 @@ class iCloudDataHandler {
                         } else {
                             // No local timestamp exists, safe to update with iCloud data
                             print("iCloudPriority: No local timestamp found, updating with iCloud data for band: \(bandName)")
-                            priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                            // Use PriorityManager's iCloud update method which handles conflict resolution
+                            self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue, deviceUID: uidValue)
                             print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority)")
                         }
                     } else if (tempData.count == 2) {
@@ -320,11 +323,12 @@ class iCloudDataHandler {
                         let newPriority = tempData[0]
                         let uidValue = String(tempData[1])
                         let timestampValue = 0.0
-                        let currentPriority = priorityHandler.getPriorityData(bandName)
+                        let currentPriority = self.priorityManager.getPriority(for: bandName)
                         print("iCloudPriority: Parsed priority data (old format) - newPriority: \(newPriority), uidValue: \(uidValue), timestamp: 0, currentPriority: \(currentPriority)")
 
                         // Always update local data, since we can't compare timestamps
-                        priorityHandler.addPriorityDataWithTimestampSilent(bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue)
+                        // Use PriorityManager's iCloud update method which handles conflict resolution
+                        self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: Int(newPriority) ?? 0, timestamp: timestampValue, deviceUID: uidValue)
                         print("iCloudPriority: Priority updated for band: \(bandName) to: \(newPriority) (from old format)")
 
                         // Now update iCloud with the new format (priority:uid:currentTime)
@@ -355,14 +359,13 @@ class iCloudDataHandler {
         
         if (checkForIcloud() == true){
             print("iCloudPriority: Internet available and iCloud enabled, proceeding with data write")
-            let priorityHandler = dataHandler()
             
             // CRITICAL FIX: First try to get cached data (synchronous), then refresh if needed
             print("iCloudPriority: DIAGNOSTIC - Calling getCachedData()...")
-            priorityHandler.getCachedData()
+            // Core Data automatically handles caching
             
             // Check initial cache state
-            let initialData = priorityHandler.getPriorityData()
+            let initialData = self.priorityManager.getAllPriorities()
             print("iCloudPriority: DIAGNOSTIC - After getCachedData(): \(initialData.count) entries")
             
             // If cache is still empty, we need to wait for refreshData to complete
@@ -370,13 +373,9 @@ class iCloudDataHandler {
                 print("iCloudPriority: Cache was empty, waiting for refreshData to complete...")
                 let semaphore = DispatchSemaphore(value: 0)
                 
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.utility).async {
-                    priorityHandler.refreshData()
-                    
-                    // Wait a moment for the async refresh to complete
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        semaphore.signal()
-                    }
+                // Core Data doesn't need explicit refresh - data is always current
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    semaphore.signal()
                 }
                 
                 // Wait for the refresh to complete
@@ -384,13 +383,13 @@ class iCloudDataHandler {
                 print("iCloudPriority: RefreshData completed, proceeding with data retrieval")
                 
                 // Check data after refresh
-                let afterRefreshData = priorityHandler.getPriorityData()
+                let afterRefreshData = self.priorityManager.getAllPriorities()
                 print("iCloudPriority: DIAGNOSTIC - After refreshData(): \(afterRefreshData.count) entries")
             } else {
                 print("iCloudPriority: Using cached priority data")
             }
             
-            let priorityData = priorityHandler.getPriorityData()
+            let priorityData = self.priorityManager.getAllPriorities()
             
             print("iCloudPriority: Retrieved priority data with \(priorityData.count) entries")
             
@@ -431,7 +430,7 @@ class iCloudDataHandler {
                         }
                     }
                     // Get the timestamp that would be written for this band
-                    var proposedTimestamp = priorityHandler.getPriorityLastChange(bandName)
+                    var proposedTimestamp = self.priorityManager.getPriorityLastChange(for: bandName)
                     if proposedTimestamp <= 0 {
                         proposedTimestamp = Date().timeIntervalSince1970
                     }
@@ -480,9 +479,8 @@ class iCloudDataHandler {
             print("iCloudPriority: Starting writeAPriorityRecord for band: \(bandName)")
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                // Get the timestamp from local data handler or use current time
-                let localDataHandler = dataHandler()
-                var timestamp = localDataHandler.getPriorityLastChange(bandName)
+                // Get the timestamp from PriorityManager or use current time
+                var timestamp = self.priorityManager.getPriorityLastChange(for: bandName)
                 
                 // If no valid timestamp exists, use current time in seconds since epoch
                 if timestamp <= 0 {
@@ -611,8 +609,7 @@ class iCloudDataHandler {
                 let attendedHandle = ShowsAttended()
                 attendedHandle.loadShowsAttended()
                 
-                let priorityHandler = dataHandler()
-                priorityHandler.refreshData()
+                // Core Data doesn't need explicit refresh
                 
                 let scheduleData = scheduleHandle.getBandSortedSchedulingData()
                 
@@ -702,7 +699,7 @@ class iCloudDataHandler {
                     if !bandsNotInList.isEmpty {
                         print("iCloudSchedule: Reading priorities for \(bandsNotInList.count) bands not in main list...")
                         for bandName in bandsNotInList {
-                            self.readAPriorityRecord(bandName: bandName, priorityHandler: priorityHandler)
+                            self.readAPriorityRecord(bandName: bandName)
                         }
                     }
                     
