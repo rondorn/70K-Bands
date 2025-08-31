@@ -720,6 +720,7 @@ func checkAndHandleYearChange(newYear: String) {
         
         // Purge all caches
         bandNamesHandler.shared.clearCachedData()
+        // LEGACY: Priority cache clearing now handled by PriorityManager if needed
         dataHandler().clearCachedData()
         if let masterView = masterView {
             masterView.schedule.clearCache()

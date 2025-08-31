@@ -662,7 +662,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         internetAvailble = isInternetAvailable();
         let bandWrite  = firebaseBandDataWrite();
-        bandWrite.writeData(dataHandle: dataHandle);
+        bandWrite.writeData();
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
     }

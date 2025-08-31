@@ -896,8 +896,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Refresh priority data in background
-            self.dataHandle.getCachedData()
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // self.dataHandle.getCachedData()
             
             // Update GUI on main thread after data loading is complete
             DispatchQueue.main.async {
@@ -981,10 +981,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🕐 [\(String(format: "%.3f", scheduleEndTime))] Schedule getCachedData END - time: \(String(format: "%.3f", (scheduleEndTime - scheduleStartTime) * 1000))ms")
             
             let dataStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", dataStartTime))] Starting dataHandle getCachedData")
-            self.dataHandle.getCachedData()
-            let dataEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", dataEndTime))] dataHandle getCachedData END - time: \(String(format: "%.3f", (dataEndTime - dataStartTime) * 1000))ms")
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // print("🕐 [\(String(format: "%.3f", dataStartTime))] Starting dataHandle getCachedData")
+            // self.dataHandle.getCachedData()
+            // let dataEndTime = CFAbsoluteTimeGetCurrent()
+            // print("🕐 [\(String(format: "%.3f", dataEndTime))] dataHandle getCachedData END - time: \(String(format: "%.3f", (dataEndTime - dataStartTime) * 1000))ms")
             
             let backgroundEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", backgroundEndTime))] refreshBandList background thread END - total time: \(String(format: "%.3f", (backgroundEndTime - backgroundStartTime) * 1000))ms")
@@ -1143,7 +1144,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 
-                self.dataHandle.getCachedData()
+                // LEGACY: Priority data now handled by Core Data (PriorityManager)
+                // self.dataHandle.getCachedData()
                 
                 DispatchQueue.main.async {
                     print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
@@ -1334,6 +1336,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Clear handler caches
         self.bandNameHandle.clearCachedData()
+        // LEGACY: Priority cache clearing now handled by PriorityManager if needed
         self.dataHandle.clearCachedData()
         self.schedule.clearCache()
         
@@ -2741,7 +2744,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func detailDidUpdate() {
         // This notification is now handled by RefreshDisplay notification to avoid duplication
         // The RefreshDisplay notification already calls refreshDataWithBackgroundUpdate which includes:
-        // 1. Immediate refreshBandList (includes dataHandle.getCachedData())
+        // 1. Immediate refreshBandList (Core Data priorities loaded automatically)
         // 2. Background data refresh
         // 3. UI updates when complete
         print("[MasterViewController] DetailDidUpdate: Handled by RefreshDisplay notification to avoid duplication")
@@ -2754,7 +2757,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             
             self.bandNameHandle.readBandFile()
-            self.dataHandle.getCachedData()
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // self.dataHandle.getCachedData()
             self.attendedHandle.getCachedData()
             self.schedule.getCachedData()
             
@@ -2853,9 +2857,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Wait for core data (artists + schedule) to complete before proceeding
             downloadGroup.notify(queue: .main) {
                 // Step 3: Load existing priority data
-                print("⭐ Step 3: Loading existing priority data...")
-                self.dataHandle.getCachedData()
-                print("✅ Priority data loaded")
+                print("⭐ Step 3: Priority data handled by Core Data (PriorityManager)")
+                // LEGACY: self.dataHandle.getCachedData()
+                print("✅ Priority data available via Core Data")
                 
                 // Step 4: Load existing attendance data
                 print("✅ Step 4: Loading existing attendance data...")
@@ -3009,6 +3013,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // 3d. Clear ALL caches comprehensively only if content changed
                 print("Full data refresh (\(reason)): Step 3d - Content changed, clearing all caches")
                 self.bandNameHandle.clearCachedData()
+                // LEGACY: Priority cache clearing now handled by PriorityManager if needed
                 self.dataHandle.clearCachedData()
                 self.schedule.clearCache()
                 
