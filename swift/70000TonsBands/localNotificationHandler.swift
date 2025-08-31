@@ -96,10 +96,11 @@ class localNoticationHandler {
      */
     func checkBandPriority (_ bandName: String, attendedStatus: String)->Bool{
         
-        if (getMustSeeAlertValue() == true && dataHandle.getPriorityData(bandName) == 1){
+        let priorityManager = PriorityManager()
+        if (getMustSeeAlertValue() == true && priorityManager.getPriority(for: bandName) == 1){
             return true
         }
-        if (getMightSeeAlertValue()  == true && dataHandle.getPriorityData(bandName) == 2){
+        if (getMightSeeAlertValue()  == true && priorityManager.getPriority(for: bandName) == 2){
             return true
         }
         
