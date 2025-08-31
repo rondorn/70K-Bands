@@ -112,6 +112,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         
+        // MARK: - Core Data Integration
+        // Core Data system is now active and ready
+        
         // Check if this is first install - if so, delay country dialog until data loads
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
         // Preload country data in background to ensure it's always available
@@ -819,20 +822,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let filtersTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", filtersTime))] viewWillAppear - filters written, starting background refresh")
         
-        // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
-        // This ensures the UI remains responsive when returning from background/details
-        // Simple cache refresh when returning from details - no background operations needed
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // OPTIMIZED: Skip unnecessary data refresh when returning from detail view
+        // The data hasn't changed while viewing a single band's details
+        // Only refresh the UI display without reloading data from files/cache
+        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Optimized return from details - UI refresh only")
+        
+        // Lightweight UI refresh without data reload
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
-            let backgroundStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
+            let uiRefreshStart = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", uiRefreshStart))] UI-only refresh START")
             
-            // Just refresh from cache - no network operations needed
-            self.refreshBandList(reason: "Return from details - cache refresh")
+            // Just update the table view with existing data
+            self.tableView.reloadData()
             
-            let backgroundEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
+            // Update title if needed
+            self.updateScreenTitle()
+            
+            let uiRefreshEnd = CFAbsoluteTimeGetCurrent()
+            print("🕐 [\(String(format: "%.3f", uiRefreshEnd))] UI-only refresh END - time: \(String(format: "%.3f", (uiRefreshEnd - uiRefreshStart) * 1000))ms")
         }
         
         finishedPlaying() // Defensive: ensure no video is left over
@@ -2796,7 +2805,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Check if we're in the middle of first launch data loading
-        guard !cacheVariables.justLaunched || (!bandNameHandle.bandNames.isEmpty && !schedule.schedulingData.isEmpty) else {
+        guard !cacheVariables.justLaunched || (!bandNameHandle.getBandNames().isEmpty && !schedule.schedulingData.isEmpty) else {
             print("MasterViewController: Skipping background refresh - first launch still in progress")
             return
         }
