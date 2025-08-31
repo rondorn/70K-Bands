@@ -172,6 +172,7 @@ class DetailViewModel: ObservableObject {
     }
     
     // MARK: - Private Properties
+    // LEGACY: dataHandler kept for compatibility but no longer used for priorities
     private let dataHandle = dataHandler()
     private let bandNameHandle = bandNamesHandler.shared
     private let schedule = scheduleHandler.shared
@@ -963,7 +964,8 @@ class DetailViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func loadInitialData() {
-        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
+        // LEGACY: No longer load from file, priorities are handled by PriorityManager
+        // bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
         attendedHandle.loadShowsAttended()
     }
     
@@ -1386,17 +1388,18 @@ class DetailViewModel: ObservableObject {
         // Set flag to prevent didSet from triggering saves during data loading
         isLoadingPriority = true
         
-        // Always reload priority data from the global data source to get latest changes
-        bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
+        // Load priority from Core Data via PriorityManager
+        let priorityManager = PriorityManager()
+        let priority = priorityManager.getPriority(for: bandName)
         
-        if let priority = bandPriorityStorage[bandName] {
+        if priority != 0 {
             selectedPriority = priority
             originalPriority = priority
             print("DEBUG: loadPriority() for '\(bandName)' - found priority: \(priority)")
         } else {
             selectedPriority = 0
             originalPriority = nil  // Track that this was originally null/unset
-            // CRITICAL FIX: Do NOT overwrite bandPriorityStorage here - just set UI state
+            // CRITICAL FIX: Do NOT overwrite priority data here - just set UI state
             // The original bug was: bandPriorityStorage[bandName] = 0
             print("DEBUG: loadPriority() for '\(bandName)' - no priority found, setting UI to 0 but NOT overwriting storage (originalPriority=nil)")
         }
