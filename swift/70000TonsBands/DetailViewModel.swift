@@ -1407,7 +1407,8 @@ class DetailViewModel: ObservableObject {
     
     private func savePriority() {
         bandPriorityStorage[bandName] = selectedPriority
-        dataHandle.addPriorityData(bandName, priority: selectedPriority)
+        let priorityManager = PriorityManager()
+        priorityManager.setPriority(for: bandName, priority: selectedPriority)
         
         print("DEBUG: savePriority() - Saved priority \(selectedPriority) for band: '\(bandName)' (originalPriority: \(originalPriority?.description ?? "nil"))")
         

@@ -56,21 +56,15 @@
 		1147D6F12E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6E92E63C879000A98B0 /* CoreDataIndexManager.swift */; };
 		1147D6F22E63C879000A98B0 /* BandDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6E82E63C879000A98B0 /* BandDataManager.swift */; };
 		1147D6F32E63C879000A98B0 /* TestCoreDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6EA2E63C879000A98B0 /* TestCoreDataModel.swift */; };
-		1147D6F62E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6F52E63CCF5000A98B0 /* BandNamesHandlerMigration.swift */; };
-		1147D6F82E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6F52E63CCF5000A98B0 /* BandNamesHandlerMigration.swift */; };
-		1147D6FA2E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6F52E63CCF5000A98B0 /* BandNamesHandlerMigration.swift */; };
 		1147D6FE2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
-		1147D6FF2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FC2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift */; };
 		1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
-		1147D7012E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FC2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift */; };
 		1147D7022E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
-		1147D7032E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FC2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift */; };
-		1147D7062E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7042E63D115000A98B0 /* bandNamesHandler_Legacy.swift */; };
-		1147D7072E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7052E63D115000A98B0 /* TestCoreDataMigration.swift */; };
-		1147D7082E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7042E63D115000A98B0 /* bandNamesHandler_Legacy.swift */; };
-		1147D7092E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7052E63D115000A98B0 /* TestCoreDataMigration.swift */; };
-		1147D70A2E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7042E63D115000A98B0 /* bandNamesHandler_Legacy.swift */; };
-		1147D70B2E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D7052E63D115000A98B0 /* TestCoreDataMigration.swift */; };
+		1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
+		1147D70F2E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
+		1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
+		1147D7112E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
+		1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
+		1147D7132E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
 		114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
@@ -320,11 +314,9 @@
 		1147D6E82E63C879000A98B0 /* BandDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandDataManager.swift; sourceTree = "<group>"; };
 		1147D6E92E63C879000A98B0 /* CoreDataIndexManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataIndexManager.swift; sourceTree = "<group>"; };
 		1147D6EA2E63C879000A98B0 /* TestCoreDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCoreDataModel.swift; sourceTree = "<group>"; };
-		1147D6F52E63CCF5000A98B0 /* BandNamesHandlerMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandNamesHandlerMigration.swift; sourceTree = "<group>"; };
-		1147D6FC2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandNamesHandlerCompatibilityTest.swift; sourceTree = "<group>"; };
 		1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandNamesHandlerProtocol.swift; sourceTree = "<group>"; };
-		1147D7042E63D115000A98B0 /* bandNamesHandler_Legacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bandNamesHandler_Legacy.swift; sourceTree = "<group>"; };
-		1147D7052E63D115000A98B0 /* TestCoreDataMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCoreDataMigration.swift; sourceTree = "<group>"; };
+		1147D70C2E63E33C000A98B0 /* PriorityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityManager.swift; sourceTree = "<group>"; };
+		1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityMigrationUtility.swift; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		114976C51C838D87003316D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandDescriptionTranslator.swift; sourceTree = "<group>"; };
@@ -527,9 +519,6 @@
 				1147D6E82E63C879000A98B0 /* BandDataManager.swift */,
 				114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
-				1147D7042E63D115000A98B0 /* bandNamesHandler_Legacy.swift */,
-				1147D6FC2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift */,
-				1147D6F52E63CCF5000A98B0 /* BandNamesHandlerMigration.swift */,
 				1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */,
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				1172EE512E5A292E006E3596 /* ConfigurationTest.swift */,
@@ -576,6 +565,8 @@
 				11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */,
 				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
 				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
+				1147D70C2E63E33C000A98B0 /* PriorityManager.swift */,
+				1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
@@ -585,7 +576,6 @@
 				11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */,
-				1147D7052E63D115000A98B0 /* TestCoreDataMigration.swift */,
 				1147D6EA2E63C879000A98B0 /* TestCoreDataModel.swift */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
@@ -1081,10 +1071,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1147D6F62E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */,
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
-				1147D7082E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */,
-				1147D7092E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */,
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1147D6EB2E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
 				1147D6EC2E63C879000A98B0 /* BandDataManager.swift in Sources */,
@@ -1120,7 +1107,6 @@
 				1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
 				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				1147D7022E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
-				1147D7032E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */,
 				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				1147D6DF2E63C549000A98B0 /* CoreDataManager.swift in Sources */,
 				1147D6E02E63C549000A98B0 /* CoreDataTest.swift in Sources */,
@@ -1142,6 +1128,8 @@
 				11E4EDAA2ACBAE5E0036D002 /* Settings70k.swift in Sources */,
 				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
+				1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1147D70F2E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1150,10 +1138,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1147D6FA2E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */,
 				1155E3A51A8B121000D51ED9 /* bandNamesHandler.swift in Sources */,
-				1147D70A2E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */,
-				1147D70B2E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */,
 				119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				1147D6EE2E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
 				1147D6EF2E63C879000A98B0 /* BandDataManager.swift in Sources */,
@@ -1189,7 +1174,6 @@
 				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
-				1147D7012E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */,
 				11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				1147D6E52E63C549000A98B0 /* CoreDataManager.swift in Sources */,
 				1147D6E62E63C549000A98B0 /* CoreDataTest.swift in Sources */,
@@ -1211,6 +1195,8 @@
 				11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */,
 				11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
+				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1147D7112E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1219,10 +1205,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1147D6F82E63CCF5000A98B0 /* BandNamesHandlerMigration.swift in Sources */,
 				1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */,
-				1147D7062E63D115000A98B0 /* bandNamesHandler_Legacy.swift in Sources */,
-				1147D7072E63D115000A98B0 /* TestCoreDataMigration.swift in Sources */,
 				1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */,
 				1147D6F12E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
 				1147D6F22E63C879000A98B0 /* BandDataManager.swift in Sources */,
@@ -1258,7 +1241,6 @@
 				1172EE122E5A1C4D006E3596 /* DetailViewModel.swift in Sources */,
 				1172EE132E5A1C4D006E3596 /* BandDescriptionTranslator.swift in Sources */,
 				1147D6FE2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
-				1147D6FF2E63CF51000A98B0 /* BandNamesHandlerCompatibilityTest.swift in Sources */,
 				1172EE142E5A1C4D006E3596 /* PreferencesHostingController.swift in Sources */,
 				1147D6E22E63C549000A98B0 /* CoreDataManager.swift in Sources */,
 				1147D6E32E63C549000A98B0 /* CoreDataTest.swift in Sources */,
@@ -1280,6 +1262,8 @@
 				1172EE232E5A1C4D006E3596 /* Settings70k.swift in Sources */,
 				1172EE242E5A1C4D006E3596 /* countryHandler.swift in Sources */,
 				1172EE252E5A1C4D006E3596 /* CustomBandDescription.swift in Sources */,
+				1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1147D7132E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
