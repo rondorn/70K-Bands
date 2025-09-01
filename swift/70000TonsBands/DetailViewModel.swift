@@ -1181,7 +1181,13 @@ class DetailViewModel: ObservableObject {
         
         schedule.getCachedData()
         
+        print("🔍 [DETAIL_SCHEDULE_DEBUG] Checking schedule data for band: '\(bandName)'")
+        print("🔍 [DETAIL_SCHEDULE_DEBUG] All available bands in schedulingData: \(Array(schedule.schedulingData.keys).sorted())")
+        print("🔍 [DETAIL_SCHEDULE_DEBUG] Total bands in schedulingData: \(schedule.schedulingData.count)")
+        
         if let bandSchedule = schedule.schedulingData[bandName], !bandSchedule.isEmpty {
+            print("🔍 [DETAIL_SCHEDULE_DEBUG] ✅ Found schedule for band '\(bandName)' with \(bandSchedule.count) time slots")
+            print("🔍 [DETAIL_SCHEDULE_DEBUG] Time indices for '\(bandName)': \(Array(bandSchedule.keys).sorted())")
             let sortedKeys = bandSchedule.keys.sorted()
             
             for timeIndex in sortedKeys {
@@ -1260,7 +1266,19 @@ class DetailViewModel: ObservableObject {
                 
                 scheduleEvents.append(event)
             }
+        } else {
+            print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ No schedule data found for band '\(bandName)'")
+            if schedule.schedulingData.isEmpty {
+                print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ schedulingData is completely empty")
+            } else {
+                print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ Band '\(bandName)' not found in schedulingData")
+                // Show a few example band names for comparison
+                let exampleBands = Array(schedule.schedulingData.keys).prefix(5)
+                print("🔍 [DETAIL_SCHEDULE_DEBUG] Example bands in schedulingData: \(Array(exampleBands))")
+            }
         }
+        
+        print("🔍 [DETAIL_SCHEDULE_DEBUG] Final scheduleEvents count for '\(bandName)': \(scheduleEvents.count)")
     }
     
     private func loadNotes() {
