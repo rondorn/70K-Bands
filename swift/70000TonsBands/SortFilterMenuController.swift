@@ -29,19 +29,19 @@ func createrFilterMenu( controller: MasterViewController){
         "Wont See Items",
         "Unknown Items"
     ]
-    if (eventCount > 0 && unofficalEventCount != eventCount){
+    if (eventCount > 0 && eventCounterUnoffical != eventCount){
         controller.filterMenu.dataSource.append("Flagged Header")
         controller.filterMenu.dataSource.append("Flagged Items")
         controller.filterMenu.dataSource.append("Sort Header")
         controller.filterMenu.dataSource.append("Sort By")
     }
     controller.filterMenu.dataSource.append("Event Type Filters")
-    if (eventCount > 0 && unofficalEventCount != eventCount){
+    if (eventCount > 0 && eventCounterUnoffical != eventCount){
         controller.filterMenu.dataSource.append("Meet and Greet Events")
         controller.filterMenu.dataSource.append("Special Events")
     }
     controller.filterMenu.dataSource.append("Unoffical Events")
-    if (eventCount > 0 && unofficalEventCount != eventCount){
+    if (eventCount > 0 && eventCounterUnoffical != eventCount){
         controller.filterMenu.dataSource.append("Location Header")
         controller.filterMenu.dataSource.append("Pool Venue")
         controller.filterMenu.dataSource.append("Lounge Venue")
@@ -104,7 +104,7 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         setupCell(header: true, titleText: NSLocalizedString("Band Ranking Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
     } else if (item == "Flagged Header"){
-        if (eventCount > 0 && unofficalEventCount != eventCount){
+        if (eventCount > 0 && eventCounterUnoffical != eventCount){
             setupCell(header: true, titleText: NSLocalizedString("Show Only Flagged As Attended", comment: "") , cellData: cellRow, imageName: unknownIcon, disabled: false)
         }
         

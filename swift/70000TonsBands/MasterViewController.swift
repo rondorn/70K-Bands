@@ -1019,36 +1019,71 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 bandsResult = self.deduplicatePreservingOrder(bandsResult)
             }
             let sortedBy = getSortedBy()
+            
+            // SORTING DEBUG: Log items before MasterViewController sorting
+            print("🎯 SORT DEBUG - MasterViewController: About to sort \(bandsResult.count) items with sortedBy='\(sortedBy)'")
+            for (index, item) in bandsResult.prefix(5).enumerated() {
+                let components = item.components(separatedBy: ":")
+                print("🎯 SORT DEBUG - MVC Item[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
+            }
+            
             if sortedBy == "name" {
+                print("🎯 SORT DEBUG - MasterViewController: Using NAME sorting")
                 bandsResult.sort { item1, item2 in
-                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
-                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                    // Events have format: "timeIndex:bandName" or "bandName:timeIndex" (2 components)
+                    // Bands have format: just the band name (1 component, no colons)
+                    let components1 = item1.components(separatedBy: ":")
+                    let components2 = item2.components(separatedBy: ":")
+                    let isEvent1 = components1.count == 2
+                    let isEvent2 = components2.count == 2
                     
-                    // Events always come before band names only
+                    // SORTING DEBUG: Log comparison details
+                    print("🎯 SORT DEBUG - MVC NAME Comparing: '\(item1)' (\(components1.count) parts, isEvent:\(isEvent1)) vs '\(item2)' (\(components2.count) parts, isEvent:\(isEvent2))")
+                    
+                    // Events always come before band names
                     if isEvent1 && !isEvent2 {
+                        print("🎯 SORT DEBUG - MVC NAME Event comes before band: '\(item1)' < '\(item2)'")
                         return true
                     } else if !isEvent1 && isEvent2 {
+                        print("🎯 SORT DEBUG - MVC NAME Band comes after event: '\(item1)' > '\(item2)'")
                         return false
                     } else {
-                        // Both are same type, sort alphabetically
+                        // Both are same type, sort alphabetically by name
                         return getNameFromSortable(item1, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: sortedBy)) == .orderedAscending
                     }
                 }
             } else if sortedBy == "time" {
+                print("🎯 SORT DEBUG - MasterViewController: Using TIME sorting")
                 bandsResult.sort { item1, item2 in
-                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
-                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                    // Events have format: "timeIndex:bandName" or "bandName:timeIndex" (2 components)
+                    // Bands have format: just the band name (1 component, no colons)
+                    let components1 = item1.components(separatedBy: ":")
+                    let components2 = item2.components(separatedBy: ":")
+                    let isEvent1 = components1.count == 2
+                    let isEvent2 = components2.count == 2
+                    
+                    // SORTING DEBUG: Log comparison details
+                    print("🎯 SORT DEBUG - MVC TIME Comparing: '\(item1)' (\(components1.count) parts, isEvent:\(isEvent1)) vs '\(item2)' (\(components2.count) parts, isEvent:\(isEvent2))")
                     
                     // Events always come before band names only
                     if isEvent1 && !isEvent2 {
+                        print("🎯 SORT DEBUG - MVC TIME Event comes before band: '\(item1)' < '\(item2)'")
                         return true
                     } else if !isEvent1 && isEvent2 {
+                        print("🎯 SORT DEBUG - MVC TIME Band comes after event: '\(item1)' > '\(item2)'")
                         return false
                     } else {
                         // Both are same type, sort by time or alphabetically for band names
                         return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
                     }
                 }
+            }
+            
+            // SORTING DEBUG: Log items after MasterViewController sorting
+            print("🎯 SORT DEBUG - MasterViewController: After sorting, first 5 items:")
+            for (index, item) in bandsResult.prefix(5).enumerated() {
+                let components = item.components(separatedBy: ":")
+                print("🎯 SORT DEBUG - MVC Sorted[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
             }
             print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             
@@ -1418,7 +1453,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var showEventMenu = false
         
-        if (scheduleReleased == true && (eventCount != unofficalEventCount && unfilteredEventCount > 0)){
+        // Show event menu only if schedule is released AND there are non-unofficial events
+        let hasNonUnofficalEventsForMenu = eventCount > eventCounterUnoffical
+        if (scheduleReleased == true && hasNonUnofficalEventsForMenu && unfilteredEventCount > 0){
             showEventMenu = true
         }
         
@@ -1430,7 +1467,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             showEventMenu = false
         }
         
-        print ("Show schedule choices = 1-\(scheduleReleased)  2-\(eventCount) 3-\(unofficalEventCount) 4-\(unfilteredCurrentEventCount) 5-\(unfilteredEventCount) 6-\(unfilteredCruiserEventCount) 7-\(showEventMenu)")
+        print ("🏷️ MENU DEBUG: Show schedule choices = scheduleReleased:\(scheduleReleased), eventCount:\(eventCount), eventCounterUnoffical:\(eventCounterUnoffical), hasNonUnofficalEvents:\(hasNonUnofficalEventsForMenu), showEventMenu:\(showEventMenu)")
         return showEventMenu
     }
     
@@ -1441,36 +1478,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var lableCounterString = String();
         var labeleCounter = Int()
         
-        print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
+        print ("🏷️ COUNTER DEBUG: listCount=\(listCount), eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical), bandCount=\(bandCount)")
         
-        // Check if we have a mixture of events and bands, but ALL events are cruiser organized
-        let hasEvents = eventCount > 0
-        let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
-        let allEventsAreCruiserOrganized = eventCounterUnoffical > 0 && eventCounterUnoffical == eventCount
+        // Counter Logic Rules:
+        // 1. All bands → show band count
+        // 2. Mix where ALL events are unofficial → show band count (ignore unofficial events)  
+        // 3. If there's ANY non-unofficial event → show event count
         
-        if (hasEvents && hasBands && allEventsAreCruiserOrganized) {
-            // Mixed list with only cruiser organized events - show only band count
-            labeleCounter = listCount - eventCounterUnoffical
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            sortedBy = "time"
-        } else if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
-            // Mixed event types (not all cruiser organized) - show event count
-            labeleCounter = listCount
+        let hasNonUnofficalEvents = eventCount > eventCounterUnoffical
+        print ("🏷️ COUNTER DEBUG: hasNonUnofficalEvents=\(hasNonUnofficalEvents) (eventCount:\(eventCount) > eventCounterUnoffical:\(eventCounterUnoffical))")
+        
+        if (hasNonUnofficalEvents) {
+            // There are non-unofficial events - show EVENT count (not total list count)
+            labeleCounter = eventCount
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
+            print ("🏷️ COUNTER DEBUG: Showing EVENTS count: \(labeleCounter) (eventCount, not listCount)")
         } else {
-            // Default case - show band count
+            // Only bands or only unofficial events - show band count (excluding unofficial events)
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            sortedBy = "time"
+            print ("🏷️ COUNTER DEBUG: Showing BANDS count: \(labeleCounter) (total:\(listCount) - unofficial:\(eventCounterUnoffical))")
         }
 
         var currentYearSetting = getScheduleUrl()
