@@ -306,21 +306,37 @@ func getPointerUrlData(keyValue: String) -> String {
         inTestEnvironment = true;
     #endif
     
-    //returned cached data when needed. Will only look up pointer data on launch as this
-    //does not change very often during the year
+    // CRITICAL FIX: Use the resolved eventYear for data lookup instead of "Current"
+    // The pointer data is stored under the actual year (e.g., "2025") not under "Current"
+    var pointerIndex = getScheduleUrl()
+    
+    // If we're looking for URLs (not eventYear itself), we need to use the resolved year
+    if actualKeyValue != "eventYear" && eventYear > 0 {
+        pointerIndex = String(eventYear)
+        print("getPointerUrlData: Using resolved eventYear \(eventYear) as pointerIndex for \(actualKeyValue)")
+    }
+    
+    // IMPROVED CACHING: Check memory cache first with proper cache key
+    // Create a cache key that includes both the pointer index and the actual key
+    let cacheKey = "\(pointerIndex):\(actualKeyValue)"
     storePointerLock.sync() {
-        if (cacheVariables.storePointerData.isEmpty == false){
-            dataString = cacheVariables.storePointerData[actualKeyValue] ?? ""
-            print ("getPointerUrlData: got cached URL data of = \(dataString) for \(actualKeyValue)")
+        if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
+            dataString = cachedValue
+            print("getPointerUrlData: ✅ FAST CACHE HIT for \(cacheKey) = \(dataString)")
         }
     }
-    //print ("getPointerUrlData: lastYear setting is \(defaults.string(forKey: "scheduleUrl"))")
     
-
-    var pointerIndex = getScheduleUrl()
+    // If we have valid cached data, return it immediately (no network call needed)
+    if !dataString.isEmpty {
+        print("getPointerUrlData: ✅ Returning cached data for \(actualKeyValue): \(dataString)")
+        return dataString
+    }
+    
+    print("getPointerUrlData: ⚠️ Cache miss for \(cacheKey), will need to load pointer data")
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
 
     print ("Files were Done setting 2 \(pointerIndex)")
+    // Only proceed with network/disk operations if cache miss
     if (dataString.isEmpty == true){
         // Check internet availability before attempting download
         if !isInternetAvailable() {
@@ -343,9 +359,9 @@ func getPointerUrlData(keyValue: String) -> String {
                     
                     dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
                     
-                    // Cache the result in memory for future use
+                    // Cache the result in memory for future use with proper cache key
                     storePointerLock.sync() {
-                        cacheVariables.storePointerData[actualKeyValue] = dataString
+                        cacheVariables.storePointerData[cacheKey] = dataString
                     }
                 } catch {
                     print("getPointerUrlData: Failed to read cached pointer data: \(error)")
@@ -372,7 +388,21 @@ func getPointerUrlData(keyValue: String) -> String {
         }
         
         print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(actualKeyValue)")
-        let httpData = getUrlData(urlString: defaultStorageUrl)
+        
+        // Ensure network call happens on background thread to prevent main thread blocking
+        var httpData = ""
+        if Thread.isMainThread {
+            print("getPointerUrlData: Main thread detected, dispatching to background for network call")
+            let semaphore = DispatchSemaphore(value: 0)
+            DispatchQueue.global(qos: .userInitiated).async {
+                httpData = getUrlData(urlString: defaultStorageUrl)
+                semaphore.signal()
+            }
+            semaphore.wait()
+        } else {
+            httpData = getUrlData(urlString: defaultStorageUrl)
+        }
+        
         print ("getPointerUrlData: httpData for pointers data = \(httpData)")
         if (httpData.isEmpty == false){
             
@@ -386,6 +416,14 @@ func getPointerUrlData(keyValue: String) -> String {
             variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
             
             dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
+            
+            // Cache the result in memory for future fast access
+            if !dataString.isEmpty {
+                storePointerLock.sync() {
+                    cacheVariables.storePointerData[cacheKey] = dataString
+                }
+                print("getPointerUrlData: ✅ Cached result for \(cacheKey) = \(dataString)")
+            }
             
             // Cache the pointer data to disk for future offline use
             let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
@@ -415,6 +453,14 @@ func getPointerUrlData(keyValue: String) -> String {
                     variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
                     
                     dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
+                    
+                    // Cache the result in memory for future fast access
+                    if !dataString.isEmpty {
+                        storePointerLock.sync() {
+                            cacheVariables.storePointerData[cacheKey] = dataString
+                        }
+                        print("getPointerUrlData: ✅ Cached fallback result for \(cacheKey) = \(dataString)")
+                    }
                 } catch {
                     print("getPointerUrlData: Failed to read cached pointer data: \(error)")
                 }
@@ -422,62 +468,70 @@ func getPointerUrlData(keyValue: String) -> String {
         }
         
         if (keyValue == "eventYear"){
-            dataString = getArtistUrl();
-            if (dataString == "Current"){
-                // Find the largest year available from all pointer values
-                var largestYear = 0
-                var largestYearString = ""
+            // Get the user's year preference (could be "Current", "2025", "2024", etc.)
+            let userYearPreference = getArtistUrl()
+            print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: User year preference: '\(userYearPreference)'")
+            print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: userYearPreference.isYearString = \(userYearPreference.isYearString)")
+            print("getPointerUrlData: User year preference: \(userYearPreference)")
+            
+            // CRITICAL FIX: If user selected a specific year (like "2025"), use that directly
+            // This handles cases where the pointer file might not have all year entries
+            if userYearPreference.isYearString && userYearPreference != "Current" {
+                print("getPointerUrlData: User selected specific year \(userYearPreference), using it directly")
+                dataString = userYearPreference
+            } else {
+                // For "Current" or other non-year preferences, look up in pointer data
+                // The pointer file contains entries like:
+                // Current::eventYear::2026
+                // 2025::eventYear::2025
+                // Default::eventYear::2026
+                dataString = pointerValues[userYearPreference]?["eventYear"] ?? ""
                 
-                for (index, values) in pointerValues {
-                    if let eventYearValue = values["eventYear"], let yearInt = Int(eventYearValue) {
-                        if yearInt > largestYear {
-                            largestYear = yearInt
-                            largestYearString = eventYearValue
-                        }
-                    }
-                }
-                
-                // Use the largest year found, or fall back to Current if no valid years found
-                if largestYear > 0 {
-                    dataString = largestYearString
-                    print ("   is Current - found largest year \(dataString) from all available years")
-                    
-                    // Cache the resolved year to disk for future launches
-                    do {
-                        try dataString.write(toFile: eventYearFile, atomically: true, encoding: String.Encoding.utf8)
-                        cacheVariables.storePointerData[keyValue] = dataString
-                        print ("getPointerUrlData: Cached resolved year \(dataString) to disk")
-                    } catch let error as NSError {
-                        print ("getPointerUrlData: Failed to cache year to disk: \(error.debugDescription)")
-                    }
+                if !dataString.isEmpty {
+                    print("getPointerUrlData: Found eventYear \(dataString) for preference \(userYearPreference)")
                 } else {
-                    // Try to read from cached file as fallback
-                    do {
-                        if FileManager.default.fileExists(atPath: eventYearFile) {
-                            dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-                            print ("   is Current - using cached year \(dataString) from disk")
+                    // Fallback to Current if user preference has no data
+                    print("getPointerUrlData: No eventYear found for preference \(userYearPreference), trying Current")
+                    dataString = pointerValues["Current"]?["eventYear"] ?? ""
+                    
+                    if !dataString.isEmpty {
+                        print("getPointerUrlData: Using Current eventYear: \(dataString)")
+                    } else {
+                        // Final fallback to Default
+                        print("getPointerUrlData: No Current eventYear, trying Default")
+                        dataString = pointerValues["Default"]?["eventYear"] ?? ""
+                        
+                        if !dataString.isEmpty {
+                            print("getPointerUrlData: Using Default eventYear: \(dataString)")
                         } else {
-                            dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
-                            print ("   is Current - setting to \(dataString) from Current (fallback)")
+                            // Ultimate fallback - try cached file or use hardcoded default
+                            do {
+                                if FileManager.default.fileExists(atPath: eventYearFile) {
+                                    dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                                    print("getPointerUrlData: Using cached eventYear from file: \(dataString)")
+                                } else {
+                                    dataString = "2026" // Hardcoded fallback
+                                    print("getPointerUrlData: Using hardcoded fallback eventYear: \(dataString)")
+                                }
+                            } catch {
+                                dataString = "2026" // Hardcoded fallback
+                                print("getPointerUrlData: Error reading cached file, using hardcoded fallback: \(dataString)")
+                            }
                         }
-                    } catch {
-                        dataString = pointerValues["Current"]?["eventYear"] ?? "Problem"
-                        print ("   is Current - setting to \(dataString) from Current (final fallback)")
                     }
                 }
-                
-                if dataString == "Problem" {
-                   print ("This is BAD - no valid year found and no cached year available")
-                   // Don't exit, try to use a reasonable default
-                   dataString = "2026" // Use a reasonable default year
-                   print ("Using default year \(dataString) as fallback")
-                }
-                
+            }
+            
+            if dataString == "Problem" {
+               print ("This is BAD - no valid year found and no cached year available")
+               // Don't exit, try to use a reasonable default
+               dataString = "2026" // Use a reasonable default year
+               print ("Using default year \(dataString) as fallback")
             }
             do {
                 if (dataString.count == 4){
                     try dataString.write(toFile: eventYearFile, atomically: true,encoding: String.Encoding.utf8)
-                    try cacheVariables.storePointerData[keyValue] = dataString
+                    try cacheVariables.storePointerData[cacheKey] = dataString
                     print ("getPointerUrlData: Just created eventYear file using \(keyValue) = \(dataString)" + eventYearFile);
                 } else {
                     try dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
@@ -485,6 +539,14 @@ func getPointerUrlData(keyValue: String) -> String {
                 }
             } catch let error as NSError {
                 print ("getPointerUrlData: Encountered an error of creating file eventYear  using \(keyValue) = \(dataString) File " + error.debugDescription)
+            }
+            
+            // Cache the eventYear result in memory for future fast access
+            if !dataString.isEmpty && dataString != "Problem" {
+                storePointerLock.sync() {
+                    cacheVariables.storePointerData[cacheKey] = dataString
+                }
+                print("getPointerUrlData: ✅ Cached eventYear result for \(cacheKey) = \(dataString)")
             }
         }
 
@@ -746,21 +808,22 @@ func checkAndHandleYearChange(newYear: String) {
 func ensureYearResolvedAtLaunch() -> Int {
     print("ensureYearResolvedAtLaunch: Starting year resolution")
     
-    // First try to read from cached file
-    var resolvedYear = ""
-    do {
-        if FileManager.default.fileExists(atPath: eventYearFile) {
-            resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-            print("ensureYearResolvedAtLaunch: Found cached year: \(resolvedYear)")
-        }
-    } catch {
-        print("ensureYearResolvedAtLaunch: Could not read cached year")
-    }
+    // Always resolve from pointer data to respect user's current preference
+    // The cached file might be outdated if user changed their year preference
+    print("ensureYearResolvedAtLaunch: Resolving from pointer data to respect user preference")
+    var resolvedYear = getPointerUrlData(keyValue: "eventYear")
     
-    // If no cached year, try to resolve from pointer data
+    // If pointer data resolution failed, try cached file as fallback
     if resolvedYear.isEmpty {
-        print("ensureYearResolvedAtLaunch: No cached year, resolving from pointer data")
-        resolvedYear = getPointerUrlData(keyValue: "eventYear")
+        print("ensureYearResolvedAtLaunch: Pointer resolution failed, trying cached file")
+        do {
+            if FileManager.default.fileExists(atPath: eventYearFile) {
+                resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
+                print("ensureYearResolvedAtLaunch: Found cached year as fallback: \(resolvedYear)")
+            }
+        } catch {
+            print("ensureYearResolvedAtLaunch: Could not read cached year")
+        }
     }
     
     // Validate the year
@@ -881,7 +944,7 @@ struct cacheVariables {
     
     static var bandPriorityStorageCache = [String:Int]()
     static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
-    static var scheduleTimeStaticCache = [TimeInterval : [String : String]]()
+    static var scheduleTimeStaticCache = [TimeInterval : [[String : String]]]()
     static var bandNamedStaticCache = [String :[String : String]]()
     static var attendedStaticCache = [String : String]()
     static var bandNamesStaticCache =  [String :[String : String]]()

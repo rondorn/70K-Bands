@@ -150,18 +150,47 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
             
             print("[YEAR_CHANGE_DEBUG] Processing time index: \(timeIndex)")
             unfilteredEventCount = unfilteredEventCount + 1
-            if (schedule.getTimeSortedSchedulingData()[timeIndex]?.isEmpty == false){
-                for bandName in (schedule.getTimeSortedSchedulingData()[timeIndex]?.keys ?? [:].keys) {
-                    unfilteredBandCount = unfilteredBandCount + 1
-                    guard
-                        let bandData = schedule.getBandSortedSchedulingData()[bandName],
-                        let timeData = bandData[timeIndex],
-                        let dateValue = timeData[dateField],
-                        let endTimeValue = timeData[endTimeField]
-                    else {
-                        print("Nil found for band: \(bandName), timeIndex: \(timeIndex)")
+            if let eventDataArray = schedule.getTimeSortedSchedulingData()[timeIndex], !eventDataArray.isEmpty {
+                // CRITICAL FIX: Process all events in this time slot (was losing events due to single event per time slot)
+                print("🔍 [DATA_ACCESS_DEBUG] Processing \(eventDataArray.count) events at timeIndex \(timeIndex)")
+                
+                for eventData in eventDataArray {
+                    // Get the band name from the event data (not from the keys!)
+                    guard let bandName = eventData[bandField], !bandName.isEmpty else {
+                        print("🔍 [DATA_ACCESS_DEBUG] ❌ No band name found in event data at timeIndex \(timeIndex)")
                         continue
                     }
+                    
+                    unfilteredBandCount = unfilteredBandCount + 1
+                    // Debug: Check each step of data access
+                    let allBandData = schedule.getBandSortedSchedulingData()
+                    print("🔍 [DATA_ACCESS_DEBUG] Checking band '\(bandName)' at timeIndex \(timeIndex)")
+                    
+                    guard let bandData = allBandData[bandName] else {
+                        print("🔍 [DATA_ACCESS_DEBUG] ❌ No band data found for '\(bandName)'")
+                        continue
+                    }
+                    print("🔍 [DATA_ACCESS_DEBUG] ✅ Found band data for '\(bandName)' with \(bandData.count) time slots")
+                    
+                    guard let timeData = bandData[timeIndex] else {
+                        print("🔍 [DATA_ACCESS_DEBUG] ❌ No time data found for '\(bandName)' at timeIndex \(timeIndex)")
+                        print("🔍 [DATA_ACCESS_DEBUG] Available time indices for '\(bandName)': \(Array(bandData.keys).sorted())")
+                        continue
+                    }
+                    print("🔍 [DATA_ACCESS_DEBUG] ✅ Found time data for '\(bandName)' at timeIndex \(timeIndex)")
+                    print("🔍 [DATA_ACCESS_DEBUG] Time data keys: \(timeData.keys.sorted())")
+                    
+                    guard let dateValue = timeData[dateField] else {
+                        print("🔍 [DATA_ACCESS_DEBUG] ❌ Missing '\(dateField)' for '\(bandName)' at timeIndex \(timeIndex)")
+                        continue
+                    }
+                    
+                    guard let endTimeValue = timeData[endTimeField] else {
+                        print("🔍 [DATA_ACCESS_DEBUG] ❌ Missing '\(endTimeField)' for '\(bandName)' at timeIndex \(timeIndex)")
+                        continue
+                    }
+                    
+                    print("🔍 [DATA_ACCESS_DEBUG] ✅ All required fields found for '\(bandName)' at timeIndex \(timeIndex)")
                     var eventEndTime = schedule.getDateIndex(dateValue, timeString: endTimeValue, band: bandName)
                     print ("start time is \(timeIndex), eventEndTime is \(eventEndTime)")
                     if (timeIndex > eventEndTime){
@@ -198,6 +227,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         
         bandCount = 0;
         eventCount = newAllBands.count;
+        
     } else {
         
         print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] returning Bands!!! Band-sorted count: \(schedule.getBandSortedSchedulingData().count), Time-sorted count: \(schedule.getTimeSortedSchedulingData().count), sortedBy: \(sortedBy)");
@@ -212,6 +242,7 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         return newAllBands
     }
 
+    // This code runs for name and time sorting (not the else case above)
     newAllBands.sort();
     
     if (newAllBands.count == 0 && getShowOnlyWillAttened() == true){
@@ -245,6 +276,10 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
 func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended)-> Bool{
     let startTime = CFAbsoluteTimeGetCurrent()
     var include = false;
+    
+    // CRITICAL DEBUG: Log all timeIndex values to understand the filtering
+    print("🔍 [APPLY_FILTERS_DEBUG] Band: '\(bandName)', timeIndex: \(timeIndex), isZero: \(timeIndex.isZero)")
+    
     if (timeIndex.isZero == false){
         let willAttendStartTime = CFAbsoluteTimeGetCurrent()
         if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle) == true){
@@ -259,32 +294,60 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
         if (getShowOnlyWillAttened() == true){
             include = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle);
         } else {
-            guard
-                let bandData = schedule.getBandSortedSchedulingData()[bandName],
-                let timeData = bandData[timeIndex],
-                let typeValue = timeData[typeField], !typeValue.isEmpty
-            else {
-                print("applyFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
+            print("🔍 [MAIN_LIST_DEBUG] applyFilters checking band '\(bandName)' at timeIndex \(timeIndex)")
+            let allBandData = schedule.getBandSortedSchedulingData()
+            print("🔍 [MAIN_LIST_DEBUG] Total bands in schedule data: \(allBandData.count)")
+            
+            guard let bandData = allBandData[bandName] else {
+                print("🔍 [MAIN_LIST_DEBUG] ❌ No schedule data found for band '\(bandName)'")
+                return false
+            }
+            print("🔍 [MAIN_LIST_DEBUG] Band '\(bandName)' has \(bandData.count) events")
+            
+            guard let timeData = bandData[timeIndex] else {
+                print("🔍 [MAIN_LIST_DEBUG] ❌ No event data at timeIndex \(timeIndex) for band '\(bandName)'")
+                return false
+            }
+            print("🔍 [MAIN_LIST_DEBUG] Found event data at timeIndex \(timeIndex) for band '\(bandName)': \(timeData)")
+            
+            guard let typeValue = timeData[typeField], !typeValue.isEmpty else {
+                print("🔍 [MAIN_LIST_DEBUG] ❌ Missing or empty event type for band '\(bandName)' at timeIndex \(timeIndex)")
                 return false
             }
             let eventType = typeValue
             if (eventType == unofficalEventType){
                 unfilteredCruiserEventCount = unfilteredCruiserEventCount + 1
             }
+            print("🔍 [MAIN_LIST_DEBUG] Testing eventType '\(eventType)' for band '\(bandName)'")
             if (eventTypeFiltering(eventType) == true){
+                print("🔍 [MAIN_LIST_DEBUG] ✅ Event type '\(eventType)' passed eventTypeFiltering")
                 if (!bandData.isEmpty) {
-                    if let locationValue = timeData[locationField], venueFiltering(locationValue) == true {
-                        if (rankFiltering(bandName, priorityManager: PriorityManager()) == true){
-                            if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
-                                unofficalEventCount = unofficalEventCount + 1
+                    if let locationValue = timeData[locationField] {
+                        print("🔍 [MAIN_LIST_DEBUG] Testing venue '\(locationValue)' for event type '\(eventType)'")
+                        if venueFiltering(locationValue) == true {
+                            print("🔍 [MAIN_LIST_DEBUG] ✅ Venue '\(locationValue)' passed venueFiltering")
+                            if (rankFiltering(bandName, priorityManager: PriorityManager()) == true){
+                                print("🔍 [MAIN_LIST_DEBUG] ✅ Band '\(bandName)' passed rankFiltering - EVENT INCLUDED")
+                                if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
+                                    unofficalEventCount = unofficalEventCount + 1
+                                }
+                                include = true
+                            } else {
+                                print("🔍 [MAIN_LIST_DEBUG] ❌ Band '\(bandName)' failed rankFiltering")
                             }
-                            include = true
+                        } else {
+                            print("🔍 [MAIN_LIST_DEBUG] ❌ Venue '\(locationValue)' failed venueFiltering for event type '\(eventType)'")
                         }
+                    } else {
+                        print("🔍 [MAIN_LIST_DEBUG] ❌ No location value found for band '\(bandName)' at timeIndex \(timeIndex)")
                     }
                 }
+            } else {
+                print("🔍 [MAIN_LIST_DEBUG] ❌ Event type '\(eventType)' failed eventTypeFiltering")
             }
         }
     } else {
+        print("🔍 [APPLY_FILTERS_DEBUG] timeIndex.isZero == true for '\(bandName)', setting include = true")
         include = true
     }
     
@@ -558,59 +621,83 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
     
     var showEvent = false;
     
+    // DEBUG: Log all event types we encounter
+    print("🔍 [EVENT_TYPE_DEBUG] Filtering eventType: '\(eventType)'")
+    print("🔍 [EVENT_TYPE_DEBUG] Expected showType: '\(showType)', meetAndGreetype: '\(meetAndGreetype)'")
+    
     if (eventType == specialEventType && getShowSpecialEvents() == true){
         showEvent = true;
+        print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing SPECIAL event: '\(eventType)'")
  
     } else if (eventType == karaokeEventType && getShowSpecialEvents() == true){
             showEvent = true;
+            print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing KARAOKE event: '\(eventType)'")
             
     } else if (eventType == meetAndGreetype && getShowMeetAndGreetEvents() == true){
         showEvent = true;
+        print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing MEET & GREET event: '\(eventType)'")
     
     } else if (eventType == clinicType && getShowMeetAndGreetEvents() == true){
         showEvent = true;
+        print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing CLINIC event: '\(eventType)'")
 
     } else if (eventType == listeningPartyType && getShowMeetAndGreetEvents() == true){
         showEvent = true;
+        print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing LISTENING PARTY event: '\(eventType)'")
         
     } else if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && getShowUnofficalEvents() == true){
         showEvent = true;
+        print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing UNOFFICIAL event: '\(eventType)'")
     
     } else if (eventType == showType){
        showEvent = true;
+       print("🔍 [EVENT_TYPE_DEBUG] ✅ Showing SHOW event: '\(eventType)'")
 
     } else {
         numberOfFilteredRecords = numberOfFilteredRecords + 1
+        print("🔍 [EVENT_TYPE_DEBUG] ❌ FILTERED OUT event type: '\(eventType)' (not matching any expected types)")
     }
     
+    print("🔍 [EVENT_TYPE_DEBUG] Result for '\(eventType)': \(showEvent ? "SHOW" : "HIDE")")
     return showEvent
 }
 
 func venueFiltering(_ venue: String) -> Bool {
     
-    print ("filtering venue is " + venue)
+    print("🔍 [VENUE_DEBUG] Filtering venue: '\(venue)'")
+    print("🔍 [VENUE_DEBUG] Expected venues - Pool: '\(poolVenueText)', Theater: '\(theaterVenueText)', Rink: '\(rinkVenueText)', Lounge: '\(loungeVenueText)'")
+    print("🔍 [VENUE_DEBUG] Show settings - Pool: \(getShowPoolShows()), Theater: \(getShowTheaterShows()), Rink: \(getShowRinkShows())")
+    print("🔍 [VENUE_DEBUG] Additional settings - Lounge: \(getShowLoungeShows()), Other: \(getShowOtherShows())")
 
     var showVenue = false;
     
     if (venue == poolVenueText && getShowPoolShows() == true){
         showVenue = true
+        print("🔍 [VENUE_DEBUG] ✅ Pool venue '\(venue)' ALLOWED")
     
     } else if (venue == theaterVenueText && getShowTheaterShows() == true){
         showVenue = true
+        print("🔍 [VENUE_DEBUG] ✅ Theater venue '\(venue)' ALLOWED")
 
     } else if (venue == rinkVenueText && getShowRinkShows() == true){
         showVenue = true
+        print("🔍 [VENUE_DEBUG] ✅ Rink venue '\(venue)' ALLOWED")
         
     } else if (venue == loungeVenueText && getShowLoungeShows() == true){
         showVenue = true
+        print("🔍 [VENUE_DEBUG] ✅ Lounge venue '\(venue)' ALLOWED")
         
     } else if (venue != loungeVenueText && venue != rinkVenueText && venue != theaterVenueText && venue != poolVenueText && getShowOtherShows() == true){
         showVenue = true
+        print("🔍 [VENUE_DEBUG] ✅ Other venue '\(venue)' ALLOWED (getShowOtherShows: \(getShowOtherShows()))")
         
     } else {
         numberOfFilteredRecords = numberOfFilteredRecords + 1
+        print("🔍 [VENUE_DEBUG] ❌ Venue '\(venue)' REJECTED - doesn't match any allowed venue or setting is disabled")
+        print("🔍 [VENUE_DEBUG] Lounge setting: \(getShowLoungeShows()), Other setting: \(getShowOtherShows())")
     }
     
+    print("🔍 [VENUE_DEBUG] Final result for venue '\(venue)': \(showVenue ? "ALLOW" : "REJECT")")
     return showVenue
 }
 

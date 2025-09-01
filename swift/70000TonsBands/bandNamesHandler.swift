@@ -36,6 +36,8 @@ open class bandNamesHandler {
     static var lastReadBandFileCallTime: Date? = nil
     
     private init() {
+        // Initialize eventYear from global variable (defined in Constants.swift)
+        // Use the global eventYear variable directly
         print("🔄 bandNamesHandler (Core Data) singleton initialized - Loading from Core Data")
         getCachedData()
     }
@@ -46,11 +48,22 @@ open class bandNamesHandler {
     private func loadCacheFromCoreData() {
         guard !cacheLoaded else { return }
         
-        staticBandName.async(flags: .barrier) {
+        print("🔄 Loading bands from Core Data...")
+        
+        // CRITICAL: Update eventYear from pointer data like scheduleHandler does
+        let newEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        if newEventYear != eventYear {
+            print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
+            eventYear = newEventYear
+        }
+        
+        staticBandName.sync {
             self.bandNames = [String: [String: String]]()
             self.bandNamesArray = [String]()
             
-            let bands = self.coreDataManager.fetchBands()
+            // CRITICAL FIX: Filter bands by the current event year
+            let bands = self.coreDataManager.fetchBands(forYear: Int32(eventYear))
+            print("🔄 Fetched \(bands.count) bands from Core Data for year \(eventYear)")
             
             for band in bands {
                 guard let bandName = band.bandName, !bandName.isEmpty else { continue }
@@ -99,6 +112,32 @@ open class bandNamesHandler {
     // MARK: - Original API Methods (100% Compatible)
     
     /// Loads band name data from cache if available, otherwise loads from Core Data.
+    /// PERFORMANCE OPTIMIZED: Load data from cache immediately (no network calls)
+    func loadCachedDataImmediately() {
+        print("🚀 bandNamesHandler: Loading cached data immediately (no network calls)")
+        
+        // Ensure year is synchronized
+        let newEventYear = ensureYearResolvedAtLaunch()
+        if newEventYear != eventYear {
+            print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
+            eventYear = newEventYear
+        }
+        
+        // Load from Core Data cache immediately
+        loadCacheFromCoreData()
+        
+        var isEmpty = false
+        staticBandName.sync {
+            isEmpty = self.bandNames.isEmpty
+        }
+        
+        if isEmpty {
+            print("⚠️ bandNamesHandler: No cached data available")
+        } else {
+            print("✅ bandNamesHandler: Loaded \(self.bandNamesArray.count) cached bands immediately")
+        }
+    }
+    
     /// Always shows cached/Core Data data immediately except on first launch or explicit refresh.
     /// Triggers background update if needed.
     func getCachedData(forceNetwork: Bool = false, completion: (() -> Void)? = nil) {
@@ -159,7 +198,8 @@ open class bandNamesHandler {
                 print("No cached/Core Data data, fetching from network (blocking UI)")
             }
             DispatchQueue.global(qos: .default).async {
-                self.gatherData(forceDownload: false, completion: completion)
+                // CRITICAL FIX: When Core Data is empty, we need to force download
+                self.gatherData(forceDownload: true, completion: completion)
             }
         }
         print("Done Loading bandName Data cache")
@@ -214,12 +254,19 @@ open class bandNamesHandler {
     /// Uses checksum comparison to avoid unnecessary cache rebuilds when data hasn't changed.
     /// Calls completion handler when done.
     /// - Parameter forceDownload: If true, forces download from network. If false, only reads from cache.
-    func gatherData(forceDownload: Bool = false, completion: (() -> Void)? = nil) {
-        // Prevent concurrent band data loading
+    /// - Parameter isYearChangeOperation: If true, this operation can override existing operations
+    func gatherData(forceDownload: Bool = false, isYearChangeOperation: Bool = false, completion: (() -> Void)? = nil) {
+        // Thread management: prevent concurrent operations unless it's a year change
         if isLoadingBandData {
-            print("[YEAR_CHANGE_DEBUG] Band data loading already in progress, skipping duplicate request")
-            completion?()
-            return
+            if isYearChangeOperation {
+                print("🔄 [THREAD_MGMT] Year change operation detected - cancelling existing band data operation")
+                // Force reset to allow year change to proceed
+                isLoadingBandData = false
+            } else {
+                print("🚫 [THREAD_MGMT] Band data loading already in progress, killing Thread B")
+                completion?()
+                return
+            }
         }
         
         isLoadingBandData = true
@@ -237,9 +284,22 @@ open class bandNamesHandler {
             
             var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
             print("DEBUG_MARKER: Artist URL from pointer: \(artistUrl)")
+            print("DEBUG_MARKER: Artist URL pointer key: \(getArtistUrl())")
             print("DEBUG_MARKER: Downloading from URL: \(artistUrl)")
             
-            let httpData = getUrlData(urlString: artistUrl)
+            // Ensure network call happens on background thread to prevent main thread blocking
+            var httpData = ""
+            if Thread.isMainThread {
+                print("bandNamesHandler: Main thread detected, dispatching to background for network call")
+                let semaphore = DispatchSemaphore(value: 0)
+                DispatchQueue.global(qos: .userInitiated).async {
+                    httpData = getUrlData(urlString: artistUrl)
+                    semaphore.signal()
+                }
+                semaphore.wait()
+            } else {
+                httpData = getUrlData(urlString: artistUrl)
+            }
             print("DEBUG_MARKER: Downloaded \(httpData.count) characters of CSV data")
             
             // Show first few lines of CSV for debugging
@@ -291,6 +351,9 @@ open class bandNamesHandler {
                     print("DEBUG_MARKER: Smart CSV import result: \(importSuccess)")
                     
                     if importSuccess {
+                        // Reset cache loaded flag to force reload of new data
+                        self.cacheLoaded = false
+                        print("DEBUG_MARKER: Reset cacheLoaded flag after successful CSV import")
                         // Store new checksum only if import was successful
                         storeChecksum(newChecksum)
                         print("DEBUG_MARKER: Successfully updated Core Data and stored new checksum")
@@ -313,6 +376,12 @@ open class bandNamesHandler {
                         
                         let cleanupSuccess = csvImporter.importBandsFromCSVString(httpData)
                         print("DEBUG_MARKER: Cleanup import result: \(cleanupSuccess)")
+                        
+                        if cleanupSuccess {
+                            // Reset cache loaded flag to force reload of new data
+                            self.cacheLoaded = false
+                            print("DEBUG_MARKER: Reset cacheLoaded flag after cleanup import")
+                        }
                     } else {
                         print("DEBUG_MARKER: Band counts match - no cleanup needed")
                     }
@@ -358,9 +427,30 @@ open class bandNamesHandler {
                         Thread.sleep(forTimeInterval: 1.0)
                     }
                     
-                    let httpData = getUrlData(urlString: artistUrl)
+                    // Ensure network call happens on background thread to prevent main thread blocking
+                    var httpData = ""
+                    if Thread.isMainThread {
+                        print("bandNamesHandler: Main thread detected, dispatching to background for network call")
+                        let semaphore = DispatchSemaphore(value: 0)
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            httpData = getUrlData(urlString: artistUrl)
+                            semaphore.signal()
+                        }
+                        semaphore.wait()
+                    } else {
+                        httpData = getUrlData(urlString: artistUrl)
+                    }
                     if (httpData.isEmpty == false && httpData.count > 100) {
                         csvImporter.importBandsFromCSVString(httpData)
+                        
+                        // Reset cache loaded flag to force reload of new data
+                        self.cacheLoaded = false
+                        print("DEBUG_MARKER: Reset cacheLoaded flag after CSV import")
+                        
+                        // Ensure eventYear is synchronized before loading cache
+                        eventYear = ensureYearResolvedAtLaunch()
+                        print("DEBUG_MARKER: Synchronized eventYear to \(eventYear) before loading cache")
+                        
                         loadCacheFromCoreData()
                         staticBandName.sync {
                             isEmpty = self.bandNames.isEmpty
@@ -405,16 +495,19 @@ open class bandNamesHandler {
                 populateCache(completion: completion)
                 
                 // Check if combined image list needs regeneration after artist data is loaded
-                print("[CHECKSUM_DEBUG] Artist data changed, checking if combined image list needs regeneration")
-                let scheduleHandle = scheduleHandler.shared
-                let compatibleHandler = bandNamesHandler.shared
-                if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: compatibleHandler, scheduleHandle: scheduleHandle) {
-                    print("[CHECKSUM_DEBUG] Regenerating combined image list due to changed artist data")
-                    CombinedImageListHandler.shared.generateCombinedImageList(
-                        bandNameHandle: compatibleHandler,
-                        scheduleHandle: scheduleHandle
-                    ) {
-                        print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after artist data load")
+                // Run this on a background thread to avoid blocking the current thread
+                DispatchQueue.global(qos: .utility).async {
+                    print("[CHECKSUM_DEBUG] Artist data changed, checking if combined image list needs regeneration")
+                    let scheduleHandle = scheduleHandler.shared
+                    let compatibleHandler = bandNamesHandler.shared
+                    if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: compatibleHandler, scheduleHandle: scheduleHandle) {
+                        print("[CHECKSUM_DEBUG] Regenerating combined image list due to changed artist data")
+                        CombinedImageListHandler.shared.generateCombinedImageList(
+                            bandNameHandle: compatibleHandler,
+                            scheduleHandle: scheduleHandle
+                        ) {
+                            print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after artist data load")
+                        }
                     }
                 }
             } else {
@@ -434,6 +527,12 @@ open class bandNamesHandler {
         
         // Reset loading flag at the end
         isLoadingBandData = false
+    }
+    
+    /// Backward-compatible gatherData method for protocol conformance
+    /// Calls the main gatherData method with isYearChangeOperation: false
+    func gatherData(forceDownload: Bool, completion: (() -> Void)?) {
+        gatherData(forceDownload: forceDownload, isYearChangeOperation: false, completion: completion)
     }
 
     /// Populates the static cache variables with the current bandNames dictionary.
@@ -469,6 +568,11 @@ open class bandNamesHandler {
         
         // Import to Core Data instead of writing to file
         csvImporter.importBandsFromCSVString(httpData)
+        
+        // Reset cache loaded flag to force reload of new data
+        self.cacheLoaded = false
+        print("DEBUG_MARKER: Reset cacheLoaded flag after writeBandFile CSV import")
+        
         print("Just imported data to Core Data");
     }
 
