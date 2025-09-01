@@ -279,6 +279,7 @@ func setSortedBy(_ value: String){
     sortedBy = value
 }
 func getSortedBy() -> String{
+    print("🎯 SORT DEBUG - getSortedBy() returning: '\(sortedBy)'")
     return sortedBy
 }
 

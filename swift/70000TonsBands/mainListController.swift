@@ -86,7 +86,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
     if schedule.getBandSortedSchedulingData().isEmpty && schedule.getTimeSortedSchedulingData().isEmpty {
         print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] determineBandOrScheduleList: Schedule data is empty, returning bands list")
         newAllBands = allBands;
-        newAllBands.sort();
+        // Sort bands alphabetically when no schedule data
+        newAllBands.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending };
         bandCount = newAllBands.count;
         eventCount = 0;
         bandCounter = allBands.count
@@ -203,7 +204,8 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] returning Bands!!! Band-sorted count: \(schedule.getBandSortedSchedulingData().count), Time-sorted count: \(schedule.getTimeSortedSchedulingData().count), sortedBy: \(sortedBy)");
         //return immediatly. Dont need to do schedule sorting magic
         newAllBands = allBands;
-        newAllBands.sort();
+        // Sort bands alphabetically when no schedule processing needed
+        newAllBands.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending };
         bandCount = newAllBands.count;
         eventCount = 0;
         bandCounter = allBands.count
@@ -212,7 +214,50 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
         return newAllBands
     }
 
-    newAllBands.sort();
+    // SORTING DEBUG: Log items before sorting
+    print("🎯 SORT DEBUG - mainListController: About to sort \(newAllBands.count) items with sortedBy='\(sortedBy)'")
+    for (index, item) in newAllBands.prefix(5).enumerated() {
+        let components = item.components(separatedBy: ":")
+        print("🎯 SORT DEBUG - Item[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
+    }
+    
+    // Sort with Events first, then Bands - both sorted appropriately based on sort preference
+    newAllBands.sort { item1, item2 in
+        // Events have format: "timeIndex:bandName" or "bandName:timeIndex" (2 components)
+        // Bands have format: just the band name (1 component, no colons)
+        let components1 = item1.components(separatedBy: ":")
+        let components2 = item2.components(separatedBy: ":")
+        let isEvent1 = components1.count == 2
+        let isEvent2 = components2.count == 2
+        
+        // SORTING DEBUG: Log comparison details
+        print("🎯 SORT DEBUG - Comparing: '\(item1)' (\(components1.count) parts, isEvent:\(isEvent1)) vs '\(item2)' (\(components2.count) parts, isEvent:\(isEvent2))")
+        
+        // Events always come before band names
+        if isEvent1 && !isEvent2 {
+            print("🎯 SORT DEBUG - Event comes before band: '\(item1)' < '\(item2)'")
+            return true
+        } else if !isEvent1 && isEvent2 {
+            print("🎯 SORT DEBUG - Band comes after event: '\(item1)' > '\(item2)'")
+            return false
+        } else {
+            // Both are same type, sort based on current sort preference
+            if sortedBy == "name" {
+                // Sort alphabetically by name
+                return getNameFromSortable(item1, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: sortedBy)) == .orderedAscending
+            } else {
+                // Sort by time for events, alphabetically for bands
+                return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+            }
+        }
+    };
+    
+    // SORTING DEBUG: Log items after sorting
+    print("🎯 SORT DEBUG - mainListController: After sorting, first 5 items:")
+    for (index, item) in newAllBands.prefix(5).enumerated() {
+        let components = item.components(separatedBy: ":")
+        print("🎯 SORT DEBUG - Sorted[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
+    }
     
     if (newAllBands.count == 0 && getShowOnlyWillAttened() == true){
         //setShowOnlyWillAttened(false);
