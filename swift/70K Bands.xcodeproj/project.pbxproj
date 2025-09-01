@@ -226,6 +226,12 @@
 		11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
+		11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
+		11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
+		11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
+		11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
+		11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
+		11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
 		11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
@@ -382,6 +388,8 @@
 		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
+		11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
+		11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCSVImporter.swift; sourceTree = "<group>"; };
 		11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandler.swift; sourceTree = "<group>"; };
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
 		11C8BDC91A7D398400037F2B /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
@@ -512,6 +520,8 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
+				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -1130,6 +1140,8 @@
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
 				1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */,
 				1147D70F2E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
+				11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
+				11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1197,6 +1209,8 @@
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
 				1147D7112E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
+				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
+				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1264,6 +1278,8 @@
 				1172EE252E5A1C4D006E3596 /* CustomBandDescription.swift in Sources */,
 				1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */,
 				1147D7132E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
+				11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
+				11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

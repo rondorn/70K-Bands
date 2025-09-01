@@ -165,6 +165,7 @@ func setShowTheaterShows(_ value: Bool){
     showTheaterShows = value
 }
 func getShowTheaterShows() -> Bool{
+    print("🔍 [SETTINGS_DEBUG] getShowTheaterShows() returning: \(showTheaterShows)")
     return showTheaterShows
 }
 
@@ -172,6 +173,7 @@ func setShowPoolShows(_ value: Bool){
     showPoolShows = value
 }
 func getShowPoolShows() -> Bool{
+    print("🔍 [SETTINGS_DEBUG] getShowPoolShows() returning: \(showPoolShows)")
     return showPoolShows
 }
 
@@ -179,6 +181,7 @@ func setShowRinkShows(_ value: Bool){
     showRinkShows = value
 }
 func getShowRinkShows() -> Bool{
+    print("🔍 [SETTINGS_DEBUG] getShowRinkShows() returning: \(showRinkShows)")
     return showRinkShows
 }
 
@@ -351,6 +354,8 @@ func readFiltersFile(){
         writeFiltersFile()
     }
     
+
+    
     if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
         print ("Status of sortedBy loading 1 " + data)
         let dataArray = data.components(separatedBy: ";")
@@ -452,15 +457,20 @@ func readFiltersFile(){
                 setMinBeforeAlertValue(Int(valueArray[1]) ?? 10)
 
             case "artistUrl":
+                print("🎯 [FILTERS_DEBUG] Loading artistUrl from file: '\(valueArray[1])'")
                 setArtistUrl(valueArray[1])
                 
             case "scheduleUrl":
+                print("🎯 [FILTERS_DEBUG] Loading scheduleUrl from file: '\(valueArray[1])'")
                 setScheduleUrl(valueArray[1])
                 
                 default:
                     print("Not sure why this would happen")
             }
         }
+        print("🎯 [FILTERS_DEBUG] After loading filters file:")
+        print("🎯 [FILTERS_DEBUG] - artistUrlPointer = '\(artistUrlPointer)'")
+        print("🎯 [FILTERS_DEBUG] - scheduleUrlPointer = '\(scheduleUrlPointer)'")
         print ("Loading setScheduleUrl = \(getScheduleUrl())")
         print ("Loading mustSeeOn = \(getMustSeeOn())")
     }

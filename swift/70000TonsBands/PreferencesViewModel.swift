@@ -471,6 +471,9 @@ class PreferencesViewModel: ObservableObject {
         // Clear all caches (pointers already updated above)
         print("🎯 STEP 4: Clearing all caches and preparing for data refresh")
         
+        // CRITICAL: Clear Core Data to remove old year's data
+        CoreDataManager.shared.clearAllData()
+        
         // Clear static caches
         bandNamesHandler.shared.clearCachedData()
         // LEGACY: Priority cache clearing now handled by PriorityManager if needed
