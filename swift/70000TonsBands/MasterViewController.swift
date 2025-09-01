@@ -1365,7 +1365,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            sortedBy = "time"
+            // Don't override user's sort preference when there are only bands
         } else if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
             // Mixed event types (not all cruiser organized) - show event count
             labeleCounter = listCount
@@ -1380,7 +1380,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            sortedBy = "time"
+            // Don't override user's sort preference when there are only bands
         }
 
         var currentYearSetting = getScheduleUrl()
