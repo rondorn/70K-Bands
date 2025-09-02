@@ -260,6 +260,10 @@ class PreferencesViewModel: ObservableObject {
         hideExpiredEvents = true
         setHideExpireScheduleData(true)
         
+        // 🔧 FIX: Immediately write preferences to prevent iPad split-screen reversion
+        print("🎛️ [PREFERENCES_SYNC] Writing Band List preference immediately to prevent reversion")
+        writeFiltersFile()
+        
         // Refresh display and navigate back immediately (data already loaded during year change)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
         masterView.refreshData(isUserInitiated: true)
@@ -275,6 +279,10 @@ class PreferencesViewModel: ObservableObject {
         // Show expired events for event list
         hideExpiredEvents = false
         setHideExpireScheduleData(false)
+        
+        // 🔧 FIX: Immediately write preferences to prevent iPad split-screen reversion
+        print("🎛️ [PREFERENCES_SYNC] Writing Event List preference immediately to prevent reversion")
+        writeFiltersFile()
         
         // Refresh display and navigate back immediately (data already loaded during year change)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
@@ -704,6 +712,12 @@ class PreferencesViewModel: ObservableObject {
             print("✅ Year change completed to \(eventYearChangeAttempt) with verified data loading")
             
             // Handle different year types
+            print("🐛 [REVERT_DEBUG] Evaluating year type:")
+            print("🐛 [REVERT_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
+            print("🐛 [REVERT_DEBUG] - isYearString: \(eventYearChangeAttempt.isYearString)")
+            print("🐛 [REVERT_DEBUG] - != Current: \(eventYearChangeAttempt != "Current")")
+            print("🐛 [REVERT_DEBUG] - Combined condition: \(eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current")")
+            
             if eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current" {
                 // For specific years, show Band List vs Event List choice
                 // Data is already fully loaded, so user can make choice immediately
@@ -711,9 +725,23 @@ class PreferencesViewModel: ObservableObject {
                 isLoadingData = false
                 showBandEventChoice = true
             } else {
-                // For "Current" year, automatically use Band List
-                hideExpiredEvents = true
-                setHideExpireScheduleData(true)
+                // For "Current" year - only auto-enable hideExpiredEvents if this is an actual year change TO Current
+                let isActualYearChangeToCurrentBool = (currentYearSetting != eventYearChangeAttempt && eventYearChangeAttempt == "Current") || (!currentYearSetting.isYearString && eventYearChangeAttempt == "Current")
+                print("🐛 [REVERT_DEBUG] Checking if this is a year change TO Current:")
+                print("🐛 [REVERT_DEBUG] - currentYearSetting: '\(currentYearSetting)'")
+                print("🐛 [REVERT_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
+                print("🐛 [REVERT_DEBUG] - isActualYearChangeToCurrentBool: \(isActualYearChangeToCurrentBool)")
+                
+                if isActualYearChangeToCurrentBool {
+                    print("🐛 [REVERT_DEBUG] ⚠️ AUTOMATIC BAND LIST MODE TRIGGERED - This is a year change TO Current")
+                    print("🐛 [REVERT_DEBUG] Current hideExpiredEvents before override: \(hideExpiredEvents)")
+                    hideExpiredEvents = true
+                    setHideExpireScheduleData(true)
+                    print("🐛 [REVERT_DEBUG] hideExpiredEvents after override: \(hideExpiredEvents)")
+                } else {
+                    print("🐛 [REVERT_DEBUG] ✅ NOT a year change TO Current - preserving user preference")
+                    print("🐛 [REVERT_DEBUG] User preference hideExpiredEvents: \(hideExpiredEvents)")
+                }
                 
                 // Ensure schedule data is loaded (same as Band/Event List choices)
                 Task {
@@ -914,6 +942,12 @@ class PreferencesViewModel: ObservableObject {
         MasterViewController.notifyYearChangeCompleted()
         
         // Handle different year types
+        print("🐛 [REVERT_DEBUG] (Second location) Evaluating year type:")
+        print("🐛 [REVERT_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
+        print("🐛 [REVERT_DEBUG] - isYearString: \(eventYearChangeAttempt.isYearString)")
+        print("🐛 [REVERT_DEBUG] - != Current: \(eventYearChangeAttempt != "Current")")
+        print("🐛 [REVERT_DEBUG] - Combined condition: \(eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current")")
+        
         if eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current" {
             // For specific years, show Band List vs Event List choice
             // Data is already fully loaded, so user can make choice immediately
@@ -921,9 +955,23 @@ class PreferencesViewModel: ObservableObject {
             isLoadingData = false
             showBandEventChoice = true
         } else {
-            // For "Current" year, automatically use Band List
-            hideExpiredEvents = true
-            setHideExpireScheduleData(true)
+            // For "Current" year - only auto-enable hideExpiredEvents if this is an actual year change TO Current
+            let isActualYearChangeToCurrentBool = (currentYearSetting != eventYearChangeAttempt && eventYearChangeAttempt == "Current") || (!currentYearSetting.isYearString && eventYearChangeAttempt == "Current")
+            print("🐛 [REVERT_DEBUG] (Second location) Checking if this is a year change TO Current:")
+            print("🐛 [REVERT_DEBUG] - currentYearSetting: '\(currentYearSetting)'")
+            print("🐛 [REVERT_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
+            print("🐛 [REVERT_DEBUG] - isActualYearChangeToCurrentBool: \(isActualYearChangeToCurrentBool)")
+            
+            if isActualYearChangeToCurrentBool {
+                print("🐛 [REVERT_DEBUG] (Second location) ⚠️ AUTOMATIC BAND LIST MODE TRIGGERED - This is a year change TO Current")
+                print("🐛 [REVERT_DEBUG] Current hideExpiredEvents before override: \(hideExpiredEvents)")
+                hideExpiredEvents = true
+                setHideExpireScheduleData(true)
+                print("🐛 [REVERT_DEBUG] hideExpiredEvents after override: \(hideExpiredEvents)")
+            } else {
+                print("🐛 [REVERT_DEBUG] (Second location) ✅ NOT a year change TO Current - preserving user preference")
+                print("🐛 [REVERT_DEBUG] User preference hideExpiredEvents: \(hideExpiredEvents)")
+            }
             
             // Ensure schedule data is loaded (same as Band/Event List choices)
             Task {

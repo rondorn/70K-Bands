@@ -222,7 +222,26 @@ func getShowMeetAndGreetEvents() -> Bool{
     return showMeetAndGreetEvents
 }
 
+// Track when user explicitly sets preferences to prevent readFiltersFile from overriding
+private var lastUserPreferenceChangeTime: TimeInterval = 0
+
 func setHideExpireScheduleData(_ value: Bool){
+    // Check if this is called from readFiltersFile (which would be an override)
+    let callStack = Thread.callStackSymbols.joined(separator: " ")
+    let isFromReadFilters = callStack.contains("readFiltersFile")
+    
+    if isFromReadFilters {
+        // This is readFiltersFile trying to override a user preference
+        let timeSinceUserChange = Date().timeIntervalSince1970 - lastUserPreferenceChangeTime
+        if timeSinceUserChange < 5.0 { // Within 5 seconds of user change
+            // Block readFiltersFile from overriding recent user preference changes
+            return
+        }
+    } else {
+        // This is a direct user preference change - track the timestamp
+        lastUserPreferenceChangeTime = Date().timeIntervalSince1970
+    }
+    
     hideExpireScheduleData = value
 }
 func getHideExpireScheduleData() -> Bool{
@@ -289,9 +308,9 @@ func getSortedBy() -> String{
 
 func writeFiltersFile(){
     
-    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-        
-        var prefsString = String()
+    // CRITICAL FIX: Use synchronous write to prevent race conditions where read happens before write completes
+    // The async write was causing iPad preference reversion when rapid read/write cycles occurred
+    var prefsString = String()
         
         print ("Status of getWontSeeOn save = \(getWontSeeOn())")
         prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
@@ -336,13 +355,12 @@ func writeFiltersFile(){
         
         print ("Wrote prefs " + prefsString)
         do {
-            try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
+            try prefsString.write(to: lastFilters, atomically: true, encoding: String.Encoding.utf8)
             print ("saved sortedBy = " + getSortedBy())
         } catch {
             print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
         }
         print ("Saving showOnlyWillAttened = \(getShowOnlyWillAttened())")
-    }
 }
 
 

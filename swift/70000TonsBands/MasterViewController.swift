@@ -46,6 +46,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @IBOutlet var mainTableView: UITableView!
+    
+    // MARK: - Preference Synchronization
+    private var lastPreferenceReturnTime: TimeInterval?
+    private var justReturnedFromPreferences = false
     @IBOutlet weak var mainToolBar: UIToolbar!
     
     @IBOutlet weak var titleButton: UINavigationItem!
@@ -376,6 +380,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
     }
+    
+
     
     @objc func displayFCMToken(notification: NSNotification){
       guard let userInfo = notification.userInfo else {return}
@@ -762,6 +768,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] viewWillAppear START - returning from details")
+        print("🎛️ [PREFERENCES_SYNC] ⚠️ viewWillAppear called - this might override user preference changes!")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents at viewWillAppear start: \(getHideExpireScheduleData())")
         
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
@@ -776,22 +784,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let filtersTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", filtersTime))] viewWillAppear - filters written, starting background refresh")
+        print("🎛️ [PREFERENCES_SYNC] hideExpiredEvents after writeFiltersFile: \(getHideExpireScheduleData())")
         
-        // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
-        // This ensures the UI remains responsive when returning from background/details
-        // Simple cache refresh when returning from details - no background operations needed
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        // 🔧 FIX: Skip automatic refresh if we just returned from preferences to prevent override
+        if justReturnedFromPreferences {
+            print("🎛️ [PREFERENCES_SYNC] ⚠️ SKIPPING viewWillAppear refresh - just returned from preferences (flag-based detection)")
+            print("🎛️ [PREFERENCES_SYNC] This prevents overriding user's preference changes")
+            // Clear the flag after use
+            justReturnedFromPreferences = false
+        } else {
+            print("🎛️ [PREFERENCES_SYNC] Proceeding with viewWillAppear refresh (normal app flow)")
             
-            let backgroundStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
-            
-            // Just refresh from cache - no network operations needed - dispatch to main thread
-            DispatchQueue.main.async {
-            self.refreshBandList(reason: "Return from details - cache refresh")
-            
-            let backgroundEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
+            // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
+            // This ensures the UI remains responsive when returning from background/details
+            // Simple cache refresh when returning from details - no background operations needed
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
+                let backgroundStartTime = CFAbsoluteTimeGetCurrent()
+                print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
+                
+                // Just refresh from cache - no network operations needed - dispatch to main thread
+                DispatchQueue.main.async {
+                self.refreshBandList(reason: "Return from details - cache refresh")
+                
+                let backgroundEndTime = CFAbsoluteTimeGetCurrent()
+                print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
+                }
             }
         }
         
@@ -1241,6 +1260,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Called when returning from preferences screen (no year change - only refresh if needed)
     @objc func handleReturnFromPreferences() {
+        lastPreferenceReturnTime = Date().timeIntervalSince1970
+        justReturnedFromPreferences = true  // Set flag to prevent viewWillAppear override
+        
+        print("🎛️ [PREFERENCES_SYNC] ⚠️ handleReturnFromPreferences called - user returned from preferences")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents: \(getHideExpireScheduleData())")
+        print("🎛️ [PREFERENCES_SYNC] Set justReturnedFromPreferences flag to prevent viewWillAppear override")
         print("Handling return from preferences screen - no year change occurred")
         print("Performing light refresh (cache-based only, no network operations)")
         
@@ -1250,6 +1275,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Called when returning from preferences screen after year change (data already refreshed)
     @objc func handleReturnFromPreferencesAfterYearChange() {
+        lastPreferenceReturnTime = Date().timeIntervalSince1970
+        justReturnedFromPreferences = true  // Set flag to prevent viewWillAppear override
+        
+        print("🎛️ [PREFERENCES_SYNC] handleReturnFromPreferencesAfterYearChange called - user returned after year change")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents: \(getHideExpireScheduleData())")
+        print("🎛️ [PREFERENCES_SYNC] Set justReturnedFromPreferences flag to prevent viewWillAppear override")
         print("Handling return from preferences screen after year change")
         print("No additional refresh needed - data was already refreshed during year change")
         
