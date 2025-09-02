@@ -303,7 +303,28 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
         // Only include band if it has no visible events
         if !bandsWithVisibleEvents.contains(bandName) {
             
-            // Don't show fake bands (which are actually standalone events) as band-only entries
+            // ROBUST FAKE BAND DETECTION: Check if band is associated ONLY with unofficial/special events
+            // If so, it's a fake band created for those events and should not appear when those events are hidden
+            let allEventsForBand = band.events?.allObjects as? [Event] ?? []
+            let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
+            
+            // Check if ALL events for this band are fake event types
+            let isAllFakeEvents = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
+                let eventType = event.eventType ?? ""
+                return fakeEventTypes.contains(eventType)
+            }
+            
+            if isAllFakeEvents {
+                print("🎭 [FAKE_BAND_DEBUG] Filtering out fake band: '\(bandName)' (only has fake event types)")
+                for event in allEventsForBand.prefix(3) {
+                    let eventType = event.eventType ?? "unknown"
+                    let isVisible = filteredEvents.contains(event)
+                    print("🎭 [FAKE_BAND_DEBUG] - Event: '\(eventType)' at '\(event.location ?? "nil")' - Visible: \(isVisible)")
+                }
+                return nil
+            }
+            
+            // FALLBACK: Pattern matching for edge cases (legacy support)
             let standaloneEventPatterns = [
                 "Metal Madness", "Thank You", "Karaoke", "Special Event", 
                 "Meet and Greet", "Clinic", "Listening Party", 
@@ -316,11 +337,12 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                 "Event", "Activity", "Party", "Session"
             ]
             
-            let isFakeBand = standaloneEventPatterns.contains { pattern in
+            let isFakeBandByPattern = standaloneEventPatterns.contains { pattern in
                 bandName.localizedCaseInsensitiveContains(pattern)
             }
             
-            if isFakeBand {
+            if isFakeBandByPattern {
+                print("🎭 [FAKE_BAND_DEBUG] Filtering out fake band by pattern: '\(bandName)'")
                 return nil
             }
             
