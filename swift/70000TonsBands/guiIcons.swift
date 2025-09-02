@@ -136,7 +136,11 @@ func getEventTypeIcon (eventType: String, eventName: String)->UIImage {
         graphicName = unknownVenue
     }
     
-    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    if graphicName.isEmpty {
+        graphicImage = UIImage()
+    } else {
+        graphicImage = UIImage(named: graphicName) ?? UIImage()
+    }
     
     return graphicImage
     
@@ -146,12 +150,20 @@ func getSortButtonImage()->UIImage{
     
     var sortImage:UIImage
     
-    print ("scheduleIcon = \(getSortedBy())")
+    // Reduced logging for performance
     if (getSortedBy() == "name"){
-        sortImage = UIImage(named: scheduleIconSort) ?? UIImage()
+        if scheduleIconSort.isEmpty {
+            sortImage = UIImage()
+        } else {
+            sortImage = UIImage(named: scheduleIconSort) ?? UIImage()
+        }
         
     } else {
-        sortImage = UIImage(named: bandIconSort) ?? UIImage()
+        if bandIconSort.isEmpty {
+            sortImage = UIImage()
+        } else {
+            sortImage = UIImage(named: bandIconSort) ?? UIImage()
+        }
     }
     
     return sortImage

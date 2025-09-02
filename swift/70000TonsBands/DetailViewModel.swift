@@ -1174,34 +1174,44 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadScheduleEvents() {
-        print("DEBUG: loadScheduleEvents() called for band: \(bandName)")
-        print("DEBUG: loadScheduleEvents() - reloading attended data first")
-        attendedHandle.loadShowsAttended()  // Force reload of attended data
-        scheduleEvents = []
+        print("DEBUG: loadScheduleEvents() called for band: \(bandName) - cache only")
         
-        schedule.getCachedData()
+        // PERFORMANCE FIX: Detail screen uses only already-cached schedule data
+        var newScheduleEvents: [ScheduleEvent] = []
         
-        print("🔍 [DETAIL_SCHEDULE_DEBUG] Checking schedule data for band: '\(bandName)'")
-        print("🔍 [DETAIL_SCHEDULE_DEBUG] All available bands in schedulingData: \(Array(schedule.schedulingData.keys).sorted())")
-        print("🔍 [DETAIL_SCHEDULE_DEBUG] Total bands in schedulingData: \(schedule.schedulingData.count)")
+        // Check if schedule data is loaded WITHOUT triggering lazy loading
+        let isScheduleCacheLoaded = schedule.cacheLoaded
+        print("DEBUG: Schedule cache loaded: \(isScheduleCacheLoaded)")
         
-        if let bandSchedule = schedule.schedulingData[bandName], !bandSchedule.isEmpty {
-            print("🔍 [DETAIL_SCHEDULE_DEBUG] ✅ Found schedule for band '\(bandName)' with \(bandSchedule.count) time slots")
-            print("🔍 [DETAIL_SCHEDULE_DEBUG] Time indices for '\(bandName)': \(Array(bandSchedule.keys).sorted())")
+        guard isScheduleCacheLoaded else {
+            print("DEBUG: Schedule cache not loaded - showing empty schedule for detail screen")
+            scheduleEvents = []
+            return
+        }
+        
+        // Now safe to access schedulingData
+        let cachedSchedulingData = schedule.getBandSortedSchedulingData()
+        print("DEBUG: Using cached schedule data with \(cachedSchedulingData.count) bands")
+        
+        if let bandSchedule = cachedSchedulingData[bandName], !bandSchedule.isEmpty {
+            print("DEBUG: Found cached schedule for '\(bandName)' with \(bandSchedule.count) time slots")
             let sortedKeys = bandSchedule.keys.sorted()
-            
+
             for timeIndex in sortedKeys {
-                let location = schedule.getData(bandName, index: timeIndex, variable: locationField)
-                let day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
-                let startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
-                let endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
-                let eventType = schedule.getData(bandName, index: timeIndex, variable: typeField)
-                let notes = schedule.getData(bandName, index: timeIndex, variable: notesField)
+                // Use cached data directly to avoid any lazy loading
+                let eventData = bandSchedule[timeIndex] ?? [:]
+                let location = eventData[locationField] ?? ""
+                let day = monthDateRegionalFormatting(dateValue: eventData[dayField] ?? "")
+                let startTime = eventData[startTimeField] ?? ""
+                let endTime = eventData[endTimeField] ?? ""
+                let eventType = eventData[typeField] ?? ""
+                let notes = eventData[notesField] ?? ""
                 
                 let formattedStartTime = formatTimeValue(timeValue: startTime)
                 let formattedEndTime = formatTimeValue(timeValue: endTime)
                 
                 let venueColor = Color(getVenueColor(venue: location))
+                
                 // Get attended status and create appropriate icon (use raw location without venue suffix)
                 let attendedStatus = attendedHandle.getShowAttendedStatus(
                     band: bandName,
@@ -1210,28 +1220,19 @@ class DetailViewModel: ObservableObject {
                     eventType: eventType,
                     eventYearString: String(eventYear)
                 )
-                print("DEBUG: loadScheduleEvents() - attended status for \(bandName) at \(location): '\(attendedStatus)'")
-                
                 let attendedIcon: UIImage = {
                     switch attendedStatus {
                     case sawAllStatus:
-                        let icon = UIImage(named: "icon-seen") ?? UIImage()
-                        print("DEBUG: sawAllStatus - using icon-seen, got: \(icon)")
-                        return icon
+                        return UIImage(named: "icon-seen") ?? UIImage()
                     case sawSomeStatus:
-                        let icon = UIImage(named: "icon-seen-partial") ?? UIImage()
-                        print("DEBUG: sawSomeStatus - trying icon-seen-partial, got: \(icon)")
-                        return icon
+                        return UIImage(named: "icon-seen-partial") ?? UIImage()
                     case sawNoneStatus:
-                        print("DEBUG: sawNoneStatus - returning empty icon")
                         return UIImage() // No icon for "did not attend"
                     default:
-                        print("DEBUG: Unknown status '\(attendedStatus)' - returning empty icon")
                         return UIImage() // Default empty icon
                     }
                 }()
                 
-                print("DEBUG: Final attended status for \(bandName) at \(location): '\(attendedStatus)' -> icon size: \(attendedIcon.size)")
                 let eventTypeIcon = getEventTypeIcon(eventType: eventType, eventName: bandName)
                 
                 var dayText = ""
@@ -1264,21 +1265,19 @@ class DetailViewModel: ObservableObject {
                     rawLocation: location  // Keep original location without venue suffix for attendance tracking
                 )
                 
-                scheduleEvents.append(event)
+                newScheduleEvents.append(event)
             }
         } else {
-            print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ No schedule data found for band '\(bandName)'")
-            if schedule.schedulingData.isEmpty {
-                print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ schedulingData is completely empty")
-            } else {
-                print("🔍 [DETAIL_SCHEDULE_DEBUG] ❌ Band '\(bandName)' not found in schedulingData")
-                // Show a few example band names for comparison
-                let exampleBands = Array(schedule.schedulingData.keys).prefix(5)
-                print("🔍 [DETAIL_SCHEDULE_DEBUG] Example bands in schedulingData: \(Array(exampleBands))")
+            print("DEBUG: No cached schedule data found for band '\(bandName)'")
+            if cachedSchedulingData.isEmpty {
+                print("DEBUG: Schedule cache is empty - expected if main list hasn't loaded yet")
             }
         }
         
-        print("🔍 [DETAIL_SCHEDULE_DEBUG] Final scheduleEvents count for '\(bandName)': \(scheduleEvents.count)")
+        print("DEBUG: Found \(newScheduleEvents.count) schedule events for '\(bandName)'")
+        
+        // Update UI directly (we're already on main thread)
+        scheduleEvents = newScheduleEvents
     }
     
     private func loadNotes() {
@@ -1401,12 +1400,11 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadPriority() {
-        print("DEBUG: loadPriority() called for band: '\(bandName)'")
+        print("DEBUG: loadPriority() called for band: '\(bandName)' - cache only")
         
-        // Set flag to prevent didSet from triggering saves during data loading
+        // PERFORMANCE FIX: Detail screen should only read cached priority data, never save
         isLoadingPriority = true
         
-        // Load priority from Core Data via PriorityManager
         let priorityManager = PriorityManager()
         let priority = priorityManager.getPriority(for: bandName)
         
@@ -1416,20 +1414,28 @@ class DetailViewModel: ObservableObject {
             print("DEBUG: loadPriority() for '\(bandName)' - found priority: \(priority)")
         } else {
             selectedPriority = 0
-            originalPriority = nil  // Track that this was originally null/unset
-            // CRITICAL FIX: Do NOT overwrite priority data here - just set UI state
-            // The original bug was: bandPriorityStorage[bandName] = 0
-            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, setting UI to 0 but NOT overwriting storage (originalPriority=nil)")
+            originalPriority = nil
+            print("DEBUG: loadPriority() for '\(bandName)' - no priority found, setting to 0")
         }
         
-        // Clear the flag after loading is complete
         isLoadingPriority = false
     }
     
     private func savePriority() {
-        bandPriorityStorage[bandName] = selectedPriority
-        let priorityManager = PriorityManager()
-        priorityManager.setPriority(for: bandName, priority: selectedPriority)
+        print("DEBUG: savePriority() called for '\(bandName)' with priority: \(selectedPriority)")
+        
+        // PERFORMANCE FIX: Remove legacy bandPriorityStorage access (triggers unnecessary migration)
+        // Priority is now managed entirely by Core Data via PriorityManager
+        
+        // THREAD SAFETY FIX: Perform Core Data operations on background thread to prevent crashes
+        let bandNameCopy = bandName
+        let priorityCopy = selectedPriority
+        
+        DispatchQueue.global(qos: .utility).async {
+            let priorityManager = PriorityManager()
+            priorityManager.setPriority(for: bandNameCopy, priority: priorityCopy)
+            print("DEBUG: savePriority() completed for '\(bandNameCopy)' with priority: \(priorityCopy)")
+        }
         
         print("DEBUG: savePriority() - Saved priority \(selectedPriority) for band: '\(bandName)' (originalPriority: \(originalPriority?.description ?? "nil"))")
         
