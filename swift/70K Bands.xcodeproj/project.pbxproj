@@ -232,6 +232,12 @@
 		11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
 		11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
 		11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
+		11C62E882E6661C9000D9AF2 /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E872E6661C9000D9AF2 /* EventManager.swift */; };
+		11C62E892E6661C9000D9AF2 /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E872E6661C9000D9AF2 /* EventManager.swift */; };
+		11C62E8A2E6661C9000D9AF2 /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E872E6661C9000D9AF2 /* EventManager.swift */; };
+		11C62E8C2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */; };
+		11C62E8D2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */; };
+		11C62E8E2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */; };
 		11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
@@ -390,6 +396,8 @@
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
 		11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
 		11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCSVImporter.swift; sourceTree = "<group>"; };
+		11C62E872E6661C9000D9AF2 /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
+		11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCSVImporter.swift; sourceTree = "<group>"; };
 		11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = scheduleHandler.swift; sourceTree = "<group>"; };
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
 		11C8BDC91A7D398400037F2B /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
@@ -520,6 +528,8 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */,
+				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
 				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
 				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
@@ -1081,6 +1091,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11C62E8A2E6661C9000D9AF2 /* EventManager.swift in Sources */,
 				11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */,
 				1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1147D6EB2E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
@@ -1129,6 +1140,7 @@
 				11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */,
 				11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */,
 				1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */,
+				11C62E8E2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */,
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				110E08542AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
@@ -1150,6 +1162,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11C62E882E6661C9000D9AF2 /* EventManager.swift in Sources */,
 				1155E3A51A8B121000D51ED9 /* bandNamesHandler.swift in Sources */,
 				119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				1147D6EE2E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
@@ -1198,6 +1211,7 @@
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
+				11C62E8C2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
 				1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */,
 				1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */,
@@ -1219,6 +1233,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11C62E892E6661C9000D9AF2 /* EventManager.swift in Sources */,
 				1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */,
 				1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */,
 				1147D6F12E63C879000A98B0 /* CoreDataIndexManager.swift in Sources */,
@@ -1267,6 +1282,7 @@
 				1172EE1A2E5A1C4D006E3596 /* mainListController.swift in Sources */,
 				1172EE1B2E5A1C4D006E3596 /* localNotificationHandler.swift in Sources */,
 				1172EE1C2E5A1C4D006E3596 /* urlStorage.swift in Sources */,
+				11C62E8D2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				1172EE1D2E5A1C4D006E3596 /* NetworkTesting.swift in Sources */,
 				1172EE1E2E5A1C4D006E3596 /* MasterViewController.swift in Sources */,
 				1172EE1F2E5A1C4D006E3596 /* DropDown+Appearance.swift in Sources */,

@@ -200,9 +200,11 @@ func getShowOtherShows() -> Bool{
 }
 
 func setShowUnofficalEvents(_ value: Bool){
+    print("🔧 [UNOFFICIAL_DEBUG] setShowUnofficalEvents called with value: \(value)")
     showUnofficalEvents = value
 }
 func getShowUnofficalEvents() -> Bool{
+    print("🔧 [UNOFFICIAL_DEBUG] getShowUnofficalEvents returning: \(showUnofficalEvents)")
     return showUnofficalEvents
 }
 
@@ -348,10 +350,13 @@ func readFiltersFile(){
     
     var tempCurrentTimeZone = "";
     
+    print ("🔧 [UNOFFICIAL_DEBUG] readFiltersFile() called - current showUnofficalEvents before reading: \(showUnofficalEvents)")
     print ("Status of getWontSeeOn loading")
     if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
+        print ("🔧 [UNOFFICIAL_DEBUG] No filters file found, establishing defaults")
         establishDefaults()
         writeFiltersFile()
+        print ("🔧 [UNOFFICIAL_DEBUG] After establishDefaults, showUnofficalEvents = \(showUnofficalEvents)")
     }
     
 
@@ -406,7 +411,9 @@ func readFiltersFile(){
                 setShowOtherShows(stringToBool(valueArray[1]))
             
             case "showUnofficalEvents":
+                print ("🔧 [UNOFFICIAL_DEBUG] Found showUnofficalEvents in file with value: \(valueArray[1])")
                 setShowUnofficalEvents(stringToBool(valueArray[1]))
+                print ("🔧 [UNOFFICIAL_DEBUG] After parsing from file, showUnofficalEvents = \(showUnofficalEvents)")
             
             case "showSpecialEvents":
                 setShowSpecialEvents(stringToBool(valueArray[1]))

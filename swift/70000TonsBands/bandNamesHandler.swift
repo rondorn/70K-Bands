@@ -187,19 +187,24 @@ open class bandNamesHandler {
                 print("First app launch - deferring background update to proper loading sequence")
             }
         } else if needsNetworkFetch || forceNetwork {
-            // If we need to fetch from network (first launch or forced refresh), block UI and fetch
+            // PERFORMANCE FIX: Only trigger network downloads during appropriate operations
             if cacheVariables.justLaunched {
                 print("First app launch detected - deferring network download to proper loading sequence")
                 print("This prevents infinite retry loops when network is unavailable")
                 // Don't automatically download on first launch - wait for proper sequence
                 completion?()
                 return
+            } else if forceNetwork {
+                // Only download if explicitly forced (app launch, foreground, pull-to-refresh)
+                print("Forced network fetch requested - proceeding with download")
+                DispatchQueue.global(qos: .default).async {
+                    self.gatherData(forceDownload: true, completion: completion)
+                }
             } else {
-                print("No cached/Core Data data, fetching from network (blocking UI)")
-            }
-            DispatchQueue.global(qos: .default).async {
-                // CRITICAL FIX: When Core Data is empty, we need to force download
-                self.gatherData(forceDownload: true, completion: completion)
+                // Cache is empty but network not explicitly requested - skip automatic download
+                print("No cached/Core Data data available, but network fetch not explicitly requested")
+                print("Skipping automatic network download - network loading should only happen during app launch, foreground return, or pull-to-refresh")
+                completion?()
             }
         }
         print("Done Loading bandName Data cache")
@@ -256,6 +261,10 @@ open class bandNamesHandler {
     /// - Parameter forceDownload: If true, forces download from network. If false, only reads from cache.
     /// - Parameter isYearChangeOperation: If true, this operation can override existing operations
     func gatherData(forceDownload: Bool = false, isYearChangeOperation: Bool = false, completion: (() -> Void)? = nil) {
+        print("🔧 [BAND_DEBUG] ========== BAND NAMES gatherData() STARTING ==========")
+        print("🔧 [BAND_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+        print("🔧 [BAND_DEBUG] forceDownload: \(forceDownload), isYearChangeOperation: \(isYearChangeOperation)")
+        
         // Thread management: prevent concurrent operations unless it's a year change
         if isLoadingBandData {
             if isYearChangeOperation {
@@ -330,8 +339,8 @@ open class bandNamesHandler {
                     print("🔍 No stored checksum found (first run or missing)")
                 }
                 
-                // Smart import detection: Force import if we have large CSV but few bands
-                let currentBandCount = CoreDataManager.shared.fetchBands().count
+                // Smart import detection: Force import if we have large CSV but few bands for current year
+                let currentBandCount = CoreDataManager.shared.fetchBands(forYear: Int32(eventYear)).count
                 if httpData.count > 10000 && currentBandCount < 20 {
                     print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) bands in Core Data")
                     clearStoredChecksum()
@@ -367,7 +376,7 @@ open class bandNamesHandler {
                     
                     // Even if data hasn't changed, we should run cleanup to remove invalid bands
                     // This handles cases where test data or old bands exist in Core Data
-                    let currentBandCount = CoreDataManager.shared.fetchBands().count
+                    let currentBandCount = CoreDataManager.shared.fetchBands(forYear: Int32(eventYear)).count
                     let csvLineCount = httpData.components(separatedBy: .newlines).count - 1 // Subtract header
                     
                     if currentBandCount != csvLineCount {
@@ -526,6 +535,8 @@ open class bandNamesHandler {
         }
         
         // Reset loading flag at the end
+        print("🔧 [BAND_DEBUG] ========== BAND NAMES gatherData() COMPLETED ==========")
+        print("🔧 [BAND_DEBUG] dataChanged: \(dataChanged), newDataValid: \(newDataValid)")
         isLoadingBandData = false
     }
     
