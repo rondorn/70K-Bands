@@ -60,11 +60,8 @@
 		1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
 		1147D7022E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
 		1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
-		1147D70F2E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
 		1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
-		1147D7112E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
 		1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
-		1147D7132E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */; };
 		114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		114CC0761C79219D00CF5BF1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
@@ -328,7 +325,6 @@
 		1147D6EA2E63C879000A98B0 /* TestCoreDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCoreDataModel.swift; sourceTree = "<group>"; };
 		1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandNamesHandlerProtocol.swift; sourceTree = "<group>"; };
 		1147D70C2E63E33C000A98B0 /* PriorityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityManager.swift; sourceTree = "<group>"; };
-		1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriorityMigrationUtility.swift; sourceTree = "<group>"; };
 		114976B31C837C6E003316D4 /* libsqlite3.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.0.tbd; path = usr/lib/libsqlite3.0.tbd; sourceTree = SDKROOT; };
 		114976C51C838D87003316D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandDescriptionTranslator.swift; sourceTree = "<group>"; };
@@ -586,7 +582,6 @@
 				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
 				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
 				1147D70C2E63E33C000A98B0 /* PriorityManager.swift */,
-				1147D70D2E63E33C000A98B0 /* PriorityMigrationUtility.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
@@ -1151,7 +1146,6 @@
 				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
 				1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */,
-				1147D70F2E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
@@ -1222,7 +1216,6 @@
 				11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
-				1147D7112E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
@@ -1293,7 +1286,6 @@
 				1172EE242E5A1C4D006E3596 /* countryHandler.swift in Sources */,
 				1172EE252E5A1C4D006E3596 /* CustomBandDescription.swift in Sources */,
 				1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */,
-				1147D7132E63E33C000A98B0 /* PriorityMigrationUtility.swift in Sources */,
 				11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,

@@ -30,7 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     let gcmMessageIDKey = "gcm.message_id"
     
-    var bandPriorityStorage = [String:Int]()
+
     
     var bandDescriptions = CustomBandDescription()
     var dataHandle = dataHandler()

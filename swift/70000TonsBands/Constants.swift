@@ -733,9 +733,7 @@ func setupDefaults() {
 
     print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
 
-    // Migrate priority data from legacy system to Core Data if needed
-    let migrationUtility = PriorityMigrationUtility()
-    migrationUtility.performMigrationIfNeeded()
+    // Priority data migration to Core Data completed - utility removed
 
     didVersionChangeFunction();
 }
@@ -942,9 +940,12 @@ func isInternetAvailable() -> Bool {
 
 struct cacheVariables {
     
+    // LEGACY: These cache variables are still used by some components during Core Data transition
+    // TODO: Remove once all schedule/priority operations are fully migrated to Core Data
     static var bandPriorityStorageCache = [String:Int]()
     static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     static var scheduleTimeStaticCache = [TimeInterval : [[String : String]]]()
+    
     static var bandNamedStaticCache = [String :[String : String]]()
     static var attendedStaticCache = [String : String]()
     static var bandNamesStaticCache =  [String :[String : String]]()

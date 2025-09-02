@@ -178,7 +178,7 @@ class DetailViewModel: ObservableObject {
     private let schedule = scheduleHandler.shared
     private let attendedHandle = ShowsAttended()
     private let bandNotes = CustomBandDescription()
-    private var bandPriorityStorage: [String: Int] = [:]
+
     private var englishDescriptionText: String = ""
     @Published var doNotSaveText: Bool = false
     
@@ -964,8 +964,7 @@ class DetailViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func loadInitialData() {
-        // LEGACY: No longer load from file, priorities are handled by PriorityManager
-        // bandPriorityStorage = dataHandle.readFile(dateWinnerPassed: "")
+        // LEGACY: Priorities are now handled by PriorityManager via Core Data
         attendedHandle.loadShowsAttended()
     }
     
@@ -1424,7 +1423,6 @@ class DetailViewModel: ObservableObject {
     private func savePriority() {
         print("DEBUG: savePriority() called for '\(bandName)' with priority: \(selectedPriority)")
         
-        // PERFORMANCE FIX: Remove legacy bandPriorityStorage access (triggers unnecessary migration)
         // Priority is now managed entirely by Core Data via PriorityManager
         
         // THREAD SAFETY FIX: Perform Core Data operations on background thread to prevent crashes
