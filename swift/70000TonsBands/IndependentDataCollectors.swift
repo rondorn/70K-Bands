@@ -568,7 +568,7 @@ extension IndependentDataCollectionManager {
         // bandNamesHandler.shared.getCachedData { ... }
         // scheduleHandler.shared.getCachedData()
         // ShowsAttended().getCachedData()
-        // dataHandler().getCachedData()
+
         
         // NEW WAY (truly independent):
         startAllCollections { [weak self] in
