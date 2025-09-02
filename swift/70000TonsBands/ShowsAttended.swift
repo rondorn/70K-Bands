@@ -100,7 +100,7 @@ open class ShowsAttended {
                 let json = try JSONEncoder().encode(currentArray)
                 try json.write(to: showsAttended)
                 writeLastScheduleDataWrite();
-                print ("Loading show attended data! saved showData \(currentArray)")
+                // Reduced logging for performance
             } catch {
                 print ("Loading show attended data! Error, unable to save showsAtteneded Data \(error.localizedDescription)")
             }
@@ -123,7 +123,7 @@ open class ShowsAttended {
                 print("ShowsAttended: ERROR - Unable to decode showsAttendedArray from JSON, data may be corrupted or in an unexpected format.")
                 self.showsAttendedArray = [:]
             }
-            print ("Loaded show attended data!! From json \(self.getShowsAttended())")
+            // Reduced logging for performance - data loaded from JSON
             var needsMigration = false
             let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
             // Migrate old format (no timestamp) to new format
@@ -145,7 +145,7 @@ open class ShowsAttended {
                     mutateShowsAttendedArray { arr in arr[index.key] = index.value }
                 }
             }
-            print ("Loading show attended data! cleanup event data loaded showData \(self.getShowsAttended())")
+            // Reduced logging for performance
             if afterMigrationArray.isEmpty && !cacheVariables.justLaunched {
                 print("Skipping attended cache population: showsAttendedArray is empty and app is not just launched.")
                 return
@@ -222,7 +222,7 @@ open class ShowsAttended {
             eventTypeValue = unofficalEventType;
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        print ("Loading show attended data! addShowsAttended 1 addAttended data index = '\(index)'")
+        // Reduced logging for performance
         var value = ""
         let currentStatus = getShowAttendedStatusRaw(index: index)
         print("DEBUG: addShowsAttended - currentStatus: '\(String(describing: currentStatus))', currentArray.isEmpty: \(currentArray.isEmpty)")
@@ -264,7 +264,7 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
-        print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status)")
+        // Reduced logging for performance
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
@@ -287,7 +287,7 @@ open class ShowsAttended {
         - skipICloud: If true, skips writing to iCloud (useful during restoration)
      */
     func changeShowAttendedStatus(index: String, status: String, skipICloud: Bool) {
-        print ("Loading show attended data! addShowsAttended 2 Settings equals index = '\(index)' - \(status), skipICloud: \(skipICloud)")
+        // Reduced logging for performance
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
@@ -328,11 +328,11 @@ open class ShowsAttended {
         }
         
         let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue,eventYearString: eventYearString);
-        print ("Loading show attended getShowAttendedStatus for '\(band)' - \(location) - \(value)")
+        // Reduced logging for performance
         
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         
-        print ("Loading show attended data! getShowAttendedIcon 2 Settings equals showsAttendedArray '\(index)' - \(value)")
+        // Reduced logging for performance
         if (value == sawAllStatus){
             iconName = "icon-seen"
         
@@ -380,7 +380,7 @@ open class ShowsAttended {
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
         let raw = getShowAttendedStatusRaw(index: index)
         var value = ""
-        print ("Loading show attended data! getShowAttendedStatusCheck on show index = '\(index)' for status=\(raw ?? "")")
+        // Reduced logging for performance
         if (raw == sawAllStatus){
             value = sawAllStatus
         } else if (raw == sawSomeStatus){

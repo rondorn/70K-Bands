@@ -184,9 +184,31 @@ class PreferencesViewModel: ObservableObject {
         
         // Trigger data refresh in background
         DispatchQueue.global(qos: .background).async {
-            masterView.bandNameHandle.gatherData()
-            masterView.schedule.DownloadCsv()
-            masterView.schedule.populateSchedule(forceDownload: false)
+            // CRITICAL: Use protected CSV download to prevent race conditions
+            MasterViewController.backgroundRefreshLock.lock()
+            let downloadAllowed = !MasterViewController.isCsvDownloadInProgress
+            if downloadAllowed {
+                MasterViewController.isCsvDownloadInProgress = true
+            }
+            MasterViewController.backgroundRefreshLock.unlock()
+            
+            if downloadAllowed {
+                print("🔒 refreshDataAndNotifications: Starting protected DUAL CSV download (bands + schedule)")
+                
+                // CRITICAL FIX: Both operations must be protected as a single atomic unit
+                // to prevent race conditions where band names import interferes with schedule import
+                masterView.bandNameHandle.gatherData()
+                masterView.schedule.DownloadCsv()
+                masterView.schedule.populateSchedule(forceDownload: false)
+                
+                // Mark download as complete
+                MasterViewController.backgroundRefreshLock.lock()
+                MasterViewController.isCsvDownloadInProgress = false
+                MasterViewController.backgroundRefreshLock.unlock()
+                print("🔒 refreshDataAndNotifications: Protected DUAL CSV download completed")
+            } else {
+                print("🔒 refreshDataAndNotifications: ❌ DUAL CSV download blocked - already in progress")
+            }
             
             DispatchQueue.main.async {
                 masterView.refreshData(isUserInitiated: true)
@@ -340,9 +362,13 @@ class PreferencesViewModel: ObservableObject {
     private func performYearChangeWithFullLogic() async {
         print("🎯 Starting year change to: \(eventYearChangeAttempt)")
         
+        // CRITICAL: Notify MasterViewController to kill all background operations
+        MasterViewController.notifyYearChangeStarting()
+        
         // Check if task was cancelled before starting
         guard !Task.isCancelled else {
             print("🚫 Year change cancelled before starting")
+            MasterViewController.notifyYearChangeCompleted()
             isLoadingData = false
             return
         }
@@ -416,6 +442,7 @@ class PreferencesViewModel: ObservableObject {
             // CRITICAL: Revert year values back to previous state since network test failed
             await revertYearChangeDueToNetworkFailure()
             
+            MasterViewController.notifyYearChangeCompleted()
             isLoadingData = false
             showNetworkError = true
             return
@@ -430,6 +457,7 @@ class PreferencesViewModel: ObservableObject {
             // CRITICAL: Revert year values back to previous state since masterView is nil
             await revertYearChangeDueToNetworkFailure()
             
+            MasterViewController.notifyYearChangeCompleted()
             isLoadingData = false
             showNetworkError = true
             return
@@ -471,8 +499,8 @@ class PreferencesViewModel: ObservableObject {
         // Clear all caches (pointers already updated above)
         print("🎯 STEP 4: Clearing all caches and preparing for data refresh")
         
-        // CRITICAL: Clear Core Data to remove old year's data
-        CoreDataManager.shared.clearAllData()
+        // CRITICAL: Clear year-specific Core Data (preserve user priorities)
+        CoreDataManager.shared.clearYearSpecificData()
         
         // Clear static caches
         bandNamesHandler.shared.clearCachedData()
@@ -516,11 +544,12 @@ class PreferencesViewModel: ObservableObject {
                 return
             }
             
-            print("🎯 Centralized data refresh completed for year change")
+            print("🎯 Centralized data refresh completed - now waiting for Core Data population")
             
-            // Continue with the rest of the year change logic
+            // CRITICAL FIX: Wait for Core Data to be fully populated before continuing
+            // The data refresh completion only means CSV download is done, not Core Data import
             Task { @MainActor in
-                await self.continueYearChangeAfterDataRefresh()
+                await self.waitForCoreDataPopulationAndContinueYearChange()
             }
         }
         
@@ -591,8 +620,9 @@ class PreferencesViewModel: ObservableObject {
                     return
                 }
                 
-                // Download CSV
-                masterView.schedule.DownloadCsv()
+                // CRITICAL: Use protected CSV download to prevent race conditions
+                print("🔒 performYearChangeWithFullLogic: Requesting protected CSV download")
+                await self.performProtectedCsvDownload()
                 
                 // Wait for file to be written
                 var attempts = 0
@@ -759,8 +789,9 @@ class PreferencesViewModel: ObservableObject {
         // Force schedule data loading (identical for both Band List and Event List)
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
-                // Ensure schedule data is downloaded and populated
-                masterView.schedule.DownloadCsv()
+                // CRITICAL: Use protected CSV download to prevent race conditions
+                print("🔒 waitForCoreDataPopulation: Requesting protected CSV download")
+                await self.performProtectedCsvDownload()
                 
                 // Wait for schedule file to be written
                 var attempts = 0
@@ -784,6 +815,54 @@ class PreferencesViewModel: ObservableObject {
     }
 
     /// Continues the year change process after the centralized data refresh completes
+    @MainActor 
+    private func waitForCoreDataPopulationAndContinueYearChange() async {
+        print("🎯 STEP 5.5: Waiting for Core Data to be fully populated with new year's data")
+        
+        let targetYear = Int(eventYearChangeAttempt) ?? eventYear
+        var attempts = 0
+        let maxAttempts = 10
+        let delaySeconds = 1.0
+        
+        while attempts < maxAttempts {
+            attempts += 1
+            
+            // Check if this year change was cancelled
+            guard !Task.isCancelled else {
+                print("🚫 Year change cancelled while waiting for Core Data population")
+                isLoadingData = false
+                return
+            }
+            
+            // Check Core Data for events in the target year
+            let eventCount = CoreDataManager.shared.fetchEvents(forYear: Int32(targetYear)).count
+            let bandCount = CoreDataManager.shared.fetchBands(forYear: Int32(targetYear)).count
+            
+            print("🎯 Core Data check (attempt \(attempts)/\(maxAttempts)): \(eventCount) events, \(bandCount) bands for year \(targetYear)")
+            
+            // We expect a reasonable number of events (more than 50 for most years)
+            if eventCount > 50 && bandCount > 20 {
+                print("✅ Core Data population confirmed - \(eventCount) events and \(bandCount) bands loaded")
+                break
+            }
+            
+            if attempts == maxAttempts {
+                print("⚠️ Core Data population timeout - proceeding anyway with \(eventCount) events")
+                break
+            }
+            
+            print("🔄 Core Data still populating... waiting \(delaySeconds)s before next check")
+            try? await Task.sleep(nanoseconds: UInt64(delaySeconds * 1_000_000_000))
+        }
+        
+        // Additional small delay to ensure any final processing is complete
+        print("🎯 Allowing additional 0.5s for final Core Data processing")
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        
+        print("🎯 Core Data population wait complete - proceeding with year change completion")
+        await continueYearChangeAfterDataRefresh()
+    }
+    
     @MainActor
     private func continueYearChangeAfterDataRefresh() async {
         print("🎯 STEP 6: Continuing year change after centralized data refresh completed")
@@ -826,6 +905,14 @@ class PreferencesViewModel: ObservableObject {
         
         print("✅ Year change completed to \(eventYearChangeAttempt) with verified data loading")
         
+        // CRITICAL: Refresh the main view to ensure all newly loaded data is displayed
+        print("🔄 Triggering final main view refresh to display all loaded data")
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        masterView.refreshBandList(reason: "Year change final refresh - ensure all data displayed")
+        
+        // CRITICAL: Notify that year change is complete
+        MasterViewController.notifyYearChangeCompleted()
+        
         // Handle different year types
         if eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current" {
             // For specific years, show Band List vs Event List choice
@@ -846,8 +933,10 @@ class PreferencesViewModel: ObservableObject {
                 await ensureScheduleDataLoaded()
                 
                 await MainActor.run {
-                    // Refresh display
+                    // Refresh display with comprehensive refresh
+                    print("🔄 Current year: Triggering comprehensive display refresh")
                     NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                    masterView.refreshBandList(reason: "Current year final refresh - ensure all data displayed")
                     masterView.refreshData(isUserInitiated: true)
                 }
                 
@@ -868,6 +957,37 @@ class PreferencesViewModel: ObservableObject {
         // Dismiss the preferences screen and return to main screen
         // Use a different notification name to indicate year change occurred (no additional refresh needed)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreenAfterYearChange"), object: nil)
+    }
+    
+    /// Perform CSV download with proper race condition protection
+    /// This ensures only one CSV download can happen at a time across the entire app
+    private func performProtectedCsvDownload() async {
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                // Use the same protection mechanism as MasterViewController
+                MasterViewController.backgroundRefreshLock.lock()
+                let downloadAllowed = !MasterViewController.isCsvDownloadInProgress
+                if downloadAllowed {
+                    MasterViewController.isCsvDownloadInProgress = true
+                }
+                MasterViewController.backgroundRefreshLock.unlock()
+                
+                if downloadAllowed {
+                    print("🔒 PreferencesViewModel: Starting protected CSV download")
+                    masterView.schedule.DownloadCsv()
+                    
+                    // Mark download as complete
+                    MasterViewController.backgroundRefreshLock.lock()
+                    MasterViewController.isCsvDownloadInProgress = false
+                    MasterViewController.backgroundRefreshLock.unlock()
+                    print("🔒 PreferencesViewModel: Protected CSV download completed")
+                } else {
+                    print("🔒 PreferencesViewModel: ❌ CSV download blocked - already in progress")
+                }
+                
+                continuation.resume()
+            }
+        }
     }
 }
 

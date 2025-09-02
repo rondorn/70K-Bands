@@ -54,8 +54,8 @@ struct FestivalConfig {
         self.subscriptionTopicTest = "Testing20250824"
         self.subscriptionUnofficalTopic = "unofficalEvents"
         
-        self.artistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
-        self.scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
+        self.artistUrlDefault = ""
+        self.scheduleUrlDefault = ""
         
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"
@@ -77,8 +77,8 @@ struct FestivalConfig {
         self.subscriptionUnofficalTopic = "unofficalEvents"
         
         // MDF-specific URLs (will be configured via pointer file)
-        self.artistUrlDefault = "https://www.dropbox.com/scl/fi/6eg74y11n070airoewsfz/mdf_artistLineup_2026.csv?rlkey=35i20kxtc6pc6v673dnmp1465&raw=1"
-        self.scheduleUrlDefault = "https://www.dropbox.com/scl/fi/3u1sr1312az0wd3dcpbfe/mdf_artistsSchedule2026_test.csv?rlkey=t96hj530o46q9fzz83ei7fllj&raw=1"
+        self.artistUrlDefault = ""
+        self.scheduleUrlDefault = ""
         
         self.logoUrl = "mdf_logo"
         self.shareUrl = "http://www.facebook.com/MDFBands"
@@ -99,8 +99,8 @@ struct FestivalConfig {
         self.subscriptionTopicTest = "Testing20250801"
         self.subscriptionUnofficalTopic = "unofficalEvents"
         
-        self.artistUrlDefault = "https://www.dropbox.com/s/5hcaxigzdj7fjrt/artistLineup.html?dl=1"
-        self.scheduleUrlDefault = "https://www.dropbox.com/s/tg9qgt48ezp7udv/Schedule.csv?dl=1"
+        self.artistUrlDefault = ""
+        self.scheduleUrlDefault = ""
         
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"

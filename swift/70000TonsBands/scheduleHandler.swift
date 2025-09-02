@@ -29,7 +29,9 @@ open class scheduleHandler {
     // Cache for performance (mirrors original structure)
     private var _schedulingData: [String : [TimeInterval : [String : String]]] = [:]
     private var _schedulingDataByTime: [TimeInterval : [[String : String]]] = [:]  // CRITICAL FIX: Array of events per time
-    private var cacheLoaded = false
+    
+    // PERFORMANCE FIX: Make cacheLoaded accessible for cache-only operations
+    var cacheLoaded = false
     
     // Thread management to prevent concurrent operations
     private var isDataLoadingInProgress = false
@@ -82,9 +84,9 @@ open class scheduleHandler {
                 self.loadCacheFromCoreData()
             }
             self.dictionaryQueue.sync {
-                block(&self._schedulingData)
-            }
+            block(&self._schedulingData)
         }
+    }
     }
     
     private func mutateSchedulingDataByTime(_ block: @escaping (inout [TimeInterval : [[String : String]]]) -> Void) {
@@ -93,7 +95,7 @@ open class scheduleHandler {
                 self.loadCacheFromCoreData()
             }
             self.dictionaryQueue.sync {
-                block(&self._schedulingDataByTime)
+            block(&self._schedulingDataByTime)
             }
         }
     }
@@ -121,7 +123,9 @@ open class scheduleHandler {
         
         // CRITICAL: Load user preferences FIRST to ensure correct year resolution
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Loading user preferences before year resolution")
+        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler calling readFiltersFile() - this could be the race condition!")
         readFiltersFile()
+        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
         
         // CRITICAL: Update eventYear from pointer data like bandNamesHandler does
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Getting pointer data for eventYear")
@@ -141,17 +145,88 @@ open class scheduleHandler {
         self.loadCacheFromCoreDataInternal()
     }
     
-    private func loadCacheFromCoreDataInternal() {
+    private func loadCacheFromCoreDataInternal(useYear: Int? = nil) {
+        let yearToUse = useYear ?? eventYear
+        print("🔧 [CONTEXT_DEBUG] ========== ENTERING loadCacheFromCoreDataInternal ==========")
+        print("🔧 [CONTEXT_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+        print("🔧 [CONTEXT_DEBUG] currentYear = \(yearToUse) (global eventYear = \(eventYear))")
+        if let explicitYear = useYear {
+            print("🔧 [YEAR_SYNC_DEBUG] Using explicit year \(explicitYear) instead of global eventYear \(eventYear)")
+        }
+        
+        // CRITICAL DEBUG: Check unofficial events BEFORE cleanup
+        print("🔧 [CONTEXT_DEBUG] Checking unofficial events BEFORE cleanup...")
+        let preCleanupEvents = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        let preCleanupUnofficial = preCleanupEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+        }
+        print("🔧 [CONTEXT_DEBUG] BEFORE cleanup: \(preCleanupUnofficial.count) unofficial events found")
+        if preCleanupUnofficial.count > 0 {
+            for event in preCleanupUnofficial.prefix(3) {
+                print("🔧 [CONTEXT_DEBUG] - PRE-CLEANUP Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
+            }
+        }
+        
         // Clean up problematic events (zero timeIndex and wrong year events)
         print("🧹 [CLEANUP] Running cleanup for problematic events")
-        self.coreDataManager.cleanupProblematicEvents(currentYear: eventYear)
+        print("🚨 [CLEANUP_DEBUG] CRITICAL: About to cleanup with currentYear = \(yearToUse)")
+        print("🚨 [CLEANUP_DEBUG] This will DELETE ALL events with eventYear != \(yearToUse)")
+        self.coreDataManager.cleanupProblematicEvents(currentYear: yearToUse)
         
-        let events = self.coreDataManager.fetchEvents(forYear: Int32(eventYear))
-        print("🔄 Fetched \(events.count) events from Core Data for year \(eventYear)")
+        // CRITICAL DEBUG: Check unofficial events AFTER cleanup
+        print("🔧 [CONTEXT_DEBUG] Checking unofficial events AFTER cleanup...")
+        let postCleanupEvents = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        let postCleanupUnofficial = postCleanupEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+        }
+        print("🔧 [CONTEXT_DEBUG] AFTER cleanup: \(postCleanupUnofficial.count) unofficial events found")
+        if postCleanupUnofficial.count > 0 {
+            for event in postCleanupUnofficial.prefix(3) {
+                print("🔧 [CONTEXT_DEBUG] - POST-CLEANUP Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
+            }
+        } else if preCleanupUnofficial.count > 0 {
+            print("🔧 [CONTEXT_DEBUG] 🚨 CRITICAL: Had \(preCleanupUnofficial.count) unofficial events BEFORE cleanup, but 0 AFTER cleanup!")
+            print("🔧 [CONTEXT_DEBUG] 🚨 This suggests cleanup is removing them!")
+        }
+        
+        let events = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        print("🔄 Fetched \(events.count) events from Core Data for year \(yearToUse)")
+        
+        // CRITICAL DEBUG: Check for unofficial events specifically
+        let unofficialEvents = events.filter { event in
+            let eventType = event.eventType ?? ""
+            return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+        }
+        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(unofficialEvents.count) unofficial events in Core Data for year \(yearToUse)")
+        if unofficialEvents.count > 0 {
+            for event in unofficialEvents.prefix(3) {
+                let bandName = event.band?.bandName ?? "nil"
+                let eventType = event.eventType ?? "nil"
+                print("🔧 [UNOFFICIAL_DEBUG] - Event: band='\(bandName)', type='\(eventType)', timeIndex=\(event.timeIndex)")
+            }
+            } else {
+            print("🔧 [UNOFFICIAL_DEBUG] ❌ NO unofficial events found in Core Data after fetchEvents(forYear:)")
+        }
         
         // Debug: Check if there are any events at all in Core Data
         let allEvents = self.coreDataManager.fetchEvents()
         print("🔍 DEBUG: Total events in Core Data (all years): \(allEvents.count)")
+        
+        // CRITICAL DEBUG: Check for unofficial events across ALL years
+        let allUnofficialEvents = allEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+        }
+        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(allUnofficialEvents.count) unofficial events in Core Data (ALL YEARS)")
+        if allUnofficialEvents.count > 0 {
+            for event in allUnofficialEvents.prefix(3) {
+                let bandName = event.band?.bandName ?? "nil"
+                let eventType = event.eventType ?? "nil"
+                print("🔧 [UNOFFICIAL_DEBUG] - All Years Event: band='\(bandName)', type='\(eventType)', year=\(event.eventYear), timeIndex=\(event.timeIndex)")
+            }
+        }
         if allEvents.count > 0 {
             let eventYears = Set(allEvents.compactMap { $0.eventYear })
             print("🔍 DEBUG: Event years in Core Data: \(eventYears.sorted())")
@@ -178,8 +253,8 @@ open class scheduleHandler {
             }
             
             // Check for events from wrong years
-            let wrongYearEvents = allEvents.filter { $0.eventYear != Int32(eventYear) }
-            print("🚨 [TIMEINDEX_AUDIT] Found \(wrongYearEvents.count) events from wrong years (current: \(eventYear))")
+            let wrongYearEvents = allEvents.filter { $0.eventYear != Int32(yearToUse) }
+            print("🚨 [TIMEINDEX_AUDIT] Found \(wrongYearEvents.count) events from wrong years (current: \(yearToUse))")
             
             if wrongYearEvents.count > 0 {
                 let wrongYears = Set(wrongYearEvents.compactMap { $0.eventYear })
@@ -208,13 +283,65 @@ open class scheduleHandler {
                     print("🔍 [SHOW_DEBUG] - event.timeIndex = \(event.timeIndex)")
                 }
                 
+                // CRITICAL FIX: Don't skip unofficial events even if they lack band associations
+                let eventType = event.eventType ?? ""
+                let isUnofficialEvent = eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+                
+                if isUnofficialEvent {
+                    print("🔧 [UNOFFICIAL_DEBUG] Processing unofficial event: '\(eventType)' - band: \(event.band?.bandName ?? "nil")")
+                    print("🔧 [UNOFFICIAL_DEBUG] - event.band exists: \(event.band != nil)")
+                    print("🔧 [UNOFFICIAL_DEBUG] - event.band?.bandName: '\(event.band?.bandName ?? "nil")'")
+                    print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty: \(event.band?.bandName?.isEmpty ?? true)")
+                }
+                
                 guard let band = event.band,
                       let bandName = band.bandName,
                       !bandName.isEmpty else { 
                     if event.eventType == "Show" {
                         print("🚨 [SHOW_DEBUG] SKIPPING Show event due to guard condition failure")
                     }
+                    
+                    // PRESERVE unofficial events even without proper band associations
+                    if isUnofficialEvent {
+                        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ Unofficial event FAILED guard - creating fake band")
+                        print("🔧 [UNOFFICIAL_DEBUG] Guard failed because:")
+                        print("🔧 [UNOFFICIAL_DEBUG] - event.band = \(event.band?.description ?? "nil")")
+                        print("🔧 [UNOFFICIAL_DEBUG] - event.band?.bandName = \(event.band?.bandName ?? "nil")")
+                        print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty = \(event.band?.bandName?.isEmpty ?? true)")
+                        // Create a fake band name for standalone unofficial events
+                        let fakeBandName = eventType  // Use event type as band name
+                        
+                        let timeIndex = event.timeIndex
+                        
+                        // Map Core Data fields to legacy dictionary format
+                        var eventData = [String : String]()
+                        eventData[bandField] = fakeBandName
+                        eventData[locationField] = event.location ?? ""
+                        eventData[dateField] = event.date ?? ""
+                        eventData[dayField] = event.day ?? ""
+                        eventData[startTimeField] = event.startTime ?? ""
+                        eventData[endTimeField] = event.endTime ?? ""
+                        eventData[typeField] = eventType
+                        eventData[notesField] = event.notes ?? ""
+                        eventData[descriptionUrlField] = event.descriptionUrl ?? ""
+                        
+                        // Store in schedulingData dictionary
+                        if self._schedulingData[fakeBandName] == nil {
+                            self._schedulingData[fakeBandName] = [TimeInterval : [String : String]]()
+                        }
+                        self._schedulingData[fakeBandName]![timeIndex] = eventData
+                        
+                        print("🔧 [UNOFFICIAL_DEBUG] ✅ Successfully added unofficial event to cache with fake band '\(fakeBandName)'")
+                        continue
+                    }
+                    
                     continue 
+                }
+                
+                if isUnofficialEvent {
+                    print("🔧 [UNOFFICIAL_DEBUG] ✅ Unofficial event PASSED guard - processing normally")
+                    print("🔧 [UNOFFICIAL_DEBUG] - bandName: '\(bandName)'")
+                    print("🔧 [UNOFFICIAL_DEBUG] - eventType: '\(eventType)'")
                 }
                 
                 let timeIndex = event.timeIndex
@@ -245,6 +372,12 @@ open class scheduleHandler {
                 // Store in both data structures using safer non-optional approach
                 self._schedulingData[bandName]![timeIndex] = eventData
                 
+                if isUnofficialEvent {
+                    print("🔧 [UNOFFICIAL_DEBUG] ✅ Successfully stored unofficial event in cache:")
+                    print("🔧 [UNOFFICIAL_DEBUG] - Key: '\(bandName)' - TimeIndex: \(timeIndex)")
+                    print("🔧 [UNOFFICIAL_DEBUG] - Event data: \(eventData)")
+                }
+                
                 // CRITICAL FIX: Store events in array to prevent data loss when multiple events share same timeIndex
                 if self._schedulingDataByTime[timeIndex] == nil {
                     self._schedulingDataByTime[timeIndex] = []
@@ -260,7 +393,7 @@ open class scheduleHandler {
                 // Debug: Check if the data was actually stored correctly
                 if let storedData = self._schedulingData[bandName]?[timeIndex] {
                     print("🔍 [CORE_DATA_CONVERSION] ✅ Successfully stored data for \(bandName) at \(timeIndex)")
-                } else {
+            } else {
                     print("🔍 [CORE_DATA_CONVERSION] ❌ Failed to store data for \(bandName) at \(timeIndex)")
                 }
             }
@@ -278,6 +411,34 @@ open class scheduleHandler {
             }
             
             print("🔍 [CORE_DATA_CONVERSION] Conversion complete: \(self._schedulingData.count) bands, \(self._schedulingDataByTime.count) time slots")
+            
+            // FINAL DEBUG: Check what made it into the final cache
+            let finalCacheBandNames = Array(self._schedulingData.keys)
+            print("🔧 [UNOFFICIAL_DEBUG] 📋 ALL Final cache bands (\(finalCacheBandNames.count)): \(finalCacheBandNames.sorted())")
+            
+            // Check for the specific bands we saw in logs
+            let targetBands = ["Wed-South Beach BBQ", "Thu-Metal Bus to Boat", "Wed-Beach Party!", "Mon-Survivor Documentary", "Mon-Monday Metal Madness"]
+            for targetBand in targetBands {
+                if finalCacheBandNames.contains(targetBand) {
+                    print("🔧 [UNOFFICIAL_DEBUG] ✅ FOUND target band in cache: '\(targetBand)'")
+                    // Check what events this band has
+                    if let bandEvents = self._schedulingData[targetBand] {
+                        print("🔧 [UNOFFICIAL_DEBUG] - Events for '\(targetBand)': \(bandEvents.count) events")
+                        for (timeIndex, eventData) in bandEvents {
+                            let eventType = eventData[typeField] ?? "unknown"
+                            print("🔧 [UNOFFICIAL_DEBUG] - Event: timeIndex=\(timeIndex), type='\(eventType)'")
+                        }
+                    }
+            } else {
+                    print("🔧 [UNOFFICIAL_DEBUG] ❌ MISSING target band from cache: '\(targetBand)'")
+                }
+            }
+            
+            let unofficialBandNames = finalCacheBandNames.filter { bandName in
+                return bandName == "Unofficial Event" || bandName == "Cruiser Organized" || bandName.contains("Unofficial") || bandName.contains("Cruiser")
+            }
+            print("🔧 [UNOFFICIAL_DEBUG] ✅ Final cache contains \(unofficialBandNames.count) unofficial 'bands': \(unofficialBandNames)")
+            
             self.cacheLoaded = true
         }
         
@@ -384,16 +545,15 @@ open class scheduleHandler {
                 cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
             }
         } else if needsNetworkFetch {
-            // If we need to fetch from network, trigger download
+            // PERFORMANCE FIX: Only trigger network downloads during appropriate operations
+            // Not during cache-only operations like priority changes, detail navigation, etc.
             if cacheVariables.justLaunched {
                 print("First app launch detected - deferring network download to proper loading sequence")
                 print("This prevents infinite retry loops when network is unavailable")
             } else {
-                print("No cached/Core Data data, fetching from network")
-                DispatchQueue.main.async {
-                    // CRITICAL FIX: When Core Data is empty, we need to force download
-                    self.populateSchedule(forceDownload: true)
-                }
+                print("No cached/Core Data data available - this should only happen during app launch or explicit refreshes")
+                print("Skipping automatic network download - network loading should only happen during app launch, foreground return, or pull-to-refresh")
+                // DO NOT automatically trigger network downloads here - let only the appropriate triggers handle it
             }
         }
         print("🔍 [SCHEDULE_DEBUG] getCachedData: Completing method")
@@ -604,14 +764,14 @@ open class scheduleHandler {
                         // Reload cache from Core Data
                         cacheLoaded = false
                         loadCacheFromCoreData()
-                    } else {
+                } else {
                         print("DEBUG_MARKER: Import failed - keeping old checksum")
-                    }
+                }
                 } else {
                     print("DEBUG_MARKER: Data unchanged - checksum: \(newChecksum.prefix(8))")
                     dataChanged = false
-                }
-            } else {
+            }
+        } else {
                 print("❌ Internet is down or data is invalid, keeping existing data")
                 newDataValid = false
                 dataChanged = false
@@ -643,23 +803,30 @@ open class scheduleHandler {
         if dataChanged {
             print("[YEAR_CHANGE_DEBUG] Schedule data downloaded from URL, checking if combined image list needs regeneration")
             DispatchQueue.global(qos: .utility).async {
-                let bandNameHandle = bandNamesHandler.shared
-                if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: bandNameHandle, scheduleHandle: self) {
-                    print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new schedule data")
-                    CombinedImageListHandler.shared.generateCombinedImageList(
-                        bandNameHandle: bandNameHandle,
-                        scheduleHandle: self
-                    ) {
-                        print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after schedule data load")
-                    }
+            let bandNameHandle = bandNamesHandler.shared
+            if CombinedImageListHandler.shared.needsRegeneration(bandNameHandle: bandNameHandle, scheduleHandle: self) {
+                print("[YEAR_CHANGE_DEBUG] Regenerating combined image list due to new schedule data")
+                CombinedImageListHandler.shared.generateCombinedImageList(
+                    bandNameHandle: bandNameHandle,
+                    scheduleHandle: self
+                ) {
+                    print("[YEAR_CHANGE_DEBUG] Combined image list regenerated after schedule data load")
                 }
             }
+        }
         }
     }
     
     // MARK: - Legacy API Methods (100% Compatible)
     
     func DownloadCsv() {
+        print("🔧 [SCHEDULE_DEBUG] ========== SCHEDULE CSV DownloadCsv() STARTING ==========")
+        print("🔧 [SCHEDULE_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+        
+        // CRITICAL FIX: Capture eventYear at start to prevent race condition with bandNamesHandler
+        let capturedEventYear = eventYear
+        print("🔧 [YEAR_SYNC_DEBUG] Captured eventYear = \(capturedEventYear) (global eventYear = \(eventYear))")
+        
         let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? ""
         
         // Validate URL before attempting download
@@ -676,26 +843,114 @@ open class scheduleHandler {
             print("scheduleHandler: Main thread detected, dispatching to background for network call")
             let semaphore = DispatchSemaphore(value: 0)
             DispatchQueue.global(qos: .userInitiated).async {
-                httpData = getUrlData(urlString: scheduleUrl)
+            httpData = getUrlData(urlString: scheduleUrl)
                 semaphore.signal()
             }
             semaphore.wait()
-        } else {
+            } else {
             httpData = getUrlData(urlString: scheduleUrl)
         }
         
         if !httpData.isEmpty {
+            // CRITICAL DEBUG: Check CSV content for unofficial events BEFORE import
+            print("🔧 [UNOFFICIAL_DEBUG] Checking downloaded CSV for unofficial events...")
+            let csvLines = httpData.components(separatedBy: .newlines)
+            let unofficialLines = csvLines.filter { line in
+                return line.contains("Unofficial Event") || line.contains("Cruiser Organized")
+            }
+            print("🔧 [UNOFFICIAL_DEBUG] Found \(unofficialLines.count) unofficial event lines in downloaded CSV")
+            if unofficialLines.count > 0 {
+                for line in unofficialLines.prefix(3) {
+                    print("🔧 [UNOFFICIAL_DEBUG] - CSV Line: \(line)")
+                }
+            }
+            
+            // CRITICAL DEBUG: Check CSV content before import
+            //let csvLines = httpData.components(separatedBy: .newlines)
+            let totalLines = csvLines.count
+            let unofficialCSVLines = csvLines.filter { line in
+                return line.contains("Unofficial Event") || line.contains("Cruiser Organized")
+            }
+            print("🔧 [UNOFFICIAL_DEBUG] 📄 CSV DOWNLOAD ANALYSIS:")
+            print("🔧 [UNOFFICIAL_DEBUG] - Total CSV lines: \(totalLines)")  
+            print("🔧 [UNOFFICIAL_DEBUG] - Unofficial event lines in CSV: \(unofficialCSVLines.count)")
+            if unofficialCSVLines.count > 0 {
+                print("🔧 [UNOFFICIAL_DEBUG] - Sample unofficial CSV lines:")
+                for line in unofficialCSVLines.prefix(3) {
+                    print("🔧 [UNOFFICIAL_DEBUG]   - \(line)")
+                }
+            }
+            
             // Import directly to Core Data instead of writing to file
+            print("🔧 [UNOFFICIAL_DEBUG] 🚀 STARTING CSV IMPORT PROCESS...")
+            print("🔧 [YEAR_SYNC_DEBUG] Pre-import: global eventYear = \(eventYear), using captured year \(capturedEventYear)")
+            
+            // CRITICAL FIX: Temporarily set global eventYear to captured value during import
+            // to prevent race condition with bandNamesHandler that might change eventYear mid-operation
+            let originalEventYear = eventYear
+            eventYear = capturedEventYear
+            print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
+            
             let importSuccess = csvImporter.importEventsFromCSVString(httpData)
+            
+            // Restore original global eventYear after import
+            eventYear = originalEventYear
+            print("🔧 [YEAR_SYNC_DEBUG] Restored global eventYear to \(eventYear) after import")
+            
+            print("🔧 [UNOFFICIAL_DEBUG] 📊 CSV IMPORT RESULT: \(importSuccess ? "SUCCESS" : "FAILED")")
+            
             if importSuccess {
-                // Reload cache from Core Data
-                cacheLoaded = false
-                loadCacheFromCoreData()
-                print("Successfully downloaded and imported schedule data to Core Data")
-            } else {
-                print("Failed to import downloaded schedule data")
+                print("🔧 [UNOFFICIAL_DEBUG] CSV import completed successfully - checking Core Data...")
+                
+                // CRITICAL FIX: Wait for context merge to complete
+                // The background import just completed, but the view context may not have merged changes yet
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    
+                    print("🔧 [CONTEXT_DEBUG] Starting context synchronization process...")
+                    print("🔧 [CONTEXT_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+                    
+                    // Force view context to process pending changes
+                    self.coreDataManager.viewContext.performAndWait {
+                        print("🔧 [CONTEXT_DEBUG] Inside performAndWait - forcing context merge...")
+                        // This ensures any pending merges are processed
+                    }
+                    
+                    print("🔧 [CONTEXT_DEBUG] Context performAndWait completed")
+                    
+                    // Now check Core Data after context synchronization using captured year
+                    print("🔧 [YEAR_SYNC_DEBUG] Using captured year \(capturedEventYear) for post-import check (global eventYear = \(eventYear))")
+                    let justImportedEvents = self.coreDataManager.fetchEvents(forYear: Int32(capturedEventYear))
+                    let justImportedUnofficial = justImportedEvents.filter { event in
+                        let eventType = event.eventType ?? ""
+                        return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
+                    }
+                    print("🔧 [CONTEXT_DEBUG] After context sync: \(justImportedUnofficial.count) unofficial events in Core Data")
+                    if justImportedUnofficial.count > 0 {
+                        for event in justImportedUnofficial.prefix(3) {
+                            print("🔧 [CONTEXT_DEBUG] - Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil")")
+                        }
+                    }
+                    
+                    print("🔧 [CONTEXT_DEBUG] About to reload cache from Core Data...")
+                    print("🔧 [CONTEXT_DEBUG] Setting cacheLoaded = false")
+                    
+                    // Reload cache from Core Data using captured year to prevent race condition
+                    self.cacheLoaded = false
+                    
+                    print("🔧 [CONTEXT_DEBUG] Calling loadCacheFromCoreData() with captured year \(capturedEventYear)...")
+                    self.loadCacheFromCoreDataInternal(useYear: capturedEventYear)
+                    
+                    print("🔧 [CONTEXT_DEBUG] loadCacheFromCoreData() completed")
+                    print("🔧 [SCHEDULE_DEBUG] ========== SCHEDULE CSV DownloadCsv() COMPLETED ==========")
+                    print("Successfully downloaded and imported schedule data to Core Data")
             }
         } else {
+                print("🔧 [SCHEDULE_DEBUG] ❌ SCHEDULE CSV DownloadCsv() FAILED (import failed)")
+                print("Failed to import downloaded schedule data")
+            }
+            } else {
+            print("🔧 [SCHEDULE_DEBUG] ❌ SCHEDULE CSV DownloadCsv() FAILED (download failed)")
             print("Failed to download schedule data")
         }
     }
@@ -827,7 +1082,7 @@ open class scheduleHandler {
             return value
         }
     }
-    
+
     func buildTimeSortedSchedulingData() {
         print("[YEAR_CHANGE_DEBUG] Building time-sorted scheduling data for year \(eventYear)")
         

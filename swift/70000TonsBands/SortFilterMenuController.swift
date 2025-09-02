@@ -130,6 +130,14 @@ func setupClickResponse(controller: MasterViewController){
         setupEventTypeClickResponse(controller: controller!, item: item)
         setupVenueClickResponse(controller: controller!, item: item)
         print ("The respond from the chosen one is \(item) = \(index)")
+        
+        // CRITICAL FIX: Update filter state immediately before refreshing menu display
+        // This ensures filterTextNeeded is current when setupAllEntries() uses it
+        controller!.setFilterTitleText()
+        
+        // IMMEDIATE MENU UPDATE: Refresh menu display immediately after setting changes
+        // This ensures menu text/icons update instantly before the full data refresh
+        setupAllEntries(controller: controller!)
     }
 }
 
@@ -192,6 +200,7 @@ func setupFlaggedOnlylMenuChoices(controller: MasterViewController, item: String
 func setupClearClickResponse(controller: MasterViewController, item: String){
     
     if (item == "Clear All Filters"){
+        print("🔄 [CLEAR_DEBUG] Clear All Filters clicked - resetting all filters to default state")
         var message = NSLocalizedString("Clear All Items", comment: "")
         setShowOnlyWillAttened(false)
         setShowPoolShows(true)
@@ -206,7 +215,8 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         setMightSeeOn(true)
         setWontSeeOn(true)
         setUnknownSeeOn(true)
-
+        
+        print("🔄 [CLEAR_DEBUG] All filters reset - calling refreshAfterMenuSelected")
         refreshAfterMenuSelected(controller: controller, message: message)
         
         
@@ -216,9 +226,12 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
 func setupClearAllMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
     if (item == "Clear All Filters"){
+        print("🔄 [CLEAR_DEBUG] Setting up Clear All Filters menu item - filterTextNeeded: \(controller.filterTextNeeded)")
         if (controller.filterTextNeeded == true){
+            print("🔄 [CLEAR_DEBUG] Clear All Filters ENABLED")
             setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         } else {
+            print("🔄 [CLEAR_DEBUG] Clear All Filters DISABLED")
             setupCell(header: false, titleText: NSLocalizedString("Clear All Filters", comment: ""), cellData: cellRow, imageName: "", disabled: true)
         }
     }
