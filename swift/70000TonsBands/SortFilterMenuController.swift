@@ -36,12 +36,7 @@ func createrFilterMenu( controller: MasterViewController){
         controller.filterMenu.dataSource.append("Sort By")
     }
     // Only show Event Type Filters section if at least one filter is enabled
-    print("🏛️ [FILTER_MENU_DEBUG] Checking event type filter visibility:")
-    print("🏛️ [FILTER_MENU_DEBUG] - getMeetAndGreetsEnabled() = \(getMeetAndGreetsEnabled())")
-    print("🏛️ [FILTER_MENU_DEBUG] - getSpecialEventsEnabled() = \(getSpecialEventsEnabled())")
-    print("🏛️ [FILTER_MENU_DEBUG] - getUnofficalEventsEnabled() = \(getUnofficalEventsEnabled())")
     let showEventTypeFilters = getMeetAndGreetsEnabled() || getSpecialEventsEnabled() || getUnofficalEventsEnabled()
-    print("🏛️ [FILTER_MENU_DEBUG] - showEventTypeFilters = \(showEventTypeFilters)")
     
     if showEventTypeFilters {
         controller.filterMenu.dataSource.append("Event Type Filters")

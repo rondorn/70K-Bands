@@ -605,26 +605,15 @@ func readFiltersFile(){
                     }
             }
         }
-        print("🎯 [FILTERS_DEBUG] After loading filters file:")
-        print("🎯 [FILTERS_DEBUG] - artistUrlPointer = '\(artistUrlPointer)'")
-        print("🎯 [FILTERS_DEBUG] - scheduleUrlPointer = '\(scheduleUrlPointer)'")
-        print("🏛️ [READ_DEBUG] Final event type filter values after file load:")
-        print("🏛️ [READ_DEBUG] - meetAndGreetsEnabled = \(getMeetAndGreetsEnabled())")
-        print("🏛️ [READ_DEBUG] - specialEventsEnabled = \(getSpecialEventsEnabled())")
-        print("🏛️ [READ_DEBUG] - unofficalEventsEnabled = \(getUnofficalEventsEnabled())")
-        
         // CRITICAL FIX: Force festival-specific event type filter defaults 
         // This prevents saved preferences from overriding festival-specific settings
         if getMeetAndGreetsEnabled() != FestivalConfig.current.meetAndGreetsEnabledDefault ||
            getSpecialEventsEnabled() != FestivalConfig.current.specialEventsEnabledDefault ||
            getUnofficalEventsEnabled() != FestivalConfig.current.unofficalEventsEnabledDefault {
-            print("🏛️ [FESTIVAL_FIX] Detected festival-specific settings mismatch - forcing correct defaults")
-            print("🏛️ [FESTIVAL_FIX] Expected: meetAndGreets=\(FestivalConfig.current.meetAndGreetsEnabledDefault), special=\(FestivalConfig.current.specialEventsEnabledDefault), unofficial=\(FestivalConfig.current.unofficalEventsEnabledDefault)")
             setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
             setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
             setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
             writeFiltersFile() // Save corrected values
-            print("🏛️ [FESTIVAL_FIX] Corrected values applied and saved")
         }
         
         print ("Loading setScheduleUrl = \(getScheduleUrl())")
