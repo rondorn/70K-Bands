@@ -113,11 +113,11 @@ public class FestivalConfig {
             
             // MDF venues: Real venue names (Market, Power Plant, Nevermore, Soundstage, Angels Rock)
             this.venues = Arrays.asList(
-                new Venue("Market", "008000", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox"),
-                new Venue("Power Plant", "0000FF", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox"),
-                new Venue("Nevermore", "FF69B4", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox"),
-                new Venue("Soundstage", "FF0000", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox"),
-                new Venue("Angels Rock", "FFFF00", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox")
+                new Venue("Market", "008000", "icon_theater", "icon_theater_alt"),
+                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt"),
+                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt"),
+                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt"),
+                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt")
             );
             
         } else {
@@ -152,10 +152,10 @@ public class FestivalConfig {
             
             // 70K venues: Pool, Lounge, Theater, Rink with colors blue, green, yellow, red
             this.venues = Arrays.asList(
-                new Venue("Pool", "0000FF", "Pool-Deck-Going-wBox", "Pool-Deck-NotGoing-wBox"),
-                new Venue("Lounge", "008000", "Lounge-Going-wBox", "Lounge-NotGoing-wBox"),
-                new Venue("Theater", "FFFF00", "Royal-Theater-Going-wBox", "Royal-Theater-NotGoing-wBox"),
-                new Venue("Rink", "FF0000", "Ice-Rink-Going-wBox", "Ice-Rink-NotGoing-wBox")
+                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt"),
+                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt"),
+                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt"),
+                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt")
             );
         }
         

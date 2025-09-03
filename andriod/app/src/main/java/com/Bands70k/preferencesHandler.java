@@ -381,6 +381,61 @@ public class preferencesHandler {
     public Boolean getShowOtherShows() {
         return showOtherShows;
     }
+    
+    /**
+     * Dynamic venue preference support - gets venue show state for any venue name
+     * Uses existing 70K preferences for known venues, defaults to true for unknown venues
+     */
+    public Boolean getShowVenueEvents(String venueName) {
+        switch (venueName) {
+            case "Pool": return getShowPoolShows();
+            case "Lounge": return getShowLoungeShows();
+            case "Theater": return getShowTheaterShows();
+            case "Rink": return getShowRinkShows();
+            case "Other": return getShowOtherShows();
+            // For MDF venues and other festivals, use a dynamic preference system
+            default:
+                return getCustomVenuePreference(venueName);
+        }
+    }
+    
+    /**
+     * Dynamic venue preference support - sets venue show state for any venue name  
+     * Uses existing 70K preferences for known venues, stores custom preferences for others
+     */
+    public void setShowVenueEvents(String venueName, Boolean value) {
+        switch (venueName) {
+            case "Pool": setShowPoolShows(value); break;
+            case "Lounge": setShowLoungeShows(value); break;
+            case "Theater": setShowTheaterShows(value); break;
+            case "Rink": setShowRinkShows(value); break;
+            case "Other": setShowOtherShows(value); break;
+            // For MDF venues and other festivals, use a dynamic preference system
+            default:
+                setCustomVenuePreference(venueName, value);
+                break;
+        }
+    }
+    
+    /**
+     * Gets custom venue preference for venues not in the hardcoded 70K list
+     */
+    private Boolean getCustomVenuePreference(String venueName) {
+        // Use SharedPreferences to store custom venue preferences
+        android.content.SharedPreferences customVenuePrefs = staticVariables.context.getSharedPreferences("custom_venue_prefs", android.content.Context.MODE_PRIVATE);
+        return customVenuePrefs.getBoolean("show_" + venueName.toLowerCase() + "_shows", true); // Default to true
+    }
+    
+    /**
+     * Sets custom venue preference for venues not in the hardcoded 70K list
+     */
+    private void setCustomVenuePreference(String venueName, Boolean value) {
+        // Use SharedPreferences to store custom venue preferences
+        android.content.SharedPreferences customVenuePrefs = staticVariables.context.getSharedPreferences("custom_venue_prefs", android.content.Context.MODE_PRIVATE);
+        android.content.SharedPreferences.Editor editor = customVenuePrefs.edit();
+        editor.putBoolean("show_" + venueName.toLowerCase() + "_shows", value);
+        editor.apply();
+    }
 
     public void setSortByTime(Boolean value) {
         sortByTime = value;
