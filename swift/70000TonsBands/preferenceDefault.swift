@@ -30,11 +30,6 @@ func setDefaults(){
     let specialEventsEnabledDefault = FestivalConfig.current.specialEventsEnabledDefault ? "YES" : "NO"
     let unofficalEventsEnabledDefault = FestivalConfig.current.unofficalEventsEnabledDefault ? "YES" : "NO"
     
-    print("🏛️ [DEFAULTS_DEBUG] UserDefaults being registered:")
-    print("🏛️ [DEFAULTS_DEBUG] - meetAndGreetsEnabled = '\(meetAndGreetsEnabledDefault)'")
-    print("🏛️ [DEFAULTS_DEBUG] - specialEventsEnabled = '\(specialEventsEnabledDefault)'")
-    print("🏛️ [DEFAULTS_DEBUG] - unofficalEventsEnabled = '\(unofficalEventsEnabledDefault)'")
-    
     let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,
                     "iCloud": iCloudDefault,
