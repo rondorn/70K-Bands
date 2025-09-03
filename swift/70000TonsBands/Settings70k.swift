@@ -58,6 +58,11 @@ var showOtherShows = true
 var showUnofficalEvents = true
 var showSpecialEvents = true
 var showMeetAndGreetEvents = true
+
+// New settings to control visibility of event type filters per festival
+var meetAndGreetsEnabled = true
+var specialEventsEnabled = true
+var unofficalEventsEnabled = true
 var showOnlyWillAttened = false;
 var sortedBy = "time"
 
@@ -275,6 +280,28 @@ func getShowMeetAndGreetEvents() -> Bool{
     return showMeetAndGreetEvents
 }
 
+// MARK: - Event Type Filter Visibility Settings
+func setMeetAndGreetsEnabled(_ value: Bool){
+    meetAndGreetsEnabled = value
+}
+func getMeetAndGreetsEnabled() -> Bool{
+    return meetAndGreetsEnabled
+}
+
+func setSpecialEventsEnabled(_ value: Bool){
+    specialEventsEnabled = value
+}
+func getSpecialEventsEnabled() -> Bool{
+    return specialEventsEnabled
+}
+
+func setUnofficalEventsEnabled(_ value: Bool){
+    unofficalEventsEnabled = value
+}
+func getUnofficalEventsEnabled() -> Bool{
+    return unofficalEventsEnabled
+}
+
 // Track when user explicitly sets preferences to prevent readFiltersFile from overriding
 private var lastUserPreferenceChangeTime: TimeInterval = 0
 
@@ -389,6 +416,11 @@ func writeFiltersFile(){
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
+        
+        // Event type filter visibility settings
+        prefsString += "meetAndGreetsEnabled:" + boolToString(getMeetAndGreetsEnabled()) + ";"
+        prefsString += "specialEventsEnabled:" + boolToString(getSpecialEventsEnabled()) + ";"
+        prefsString += "unofficalEventsEnabled:" + boolToString(getUnofficalEventsEnabled()) + ";"
 
         prefsString += "mustSeeAlertValue:" + boolToString(getMustSeeAlertValue()) + ";"
         prefsString += "mightSeeAlertValue:" + boolToString(getMightSeeAlertValue()) + ";"
@@ -502,6 +534,15 @@ func readFiltersFile(){
             
             case "showMeetAndGreetEvents":
                 setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+            
+            case "meetAndGreetsEnabled":
+                setMeetAndGreetsEnabled(stringToBool(valueArray[1]))
+            
+            case "specialEventsEnabled":
+                setSpecialEventsEnabled(stringToBool(valueArray[1]))
+            
+            case "unofficalEventsEnabled":
+                setUnofficalEventsEnabled(stringToBool(valueArray[1]))
 
             case "mustSeeAlertValue":
                 setMustSeeAlertValue(stringToBool(valueArray[1]))
@@ -567,6 +608,25 @@ func readFiltersFile(){
         print("🎯 [FILTERS_DEBUG] After loading filters file:")
         print("🎯 [FILTERS_DEBUG] - artistUrlPointer = '\(artistUrlPointer)'")
         print("🎯 [FILTERS_DEBUG] - scheduleUrlPointer = '\(scheduleUrlPointer)'")
+        print("🏛️ [READ_DEBUG] Final event type filter values after file load:")
+        print("🏛️ [READ_DEBUG] - meetAndGreetsEnabled = \(getMeetAndGreetsEnabled())")
+        print("🏛️ [READ_DEBUG] - specialEventsEnabled = \(getSpecialEventsEnabled())")
+        print("🏛️ [READ_DEBUG] - unofficalEventsEnabled = \(getUnofficalEventsEnabled())")
+        
+        // CRITICAL FIX: Force festival-specific event type filter defaults 
+        // This prevents saved preferences from overriding festival-specific settings
+        if getMeetAndGreetsEnabled() != FestivalConfig.current.meetAndGreetsEnabledDefault ||
+           getSpecialEventsEnabled() != FestivalConfig.current.specialEventsEnabledDefault ||
+           getUnofficalEventsEnabled() != FestivalConfig.current.unofficalEventsEnabledDefault {
+            print("🏛️ [FESTIVAL_FIX] Detected festival-specific settings mismatch - forcing correct defaults")
+            print("🏛️ [FESTIVAL_FIX] Expected: meetAndGreets=\(FestivalConfig.current.meetAndGreetsEnabledDefault), special=\(FestivalConfig.current.specialEventsEnabledDefault), unofficial=\(FestivalConfig.current.unofficalEventsEnabledDefault)")
+            setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
+            setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
+            setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
+            writeFiltersFile() // Save corrected values
+            print("🏛️ [FESTIVAL_FIX] Corrected values applied and saved")
+        }
+        
         print ("Loading setScheduleUrl = \(getScheduleUrl())")
         print ("Loading mustSeeOn = \(getMustSeeOn())")
     }
@@ -598,6 +658,11 @@ func establishDefaults(){
     setShowUnofficalEvents(true)
     setShowSpecialEvents(true)
     setShowMeetAndGreetEvents(true)
+    
+    // Set festival-specific defaults for event type filter visibility from FestivalConfig
+    setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
+    setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
+    setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
     setMustSeeAlertValue(true)
     setMightSeeAlertValue(true)
     setOnlyAlertForAttendedValue(false)

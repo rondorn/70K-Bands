@@ -394,7 +394,10 @@ public class BandInfo {
         ArrayList<String> bandNames = ParseBandCSV();
 
         scheduleInfo schedule = new scheduleInfo();
+        Log.d("FILTER_DEBUG", "🔍 BANDINFO: About to download schedule from URL: " + downloadUrls.get("scheduleUrl"));
         scheduleRecords = schedule.DownloadScheduleFile(downloadUrls.get("scheduleUrl"));
+        Log.d("FILTER_DEBUG", "🔍 BANDINFO: Schedule download complete, scheduleRecords has " + 
+              (scheduleRecords != null ? scheduleRecords.size() : "NULL") + " records");
 
         // Regenerate combined image list after schedule data is loaded (lightweight URL list creation)
         // This ensures event images from schedule CSV are included for year changes
