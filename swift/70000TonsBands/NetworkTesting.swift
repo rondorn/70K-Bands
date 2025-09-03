@@ -281,6 +281,10 @@ open class NetworkTesting {
                 if httpResponse.statusCode == 200{
                     returnState = true
                     print ("Internet Found returnState = \(returnState)")
+                } else if httpResponse.statusCode == 429 {
+                    // Rate limited - internet is available but server is limiting requests
+                    print("Internet Found: Rate limited (429) - treating as internet available")
+                    returnState = true // Internet is available, just rate limited
                 } else {
                     print("Internet Found is not 200 status \(httpResponse.statusCode)")
                     returnState = false

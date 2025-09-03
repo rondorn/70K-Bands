@@ -1,6 +1,26 @@
 package com.Bands70k;
 
 import android.util.Log;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+/**
+ * Venue configuration class that holds venue-specific settings
+ */
+class Venue {
+    public final String name;
+    public final String color; // Hex color string
+    public final String goingIcon;
+    public final String notGoingIcon;
+    
+    public Venue(String name, String color, String goingIcon, String notGoingIcon) {
+        this.name = name;
+        this.color = color;
+        this.goingIcon = goingIcon;
+        this.notGoingIcon = notGoingIcon;
+    }
+}
 
 /**
  * Festival-specific configuration class that provides centralized access to
@@ -48,6 +68,14 @@ public class FestivalConfig {
     
     public final String shareUrl;
     
+    // Venue configuration
+    public final List<Venue> venues;
+    
+    // Event type filter visibility settings (festival-specific)
+    public final boolean meetAndGreetsEnabledDefault;
+    public final boolean specialEventsEnabledDefault;
+    public final boolean unofficalEventsEnabledDefault;
+    
     /**
      * Private constructor that initializes configuration based on build variant
      */
@@ -88,6 +116,20 @@ public class FestivalConfig {
             
             this.shareUrl = "http://www.facebook.com/MDFBands";
             
+            // MDF venues: Real venue names (Market, Power Plant, Nevermore, Soundstage, Angels Rock)
+            this.venues = Arrays.asList(
+                new Venue("Market", "008000", "icon_theater", "icon_theater_alt"),
+                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt"),
+                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt"),
+                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt"),
+                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt")
+            );
+            
+            // MDF: Hide all event type filters by default
+            this.meetAndGreetsEnabledDefault = false;
+            this.specialEventsEnabledDefault = false;
+            this.unofficalEventsEnabledDefault = false;
+            
         } else {
             // Default to 70K configuration
             this.festivalName = "70,000 Tons of Metal";
@@ -117,6 +159,19 @@ public class FestivalConfig {
             this.notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
             
             this.shareUrl = "http://www.facebook.com/70kBands";
+            
+            // 70K venues: Pool, Lounge, Theater, Rink with colors blue, green, yellow, red
+            this.venues = Arrays.asList(
+                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt"),
+                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt"),
+                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt"),
+                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt")
+            );
+            
+            // 70K: Show all event type filters by default (maintain existing behavior)
+            this.meetAndGreetsEnabledDefault = true;
+            this.specialEventsEnabledDefault = true;
+            this.unofficalEventsEnabledDefault = true;
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");
@@ -202,5 +257,67 @@ public class FestivalConfig {
         // Check against both possible default texts (English versions for simplicity)
         return text.contains("Comment text is not available yet") || 
                text.contains("No notes are available, right now, feel free to add your own");
+    }
+    
+    // MARK: - Venue Helper Methods
+    
+    /**
+     * Get venue by name
+     */
+    public Venue getVenue(String name) {
+        for (Venue venue : venues) {
+            if (venue.name.equalsIgnoreCase(name)) {
+                return venue;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get venue by partial name match (for backwards compatibility)
+     */
+    public Venue getVenueByPartialName(String name) {
+        for (Venue venue : venues) {
+            if (name.toLowerCase().contains(venue.name.toLowerCase()) || 
+                venue.name.toLowerCase().contains(name.toLowerCase())) {
+                return venue;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get all venue names
+     */
+    public List<String> getAllVenueNames() {
+        List<String> names = new ArrayList<>();
+        for (Venue venue : venues) {
+            names.add(venue.name);
+        }
+        return names;
+    }
+    
+    /**
+     * Get venue color for a given venue name (returns hex string)
+     */
+    public String getVenueColor(String venueName) {
+        Venue venue = getVenueByPartialName(venueName);
+        return venue != null ? venue.color : "A9A9A9"; // Default to gray
+    }
+    
+    /**
+     * Get venue going icon for a given venue name
+     */
+    public String getVenueGoingIcon(String venueName) {
+        Venue venue = getVenueByPartialName(venueName);
+        return venue != null ? venue.goingIcon : "Unknown-Going-wBox";
+    }
+    
+    /**
+     * Get venue not going icon for a given venue name
+     */
+    public String getVenueNotGoingIcon(String venueName) {
+        Venue venue = getVenueByPartialName(venueName);
+        return venue != null ? venue.notGoingIcon : "Unknown-NotGoing-wBox";
     }
 }

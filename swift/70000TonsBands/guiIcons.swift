@@ -136,7 +136,11 @@ func getEventTypeIcon (eventType: String, eventName: String)->UIImage {
         graphicName = unknownVenue
     }
     
-    graphicImage = UIImage(named: graphicName) ?? UIImage()
+    if graphicName.isEmpty {
+        graphicImage = UIImage()
+    } else {
+        graphicImage = UIImage(named: graphicName) ?? UIImage()
+    }
     
     return graphicImage
     
@@ -146,12 +150,20 @@ func getSortButtonImage()->UIImage{
     
     var sortImage:UIImage
     
-    print ("scheduleIcon = \(getSortedBy())")
+    // Reduced logging for performance
     if (getSortedBy() == "name"){
-        sortImage = UIImage(named: scheduleIconSort) ?? UIImage()
+        if scheduleIconSort.isEmpty {
+            sortImage = UIImage()
+        } else {
+            sortImage = UIImage(named: scheduleIconSort) ?? UIImage()
+        }
         
     } else {
-        sortImage = UIImage(named: bandIconSort) ?? UIImage()
+        if bandIconSort.isEmpty {
+            sortImage = UIImage()
+        } else {
+            sortImage = UIImage(named: bandIconSort) ?? UIImage()
+        }
     }
     
     return sortImage
@@ -235,28 +247,11 @@ func getRankGuiIcons (rank: String)->UIImage {
 
 func getVenueColor (venue: String)->UIColor{
     
-    var venuColor = UIColor();
+    // Use the new configurable venue system from FestivalConfig
+    let venueColor = FestivalConfig.current.getVenueColor(for: venue)
     
-    switch venue {
-        
-    case venuePoolKey:
-        venuColor = poolVenueColor
-        
-    case venueTheaterKey:
-        venuColor = theaterVenueColor
-        
-    case venueLoungeKey:
-        venuColor = loungeVenueColor
-        
-    case venueRinkKey:
-        venuColor = rinkVenueColor
-        
-    default:
-       venuColor = unknownVenueColor
-    }
-    
-    print ("Returning \(venuColor) for venu of \(venue)")
-    return venuColor
+    print ("Returning \(venueColor) for venue of \(venue)")
+    return venueColor
 }
 
 func getVenuIcon(_ venue: String)->String {

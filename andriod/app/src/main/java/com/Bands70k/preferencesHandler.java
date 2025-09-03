@@ -33,6 +33,12 @@ public class preferencesHandler {
     private Boolean showClinicEvents = true;
     private Boolean showAlbumListen = true;
 
+    // New settings to control visibility of event type filters per festival
+    // These will be initialized properly in loadData() method based on festival type
+    private Boolean meetAndGreetsEnabled;
+    private Boolean specialEventsEnabled;
+    private Boolean unofficalEventsEnabled;
+
     private Boolean showPoolShows = true;
     private Boolean showTheaterShows = true;
     private Boolean showRinkShows = true;
@@ -69,6 +75,7 @@ public class preferencesHandler {
 
     public void loadData() {
 
+        Log.d("FILTER_DEBUG", "🔧 preferencesHandler.loadData() called, prefsLoaded: " + staticVariables.prefsLoaded + ", loadCounter: " + loadCounter);
         Log.d("settingFilters", "Loading prefereces, already loaded" + staticVariables.prefsLoaded);
         if (loadCounter == 0) {
             loadCounter = loadCounter + 1;
@@ -110,6 +117,18 @@ public class preferencesHandler {
 
                         case "showUnofficalEvents":
                             setShowUnofficalEvents(Boolean.valueOf(RowData[1]));
+                            break;
+                        
+                        case "meetAndGreetsEnabled":
+                            setMeetAndGreetsEnabled(Boolean.valueOf(RowData[1]));
+                            break;
+                        
+                        case "specialEventsEnabled":
+                            setSpecialEventsEnabled(Boolean.valueOf(RowData[1]));
+                            break;
+                        
+                        case "unofficalEventsEnabled":
+                            setUnofficalEventsEnabled(Boolean.valueOf(RowData[1]));
                             break;
 
                         case "showClinics":
@@ -224,10 +243,69 @@ public class preferencesHandler {
             } catch (Exception error) {
                 Log.e("Load Data Error", error.getMessage() + "\n" + error.fillInStackTrace());
             }
+            
+            // CRITICAL: Initialize festival-specific event type filter visibility settings IMMEDIATELY
+            // to prevent null values from affecting other filtering logic
+            initializeEventTypeFilterVisibilityImmediate();
+            
             removeFiltersForShowWillAttend();
         }
     }
 
+    /**
+     * Initialize festival-specific event type filter visibility settings.
+     * This ensures proper defaults based on the current festival type.
+     */
+    private void initializeEventTypeFilterVisibility() {
+        FestivalConfig config = FestivalConfig.getInstance();
+        
+        // Only initialize if not already set (null values indicate not loaded from file)
+        if (meetAndGreetsEnabled == null || specialEventsEnabled == null || unofficalEventsEnabled == null) {
+            // Use festival-specific defaults from FestivalConfig
+            if (meetAndGreetsEnabled == null) meetAndGreetsEnabled = config.meetAndGreetsEnabledDefault;
+            if (specialEventsEnabled == null) specialEventsEnabled = config.specialEventsEnabledDefault;
+            if (unofficalEventsEnabled == null) unofficalEventsEnabled = config.unofficalEventsEnabledDefault;
+            
+            Log.d("PreferencesHandler", "Initialized event type filter visibility for festival: " + 
+                  config.festivalShortName + 
+                  " - meetAndGreets: " + meetAndGreetsEnabled + 
+                  ", specialEvents: " + specialEventsEnabled + 
+                  ", unofficalEvents: " + unofficalEventsEnabled);
+        }
+    }
+    
+    /**
+     * IMMEDIATE initialization of event type filter visibility settings.
+     * This is called right after preferences are loaded to ensure values are never null.
+     */
+    private void initializeEventTypeFilterVisibilityImmediate() {
+        FestivalConfig config = FestivalConfig.getInstance();
+        
+        Log.d("FILTER_DEBUG", "🔧 IMMEDIATE initialization called for festival: " + config.festivalShortName);
+        Log.d("FILTER_DEBUG", "🔧 Current values before init: meetAndGreets=" + meetAndGreetsEnabled + 
+              ", specialEvents=" + specialEventsEnabled + ", unoffical=" + unofficalEventsEnabled);
+        
+        // FORCE initialization to prevent any null values that could affect other logic
+        if (meetAndGreetsEnabled == null) {
+            meetAndGreetsEnabled = config.meetAndGreetsEnabledDefault;
+            Log.d("FILTER_DEBUG", "🔧 IMMEDIATE: Set meetAndGreetsEnabled = " + meetAndGreetsEnabled);
+        }
+        if (specialEventsEnabled == null) {
+            specialEventsEnabled = config.specialEventsEnabledDefault;
+            Log.d("FILTER_DEBUG", "🔧 IMMEDIATE: Set specialEventsEnabled = " + specialEventsEnabled);
+        }
+        if (unofficalEventsEnabled == null) {
+            unofficalEventsEnabled = config.unofficalEventsEnabledDefault;
+            Log.d("FILTER_DEBUG", "🔧 IMMEDIATE: Set unofficalEventsEnabled = " + unofficalEventsEnabled);
+        }
+        
+        Log.d("FILTER_DEBUG", "🔧 IMMEDIATE initialization complete for festival: " + 
+              config.festivalShortName + 
+              " - meetAndGreets: " + meetAndGreetsEnabled + 
+              ", specialEvents: " + specialEventsEnabled + 
+              ", unofficalEvents: " + unofficalEventsEnabled);
+    }
+    
     public void removeFiltersForShowWillAttend(){
         if (getShowWillAttend() == true){
             setshowMust(true);
@@ -254,6 +332,12 @@ public class preferencesHandler {
         dataString += "showClinics," + showClinicEvents.toString() + "\n";
         dataString += "showListeningParties," + showAlbumListen.toString() + "\n";
         dataString += "showUnofficalEvents," + showUnofficalEvents.toString() + "\n";
+
+        // Event type filter visibility settings (ensure they're initialized before saving)
+        initializeEventTypeFilterVisibilityImmediate();
+        dataString += "meetAndGreetsEnabled," + meetAndGreetsEnabled.toString() + "\n";
+        dataString += "specialEventsEnabled," + specialEventsEnabled.toString() + "\n";
+        dataString += "unofficalEventsEnabled," + unofficalEventsEnabled.toString() + "\n";
 
         dataString += "showPoolShows," + showPoolShows.toString() + "\n";
         dataString += "showTheaterShows," + showTheaterShows.toString() + "\n";
@@ -366,6 +450,52 @@ public class preferencesHandler {
         return showAlbumListen;
     }
 
+    // Event type filter visibility settings
+    public Boolean getMeetAndGreetsEnabled() {
+        if (meetAndGreetsEnabled == null) {
+            // Safe default from FestivalConfig
+            FestivalConfig config = FestivalConfig.getInstance();
+            Log.d("FILTER_DEBUG", "⚠️ getMeetAndGreetsEnabled() was NULL, returning default: " + config.meetAndGreetsEnabledDefault + " for festival: " + config.festivalShortName);
+            return config.meetAndGreetsEnabledDefault;
+        }
+        Log.d("FILTER_DEBUG", "✅ getMeetAndGreetsEnabled() returning: " + meetAndGreetsEnabled);
+        return meetAndGreetsEnabled;
+    }
+    
+    public void setMeetAndGreetsEnabled(Boolean meetAndGreetsEnabled) {
+        this.meetAndGreetsEnabled = meetAndGreetsEnabled;
+    }
+    
+    public Boolean getSpecialEventsEnabled() {
+        if (specialEventsEnabled == null) {
+            // Safe default from FestivalConfig
+            FestivalConfig config = FestivalConfig.getInstance();
+            Log.d("FILTER_DEBUG", "⚠️ getSpecialEventsEnabled() was NULL, returning default: " + config.specialEventsEnabledDefault + " for festival: " + config.festivalShortName);
+            return config.specialEventsEnabledDefault;
+        }
+        Log.d("FILTER_DEBUG", "✅ getSpecialEventsEnabled() returning: " + specialEventsEnabled);
+        return specialEventsEnabled;
+    }
+    
+    public void setSpecialEventsEnabled(Boolean specialEventsEnabled) {
+        this.specialEventsEnabled = specialEventsEnabled;
+    }
+    
+    public Boolean getUnofficalEventsEnabled() {
+        if (unofficalEventsEnabled == null) {
+            // Safe default from FestivalConfig
+            FestivalConfig config = FestivalConfig.getInstance();
+            Log.d("FILTER_DEBUG", "⚠️ getUnofficalEventsEnabled() was NULL, returning default: " + config.unofficalEventsEnabledDefault + " for festival: " + config.festivalShortName);
+            return config.unofficalEventsEnabledDefault;
+        }
+        Log.d("FILTER_DEBUG", "✅ getUnofficalEventsEnabled() returning: " + unofficalEventsEnabled);
+        return unofficalEventsEnabled;
+    }
+    
+    public void setUnofficalEventsEnabled(Boolean unofficalEventsEnabled) {
+        this.unofficalEventsEnabled = unofficalEventsEnabled;
+    }
+
     public Boolean getShowPoolShows() {
         return showPoolShows;
     }
@@ -380,6 +510,61 @@ public class preferencesHandler {
     }
     public Boolean getShowOtherShows() {
         return showOtherShows;
+    }
+    
+    /**
+     * Dynamic venue preference support - gets venue show state for any venue name
+     * Uses existing 70K preferences for known venues, defaults to true for unknown venues
+     */
+    public Boolean getShowVenueEvents(String venueName) {
+        switch (venueName) {
+            case "Pool": return getShowPoolShows();
+            case "Lounge": return getShowLoungeShows();
+            case "Theater": return getShowTheaterShows();
+            case "Rink": return getShowRinkShows();
+            case "Other": return getShowOtherShows();
+            // For MDF venues and other festivals, use a dynamic preference system
+            default:
+                return getCustomVenuePreference(venueName);
+        }
+    }
+    
+    /**
+     * Dynamic venue preference support - sets venue show state for any venue name  
+     * Uses existing 70K preferences for known venues, stores custom preferences for others
+     */
+    public void setShowVenueEvents(String venueName, Boolean value) {
+        switch (venueName) {
+            case "Pool": setShowPoolShows(value); break;
+            case "Lounge": setShowLoungeShows(value); break;
+            case "Theater": setShowTheaterShows(value); break;
+            case "Rink": setShowRinkShows(value); break;
+            case "Other": setShowOtherShows(value); break;
+            // For MDF venues and other festivals, use a dynamic preference system
+            default:
+                setCustomVenuePreference(venueName, value);
+                break;
+        }
+    }
+    
+    /**
+     * Gets custom venue preference for venues not in the hardcoded 70K list
+     */
+    private Boolean getCustomVenuePreference(String venueName) {
+        // Use SharedPreferences to store custom venue preferences
+        android.content.SharedPreferences customVenuePrefs = staticVariables.context.getSharedPreferences("custom_venue_prefs", android.content.Context.MODE_PRIVATE);
+        return customVenuePrefs.getBoolean("show_" + venueName.toLowerCase() + "_shows", true); // Default to true
+    }
+    
+    /**
+     * Sets custom venue preference for venues not in the hardcoded 70K list
+     */
+    private void setCustomVenuePreference(String venueName, Boolean value) {
+        // Use SharedPreferences to store custom venue preferences
+        android.content.SharedPreferences customVenuePrefs = staticVariables.context.getSharedPreferences("custom_venue_prefs", android.content.Context.MODE_PRIVATE);
+        android.content.SharedPreferences.Editor editor = customVenuePrefs.edit();
+        editor.putBoolean("show_" + venueName.toLowerCase() + "_shows", value);
+        editor.apply();
     }
 
     public void setSortByTime(Boolean value) {
@@ -467,6 +652,8 @@ public class preferencesHandler {
     }
 
     public void setShowWillAttend(Boolean showWillAttendValue) {
+        Log.d("FILTER_DEBUG", "⚠️ CHANGING getShowWillAttend from " + this.showWillAttend + " to " + showWillAttendValue);
+        Log.d("FILTER_DEBUG", "⚠️ STACK TRACE: " + Log.getStackTraceString(new Exception("Stack trace for setShowWillAttend call")));
         this.showWillAttend = showWillAttendValue;
     }
 

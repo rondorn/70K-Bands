@@ -109,9 +109,31 @@ class PreferencesHostingController: UIHostingController<AnyView> {
         
         // Trigger data refresh when preferences are closed
         DispatchQueue.global(qos: .background).async {
-            masterView.bandNameHandle.gatherData()
-            masterView.schedule.DownloadCsv()
-            masterView.schedule.populateSchedule(forceDownload: false)
+            // CRITICAL: Use protected CSV download to prevent race conditions
+            MasterViewController.backgroundRefreshLock.lock()
+            let downloadAllowed = !MasterViewController.isCsvDownloadInProgress
+            if downloadAllowed {
+                MasterViewController.isCsvDownloadInProgress = true
+            }
+            MasterViewController.backgroundRefreshLock.unlock()
+            
+            if downloadAllowed {
+                print("🔒 PreferencesHostingController: Starting protected DUAL CSV download (bands + schedule)")
+                
+                // CRITICAL FIX: Both operations must be protected as a single atomic unit
+                // to prevent race conditions where band names import interferes with schedule import
+                masterView.bandNameHandle.gatherData()
+                masterView.schedule.DownloadCsv()
+                masterView.schedule.populateSchedule(forceDownload: false)
+                
+                // Mark download as complete
+                MasterViewController.backgroundRefreshLock.lock()
+                MasterViewController.isCsvDownloadInProgress = false
+                MasterViewController.backgroundRefreshLock.unlock()
+                print("🔒 PreferencesHostingController: Protected DUAL CSV download completed")
+            } else {
+                print("🔒 PreferencesHostingController: ❌ DUAL CSV download blocked - already in progress")
+            }
             
             // Update UI on main thread
             DispatchQueue.main.async {

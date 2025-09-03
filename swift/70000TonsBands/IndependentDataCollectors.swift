@@ -230,7 +230,7 @@ class IndependentBandNamesCollector: BaseIndependentCollector {
 
 class IndependentScheduleCollector: BaseIndependentCollector {
     private var schedulingData: [String: [TimeInterval: [String: String]]] = [:]
-    private var schedulingDataByTime: [TimeInterval: [String: String]] = [:]
+    private var schedulingDataByTime: [TimeInterval: [[String: String]]] = [:]
     private let scheduleLock = NSLock()
     
     init() {
@@ -298,7 +298,7 @@ class IndependentScheduleCollector: BaseIndependentCollector {
         
         let csvData = try! CSV(csvStringToParse: csvDataString)
         var tempSchedulingData: [String: [TimeInterval: [String: String]]] = [:]
-        var tempSchedulingDataByTime: [TimeInterval: [String: String]] = [:]
+        var tempSchedulingDataByTime: [TimeInterval: [[String: String]]] = [:]
         var uniqueIndex: [TimeInterval: Int] = [:]
         
         for lineData in csvData.rows {
@@ -331,8 +331,20 @@ class IndependentScheduleCollector: BaseIndependentCollector {
             tempSchedulingData[bandValue]?[dateIndex]?[notesField] = lineData[notesField] ?? ""
             tempSchedulingData[bandValue]?[dateIndex]?[locationField] = lineData[locationField] ?? ""
             
-            // Add to time-sorted data
-            tempSchedulingDataByTime[dateIndex] = [bandValue: bandValue]
+            // Add to time-sorted data - store as array to prevent data loss
+            if tempSchedulingDataByTime[dateIndex] == nil {
+                tempSchedulingDataByTime[dateIndex] = []
+            }
+            var eventData = [String: String]()
+            eventData[bandField] = bandValue
+            eventData[locationField] = lineData[locationField] ?? ""
+            eventData[dateField] = lineData[dateField] ?? ""
+            eventData[dayField] = lineData[dayField] ?? ""
+            eventData[startTimeField] = lineData[startTimeField] ?? ""
+            eventData[endTimeField] = lineData[endTimeField] ?? ""
+            eventData[typeField] = lineData[typeField] ?? ""
+            eventData[notesField] = lineData[notesField] ?? ""
+            tempSchedulingDataByTime[dateIndex]!.append(eventData)
         }
         
         scheduleLock.lock()
@@ -556,7 +568,7 @@ extension IndependentDataCollectionManager {
         // bandNamesHandler.shared.getCachedData { ... }
         // scheduleHandler.shared.getCachedData()
         // ShowsAttended().getCachedData()
-        // dataHandler().getCachedData()
+
         
         // NEW WAY (truly independent):
         startAllCollections { [weak self] in

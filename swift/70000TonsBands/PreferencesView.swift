@@ -256,12 +256,22 @@ struct LifecycleModifiers: ViewModifier {
     let viewModel: PreferencesViewModel
     @Binding var minutesText: String
     let presentationMode: Binding<PresentationMode>
+    @State private var hasLoadedInitialPreferences = false
     
     func body(content: Content) -> some View {
         content
             .onAppear {
                 viewModel.refreshAvailableYears()
-                viewModel.loadCurrentPreferences()
+                
+                // 🔧 FIX: Only load preferences on first appearance to prevent iPad split-screen reversion
+                if !hasLoadedInitialPreferences {
+                    print("🎛️ [PREFERENCES_SYNC] Loading initial preferences (first appearance)")
+                    viewModel.loadCurrentPreferences()
+                    hasLoadedInitialPreferences = true
+                } else {
+                    print("🎛️ [PREFERENCES_SYNC] Skipping preference reload (subsequent appearance) - preserving user changes")
+                }
+                
                 minutesText = String(viewModel.minutesBeforeAlert)
             }
             .onDisappear {
