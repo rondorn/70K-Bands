@@ -66,15 +66,40 @@ func getUrlData(urlString: String) -> String{
                 return ""
             }
             
-            do {
-                print ("Problem URL string is \(urlString)")
-                //create the url with NSURL
-                let url = try URL(string: urlString) ?? URL(fileURLWithPath: "") //change the url
-                let contents = try String(contentsOf: url)
-                print(contents)
-                results = contents
-            } catch {
-                print ("Failed to find data !!Looking up url \(urlString)")
+            // Retry logic for handling rate limiting and temporary failures
+            var retryCount = 0
+            let maxRetries = 3
+            var success = false
+            
+            while retryCount < maxRetries && !success {
+                do {
+                    if retryCount > 0 {
+                        let delay = pow(2.0, Double(retryCount)) // Exponential backoff: 2, 4, 8 seconds
+                        print("getUrlData: Retry \(retryCount) after \(delay) second delay for \(urlString)")
+                        Thread.sleep(forTimeInterval: delay)
+                    }
+                    
+                    print ("getUrlData: Attempting to load URL \(urlString) (attempt \(retryCount + 1))")
+                    let url = try URL(string: urlString) ?? URL(fileURLWithPath: "")
+                    let contents = try String(contentsOf: url)
+                    
+                    if !contents.isEmpty {
+                        print("getUrlData: Successfully loaded \(contents.count) characters")
+                        results = contents
+                        success = true
+                    } else {
+                        print("getUrlData: Empty response received")
+                        retryCount += 1
+                    }
+                } catch {
+                    print("getUrlData: Attempt \(retryCount + 1) failed: \(error.localizedDescription)")
+                    retryCount += 1
+                    
+                    // If this was the last retry, log the final failure
+                    if retryCount >= maxRetries {
+                        print("getUrlData: All \(maxRetries) attempts failed for \(urlString)")
+                    }
+                }
             }
         }
     }

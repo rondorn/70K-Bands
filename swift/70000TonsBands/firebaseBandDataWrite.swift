@@ -48,7 +48,7 @@ class firebaseBandDataWrite {
             .replacingOccurrences(of: "]", with: "_")
     }
     
-    func writeSingleRecord(dataHandle: dataHandler, bandName: String, ranking: String){
+    func writeSingleRecord(bandName: String, ranking: String){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
@@ -85,23 +85,24 @@ class firebaseBandDataWrite {
         }
     }
     
-    func writeData (dataHandle: dataHandler){
+    func writeData (){
         
         if inTestEnvironment == false {
-            dataHandle.refreshData()
+            // LEGACY: dataHandle.refreshData() no longer needed - priorities handled by PriorityManager
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             firebaseBandAttendedArray = self.loadCompareFile()
             print ("bandDataReport - Loading firebaseBandAttendedArray \(firebaseBandAttendedArray)")
             if (uid.isEmpty == false){
-                self.buildBandRankArray(dataHandle: dataHandle)
+                self.buildBandRankArray()
                 for bandName in self.bandRank.keys {
                     
-                    let rankingInteger = dataHandle.getPriorityData(bandName)
+                    let priorityManager = PriorityManager()
+                    let rankingInteger = priorityManager.getPriority(for: bandName)
                     let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
                     print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
                     if firebaseBandAttendedArray[bandName] != ranking || didVersionChange == true {
                         print ("bandDataReport - fixing record for \(bandName)")
-                        writeSingleRecord(dataHandle: dataHandle, bandName: bandName, ranking: ranking)
+                        writeSingleRecord(bandName: bandName, ranking: ranking)
                     }
                     
                 }
@@ -112,14 +113,15 @@ class firebaseBandDataWrite {
         }
     }
     
-    func buildBandRankArray(dataHandle: dataHandler){
+    func buildBandRankArray(){
         
         let bandNameHandle = bandNamesHandler.shared
         
         let allBands = bandNameHandle.getBandNames()
         for bandName in allBands {
             
-            let rankingNumber = String(dataHandle.getPriorityData(bandName))
+            let priorityManager = PriorityManager()
+            let rankingNumber = String(priorityManager.getPriority(for: bandName))
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
             bandRank[bandName] = rankingString;

@@ -8,6 +8,43 @@
 
 import Foundation
 
+// MARK: - Dynamic Venue Filtering System
+// Dictionary to store venue filter settings dynamically based on FestivalConfig
+private var venueFilterSettings: [String: Bool] = [:]
+
+// Dynamic venue filter functions
+func getShowVenueEvents(venueName: String) -> Bool {
+    // Initialize with true if not set (default to showing all venues)
+    return venueFilterSettings[venueName.lowercased(), default: true]
+}
+
+func setShowVenueEvents(venueName: String, show: Bool) {
+    venueFilterSettings[venueName.lowercased()] = show
+}
+
+// Helper function to initialize venue filters from FestivalConfig
+func initializeVenueFilters() {
+    let venues = FestivalConfig.current.getAllVenueNames()
+    for venue in venues {
+        if venueFilterSettings[venue.lowercased()] == nil {
+            venueFilterSettings[venue.lowercased()] = true // Default to showing all venues
+        }
+    }
+}
+
+// Helper function to get all venue filter states
+func getAllVenueFilterStates() -> [String: Bool] {
+    return venueFilterSettings
+}
+
+// Helper function to set all venues to a specific state
+func setAllVenueFilters(show: Bool) {
+    let venues = FestivalConfig.current.getAllVenueNames()
+    for venue in venues {
+        venueFilterSettings[venue.lowercased()] = show
+    }
+}
+
 var mustSeeOn = true;
 var mightSeeOn = true;
 var wontSeeOn = true;
@@ -21,6 +58,11 @@ var showOtherShows = true
 var showUnofficalEvents = true
 var showSpecialEvents = true
 var showMeetAndGreetEvents = true
+
+// New settings to control visibility of event type filters per festival
+var meetAndGreetsEnabled = true
+var specialEventsEnabled = true
+var unofficalEventsEnabled = true
 var showOnlyWillAttened = false;
 var sortedBy = "time"
 
@@ -163,30 +205,49 @@ func getOnlyAlertForAttendedValue()->Bool{
 
 func setShowTheaterShows(_ value: Bool){
     showTheaterShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Theater", show: value)
 }
 func getShowTheaterShows() -> Bool{
-    return showTheaterShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Theater")
+    print("🔍 [SETTINGS_DEBUG] getShowTheaterShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowPoolShows(_ value: Bool){
     showPoolShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Pool", show: value)
 }
 func getShowPoolShows() -> Bool{
-    return showPoolShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Pool")
+    print("🔍 [SETTINGS_DEBUG] getShowPoolShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowRinkShows(_ value: Bool){
     showRinkShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Rink", show: value)
 }
 func getShowRinkShows() -> Bool{
-    return showRinkShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Rink")
+    print("🔍 [SETTINGS_DEBUG] getShowRinkShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowLoungeShows(_ value: Bool){
     showLoungeShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Lounge", show: value)
 }
 func getShowLoungeShows() -> Bool{
-    return showLoungeShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Lounge")
+    return dynamicValue
 }
 
 func setShowOtherShows(_ value: Bool){
@@ -197,9 +258,11 @@ func getShowOtherShows() -> Bool{
 }
 
 func setShowUnofficalEvents(_ value: Bool){
+    print("🔧 [UNOFFICIAL_DEBUG] setShowUnofficalEvents called with value: \(value)")
     showUnofficalEvents = value
 }
 func getShowUnofficalEvents() -> Bool{
+    print("🔧 [UNOFFICIAL_DEBUG] getShowUnofficalEvents returning: \(showUnofficalEvents)")
     return showUnofficalEvents
 }
 
@@ -217,7 +280,48 @@ func getShowMeetAndGreetEvents() -> Bool{
     return showMeetAndGreetEvents
 }
 
+// MARK: - Event Type Filter Visibility Settings
+func setMeetAndGreetsEnabled(_ value: Bool){
+    meetAndGreetsEnabled = value
+}
+func getMeetAndGreetsEnabled() -> Bool{
+    return meetAndGreetsEnabled
+}
+
+func setSpecialEventsEnabled(_ value: Bool){
+    specialEventsEnabled = value
+}
+func getSpecialEventsEnabled() -> Bool{
+    return specialEventsEnabled
+}
+
+func setUnofficalEventsEnabled(_ value: Bool){
+    unofficalEventsEnabled = value
+}
+func getUnofficalEventsEnabled() -> Bool{
+    return unofficalEventsEnabled
+}
+
+// Track when user explicitly sets preferences to prevent readFiltersFile from overriding
+private var lastUserPreferenceChangeTime: TimeInterval = 0
+
 func setHideExpireScheduleData(_ value: Bool){
+    // Check if this is called from readFiltersFile (which would be an override)
+    let callStack = Thread.callStackSymbols.joined(separator: " ")
+    let isFromReadFilters = callStack.contains("readFiltersFile")
+    
+    if isFromReadFilters {
+        // This is readFiltersFile trying to override a user preference
+        let timeSinceUserChange = Date().timeIntervalSince1970 - lastUserPreferenceChangeTime
+        if timeSinceUserChange < 5.0 { // Within 5 seconds of user change
+            // Block readFiltersFile from overriding recent user preference changes
+            return
+        }
+    } else {
+        // This is a direct user preference change - track the timestamp
+        lastUserPreferenceChangeTime = Date().timeIntervalSince1970
+    }
+    
     hideExpireScheduleData = value
 }
 func getHideExpireScheduleData() -> Bool{
@@ -285,9 +389,9 @@ func getSortedBy() -> String{
 
 func writeFiltersFile(){
     
-    DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-        
-        var prefsString = String()
+    // CRITICAL FIX: Use synchronous write to prevent race conditions where read happens before write completes
+    // The async write was causing iPad preference reversion when rapid read/write cycles occurred
+    var prefsString = String()
         
         print ("Status of getWontSeeOn save = \(getWontSeeOn())")
         prefsString = "mustSeeOn:" + boolToString(getMustSeeOn()) + ";"
@@ -304,9 +408,20 @@ func writeFiltersFile(){
         prefsString += "showRinkShows:" + boolToString(getShowRinkShows()) + ";"
         prefsString += "showLoungeShows:" + boolToString(getShowLoungeShows()) + ";"
         prefsString += "showOtherShows:" + boolToString(getShowOtherShows()) + ";"
+        
+        // Save dynamic venue settings
+        let dynamicVenueSettings = getAllVenueFilterStates()
+        for (venueName, showState) in dynamicVenueSettings {
+            prefsString += "venue_\(venueName.lowercased()):" + boolToString(showState) + ";"
+        }
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
+        
+        // Event type filter visibility settings
+        prefsString += "meetAndGreetsEnabled:" + boolToString(getMeetAndGreetsEnabled()) + ";"
+        prefsString += "specialEventsEnabled:" + boolToString(getSpecialEventsEnabled()) + ";"
+        prefsString += "unofficalEventsEnabled:" + boolToString(getUnofficalEventsEnabled()) + ";"
 
         prefsString += "mustSeeAlertValue:" + boolToString(getMustSeeAlertValue()) + ";"
         prefsString += "mightSeeAlertValue:" + boolToString(getMightSeeAlertValue()) + ";"
@@ -332,13 +447,12 @@ func writeFiltersFile(){
         
         print ("Wrote prefs " + prefsString)
         do {
-            try prefsString.write(to: lastFilters, atomically: false, encoding: String.Encoding.utf8)
+            try prefsString.write(to: lastFilters, atomically: true, encoding: String.Encoding.utf8)
             print ("saved sortedBy = " + getSortedBy())
         } catch {
             print ("Status of getWontSeeOn NOT saved \(error.localizedDescription)")
         }
         print ("Saving showOnlyWillAttened = \(getShowOnlyWillAttened())")
-    }
 }
 
 
@@ -346,11 +460,21 @@ func readFiltersFile(){
     
     var tempCurrentTimeZone = "";
     
+    print ("🔧 [UNOFFICIAL_DEBUG] readFiltersFile() called - current showUnofficalEvents before reading: \(showUnofficalEvents)")
     print ("Status of getWontSeeOn loading")
+    
+    // Always initialize venue filters from FestivalConfig (handles festival switching)
+    initializeVenueFilters()
+    print ("🏟️ [VENUE_INIT] Initialized venue filters for current festival")
+    
     if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
+        print ("🔧 [UNOFFICIAL_DEBUG] No filters file found, establishing defaults")
         establishDefaults()
         writeFiltersFile()
+        print ("🔧 [UNOFFICIAL_DEBUG] After establishDefaults, showUnofficalEvents = \(showUnofficalEvents)")
     }
+    
+
     
     if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
         print ("Status of sortedBy loading 1 " + data)
@@ -402,13 +526,24 @@ func readFiltersFile(){
                 setShowOtherShows(stringToBool(valueArray[1]))
             
             case "showUnofficalEvents":
+                print ("🔧 [UNOFFICIAL_DEBUG] Found showUnofficalEvents in file with value: \(valueArray[1])")
                 setShowUnofficalEvents(stringToBool(valueArray[1]))
+                print ("🔧 [UNOFFICIAL_DEBUG] After parsing from file, showUnofficalEvents = \(showUnofficalEvents)")
             
             case "showSpecialEvents":
                 setShowSpecialEvents(stringToBool(valueArray[1]))
             
             case "showMeetAndGreetEvents":
                 setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+            
+            case "meetAndGreetsEnabled":
+                setMeetAndGreetsEnabled(stringToBool(valueArray[1]))
+            
+            case "specialEventsEnabled":
+                setSpecialEventsEnabled(stringToBool(valueArray[1]))
+            
+            case "unofficalEventsEnabled":
+                setUnofficalEventsEnabled(stringToBool(valueArray[1]))
 
             case "mustSeeAlertValue":
                 setMustSeeAlertValue(stringToBool(valueArray[1]))
@@ -453,15 +588,35 @@ func readFiltersFile(){
                 setMinBeforeAlertValue(Int(valueArray[1]) ?? 10)
 
             case "artistUrl":
+                print("🎯 [FILTERS_DEBUG] Loading artistUrl from file: '\(valueArray[1])'")
                 setArtistUrl(valueArray[1])
                 
             case "scheduleUrl":
+                print("🎯 [FILTERS_DEBUG] Loading scheduleUrl from file: '\(valueArray[1])'")
                 setScheduleUrl(valueArray[1])
                 
                 default:
-                    print("Not sure why this would happen")
+                    // Handle dynamic venue settings
+                    if valueArray[0].hasPrefix("venue_") {
+                        let venueName = String(valueArray[0].dropFirst(6)) // Remove "venue_" prefix
+                        setShowVenueEvents(venueName: venueName, show: stringToBool(valueArray[1]))
+                        print("🏟️ [VENUE_SETTINGS] Loaded venue '\(venueName)' = \(stringToBool(valueArray[1]))")
+                    } else {
+                        print("⚠️ [SETTINGS_DEBUG] Unknown setting key: \(valueArray[0])")
+                    }
             }
         }
+        // CRITICAL FIX: Force festival-specific event type filter defaults 
+        // This prevents saved preferences from overriding festival-specific settings
+        if getMeetAndGreetsEnabled() != FestivalConfig.current.meetAndGreetsEnabledDefault ||
+           getSpecialEventsEnabled() != FestivalConfig.current.specialEventsEnabledDefault ||
+           getUnofficalEventsEnabled() != FestivalConfig.current.unofficalEventsEnabledDefault {
+            setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
+            setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
+            setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
+            writeFiltersFile() // Save corrected values
+        }
+        
         print ("Loading setScheduleUrl = \(getScheduleUrl())")
         print ("Loading mustSeeOn = \(getMustSeeOn())")
     }
@@ -475,6 +630,9 @@ func readFiltersFile(){
 }
 
 func establishDefaults(){
+    // Initialize dynamic venue filters from FestivalConfig
+    initializeVenueFilters()
+    
     setMustSeeOn(true)
     setMightSeeOn(true)
     setWontSeeOn(true)
@@ -490,6 +648,11 @@ func establishDefaults(){
     setShowUnofficalEvents(true)
     setShowSpecialEvents(true)
     setShowMeetAndGreetEvents(true)
+    
+    // Set festival-specific defaults for event type filter visibility from FestivalConfig
+    setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
+    setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
+    setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
     setMustSeeAlertValue(true)
     setMightSeeAlertValue(true)
     setOnlyAlertForAttendedValue(false)
