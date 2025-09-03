@@ -140,6 +140,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        print("🎮 [MDF_DEBUG] MasterViewController.viewDidLoad() called")
+        print("🎮 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+        print("🎮 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
+        
         // Set initial title to app name before data loads
         titleButton.title = FestivalConfig.current.appName
         
@@ -154,6 +158,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Check if this is first install - if so, delay country dialog until data loads
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
+        print("🎮 [MDF_DEBUG] hasRunBefore: \(hasRunBefore)")
+        
         // Preload country data in background to ensure it's always available
         countryHandler.shared.loadCountryData { 
             print("[MasterViewController] Country data preloaded successfully")
@@ -161,8 +167,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if !hasRunBefore {
             shouldShowCountryDialogAfterDataLoad = true
+            print("🎮 [MDF_DEBUG] First install detected - delaying country dialog until data loads")
             print("[MasterViewController] First install detected - delaying country dialog until data loads")
         } else {
+            print("🎮 [MDF_DEBUG] Not first install - showing country dialog immediately if needed")
             // Not first install, show country dialog immediately if needed
             getCountry()
         }
@@ -205,6 +213,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Only show initial waiting message on first install (reuse hasRunBefore from above)
         if !hasRunBefore {
+            print("🎮 [MDF_DEBUG] FIRST LAUNCH PATH - will call performOptimizedFirstLaunch")
             print("[MasterViewController] 🚀 FIRST INSTALL - Starting optimized first launch sequence")
             showInitialWaitingMessage()
             
@@ -213,6 +222,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.performOptimizedFirstLaunch()
             }
         } else {
+            print("🎮 [MDF_DEBUG] SUBSEQUENT LAUNCH PATH - will call performOptimizedSubsequentLaunch")
             print("[MasterViewController] 🚀 SUBSEQUENT LAUNCH - Starting optimized cached launch sequence")
             
             // OPTIMIZED SUBSEQUENT LAUNCH: Display cached data immediately, then update in background
@@ -1380,7 +1390,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Check if ANY filters are active (non-default state)
         // DEFAULT STATE: All filters ON except attendance filter OFF
         let priorityFiltersActive = !(getMustSeeOn() == true && getMightSeeOn() == true && getWontSeeOn() == true && getUnknownSeeOn() == true)
-        let venueFiltersActive = !(getShowPoolShows() == true && getShowRinkShows() == true && getShowOtherShows() == true && getShowLoungeShows() == true && getShowTheaterShows() == true)
+        // FIXED: Use dynamic venue system instead of hardcoded venue functions
+        // SAFETY: Add guard to prevent hang during app initialization
+        var venueFiltersActive = false
+        
+        // SAFETY: Check if we're in early app initialization to prevent hang
+        if bands.isEmpty && listCount == 0 {
+            print("🔍 [FILTER_STATUS] ⚠️ Early initialization detected (no band data), using hardcoded fallback for venue filters")
+            // Use hardcoded detection during early initialization to prevent hang
+            venueFiltersActive = !(getShowPoolShows() && getShowRinkShows() && getShowOtherShows() && getShowLoungeShows() && getShowTheaterShows())
+        } else {
+            // Normal operation - use dynamic venue system
+            let configuredVenues = FestivalConfig.current.getAllVenueNames()
+            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig venues: \(configuredVenues)")
+            
+            // Check all configured venues from FestivalConfig
+            for venueName in configuredVenues {
+                if !getShowVenueEvents(venueName: venueName) {
+                    venueFiltersActive = true
+                    break
+                }
+            }
+            
+            // Also check if "Other" venues are disabled
+            if !getShowOtherShows() {
+                venueFiltersActive = true
+            }
+        }
         let eventTypeFiltersActive = !(getShowSpecialEvents() == true && getShowUnofficalEvents() == true && getShowMeetAndGreetEvents() == true)
         let attendanceFilterActive = getShowOnlyWillAttened() == true  // Default is false, so true means active
         let searchActive = bandSearch.text?.isEmpty == false
@@ -1388,6 +1424,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔍 [FILTER_STATUS] ===== FILTER DETECTION =====")
         print("🔍 [FILTER_STATUS] Priority filters - Must:\(getMustSeeOn()), Might:\(getMightSeeOn()), Wont:\(getWontSeeOn()), Unknown:\(getUnknownSeeOn())")
         print("🔍 [FILTER_STATUS] Priority filters active: \(priorityFiltersActive)")
+        
+        // Only show venue details if we accessed FestivalConfig (not in early initialization)
+        if !bands.isEmpty || listCount != 0 {
+            let configuredVenues = FestivalConfig.current.getAllVenueNames()
+            print("🔍 [FILTER_STATUS] Configured venues: \(configuredVenues)")
+            print("🔍 [FILTER_STATUS] Venue filter states: \(configuredVenues.map { "\($0):\(getShowVenueEvents(venueName: $0))" })")
+        } else {
+            print("🔍 [FILTER_STATUS] Early initialization mode - venue details skipped for safety")
+        }
+        
+        print("🔍 [FILTER_STATUS] Other venues enabled: \(getShowOtherShows())")
         print("🔍 [FILTER_STATUS] Venue filters active: \(venueFiltersActive)")  
         print("🔍 [FILTER_STATUS] Event type filters active: \(eventTypeFiltersActive)")
         print("🔍 [FILTER_STATUS] Unofficial events: \(getShowUnofficalEvents())")
@@ -1457,8 +1504,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
             // Don't override user's sort preference when there are only bands
-        } else if (listCount != eventCounterUnoffical && listCount > 0 && eventCounterUnoffical > 0){
-            // Mixed event types (not all cruiser organized) - show event count
+        } else if (listCount > 0 && eventCounterUnoffical < listCount){
+            // We have events and NOT ALL are unofficial - show event count
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
@@ -3317,15 +3364,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Optimized first launch: Sequential download → import → display for each data type
     private func performOptimizedFirstLaunch() {
+        print("🚀 [MDF_DEBUG] First launch - starting band names download")
+        print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🚀 FIRST LAUNCH: Step 1 - Starting band names download")
         
         // Step 1: Download and import band names first
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
+            print("🚀 [MDF_DEBUG] About to call bandNameHandle.gatherData() for MDF")
             self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
                 guard let self = self else { return }
                 
+                print("🚀 [MDF_DEBUG] bandNameHandle.gatherData() COMPLETED for MDF")
                 DispatchQueue.main.async {
                     print("🚀 FIRST LAUNCH: Step 2 - Band names imported, refreshing display")
                     // Display band names immediately after import
@@ -3333,8 +3384,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     // Step 2: Now download and import schedule data
                     print("🚀 FIRST LAUNCH: Step 3 - Starting schedule download")
+                    print("🚀 [MDF_DEBUG] About to call schedule.populateSchedule() for MDF")
                     DispatchQueue.global(qos: .userInitiated).async {
                         self.schedule.populateSchedule(forceDownload: true)
+                        print("🚀 [MDF_DEBUG] schedule.populateSchedule() COMPLETED for MDF")
                         
                         DispatchQueue.main.async {
                             print("🚀 FIRST LAUNCH: Step 4 - Schedule imported, final display refresh")
@@ -3360,6 +3413,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying cached data immediately")
         
         // Step 1: Load cached data immediately and display
+        print("🚀 [MDF_DEBUG] Subsequent launch - loading cached data")
+        print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         self.bandNameHandle.loadCachedDataImmediately()
         self.schedule.loadCachedDataImmediately()
         self.refreshBandList(reason: "Subsequent launch - cached data", skipDataLoading: true)
