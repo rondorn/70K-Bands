@@ -41,11 +41,19 @@ public class OtherFilterHandler {
                  staticVariables.preferences.setshowWont(true);
                  staticVariables.preferences.setshowUnknown(true);
 
+                 // Reset hardcoded venue preferences (for 70K)
                  staticVariables.preferences.setShowLoungeShows(true);
                  staticVariables.preferences.setShowPoolShows(true);
                  staticVariables.preferences.setShowRinkShows(true);
                  staticVariables.preferences.setShowTheaterShows(true);
                  staticVariables.preferences.setShowOtherShows(true);
+                 
+                 // Reset all dynamic venue preferences (for MDF and other festivals)
+                 FestivalConfig festivalConfig = FestivalConfig.getInstance();
+                 java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
+                 for (String venueName : configuredVenues) {
+                     staticVariables.preferences.setShowVenueEvents(venueName, true);
+                 }
 
                  staticVariables.preferences.setShowWillAttend(false);
 
@@ -112,11 +120,8 @@ public class OtherFilterHandler {
             FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.theaterVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
+            // Show dynamic venue filters container instead of individual hardcoded venue sections
+            FilterButtonHandler.showMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
             FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
@@ -134,11 +139,8 @@ public class OtherFilterHandler {
             FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.theaterVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.hideMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
+            // Hide dynamic venue filters container instead of individual hardcoded venue sections
+            FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
             FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake3, "TextView", popupWindow);
@@ -194,16 +196,8 @@ public class OtherFilterHandler {
             FilterButtonHandler.enableMenuSection(R.id.specialOtherEventFilter, "TextView", popupWindow);
             FilterButtonHandler.enableMenuSection(R.id.unofficalEventFilter, "TextView", popupWindow);
 
-            FilterButtonHandler.enableMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.theaterVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.loungVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.poolVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.rinkVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.theaterVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.enableMenuSection(R.id.otherVenueFilter, "TextView", popupWindow);
+            // Enable dynamic venue filters container
+            FilterButtonHandler.enableMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
         } else if (staticVariables.showEventButtons == true){
             onlyShowAttendedIcon.setImageDrawable(onlyShowAttendedNo);
@@ -225,16 +219,8 @@ public class OtherFilterHandler {
             FilterButtonHandler.disableMenuSection(R.id.specialOtherEventFilter, "TextView", popupWindow);
             FilterButtonHandler.disableMenuSection(R.id.unofficalEventFilter, "TextView", popupWindow);
 
-            FilterButtonHandler.disableMenuSection(R.id.loungVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.poolVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.rinkVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.theaterVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.otherVenueFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.loungVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.poolVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.rinkVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.theaterVenueFilter, "TextView", popupWindow);
-            FilterButtonHandler.disableMenuSection(R.id.otherVenueFilter, "TextView", popupWindow);
+            // Disable dynamic venue filters container
+            FilterButtonHandler.disableMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
             ImageView mustSeeFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.mustSeeFilterIcon);
             ImageView mightSeeFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.mightSeeFilterIcon);
@@ -245,11 +231,8 @@ public class OtherFilterHandler {
             ImageView specialOtherEventFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.specialOtherEventFilterIcon);
             ImageView unofficalEventFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.unofficalEventFilterIcon);
 
-            ImageView loungVenueFiltercon = (ImageView) popupWindow.getContentView().findViewById(R.id.loungVenueFilterIcon);
-            ImageView poolVenueFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.poolVenueFilterIcon);
-            ImageView rinkVenueFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.rinkVenueFilterIcon);
-            ImageView theaterVenueFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.theaterVenueFilterIcon);
-            ImageView otherVenueFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.otherVenueFilterIcon);
+            // Venue filter icons are now managed dynamically by VenueFilterHandler
+            // No need to manually set their states here
 
             mightSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_going_yes_alt));
             mustSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_going_maybe_alt));
@@ -260,11 +243,7 @@ public class OtherFilterHandler {
             specialOtherEventFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_all_star_jam_alt));
             unofficalEventFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_unoffical_event_alt));
 
-            loungVenueFiltercon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_lounge_alt));
-            poolVenueFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_pool_alt));
-            rinkVenueFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_rink_alt));
-            theaterVenueFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_theater_alt));
-            otherVenueFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_unknown_alt));
+            // Venue filter icon states are now handled by VenueFilterHandler.setupVenueFilters()
 
         }
 
