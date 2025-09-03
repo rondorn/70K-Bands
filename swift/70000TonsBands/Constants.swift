@@ -727,6 +727,10 @@ func setupDefaults() {
     // Use robust year resolution that handles launch scenarios
     eventYear = ensureYearResolvedAtLaunch()
     
+    print("🎯 [MDF_DEBUG] GLOBAL eventYear RESOLUTION:")
+    print("   Festival: \(FestivalConfig.current.festivalShortName)")
+    print("   Resolved global eventYear = \(eventYear)")
+    
     // Check if year has changed and handle accordingly
     let resolvedYearString = String(eventYear)
     checkAndHandleYearChange(newYear: resolvedYearString)
@@ -809,7 +813,10 @@ func ensureYearResolvedAtLaunch() -> Int {
     // Always resolve from pointer data to respect user's current preference
     // The cached file might be outdated if user changed their year preference
     print("ensureYearResolvedAtLaunch: Resolving from pointer data to respect user preference")
+    print("🎯 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+    print("🎯 [MDF_DEBUG] About to call getPointerUrlData for eventYear...")
     var resolvedYear = getPointerUrlData(keyValue: "eventYear")
+    print("🎯 [MDF_DEBUG] getPointerUrlData returned eventYear: '\(resolvedYear)'")
     
     // If pointer data resolution failed, try cached file as fallback
     if resolvedYear.isEmpty {

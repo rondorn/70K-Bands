@@ -247,28 +247,11 @@ func getRankGuiIcons (rank: String)->UIImage {
 
 func getVenueColor (venue: String)->UIColor{
     
-    var venuColor = UIColor();
+    // Use the new configurable venue system from FestivalConfig
+    let venueColor = FestivalConfig.current.getVenueColor(for: venue)
     
-    switch venue {
-        
-    case venuePoolKey:
-        venuColor = poolVenueColor
-        
-    case venueTheaterKey:
-        venuColor = theaterVenueColor
-        
-    case venueLoungeKey:
-        venuColor = loungeVenueColor
-        
-    case venueRinkKey:
-        venuColor = rinkVenueColor
-        
-    default:
-       venuColor = unknownVenueColor
-    }
-    
-    print ("Returning \(venuColor) for venu of \(venue)")
-    return venuColor
+    print ("Returning \(venueColor) for venue of \(venue)")
+    return venueColor
 }
 
 func getVenuIcon(_ venue: String)->String {
