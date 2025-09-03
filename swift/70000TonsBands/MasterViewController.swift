@@ -13,7 +13,43 @@ import AVKit
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
+    // MARK: - Year Change Thread Management
+    private static var currentDataRefreshOperationId: UUID = UUID()
+    private static var isYearChangeInProgress: Bool = false
+    static var isCsvDownloadInProgress: Bool = false
+    static let backgroundRefreshLock = NSLock()
+    private var backgroundOperationQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 3
+        queue.qualityOfService = .utility
+        queue.name = "MasterViewController.backgroundOperations"
+        return queue
+    }()
+    
+    // MARK: - Year Change Coordination Methods
+    static func notifyYearChangeStarting() {
+        print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Year change starting - cancelling ALL background operations")
+        isYearChangeInProgress = true
+        currentDataRefreshOperationId = UUID()
+    }
+    
+    static func notifyYearChangeCompleted() {
+        print("✅ [YEAR_CHANGE_DEADLOCK_FIX] Year change completed - background operations can resume")
+        isYearChangeInProgress = false
+    }
+    
+    private func cancelAllBackgroundOperations() {
+        print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Cancelling \(backgroundOperationQueue.operationCount) operations")
+        backgroundOperationQueue.cancelAllOperations()
+        // Also cancel any existing dispatch group operations by incrementing operation ID
+        MasterViewController.currentDataRefreshOperationId = UUID()
+    }
+    
     @IBOutlet var mainTableView: UITableView!
+    
+    // MARK: - Preference Synchronization
+    private var lastPreferenceReturnTime: TimeInterval?
+    private var justReturnedFromPreferences = false
     @IBOutlet weak var mainToolBar: UIToolbar!
     
     @IBOutlet weak var titleButton: UINavigationItem!
@@ -66,6 +102,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleLabel: UINavigationItem!
     
     var dataHandle = dataHandler()
+    private let priorityManager = PriorityManager()
     
     var videoURL = URL("")
     var player = AVPlayer()
@@ -103,6 +140,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        print("🎮 [MDF_DEBUG] MasterViewController.viewDidLoad() called")
+        print("🎮 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+        print("🎮 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
+        
         // Set initial title to app name before data loads
         titleButton.title = FestivalConfig.current.appName
         
@@ -112,8 +153,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         
+        // MARK: - Core Data Integration
+        // Core Data system is now active and ready
+        
         // Check if this is first install - if so, delay country dialog until data loads
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
+        print("🎮 [MDF_DEBUG] hasRunBefore: \(hasRunBefore)")
+        
         // Preload country data in background to ensure it's always available
         countryHandler.shared.loadCountryData { 
             print("[MasterViewController] Country data preloaded successfully")
@@ -121,8 +167,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if !hasRunBefore {
             shouldShowCountryDialogAfterDataLoad = true
+            print("🎮 [MDF_DEBUG] First install detected - delaying country dialog until data loads")
             print("[MasterViewController] First install detected - delaying country dialog until data loads")
         } else {
+            print("🎮 [MDF_DEBUG] Not first install - showing country dialog immediately if needed")
             // Not first install, show country dialog immediately if needed
             getCountry()
         }
@@ -165,37 +213,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Only show initial waiting message on first install (reuse hasRunBefore from above)
         if !hasRunBefore {
-            print("[MasterViewController] First install - showing initial waiting message")
+            print("🎮 [MDF_DEBUG] FIRST LAUNCH PATH - will call performOptimizedFirstLaunch")
+            print("[MasterViewController] 🚀 FIRST INSTALL - Starting optimized first launch sequence")
             showInitialWaitingMessage()
             
-            // Delay the data loading slightly to ensure waiting message is visible on first install
+            // OPTIMIZED FIRST LAUNCH: Download and import data in proper sequence
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                print("First install detected - calling proper loading sequence to download data")
-                // Call the proper loading sequence instead of just refreshBandList
-                self.performBackgroundDataRefresh(reason: "First install - initial data download", endRefreshControl: false, shouldScrollToTop: false)
+                self.performOptimizedFirstLaunch()
             }
         } else {
-            // Check if we should do a full refresh on launch (if it's been a while since last launch)
-            let lastLaunchKey = "LastAppLaunchDate"
-            let now = Date()
-            let lastLaunch = UserDefaults.standard.object(forKey: lastLaunchKey) as? Date
-            let shouldDoFullRefresh = lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
+            print("🎮 [MDF_DEBUG] SUBSEQUENT LAUNCH PATH - will call performOptimizedSubsequentLaunch")
+            print("[MasterViewController] 🚀 SUBSEQUENT LAUNCH - Starting optimized cached launch sequence")
             
-            UserDefaults.standard.set(now, forKey: lastLaunchKey)
-            
-            if shouldDoFullRefresh {
-                print("App launch: Been more than 24 hours since last launch, performing full data refresh")
-                // Move to background thread to prevent main thread blocking
-                DispatchQueue.global(qos: .userInitiated).async {
-                    self.performFullDataRefresh(reason: "App launch - full refresh")
-                }
-            } else {
-                print("Calling refreshBandList from viewDidLoad with reason: Initial launch")
-                // Move to background thread to prevent main thread blocking
-                DispatchQueue.global(qos: .userInitiated).async {
-                    self.refreshBandList(reason: "Initial launch")
-                }
-            }
+            // OPTIMIZED SUBSEQUENT LAUNCH: Display cached data immediately, then update in background
+            self.performOptimizedSubsequentLaunch()
         }
         
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
@@ -283,98 +314,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Listen for when returning from preferences screen after year change (no additional refresh needed)
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferencesAfterYearChange), name: Notification.Name("DismissPreferencesScreenAfterYearChange"), object: nil)
         
-        // Defensive: trigger a delayed refresh to help with first-launch data population
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            print("Calling refreshBandList from delayed initial refresh with reason: Initial delayed refresh")
-            self.refreshBandList(reason: "Initial delayed refresh")
-        }
-
-        if cacheVariables.justLaunched {
-            // Perform network test on initial launch before loading any data (5 second max)
-            print("Initial launch: Performing network test before data loading")
-            let hasInternet = NetworkTesting.forceNetworkTest()
-            print("Initial launch: Network test result: \(hasInternet)")
-            
-            DispatchQueue.global(qos: .userInitiated).async {
-                // Check internet availability first
-                if !hasInternet {
-                    print("First launch: No internet available, using cached data")
-                    DispatchQueue.main.async {
-                        // Mark as not just launched
-                        cacheVariables.justLaunched = false
-                        
-                        // Load from cache and refresh UI
-                        bandNamesHandler.readBandFileCallCount = 0
-                        bandNamesHandler.lastReadBandFileCallTime = nil
-                        self.bandNameHandle.forceReadBandFileAndPopulateCache {
-                            self.refreshBandList(reason: "First launch - offline mode")
-                            
-                            // Show offline message if no data available and no valid schedule
-                            let noBands = self.bands.isEmpty
-                            let noEvents = eventCount == 0
-                            let noValidSchedule = !scheduleReleased
-                            if noBands && noEvents && noValidSchedule {
-                                let alert = UIAlertController(title: "Offline Mode", message: "No internet connection detected. The app will work with cached data when available.", preferredStyle: .alert)
-                                alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                                self.present(alert, animated: true, completion: nil)
-                            } else if noBands && noEvents && scheduleReleased {
-                                print("Offline mode: Schedule file available but no events yet - this is normal before events are announced")
-                            }
-                        }
-                    }
-                    return
-                }
-                
-                // Download pointer/defaultStorageUrl if needed
-                let pointerUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-                // Download band data
-                let bandData = getUrlData(urlString: pointerUrl)
-                if !bandData.isEmpty {
-                    self.bandNameHandle.writeBandFile(bandData)
-                }
-                // Download schedule data
-                let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? "http://dropbox.com"
-                let scheduleData = getUrlData(urlString: scheduleUrl)
-                if !scheduleData.isEmpty {
-                    let scheduleFilePath = scheduleFile
-                    do {
-                        try scheduleData.write(toFile: scheduleFilePath, atomically: true, encoding: .utf8)
-                    } catch {
-                        print("Error writing schedule data: \(error)")
-                    }
-                }
-                // Mark as not just launched
-                cacheVariables.justLaunched = false
-
-                DispatchQueue.main.async {
-                    // Force reload of band file and cache before refreshing UI
-                    bandNamesHandler.readBandFileCallCount = 0
-                    bandNamesHandler.lastReadBandFileCallTime = nil
-                    self.bandNameHandle.forceReadBandFileAndPopulateCache {
-                        // Always call refreshBandList, even if data is empty
-                        self.refreshBandList(reason: "First launch blocking download complete")
-                        // If both band and schedule data are empty, show an alert
-                        // But don't show retry dialog if schedule is released (valid headers downloaded)
-                        let noBands = self.bands.isEmpty
-                        let noEvents = eventCount == 0
-                        let noValidSchedule = !scheduleReleased
-                        if noBands && noEvents && noValidSchedule {
-                            let alert = UIAlertController(title: "No Data Loaded", message: "Unable to load band or event data. Please check your internet connection and try again.", preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
-                                // Retry logic: re-run viewDidLoad's first-launch block
-                                cacheVariables.justLaunched = true
-                                self.viewDidLoad()
-                            })
-                            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-                            self.present(alert, animated: true, completion: nil)
-                        } else if noBands && noEvents && scheduleReleased {
-                            print("Schedule file downloaded successfully but contains no data yet - this is normal before events are announced")
-                        }
-                    }
-                }
-            }
-            return // Prevent normal UI setup until data is ready
-        }
+        // Legacy initialization code removed - now handled by optimized launch methods in performOptimizedFirstLaunch() and performOptimizedSubsequentLaunch()
     }
     
     @objc func bandNamesCacheReadyHandler() {
@@ -386,7 +326,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         lastBandNamesCacheRefresh = now
         print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
+        
+        // Ensure refreshBandList is called on main thread to avoid UI access issues
+        if Thread.isMainThread {
         refreshBandList(reason: "Band names cache ready")
+        } else {
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Band names cache ready")
+            }
+        }
         
         // Show country dialog after data loads on first install
         if shouldShowCountryDialogAfterDataLoad {
@@ -433,10 +381,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshMainDisplayAfterRefresh() {
         print("Calling refreshBandList from refreshMainDisplayAfterRefresh with reason: Main display after refresh")
-        if (Thread.isMainThread == true){
+        // Ensure refreshBandList is called on main thread to avoid UI access issues
+        if Thread.isMainThread {
             refreshBandList(reason: "Main display after refresh")
+        } else {
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Main display after refresh")
+            }
         }
     }
+    
+
     
     @objc func displayFCMToken(notification: NSNotification){
       guard let userInfo = notification.userInfo else {return}
@@ -509,6 +464,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshDataWithBackgroundUpdate(reason: "Easter egg finished")
     }
     
+    // Defensive cleanup method for navigation - NO data refresh
+    func cleanupEasterEggPlayer() {
+        player.pause()
+        if playerLayer.superlayer != nil {
+            playerLayer.removeFromSuperlayer()
+        }
+        player.replaceCurrentItem(with: nil)
+    }
+    
     func chooseCountry(){
         
         let countryHandle = countryHandler.shared
@@ -529,7 +493,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         print ("countryValue writing Acceptable country of " + finalCountyValue + " found")
                         try finalCountyValue.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
                     } catch {
-                        print ("countryValue Error writing Acceptable country of " + countryLongShort[keyValue]! + " found " + error.localizedDescription)
+                        let countryName = countryLongShort[keyValue] ?? "Unknown"
+                        print ("countryValue Error writing Acceptable country of " + countryName + " found " + error.localizedDescription)
                     }
                 }))
             }
@@ -687,19 +652,28 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     // Track background refresh operations to prevent overlapping
     private static var isBackgroundRefreshInProgress = false
-    private static let backgroundRefreshLock = NSLock()
     
     // Centralized background refresh with immediate GUI update
     func refreshDataWithBackgroundUpdate(reason: String) {
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] refreshDataWithBackgroundUpdate START - reason: '\(reason)'")
         
-        // Immediately refresh GUI from cache
+        // Immediately refresh GUI from cache on main thread
         let immediateStartTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", immediateStartTime))] Starting immediate cache refresh")
+        
+        // Ensure refreshBandList is called on main thread to avoid UI access issues
+        if Thread.isMainThread {
         refreshBandList(reason: "\(reason) - immediate cache refresh")
         let immediateEndTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", immediateEndTime))] Immediate cache refresh END - time: \(String(format: "%.3f", (immediateEndTime - immediateStartTime) * 1000))ms")
+        } else {
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "\(reason) - immediate cache refresh")
+                let immediateEndTime = CFAbsoluteTimeGetCurrent()
+                print("🕐 [\(String(format: "%.3f", immediateEndTime))] Immediate cache refresh END - time: \(String(format: "%.3f", (immediateEndTime - immediateStartTime) * 1000))ms")
+            }
+        }
         
         // Check if background refresh is already in progress
         MasterViewController.backgroundRefreshLock.lock()
@@ -804,6 +778,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] viewWillAppear START - returning from details")
+        print("🎛️ [PREFERENCES_SYNC] ⚠️ viewWillAppear called - this might override user preference changes!")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents at viewWillAppear start: \(getHideExpireScheduleData())")
         
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
@@ -818,24 +794,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let filtersTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", filtersTime))] viewWillAppear - filters written, starting background refresh")
+        print("🎛️ [PREFERENCES_SYNC] hideExpiredEvents after writeFiltersFile: \(getHideExpireScheduleData())")
         
-        // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
-        // This ensures the UI remains responsive when returning from background/details
-        // Simple cache refresh when returning from details - no background operations needed
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        // 🔧 FIX: Skip automatic refresh if we just returned from preferences to prevent override
+        if justReturnedFromPreferences {
+            print("🎛️ [PREFERENCES_SYNC] ⚠️ SKIPPING viewWillAppear refresh - just returned from preferences (flag-based detection)")
+            print("🎛️ [PREFERENCES_SYNC] This prevents overriding user's preference changes")
+            // Clear the flag after use
+            justReturnedFromPreferences = false
+        } else {
+            print("🎛️ [PREFERENCES_SYNC] Proceeding with viewWillAppear refresh (normal app flow)")
             
-            let backgroundStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
-            
-            // Just refresh from cache - no network operations needed
-            self.refreshBandList(reason: "Return from details - cache refresh")
-            
-            let backgroundEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
+            // CRITICAL: Move ALL data refresh operations to background to prevent GUI blocking
+            // This ensures the UI remains responsive when returning from background/details
+            // Simple cache refresh when returning from details - no background operations needed
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
+                let backgroundStartTime = CFAbsoluteTimeGetCurrent()
+                print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Cache refresh START - reason: Return from details")
+                
+                // Just refresh from cache - no network operations needed - dispatch to main thread
+                DispatchQueue.main.async {
+                self.refreshBandList(reason: "Return from details - cache refresh")
+                
+                let backgroundEndTime = CFAbsoluteTimeGetCurrent()
+                print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Cache refresh END - reason: Return from details")
+                }
+            }
         }
         
-        finishedPlaying() // Defensive: ensure no video is left over
+        cleanupEasterEggPlayer() // Defensive: ensure no video is left over
         
         let endTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", endTime))] viewWillAppear END - total time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
@@ -843,7 +832,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        finishedPlaying()
+        cleanupEasterEggPlayer()
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
@@ -887,13 +876,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func refreshDisplayAfterWake2(){
-        finishedPlaying()
+        cleanupEasterEggPlayer()
         // Simple cache refresh for screen navigation - no background operations needed
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Refresh priority data in background
-            self.dataHandle.getCachedData()
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // self.dataHandle.getCachedData()
             
             // Update GUI on main thread after data loading is complete
             DispatchQueue.main.async {
@@ -925,7 +914,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     // Centralized refresh method for band list
-    func refreshBandList(reason: String = "", scrollToTop: Bool = false, isPullToRefresh: Bool = false) {
+    func refreshBandList(reason: String = "", scrollToTop: Bool = false, isPullToRefresh: Bool = false, skipDataLoading: Bool = false) {
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] refreshBandList START - reason: '\(reason)'")
         
@@ -951,6 +940,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             MasterViewController.refreshBandListSafetyTimer = nil
             return
         }
+        // PERFORMANCE OPTIMIZATION: Skip data loading if we're just refreshing UI with already-loaded data
+        if skipDataLoading {
+            print("🚀 refreshBandList: Skipping data loading, using already-loaded cached data")
+            // Jump directly to UI updates
+            self.performUIRefreshWithLoadedData(reason: reason, scrollToTop: scrollToTop, previousOffset: self.tableView.contentOffset)
+            return
+        }
+        
         // Move all data loading to background thread to avoid GUI blocking
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
@@ -977,10 +974,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🕐 [\(String(format: "%.3f", scheduleEndTime))] Schedule getCachedData END - time: \(String(format: "%.3f", (scheduleEndTime - scheduleStartTime) * 1000))ms")
             
             let dataStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", dataStartTime))] Starting dataHandle getCachedData")
-            self.dataHandle.getCachedData()
-            let dataEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", dataEndTime))] dataHandle getCachedData END - time: \(String(format: "%.3f", (dataEndTime - dataStartTime) * 1000))ms")
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // print("🕐 [\(String(format: "%.3f", dataStartTime))] Starting dataHandle getCachedData")
+            // self.dataHandle.getCachedData()
+            // let dataEndTime = CFAbsoluteTimeGetCurrent()
+            // print("🕐 [\(String(format: "%.3f", dataEndTime))] dataHandle getCachedData END - time: \(String(format: "%.3f", (dataEndTime - dataStartTime) * 1000))ms")
             
             let backgroundEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", backgroundEndTime))] refreshBandList background thread END - total time: \(String(format: "%.3f", (backgroundEndTime - backgroundStartTime) * 1000))ms")
@@ -998,9 +996,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     bandNameHandle: self.bandNameHandle,
                     schedule: self.schedule,
                     dataHandle: self.dataHandle,
+                    priorityManager: self.priorityManager,
                     attendedHandle: self.attendedHandle,
                     searchCriteria: self.bandSearch.text ?? ""
                 ) { [weak self] (filtered: [String]) in
+            // CRITICAL FIX: Ensure all UI operations happen on main thread
+            DispatchQueue.main.async {
             guard let self = self else {
                 MasterViewController.isRefreshingBandList = false
                 MasterViewController.refreshBandListSafetyTimer?.invalidate()
@@ -1019,71 +1020,42 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 bandsResult = self.deduplicatePreservingOrder(bandsResult)
             }
             let sortedBy = getSortedBy()
-            
-            // SORTING DEBUG: Log items before MasterViewController sorting
-            print("🎯 SORT DEBUG - MasterViewController: About to sort \(bandsResult.count) items with sortedBy='\(sortedBy)'")
-            for (index, item) in bandsResult.prefix(5).enumerated() {
-                let components = item.components(separatedBy: ":")
-                print("🎯 SORT DEBUG - MVC Item[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
-            }
-            
             if sortedBy == "name" {
-                print("🎯 SORT DEBUG - MasterViewController: Using NAME sorting")
                 bandsResult.sort { item1, item2 in
-                    // Events have format: "timeIndex:bandName" or "bandName:timeIndex" (2 components)
-                    // Bands have format: just the band name (1 component, no colons)
-                    let components1 = item1.components(separatedBy: ":")
-                    let components2 = item2.components(separatedBy: ":")
-                    let isEvent1 = components1.count == 2
-                    let isEvent2 = components2.count == 2
+                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
                     
-                    // SORTING DEBUG: Log comparison details
-                    print("🎯 SORT DEBUG - MVC NAME Comparing: '\(item1)' (\(components1.count) parts, isEvent:\(isEvent1)) vs '\(item2)' (\(components2.count) parts, isEvent:\(isEvent2))")
-                    
-                    // Events always come before band names
+                    // Events always come before band names only
                     if isEvent1 && !isEvent2 {
-                        print("🎯 SORT DEBUG - MVC NAME Event comes before band: '\(item1)' < '\(item2)'")
                         return true
                     } else if !isEvent1 && isEvent2 {
-                        print("🎯 SORT DEBUG - MVC NAME Band comes after event: '\(item1)' > '\(item2)'")
                         return false
                     } else {
-                        // Both are same type, sort alphabetically by name
+                        // Both are same type, sort alphabetically
                         return getNameFromSortable(item1, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: sortedBy)) == .orderedAscending
                     }
                 }
             } else if sortedBy == "time" {
-                print("🎯 SORT DEBUG - MasterViewController: Using TIME sorting")
                 bandsResult.sort { item1, item2 in
-                    // Events have format: "timeIndex:bandName" or "bandName:timeIndex" (2 components)
-                    // Bands have format: just the band name (1 component, no colons)
-                    let components1 = item1.components(separatedBy: ":")
-                    let components2 = item2.components(separatedBy: ":")
-                    let isEvent1 = components1.count == 2
-                    let isEvent2 = components2.count == 2
-                    
-                    // SORTING DEBUG: Log comparison details
-                    print("🎯 SORT DEBUG - MVC TIME Comparing: '\(item1)' (\(components1.count) parts, isEvent:\(isEvent1)) vs '\(item2)' (\(components2.count) parts, isEvent:\(isEvent2))")
+                    let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                    let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
                     
                     // Events always come before band names only
                     if isEvent1 && !isEvent2 {
-                        print("🎯 SORT DEBUG - MVC TIME Event comes before band: '\(item1)' < '\(item2)'")
                         return true
                     } else if !isEvent1 && isEvent2 {
-                        print("🎯 SORT DEBUG - MVC TIME Band comes after event: '\(item1)' > '\(item2)'")
                         return false
                     } else {
-                        // Both are same type, sort by time or alphabetically for band names
+                        // If both are events, sort by time. If both are bands, sort alphabetically (since bands have no time)
+                        if isEvent1 && isEvent2 {
+                            // Both are events - sort by time
                         return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+                        } else {
+                            // Both are band names - sort alphabetically even when sortBy is "time"
+                            return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
+                        }
                     }
                 }
-            }
-            
-            // SORTING DEBUG: Log items after MasterViewController sorting
-            print("🎯 SORT DEBUG - MasterViewController: After sorting, first 5 items:")
-            for (index, item) in bandsResult.prefix(5).enumerated() {
-                let components = item.components(separatedBy: ":")
-                print("🎯 SORT DEBUG - MVC Sorted[\(index)]: '\(item)' -> \(components.count) components -> isEvent: \(components.count == 2)")
             }
             print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             
@@ -1121,8 +1093,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.autoSelectFirstValidBandForIPad()
                 }
             }
-            if shouldSnapToTopAfterRefresh {
-                shouldSnapToTopAfterRefresh = false
+                if self.shouldSnapToTopAfterRefresh {
+                    self.shouldSnapToTopAfterRefresh = false
                 self.tableView.setContentOffset(.zero, animated: false)
                 print("Pull-to-refresh: Snapped to top of list")
             } else if scrollToTop, self.bands.count > 0 {
@@ -1146,7 +1118,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             let mainThreadEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", mainThreadEndTime))] refreshBandList main thread END - total time: \(String(format: "%.3f", (mainThreadEndTime - mainThreadStartTime) * 1000))ms")
-                }
+                } // End of DispatchQueue.main.async for UI operations
+            } // End of getFilteredBands completion handler
             }
         }
         
@@ -1173,7 +1146,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 
-                self.dataHandle.getCachedData()
+                // LEGACY: Priority data now handled by Core Data (PriorityManager)
+                // self.dataHandle.getCachedData()
                 
                 DispatchQueue.main.async {
                     print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
@@ -1296,6 +1270,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Called when returning from preferences screen (no year change - only refresh if needed)
     @objc func handleReturnFromPreferences() {
+        lastPreferenceReturnTime = Date().timeIntervalSince1970
+        justReturnedFromPreferences = true  // Set flag to prevent viewWillAppear override
+        
+        print("🎛️ [PREFERENCES_SYNC] ⚠️ handleReturnFromPreferences called - user returned from preferences")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents: \(getHideExpireScheduleData())")
+        print("🎛️ [PREFERENCES_SYNC] Set justReturnedFromPreferences flag to prevent viewWillAppear override")
         print("Handling return from preferences screen - no year change occurred")
         print("Performing light refresh (cache-based only, no network operations)")
         
@@ -1305,6 +1285,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Called when returning from preferences screen after year change (data already refreshed)
     @objc func handleReturnFromPreferencesAfterYearChange() {
+        lastPreferenceReturnTime = Date().timeIntervalSince1970
+        justReturnedFromPreferences = true  // Set flag to prevent viewWillAppear override
+        
+        print("🎛️ [PREFERENCES_SYNC] handleReturnFromPreferencesAfterYearChange called - user returned after year change")
+        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents: \(getHideExpireScheduleData())")
+        print("🎛️ [PREFERENCES_SYNC] Set justReturnedFromPreferences flag to prevent viewWillAppear override")
         print("Handling return from preferences screen after year change")
         print("No additional refresh needed - data was already refreshed during year change")
         
@@ -1364,6 +1350,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Clear handler caches
         self.bandNameHandle.clearCachedData()
+        // LEGACY: Priority cache clearing now handled by PriorityManager if needed
         self.dataHandle.clearCachedData()
         self.schedule.clearCache()
         
@@ -1397,65 +1384,89 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func setFilterTitleText(){
         
-        filterTextNeeded = true
-        print ("Making final filtering call \(bandCounter) - \(unfilteredBandCount) - \(unfilteredCurrentEventCount) - \(unfilteredCruiserEventCount)")
-        if (bandCounter == unfilteredBandCount && unfilteredCurrentEventCount == unfilteredCruiserEventCount){
-            filterTextNeeded = false
-            print ("Making final filtering call 1");
+        // FIXED: Determine if filters are active by checking actual filter settings, not counts
+        print("🔍 [FILTER_STATUS] Checking filter status...")
+        
+        // Check if ANY filters are active (non-default state)
+        // DEFAULT STATE: All filters ON except attendance filter OFF
+        let priorityFiltersActive = !(getMustSeeOn() == true && getMightSeeOn() == true && getWontSeeOn() == true && getUnknownSeeOn() == true)
+        // FIXED: Use dynamic venue system instead of hardcoded venue functions
+        // SAFETY: Add guard to prevent hang during app initialization
+        var venueFiltersActive = false
+        
+        // SAFETY: Check if we're in early app initialization to prevent hang
+        if bands.isEmpty && listCount == 0 {
+            print("🔍 [FILTER_STATUS] ⚠️ Early initialization detected (no band data), using hardcoded fallback for venue filters")
+            // Use hardcoded detection during early initialization to prevent hang
+            venueFiltersActive = !(getShowPoolShows() && getShowRinkShows() && getShowOtherShows() && getShowLoungeShows() && getShowTheaterShows())
+        } else {
+            // Normal operation - use dynamic venue system
+            let configuredVenues = FestivalConfig.current.getAllVenueNames()
+            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig venues: \(configuredVenues)")
             
-        } else if (eventCounter == unfilteredEventCount  && getHideExpireScheduleData() == false ) {
-            filterTextNeeded = false
-            print ("Making final filtering call 2");
+            // Check all configured venues from FestivalConfig
+            for venueName in configuredVenues {
+                if !getShowVenueEvents(venueName: venueName) {
+                    venueFiltersActive = true
+                    break
+                }
+            }
+            
+            // Also check if "Other" venues are disabled
+            if !getShowOtherShows() {
+                venueFiltersActive = true
+            }
+        }
+        let eventTypeFiltersActive = !(getShowSpecialEvents() == true && getShowUnofficalEvents() == true && getShowMeetAndGreetEvents() == true)
+        let attendanceFilterActive = getShowOnlyWillAttened() == true  // Default is false, so true means active
+        let searchActive = bandSearch.text?.isEmpty == false
         
-        } else if (bandCounter == unfilteredBandCount) {
-            filterTextNeeded = false
-            print ("Making final filtering call 3");
-
-        }  else if ((eventCounter == unfilteredCurrentEventCount && bandCounter == unfilteredBandCount) && getHideExpireScheduleData() == true ) {
-            filterTextNeeded = false
-            print ("Making final filtering call 4");
+        print("🔍 [FILTER_STATUS] ===== FILTER DETECTION =====")
+        print("🔍 [FILTER_STATUS] Priority filters - Must:\(getMustSeeOn()), Might:\(getMightSeeOn()), Wont:\(getWontSeeOn()), Unknown:\(getUnknownSeeOn())")
+        print("🔍 [FILTER_STATUS] Priority filters active: \(priorityFiltersActive)")
+        
+        // Only show venue details if we accessed FestivalConfig (not in early initialization)
+        if !bands.isEmpty || listCount != 0 {
+            let configuredVenues = FestivalConfig.current.getAllVenueNames()
+            print("🔍 [FILTER_STATUS] Configured venues: \(configuredVenues)")
+            print("🔍 [FILTER_STATUS] Venue filter states: \(configuredVenues.map { "\($0):\(getShowVenueEvents(venueName: $0))" })")
+        } else {
+            print("🔍 [FILTER_STATUS] Early initialization mode - venue details skipped for safety")
         }
         
-        if (getShowPoolShows() == true &&
-            getShowRinkShows() == true &&
-            getShowOtherShows() == true &&
-            getShowLoungeShows() == true &&
-            getShowTheaterShows() == true &&
-            getShowSpecialEvents() == true &&
-            getShowUnofficalEvents() == true &&
-            getShowOnlyWillAttened() == false &&
-            getShowMeetAndGreetEvents() == true &&
-            getMustSeeOn() == true &&
-            getMightSeeOn() == true &&
-            getWontSeeOn() == true &&
-            getUnknownSeeOn() == true){
-                filterTextNeeded = false
-        }
+        print("🔍 [FILTER_STATUS] Other venues enabled: \(getShowOtherShows())")
+        print("🔍 [FILTER_STATUS] Venue filters active: \(venueFiltersActive)")  
+        print("🔍 [FILTER_STATUS] Event type filters active: \(eventTypeFiltersActive)")
+        print("🔍 [FILTER_STATUS] Unofficial events: \(getShowUnofficalEvents())")
+        print("🔍 [FILTER_STATUS] Attendance filter active: \(attendanceFilterActive)")
+        print("🔍 [FILTER_STATUS] Search active: \(searchActive)")
         
-        if (getShowUnofficalEvents() == false && unfilteredCruiserEventCount > 0){
-            filterTextNeeded = true
-        }
+        // Enable Clear Filters if ANY filter is active (non-default)
+        let anyFiltersActive = priorityFiltersActive || venueFiltersActive || eventTypeFiltersActive || attendanceFilterActive || searchActive
+        filterTextNeeded = anyFiltersActive  // CORRECTED: Clear Filters enabled when filters are active
+        
+        print("🔍 [FILTER_STATUS] anyFiltersActive: \(anyFiltersActive)")
+        print("🔍 [FILTER_STATUS] filterTextNeeded: \(filterTextNeeded)")
+        print("🔍 [FILTER_STATUS] Summary: Clear All Filters should be \(filterTextNeeded ? "ENABLED" : "DISABLED")")
+        
+        print("🔍 [FILTER_STATUS] Final filterTextNeeded: \(filterTextNeeded)")
         
         
-        print ("numberOfFilteredRecords is \(numberOfFilteredRecords)")
+        // Set the filter text based on whether any filters are active
         if (filterTextNeeded == true){
             filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
         } else {
             filtersOnText = ""
         }
         
-        if (bandSearch.text?.isEmpty == false){
-            filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
-        }
+        print("🔍 [FILTER_STATUS] filtersOnText set to: '\(filtersOnText)'")
     }
     
     func decideIfScheduleMenuApplies()->Bool{
         
         var showEventMenu = false
         
-        // Show event menu only if schedule is released AND there are non-unofficial events
-        let hasNonUnofficalEventsForMenu = eventCount > eventCounterUnoffical
-        if (scheduleReleased == true && hasNonUnofficalEventsForMenu && unfilteredEventCount > 0){
+        if (scheduleReleased == true && (eventCount != unofficalEventCount && unfilteredEventCount > 0)){
             showEventMenu = true
         }
         
@@ -1467,7 +1478,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             showEventMenu = false
         }
         
-        print ("🏷️ MENU DEBUG: Show schedule choices = scheduleReleased:\(scheduleReleased), eventCount:\(eventCount), eventCounterUnoffical:\(eventCounterUnoffical), hasNonUnofficalEvents:\(hasNonUnofficalEventsForMenu), showEventMenu:\(showEventMenu)")
+        print ("Show schedule choices = 1-\(scheduleReleased)  2-\(eventCount) 3-\(unofficalEventCount) 4-\(unfilteredCurrentEventCount) 5-\(unfilteredEventCount) 6-\(unfilteredCruiserEventCount) 7-\(showEventMenu)")
         return showEventMenu
     }
     
@@ -1478,32 +1489,36 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var lableCounterString = String();
         var labeleCounter = Int()
         
-        print ("🏷️ COUNTER DEBUG: listCount=\(listCount), eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical), bandCount=\(bandCount)")
+        print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
         
-        // Counter Logic Rules:
-        // 1. All bands → show band count
-        // 2. Mix where ALL events are unofficial → show band count (ignore unofficial events)  
-        // 3. If there's ANY non-unofficial event → show event count
+        // Check if we have a mixture of events and bands, but ALL events are cruiser organized
+        let hasEvents = eventCount > 0
+        let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
+        let allEventsAreCruiserOrganized = eventCounterUnoffical > 0 && eventCounterUnoffical == eventCount
         
-        let hasNonUnofficalEvents = eventCount > eventCounterUnoffical
-        print ("🏷️ COUNTER DEBUG: hasNonUnofficalEvents=\(hasNonUnofficalEvents) (eventCount:\(eventCount) > eventCounterUnoffical:\(eventCounterUnoffical))")
-        
-        if (hasNonUnofficalEvents) {
-            // There are non-unofficial events - show EVENT count (not total list count)
-            labeleCounter = eventCount
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
-            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print ("🏷️ COUNTER DEBUG: Showing EVENTS count: \(labeleCounter) (eventCount, not listCount)")
-        } else {
-            // Only bands or only unofficial events - show band count (excluding unofficial events)
+        if (hasEvents && hasBands && allEventsAreCruiserOrganized) {
+            // Mixed list with only cruiser organized events - show only band count
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print ("🏷️ COUNTER DEBUG: Showing BANDS count: \(labeleCounter) (total:\(listCount) - unofficial:\(eventCounterUnoffical))")
+            // Don't override user's sort preference when there are only bands
+        } else if (listCount > 0 && eventCounterUnoffical < listCount){
+            // We have events and NOT ALL are unofficial - show event count
+            labeleCounter = listCount
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
+        } else {
+            // Default case - show band count
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            // Don't override user's sort preference when there are only bands
         }
 
         var currentYearSetting = getScheduleUrl()
@@ -1686,7 +1701,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 1);
+            self.priorityManager.setPriority(for: bandName, priority: 1)
             print ("Offline is offline");
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Must See")
@@ -1703,7 +1718,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 2);
+            self.priorityManager.setPriority(for: bandName, priority: 2)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Might See")
             
@@ -1718,7 +1733,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 3);
+            self.priorityManager.setPriority(for: bandName, priority: 3)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Won't See")
             
@@ -1733,7 +1748,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
-            self.dataHandle.addPriorityData(bandName, priority: 0);
+            self.priorityManager.setPriority(for: bandName, priority: 0)
             isLoadingBandData = false
             self.refreshBandListOnly(reason: "Priority changed to Unknown")
             
@@ -1778,7 +1793,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         setBands(bands)
         
         // Configure cell on main thread for immediate display
-        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, attendedHandle: attendedHandle)
+        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
         
         // Configure separator immediately to avoid async access issues
         // Hide separator for band names only (plain strings without time index)
@@ -2767,12 +2782,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func detailDidUpdate() {
-        // This notification is now handled by RefreshDisplay notification to avoid duplication
-        // The RefreshDisplay notification already calls refreshDataWithBackgroundUpdate which includes:
-        // 1. Immediate refreshBandList (includes dataHandle.getCachedData())
-        // 2. Background data refresh
-        // 3. UI updates when complete
-        print("[MasterViewController] DetailDidUpdate: Handled by RefreshDisplay notification to avoid duplication")
+        // PERFORMANCE FIX: DetailDidUpdate should ONLY refresh from cache, never trigger network
+        // This handles priority changes, attendance changes, and notes changes from detail screen
+        print("[MasterViewController] DetailDidUpdate: Cache-only refresh for priority/attendance/notes changes")
+        
+        // Refresh UI using only cached data (no background network operations)
+        DispatchQueue.main.async {
+            self.refreshBandList(reason: "Detail screen update - cache only")
+        }
     }
     
     @objc func iCloudDataReadyHandler() {
@@ -2782,7 +2799,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             
             self.bandNameHandle.readBandFile()
-            self.dataHandle.getCachedData()
+            // LEGACY: Priority data now handled by Core Data (PriorityManager)
+            // self.dataHandle.getCachedData()
             self.attendedHandle.getCachedData()
             self.schedule.getCachedData()
             
@@ -2809,7 +2827,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     */
     @objc func handleDataReady() {
+        // Ensure refreshBandList is called on main thread to avoid UI access issues
+        if Thread.isMainThread {
+            self.refreshBandList()
+        } else {
+            DispatchQueue.main.async {
         self.refreshBandList()
+            }
+        }
     }
     
     @objc func handlePointerDataUpdated() {
@@ -2829,7 +2854,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Check if we're in the middle of first launch data loading
-        guard !cacheVariables.justLaunched || (!bandNameHandle.bandNames.isEmpty && !schedule.schedulingData.isEmpty) else {
+        guard !cacheVariables.justLaunched || (!bandNameHandle.getBandNames().isEmpty && !schedule.schedulingData.isEmpty) else {
             print("MasterViewController: Skipping background refresh - first launch still in progress")
             return
         }
@@ -2881,9 +2906,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Wait for core data (artists + schedule) to complete before proceeding
             downloadGroup.notify(queue: .main) {
                 // Step 3: Load existing priority data
-                print("⭐ Step 3: Loading existing priority data...")
-                self.dataHandle.getCachedData()
-                print("✅ Priority data loaded")
+                print("⭐ Step 3: Priority data handled by Core Data (PriorityManager)")
+                // LEGACY: self.dataHandle.getCachedData()
+                print("✅ Priority data available via Core Data")
                 
                 // Step 4: Load existing attendance data
                 print("✅ Step 4: Loading existing attendance data...")
@@ -2956,13 +2981,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Pre-load priority data for all bands in a single operation
         DispatchQueue.global(qos: .utility).async {
-            _ = self.dataHandle.getPriorityDataForBands(uniqueBandNames)
+            // Pre-load priority data for performance (Core Data handles caching automatically)
+            _ = self.priorityManager.getAllPriorities()
         }
     }
     
     /// Performs the background data refresh operations
     internal func performBackgroundDataRefresh(reason: String, endRefreshControl: Bool, shouldScrollToTop: Bool, completion: (() -> Void)? = nil) {
         print("Full data refresh (\(reason)): Step 3 - Starting background process")
+        
+        // YEAR CHANGE DEADLOCK FIX: Generate unique operation ID and check for year change
+        let thisOperationId = UUID()
+        let isYearChangeOperation = reason.lowercased().contains("year change")
+        
+        if isYearChangeOperation {
+            print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Year change operation detected - killing all existing operations")
+            cancelAllBackgroundOperations()
+            MasterViewController.currentDataRefreshOperationId = thisOperationId
+        } else {
+            // Check if year change is in progress - if so, abort this operation
+            if MasterViewController.isYearChangeInProgress {
+                print("🚫 [YEAR_CHANGE_DEADLOCK_FIX] Year change in progress - aborting non-year-change operation: \(reason)")
+                DispatchQueue.main.async {
+                    if endRefreshControl {
+                        self.refreshControl?.endRefreshing()
+                    }
+                    completion?()
+                }
+                return
+            }
+            MasterViewController.currentDataRefreshOperationId = thisOperationId
+        }
+        
+        print("✅ [YEAR_CHANGE_DEADLOCK_FIX] Starting operation: \(thisOperationId.uuidString.prefix(8))")
+        
+        // Function to check if this operation was cancelled
+        func isOperationCancelled() -> Bool {
+            let cancelled = MasterViewController.currentDataRefreshOperationId != thisOperationId
+            if cancelled {
+                print("🚫 [YEAR_CHANGE_DEADLOCK_FIX] Operation \(thisOperationId.uuidString.prefix(8)) was cancelled")
+            }
+            return cancelled
+        }
         
         // 3a. Verify internet connection before proceeding
         print("Full data refresh (\(reason)): Step 3a - Verifying internet connection")
@@ -2986,12 +3046,43 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var newDataDownloaded = false
         var contentChanged = false
         
-        // Download schedule data
+        // Download schedule data - SYNCHRONIZED to prevent concurrent downloads
         dataLoadGroup.enter()
         DispatchQueue.global(qos: .utility).async {
-            print("Full data refresh (\(reason)): Downloading schedule data")
+            // Check cancellation before proceeding
+            guard !isOperationCancelled() else {
+                dataLoadGroup.leave()
+                return
+            }
+            
+            // CRITICAL: Prevent concurrent CSV downloads
+            MasterViewController.backgroundRefreshLock.lock()
+            let downloadAllowed = !MasterViewController.isCsvDownloadInProgress
+            if downloadAllowed {
+                MasterViewController.isCsvDownloadInProgress = true
+            }
+            MasterViewController.backgroundRefreshLock.unlock()
+            
+            if !downloadAllowed {
+                print("Full data refresh (\(reason)): ❌ CSV download already in progress - skipping duplicate")
+                dataLoadGroup.leave()
+                return
+            }
+            
+            print("Full data refresh (\(reason)): ✅ Starting CSV download (protected)")
             // Actually download schedule data
             self.schedule.DownloadCsv()
+            
+            // Mark CSV download as complete
+            MasterViewController.backgroundRefreshLock.lock()
+            MasterViewController.isCsvDownloadInProgress = false
+            MasterViewController.backgroundRefreshLock.unlock()
+            
+            // Check cancellation after download
+            guard !isOperationCancelled() else {
+                dataLoadGroup.leave()
+                return
+            }
             newDataDownloaded = true
             dataLoadGroup.leave()
         }
@@ -2999,9 +3090,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Download band names data
         dataLoadGroup.enter()
         DispatchQueue.global(qos: .utility).async {
+            // Check cancellation before proceeding
+            guard !isOperationCancelled() else {
+                dataLoadGroup.leave()
+                return
+            }
             print("Full data refresh (\(reason)): Downloading band names data")
-            // Actually download band names data
-            self.bandNameHandle.gatherData(forceDownload: true) {
+            // Actually download band names data - pass year change flag for proper coordination
+            self.bandNameHandle.gatherData(forceDownload: true, isYearChangeOperation: isYearChangeOperation) {
+                // Check cancellation in completion handler
+                guard !isOperationCancelled() else {
+                    dataLoadGroup.leave()
+                    return
+                }
                 newDataDownloaded = true
                 dataLoadGroup.leave()
             }
@@ -3010,15 +3111,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Download descriptionMap data
         dataLoadGroup.enter()
         DispatchQueue.global(qos: .utility).async {
+            // Check cancellation before proceeding
+            guard !isOperationCancelled() else {
+                dataLoadGroup.leave()
+                return
+            }
             print("Full data refresh (\(reason)): Downloading description map data")
             self.bandDescriptions.getDescriptionMapFile()
             self.bandDescriptions.getDescriptionMap()
+            // Check cancellation after download
+            guard !isOperationCancelled() else {
+                dataLoadGroup.leave()
+                return
+            }
             newDataDownloaded = true
             dataLoadGroup.leave()
         }
         
         // 3c. Once all downloads are complete, determine if content changed and clear caches
         dataLoadGroup.notify(queue: .main) {
+            // Final cancellation check before proceeding with UI updates
+            guard !isOperationCancelled() else {
+                print("🚫 [YEAR_CHANGE_DEADLOCK_FIX] Operation \(thisOperationId.uuidString.prefix(8)) cancelled before UI updates")
+                if endRefreshControl {
+                    self.refreshControl?.endRefreshing()
+                }
+                completion?()
+                return
+            }
             print("Full data refresh (\(reason)): Step 3c - All downloads complete, determining content changes")
             
             // If we couldn't download any new data, assume content has changed to be safe
@@ -3036,6 +3156,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // 3d. Clear ALL caches comprehensively only if content changed
                 print("Full data refresh (\(reason)): Step 3d - Content changed, clearing all caches")
                 self.bandNameHandle.clearCachedData()
+                // LEGACY: Priority cache clearing now handled by PriorityManager if needed
                 self.dataHandle.clearCachedData()
                 self.schedule.clearCache()
                 
@@ -3238,8 +3359,254 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print("✅ Combined image list loading completed")
     }
+    
+    // MARK: - PERFORMANCE OPTIMIZED LAUNCH METHODS
+    
+    /// Optimized first launch: Sequential download → import → display for each data type
+    private func performOptimizedFirstLaunch() {
+        print("🚀 [MDF_DEBUG] First launch - starting band names download")
+        print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+        print("🚀 FIRST LAUNCH: Step 1 - Starting band names download")
+        
+        // Step 1: Download and import band names first
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("🚀 [MDF_DEBUG] About to call bandNameHandle.gatherData() for MDF")
+            self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                guard let self = self else { return }
+                
+                print("🚀 [MDF_DEBUG] bandNameHandle.gatherData() COMPLETED for MDF")
+                DispatchQueue.main.async {
+                    print("🚀 FIRST LAUNCH: Step 2 - Band names imported, refreshing display")
+                    // Display band names immediately after import
+                    self.refreshBandList(reason: "First launch - band names loaded")
+                    
+                    // Step 2: Now download and import schedule data
+                    print("🚀 FIRST LAUNCH: Step 3 - Starting schedule download")
+                    print("🚀 [MDF_DEBUG] About to call schedule.populateSchedule() for MDF")
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        self.schedule.populateSchedule(forceDownload: true)
+                        print("🚀 [MDF_DEBUG] schedule.populateSchedule() COMPLETED for MDF")
+                        
+                        DispatchQueue.main.async {
+                            print("🚀 FIRST LAUNCH: Step 4 - Schedule imported, final display refresh")
+                            // Final display refresh with both band names and schedule
+                            self.refreshBandList(reason: "First launch - schedule loaded")
+                            
+                            // Step 3: Download iCloud data in background (non-blocking)
+                            print("🚀 FIRST LAUNCH: Step 5 - Starting iCloud download in background")
+                            DispatchQueue.global(qos: .utility).async {
+                                // iCloud and description data can load in background without blocking UI
+                                self.bandDescriptions.getDescriptionMapFile()
+                                // Note: iCloud data will trigger its own refresh when ready
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Optimized subsequent launch: Immediate cached display → background updates → refresh if changed
+    private func performOptimizedSubsequentLaunch() {
+        print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying cached data immediately")
+        
+        // Step 1: Load cached data immediately and display
+        print("🚀 [MDF_DEBUG] Subsequent launch - loading cached data")
+        print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+        self.bandNameHandle.loadCachedDataImmediately()
+        self.schedule.loadCachedDataImmediately()
+        self.refreshBandList(reason: "Subsequent launch - cached data", skipDataLoading: true)
+        
+        // Step 2: Check if we need background updates
+        let lastLaunchKey = "LastAppLaunchDate"
+        let now = Date()
+        let lastLaunch = UserDefaults.standard.object(forKey: lastLaunchKey) as? Date
+        let shouldUpdateData = lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
+        
+        UserDefaults.standard.set(now, forKey: lastLaunchKey)
+        
+        if shouldUpdateData {
+            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background data update (24+ hours since last launch)")
+            self.performBackgroundDataUpdate()
+        } else {
+            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Skipping background update (recent data)")
+        }
+    }
+    
+    /// Background data update that only refreshes UI if data actually changed
+    private func performBackgroundDataUpdate() {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("🚀 BACKGROUND UPDATE: Checking for data changes")
+            var dataChanged = false
+            
+            // Check band names for changes
+            let bandNamesGroup = DispatchGroup()
+            bandNamesGroup.enter()
+            
+            self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                // This completion is called if data actually changed
+                dataChanged = true
+                print("🚀 BACKGROUND UPDATE: Band names changed")
+                bandNamesGroup.leave()
+            }
+            
+            // Check schedule for changes
+            let scheduleGroup = DispatchGroup()
+            scheduleGroup.enter()
+            
+            DispatchQueue.global(qos: .utility).async {
+                // Get current event count before update
+                let eventCountBefore = self.schedule.getBandSortedSchedulingData().count
+                
+                // Trigger schedule update
+                self.schedule.populateSchedule(forceDownload: true)
+                
+                // Check if event count changed (simple change detection)
+                let eventCountAfter = self.schedule.getBandSortedSchedulingData().count
+                if eventCountBefore != eventCountAfter {
+                    dataChanged = true
+                    print("🚀 BACKGROUND UPDATE: Schedule changed (events: \(eventCountBefore) → \(eventCountAfter))")
+                } else {
+                    print("🚀 BACKGROUND UPDATE: Schedule unchanged (\(eventCountAfter) events)")
+                }
+                scheduleGroup.leave()
+            }
+            
+            // Wait for both to complete
+            let updateGroup = DispatchGroup()
+            updateGroup.enter()
+            bandNamesGroup.notify(queue: .global(qos: .utility)) {
+                updateGroup.leave()
+            }
+            updateGroup.enter()
+            scheduleGroup.notify(queue: .global(qos: .utility)) {
+                updateGroup.leave()
+            }
+            
+            updateGroup.notify(queue: .main) {
+                if dataChanged {
+                    print("🚀 BACKGROUND UPDATE: Data changed, refreshing display")
+                    self.refreshBandList(reason: "Background update - data changed")
+                } else {
+                    print("🚀 BACKGROUND UPDATE: No data changes, display unchanged")
+                }
+            }
+        }
+    }
+    
+    /// Performs UI refresh with already-loaded data (no background data loading)
+    private func performUIRefreshWithLoadedData(reason: String, scrollToTop: Bool, previousOffset: CGPoint) {
+        print("🚀 performUIRefreshWithLoadedData: Starting fast UI refresh")
+        
+        self.filterRequestID += 1
+        let requestID = self.filterRequestID
+        
+        getFilteredBands(
+            bandNameHandle: self.bandNameHandle,
+            schedule: self.schedule,
+            dataHandle: self.dataHandle,
+            priorityManager: self.priorityManager,
+            attendedHandle: self.attendedHandle,
+            searchCriteria: self.bandSearch.text ?? ""
+        ) { [weak self] (filtered: [String]) in
+            // CRITICAL FIX: Ensure all UI operations happen on main thread
+            DispatchQueue.main.async {
+                guard let self = self else {
+                    MasterViewController.isRefreshingBandList = false
+                    MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                    MasterViewController.refreshBandListSafetyTimer = nil
+                    return
+                }
+                // Only update UI if this is the latest request
+                if requestID != self.filterRequestID {
+                    MasterViewController.isRefreshingBandList = false
+                    MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                    MasterViewController.refreshBandListSafetyTimer = nil
+                    return
+                }
+                
+                var bandsResult = filtered
+                if eventCount == 0 {
+                    bandsResult = self.deduplicatePreservingOrder(bandsResult)
+                }
+                
+                let sortedBy = getSortedBy()
+                if sortedBy == "name" {
+                    bandsResult.sort { item1, item2 in
+                        let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                        let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                        
+                        // Events always come before band names only
+                        if isEvent1 && !isEvent2 {
+                            return true
+                        } else if !isEvent1 && isEvent2 {
+                            return false
+                        } else {
+                            // Both are same type, sort alphabetically
+                            return getNameFromSortable(item1, sortedBy: sortedBy).localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: sortedBy)) == .orderedAscending
+                        }
+                    }
+                } else if sortedBy == "time" {
+                    bandsResult.sort { item1, item2 in
+                        let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
+                        let isEvent2 = item2.contains(":") && item2.components(separatedBy: ":").first?.doubleValue != nil
+                        
+                        // Events always come before band names only
+                        if isEvent1 && !isEvent2 {
+                            return true
+                        } else if !isEvent1 && isEvent2 {
+                            return false
+                        } else {
+                            // If both are events, sort by time. If both are bands, sort alphabetically (since bands have no time)
+                            if isEvent1 && isEvent2 {
+                                // Both are events - sort by time
+                                return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+                            } else {
+                                // Both are band names - sort alphabetically even when sortBy is "time"
+                                return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
+                            }
+                        }
+                    }
+                }
+                
+                print("🚀 performUIRefreshWithLoadedData: Loaded \(bandsResult.count) bands for year \(eventYear)")
+                
+                // Safely merge new band data with existing data to prevent race conditions
+                self.safelyMergeBandData(bandsResult, reason: reason)
+                
+                // Pre-load priority data for all bands to improve table view performance
+                self.preloadPriorityData()
+                
+                self.updateCountLable()
+                
+                // Handle scrolling
+                if scrollToTop, self.bands.count > 0 {
+                    let topIndex = IndexPath(row: 0, section: 0)
+                    self.tableView.scrollToRow(at: topIndex, at: .top, animated: false)
+                } else {
+                    self.tableView.setContentOffset(previousOffset, animated: false)
+                }
+                
+                // Always show separators when we have mixed content, per-cell logic will hide them for band names
+                if eventCount == 0 {
+                    self.tableView.separatorStyle = .none
+                } else {
+                    self.tableView.separatorStyle = .singleLine
+                }
+                
+                MasterViewController.isRefreshingBandList = false
+                MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                MasterViewController.refreshBandListSafetyTimer = nil
+                
+                print("🚀 performUIRefreshWithLoadedData: Fast UI refresh completed")
+            } // End of DispatchQueue.main.async for UI operations
+        } // End of getFilteredBands completion handler
+    }
 }
-
 
 extension UITableViewRowAction {
     

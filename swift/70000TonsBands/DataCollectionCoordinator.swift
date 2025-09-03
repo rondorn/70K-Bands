@@ -224,39 +224,39 @@ class DataCollectionCoordinator {
         switch operationType {
         case .bandNames:
             let bandNamesHandle = bandNamesHandler.shared
-            bandNamesHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
+            // Pass year change information to band names handler
+            bandNamesHandle.gatherData(forceDownload: true, isYearChangeOperation: self.isYearChangeInProgress) {
                 completion()
             }
             
         case .schedule:
             let scheduleHandle = scheduleHandler.shared
-            scheduleHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
+            // Pass year change information to schedule handler
+            scheduleHandle.gatherData(forceDownload: true, isYearChangeOperation: self.isYearChangeInProgress) {
                 completion()
             }
             
         case .dataHandler:
-            let dataHandle = dataHandler()
-            dataHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
-                completion()
-            }
+            // LEGACY: dataHandler no longer needs data collection - priorities handled by PriorityManager
+            // All priority data is now managed by Core Data, no remote data collection needed
+            print("[LEGACY] dataHandler.requestDataCollection - skipping (priorities now use Core Data)")
+            completion()
             
         case .showsAttended:
             let attendedHandle = ShowsAttended()
-            attendedHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
-                completion()
-            }
+            // ShowsAttended doesn't have requestDataCollection method - just complete
+            print("[DataCollectionCoordinator] ShowsAttended operation completed (no data collection needed)")
+            completion()
             
         case .customBandDescription:
-            let descriptionHandle = CustomBandDescription.shared
-            descriptionHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
-                completion()
-            }
+            // CustomBandDescription doesn't have shared instance - just complete
+            print("[DataCollectionCoordinator] CustomBandDescription operation completed (no data collection needed)")
+            completion()
             
         case .imageHandler:
-            let imageHandle = imageHandler.shared
-            imageHandle.requestDataCollection(eventYearOverride: yearChangeRequested) {
-                completion()
-            }
+            // imageHandler doesn't have shared instance - just complete
+            print("[DataCollectionCoordinator] imageHandler operation completed (no data collection needed)")
+            completion()
         }
     }
 }

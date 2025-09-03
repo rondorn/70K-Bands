@@ -229,7 +229,9 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.locationColor.setBackgroundColor(Color.parseColor(locationColorChoice));
 
             } else {
-                viewHolder.locationColor.setBackgroundColor(Color.parseColor(staticVariables.unknownVenueColor));
+                // Use the dynamic venue color system for unknown venues too
+                String fallbackColor = staticVariables.getVenueColor("Unknown");
+                viewHolder.locationColor.setBackgroundColor(Color.parseColor(fallbackColor));
             }
 
             viewHolder.bandName.setText(currentBandName);

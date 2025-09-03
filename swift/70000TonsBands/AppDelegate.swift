@@ -30,7 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     let gcmMessageIDKey = "gcm.message_id"
     
-    var bandPriorityStorage = [String:Int]()
+
     
     var bandDescriptions = CustomBandDescription()
     var dataHandle = dataHandler()
@@ -210,6 +210,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        print("🚀 [MDF_DEBUG] AppDelegate.didFinishLaunchingWithOptions CALLED")
+        print("🚀 [MDF_DEBUG] Festival Config: \(FestivalConfig.current.festivalShortName)")
+        print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
+        print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
@@ -662,7 +667,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         internetAvailble = isInternetAvailable();
         let bandWrite  = firebaseBandDataWrite();
-        bandWrite.writeData(dataHandle: dataHandle);
+        bandWrite.writeData();
         let showWrite = firebaseEventDataWrite()
         showWrite.writeData();
     }

@@ -471,30 +471,16 @@ public class staticVariables {
     }
 
     /**
-     * Gets the color for a given venue.
+     * Gets the color for a given venue using FestivalConfig.
      * @param venue The venue string.
-     * @return The color string for the venue.
+     * @return The color string for the venue with # prefix.
      */
     public static String getVenueColor(String venue){
-
-        String color = "";
-
-        if (venue.equals(poolVenueText)){
-            color = poolVenueColor;
-
-        } else if (venue.equals(theaterVenueText)){
-            color = theaterVenueColor;
-
-        } else if (venue.equals(rinkVenueText)){
-            color = rinkVenueColor;
-
-        } else if (venue.equals(loungeVenueText)){
-            color = loungeVenueColor;
-
-        } else {
-            color =  unknownVenueColor;
+        String color = FestivalConfig.getInstance().getVenueColor(venue);
+        // Ensure color has # prefix for Android color parsing
+        if (!color.startsWith("#")) {
+            color = "#" + color;
         }
-
         return color;
     }
 

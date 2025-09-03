@@ -129,7 +129,16 @@ open class CustomBandDescription {
         
         print ("commentFile getDescriptionMapFile: Map url is \(mapUrl)")
         
-        let httpData = getUrlData(urlString: mapUrl)
+        // Move network call off main thread to prevent UI hang
+        let semaphore = DispatchSemaphore(value: 0)
+        var httpData = ""
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            httpData = getUrlData(urlString: mapUrl)
+            semaphore.signal()
+        }
+        
+        semaphore.wait()
         
         print ("commentFile getDescriptionMapFile: Map url Data length is \(httpData.count)")
         
@@ -312,7 +321,16 @@ open class CustomBandDescription {
                 return FestivalConfig.current.getDefaultDescriptionText()
             }
             
-            let httpData = getUrlData(urlString: descriptionUrl);
+            // Move network call off main thread to prevent UI hang
+            let semaphore = DispatchSemaphore(value: 0)
+            var httpData = ""
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                httpData = getUrlData(urlString: descriptionUrl)
+                semaphore.signal()
+            }
+            
+            semaphore.wait()
                 
             //do not write if we are getting 404 error or HTML error page
             if (httpData.starts(with: "<!DOCTYPE") == false && !httpData.isEmpty){

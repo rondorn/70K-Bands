@@ -214,7 +214,8 @@ class showAttendenceReport {
         
         // Collect must-see bands
         for band in bands {
-            if (dataHandle.getPriorityData(band) == 1){
+            let priorityManager = PriorityManager()
+            if (priorityManager.getPriority(for: band) == 1){
                 print ("Adding band " + band)
                 mustSeeBands.append(band)
             }
@@ -222,7 +223,8 @@ class showAttendenceReport {
         
         // Collect might-see bands
         for band in bands {
-            if (dataHandle.getPriorityData(band) == 2){
+            let priorityManager = PriorityManager()
+            if (priorityManager.getPriority(for: band) == 2){
                 print ("Adding band " + band)
                 mightSeeBands.append(band)
             }
