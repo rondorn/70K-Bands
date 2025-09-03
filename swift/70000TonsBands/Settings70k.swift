@@ -8,6 +8,43 @@
 
 import Foundation
 
+// MARK: - Dynamic Venue Filtering System
+// Dictionary to store venue filter settings dynamically based on FestivalConfig
+private var venueFilterSettings: [String: Bool] = [:]
+
+// Dynamic venue filter functions
+func getShowVenueEvents(venueName: String) -> Bool {
+    // Initialize with true if not set (default to showing all venues)
+    return venueFilterSettings[venueName.lowercased(), default: true]
+}
+
+func setShowVenueEvents(venueName: String, show: Bool) {
+    venueFilterSettings[venueName.lowercased()] = show
+}
+
+// Helper function to initialize venue filters from FestivalConfig
+func initializeVenueFilters() {
+    let venues = FestivalConfig.current.getAllVenueNames()
+    for venue in venues {
+        if venueFilterSettings[venue.lowercased()] == nil {
+            venueFilterSettings[venue.lowercased()] = true // Default to showing all venues
+        }
+    }
+}
+
+// Helper function to get all venue filter states
+func getAllVenueFilterStates() -> [String: Bool] {
+    return venueFilterSettings
+}
+
+// Helper function to set all venues to a specific state
+func setAllVenueFilters(show: Bool) {
+    let venues = FestivalConfig.current.getAllVenueNames()
+    for venue in venues {
+        venueFilterSettings[venue.lowercased()] = show
+    }
+}
+
 var mustSeeOn = true;
 var mightSeeOn = true;
 var wontSeeOn = true;
@@ -163,33 +200,49 @@ func getOnlyAlertForAttendedValue()->Bool{
 
 func setShowTheaterShows(_ value: Bool){
     showTheaterShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Theater", show: value)
 }
 func getShowTheaterShows() -> Bool{
-    print("🔍 [SETTINGS_DEBUG] getShowTheaterShows() returning: \(showTheaterShows)")
-    return showTheaterShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Theater")
+    print("🔍 [SETTINGS_DEBUG] getShowTheaterShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowPoolShows(_ value: Bool){
     showPoolShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Pool", show: value)
 }
 func getShowPoolShows() -> Bool{
-    print("🔍 [SETTINGS_DEBUG] getShowPoolShows() returning: \(showPoolShows)")
-    return showPoolShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Pool")
+    print("🔍 [SETTINGS_DEBUG] getShowPoolShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowRinkShows(_ value: Bool){
     showRinkShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Rink", show: value)
 }
 func getShowRinkShows() -> Bool{
-    print("🔍 [SETTINGS_DEBUG] getShowRinkShows() returning: \(showRinkShows)")
-    return showRinkShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Rink")
+    print("🔍 [SETTINGS_DEBUG] getShowRinkShows() returning: \(dynamicValue)")
+    return dynamicValue
 }
 
 func setShowLoungeShows(_ value: Bool){
     showLoungeShows = value
+    // Also update the dynamic system
+    setShowVenueEvents(venueName: "Lounge", show: value)
 }
 func getShowLoungeShows() -> Bool{
-    return showLoungeShows
+    // Use dynamic system if available, otherwise fall back to hardcoded
+    let dynamicValue = getShowVenueEvents(venueName: "Lounge")
+    return dynamicValue
 }
 
 func setShowOtherShows(_ value: Bool){
@@ -327,6 +380,12 @@ func writeFiltersFile(){
         prefsString += "showRinkShows:" + boolToString(getShowRinkShows()) + ";"
         prefsString += "showLoungeShows:" + boolToString(getShowLoungeShows()) + ";"
         prefsString += "showOtherShows:" + boolToString(getShowOtherShows()) + ";"
+        
+        // Save dynamic venue settings
+        let dynamicVenueSettings = getAllVenueFilterStates()
+        for (venueName, showState) in dynamicVenueSettings {
+            prefsString += "venue_\(venueName.lowercased()):" + boolToString(showState) + ";"
+        }
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
@@ -370,6 +429,11 @@ func readFiltersFile(){
     
     print ("🔧 [UNOFFICIAL_DEBUG] readFiltersFile() called - current showUnofficalEvents before reading: \(showUnofficalEvents)")
     print ("Status of getWontSeeOn loading")
+    
+    // Always initialize venue filters from FestivalConfig (handles festival switching)
+    initializeVenueFilters()
+    print ("🏟️ [VENUE_INIT] Initialized venue filters for current festival")
+    
     if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
         print ("🔧 [UNOFFICIAL_DEBUG] No filters file found, establishing defaults")
         establishDefaults()
@@ -490,7 +554,14 @@ func readFiltersFile(){
                 setScheduleUrl(valueArray[1])
                 
                 default:
-                    print("Not sure why this would happen")
+                    // Handle dynamic venue settings
+                    if valueArray[0].hasPrefix("venue_") {
+                        let venueName = String(valueArray[0].dropFirst(6)) // Remove "venue_" prefix
+                        setShowVenueEvents(venueName: venueName, show: stringToBool(valueArray[1]))
+                        print("🏟️ [VENUE_SETTINGS] Loaded venue '\(venueName)' = \(stringToBool(valueArray[1]))")
+                    } else {
+                        print("⚠️ [SETTINGS_DEBUG] Unknown setting key: \(valueArray[0])")
+                    }
             }
         }
         print("🎯 [FILTERS_DEBUG] After loading filters file:")
@@ -509,6 +580,9 @@ func readFiltersFile(){
 }
 
 func establishDefaults(){
+    // Initialize dynamic venue filters from FestivalConfig
+    initializeVenueFilters()
+    
     setMustSeeOn(true)
     setMightSeeOn(true)
     setWontSeeOn(true)

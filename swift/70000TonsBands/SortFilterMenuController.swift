@@ -43,10 +43,13 @@ func createrFilterMenu( controller: MasterViewController){
     controller.filterMenu.dataSource.append("Unoffical Events")
     if (eventCount > 0 && unofficalEventCount != eventCount){
         controller.filterMenu.dataSource.append("Location Header")
-        controller.filterMenu.dataSource.append("Pool Venue")
-        controller.filterMenu.dataSource.append("Lounge Venue")
-        controller.filterMenu.dataSource.append("Rink Venue")
-        controller.filterMenu.dataSource.append("Theater Venue")
+        
+        // Dynamically add venue options based on FestivalConfig
+        let configuredVenues = FestivalConfig.current.getAllVenueNames()
+        for venueName in configuredVenues {
+            controller.filterMenu.dataSource.append("\(venueName) Venue")
+        }
+        
         controller.filterMenu.dataSource.append("Other Venue")        
     }
         
@@ -203,11 +206,16 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         print("🔄 [CLEAR_DEBUG] Clear All Filters clicked - resetting all filters to default state")
         var message = NSLocalizedString("Clear All Items", comment: "")
         setShowOnlyWillAttened(false)
+        
+        // Reset all dynamic venues to true
+        setAllVenueFilters(show: true)
+        
+        // Also reset the legacy hardcoded venue settings for backward compatibility
         setShowPoolShows(true)
         setShowRinkShows(true)
-        setShowOtherShows(true)
         setShowLoungeShows(true)
         setShowTheaterShows(true)
+        setShowOtherShows(true)
         setShowSpecialEvents(true)
         setShowUnofficalEvents(true)
         setShowMeetAndGreetEvents(true)
@@ -240,7 +248,30 @@ func setupClearAllMenuChoices(controller: MasterViewController, item: String, ce
 
 func setupVenueClickResponse(controller: MasterViewController, item: String){
     
-    if (item == "Pool Venue"){
+    // Handle dynamic venues from FestivalConfig
+    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    
+    for venueName in configuredVenues {
+        if (item == "\(venueName) Venue" && blockTurningAllFiltersOn(controller:controller) == false){
+            var message = "\(venueName) Venue Filter Off"
+            if (getShowVenueEvents(venueName: venueName) == true){
+                setShowVenueEvents(venueName: venueName, show: false)
+                message = "\(venueName) Venue Filter On"
+            } else {
+                setShowVenueEvents(venueName: venueName, show: true)
+            }
+            if (blockTurningAllFiltersOn(controller: controller) == true){
+                setShowVenueEvents(venueName: venueName, show: true)
+            } else {
+                refreshAfterMenuSelected(controller: controller, message: message)
+            }
+            return // Exit early once we found the matching venue
+        }
+    }
+    
+    // Keep backward compatibility with the hardcoded venue methods if needed
+    // This allows for a smoother transition
+    if item == "Pool Venue" {
         var message = NSLocalizedString("Pool Venue Filter Off", comment: "")
         if (getShowPoolShows() == true){
             setShowPoolShows(false)
@@ -250,49 +281,6 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
         }
         if (blockTurningAllFiltersOn(controller: controller) == true){
             setShowPoolShows(true)
-        } else {
-            refreshAfterMenuSelected(controller: controller, message: message)
-        }
-    }
-    if (item == "Lounge Venue" && blockTurningAllFiltersOn(controller:controller) == false){
-        var message = NSLocalizedString("Lounge Venue Filter Off", comment: "")
-        if (getShowLoungeShows() == true){
-            setShowLoungeShows(false)
-            message = NSLocalizedString("Lounge Venue Filter On", comment: "")
-        } else {
-            setShowLoungeShows(true)
-        }
-        if (blockTurningAllFiltersOn(controller: controller) == true){
-            setShowLoungeShows(true)
-        } else {
-            refreshAfterMenuSelected(controller: controller, message: message)
-        }
-    }
-    if (item == "Rink Venue" && blockTurningAllFiltersOn(controller:controller) == false){
-        var message = NSLocalizedString("Rink Venue Filter Off", comment: "")
-        if (getShowRinkShows() == true){
-            setShowRinkShows(false)
-            message = NSLocalizedString("Rink Venue Filter On", comment: "")
-        } else {
-            setShowRinkShows(true)
-        }
-        if (blockTurningAllFiltersOn(controller: controller) == true){
-            setShowRinkShows(true)
-        } else {
-            refreshAfterMenuSelected(controller: controller, message: message)
-        }
-    }
-    
-    if (item == "Theater Venue" && blockTurningAllFiltersOn(controller:controller) == false){
-        var message = NSLocalizedString("Theater Venue Filter Off", comment: "")
-        if (getShowTheaterShows() == true){
-            setShowTheaterShows(false)
-            message = NSLocalizedString("Theater Venue Filter On", comment: "")
-        } else {
-            setShowTheaterShows(true)
-        }
-        if (blockTurningAllFiltersOn(controller: controller) == true){
-            setShowTheaterShows(true)
         } else {
             refreshAfterMenuSelected(controller: controller, message: message)
         }
@@ -316,59 +304,31 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
 
 func setupVenueMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
     
-    if (item == "Pool Venue"){
-        var currentIcon = poolIconAlt
-        var currentText = NSLocalizedString("Show Pool Events", comment: "")
-        if (getShowPoolShows() == true){
-            currentIcon = poolIcon
-            currentText = NSLocalizedString("Hide Pool Events", comment: "")
+    // Handle dynamic venues from FestivalConfig
+    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    
+    for venueName in configuredVenues {
+        if (item == "\(venueName) Venue"){
+            let venue = FestivalConfig.current.getVenue(named: venueName)
+            var currentIcon = venue?.notGoingIcon ?? "Unknown-NotGoing-wBox"
+            var currentText = "Show \(venueName) Events"
+            
+            if (getShowVenueEvents(venueName: venueName) == true){
+                currentIcon = venue?.goingIcon ?? "Unknown-Going-wBox"
+                currentText = "Hide \(venueName) Events"
+            }
+            
+            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
+            if (getShowOnlyWillAttened() == true){
+                setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: venue?.notGoingIcon ?? "Unknown-NotGoing-wBox", disabled: true)
+                cellRow.optionLabel.textColor = UIColor.darkGray
+            }
+            return // Exit early once we found the matching venue
         }
-        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-        if (getShowOnlyWillAttened() == true){
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: poolIconAlt, disabled: true)
-            cellRow.optionLabel.textColor = UIColor.darkGray
-        }
-        
-    } else if (item == "Lounge Venue"){
-        var currentIcon = loungIconAlt
-        var currentText = NSLocalizedString("Show Lounge Events", comment: "")
-        if (getShowLoungeShows() == true){
-            currentIcon = loungIcon
-            currentText = NSLocalizedString("Hide Lounge Events", comment: "")
-        }
-        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-        if (getShowOnlyWillAttened() == true){
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: loungIconAlt, disabled: true)
-            cellRow.optionLabel.textColor = UIColor.darkGray
-        }
-        
-    } else if (item == "Rink Venue"){
-        var currentIcon = iceRinkIconAlt
-        var currentText = NSLocalizedString("Show Rink Events", comment: "")
-        if (getShowRinkShows() == true){
-            currentIcon = iceRinkIcon
-            currentText = NSLocalizedString("Hide Rink Events", comment: "")
-        }
-        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-        if (getShowOnlyWillAttened() == true){
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: iceRinkIconAlt, disabled: true)
-            cellRow.optionLabel.textColor = UIColor.darkGray
-        }
-        
-    } else if (item == "Theater Venue"){
-        var currentIcon = theaterIconAlt
-        var currentText = NSLocalizedString("Show Theater Events", comment: "")
-        if (getShowTheaterShows() == true){
-            currentIcon = theaterIcon
-            currentText = NSLocalizedString("Hide Theater Events", comment: "")
-        }
-        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-        if (getShowOnlyWillAttened() == true){
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: theaterIconAlt, disabled: true)
-            cellRow.optionLabel.textColor = UIColor.darkGray
-        }
-        
-    } else if (item == "Other Venue"){
+    }
+    
+    // Handle "Other Venue" (catch-all for non-configured venues)
+    if (item == "Other Venue"){
         var currentIcon = unknownIconAlt
         var currentText = NSLocalizedString("Show Other Events", comment: "")
         if (getShowOtherShows() == true){
@@ -617,11 +577,24 @@ func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
     var message = ""
     var venueCouner = 0
     
-    if (getShowPoolShows() == false &&
-        getShowRinkShows() == false &&
-        getShowOtherShows() == false &&
-        getShowLoungeShows() == false &&
-        getShowTheaterShows() == false){
+    // Check if all dynamic venues are disabled
+    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    var allVenuesDisabled = true
+    
+    // Check dynamic venues
+    for venueName in configuredVenues {
+        if getShowVenueEvents(venueName: venueName) == true {
+            allVenuesDisabled = false
+            break
+        }
+    }
+    
+    // Also check "Other" shows
+    if getShowOtherShows() == true {
+        allVenuesDisabled = false
+    }
+    
+    if allVenuesDisabled {
         blockChange = true
         message = NSLocalizedString("Can not hide all venues", comment: "")
     }

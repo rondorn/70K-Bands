@@ -210,6 +210,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        print("🚀 [MDF_DEBUG] AppDelegate.didFinishLaunchingWithOptions CALLED")
+        print("🚀 [MDF_DEBUG] Festival Config: \(FestivalConfig.current.festivalShortName)")
+        print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
+        print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)

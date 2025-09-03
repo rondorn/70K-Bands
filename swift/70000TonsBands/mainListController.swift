@@ -94,51 +94,38 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
         print("🔍 [FILTER] No event types excluded - showing ALL event types")
     }
     
-    // 3. VENUE FILTERS (EXCLUSIVE approach - show everything EXCEPT filtered out venues)
-    // This ensures new unknown venues appear by default unless explicitly hidden
+    // 3. VENUE FILTERS (DYNAMIC approach using FestivalConfig venues)
+    // This ensures new venues from different festivals are handled automatically
     var excludedVenuePredicates: [NSPredicate] = []
     
-    if !getShowPoolShows() {
-        excludedVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", "Pool"))
-        print("🔍 [FILTER] ❌ EXCLUDING Pool venues")
-    } else {
-        print("🔍 [FILTER] ✅ Including Pool venues")
+    // Get the configurable venues from FestivalConfig
+    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    var mainVenuePredicates: [NSPredicate] = []
+    
+    // Process each configured venue
+    for venueName in configuredVenues {
+        if !getShowVenueEvents(venueName: venueName) {
+            excludedVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", venueName))
+            print("🔍 [FILTER] ❌ EXCLUDING \(venueName) venues")
+        } else {
+            print("🔍 [FILTER] ✅ Including \(venueName) venues")
+            mainVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", venueName))
+        }
     }
     
-    if !getShowTheaterShows() {
-        excludedVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", "Theater"))
-        print("🔍 [FILTER] ❌ EXCLUDING Theater venues")
-    } else {
-        print("🔍 [FILTER] ✅ Including Theater venues")
-    }
-    
-    if !getShowRinkShows() {
-        excludedVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", "Rink"))
-        print("🔍 [FILTER] ❌ EXCLUDING Rink venues")
-    } else {
-        print("🔍 [FILTER] ✅ Including Rink venues")
-    }
-    
-    if !getShowLoungeShows() {
-        excludedVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", "Lounge"))
-        print("🔍 [FILTER] ❌ EXCLUDING Lounge venues")  
-    } else {
-        print("🔍 [FILTER] ✅ Including Lounge venues")
-    }
-    
+    // Handle "Other" venues (catch-all for venues not in the main configured list)
     if !getShowOtherShows() {
-        // CATCH-ALL: Exclude venues that are NOT Pool, Theater, Rink, or Lounge
-        // This catches any venue (like "Clevelander") that doesn't fit the main categories
-        let mainVenuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: [
-            NSPredicate(format: "location CONTAINS[cd] %@", "Pool"),
-            NSPredicate(format: "location CONTAINS[cd] %@", "Theater"), 
-            NSPredicate(format: "location CONTAINS[cd] %@", "Rink"),
-            NSPredicate(format: "location CONTAINS[cd] %@", "Lounge")
-        ])
-        excludedVenuePredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: mainVenuePredicate))
-        print("🔍 [FILTER] ❌ EXCLUDING Other venues (anything NOT Pool/Theater/Rink/Lounge)")
+        // Only exclude "Other" venues if we have some configured venues enabled
+        if !mainVenuePredicates.isEmpty {
+            let mainVenuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: mainVenuePredicates)
+            excludedVenuePredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: mainVenuePredicate))
+            print("🔍 [FILTER] ❌ EXCLUDING Other venues (anything NOT in configured venues: \(configuredVenues))")
+        } else {
+            // If no configured venues are enabled, don't exclude "Other" venues as that would hide everything
+            print("🔍 [FILTER] ⚠️ All configured venues disabled, keeping Other venues visible")
+        }
     } else {
-        print("🔍 [FILTER] ✅ Including Other venues (catch-all for non-main venues)")
+        print("🔍 [FILTER] ✅ Including Other venues (catch-all for non-configured venues) - DEFAULT BEHAVIOR")
     }
     
     // Apply venue exclusion filter only if there are venues to exclude
@@ -283,13 +270,30 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     
     print("🔍 DEBUG: Final event strings generated: \(eventStrings.count)")
     
-    // Get bands that have events (so we don't show them as standalone bands)
-    let bandsWithVisibleEvents = Set(eventStrings.compactMap { eventString in
-        let components = eventString.components(separatedBy: ":")
-        return components.count == 2 ? components[1] : nil
-    })
-    
-    print("🔍 DEBUG: Bands with visible events: \(bandsWithVisibleEvents.sorted())")
+    // FIX: Get bands that have NON-EXPIRED events (regardless of other filters)
+    // Bands should only appear below events when they have NO non-expired events, not when just filtered by venue
+    let bandsWithVisibleEvents: Set<String>
+    if getHideExpireScheduleData() {
+        // When "Hide Expired Events" is enabled, get all bands that have future events (regardless of venue/priority filters)
+        let currentTime = Date().timeIntervalSince1970
+        let nonExpiredEventsPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "eventYear == %d", eventYear),
+            NSPredicate(format: "timeIndex > %f", currentTime)
+        ])
+        let nonExpiredEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: nonExpiredEventsPredicate)
+        bandsWithVisibleEvents = Set(nonExpiredEvents.compactMap { event in
+            event.band?.bandName
+        })
+        print("🔍 [BAND_DISPLAY_FIX] Hide Expired Events ON - bands with non-expired events: \(bandsWithVisibleEvents.sorted())")
+    } else {
+        // When "Hide Expired Events" is disabled, all bands with any events should not appear below (regardless of filters)
+        let allEventsPredicate = NSPredicate(format: "eventYear == %d", eventYear)
+        let allEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: allEventsPredicate)
+        bandsWithVisibleEvents = Set(allEvents.compactMap { event in
+            event.band?.bandName
+        })
+        print("🔍 [BAND_DISPLAY_FIX] Hide Expired Events OFF - bands with any events: \(bandsWithVisibleEvents.sorted())")
+    }
     
     // Fetch ALL bands for current year
     let fetchedBands = coreDataManager.fetchBands(forYear: Int32(eventYear))
@@ -1023,36 +1027,42 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
 func venueFiltering(_ venue: String) -> Bool {
     
     print("🔍 [VENUE_DEBUG] Filtering venue: '\(venue)'")
-    print("🔍 [VENUE_DEBUG] Expected venues - Pool: '\(poolVenueText)', Theater: '\(theaterVenueText)', Rink: '\(rinkVenueText)', Lounge: '\(loungeVenueText)'")
-    print("🔍 [VENUE_DEBUG] Show settings - Pool: \(getShowPoolShows()), Theater: \(getShowTheaterShows()), Rink: \(getShowRinkShows())")
-    print("🔍 [VENUE_DEBUG] Additional settings - Lounge: \(getShowLoungeShows()), Other: \(getShowOtherShows())")
-
-    var showVenue = false;
     
-    if (venue == poolVenueText && getShowPoolShows() == true){
-        showVenue = true
-        print("🔍 [VENUE_DEBUG] ✅ Pool venue '\(venue)' ALLOWED")
-    
-    } else if (venue == theaterVenueText && getShowTheaterShows() == true){
-        showVenue = true
-        print("🔍 [VENUE_DEBUG] ✅ Theater venue '\(venue)' ALLOWED")
+    // Get the configurable venues from FestivalConfig
+    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    print("🔍 [VENUE_DEBUG] Configured venues: \(configuredVenues)")
 
-    } else if (venue == rinkVenueText && getShowRinkShows() == true){
-        showVenue = true
-        print("🔍 [VENUE_DEBUG] ✅ Rink venue '\(venue)' ALLOWED")
-        
-    } else if (venue == loungeVenueText && getShowLoungeShows() == true){
-        showVenue = true
-        print("🔍 [VENUE_DEBUG] ✅ Lounge venue '\(venue)' ALLOWED")
-        
-    } else if (venue != loungeVenueText && venue != rinkVenueText && venue != theaterVenueText && venue != poolVenueText && getShowOtherShows() == true){
-        showVenue = true
-        print("🔍 [VENUE_DEBUG] ✅ Other venue '\(venue)' ALLOWED (getShowOtherShows: \(getShowOtherShows()))")
-        
-    } else {
+    var showVenue = false
+    
+    // Check if this venue matches any of the configured venues
+    var matchedConfiguredVenue = false
+    for configuredVenueName in configuredVenues {
+        if venue.lowercased().contains(configuredVenueName.lowercased()) || 
+           configuredVenueName.lowercased().contains(venue.lowercased()) {
+            // This is a configured venue, check its setting
+            if getShowVenueEvents(venueName: configuredVenueName) {
+                showVenue = true
+                print("🔍 [VENUE_DEBUG] ✅ \(configuredVenueName) venue '\(venue)' ALLOWED")
+            } else {
+                print("🔍 [VENUE_DEBUG] ❌ \(configuredVenueName) venue '\(venue)' REJECTED - setting disabled")
+            }
+            matchedConfiguredVenue = true
+            break
+        }
+    }
+    
+    // If it didn't match any configured venue, treat it as "Other"
+    if !matchedConfiguredVenue {
+        if getShowOtherShows() {
+            showVenue = true
+            print("🔍 [VENUE_DEBUG] ✅ Other venue '\(venue)' ALLOWED (getShowOtherShows: \(getShowOtherShows()))")
+        } else {
+            print("🔍 [VENUE_DEBUG] ❌ Other venue '\(venue)' REJECTED - Other venues disabled")
+        }
+    }
+    
+    if !showVenue {
         numberOfFilteredRecords = numberOfFilteredRecords + 1
-        print("🔍 [VENUE_DEBUG] ❌ Venue '\(venue)' REJECTED - doesn't match any allowed venue or setting is disabled")
-        print("🔍 [VENUE_DEBUG] Lounge setting: \(getShowLoungeShows()), Other setting: \(getShowOtherShows())")
     }
     
     print("🔍 [VENUE_DEBUG] Final result for venue '\(venue)': \(showVenue ? "ALLOW" : "REJECT")")
