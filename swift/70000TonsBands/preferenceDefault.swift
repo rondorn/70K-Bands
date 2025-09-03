@@ -25,6 +25,16 @@ let allLinksOpenInExternalBrowserDefault = "NO"
 
 func setDefaults(){
     
+    // Set festival-specific defaults for event type filter visibility from FestivalConfig
+    let meetAndGreetsEnabledDefault = FestivalConfig.current.meetAndGreetsEnabledDefault ? "YES" : "NO"
+    let specialEventsEnabledDefault = FestivalConfig.current.specialEventsEnabledDefault ? "YES" : "NO"
+    let unofficalEventsEnabledDefault = FestivalConfig.current.unofficalEventsEnabledDefault ? "YES" : "NO"
+    
+    print("🏛️ [DEFAULTS_DEBUG] UserDefaults being registered:")
+    print("🏛️ [DEFAULTS_DEBUG] - meetAndGreetsEnabled = '\(meetAndGreetsEnabledDefault)'")
+    print("🏛️ [DEFAULTS_DEBUG] - specialEventsEnabled = '\(specialEventsEnabledDefault)'")
+    print("🏛️ [DEFAULTS_DEBUG] - unofficalEventsEnabled = '\(unofficalEventsEnabledDefault)'")
+    
     let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,
                     "iCloud": iCloudDefault,
@@ -33,7 +43,10 @@ func setDefaults(){
                     "alertForSpecial": alertForSpecialDefault, "alertForMandG": alertForMandGDefault,
                     "alertForClinics": alertForClinicsDefault, "alertForListening": alertForListeningDefault,
                     "validateScheduleFile": validateScheduleFileDefault,
-                    "allLinksOpenInExternalBrowser": allLinksOpenInExternalBrowserDefault]
+                    "allLinksOpenInExternalBrowser": allLinksOpenInExternalBrowserDefault,
+                    "meetAndGreetsEnabled": meetAndGreetsEnabledDefault,
+                    "specialEventsEnabled": specialEventsEnabledDefault,
+                    "unofficalEventsEnabled": unofficalEventsEnabledDefault]
 
     UserDefaults.standard.register(defaults: defaults)
 }

@@ -71,6 +71,11 @@ public class FestivalConfig {
     // Venue configuration
     public final List<Venue> venues;
     
+    // Event type filter visibility settings (festival-specific)
+    public final boolean meetAndGreetsEnabledDefault;
+    public final boolean specialEventsEnabledDefault;
+    public final boolean unofficalEventsEnabledDefault;
+    
     /**
      * Private constructor that initializes configuration based on build variant
      */
@@ -120,6 +125,11 @@ public class FestivalConfig {
                 new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt")
             );
             
+            // MDF: Hide all event type filters by default
+            this.meetAndGreetsEnabledDefault = false;
+            this.specialEventsEnabledDefault = false;
+            this.unofficalEventsEnabledDefault = false;
+            
         } else {
             // Default to 70K configuration
             this.festivalName = "70,000 Tons of Metal";
@@ -157,6 +167,11 @@ public class FestivalConfig {
                 new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt"),
                 new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt")
             );
+            
+            // 70K: Show all event type filters by default (maintain existing behavior)
+            this.meetAndGreetsEnabledDefault = true;
+            this.specialEventsEnabledDefault = true;
+            this.unofficalEventsEnabledDefault = true;
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");

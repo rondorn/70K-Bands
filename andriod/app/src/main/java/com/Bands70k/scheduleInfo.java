@@ -88,6 +88,7 @@ public class scheduleInfo {
         Log.d("ScheduleLine", "DownloadScheduleFile - 4");
         Map<String, scheduleTimeTracker> bandSchedule = ParseScheduleCSV();
         Log.d("ScheduleLine", "DownloadScheduleFile - 5");
+        Log.d("FILTER_DEBUG", "🔍 SCHEDULE DATA LOADING: DownloadScheduleFile returning " + bandSchedule.size() + " schedule records");
         return bandSchedule;
     }
 
@@ -96,18 +97,28 @@ public class scheduleInfo {
         Map<String, scheduleTimeTracker> bandSchedule = new HashMap<>();
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 1");
+        Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Starting to parse schedule CSV");
         try {
             File file = FileHandler70k.schedule;
+            Log.d("FILTER_DEBUG", "🔍 SCHEDULE FILE: file exists=" + file.exists() + ", path=" + file.getAbsolutePath() + ", length=" + file.length());
+
+            if (!file.exists()) {
+                Log.d("FILTER_DEBUG", "🔍 SCHEDULE FILE: File does not exist, returning empty schedule");
+                return bandSchedule;
+            }
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
             boolean labelRow = true;
             Map<String, Integer> labelKeys = new HashMap<>();
+            int lineCount = 0;
 
             Log.d("ParseScheduleCSV", "ParseScheduleCSV - 2");
             while ((line = br.readLine()) != null) {
+                lineCount++;
                 Log.d("ScheduleLine", line);
+                Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Processing line " + lineCount + ": " + line);
                 try {
                     Log.d("ParseScheduleCSV", "ParseScheduleCSV - 3");
                     String[] RowData = line.split(",");
@@ -181,11 +192,17 @@ public class scheduleInfo {
         } catch (Exception e) {
             Log.d("ParseScheduleCSV", "ParseScheduleCSV - 6");
             Log.e("ScheduleLine Exception", "Parsing bandData", e);
+            Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Exception occurred during parsing: " + e.getMessage());
 
         }
         //Log.d("Output of bandData", bandSchedule.toString());
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
+        Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Completed parsing, returning " + bandSchedule.size() + " schedule records");
+        for (String bandName : bandSchedule.keySet()) {
+            Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Band found: " + bandName + " with " + 
+                  bandSchedule.get(bandName).scheduleByTime.size() + " time slots");
+        }
         return bandSchedule;
     }
 
