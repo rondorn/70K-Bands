@@ -183,11 +183,25 @@ public class FilterButtonHandler  {
     public static Boolean blockTurningAllFiltersOn(){
 
         Boolean blockChange = false;
-        if (staticVariables.preferences.getShowPoolShows() == false &&
-                staticVariables.preferences.getShowRinkShows() == false &&
-                staticVariables.preferences.getShowOtherShows() == false &&
-                staticVariables.preferences.getShowLoungeShows() == false &&
-                staticVariables.preferences. getShowTheaterShows() == false){
+        
+        // Check if all venues are hidden using dynamic venue system
+        FestivalConfig festivalConfig = FestivalConfig.getInstance();
+        java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        
+        boolean anyVenueVisible = false;
+        // Check all configured venues
+        for (String venueName : configuredVenues) {
+            if (staticVariables.preferences.getShowVenueEvents(venueName)) {
+                anyVenueVisible = true;
+                break;
+            }
+        }
+        // Also check "Other" venues
+        if (staticVariables.preferences.getShowVenueEvents("Other")) {
+            anyVenueVisible = true;
+        }
+        
+        if (!anyVenueVisible) {
             blockChange = true;
             HelpMessageHandler.showMessage(context.getResources().getString(R.string.can_not_hide_all_venues), messageView);
         }

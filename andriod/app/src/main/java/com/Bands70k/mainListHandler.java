@@ -150,11 +150,14 @@ public class mainListHandler {
                 }
                 if (staticVariables.preferences.getShowWillAttend() == false) {
                     if (bandPresent.contains(bandName) == false) {
-                        sortableBandNames.add(bandName + ":");
-                        if (numberOfEvents == 0) {
-                            numberOfBands++;
+                        // Only add artists to bottom if they have expired events that would have passed current filters
+                        if (shouldShowArtistWithExpiredEvents(bandName)) {
+                            sortableBandNames.add(bandName + ":");
+                            if (numberOfEvents == 0) {
+                                numberOfBands++;
+                            }
+                            altNumberOfBands++;
                         }
-                        altNumberOfBands++;
                     }
                 }
             }
@@ -174,7 +177,10 @@ public class mainListHandler {
         }
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
-        bandCount.setText(this.getSizeDisplay());
+        String headerText = this.getSizeDisplay();
+        Log.d("HeaderText", "Setting headerBandCount TextView to: " + headerText);
+        Log.d("HeaderText", "FestivalConfig appName: " + FestivalConfig.getInstance().appName);
+        bandCount.setText(headerText);
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
 
@@ -252,29 +258,36 @@ public class mainListHandler {
         Boolean showVenue = false;
         Log.d("VenueFilter", "Venue is " + venue);
 
-        if (venue.equals("Pool") && staticVariables.preferences.getShowPoolShows() == true){
-            showVenue = true;
+        // Get the current festival configuration
+        FestivalConfig festivalConfig = FestivalConfig.getInstance();
+        List<String> configuredVenues = festivalConfig.getAllVenueNames();
 
-        } else if (venue.equals("Theater") && staticVariables.preferences.getShowTheaterShows() == true){
-            showVenue = true;
-
-        } else if (venue.equals("Rink") && staticVariables.preferences.getShowRinkShows()== true){
-            showVenue = true;
-
-        } else if (venue.equals("Lounge") && staticVariables.preferences.getShowLoungeShows() == true){
-            showVenue = true;
-
-        } else if ( venue.equals("Lounge") == false && venue.equals("Rink") == false &&
-                    venue.equals("Theater") == false && venue.equals("Pool") == false &&
-                    staticVariables.preferences.getShowOtherShows() == true){
-
-            showVenue = true;
-
-        } else {
-            Log.d("EventFilter", "No hide preferences are set");
+        // Check if this venue is one of the configured festival venues
+        boolean isConfiguredVenue = false;
+        for (String configuredVenue : configuredVenues) {
+            if (venue.equals(configuredVenue)) {
+                // Check if this specific venue is enabled
+                showVenue = getVenueShowState(configuredVenue);
+                isConfiguredVenue = true;
+                Log.d("VenueFilter", "Configured venue " + configuredVenue + " show state: " + showVenue);
+                break;
+            }
+        }
+        
+        // If not a configured venue, treat as "Other"
+        if (!isConfiguredVenue) {
+            showVenue = staticVariables.preferences.getShowOtherShows();
+            Log.d("VenueFilter", "Other venue '" + venue + "' show state: " + showVenue);
         }
 
         return showVenue;
+    }
+    
+    /**
+     * Get the show state for a specific venue using the dynamic preference system
+     */
+    private boolean getVenueShowState(String venueName) {
+        return staticVariables.preferences.getShowVenueEvents(venueName);
     }
 
     private boolean filterByEventType(String eventType){
@@ -381,22 +394,125 @@ public class mainListHandler {
      * Returns true if any real filter (not just search) is active.
      */
     private boolean isAnyFilterActive() {
-        // Adjust these as needed for your app's default filter settings
-        return !(staticVariables.preferences.getShowMust() &&
+        // Check status filters
+        boolean statusFiltersDefault = (staticVariables.preferences.getShowMust() &&
                  staticVariables.preferences.getShowMight() &&
                  staticVariables.preferences.getShowWont() &&
                  staticVariables.preferences.getShowUnknown() &&
-                 !staticVariables.preferences.getShowWillAttend() &&
-                 staticVariables.preferences.getShowSpecialEvents() &&
+                 !staticVariables.preferences.getShowWillAttend());
+                 
+        // Check event type filters
+        boolean eventTypeFiltersDefault = (staticVariables.preferences.getShowSpecialEvents() &&
                  staticVariables.preferences.getShowMeetAndGreet() &&
                  staticVariables.preferences.getShowClinicEvents() &&
                  staticVariables.preferences.getShowAlbumListen() &&
-                 staticVariables.preferences.getShowUnofficalEvents() &&
-                 staticVariables.preferences.getShowPoolShows() &&
-                 staticVariables.preferences.getShowTheaterShows() &&
-                 staticVariables.preferences.getShowRinkShows() &&
-                 staticVariables.preferences.getShowLoungeShows() &&
-                 staticVariables.preferences.getShowOtherShows());
+                 staticVariables.preferences.getShowUnofficalEvents());
+                 
+        // Check venue filters using dynamic system
+        boolean venueFiltersDefault = true;
+        FestivalConfig festivalConfig = FestivalConfig.getInstance();
+        java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        
+        // Check all configured venues
+        for (String venueName : configuredVenues) {
+            if (!staticVariables.preferences.getShowVenueEvents(venueName)) {
+                venueFiltersDefault = false;
+                break;
+            }
+        }
+        // Also check "Other" venues
+        if (!staticVariables.preferences.getShowVenueEvents("Other")) {
+            venueFiltersDefault = false;
+        }
+        
+        // Return true if ANY filter is active (not in default state)
+        return !(statusFiltersDefault && eventTypeFiltersDefault && venueFiltersDefault);
+    }
+    
+    /**
+     * Determines if an artist should be shown at the bottom of the list due to having expired events.
+     * This should ONLY happen when:
+     * 1. The artist has events that have passed (expired events)
+     * 2. The user has "Hide Expired Events" set to true
+     * 3. The filtering is NOT filtering out those expired records (meaning if expired events were shown, they would pass the current filters)
+     */
+    private boolean shouldShowArtistWithExpiredEvents(String bandName) {
+        // Only proceed if Hide Expired Events is enabled
+        if (!staticVariables.preferences.getHideExpiredEvents()) {
+            return false;
+        }
+        
+        // Check if this artist has any expired events
+        boolean hasExpiredEvents = false;
+        boolean expiredEventsWouldPassFilters = false;
+        
+        if (BandInfo.scheduleRecords.containsKey(bandName)) {
+            for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
+                Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
+                if (timeIndex > endTime) {
+                    endTime = endTime + (3600000 * 24);
+                }
+                
+                // Check if this is an expired event
+                if (endTime <= System.currentTimeMillis()) {
+                    hasExpiredEvents = true;
+                    
+                    // Check if this expired event would pass the current filters (ignoring the expiration check)
+                    if (applyFiltersIgnoringExpiration(bandName, timeIndex)) {
+                        expiredEventsWouldPassFilters = true;
+                        break; // Found at least one expired event that would pass filters
+                    }
+                }
+            }
+        }
+        
+        // Only show at bottom if artist has expired events AND those events would have passed current filters
+        boolean result = hasExpiredEvents && expiredEventsWouldPassFilters;
+        
+        if (result) {
+            Log.d("ExpiredArtists", "Adding " + bandName + " to bottom - has expired events that would pass current filters");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Applies all current filters except the expiration check.
+     * This is used to determine if expired events would have passed the current filtering criteria.
+     * Replicates the logic from applyFilters() but ignores the "will attend" filter since we're checking expired events.
+     */
+    private boolean applyFiltersIgnoringExpiration(String bandName, Long timeIndex) {
+        // Apply search criteria first
+        if (staticVariables.searchCriteria.isEmpty() == false) {
+            if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase()) == false) {
+                return false;
+            }
+        }
+        
+        // If showing only attended events, skip this check for expired events
+        // (we're trying to see if the event would have been shown if it wasn't expired)
+        if (staticVariables.preferences.getShowWillAttend() == true) {
+            // For expired events, we assume they would pass the "will attend" filter 
+            // since we're checking if they should be shown at the bottom
+            return true;
+        }
+        
+        // Apply the same logic as applyFilters() but for expired events
+        if (timeIndex == null) {
+            // For bands with no schedule, just check ranking filters
+            return checkFiltering(bandName);
+        } else {
+            // For scheduled events, check ranking, event type, and venue filters
+            if (checkFiltering(bandName)) {
+                if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType())) {
+                    if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
     }
 
     public String getSizeDisplay() {
@@ -443,7 +559,10 @@ public class mainListHandler {
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = false;
 
-            displayText = yearDisplay + " 0 bands";
+            // Show the festival app name when no data is available
+            String appName = FestivalConfig.getInstance().appName;
+            Log.d("HeaderText", "Setting header text with appName: " + appName);
+            displayText = yearDisplay + " " + appName + "!";
             staticVariables.staticBandCount = 0;
         }
 

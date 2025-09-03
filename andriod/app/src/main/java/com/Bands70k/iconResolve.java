@@ -70,25 +70,7 @@ public class iconResolve {
     }
 
     public static String getLocationColor(String location){
-
-        String eventColor = staticVariables.unknownVenueColor;
-
-        Log.d("colorResolve", location + " does it match " + staticVariables.poolVenueText);
-
-        if (location.equals(staticVariables.poolVenueText)){
-            eventColor = staticVariables.poolVenueColor;
-
-        } else if (location.equals(staticVariables.theaterVenueText)){
-            eventColor = staticVariables.theaterVenueColor;
-
-        } else if (location.equals(staticVariables.loungeVenueText)){
-            eventColor = staticVariables.loungeVenueColor;
-
-        } else if (location.equals(staticVariables.rinkVenueText)) {
-            eventColor = staticVariables.rinkVenueColor;
-
-        }
-
-        return eventColor;
+        // Use the centralized venue color system from staticVariables which now uses FestivalConfig
+        return staticVariables.getVenueColor(location);
     }
 }

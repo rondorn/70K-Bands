@@ -35,7 +35,7 @@
             android:layout_marginLeft="2dp"
             android:layout_marginRight="2dp"
             android:gravity="center"
-            android:text="70,000 Tons"
+            android:text=""
             android:textAlignment="center"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="@android:color/white"
