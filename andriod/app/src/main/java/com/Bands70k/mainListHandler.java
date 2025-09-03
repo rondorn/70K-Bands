@@ -72,6 +72,8 @@ public class mainListHandler {
      */
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
+        Log.d("FILTER_DEBUG", "🏁 populateBandInfo() called with " + bandList.size() + " bands");
+        Log.d("FILTER_DEBUG", "🏁 ENTRY STATE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         Log.d("loadingpopulateBandInfo", "From live data");
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, bandList);
 
@@ -80,8 +82,10 @@ public class mainListHandler {
 
         Set<String> allBands = new ArraySet<>();
 
-        if (BandInfo.scheduleRecords != null) {
+        if (BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty()) {
+            Log.d("FILTER_DEBUG", "🔍 BandInfo.scheduleRecords has " + bandInfo.scheduleRecords.keySet().size() + " bands");
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
+                Log.d("FILTER_DEBUG", "🔍 Processing band: " + bandName);
                 if ( staticVariables.searchCriteria.isEmpty() == false) {
                     Log.d("searchCriteria", "Doing lookup using " + staticVariables.searchCriteria);
                     if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase()) == false) {
@@ -92,16 +96,23 @@ public class mainListHandler {
                     }
                 }
 
+                Log.d("FILTER_DEBUG", "🔍 Band " + bandName + " has " + BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet().size() + " time slots");
                 for (Long timeIndex : BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet()) {
                     if (staticVariables.preferences.getSortByTime() == true) {
 
                         Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
                         Log.d("scheduleInfo","Start time is " + String.valueOf(timeIndex) + " EndTime is " + String.valueOf(endTime));
+                        Log.d("FILTER_DEBUG", "⏰ TIME CHECK for " + bandName + ": timeIndex=" + timeIndex + ", endTime=" + endTime + ", currentTime=" + System.currentTimeMillis());
                         if (timeIndex > endTime){
                             endTime = endTime + (3600000 * 24);
+                            Log.d("FILTER_DEBUG", "⏰ TIME ADJUSTED for " + bandName + ": new endTime=" + endTime);
                         }
-                        if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false){
+                        Log.d("FILTER_DEBUG", "⏰ getHideExpiredEvents: " + staticVariables.preferences.getHideExpiredEvents());
+                        boolean timeCondition = endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
+                        Log.d("FILTER_DEBUG", "⏰ TIME CONDITION for " + bandName + ": " + timeCondition);
+                        if (timeCondition){
                             allUpcomingEvents++;
+                            Log.d("FILTER_DEBUG", "📞 SORTBYTIME: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(String.valueOf(timeIndex) + ":" + bandName);
                                 bandPresent.add(bandName);
@@ -116,11 +127,17 @@ public class mainListHandler {
                     } else {
                         Log.d("scheduleInfo", "Sort alphbetically, bandname is " + bandName);
                         Long endTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getEpochEnd();
+                        Log.d("FILTER_DEBUG", "⏰ ALPHA TIME CHECK for " + bandName + ": timeIndex=" + timeIndex + ", endTime=" + endTime + ", currentTime=" + System.currentTimeMillis());
                         if (timeIndex > endTime){
                             endTime = endTime + (3600000 * 24);
+                            Log.d("FILTER_DEBUG", "⏰ ALPHA TIME ADJUSTED for " + bandName + ": new endTime=" + endTime);
                         }
-                        if (endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false) {
+                        Log.d("FILTER_DEBUG", "⏰ ALPHA getHideExpiredEvents: " + staticVariables.preferences.getHideExpiredEvents());
+                        boolean timeCondition = endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
+                        Log.d("FILTER_DEBUG", "⏰ ALPHA TIME CONDITION for " + bandName + ": " + timeCondition);
+                        if (timeCondition) {
                             allUpcomingEvents++;
+                            Log.d("FILTER_DEBUG", "📞 SORTALPHA: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
                             if (applyFilters(bandName, timeIndex) == true) {
                                 sortableBandNames.add(bandName + ":" + String.valueOf(timeIndex));
                                 bandPresent.add(bandName);
@@ -136,6 +153,7 @@ public class mainListHandler {
                 }
             }
             Collections.sort(sortableBandNames);
+            Log.d("FILTER_DEBUG", "🏁 After schedule processing: sortableBandNames has " + sortableBandNames.size() + " items");
             Log.d("populateBandInfo", "BandList has this many enties " + String.valueOf(bandList.size()));
             for (String bandName : bandList){
 
@@ -163,6 +181,7 @@ public class mainListHandler {
             }
 
         } else {
+            Log.d("FILTER_DEBUG", "🚨 BandInfo.scheduleRecords is NULL or EMPTY! Using raw bandList with " + bandList.size() + " bands (no schedule released yet)");
             sortableBandNames = bandList;
             numberOfBands = bandList.size();
             Collections.sort(sortableBandNames);
@@ -171,9 +190,14 @@ public class mainListHandler {
         turnSortedListIntoArrayAdapter();
 
         //ensure that if there is no list for getShowWillAttend(), we turn this off and recollect
+        Log.d("FILTER_DEBUG", "🔄 PRE-RECURSIVE CHECK: sortableBandNames.size() = " + sortableBandNames.size() + 
+              ", getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         if (sortableBandNames.isEmpty() && staticVariables.preferences.getShowWillAttend() == true){
+            Log.d("FILTER_DEBUG", "🔄 TRIGGERING RECURSIVE CALL: Setting getShowWillAttend = false and calling populateBandInfo recursively");
             staticVariables.preferences.setShowWillAttend(false);
+            Log.d("FILTER_DEBUG", "🔄 AFTER SETTING FALSE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
             sortableBandNames = populateBandInfo(bandInfo, bandList);
+            Log.d("FILTER_DEBUG", "🔄 RECURSIVE CALL COMPLETE: returned " + sortableBandNames.size() + " bands, getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         }
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
@@ -187,7 +211,12 @@ public class mainListHandler {
         if (sortableBandNames.size() == 0){
             String emptyDataMessage = staticVariables.context.getResources().getString(R.string.data_filter_issue);
             sortableBandNames.add(emptyDataMessage);
+            Log.d("FILTER_DEBUG", "🚨 NO BANDS passed filtering! Adding empty data message: " + emptyDataMessage);
         }
+
+        Log.d("FILTER_DEBUG", "🏁 populateBandInfo() COMPLETE: " + sortableBandNames.size() + " bands passed all filters");
+        Log.d("FILTER_DEBUG", "🏁 EXIT STATE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
+        Log.d("FILTER_DEBUG", "🏁 Input bands: " + bandList.size() + ", Output bands: " + sortableBandNames.size());
 
         //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         return sortableBandNames;
@@ -202,6 +231,9 @@ public class mainListHandler {
     private boolean applyFilters(String bandName, Long timeIndex) {
 
         boolean status = true;
+        
+        Log.d("FILTER_DEBUG", "🔍 applyFilters() called for band: " + bandName + ", timeIndex: " + (timeIndex != null ? timeIndex.toString() : "null"));
+        Log.d("FILTER_DEBUG", "🔍 getShowWillAttend: " + staticVariables.preferences.getShowWillAttend());
 
         if (filterByWillAttend(bandName, timeIndex) == true){
             staticVariables.showsIwillAttend = staticVariables.showsIwillAttend + 1;
@@ -209,26 +241,42 @@ public class mainListHandler {
 
         if (staticVariables.preferences.getShowWillAttend() == true) {
             status = filterByWillAttend(bandName, timeIndex);
+            Log.d("FILTER_DEBUG", "🔍 Will Attend filtering: " + status);
 
         } else if (timeIndex == null){
-            if (checkFiltering(bandName) == true) {
+            // This is the path for "Current" view when bands have no events
+            boolean rankingResult = checkFiltering(bandName);
+            if (rankingResult == true) {
                 status = true;
             } else {
                 status = false;
             }
+            Log.d("FILTER_DEBUG", "🔍 NO EVENT path - Band: " + bandName + ", ranking result: " + rankingResult + ", final status: " + status);
         } else {
 
             status = false;
+            
+            boolean rankingResult = checkFiltering(bandName);
+            Log.d("FILTER_DEBUG", "🔍 HAS EVENT path - Band: " + bandName + ", ranking result: " + rankingResult);
 
-            if (checkFiltering(bandName) == true){
-                if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType()) == true) {
-                    if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation()) == true) {
+            if (rankingResult == true){
+                String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+                boolean eventTypeResult = filterByEventType(eventType);
+                Log.d("FILTER_DEBUG", "🔍 Event type: '" + eventType + "', event type result: " + eventTypeResult);
+                
+                if (eventTypeResult == true) {
+                    String venue = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
+                    boolean venueResult = filterByVenue(venue);
+                    Log.d("FILTER_DEBUG", "🔍 Venue: '" + venue + "', venue result: " + venueResult);
+                    
+                    if (venueResult == true) {
                         status = true;
                     }
                 }
             }
         }
-        Log.d("applyFilter", "bandName = " + bandName + " timeIndex = " + timeIndex.toString() + " status = " + status);
+        Log.d("FILTER_DEBUG", "🔍 FINAL RESULT for " + bandName + ": " + status);
+        Log.d("applyFilter", "bandName = " + bandName + " timeIndex = " + (timeIndex != null ? timeIndex.toString() : "null") + " status = " + status);
         return status;
     }
 
@@ -630,35 +678,46 @@ public class mainListHandler {
     private boolean checkFiltering(String bandName){
 
         Boolean returnValue = true;
+        
+        String bandRank = rankStore.getRankForBand(bandName);
+        Log.d("FILTER_DEBUG", "🎯 checkFiltering() for band: " + bandName + ", rank: " + bandRank);
+        Log.d("FILTER_DEBUG", "🎯 Rank settings - Must:" + staticVariables.preferences.getShowMust() + 
+              ", Might:" + staticVariables.preferences.getShowMight() + 
+              ", Wont:" + staticVariables.preferences.getShowWont() + 
+              ", Unknown:" + staticVariables.preferences.getShowUnknown());
 
-
-        if (rankStore.getRankForBand(bandName).equals(staticVariables.mustSeeIcon)){
+        if (bandRank.equals(staticVariables.mustSeeIcon)){
             if (staticVariables.preferences.getShowMust() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
+            Log.d("FILTER_DEBUG", "🎯 MUST SEE band - show setting: " + staticVariables.preferences.getShowMust() + ", result: " + returnValue);
 
-        } else if (rankStore.getRankForBand(bandName).equals(staticVariables.mightSeeIcon)){
+        } else if (bandRank.equals(staticVariables.mightSeeIcon)){
             if (staticVariables.preferences.getShowMight() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
-        } else if (rankStore.getRankForBand(bandName).equals(staticVariables.wontSeeIcon)){
+            Log.d("FILTER_DEBUG", "🎯 MIGHT SEE band - show setting: " + staticVariables.preferences.getShowMight() + ", result: " + returnValue);
+        } else if (bandRank.equals(staticVariables.wontSeeIcon)){
             if (staticVariables.preferences.getShowWont() == true){
                 returnValue = true;
             } else {
                 returnValue = false;
             }
+            Log.d("FILTER_DEBUG", "🎯 WONT SEE band - show setting: " + staticVariables.preferences.getShowWont() + ", result: " + returnValue);
         } else {
             if (staticVariables.preferences.getShowUnknown() == true) {
                 returnValue = true;
             } else {
                 returnValue = false;
             }
+            Log.d("FILTER_DEBUG", "🎯 UNKNOWN rank band - show setting: " + staticVariables.preferences.getShowUnknown() + ", result: " + returnValue);
         }
 
+        Log.d("FILTER_DEBUG", "🎯 checkFiltering() RESULT for " + bandName + ": " + returnValue);
         Log.d(TAG, "FILTERING - " + rankStore.getRankForBand(bandName) + " " + staticVariables.mustSeeIcon + " " + String.valueOf(returnValue));
         return returnValue;
     }

@@ -113,16 +113,51 @@ public class OtherFilterHandler {
     public void setupOtherFilters(){
 
         if (staticVariables.showEventButtons == true){
-            FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+            // Separate event type filters from venue/location filters
+            
+            // Check if any event type filters should be shown based on festival-specific settings
+            boolean showAnyEventTypeFilters = staticVariables.preferences.getMeetAndGreetsEnabled() ||
+                                             staticVariables.preferences.getSpecialEventsEnabled() ||
+                                             staticVariables.preferences.getUnofficalEventsEnabled();
+            
+            if (showAnyEventTypeFilters) {
+                // Show event type header only if at least one event type filter is enabled
+                FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
+                
+                // Conditionally show each event type filter based on festival settings
+                if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
+                    FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                } else {
+                    FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                }
+                
+                if (staticVariables.preferences.getSpecialEventsEnabled()) {
+                    FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                } else {
+                    FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                }
+                
+                if (staticVariables.preferences.getUnofficalEventsEnabled()) {
+                    FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                } else {
+                    FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                }
+            } else {
+                // Hide event type filters section when all are disabled
+                FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+            }
+            
+            // ALWAYS show location/venue filters when showEventButtons is true (regardless of event type settings)
             FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
-            // Show dynamic venue filters container instead of individual hardcoded venue sections
             FilterButtonHandler.showMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
+            // ALWAYS show other sections when showEventButtons is true
             FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
@@ -132,6 +167,7 @@ public class OtherFilterHandler {
             FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
 
         } else {
+            // Hide ALL sections when showEventButtons is false
             FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
@@ -139,7 +175,6 @@ public class OtherFilterHandler {
             FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
-            // Hide dynamic venue filters container instead of individual hardcoded venue sections
             FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
             FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
@@ -150,15 +185,6 @@ public class OtherFilterHandler {
             FilterButtonHandler.hideMenuSection(R.id.Brake4, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
         }
-        //if (staticVariables.showUnofficalEventButtons == true){
-            FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
-        //} else {
-            //FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-            //FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
-            //FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
-        //}
 
         TextView clearFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.clearFilter);
 

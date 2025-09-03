@@ -115,6 +115,11 @@ struct FestivalConfig {
     // Venue configuration
     let venues: [Venue]
     
+    // Event type filter visibility defaults
+    let meetAndGreetsEnabledDefault: Bool
+    let specialEventsEnabledDefault: Bool
+    let unofficalEventsEnabledDefault: Bool
+    
     private init() {
         print("🏛️ [MDF_DEBUG] FestivalConfig init() called")
         #if FESTIVAL_70K
@@ -147,6 +152,11 @@ struct FestivalConfig {
             Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
             Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox")
         ]
+        
+        // 70K event type filter visibility - all enabled
+        self.meetAndGreetsEnabledDefault = true
+        self.specialEventsEnabledDefault = true
+        self.unofficalEventsEnabledDefault = true
         
         #elseif FESTIVAL_MDF
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
@@ -181,6 +191,11 @@ struct FestivalConfig {
             Venue(name: "Angels Rock", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox")
         ]
         
+        // MDF event type filter visibility - all disabled
+        self.meetAndGreetsEnabledDefault = false
+        self.specialEventsEnabledDefault = false
+        self.unofficalEventsEnabledDefault = false
+        
         #else
         print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
         // Default to 70K configuration if no macro is defined
@@ -211,6 +226,11 @@ struct FestivalConfig {
             Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
             Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox")
         ]
+        
+        // Default event type filter visibility (same as 70K) - all enabled
+        self.meetAndGreetsEnabledDefault = true
+        self.specialEventsEnabledDefault = true
+        self.unofficalEventsEnabledDefault = true
         #endif
         
         print("🏛️ [MDF_DEBUG] FestivalConfig init() completed")

@@ -35,12 +35,30 @@ func createrFilterMenu( controller: MasterViewController){
         controller.filterMenu.dataSource.append("Sort Header")
         controller.filterMenu.dataSource.append("Sort By")
     }
-    controller.filterMenu.dataSource.append("Event Type Filters")
-    if (eventCount > 0 && unofficalEventCount != eventCount){
-        controller.filterMenu.dataSource.append("Meet and Greet Events")
-        controller.filterMenu.dataSource.append("Special Events")
+    // Only show Event Type Filters section if at least one filter is enabled
+    print("🏛️ [FILTER_MENU_DEBUG] Checking event type filter visibility:")
+    print("🏛️ [FILTER_MENU_DEBUG] - getMeetAndGreetsEnabled() = \(getMeetAndGreetsEnabled())")
+    print("🏛️ [FILTER_MENU_DEBUG] - getSpecialEventsEnabled() = \(getSpecialEventsEnabled())")
+    print("🏛️ [FILTER_MENU_DEBUG] - getUnofficalEventsEnabled() = \(getUnofficalEventsEnabled())")
+    let showEventTypeFilters = getMeetAndGreetsEnabled() || getSpecialEventsEnabled() || getUnofficalEventsEnabled()
+    print("🏛️ [FILTER_MENU_DEBUG] - showEventTypeFilters = \(showEventTypeFilters)")
+    
+    if showEventTypeFilters {
+        controller.filterMenu.dataSource.append("Event Type Filters")
+        
+        // Conditionally add each event type filter based on settings
+        if (eventCount > 0 && unofficalEventCount != eventCount) {
+            if getMeetAndGreetsEnabled() {
+                controller.filterMenu.dataSource.append("Meet and Greet Events")
+            }
+            if getSpecialEventsEnabled() {
+                controller.filterMenu.dataSource.append("Special Events")
+            }
+        }
+        if getUnofficalEventsEnabled() {
+            controller.filterMenu.dataSource.append("Unoffical Events")
+        }
     }
-    controller.filterMenu.dataSource.append("Unoffical Events")
     if (eventCount > 0 && unofficalEventCount != eventCount){
         controller.filterMenu.dataSource.append("Location Header")
         
