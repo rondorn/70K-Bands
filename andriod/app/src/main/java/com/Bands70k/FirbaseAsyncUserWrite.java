@@ -1,36 +1,37 @@
 package com.Bands70k;
 
-import android.os.AsyncTask;
-
-import java.util.ArrayList;
+import java.util.concurrent.Future;
 
 /**
- * AsyncTask for writing user data to Firebase in the background.
+ * Modern replacement for AsyncTask - writes user data to Firebase in the background.
+ * Uses ThreadManager instead of deprecated AsyncTask.
  */
-public class FirbaseAsyncUserWrite extends AsyncTask<String, Void, ArrayList<String>> {
-
-    ArrayList<String> result;
+public class FirbaseAsyncUserWrite {
 
     /**
-     * Runs on the UI thread before the background computation begins.
+     * Executes the Firebase user write operation in the background.
+     * @return Future representing the background task.
      */
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
+    public Future<?> execute() {
+        return ThreadManager.getInstance().executeNetwork(() -> {
+            FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
+            userDataWrite.writeData();
+        });
     }
-
+    
     /**
-     * Performs the background write operation to Firebase.
-     * @param params The parameters for the background task.
-     * @return The result of the background operation.
+     * Executes the Firebase user write operation with callbacks.
+     * @param onComplete Optional callback to run when operation completes.
+     * @return Future representing the background task.
      */
-    @Override
-    protected ArrayList<String> doInBackground(String... params) {
-
-        FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
-        userDataWrite.writeData();
-
-        return result;
+    public Future<?> execute(Runnable onComplete) {
+        return ThreadManager.getInstance().executeNetworkWithCallbacks(
+            () -> {
+                FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
+                userDataWrite.writeData();
+            },
+            null, // no pre-execute needed
+            onComplete
+        );
     }
-
 }

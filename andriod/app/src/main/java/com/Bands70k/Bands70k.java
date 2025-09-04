@@ -33,6 +33,11 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         super.onCreate();
 
         Bands70k.context = getApplicationContext();
+        
+        // Initialize crash reporting first to catch any issues during modernization
+        CrashReporter.initialize(this);
+        Log.d("AppLifecycle", "Crash reporting initialized for AsyncTask modernization monitoring");
+        
         OnlineStatus.isOnline();
         
         // Register network state receiver for connectivity monitoring
@@ -42,8 +47,31 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         registerActivityLifecycleCallbacks(this);
         Log.d("AppLifecycle", "Application created, lifecycle callbacks registered for proper background detection");
         
-        SystemClock.sleep(3000);
+        // Initialize app components asynchronously to avoid blocking startup
+        initializeAppAsync();
 
+    }
+    
+    /**
+     * Initialize app components asynchronously to avoid blocking the main thread.
+     * Replaces the problematic 3-second sleep with proper async initialization.
+     */
+    private void initializeAppAsync() {
+        // Use ThreadManager to handle any heavy initialization work
+        ThreadManager.getInstance().executeGeneral(() -> {
+            try {
+                // Perform any heavy initialization that was previously relying on the sleep
+                Log.d("AppLifecycle", "Performing async app initialization");
+                
+                // Give some time for essential services to initialize if needed
+                Thread.sleep(500); // Much shorter delay, only if absolutely necessary
+                
+                Log.d("AppLifecycle", "Async app initialization completed");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w("AppLifecycle", "App initialization interrupted", e);
+            }
+        });
     }
     
     /**
