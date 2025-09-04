@@ -17,7 +17,7 @@ import java.util.Date;
  */
 public class shipNotifications extends BroadcastReceiver {
 
-    public static String NOTIFICATION_ID = "com.bands70K";
+    public static String NOTIFICATION_ID = "com.bands" + BuildConfig.FESTIVAL_TYPE;
     public static String NOTIFICATION = "notification";
     public static int unuiqueNumber = 0;
 

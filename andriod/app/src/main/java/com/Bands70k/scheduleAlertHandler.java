@@ -250,7 +250,7 @@ public class scheduleAlertHandler {
 
         Notification.Builder builder = new Notification.Builder(context);
 
-        builder.setContentTitle("70K Bands");
+        builder.setContentTitle(context.getString(R.string.app_name));
         builder.setContentText(content);
         builder.setSmallIcon(getNotificationIcon());
         builder.setContentIntent(launchApp);
