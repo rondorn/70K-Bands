@@ -1,40 +1,45 @@
 package com.Bands70k;
 
-import android.os.AsyncTask;
-
-import java.util.ArrayList;
+import java.util.concurrent.Future;
 
 /**
- * AsyncTask for writing band and event data to Firebase in the background.
+ * Modern replacement for AsyncTask - writes band and event data to Firebase in the background.
+ * Uses ThreadManager instead of deprecated AsyncTask.
  */
-public class FireBaseAsyncBandEventWrite extends AsyncTask<String, Void, ArrayList<String>> {
+public class FireBaseAsyncBandEventWrite {
 
-        ArrayList<String> result;
+    /**
+     * Executes the Firebase band and event write operations in the background.
+     * @return Future representing the background task.
+     */
+    public Future<?> execute() {
+        return ThreadManager.getInstance().executeNetwork(() -> {
+            FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
+            bandWrite.writeData();
 
-        /**
-         * Runs on the UI thread before the background computation begins.
-         */
-        @Override
-        protected void onPreExecute() {
-                super.onPreExecute();
-                }
-
-        /**
-         * Performs the background write operation to Firebase for band and event data.
-         * @param params The parameters for the background task.
-         * @return The result of the background operation.
-         */
-        @Override
-        protected ArrayList<String> doInBackground(String... params) {
-
+            FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
+            eventWrite.writeData();
+        });
+    }
+    
+    /**
+     * Executes the Firebase write operations with callbacks.
+     * @param onComplete Optional callback to run when operation completes.
+     * @return Future representing the background task.
+     */
+    public Future<?> execute(Runnable onComplete) {
+        return ThreadManager.getInstance().executeNetworkWithCallbacks(
+            () -> {
                 FireBaseBandDataWrite bandWrite = new FireBaseBandDataWrite();
                 bandWrite.writeData();
 
                 FirebaseEventDataWrite eventWrite = new FirebaseEventDataWrite();
                 eventWrite.writeData();
-
-                return result;
-        }
+            },
+            null, // no pre-execute needed
+            onComplete
+        );
+    }
 }
 
 

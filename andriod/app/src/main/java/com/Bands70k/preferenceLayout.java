@@ -36,6 +36,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -46,7 +47,6 @@ import static com.Bands70k.staticVariables.context;
 import static com.Bands70k.staticVariables.eventYearArray;
 import static com.Bands70k.staticVariables.listState;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
-import static java.lang.Thread.sleep;
 
 
 /**
@@ -521,25 +521,36 @@ public class preferenceLayout  extends Activity {
                         scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
 
                         staticVariablesInitialize();
-                        try {
-                            Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
-                            while (FileHandler70k.schedule.exists() == false){
-                                Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " waiting");
-                                sleep(500);
-                                bandInfo.getDownloadtUrls();
-                                scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+                        
+                        Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
+                        // Use exponential backoff instead of fixed sleep delays
+                        AtomicBoolean scheduleFileReady = new AtomicBoolean(false);
+                        if (!FileHandler70k.schedule.exists()) {
+                            Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " - downloading");
+                            bandInfo.getDownloadtUrls();
+                            scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+                            
+                            // Wait with backoff instead of busy-waiting
+                            if (!SynchronizationManager.waitWithBackoff(scheduleFileReady, 5, 500)) {
+                                Log.w("preferenceLayout", "Timeout waiting for schedule file download");
                             }
-                            Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
-                            Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
-                            while (FileHandler70k.bandInfo.exists() == false){
-                                sleep(500);
-                                bandInfo.getDownloadtUrls();
-                                bandInfo.DownloadBandFile();
-                            }
-                            Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
                         }
+                        
+                        Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
+                        Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
+                        
+                        AtomicBoolean bandInfoFileReady = new AtomicBoolean(false);
+                        if (!FileHandler70k.bandInfo.exists()) {
+                            Log.d("preferenceLayout", "Missing band info file - downloading");
+                            bandInfo.getDownloadtUrls();
+                            bandInfo.DownloadBandFile();
+                            
+                            // Wait with backoff instead of busy-waiting
+                            if (!SynchronizationManager.waitWithBackoff(bandInfoFileReady, 5, 500)) {
+                                Log.w("preferenceLayout", "Timeout waiting for band info file download");
+                            }
+                        }
+                        Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
 
                         staticVariables.refreshActivated = true;
 
@@ -604,11 +615,13 @@ public class preferenceLayout  extends Activity {
     private void setValues(){
 
         //if this code is called before the main thread initialized the values...wait
-        while (staticVariables.preferences == null){
-            try {
-                sleep(200);
-            } catch (Exception error){
-                //do nothing
+        // Use exponential backoff instead of fixed sleep for preferences initialization
+        AtomicBoolean preferencesReady = new AtomicBoolean(staticVariables.preferences != null);
+        if (staticVariables.preferences == null) {
+            Log.d("preferenceLayout", "Waiting for preferences initialization");
+            if (!SynchronizationManager.waitWithBackoff(preferencesReady, 10, 200)) {
+                Log.w("preferenceLayout", "Timeout waiting for preferences initialization");
+                // Continue anyway - the app might still function
             }
         }
 
@@ -782,7 +795,7 @@ public class preferenceLayout  extends Activity {
         staticVariables.preferences.setPointerUrl(pointerUrl.getText().toString());
         staticVariables.preferences.saveData();
 
-        SystemClock.sleep(70);
+        // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
         setResult(RESULT_OK, null);
         finish();
         NavUtils.navigateUpTo(this, new Intent(this,

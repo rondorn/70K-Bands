@@ -1045,11 +1045,15 @@ public class CustomerDescriptionHandler {
 
             Log.d("AsyncTask", "Downloading NoteData for all bands in background");
             
-            // Wait for any existing loading to complete
-            while (staticVariables.loadingNotes == true) {
-                SystemClock.sleep(2000);
+            // Wait for any existing notes loading to complete using proper synchronization
+            if (!SynchronizationManager.waitForNotesLoadingComplete(10)) {
+                Log.w("CustomerDescriptionHandler", "Timeout waiting for existing notes loading to complete");
+                return result; // Don't proceed if we can't ensure exclusive access
             }
 
+            // Signal that we're starting notes loading
+            SynchronizationManager.signalNotesLoadingStarted();
+            staticVariables.loadingNotes = true;
             staticVariables.notesLoaded = true;
             getDescriptionMapFile();
             descriptionMapData = descriptionHandler.getDescriptionMap();
@@ -1092,6 +1096,8 @@ public class CustomerDescriptionHandler {
             synchronized (lock) {
                 isRunning.set(false);
                 backgroundLoadingActive.set(false);
+                staticVariables.loadingNotes = false;
+                SynchronizationManager.signalNotesLoadingComplete();
                 Log.d("CustomerDescriptionHandler", "Background loading completed");
                 
                 // SAFETY CHECK: Only start translation pre-caching if still in background

@@ -466,9 +466,9 @@ class AsyncAllImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
 
         Log.d("AsyncTask", "Downloading Image data for all bands in background");
 
-        // Wait for any existing loading to complete
-        while (staticVariables.loadingNotes == true) {
-            SystemClock.sleep(2000);
+        // Wait for any existing notes loading to complete using proper synchronization
+        if (!SynchronizationManager.waitForNotesLoadingComplete(10)) {
+            Log.w("ImageHandler", "Timeout waiting for notes loading to complete - proceeding anyway");
         }
 
         Log.d("AsyncTask", "Starting image download for all bands");
