@@ -82,18 +82,18 @@ public class FirebaseUserWrite {
             if (currentUserdata.equals(staticVariables.userDataForCompareAndWriteBlock ) == true){
                 Log.d("FirebaseUserWrite", "NOT Writing user data " + userData.toString());
             } else {
-                //get second to sleep trying to prevent an announcement from fillingup all available connections
-                int random_int = (int)Math.floor(Math.random() * (30000 - 5000 + 1) + 5000);
-                try {
-                    Log.d("FirebaseUserWrite", "Writing user data sleep for " + String.valueOf(random_int));
-                    Thread.sleep(random_int);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
+                // Use delayed execution instead of blocking sleep for rate limiting
+                int delayMs = (int) Math.floor(Math.random() * (30000 - 5000 + 1) + 5000);
+                Log.d("FirebaseUserWrite", "Scheduling user data write after " + delayMs + "ms delay for rate limiting");
+                
                 staticVariables.userDataForCompareAndWriteBlock = country + '-' + language + '-' + version70k + dateOnly;
-                Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
-                mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+                
+                ThreadManager.getInstance().runOnUiThreadDelayed(() -> {
+                    ThreadManager.getInstance().executeNetwork(() -> {
+                        Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
+                        mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+                    });
+                }, delayMs);
             }
         }
     }

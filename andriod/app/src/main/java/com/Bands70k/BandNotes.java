@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handles reading, writing, and converting band notes for a specific band.
@@ -210,10 +211,16 @@ public class BandNotes {
 
         Map<String, String> defaultNotesData = FileHandler70k.readObject(bandNoteFile);
         String defaultNote = defaultNotesData.get("defaultNote");
-        if (defaultNote == ""){
-            SystemClock.sleep(1000);
-            defaultNotesData = FileHandler70k.readObject(bandNoteFile);
-            defaultNote = defaultNotesData.get("defaultNote");
+        if (defaultNote == "" || defaultNote == null){
+            // Use exponential backoff instead of fixed sleep for file retry
+            AtomicBoolean fileReady = new AtomicBoolean(false);
+            if (SynchronizationManager.waitWithBackoff(fileReady, 3, 500)) {
+                defaultNotesData = FileHandler70k.readObject(bandNoteFile);
+                defaultNote = defaultNotesData.get("defaultNote");
+            } else {
+                Log.w("BandNotes", "Timeout waiting for note file to be ready, using empty note");
+                defaultNote = "";
+            }
         }
 
         String strippedDefaultNote = this.stripDataForCompare(defaultNote);

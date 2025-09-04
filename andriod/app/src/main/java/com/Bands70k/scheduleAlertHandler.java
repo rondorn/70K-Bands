@@ -9,7 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioAttributes;
-import android.os.AsyncTask;
+import java.util.concurrent.Future;
 import android.os.Build;
 import android.os.SystemClock;
 
@@ -33,13 +33,12 @@ import static com.Bands70k.staticVariables.context;
 
 /**
  * Handles scheduling and management of local notifications for band events.
+ * Modernized to use ThreadManager instead of deprecated AsyncTask.
  */
-public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<String>> {
+public class scheduleAlertHandler {
 
     private static String staticBandName;
     private Map<Integer, String> alarmStorageStringHash = new HashMap<Integer, String>();
-
-    ArrayList<String> result;
 
     /**
      * Default constructor for scheduleAlertHandler. Sets up notification channels if needed.
@@ -69,16 +68,26 @@ public class scheduleAlertHandler extends AsyncTask<String, Void, ArrayList<Stri
         }
     }
 
-    @Override
-    protected ArrayList<String> doInBackground(String... params) {
-        scheduleAlerts();
-
-        return result;
+    /**
+     * Executes the alert scheduling operation in the background.
+     * Modern replacement for AsyncTask.execute().
+     * @return Future representing the background task.
+     */
+    public Future<?> execute() {
+        return ThreadManager.getInstance().executeGeneral(this::scheduleAlerts);
     }
-
-    @Override
-    protected void onPostExecute(ArrayList<String> result) {
-
+    
+    /**
+     * Executes the alert scheduling with completion callback.
+     * @param onComplete Optional callback to run when scheduling completes.
+     * @return Future representing the background task.
+     */
+    public Future<?> execute(Runnable onComplete) {
+        return ThreadManager.getInstance().executeGeneralWithCallbacks(
+            this::scheduleAlerts,
+            null, // no pre-execute needed
+            onComplete
+        );
     }
 
     /**

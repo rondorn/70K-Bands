@@ -2812,10 +2812,13 @@ public class showBandDetails extends Activity {
                     Log.d("LineBreakDebug", "Re-downloading note data for " + bandName);
                     descHandler.loadNoteFromURL(bandName);
                     
-                    // Wait a moment for the download to complete
-                    Thread.sleep(2000);
+                    // Use proper async pattern instead of blocking sleep
+                    ThreadManager.getInstance().runOnUiThreadDelayed(() -> {
+                        Log.d("BandDetails", "Refreshing UI after note download delay");
+                        setupExtraDataSection(); // Refresh the note section display
+                    }, 2000);
                     
-                    // Refresh the UI on the main thread
+                    // Also refresh immediately for quick responses
                     runOnUiThread(() -> {
                         Log.d("LineBreakDebug", "Refreshing display for " + bandName);
                         // IMAGE PRESERVATION FIX: Only refresh the note section, not the entire content
@@ -3100,7 +3103,7 @@ public class showBandDetails extends Activity {
         }
         
         Log.d("WebView", "Standard back navigation to bands list");
-        SystemClock.sleep(70);
+        // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
         setResult(RESULT_OK, null);
         // LIST POSITION FIX: Use simple finish() to return to existing parent activity
         // This preserves the list position instead of creating a new activity instance

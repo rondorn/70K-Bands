@@ -58,7 +58,7 @@ public class ReportDownloader {
      */
     public void downloadReport(String url, DownloadCallback callback) {
         if (isNetworkAvailable()) {
-            new DownloadTask(callback).execute(url);
+            executeDownloadTask(callback, url);
         } else {
             String cachedFile = getCachedReportPath();
             if (new File(cachedFile).exists()) {
@@ -111,7 +111,7 @@ public class ReportDownloader {
      */
     public void downloadReportUrlInBackground(DownloadCallback callback) {
         if (isNetworkAvailable()) {
-            new DownloadUrlTask(callback).execute();
+            executeDownloadUrlTask(callback);
         } else {
             callback.onDownloadError("No internet connection available");
         }
@@ -149,66 +149,62 @@ public class ReportDownloader {
     }
     
     /**
-     * AsyncTask for downloading the report HTML content in the background.
+     * Modern replacement for DownloadTask AsyncTask - executes download in background.
+     * @param callback The callback to notify on completion or error.
+     * @param url The URL to download from.
      */
-    private class DownloadTask extends AsyncTask<String, Void, String> {
-        private DownloadCallback callback;
-        private String errorMessage;
-        
-        /**
-         * Constructs a DownloadTask with the given callback.
-         * @param callback The callback to notify on completion or error.
-         */
-        public DownloadTask(DownloadCallback callback) {
-            this.callback = callback;
-        }
-        
-        @Override
-        protected String doInBackground(String... urls) {
-            String url = urls[0];
-            try {
-                return downloadHtmlContent(url);
-            } catch (Exception e) {
-                errorMessage = e.getMessage();
-                Log.e(TAG, "Download failed: " + e.getMessage());
-                return null;
-            }
-        }
-        
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null) {
-                // Read the content and pass both file path and content
+    private void executeDownloadTask(DownloadCallback callback, String url) {
+        ThreadManager.getInstance().executeNetworkWithCallbacks(
+            () -> {
                 try {
-                    String content = readFileContentOptimized(result);
-                    callback.onDownloadComplete(result, content);
-                } catch (IOException e) {
-                    callback.onDownloadError("Error reading downloaded file: " + e.getMessage());
-                }
-            } else {
-                // Try to use cached file if download failed
-                String cachedFile = getCachedReportPath();
-                if (new File(cachedFile).exists()) {
-                    Log.d(TAG, "Download failed, using cached file");
-                    try {
-                        String content = readFileContentOptimized(cachedFile);
-                        callback.onDownloadComplete(cachedFile, content);
-                    } catch (IOException e) {
-                        callback.onDownloadError("Error reading cached file: " + e.getMessage());
+                    String filePath = downloadHtmlContent(url);
+                    if (filePath != null) {
+                        String content = readFileContentOptimized(filePath);
+                        ThreadManager.getInstance().runOnUiThread(() -> 
+                            callback.onDownloadComplete(filePath, content));
+                    } else {
+                        handleDownloadFailure(callback, "Download failed");
                     }
-                } else {
-                    callback.onDownloadError(errorMessage != null ? errorMessage : "Download failed");
+                } catch (Exception e) {
+                    Log.e(TAG, "Download failed: " + e.getMessage());
+                    handleDownloadFailure(callback, e.getMessage());
                 }
+            },
+            null, // no pre-execute needed
+            null  // post-execute handled in background task
+        );
+    }
+    
+    /**
+     * Handles download failure by trying cache or reporting error.
+     * @param callback The callback to notify.
+     * @param errorMessage The error message.
+     */
+    private void handleDownloadFailure(DownloadCallback callback, String errorMessage) {
+        String cachedFile = getCachedReportPath();
+        if (new File(cachedFile).exists()) {
+            Log.d(TAG, "Download failed, using cached file");
+            try {
+                String content = readFileContentOptimized(cachedFile);
+                ThreadManager.getInstance().runOnUiThread(() -> 
+                    callback.onDownloadComplete(cachedFile, content));
+            } catch (IOException e) {
+                ThreadManager.getInstance().runOnUiThread(() -> 
+                    callback.onDownloadError("Error reading cached file: " + e.getMessage()));
             }
+        } else {
+            ThreadManager.getInstance().runOnUiThread(() -> 
+                callback.onDownloadError(errorMessage != null ? errorMessage : "Download failed"));
         }
-        
-        /**
-         * Downloads the HTML content from the given URL and saves it to cache.
-         * @param urlString The URL to download from.
-         * @return The file path to the saved HTML file.
-         * @throws IOException If download or save fails.
-         */
-        private String downloadHtmlContent(String urlString) throws IOException {
+    }
+    
+    /**
+     * Downloads the HTML content from the given URL and saves it to cache.
+     * @param urlString The URL to download from.
+     * @return The file path to the saved HTML file.
+     * @throws IOException If download or save fails.
+     */
+    private String downloadHtmlContent(String urlString) throws IOException {
             Log.d(TAG, "Downloading from URL: " + urlString);
             
             URL url = new URL(urlString);
@@ -245,15 +241,15 @@ public class ReportDownloader {
             } finally {
                 connection.disconnect();
             }
-        }
-        
-        /**
-         * Reads an InputStream into a string with optimized performance.
-         * @param inputStream The input stream to read.
-         * @return The content as a string.
-         * @throws IOException If reading fails.
-         */
-        private String readStreamOptimized(InputStream inputStream) throws IOException {
+    }
+    
+    /**
+     * Reads an InputStream into a string with optimized performance.
+     * @param inputStream The input stream to read.
+     * @return The content as a string.
+     * @throws IOException If reading fails.
+     */
+    private String readStreamOptimized(InputStream inputStream) throws IOException {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 8192); // Larger buffer
             StringBuilder content = new StringBuilder(8192); // Pre-allocate buffer
             char[] buffer = new char[8192]; // Use char buffer for better performance
@@ -265,15 +261,15 @@ public class ReportDownloader {
             
             reader.close();
             return content.toString();
-        }
-        
-        /**
-         * Saves content to a file with optimized performance.
-         * @param content The content to save.
-         * @param filePath The file path to save to.
-         * @throws IOException If writing fails.
-         */
-        private void saveToFileOptimized(String content, String filePath) throws IOException {
+    }
+    
+    /**
+     * Saves content to a file with optimized performance.
+     * @param content The content to save.
+     * @param filePath The file path to save to.
+     * @throws IOException If writing fails.
+     */
+    private void saveToFileOptimized(String content, String filePath) throws IOException {
             try {
                 File file = new File(filePath);
                 File parentDir = file.getParentFile();
@@ -291,47 +287,37 @@ public class ReportDownloader {
             } catch (IOException e) {
                 Log.e(TAG, "Error saving file: " + e.getMessage());
                 throw e;
-            }
         }
     }
     
     /**
-     * AsyncTask for downloading the report URL in the background.
+     * Modern replacement for DownloadUrlTask AsyncTask - gets URL and executes download.
+     * @param callback The callback to notify on completion or error.
      */
-    private class DownloadUrlTask extends AsyncTask<Void, Void, String> {
-        private DownloadCallback callback;
-        private String errorMessage;
-        
-        /**
-         * Constructs a DownloadUrlTask with the given callback.
-         * @param callback The callback to notify on completion or error.
-         */
-        public DownloadUrlTask(DownloadCallback callback) {
-            this.callback = callback;
-        }
-        
-        @Override
-        protected String doInBackground(Void... voids) {
-            try {
-                // Get the report URL from pointer data
-                String reportUrl = staticVariables.getPointerUrlData("reportUrl");
-                Log.d(TAG, "Retrieved report URL: " + reportUrl);
-                return reportUrl;
-            } catch (Exception e) {
-                errorMessage = e.getMessage();
-                Log.e(TAG, "Failed to get report URL: " + e.getMessage());
-                return null;
-            }
-        }
-        
-        @Override
-        protected void onPostExecute(String result) {
-            if (result != null && !result.isEmpty()) {
-                // Download the actual report content
-                new DownloadTask(callback).execute(result);
-            } else {
-                callback.onDownloadError(errorMessage != null ? errorMessage : "Failed to get report URL");
-            }
-        }
+    private void executeDownloadUrlTask(DownloadCallback callback) {
+        ThreadManager.getInstance().executeNetworkWithCallbacks(
+            () -> {
+                try {
+                    // Get the report URL from pointer data
+                    String reportUrl = staticVariables.getPointerUrlData("reportUrl");
+                    Log.d(TAG, "Retrieved report URL: " + reportUrl);
+                    
+                    if (reportUrl != null && !reportUrl.isEmpty()) {
+                        // Download the actual report content on UI thread
+                        ThreadManager.getInstance().runOnUiThread(() -> 
+                            executeDownloadTask(callback, reportUrl));
+                    } else {
+                        ThreadManager.getInstance().runOnUiThread(() -> 
+                            callback.onDownloadError("Failed to get report URL"));
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to get report URL: " + e.getMessage());
+                    ThreadManager.getInstance().runOnUiThread(() -> 
+                        callback.onDownloadError("Failed to get report URL: " + e.getMessage()));
+                }
+            },
+            null, // no pre-execute needed
+            null  // post-execute handled in background task
+        );
     }
 } 

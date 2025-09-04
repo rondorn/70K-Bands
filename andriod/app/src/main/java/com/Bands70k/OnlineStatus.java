@@ -75,12 +75,10 @@ public class OnlineStatus {
      */
     private static void scheduleBackgroundVerification() {
         // Use a simple background thread with delay instead of AsyncTask
-        new Thread(() -> {
-            try {
-                // Wait 3 seconds to let the UI settle
-                Thread.sleep(3000);
-                
-                // Now do a background verification
+        // Use proper delayed execution instead of blocking thread with sleep
+        ThreadManager.getInstance().runOnUiThreadDelayed(() -> {
+            ThreadManager.getInstance().executeNetwork(() -> {
+                // Background verification after UI has settled
                 Log.d("Internet Found", "Background verification of network status");
                 boolean actualStatus = testInternetAvailableSynchronous();
                 
@@ -93,11 +91,8 @@ public class OnlineStatus {
                 } else {
                     Log.d("Internet Found", "Assumption was correct - connectivity unchanged");
                 }
-                
-            } catch (InterruptedException e) {
-                Log.d("Internet Found", "Background verification interrupted");
-            }
-        }).start();
+            });
+        }, 3000); // 3 second delay for UI to settle
     }
 
     public static boolean isOnline() {
@@ -143,8 +138,7 @@ public class OnlineStatus {
 
             Log.d("Internet Found", "Internet Found Return state is cached, but refreshing " + returnState);
 
-            IsInternetAvailableAsynchronous checkInternet = new IsInternetAvailableAsynchronous();
-            checkInternet.execute();
+            executeInternetAvailabilityCheck();
 
         }
 
@@ -211,35 +205,23 @@ public class OnlineStatus {
     }
 
 
-    class IsInternetAvailableAsynchronous extends AsyncTask<String, Void, ArrayList<String>> {
-
-        ArrayList<String> result;
-
-        @Override
-        protected void onPreExecute() {
-            staticVariables.internetCheckCache = "true";
-        }
-
-
-        @Override
-        protected ArrayList<String> doInBackground(String... params) {
-
-            Boolean onlineCheck = testInternetAvailableSynchronous();
-
-            if (onlineCheck == true) {
+    /**
+     * Modern replacement for IsInternetAvailableAsynchronous AsyncTask.
+     * Tests internet availability and caches the result using ThreadManager.
+     */
+    public static void executeInternetAvailabilityCheck() {
+        ThreadManager.getInstance().executeNetworkWithCallbacks(
+            () -> {
+                // Background task
+                Boolean onlineCheck = testInternetAvailableSynchronous();
+                staticVariables.internetCheckCache = onlineCheck ? "true" : "false";
+            },
+            // Pre-execute on UI thread
+            () -> {
                 staticVariables.internetCheckCache = "true";
-            } else {
-                staticVariables.internetCheckCache = "false";
-            }
-
-            return result;
-
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<String> result) {
-
-        }
+            },
+            null // No post-execute needed
+        );
     }
 
 

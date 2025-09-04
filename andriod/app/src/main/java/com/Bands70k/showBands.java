@@ -81,7 +81,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.Bands70k.staticVariables.*;
-import static java.lang.Thread.sleep;
 
 import com.Bands70k.CombinedImageListHandler;
 
@@ -176,22 +175,21 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     //        {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
 
                     Log.d("get perms", "Getting access to storage - asking");
-                    Integer count = 0;
-                    while (permission != 0 || recievedPermAnswer == false) {
-                        permission = checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                        Log.d("get perms", "Getting access to storage - waiting " + permission + " " + count.toString());
-                        sleep(1000);
-                        requestPermissions((new String[]
-                                {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
-                        count = count + 1;
+                    // Modern async permission handling instead of busy-waiting with sleep
+                    if (permission != 0) {
+                        Log.d("get perms", "Requesting storage permission asynchronously");
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                        // Permission result will be handled in onRequestPermissionsResult callback
+                        // No need to block with sleep - let Android handle the async flow
+                    } else {
+                        Log.d("get perms", "Storage permission already granted");
                     }
-                    Log.d("get perms", "Getting access to storage - granted " + permission);
                 }
                 if (readpermission != 0) {
+                    Log.d("get perms", "Requesting read storage permission asynchronously");
                     requestPermissions(INITIAL_PERMS, REQUEST);
-                    while (readpermission != 0) {
-                        readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
-                    }
+                    // Permission result will be handled in onRequestPermissionsResult callback
+                    // Removed busy-wait loop - let Android handle async permission flow
                 }
             } catch (Exception error) {
                 newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
@@ -201,6 +199,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
         }
         Log.d("Rool volume", "Root volume is " + newRootDir);
+        
+        // Log crash statistics from AsyncTask modernization
+        Log.i("AsyncTaskModernization", "📊 " + CrashReporter.getCrashStats());
+        
         try {
             File testFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "test.txt");
             String test = "test";
@@ -296,6 +298,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         bandNamesPullRefresh.setRefreshing(true);
                         bandInfo = new BandInfo();
                         staticVariables.loadingNotes = false;
+                        SynchronizationManager.signalNotesLoadingComplete();
                         
                         // Refresh description map cache on pull to refresh
                         // This updates the cache with band names and description URLs (not actual descriptions)
@@ -1110,8 +1113,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d("refreshNewData", "refreshNewData - 1");
 
-        AsyncListViewLoader mytask = new AsyncListViewLoader();
-        mytask.execute();
+        executeAsyncListViewLoader();
 
         // REMOVED: AsyncNotesLoader should only run during background operations
         // Individual note loading happens in details screen only
@@ -1921,78 +1923,64 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void onPrepared(MediaPlayer mediaPlayer) {
 
     }
-
-    class AsyncListViewLoader extends AsyncTask<String, Void, ArrayList<String>> {
-
-        ArrayList<String> result;
-
-        @Override
-        protected void onPreExecute() {
-
-            Log.d("DisplayListData", "Refresh Stage = Pre-Start");
-            super.onPreExecute();
-            if (staticVariables.loadingBands == false) {
-
-                Log.d("DisplayListData", "onPreExecuteRefresh - 1");
-                staticVariables.loadingBands = true;
-                Log.d("AsyncList refresh", "Starting AsyncList refresh");
+    
+    /**
+     * Modern replacement for AsyncListViewLoader - executes list loading in background.
+     * Uses ThreadManager instead of deprecated AsyncTask.
+     */
+    private void executeAsyncListViewLoader() {
+        ThreadManager.getInstance().executeGeneralWithCallbacks(
+            () -> {
+                // Background task
+                Log.d("Refresh", "Refresh Stage = Background-Start");
                 
-                // ANIMATION FIX: Save scroll position before async refresh
-                if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
-                    saveScrollPosition();
-                    Log.d("ScrollPosition", "Async refresh scroll preservation activated");
+                // Wait for any existing loading to complete using proper synchronization
+                if (!SynchronizationManager.waitForBandLoadingComplete(10)) {
+                    Log.w("Refresh", "Timeout waiting for existing band loading to complete");
+                    return; // Don't proceed if we can't ensure exclusive access
                 }
                 
-                refreshData();
-                staticVariables.loadingBands = false;
-                Log.d("DisplayListData", "onPreExecuteRefresh - 2");
+                // Signal that we're starting band loading
+                SynchronizationManager.signalBandLoadingStarted();
+                staticVariables.loadingBands = true;
 
-            }
-            Log.d("Refresh", "Refresh Stage = Pre-Stop");
-        }
-
-
-        @Override
-        protected ArrayList<String> doInBackground(String... params) {
-
-            Log.d("Refresh", "Refresh Stage = Background-Start");
-            while (staticVariables.loadingBands == true) {
-                Log.d("bandInfo", "Waiting for background process to finish");
-                SystemClock.sleep(2000);
-            }
-            staticVariables.loadingBands = true;
-
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-
-            Log.d("AsyncTask", "Downloading data");
-
-            try {
-                BandInfo bandInfo = new BandInfo();
-                bandInfo.DownloadBandFile();
-
-                // REMOVED: AsyncNotesLoader should only run during background operations
-                // Individual note loading happens in details screen only
-                // Bulk note loading happens when app goes to background only
-
-            } catch (Exception error) {
-                Log.d("bandInfo", error.getMessage());
-            }
-            staticVariables.loadingBands = false;
-
-
-            Log.d("Refresh", "Refresh Stage = Background-Stop");
-            return result;
-
-        }
-
-
-        @Override
-        protected void onPostExecute(ArrayList<String> result) {
-
-            Log.d("Refresh", "Refresh Stage = Post-Start");
-            //if (staticVariables.loadingBands == false) {
-
+                Log.d("AsyncTask", "Downloading data");
+                try {
+                    BandInfo bandInfo = new BandInfo();
+                    bandInfo.DownloadBandFile();
+                } catch (Exception error) {
+                    Log.d("bandInfo", error.getMessage());
+                } finally {
+                    // Always signal completion, even if there was an error
+                    staticVariables.loadingBands = false;
+                    SynchronizationManager.signalBandLoadingComplete();
+                }
+                Log.d("Refresh", "Refresh Stage = Background-Stop");
+            },
+            // Pre-execute on UI thread
+            () -> {
+                Log.d("DisplayListData", "Refresh Stage = Pre-Start");
+                if (!staticVariables.loadingBands) {
+                    Log.d("DisplayListData", "onPreExecuteRefresh - 1");
+                    staticVariables.loadingBands = true;
+                    Log.d("AsyncList refresh", "Starting AsyncList refresh");
+                    
+                    // ANIMATION FIX: Save scroll position before async refresh
+                    if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
+                        saveScrollPosition();
+                        Log.d("ScrollPosition", "Async refresh scroll preservation activated");
+                    }
+                    
+                    refreshData();
+                    staticVariables.loadingBands = false;
+                    Log.d("DisplayListData", "onPreExecuteRefresh - 2");
+                }
+                Log.d("Refresh", "Refresh Stage = Pre-Stop");
+            },
+            // Post-execute on UI thread
+            () -> {
+                Log.d("Refresh", "Refresh Stage = Post-Start");
+                
                 // ANIMATION FIX: Only refresh if we don't have scroll preservation active
                 if (staticVariables.savedScrollPosition < 0) {
                     refreshData();
@@ -2002,8 +1990,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
-
-                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 2");
                 
                 // ANIMATION FIX: Don't manually control visibility - let our system handle it
                 if (staticVariables.savedScrollPosition < 0) {
@@ -2015,19 +2001,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 3");
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(false);
-
                 fileDownloaded = true;
-
-                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 4");
-                // Scroll position is now handled by refreshData()
-
-                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 5");
-
-
-                Log.d("DisplayListData", "Refresh Stage = Post-Stop");
-            //}
-        }
+                
+                Log.d("Refresh", "Refresh Stage = Post-Stop");
+            }
+        );
     }
+
 
 
     class AsyncNotesLoader extends AsyncTask<String, Void, ArrayList<String>> {
@@ -2043,9 +2023,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         @Override
         protected ArrayList<String> doInBackground(String... params) {
 
-            while (staticVariables.loadingNotes == true) {
-                SystemClock.sleep(2000);
+            // Wait for any existing notes loading to complete using proper synchronization
+            if (!SynchronizationManager.waitForNotesLoadingComplete(10)) {
+                Log.w("AsyncNotesLoader", "Timeout waiting for notes loading to complete");
+                return result; // Don't proceed if we can't ensure exclusive access
             }
+            
+            // Signal that we're starting notes loading
+            SynchronizationManager.signalNotesLoadingStarted();
             staticVariables.loadingNotes = true;
 
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -2068,6 +2053,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 //Log.d("bandInfo", error.getMessage());
             }
             staticVariables.loadingNotes = false;
+            SynchronizationManager.signalNotesLoadingComplete();
 
 
             return result;
