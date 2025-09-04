@@ -32,6 +32,7 @@ android {
             resValue "string", "notification_icon", "@drawable/new_bands_70k_icon"
             resValue "string", "authorities", "com.Bands70k"
             resValue "string", "notification_publisher", "com.Bands70k.NotificationPublisher"
+            resValue "string", "default_description", "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
         }
         
         mdfbands {
@@ -44,6 +45,7 @@ android {
             resValue "string", "notification_icon", "@drawable/mdf_bands_icon"
             resValue "string", "authorities", "com.rdorn.mdfbands"
             resValue "string", "notification_publisher", "com.rdorn.mdfbands.NotificationPublisher"
+            resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
         }
     }
 

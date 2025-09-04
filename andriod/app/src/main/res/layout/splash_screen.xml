@@ -9,7 +9,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingTop="20pt"
-        android:text="70K Bands" />
+        android:text="@string/app_name" />
 
     <ImageView
         android:id="@+id/splashscreen"
