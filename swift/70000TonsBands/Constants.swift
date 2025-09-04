@@ -373,7 +373,13 @@ func getPointerUrlData(keyValue: String) -> String {
         // If we still don't have data and no internet, provide sensible defaults
         if dataString.isEmpty && !isInternetAvailable() {
             
-            sleep(3)
+            // DEADLOCK FIX: Only sleep on background thread, never on main thread
+            if Thread.isMainThread {
+                print("🔓 DEADLOCK FIX: Main thread detected - skipping sleep delay to prevent UI freeze")
+                print("🔓 DEADLOCK FIX: Providing default value instead")
+            } else {
+                Thread.sleep(forTimeInterval: 3.0)  // Safe on background thread
+            }
             
             loadUrlCounter = loadUrlCounter + 1
             
