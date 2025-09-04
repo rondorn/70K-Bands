@@ -39,7 +39,7 @@
 "XwI-fp-dny.text" = "Activating 'Use Last Years Data' will load the show schedule from last year, but use a simulated Thurs-Sun shows schedule using your current week. This is intended for demonstration and testing of the scheduling features.";
 
 /* Class = "UINavigationItem"; title = "70,000 Tons"; ObjectID = "Zdf-7t-Un8"; */
-"Zdf-7t-Un8.title" = "70,000 Tons";
+"Zdf-7t-Un8.title" = "Bands";
 
 /* Class = "UILabel"; text = "Alert On Must See Bands"; ObjectID = "Zdt-B0-gyT"; */
 "Zdt-B0-gyT.text" = "Alert On Must See Bands";
