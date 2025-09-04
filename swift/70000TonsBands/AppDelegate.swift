@@ -771,14 +771,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("📝 Internet available: \(internetAvailable)")
             
             if !internetAvailable {
-                print("⚠️ No internet available - waiting 5 seconds for network test to complete")
-                sleep(5) // Wait for network test to complete
-                let internetAfterWait = isInternetAvailable()
-                print("📝 Internet available after wait: \(internetAfterWait)")
-                
-                if !internetAfterWait {
-                    print("⚠️ Still no internet - skipping description bulk loading")
-                    return
+                // DEADLOCK FIX: Never block main thread with sleep during app startup
+                if Thread.isMainThread {
+                    print("🔓 DEADLOCK FIX: Main thread detected - using non-blocking network wait")
+                    DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 5.0) {
+                        let internetAfterWait = isInternetAvailable()
+                        print("📝 Internet available after delayed check: \(internetAfterWait)")
+                        if !internetAfterWait {
+                            print("⚠️ Still no internet - skipping description bulk loading")
+                            return
+                        }
+                        // Continue with description loading on background thread if internet becomes available
+                    }
+                    return // Exit early when no internet, background task will handle retry
+                } else {
+                    print("⚠️ No internet available - waiting 5 seconds for network test to complete")
+                    Thread.sleep(forTimeInterval: 5.0) // Safe on background thread
+                    let internetAfterWait = isInternetAvailable()
+                    print("📝 Internet available after wait: \(internetAfterWait)")
+                    
+                    if !internetAfterWait {
+                        print("⚠️ Still no internet - skipping description bulk loading")
+                        return
+                    }
                 }
             }
             

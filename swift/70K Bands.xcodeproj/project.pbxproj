@@ -35,6 +35,12 @@
 		111A936D2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
 		111A936E2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
+		1145F0D52E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
+		1145F0D62E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
+		1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
+		1145F0D92E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */; };
+		1145F0DA2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */; };
+		1145F0DB2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */; };
 		1147D6D92E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */; };
 		1147D6DA2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */; };
 		1147D6DB2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */; };
@@ -316,6 +322,8 @@
 		11274945242D044800B8E1B8 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		112873C424A54F370036CC2A /* 70K Bands copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "70K Bands copy-Info.plist"; path = "/Users/rdorn/personalGit/70K-Bands/swift/70K Bands copy-Info.plist"; sourceTree = "<absolute>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
+		1145F0D42E69ED1A002B7511 /* CellDataCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CellDataCache.swift; sourceTree = "<group>"; };
+		1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataPreloadManager.swift; sourceTree = "<group>"; };
 		1147D6D82E63A8C3000A98B0 /* DataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DataModel.xcdatamodel; sourceTree = "<group>"; };
 		1147D6DC2E63C549000A98B0 /* BandCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandCSVImporter.swift; sourceTree = "<group>"; };
 		1147D6DD2E63C549000A98B0 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
@@ -524,6 +532,8 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */,
+				1145F0D42E69ED1A002B7511 /* CellDataCache.swift */,
 				11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */,
 				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
 				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
@@ -1131,6 +1141,7 @@
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
+				1145F0D92E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */,
 				11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */,
 				11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */,
@@ -1146,6 +1157,7 @@
 				11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */,
 				110924361F748601002237AB /* CustomBandDescription.swift in Sources */,
 				1147D70E2E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1145F0D62E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
@@ -1201,6 +1213,7 @@
 				11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */,
 				1155E3AF1A8B121000D51ED9 /* webViewController.swift in Sources */,
+				1145F0DA2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
@@ -1216,6 +1229,7 @@
 				11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */,
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
@@ -1271,6 +1285,7 @@
 				1172EE162E5A1C4D006E3596 /* PreferencesView.swift in Sources */,
 				1172EE172E5A1C4D006E3596 /* AppDelegate.swift in Sources */,
 				1172EE182E5A1C4D006E3596 /* Reachability.swift in Sources */,
+				1145F0DB2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1172EE192E5A1C4D006E3596 /* bandNamesHandler.swift in Sources */,
 				1172EE1A2E5A1C4D006E3596 /* mainListController.swift in Sources */,
 				1172EE1B2E5A1C4D006E3596 /* localNotificationHandler.swift in Sources */,
@@ -1286,6 +1301,7 @@
 				1172EE242E5A1C4D006E3596 /* countryHandler.swift in Sources */,
 				1172EE252E5A1C4D006E3596 /* CustomBandDescription.swift in Sources */,
 				1147D7122E63E33C000A98B0 /* PriorityManager.swift in Sources */,
+				1145F0D52E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
@@ -1511,7 +1527,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250903001;
+				CURRENT_PROJECT_VERSION = 20250904001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1539,7 +1555,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250903001;
+				MARKETING_VERSION = 20250904001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1595,7 +1611,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250903001;
+				CURRENT_PROJECT_VERSION = 20250904001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1620,7 +1636,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250903001;
+				MARKETING_VERSION = 20250904001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1817,7 +1833,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250903001;
+				CURRENT_PROJECT_VERSION = 20250904001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1838,7 +1854,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250903001;
+				MARKETING_VERSION = 20250904001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1894,7 +1910,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250903001;
+				CURRENT_PROJECT_VERSION = 20250904001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1919,7 +1935,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250903001;
+				MARKETING_VERSION = 20250904001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

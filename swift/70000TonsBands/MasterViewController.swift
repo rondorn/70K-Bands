@@ -78,6 +78,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
+    // MARK: - Core Data Preload System
+    private let preloadManager = CoreDataPreloadManager.shared
+    
     var filterTextNeeded = true;
     var viewableCell = UITableViewCell()
     
@@ -153,8 +156,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         
-        // MARK: - Core Data Integration
+        // MARK: - Core Data Integration  
         // Core Data system is now active and ready
+        
+        // Start the Core Data preload system
+        print("🚀 Starting Core Data preload system...")
+        preloadManager.start(delegate: self)
         
         // Check if this is first install - if so, delay country dialog until data loads
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
@@ -1178,9 +1185,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
 
     @objc func OnOrientationChange(){
-        sleep(1)
-        print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
-        refreshBandList(reason: "Orientation change")
+        // DEADLOCK FIX: Never block main thread - use async delay instead
+        print("🔓 DEADLOCK FIX: Orientation change detected - scheduling refresh with non-blocking delay")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
+            self.refreshBandList(reason: "Orientation change")
+        }
     }
     
     /// Centralized method that performs the same logic as pull-to-refresh
@@ -1792,8 +1803,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         setBands(bands)
         
-        // Configure cell on main thread for immediate display
-        getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
+        // PERFORMANCE FIX: Use cached cell data to prevent database lookups during scrolling
+        if let cachedData = CellDataCache.shared.getCellData(at: indexPath.row) {
+            // Configure cell with pre-computed cached data (NO database calls!)
+            configureCellFromCache(cell, with: cachedData)
+        } else {
+            // Fallback: Use original method if cache miss (shouldn't happen with proper preload)
+            print("⚠️ Cache miss at index \(indexPath.row) - using fallback cell configuration")
+            getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
+        }
         
         // Configure separator immediately to avoid async access issues
         // Hide separator for band names only (plain strings without time index)
@@ -1808,6 +1826,92 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
         }
         
+    }
+    
+    // MARK: - Cache-Optimized Cell Configuration
+    
+    /// Configure cell using pre-computed cached data (NO database calls during scrolling!)
+    private func configureCellFromCache(_ cell: UITableViewCell, with cachedData: CellDataModel) {
+        // Get UI elements by tags
+        let indexForCell = cell.viewWithTag(1) as! UILabel
+        let bandNameView = cell.viewWithTag(2) as! UILabel
+        let locationView = cell.viewWithTag(3) as! UILabel
+        let eventTypeImageView = cell.viewWithTag(4) as! UIImageView
+        let rankImageView = cell.viewWithTag(5) as! UIImageView
+        let attendedView = cell.viewWithTag(6) as! UIImageView
+        let rankImageViewNoSchedule = cell.viewWithTag(7) as! UIImageView
+        let startTimeView = cell.viewWithTag(14) as! UILabel
+        let endTimeView = cell.viewWithTag(8) as! UILabel
+        let dayLabelView = cell.viewWithTag(9) as! UILabel
+        let dayView = cell.viewWithTag(10) as! UILabel
+        let bandNameNoSchedule = cell.viewWithTag(12) as! UILabel
+        
+        // Configure cell colors
+        cell.backgroundColor = UIColor.black
+        cell.textLabel?.textColor = UIColor.white
+        
+        // Configure text colors (from cached data)
+        bandNameView.textColor = cachedData.bandNameColor
+        locationView.textColor = cachedData.locationColor
+        startTimeView.textColor = UIColor.white
+        endTimeView.textColor = hexStringToUIColor(hex: "#797D7F")
+        dayView.textColor = UIColor.white
+        bandNameNoSchedule.textColor = UIColor.white
+        
+        // Set text from cached data
+        bandNameView.text = cachedData.bandName
+        locationView.text = cachedData.locationText
+        startTimeView.text = cachedData.startTimeText
+        endTimeView.text = cachedData.endTimeText
+        dayView.text = cachedData.dayText
+        bandNameNoSchedule.text = cachedData.bandName
+        
+        // Set images from cached data
+        eventTypeImageView.image = cachedData.eventIcon
+        rankImageView.image = cachedData.priorityIcon
+        attendedView.image = cachedData.attendedIcon
+        rankImageViewNoSchedule.image = cachedData.priorityIcon
+        
+        // Configure visibility based on cached data
+        if cachedData.hasSchedule {
+            // Has schedule - show schedule elements
+            locationView.isHidden = false
+            startTimeView.isHidden = false
+            endTimeView.isHidden = false
+            dayView.isHidden = false
+            dayLabelView.isHidden = false
+            attendedView.isHidden = false
+            eventTypeImageView.isHidden = false
+            rankImageView.isHidden = false
+            bandNameView.isHidden = false
+            rankImageViewNoSchedule.isHidden = true
+            bandNameNoSchedule.isHidden = true
+            indexForCell.isHidden = true
+        } else {
+            // No schedule - show band name only elements
+            locationView.isHidden = true
+            startTimeView.isHidden = true
+            endTimeView.isHidden = true
+            dayView.isHidden = true
+            dayLabelView.isHidden = true
+            attendedView.isHidden = true
+            eventTypeImageView.isHidden = true
+            rankImageView.isHidden = true
+            bandNameView.isHidden = true
+            rankImageViewNoSchedule.isHidden = false
+            bandNameNoSchedule.isHidden = false
+            indexForCell.isHidden = true
+        }
+        
+        // Configure separator visibility from cached data
+        if cachedData.shouldHideSeparator {
+            cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
+        } else {
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+        }
+        
+        // Set venue background color from cached data
+        cell.backgroundColor = cachedData.venueBackgroundColor
     }
     
     
@@ -3605,6 +3709,75 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("🚀 performUIRefreshWithLoadedData: Fast UI refresh completed")
             } // End of DispatchQueue.main.async for UI operations
         } // End of getFilteredBands completion handler
+    }
+}
+
+// MARK: - CoreDataPreloadManagerDelegate
+
+extension MasterViewController: CoreDataPreloadManagerDelegate {
+    
+    func preloadManager(_ manager: CoreDataPreloadManager, didLoadInitialData bandCount: Int) {
+        print("✅ CoreDataPreloadManager: Initial data loaded - \(bandCount) bands")
+        
+        // Refresh display with the preloaded data
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshBandList(reason: "Core Data preload - initial data")
+        }
+    }
+    
+    func preloadManager(_ manager: CoreDataPreloadManager, didUpdateData changeType: CoreDataPreloadManager.ChangeType) {
+        print("🔄 CoreDataPreloadManager: Data updated - \(changeType)")
+        
+        // Perform targeted UI updates based on change type
+        DispatchQueue.main.async { [weak self] in
+            switch changeType {
+            case .bandsUpdated(let added, let modified, let deleted):
+                if added > 0 || deleted > 0 {
+                    // Major changes - full refresh
+                    self?.refreshBandList(reason: "Core Data - bands added/deleted")
+                } else if modified > 0 {
+                    // Minor changes - could be optimized to just refresh table
+                    self?.tableView?.reloadData()
+                }
+                
+            case .eventsUpdated(let added, let modified, let deleted):
+                if added > 0 || deleted > 0 {
+                    // Schedule changes affect display
+                    self?.refreshBandList(reason: "Core Data - events changed")
+                } else if modified > 0 {
+                    self?.tableView?.reloadData()
+                }
+                
+            case .prioritiesUpdated(_):
+                // Priority changes just need visual refresh
+                self?.tableView?.reloadData()
+                
+            case .attendanceUpdated(_):
+                // Attendance changes just need visual refresh
+                self?.tableView?.reloadData()
+                
+            case .fullRefresh:
+                // Full refresh needed
+                self?.refreshBandList(reason: "Core Data - full refresh")
+            }
+        }
+    }
+    
+    func preloadManager(_ manager: CoreDataPreloadManager, didCompleteYearChange newYear: Int) {
+        print("✅ CoreDataPreloadManager: Year change completed - now \(newYear)")
+        
+        DispatchQueue.main.async { [weak self] in
+            // Update UI for new year
+            self?.refreshBandList(reason: "Core Data - year change to \(newYear)")
+            
+            // Update any year-specific UI elements
+            self?.updateYearSpecificUI()
+        }
+    }
+    
+    private func updateYearSpecificUI() {
+        // Update title, labels, etc. for new year
+        titleButton.title = "\(FestivalConfig.current.appName) \(eventYear)"
     }
 }
 
