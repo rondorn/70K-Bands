@@ -154,9 +154,9 @@ public class FestivalConfig {
             this.logoResourceId = R.drawable.bands_70k_icon;
             this.appIconResourceId = R.drawable.ic_launcher;
             
-            this.notificationChannelId = "70KBandsCustomSound1";
-            this.notificationChannelName = "70KBandsCustomSound1";
-            this.notificationChannelDescription = "Channel for the 70K Bands local show alerts with custom sound1";
+            this.notificationChannelId = BuildConfig.FESTIVAL_TYPE + "BandsCustomSound1";
+            this.notificationChannelName = BuildConfig.FESTIVAL_TYPE + "BandsCustomSound1";
+            this.notificationChannelDescription = "Channel for the " + BuildConfig.FESTIVAL_TYPE + " Bands local show alerts with custom sound1";
             
             this.shareUrl = "http://www.facebook.com/70kBands";
             
