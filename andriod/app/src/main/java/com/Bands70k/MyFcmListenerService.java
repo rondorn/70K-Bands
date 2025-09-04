@@ -55,7 +55,7 @@ public class MyFcmListenerService extends FirebaseMessagingService {
 
         androidx.core.app.NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(getNotificationIcon())
-                .setContentTitle("70K Bands")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(messageString)
                 .setAutoCancel(true)
                 .setSound(staticVariables.alarmSound)

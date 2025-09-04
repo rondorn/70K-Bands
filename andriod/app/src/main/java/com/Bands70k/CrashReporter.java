@@ -250,3 +250,4 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         }
     }
 }
+
