@@ -22,7 +22,6 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.os.Bundle;
@@ -92,7 +91,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     String notificationTag = "notificationTag";
 
-    public static String newRootDir = Environment.getExternalStorageDirectory().toString();
+    public static String newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
 
     private ArrayList<String> bandNames;
     public List<String> scheduleSortedBandNames = new ArrayList<String>();
@@ -141,8 +140,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     // inside my class
     private static final String[] INITIAL_PERMS = {
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
             android.Manifest.permission.INTERNET,
             android.Manifest.permission.ACCESS_NETWORK_STATE,
             android.Manifest.permission.WAKE_LOCK,
@@ -150,73 +147,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     };
     private static final int REQUEST = 1337;
 
-    private boolean checkWriteExternalPermission() {
-        String permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-        int res = Bands70k.getAppContext().checkCallingOrSelfPermission(permission);
-        return (res == PackageManager.PERMISSION_GRANTED);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        if (this.checkWriteExternalPermission() == false) {
-            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
-
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                Log.d("get perms", "Getting access to storage " + Build.VERSION.SDK_INT + "-" + Build.VERSION_CODES.M);
-                int permission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                int readpermission = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE);
-                Log.d("get perms", "Getting access to storage - pre- asking");
-                if (permission != 0) {
-                    //ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-
-                    //requestPermissions((new String[]
-                    //        {Manifest.permission.WRITE_EXTERNAL_STORAGE}), 1);
-
-                    Log.d("get perms", "Getting access to storage - asking");
-                    // Modern async permission handling instead of busy-waiting with sleep
-                    if (permission != 0) {
-                        Log.d("get perms", "Requesting storage permission asynchronously");
-                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                        // Permission result will be handled in onRequestPermissionsResult callback
-                        // No need to block with sleep - let Android handle the async flow
-                    } else {
-                        Log.d("get perms", "Storage permission already granted");
-                    }
-                }
-                if (readpermission != 0) {
-                    Log.d("get perms", "Requesting read storage permission asynchronously");
-                    requestPermissions(INITIAL_PERMS, REQUEST);
-                    // Permission result will be handled in onRequestPermissionsResult callback
-                    // Removed busy-wait loop - let Android handle async permission flow
-                }
-            } catch (Exception error) {
-                newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
-            }
-
-        } else {
-            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
-        }
-        Log.d("Rool volume", "Root volume is " + newRootDir);
+        // Use internal app storage - no permissions required
+        Log.d("App Storage", "Using internal app storage: " + newRootDir);
         
         // Log crash statistics from AsyncTask modernization
         Log.i("AsyncTaskModernization", "📊 " + CrashReporter.getCrashStats());
-        
-        try {
-            File testFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "test.txt");
-            String test = "test";
-            FileOutputStream stream = new FileOutputStream(testFile);
-            try {
-                stream.write(test.getBytes());
-            } finally {
-                stream.close();
-            }
-        } catch (Exception error) {
-            //It appears I do not have access to external storage...lets fix that
-            //by changing to use app storage
-            newRootDir = Bands70k.getAppContext().getFilesDir().getPath();
-        }
 
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);

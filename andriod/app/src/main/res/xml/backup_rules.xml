@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include user data files -->
+    <include domain="file" path="70kBands/bandRankings.txt" />
+    <include domain="file" path="70kBands/70kbandPreferences.csv" />
+    <include domain="file" path="70kBands/70kAlertData.csv" />
+    <include domain="file" path="70kBands/showsAtteded.data" />
+    <include domain="file" path="70kBands/country.txt" />
+    <include domain="file" path="70kBands/70kbandAlertStorage.data" />
+    
+    <!-- Exclude cache files and temporary data -->
+    <exclude domain="file" path="70kBands/bandListCache.data" />
+    <exclude domain="file" path="70kBands/backupFileTemp.zip" />
+    <exclude domain="file" path="70kBands/cachedImages/" />
+    <exclude domain="file" path="70kBands/.nomedia" />
+    
+    <!-- App data files - include if they contain user customizations -->
+    <include domain="file" path="70kBands/70kbandInfo.csv" />
+    <include domain="file" path="70kBands/70kScheduleInfo.csv" />
+    <include domain="file" path="70kBands/70kbandDescriptionMap.csv" />
+</full-backup-content>
