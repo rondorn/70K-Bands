@@ -8,6 +8,7 @@
 
 import Foundation
 import Firebase
+import CoreData
 
 
 class firebaseBandDataWrite {
@@ -38,7 +39,7 @@ class firebaseBandDataWrite {
     }
     
     /// Sanitizes band names for use as Firebase database path components
-    /// Firebase paths cannot contain: . # $ [ ]
+    /// Firebase paths cannot contain: . # $ [ ] / ' " \ and control characters
     private func sanitizeBandNameForFirebase(_ bandName: String) -> String {
         return bandName
             .replacingOccurrences(of: ".", with: "_")
@@ -46,9 +47,38 @@ class firebaseBandDataWrite {
             .replacingOccurrences(of: "$", with: "_")
             .replacingOccurrences(of: "[", with: "_")
             .replacingOccurrences(of: "]", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "'", with: "_")
+            .replacingOccurrences(of: "\"", with: "_")
+            .replacingOccurrences(of: "\\", with: "_")
+            // Remove control characters
+            .components(separatedBy: .controlCharacters).joined()
+            // Trim whitespace
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    func writeSingleRecord(bandName: String, ranking: String){
+    /// Gets sanitized name for a band from Core Data, fallback to computing it
+    private func getSanitizedNameForBand(_ bandName: String) -> String {
+        let context = CoreDataManager.shared.viewContext
+        let request: NSFetchRequest<Band> = Band.fetchRequest()
+        request.predicate = NSPredicate(format: "bandName == %@ AND eventYear == %d", bandName, Int32(eventYear))
+        request.fetchLimit = 1
+        
+        do {
+            if let band = try context.fetch(request).first,
+               let sanitizedName = band.sanitizedName,
+               !sanitizedName.isEmpty {
+                return sanitizedName
+            }
+        } catch {
+            print("⚠️ Error fetching sanitized name for \(bandName): \(error)")
+        }
+        
+        // Fallback to computing it
+        return sanitizeBandNameForFirebase(bandName)
+    }
+    
+    func writeSingleRecord(bandName: String, ranking: String, sanitizedName: String? = nil){
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
@@ -61,11 +91,12 @@ class firebaseBandDataWrite {
                 return
             }
             
-            // Sanitize band name for Firebase path
-            let sanitizedBandName = self.sanitizeBandNameForFirebase(bandName)
+            // Use provided sanitized name or fall back to computing it
+            let sanitizedBandName = sanitizedName ?? self.sanitizeBandNameForFirebase(bandName)
             
             self.ref.child("bandData/").child(uid).child(String(eventYear)).child(sanitizedBandName).setValue([
                 "bandName": bandName,
+                "sanitizedKey": sanitizedBandName, // Store for reference/debugging
                 "ranking": ranking,
                 "userID": uid,
                 "year": String(eventYear)]){
@@ -102,7 +133,8 @@ class firebaseBandDataWrite {
                     print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
                     if firebaseBandAttendedArray[bandName] != ranking || didVersionChange == true {
                         print ("bandDataReport - fixing record for \(bandName)")
-                        writeSingleRecord(bandName: bandName, ranking: ranking)
+                        let sanitizedName = getSanitizedNameForBand(bandName)
+                        writeSingleRecord(bandName: bandName, ranking: ranking, sanitizedName: sanitizedName)
                     }
                     
                 }

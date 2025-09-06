@@ -33,17 +33,29 @@ public class FireBaseBandDataWrite {
 
     /**
      * Sanitizes band names for use as Firebase database path components.
-     * Firebase paths cannot contain: . # $ [ ]
+     * Firebase paths cannot contain: . # $ [ ] / ' " \ and control characters
      * @param bandName The band name to sanitize
      * @return Sanitized band name safe for Firebase paths
      */
     private String sanitizeBandNameForFirebase(String bandName) {
+        if (bandName == null || bandName.isEmpty()) {
+            return bandName;
+        }
+        
         return bandName
                 .replace(".", "_")
                 .replace("#", "_")
                 .replace("$", "_")
                 .replace("[", "_")
-                .replace("]", "_");
+                .replace("]", "_")
+                .replace("/", "_")
+                .replace("'", "_")
+                .replace("\"", "_")
+                .replace("\\", "_")
+                // Remove control characters (ASCII 0-31 and 127)
+                .replaceAll("[\\p{Cntrl}]", "")
+                // Trim whitespace
+                .trim();
     }
 
 
@@ -66,15 +78,17 @@ public class FireBaseBandDataWrite {
 
                     String eventYear = String.valueOf(staticVariables.eventYear);
                     String ranking = bandRanks.get(bandName);
+                    String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
 
-                    bandData.put("bandName", bandName);
+                    bandData.put("bandName", bandName); // Original name for reports/display
+                    bandData.put("sanitizedKey", sanitizedBandName); // Sanitized key for reference/debugging
                     bandData.put("ranking", ranking);
+                    bandData.put("userID", staticVariables.userID);
                     bandData.put("year", eventYear);
 
-                    Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString());
+                    Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString() + " (sanitized: " + sanitizedBandName + ")");
                     try {
-                        // Sanitize band name for Firebase path
-                        String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
+                        // Use sanitized band name for Firebase path
                         mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(sanitizedBandName).setValue(bandData);
                     } catch (Exception error){
                         Log.e("FireBaseBandDataWrite", "Writing band data Failed" + error.toString());

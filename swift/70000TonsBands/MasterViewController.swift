@@ -1242,41 +1242,78 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    @objc func pullTorefreshData(){
-        checkForEasterEgg()
-        print ("iCloud: pull to refresh, load in new iCloud data")
+    /// Background data refresh that follows the network-test-first pattern
+    /// Shows cached data immediately, tests network, then does fresh data collection if network is good
+    func performBackgroundOnlyDataRefresh(reason: String) {
+        print("🌐 BACKGROUND-ONLY REFRESH: \(reason) - Using network-test-first pattern")
         
-        // Use a specialized method for pull-to-refresh that includes live network testing
-        performPullToRefreshWithLiveNetworkTest()
+        // STEP 1: Always show cached data first (immediate)
+        refreshBandList(reason: "\(reason) - cached display")
+        
+        // STEP 2: Test network first, then do fresh data collection
+        self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+            guard let self = self else { return }
+            
+            if networkIsGood {
+                print("🌐 BACKGROUND-ONLY REFRESH: Network test passed - proceeding with fresh data collection")
+                self.performFreshDataCollection(reason: reason)
+            } else {
+                print("🌐 BACKGROUND-ONLY REFRESH: Network test failed - staying with cached data")
+                print("🌐 BACKGROUND-ONLY REFRESH: User will continue seeing cached data until network improves")
+            }
+        }
     }
     
-    /// Specialized pull-to-refresh method with live network testing
-    /// This method is allowed to block the GUI briefly since users expect delays during pull-to-refresh
-    func performPullToRefreshWithLiveNetworkTest() {
-        print("🔄 Starting pull-to-refresh with live network test")
+    @objc func pullTorefreshData(){
+        checkForEasterEgg()
+        print ("🔄 PULL-TO-REFRESH: Starting pull-to-refresh with robust network testing")
+        
+        // Use the robust network-test-first pattern for pull-to-refresh
+        performPullToRefreshWithRobustNetworkTest()
+    }
+    
+    /// Pull-to-refresh using the robust network testing pattern
+    /// Shows busy indicator for 2 seconds, then continues background updates
+    func performPullToRefreshWithRobustNetworkTest() {
+        print("🔄 PULL-TO-REFRESH: Starting with 2-second busy indicator")
         
         // STEP 1: Refresh from cache first (immediate UI update)
-        print("🔄 Pull-to-refresh: Step 1 - Refreshing from cache")
-        refreshBandList(reason: "Pull-to-refresh - cache refresh")
+        print("🔄 PULL-TO-REFRESH: Step 1 - Showing cached data immediately")
+        refreshBandList(reason: "Pull-to-refresh - immediate cached display")
         
-        // STEP 2: Perform LIVE network test (this will block GUI briefly - acceptable for pull-to-refresh)
-        print("🔄 Pull-to-refresh: Step 2 - Performing LIVE network test")
-        
-        let networkTesting = NetworkTesting()
-        let hasNetwork = networkTesting.liveNetworkTestForPullToRefresh()
-        
-        if !hasNetwork {
-            print("🔄 Pull-to-refresh: ❌ Live network test failed - staying with cached data")
-            DispatchQueue.main.async {
-                self.refreshControl?.endRefreshing()
+        // STEP 2: Always end refresh control after exactly 2 seconds (consistent UX)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self = self else { return }
+            print("🔄 PULL-TO-REFRESH: Ending refresh control after 2 seconds (background updates continue)")
+            
+            // Properly end refresh control with animation
+            self.refreshControl?.endRefreshing()
+            
+            // Ensure table view animates back to normal position (rubber band effect)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.mainTableView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+                print("🔄 PULL-TO-REFRESH: Table view animated back to normal position")
             }
-            return
         }
         
-        print("🔄 Pull-to-refresh: ✅ Live network test passed - proceeding with data refresh")
+        // STEP 3: Start background network test and data collection (independent of UI)
+        print("🔄 PULL-TO-REFRESH: Step 2 - Starting background network test (UI will return to normal in 2s)")
         
-        // STEP 3: Start background data refresh (same as regular performFullDataRefresh)
-        performBackgroundDataRefresh(reason: "Pull to refresh with live network test", endRefreshControl: true, shouldScrollToTop: true)
+        // Use background network test pattern - UI indicator timing is now independent
+        performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+            guard let self = self else { return }
+            
+            if networkIsGood {
+                print("🔄 PULL-TO-REFRESH: ✅ Network test passed - performing complete fresh data collection in background")
+                
+                // Do complete fresh data collection in background (UI already returned to normal)
+                self.performFreshDataCollection(reason: "Pull-to-refresh - network verified background update") 
+                
+            } else {
+                print("🔄 PULL-TO-REFRESH: ❌ Network test failed - staying with cached data")
+                print("🔄 PULL-TO-REFRESH: Background update skipped, user sees cached data")
+            }
+        }
     }
     
     /// Called when returning from preferences screen (no year change - only refresh if needed)
@@ -3466,62 +3503,77 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // MARK: - PERFORMANCE OPTIMIZED LAUNCH METHODS
     
-    /// Optimized first launch: Sequential download → import → display for each data type
+    /// Optimized first launch: Show CoreData immediately, then test network before fresh data collection
     private func performOptimizedFirstLaunch() {
-        print("🚀 [MDF_DEBUG] First launch - starting band names download")
+        print("🚀 [MDF_DEBUG] First launch - showing CoreData immediately, then testing network")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        print("🚀 FIRST LAUNCH: Step 1 - Starting band names download")
+        print("🚀 FIRST LAUNCH: Step 1 - Loading and displaying CoreData/cached data immediately")
         
-        // Step 1: Download and import band names first
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Step 1: Load and display CoreData/cached data immediately (completely non-blocking)
+        self.bandNameHandle.loadCachedDataImmediately()
+        self.schedule.loadCachedDataImmediately()
+        self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
+        
+        print("🚀 FIRST LAUNCH: Step 2 - Starting background network test with completion handler")
+        
+        // Step 2: Start background network test with completion handler
+        self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
             guard let self = self else { return }
             
-            print("🚀 [MDF_DEBUG] About to call bandNameHandle.gatherData() for MDF")
-            self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
-                guard let self = self else { return }
+            if networkIsGood {
+                print("🚀 FIRST LAUNCH: Network test passed - proceeding with fresh data collection")
                 
-                print("🚀 [MDF_DEBUG] bandNameHandle.gatherData() COMPLETED for MDF")
-                DispatchQueue.main.async {
-                    print("🚀 FIRST LAUNCH: Step 2 - Band names imported, refreshing display")
-                    // Display band names immediately after import
-                    self.refreshBandList(reason: "First launch - band names loaded")
-                    
-                    // Step 2: Now download and import schedule data
-                    print("🚀 FIRST LAUNCH: Step 3 - Starting schedule download")
-                    print("🚀 [MDF_DEBUG] About to call schedule.populateSchedule() for MDF")
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        self.schedule.populateSchedule(forceDownload: true)
-                        print("🚀 [MDF_DEBUG] schedule.populateSchedule() COMPLETED for MDF")
+                // Network is good - proceed with fresh data collection including description map
+                DispatchQueue.global(qos: .userInitiated).async {
+                    print("🚀 [MDF_DEBUG] About to call bandNameHandle.gatherData() for MDF")
+                    self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                        guard let self = self else { return }
                         
+                        print("🚀 [MDF_DEBUG] bandNameHandle.gatherData() COMPLETED for MDF")
                         DispatchQueue.main.async {
-                            print("🚀 FIRST LAUNCH: Step 4 - Schedule imported, final display refresh")
-                            // Final display refresh with both band names and schedule
-                            self.refreshBandList(reason: "First launch - schedule loaded")
+                            print("🚀 FIRST LAUNCH: Step 3 - Band names imported, refreshing display")
+                            self.refreshBandList(reason: "First launch - band names loaded")
                             
-                            // Step 3: Download iCloud data in background (non-blocking)
-                            print("🚀 FIRST LAUNCH: Step 5 - Starting iCloud download in background")
-                            DispatchQueue.global(qos: .utility).async {
-                                // iCloud and description data can load in background without blocking UI
-                                self.bandDescriptions.getDescriptionMapFile()
-                                // Note: iCloud data will trigger its own refresh when ready
+                            // Download schedule data
+                            print("🚀 FIRST LAUNCH: Step 4 - Starting schedule download")
+                            print("🚀 [MDF_DEBUG] About to call schedule.populateSchedule() for MDF")
+                            DispatchQueue.global(qos: .userInitiated).async {
+                                self.schedule.populateSchedule(forceDownload: true)
+                                print("🚀 [MDF_DEBUG] schedule.populateSchedule() COMPLETED for MDF")
+                                
+                                DispatchQueue.main.async {
+                                    print("🚀 FIRST LAUNCH: Step 5 - Schedule imported, final display refresh")
+                                    self.refreshBandList(reason: "First launch - schedule loaded")
+                                    
+                                    // Now download description map and other data
+                                    print("🚀 FIRST LAUNCH: Step 6 - Starting description map download")
+                                    DispatchQueue.global(qos: .utility).async {
+                                        self.bandDescriptions.getDescriptionMapFile()
+                                        self.bandDescriptions.getDescriptionMap()
+                                        print("🚀 FIRST LAUNCH: Description map download completed")
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                print("🚀 FIRST LAUNCH: Network test failed - staying with CoreData, no fresh data collection")
+                print("🚀 FIRST LAUNCH: User will see cached data only until network improves")
             }
         }
     }
     
-    /// Optimized subsequent launch: Immediate cached display → background updates → refresh if changed
+    /// Optimized subsequent launch: Show CoreData immediately, then test network before fresh data collection if needed
     private func performOptimizedSubsequentLaunch() {
-        print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying cached data immediately")
+        print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying CoreData/cached data immediately (non-blocking)")
         
-        // Step 1: Load cached data immediately and display
-        print("🚀 [MDF_DEBUG] Subsequent launch - loading cached data")
+        // Step 1: Load CoreData/cached data immediately and display (ALWAYS show cached data first)
+        print("🚀 [MDF_DEBUG] Subsequent launch - loading CoreData/cached data")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         self.bandNameHandle.loadCachedDataImmediately()
         self.schedule.loadCachedDataImmediately()
-        self.refreshBandList(reason: "Subsequent launch - cached data", skipDataLoading: true)
+        self.refreshBandList(reason: "Subsequent launch - immediate CoreData display", skipDataLoading: true)
         
         // Step 2: Check if we need background updates
         let lastLaunchKey = "LastAppLaunchDate"
@@ -3532,10 +3584,169 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         UserDefaults.standard.set(now, forKey: lastLaunchKey)
         
         if shouldUpdateData {
-            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background data update (24+ hours since last launch)")
-            self.performBackgroundDataUpdate()
+            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background network test for 24h data update")
+            
+            // Test network first, then do fresh data collection including description map
+            self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+                guard let self = self else { return }
+                
+                if networkIsGood {
+                    print("🚀 SUBSEQUENT LAUNCH: Network test passed - proceeding with fresh data collection")
+                    self.performFreshDataCollection(reason: "Subsequent launch - 24h network-verified update")
+                } else {
+                    print("🚀 SUBSEQUENT LAUNCH: Network test failed - staying with CoreData, no fresh data collection")
+                    print("🚀 SUBSEQUENT LAUNCH: User will continue seeing cached data until network improves")
+                }
+            }
         } else {
             print("🚀 SUBSEQUENT LAUNCH: Step 2 - Skipping background update (recent data)")
+        }
+    }
+    
+    // MARK: - Background Network Testing & Fresh Data Collection
+    
+    /// Performs a background network test with completion handler - never blocks GUI
+    /// This is the key method that enables the pattern: show CoreData immediately, test network, then fresh data collection
+    /// - Parameter completion: Called with true if network is good, false if network is bad or unavailable
+    private func performBackgroundNetworkTestWithCompletion(completion: @escaping (Bool) -> Void) {
+        print("🌐 BACKGROUND NETWORK TEST: Starting ROBUST network test with completion handler")
+        
+        // Always run network test on background queue to never block GUI
+        DispatchQueue.global(qos: .userInitiated).async {
+            print("🌐 BACKGROUND NETWORK TEST: Performing real HTTP request to test network quality")
+            
+            // ROBUST NETWORK TEST: Do actual HTTP request instead of relying on cached values
+            let isNetworkGood = self.performRobustNetworkTest()
+            
+            print("🌐 BACKGROUND NETWORK TEST: Robust network test completed - result: \(isNetworkGood)")
+            
+            // Call completion handler on main thread for UI updates
+            DispatchQueue.main.async {
+                completion(isNetworkGood)
+            }
+        }
+    }
+    
+    /// Performs a robust network test with actual HTTP request - not cached values
+    /// This properly detects 100% packet loss and poor network conditions
+    /// - Returns: true if network is good enough for data operations, false otherwise
+    private func performRobustNetworkTest() -> Bool {
+        print("🌐 ROBUST TEST: Starting real HTTP request to test network")
+        
+        // Test with a lightweight, fast endpoint
+        guard let url = URL(string: "https://www.google.com/generate_204") else {
+            print("🌐 ROBUST TEST: ❌ Invalid test URL")
+            return false
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 4.0 // 4 second timeout for data operations test  
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        var testResult = false
+        
+        print("🌐 ROBUST TEST: Making HTTP request to \(url.absoluteString)")
+        let startTime = Date()
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            let duration = Date().timeIntervalSince(startTime)
+            
+            if let error = error {
+                print("🌐 ROBUST TEST: ❌ Network error after \(String(format: "%.2f", duration))s: \(error.localizedDescription)")
+                if error.localizedDescription.contains("timed out") {
+                    print("🌐 ROBUST TEST: ❌ TIMEOUT - This indicates poor network or 100% packet loss")
+                }
+                testResult = false
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("🌐 ROBUST TEST: ✅ HTTP response received after \(String(format: "%.2f", duration))s: \(httpResponse.statusCode)")
+                // Google's generate_204 returns 204 No Content on success
+                testResult = (httpResponse.statusCode == 204 || httpResponse.statusCode == 200)
+                if testResult {
+                    print("🌐 ROBUST TEST: ✅ Network is good for data operations")
+                } else {
+                    print("🌐 ROBUST TEST: ❌ Unexpected HTTP status: \(httpResponse.statusCode)")
+                }
+            } else {
+                print("🌐 ROBUST TEST: ❌ No response received")
+                testResult = false
+            }
+            
+            semaphore.signal()
+        }
+        
+        task.resume()
+        
+        // Wait for test to complete with timeout
+        let timeoutResult = semaphore.wait(timeout: .now() + 5.0)
+        if timeoutResult == .timedOut {
+            print("🌐 ROBUST TEST: ❌ SEMAPHORE TIMEOUT - Network test took too long, assuming bad network")
+            task.cancel()
+            testResult = false
+        }
+        
+        print("🌐 ROBUST TEST: Final result: \(testResult ? "NETWORK GOOD" : "NETWORK BAD/DOWN")")
+        return testResult
+    }
+    
+    /// Performs fresh data collection including description map - only called after network test passes
+    /// This method includes all the data sources: band names, schedule, description map, iCloud data
+    /// - Parameter reason: Reason for the fresh data collection (for logging)
+    private func performFreshDataCollection(reason: String) {
+        print("📡 FRESH DATA COLLECTION: Starting fresh data collection - \(reason)")
+        
+        // Run entirely in background to never block GUI
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Step 1: Download band names
+            print("📡 FRESH DATA COLLECTION: Step 1 - Downloading band names")
+            self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    print("📡 FRESH DATA COLLECTION: Band names updated - refreshing display")
+                    self.refreshBandList(reason: "\(reason) - band names updated")
+                }
+                
+                // Step 2: Download schedule data
+                print("📡 FRESH DATA COLLECTION: Step 2 - Downloading schedule data")
+                DispatchQueue.global(qos: .userInitiated).async {
+                    self.schedule.populateSchedule(forceDownload: true)
+                    
+                    DispatchQueue.main.async {
+                        print("📡 FRESH DATA COLLECTION: Schedule updated - refreshing display")
+                        self.refreshBandList(reason: "\(reason) - schedule updated")
+                        
+                        // Step 3: Download description map and other data
+                        print("📡 FRESH DATA COLLECTION: Step 3 - Downloading description map")
+                        DispatchQueue.global(qos: .utility).async {
+                            // Download description map file
+                            self.bandDescriptions.getDescriptionMapFile()
+                            self.bandDescriptions.getDescriptionMap()
+                            print("📡 FRESH DATA COLLECTION: Description map updated")
+                            
+                            // Load iCloud data
+                            print("📡 FRESH DATA COLLECTION: Step 4 - Loading iCloud data")
+                            self.loadICloudData()
+                            
+                            // Load combined image list
+                            print("📡 FRESH DATA COLLECTION: Step 5 - Loading combined image list")
+                            self.loadCombinedImageList()
+                            
+                            print("📡 FRESH DATA COLLECTION: All fresh data collection completed for: \(reason)")
+                            
+                            // Notify CoreDataPreloadManager that fresh data is available
+                            // This allows it to restart if it was stuck in cache-only mode
+                            DispatchQueue.main.async {
+                                print("📡 FRESH DATA COLLECTION: Notifying CoreDataPreloadManager of fresh data availability")
+                                self.preloadManager.resetAndRestartIfNeeded()
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     
