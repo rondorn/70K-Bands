@@ -656,6 +656,18 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["bandImageUrl"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                let imageUrl = bandData.imageUrl ?? ""
+                if !imageUrl.isEmpty {
+                    result = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
+                    print("🔧 OFFLINE MODE: Retrieved imageUrl '\(result)' from Core Data for band '\(band)'")
+                }
+            }
+        }
+        
         print("🔗 URL lookup for band \(band): \(result.isEmpty ? "no URL available" : result) (Core Data)")
         return result
     }
@@ -668,6 +680,18 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["officalUrls"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                let officialSite = bandData.officialSite ?? ""
+                if !officialSite.isEmpty {
+                    result = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
+                    print("🔧 OFFLINE MODE: Retrieved officialSite '\(result)' from Core Data for band '\(band)'")
+                }
+            }
+        }
+        
         print("Getting officalSite for band \(band) will return \(result) (Core Data)")
         return result
     }
@@ -680,6 +704,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             wikipediaUrl = self.bandNames[bandName]?["wikipediaLink"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if wikipediaUrl.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+                wikipediaUrl = bandData.wikipedia ?? ""
+                print("🔧 OFFLINE MODE: Retrieved wikipedia '\(wikipediaUrl)' from Core Data for band '\(bandName)'")
+            }
+        }
+        
         if (wikipediaUrl.isEmpty == false) {
             let language: String = Locale.current.languageCode!
             print("Language is " + language);
@@ -699,6 +732,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             youTubeUrl = self.bandNames[bandName]?["youtubeLinks"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if youTubeUrl.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+                youTubeUrl = bandData.youtube ?? ""
+                print("🔧 OFFLINE MODE: Retrieved youtube '\(youTubeUrl)' from Core Data for band '\(bandName)'")
+            }
+        }
+        
         if (youTubeUrl.isEmpty == false) {
             let language: String = Locale.preferredLanguages[0]
             if (language != "en") {
@@ -716,6 +758,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[bandName]?["metalArchiveLinks"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+                result = bandData.metalArchives ?? ""
+                print("🔧 OFFLINE MODE: Retrieved metalArchives '\(result)' from Core Data for band '\(bandName)'")
+            }
+        }
+        
         return result
     }
     
@@ -727,6 +778,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["bandCountry"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                result = bandData.country ?? ""
+                print("🔧 OFFLINE MODE: Retrieved country '\(result)' from Core Data for band '\(band)'")
+            }
+        }
+        
         return result
     }
     
@@ -738,6 +798,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["bandGenre"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                result = bandData.genre ?? ""
+                print("🔧 OFFLINE MODE: Retrieved genre '\(result)' from Core Data for band '\(band)'")
+            }
+        }
+        
         return result
     }
 
@@ -749,6 +818,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             result = self.bandNames[band]?["bandNoteWorthy"] ?? ""
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if result.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                result = bandData.noteworthy ?? ""
+                print("🔧 OFFLINE MODE: Retrieved noteworthy '\(result)' from Core Data for band '\(band)'")
+            }
+        }
+        
         return result
     }
 
@@ -760,6 +838,15 @@ open class bandNamesHandler {
         staticBandName.sync {
             previousYears = self.bandNames[band]?["priorYears"]
         }
+        
+        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        if previousYears == nil || previousYears!.isEmpty {
+            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+                previousYears = bandData.priorYears
+                print("🔧 OFFLINE MODE: Retrieved priorYears '\(previousYears ?? "")' from Core Data for band '\(band)'")
+            }
+        }
+        
         previousYears = previousYears?.replacingOccurrences(of: " ", with: ", ")
         return previousYears ?? ""
     }
