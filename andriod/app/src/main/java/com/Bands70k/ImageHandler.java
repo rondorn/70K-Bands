@@ -3,7 +3,6 @@ package com.Bands70k;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Environment;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
@@ -54,7 +53,6 @@ public class ImageHandler {
     // Instance fields for background loading
     public String bandName;
     public File bandImageFile;
-    private File oldImageFile;
 
     /**
      * Private constructor for singleton pattern.
@@ -69,9 +67,7 @@ public class ImageHandler {
      */
     public ImageHandler(String bandNameValue){
         this.bandName = bandNameValue;
-        oldImageFile = new File(Environment.getExternalStorageDirectory() + FileHandler70k.directoryName + bandName + ".png");
         bandImageFile = new File(FileHandler70k.imageDirectory + bandName + ".png");
-        this.moveOldToNew();
     }
 
     /**
@@ -178,11 +174,6 @@ public class ImageHandler {
         return false;
     }
 
-    private void moveOldToNew() {
-        if (oldImageFile.exists()){
-            oldImageFile.renameTo(bandImageFile);
-        }
-    }
 
     public URI getImage(){
 
