@@ -64,8 +64,10 @@ open class scheduleHandler {
                 if !cacheLoaded {
                     loadCacheFromCoreData()
                 }
+                // CRASH FIX: Create defensive copy to prevent concurrent modification
                 return dictionaryQueue.sync { 
-                    return _schedulingDataByTime 
+                    let defensiveCopy = _schedulingDataByTime
+                    return defensiveCopy 
                 }
             }
         }
@@ -94,8 +96,12 @@ open class scheduleHandler {
             if !self.cacheLoaded {
                 self.loadCacheFromCoreData()
             }
+            // CRASH FIX: Use defensive copy to prevent concurrent modification crashes
             self.dictionaryQueue.sync {
-            block(&self._schedulingDataByTime)
+                var defensiveCopy = self._schedulingDataByTime
+                block(&defensiveCopy)
+                // Update the original with any changes made by the block
+                self._schedulingDataByTime = defensiveCopy
             }
         }
     }
@@ -127,9 +133,9 @@ open class scheduleHandler {
         readFiltersFile()
         print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
         
-        // CRITICAL: Update eventYear from pointer data like bandNamesHandler does
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Getting pointer data for eventYear")
-        let newEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        // CRITICAL: Update eventYear using NON-BLOCKING resolution for launch optimization
+        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Getting non-blocking eventYear resolution")
+        let newEventYear = ensureYearResolvedAtLaunch()
         if newEventYear != eventYear {
             print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
             eventYear = newEventYear
@@ -152,6 +158,12 @@ open class scheduleHandler {
         print("🔧 [CONTEXT_DEBUG] currentYear = \(yearToUse) (global eventYear = \(eventYear))")
         if let explicitYear = useYear {
             print("🔧 [YEAR_SYNC_DEBUG] Using explicit year \(explicitYear) instead of global eventYear \(eventYear)")
+        }
+        
+        // CRASH FIX: Prevent concurrent loads that could cause dictionary corruption
+        guard !cacheLoaded else {
+            print("🔧 [CRASH_FIX] Cache already loaded, preventing concurrent load that could cause corruption")
+            return
         }
         
         // CRITICAL DEBUG: Check unofficial events BEFORE cleanup
@@ -263,10 +275,12 @@ open class scheduleHandler {
         }
         
         // CRITICAL: Use serial queue for ALL dictionary operations to prevent corruption
+        // CRASH FIX: Create new dictionary instances instead of calling removeAll() to avoid Swift memory corruption
         dictionaryQueue.sync {
-            // Clear existing data safely
-            self._schedulingData.removeAll()
-            self._schedulingDataByTime.removeAll()
+            // Clear existing data safely by creating new instances (prevents Swift deallocation crash)
+            self._schedulingData = [String : [TimeInterval : [String : String]]]()
+            self._schedulingDataByTime = [TimeInterval : [[String : String]]]()
+            print("🔧 [CRASH_FIX] Created new dictionary instances instead of removeAll() to prevent deallocation crash")
             
             print("🔍 [CORE_DATA_CONVERSION] Starting conversion of \(events.count) events to dictionary format")
             
@@ -451,12 +465,8 @@ open class scheduleHandler {
     func loadCachedDataImmediately() {
         print("🚀 scheduleHandler: Loading cached data immediately (no network calls)")
         
-        // Ensure year is synchronized
-        let newEventYear = ensureYearResolvedAtLaunch()
-        if newEventYear != eventYear {
-            print("🔄 scheduleHandler: Updating eventYear from \(eventYear) to \(newEventYear)")
-            eventYear = newEventYear
-        }
+        // Year synchronization is now handled by loadCacheFromCoreData() - no need to duplicate
+        print("🚀 scheduleHandler: Year resolution will be handled by loadCacheFromCoreData() if needed")
         
         // Load from Core Data cache immediately (thread-safe)
         var eventCount = 0
@@ -566,8 +576,10 @@ open class scheduleHandler {
         scheduleHandlerQueue.async(flags: .barrier) {
             print("🔍 [SCHEDULE_DEBUG] clearCache: Inside barrier block")
             self.dictionaryQueue.sync {
-                self._schedulingData = [:]
-                self._schedulingDataByTime = [:]
+                // CRASH FIX: Create new dictionary instances instead of assigning empty dictionaries
+                self._schedulingData = [String : [TimeInterval : [String : String]]]()
+                self._schedulingDataByTime = [TimeInterval : [[String : String]]]()
+                print("🔧 [CRASH_FIX] clearCache: Created new dictionary instances to prevent memory corruption")
             }
             self.cacheLoaded = false
             print("🔍 [SCHEDULE_DEBUG] clearCache: Cache cleared, cacheLoaded = false")
@@ -1095,17 +1107,22 @@ open class scheduleHandler {
             }
             
             self.dictionaryQueue.sync {
-                self._schedulingDataByTime = [TimeInterval : [[String : String]]]()
+                // CRASH FIX: Create new dictionary instance instead of assignment
+                var newSchedulingDataByTime = [TimeInterval : [[String : String]]]()
                 
                 for (bandName, timeData) in self._schedulingData {
                     for (timeIndex, eventData) in timeData {
                         // CRITICAL FIX: Store events in array to prevent data loss
-                        if self._schedulingDataByTime[timeIndex] == nil {
-                            self._schedulingDataByTime[timeIndex] = []
+                        if newSchedulingDataByTime[timeIndex] == nil {
+                            newSchedulingDataByTime[timeIndex] = []
                         }
-                        self._schedulingDataByTime[timeIndex]!.append(eventData)
+                        newSchedulingDataByTime[timeIndex]!.append(eventData)
                     }
                 }
+                
+                // Atomically replace the dictionary to prevent corruption
+                self._schedulingDataByTime = newSchedulingDataByTime
+                print("🔧 [CRASH_FIX] buildTimeFromBandData: Atomically replaced dictionary to prevent memory corruption")
             }
             
             let timeSlotCount = self.dictionaryQueue.sync { return self._schedulingDataByTime.count }

@@ -373,38 +373,25 @@ func getPointerUrlData(keyValue: String) -> String {
         // If we still don't have data and no internet, provide sensible defaults
         if dataString.isEmpty && !isInternetAvailable() {
             
-            // DEADLOCK FIX: Only sleep on background thread, never on main thread
-            if Thread.isMainThread {
-                print("🔓 DEADLOCK FIX: Main thread detected - skipping sleep delay to prevent UI freeze")
-                print("🔓 DEADLOCK FIX: Providing default value instead")
-            } else {
-                Thread.sleep(forTimeInterval: 3.0)  // Safe on background thread
-            }
-            
-            loadUrlCounter = loadUrlCounter + 1
-            
-            if (loadUrlCounter < 5){
-                dataString = getPointerUrlData(keyValue: keyValue)
-            } else {
-                print ("Can not load needed data, exiting")
-                exit(1)
-            }
-            
-            return dataString
+            // LAUNCH OPTIMIZATION: Always return defaults immediately, no retries during launch
+            print("🚀 LAUNCH OPTIMIZATION: No internet and no cache - returning default value for \(actualKeyValue)")
+            return getDefaultPointerValue(for: actualKeyValue)
         }
         
         print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(actualKeyValue)")
         
-        // Ensure network call happens on background thread to prevent main thread blocking
+        // MAIN THREAD PROTECTION: Never block main thread with network calls
         var httpData = ""
         if Thread.isMainThread {
-            print("getPointerUrlData: Main thread detected, dispatching to background for network call")
-            let semaphore = DispatchSemaphore(value: 0)
-            DispatchQueue.global(qos: .userInitiated).async {
-                httpData = getUrlData(urlString: defaultStorageUrl)
-                semaphore.signal()
+            print("🚀 LAUNCH OPTIMIZATION: Main thread detected - returning default value to prevent blocking")
+            print("🚀 LAUNCH OPTIMIZATION: Network update will happen in background for next time")
+            // Start background update for next time
+            DispatchQueue.global(qos: .utility).async {
+                _ = getUrlData(urlString: defaultStorageUrl)
+                print("🚀 LAUNCH OPTIMIZATION: Background pointer update completed")
             }
-            semaphore.wait()
+            // Return default value immediately instead of blocking
+            return getDefaultPointerValue(for: actualKeyValue)
         } else {
             httpData = getUrlData(urlString: defaultStorageUrl)
         }
@@ -563,6 +550,74 @@ func getPointerUrlData(keyValue: String) -> String {
     loadUrlCounter = 0
     
     return dataString
+}
+
+/// Returns sensible default values for pointer data keys when network/cache is unavailable during launch
+/// This prevents blocking the app launch while providing functional defaults
+/// - Parameter keyValue: The key for which to provide a default value
+/// - Returns: A sensible default value for the given key
+func getDefaultPointerValue(for keyValue: String) -> String {
+    print("🚀 LAUNCH OPTIMIZATION: Providing default value for \(keyValue)")
+    
+    switch keyValue {
+    case "eventYear":
+        // Use FestivalConfig default year or current year
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let defaultYear = max(currentYear, 2024) // Ensure we don't go below 2024
+        print("🚀 LAUNCH OPTIMIZATION: Default eventYear = \(defaultYear)")
+        return String(defaultYear)
+        
+    case "scheduleUrl":
+        // Use FestivalConfig default schedule URL
+        let defaultUrl = FestivalConfig.current.scheduleUrlDefault
+        print("🚀 LAUNCH OPTIMIZATION: Default scheduleUrl = \(defaultUrl)")
+        return defaultUrl
+        
+    case "artistUrl":
+        // Use FestivalConfig default artist URL  
+        let defaultUrl = FestivalConfig.current.artistUrlDefault
+        print("🚀 LAUNCH OPTIMIZATION: Default artistUrl = \(defaultUrl)")
+        return defaultUrl
+        
+    case "reportUrl", "reportUrl-en", "reportUrl-es":
+        // Use a basic report URL - this is non-critical for launch
+        let defaultUrl = "https://example.com/report"
+        print("🚀 LAUNCH OPTIMIZATION: Default reportUrl = \(defaultUrl)")
+        return defaultUrl
+        
+    default:
+        // For unknown keys, return empty string - will be updated in background
+        print("🚀 LAUNCH OPTIMIZATION: Unknown key \(keyValue), returning empty string")
+        return ""
+    }
+}
+
+/// Triggers a background update of pointer data without blocking current operation
+/// This ensures next app launch will have fresh data available
+func triggerBackgroundPointerUpdate() {
+    print("🚀 LAUNCH OPTIMIZATION: Triggering background pointer update for next launch")
+    
+    DispatchQueue.global(qos: .background).async {
+        // Only proceed if we have internet and this won't interfere with user activity
+        guard isInternetAvailable() else {
+            print("🚀 LAUNCH OPTIMIZATION: No internet for background pointer update")
+            return
+        }
+        
+        print("🚀 LAUNCH OPTIMIZATION: Starting background pointer data download")
+        let httpData = getUrlData(urlString: defaultStorageUrl)
+        
+        if !httpData.isEmpty {
+            // Cache the new data for next launch
+            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            do {
+                try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
+                print("🚀 LAUNCH OPTIMIZATION: Background pointer update completed and cached")
+            } catch {
+                print("🚀 LAUNCH OPTIMIZATION: Failed to cache background pointer update: \(error)")
+            }
+        }
+    }
 }
 
 /// Gets the language-specific key for reportUrl based on user's language preference.
@@ -741,7 +796,14 @@ func setupDefaults() {
     let resolvedYearString = String(eventYear)
     checkAndHandleYearChange(newYear: resolvedYearString)
 
-    print ("eventYear is \(eventYear) scheduleURL is \(getPointerUrlData(keyValue: "scheduleUrl"))")
+    // LAUNCH OPTIMIZATION: Don't block launch with scheduleUrl lookup - get it in background
+    print ("🚀 LAUNCH OPTIMIZATION: eventYear is \(eventYear), scheduleURL will be resolved in background")
+    
+    // Trigger background update of schedule URL for next access (non-blocking)
+    DispatchQueue.global(qos: .background).async {
+        let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
+        print("🚀 LAUNCH OPTIMIZATION: Background resolved scheduleURL = \(scheduleUrl)")
+    }
 
     // Priority data migration to Core Data completed - utility removed
 
@@ -811,40 +873,64 @@ func checkAndHandleYearChange(newYear: String) {
 }
 
 /// Ensures the year is properly resolved at launch, with fallback mechanisms.
+/// LAUNCH OPTIMIZED: Never blocks, always returns cached data or sensible defaults immediately.
 /// This function should be called during app initialization to ensure a valid year is set.
 /// - Returns: The resolved year as an integer, or a default year if resolution fails.
 func ensureYearResolvedAtLaunch() -> Int {
-    print("ensureYearResolvedAtLaunch: Starting year resolution")
+    print("🚀 LAUNCH OPTIMIZATION: ensureYearResolvedAtLaunch starting NON-BLOCKING year resolution")
     
-    // Always resolve from pointer data to respect user's current preference
-    // The cached file might be outdated if user changed their year preference
-    print("ensureYearResolvedAtLaunch: Resolving from pointer data to respect user preference")
-    print("🎯 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-    print("🎯 [MDF_DEBUG] About to call getPointerUrlData for eventYear...")
-    var resolvedYear = getPointerUrlData(keyValue: "eventYear")
-    print("🎯 [MDF_DEBUG] getPointerUrlData returned eventYear: '\(resolvedYear)'")
+    // Step 1: Try to get year from memory cache first (fastest path)
+    let cacheKey = "Current:eventYear" // or use getScheduleUrl() if needed
+    var resolvedYear = ""
     
-    // If pointer data resolution failed, try cached file as fallback
+    storePointerLock.sync() {
+        if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
+            resolvedYear = cachedValue
+            print("🚀 LAUNCH OPTIMIZATION: Found year in memory cache: \(resolvedYear)")
+        }
+    }
+    
+    // Step 2: If no memory cache, try cached file (still fast, no network)
     if resolvedYear.isEmpty {
-        print("ensureYearResolvedAtLaunch: Pointer resolution failed, trying cached file")
+        print("🚀 LAUNCH OPTIMIZATION: No memory cache, trying cached year file")
         do {
             if FileManager.default.fileExists(atPath: eventYearFile) {
                 resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-                print("ensureYearResolvedAtLaunch: Found cached year as fallback: \(resolvedYear)")
+                print("🚀 LAUNCH OPTIMIZATION: Found cached year file: \(resolvedYear)")
+                
+                // Cache in memory for next time
+                if !resolvedYear.isEmpty {
+                    storePointerLock.sync() {
+                        cacheVariables.storePointerData[cacheKey] = resolvedYear
+                    }
+                }
             }
         } catch {
-            print("ensureYearResolvedAtLaunch: Could not read cached year")
+            print("🚀 LAUNCH OPTIMIZATION: Could not read cached year file")
         }
+    }
+    
+    // Step 3: If still no data, use sensible default and trigger background update
+    if resolvedYear.isEmpty {
+        print("🚀 LAUNCH OPTIMIZATION: No cached year data - using default and triggering background update")
+        resolvedYear = getDefaultPointerValue(for: "eventYear")
+        
+        // Trigger background pointer update for next time (non-blocking)
+        triggerBackgroundPointerUpdate()
     }
     
     // Validate the year
     guard let yearInt = Int(resolvedYear), yearInt > 2000 && yearInt < 2030 else {
-        print("ensureYearResolvedAtLaunch: Invalid year \(resolvedYear), using default")
-        resolvedYear = "2026" // Default fallback
-        return Int(resolvedYear)!
+        print("🚀 LAUNCH OPTIMIZATION: Invalid year '\(resolvedYear)', using current year as fallback")
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let fallbackYear = max(currentYear, 2024)
+        return fallbackYear
     }
     
-    print("ensureYearResolvedAtLaunch: Final resolved year: \(resolvedYear)")
+    print("🚀 LAUNCH OPTIMIZATION: Final resolved year (NON-BLOCKING): \(resolvedYear)")
+    print("🎯 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+    print("🎯 [MDF_DEBUG] Non-blocking eventYear resolution returned: \(resolvedYear)")
+    
     return Int(resolvedYear)!
 }
 

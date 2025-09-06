@@ -8,6 +8,7 @@
 
 import Foundation
 import Firebase
+import CoreData
 
 class firebaseEventDataWrite {
     
@@ -34,8 +35,8 @@ class firebaseEventDataWrite {
         return firebaseShowsAttendedArray
     }
     
-    /// Sanitizes strings for use as Firebase database path components
-    /// Firebase paths cannot contain: . # $ [ ]
+    /// Sanitizes strings for use as Firebase database path components  
+    /// Firebase paths cannot contain: . # $ [ ] / ' " \ and control characters
     private func sanitizeForFirebase(_ input: String) -> String {
         return input
             .replacingOccurrences(of: ".", with: "_")
@@ -43,6 +44,36 @@ class firebaseEventDataWrite {
             .replacingOccurrences(of: "$", with: "_")
             .replacingOccurrences(of: "[", with: "_")
             .replacingOccurrences(of: "]", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "'", with: "_")
+            .replacingOccurrences(of: "\"", with: "_")
+            .replacingOccurrences(of: "\\", with: "_")
+            // Remove control characters
+            .components(separatedBy: .controlCharacters).joined()
+            // Trim whitespace
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Gets sanitized identifier for an event from Core Data, fallback to computing it
+    private func getSanitizedIdentifierForEvent(_ originalIndex: String) -> String {
+        // Try to find the event in Core Data by its original identifier
+        let context = CoreDataManager.shared.viewContext
+        let request: NSFetchRequest<Event> = Event.fetchRequest()
+        request.predicate = NSPredicate(format: "identifier == %@", originalIndex)
+        request.fetchLimit = 1
+        
+        do {
+            if let event = try context.fetch(request).first,
+               let sanitizedIdentifier = event.sanitizedIdentifier,
+               !sanitizedIdentifier.isEmpty {
+                return sanitizedIdentifier
+            }
+        } catch {
+            print("⚠️ Error fetching sanitized identifier for event: \(error)")
+        }
+        
+        // Fallback to sanitizing the original index
+        return sanitizeForFirebase(originalIndex)
     }
             
     func writeEvent(index: String, status: String){
@@ -62,10 +93,12 @@ class firebaseEventDataWrite {
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
-            // Sanitize index for Firebase path (contains band name which may have invalid characters)
-            let sanitizedIndex = self.sanitizeForFirebase(index)
+            // Get sanitized identifier from Core Data, fallback to computation
+            let sanitizedIndex = self.getSanitizedIdentifierForEvent(index)
             
             self.ref.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
+                "originalIdentifier": index, // Store original for reference
+                "sanitizedKey": sanitizedIndex, // Store sanitized for debugging
                 "bandName": bandName,
                 "location": location,
                 "startTimeHour": startTimeHour,

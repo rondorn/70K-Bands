@@ -13,22 +13,30 @@ import UIKit
 
 // ⚠️ IMPORTANT: Network Testing Guidelines ⚠️
 // 
+// OPTIMIZED FOR BAD NETWORK CONDITIONS:
+// - All timeouts reduced to 2-3 seconds for faster failure
+// - Cache expiration reduced to 10 seconds for faster network change detection
+// - FAIL FAST policy: No retries, show cached data immediately
+//
 // This class has TWO types of network testing methods:
 //
-// 1. NON-BLOCKING methods (safe for general use):
+// 1. NON-BLOCKING methods (safe for general use - ALWAYS USE THESE):
 //    - forgroundNetworkTest() - Returns cached values immediately, never blocks GUI
 //    - isInternetAvailable() - Returns cached values immediately, never blocks GUI
 //    - isInternetAvailableBasic() - Fast OS check, never blocks GUI
 //    - performAsyncNetworkTest() - Background test, never blocks GUI
 //
 // 2. BLOCKING methods (ONLY for critical operations where delays are expected):
-//    - forceFreshNetworkTestForYearChange() - ⚠️ WILL block GUI for up to 6 seconds
+//    - forceFreshNetworkTestForYearChange() - ⚠️ WILL block GUI for up to 4 seconds
 //    - liveNetworkTestForPullToRefresh() - ⚠️ WILL block GUI briefly, updates cache
 //    - performSynchronousNetworkTest() - ⚠️ Internal blocking method
 //
 // RULE: NEVER use blocking methods in regular app operations. Only use them for
 // year changes where the user explicitly expects to wait for network verification.
 // All other network operations must be completely non-blocking for smooth UX.
+//
+// BAD NETWORK POLICY: In poor network conditions, immediately show cached data
+// and perform background testing. Never block the UI waiting for network responses.
 
 // Global network status manager
 class NetworkStatusManager {
@@ -38,7 +46,7 @@ class NetworkStatusManager {
     private var _isInternetAvailable: Bool = true // Default to true at startup
     private var _lastTestTime: Date = Date.distantPast
     private var _isCurrentlyTesting: Bool = false
-    private let _cacheExpirationInterval: TimeInterval = 15 // 15 seconds cache
+    private let _cacheExpirationInterval: TimeInterval = 10 // 10 seconds cache for faster network change detection
     private let _lock = NSLock()
     
     // Thread-safe access to network status
@@ -262,7 +270,7 @@ open class NetworkTesting {
         }
         
         var request = URLRequest(url: url)
-        request.timeoutInterval = 4.0 // 4 second timeout for faster failure
+        request.timeoutInterval = 2.0 // 2 second timeout for faster failure in bad network
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
         
         let startTime = Date()
@@ -309,7 +317,7 @@ open class NetworkTesting {
             internetCheckCache = "true"
         }
         
-        internetCheckCacheDate = NSDate().timeIntervalSince1970 + 15
+        internetCheckCacheDate = NSDate().timeIntervalSince1970 + 10 // 10 second cache for faster network change detection
         
         // Update global cache
         NetworkTesting.networkTestLock.lock()
@@ -412,7 +420,7 @@ open class NetworkTesting {
         }
         
         var request = URLRequest(url: url)
-        request.timeoutInterval = 5.0 // 5 second timeout
+        request.timeoutInterval = 3.0 // 3 second timeout for faster failure in bad network
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
         request.httpMethod = "GET"
         
@@ -450,10 +458,10 @@ open class NetworkTesting {
         task.resume()
         
         // Wait for the live test to complete with timeout
-        let timeoutResult = semaphore.wait(timeout: .now() + 6.0) // 6 second total timeout
+        let timeoutResult = semaphore.wait(timeout: .now() + 4.0) // 4 second total timeout for faster failure
         
         if timeoutResult == .timedOut {
-            print("🔥 NetworkTesting: ❌ LIVE TEST TIMED OUT after 6 seconds")
+            print("🔥 NetworkTesting: ❌ LIVE TEST TIMED OUT after 4 seconds")
             task.cancel()
             liveTestResult = false
         }
@@ -484,7 +492,7 @@ open class NetworkTesting {
         }
         
         var request = URLRequest(url: url)
-        request.timeoutInterval = 5.0 // 5 second timeout
+        request.timeoutInterval = 2.0 // 2 second timeout for faster failure in bad network
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         
         let semaphore = DispatchSemaphore(value: 0)
@@ -516,11 +524,11 @@ open class NetworkTesting {
         
         task.resume()
         
-        // Wait for test to complete with timeout
-        let timeoutResult = semaphore.wait(timeout: .now() + 6.0) // 6 second timeout
+        // Wait for test to complete with timeout  
+        let timeoutResult = semaphore.wait(timeout: .now() + 3.0) // 3 second timeout for faster failure
         
         if timeoutResult == .timedOut {
-            print("NetworkTesting: ❌ Network test TIMED OUT after 6 seconds")
+            print("NetworkTesting: ❌ Network test TIMED OUT after 3 seconds")
             task.cancel()
             updateInternetCache(false)
             return false

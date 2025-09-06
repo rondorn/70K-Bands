@@ -33,17 +33,29 @@ public class FirebaseEventDataWrite {
 
     /**
      * Sanitizes strings for use as Firebase database path components.
-     * Firebase paths cannot contain: . # $ [ ]
+     * Firebase paths cannot contain: . # $ [ ] / ' " \ and control characters
      * @param input The string to sanitize
      * @return Sanitized string safe for Firebase paths
      */
     private String sanitizeForFirebase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
         return input
                 .replace(".", "_")
                 .replace("#", "_")
                 .replace("$", "_")
                 .replace("[", "_")
-                .replace("]", "_");
+                .replace("]", "_")
+                .replace("/", "_")
+                .replace("'", "_")
+                .replace("\"", "_")
+                .replace("\\", "_")
+                // Remove control characters (ASCII 0-31 and 127)
+                .replaceAll("[\\p{Cntrl}]", "")
+                // Trim whitespace
+                .trim();
     }
 
 
@@ -74,21 +86,21 @@ public class FirebaseEventDataWrite {
                         Log.d("FireBaseBandDataWrite", "showsAttendedArrayData - " + data);
                     }
 
-                    //index = index.replaceAll("[^:a-zA-Z0-9_-]", "");
-                    bandName = bandName.replaceAll("[^a-zA-Z0-9_-]", "");
-                    location = location.replaceAll("[^a-zA-Z0-9_-]", "");
-                    startTimeHour = startTimeHour.replaceAll("[^a-zA-Z0-9_-]", "");
-                    startTimeMin = startTimeMin.replaceAll("[^a-zA-Z0-9_-]", "");
-                    eventType = eventType.replaceAll("[^a-zA-Z0-9_-]", "");
-
                     if (indexArray.length == 6) {
                         eventYear = indexArray[5];
                     } else {
                         continue;
                     }
 
+                    // Sanitize index for Firebase path (contains band name which may have invalid characters)
+                    String sanitizedIndex = sanitizeForFirebase(index);
+
                     String attendedStatus = showsAttendedArray.get(index);
                     Log.d("FireBaseBandDataWrite", "showsAttendedArray - " + showsAttendedArray.get(index));
+                    
+                    // Store both original and sanitized data for reference
+                    eventData.put("originalIdentifier", index); // Original identifier for reference
+                    eventData.put("sanitizedKey", sanitizedIndex); // Sanitized key for debugging
                     eventData.put("bandName", bandName);
                     eventData.put("location", location);
                     eventData.put("startTimeHour", startTimeHour);
@@ -96,10 +108,9 @@ public class FirebaseEventDataWrite {
                     eventData.put("eventType", eventType);
                     eventData.put("status", attendedStatus);
 
-                    Log.d("FireBaseBandDataWrite", "Writing band event data - " + index + "-" + eventData.toString());
+                    Log.d("FireBaseBandDataWrite", "Writing band event data - " + index + " -> " + sanitizedIndex + " - " + eventData.toString());
 
-                    // Sanitize index for Firebase path (contains band name which may have invalid characters)
-                    String sanitizedIndex = sanitizeForFirebase(index);
+                    // Use sanitized index for Firebase path
                     mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(sanitizedIndex).setValue(eventData);
                 }
                 //FirebaseDatabase.getInstance().goOffline();

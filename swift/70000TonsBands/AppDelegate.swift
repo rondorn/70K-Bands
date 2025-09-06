@@ -718,8 +718,119 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("☁️ iCloud sync completed")
         }
         
-        // Bulk image loading - ensure this runs in parallel with other background tasks
-        print("🔄 About to dispatch image loading to background queue")
+        // Gate bulk operations behind network test - never run heavy operations in bad network
+        print("🌐 GATED BULK OPERATIONS: Testing network before bulk downloads")
+        self.performBulkOperationsWithNetworkGating()
+        
+        // End background task after a delay (give time for operations to complete)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            if backgroundTask != .invalid {
+                print("🔄 Ending background task")
+                application.endBackgroundTask(backgroundTask)
+                backgroundTask = .invalid
+            }
+        }
+        
+        //Messaging.messaging().disconnect()
+        print("Disconnected from FCM.")
+        // reportData() is now gated behind network test in performBulkOperationsWithNetworkGating()
+    }
+
+    // MARK: - Network-Gated Bulk Operations
+    
+    /// Performs network test first, then executes bulk operations (images, notes, Firebase) only if network is good
+    /// This prevents heavy operations from running in poor network conditions and consuming resources
+    private func performBulkOperationsWithNetworkGating() {
+        print("🌐 NETWORK GATING: Starting REAL network test before bulk operations")
+        
+        // Run network test on background queue to never block
+        DispatchQueue.global(qos: .utility).async {
+            print("🌐 NETWORK GATING: Performing real HTTP request to test network quality")
+            
+            // ROBUST NETWORK TEST: Do actual HTTP request instead of relying on cached values
+            let isNetworkGood = self.performRobustNetworkTest()
+            
+            print("🌐 NETWORK GATING: Robust network test completed - result: \(isNetworkGood)")
+            
+            if isNetworkGood {
+                print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
+                self.performBulkImageDownload()
+                self.performBulkDescriptionDownload()
+                self.performFirebaseReporting()
+            } else {
+                print("🌐 NETWORK GATING: ❌ Network is poor/down - skipping ALL bulk operations")
+                print("🌐 NETWORK GATING: This should prevent bulk operations in 100% packet loss scenarios")
+            }
+        }
+    }
+    
+    /// Performs a robust network test with actual HTTP request - not cached values
+    /// This properly detects 100% packet loss and poor network conditions
+    /// - Returns: true if network is good enough for bulk operations, false otherwise
+    private func performRobustNetworkTest() -> Bool {
+        print("🌐 ROBUST TEST: Starting real HTTP request to test network")
+        
+        // Test with a lightweight, fast endpoint
+        guard let url = URL(string: "https://www.google.com/generate_204") else {
+            print("🌐 ROBUST TEST: ❌ Invalid test URL")
+            return false
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 5.0 // 5 second timeout for bulk operations test
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        var testResult = false
+        
+        print("🌐 ROBUST TEST: Making HTTP request to \(url.absoluteString)")
+        let startTime = Date()
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            let duration = Date().timeIntervalSince(startTime)
+            
+            if let error = error {
+                print("🌐 ROBUST TEST: ❌ Network error after \(String(format: "%.2f", duration))s: \(error.localizedDescription)")
+                if error.localizedDescription.contains("timed out") {
+                    print("🌐 ROBUST TEST: ❌ TIMEOUT - This indicates poor network or 100% packet loss")
+                }
+                testResult = false
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("🌐 ROBUST TEST: ✅ HTTP response received after \(String(format: "%.2f", duration))s: \(httpResponse.statusCode)")
+                // Google's generate_204 returns 204 No Content on success
+                testResult = (httpResponse.statusCode == 204 || httpResponse.statusCode == 200)
+                if testResult {
+                    print("🌐 ROBUST TEST: ✅ Network is good for bulk operations")
+                } else {
+                    print("🌐 ROBUST TEST: ❌ Unexpected HTTP status: \(httpResponse.statusCode)")
+                }
+            } else {
+                print("🌐 ROBUST TEST: ❌ No response received")
+                testResult = false
+            }
+            
+            semaphore.signal()
+        }
+        
+        task.resume()
+        
+        // Wait for test to complete with timeout
+        let timeoutResult = semaphore.wait(timeout: .now() + 6.0)
+        if timeoutResult == .timedOut {
+            print("🌐 ROBUST TEST: ❌ SEMAPHORE TIMEOUT - Network test took too long, assuming bad network")
+            task.cancel()
+            testResult = false
+        }
+        
+        print("🌐 ROBUST TEST: Final result: \(testResult ? "NETWORK GOOD" : "NETWORK BAD/DOWN")")
+        return testResult
+    }
+    
+    /// Performs bulk image download - only called after network test passes
+    private func performBulkImageDownload() {
+        print("🖼️ BULK IMAGE DOWNLOAD: Starting image download (network verified)")
+        
         DispatchQueue.global(qos: .userInitiated).async {
             print("🖼️ Image loading background queue started")
             
@@ -756,9 +867,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             print("🖼️ Background image loading completed")
         }
+    }
+    
+    /// Performs bulk description/notes download - only called after network test passes
+    private func performBulkDescriptionDownload() {
+        print("📝 BULK DESCRIPTION DOWNLOAD: Starting description download (network verified)")
         
-        // Bulk description loading
-        print("🔄 About to dispatch description loading to background queue")
         DispatchQueue.global(qos: .userInitiated).async {
             print("📝 Description loading background queue started")
             print("📝 Starting bulk description loading")
@@ -766,36 +880,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // Download all missing descriptions and replace obsolete cached files
             self.bandDescriptions.downloadAllDescriptionsOnAppExit()
             
-            // Check internet availability before proceeding
-            let internetAvailable = isInternetAvailable()
-            print("📝 Internet available: \(internetAvailable)")
-            
-            if !internetAvailable {
-                // DEADLOCK FIX: Never block main thread with sleep during app startup
-                if Thread.isMainThread {
-                    print("🔓 DEADLOCK FIX: Main thread detected - using non-blocking network wait")
-                    DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 5.0) {
-                        let internetAfterWait = isInternetAvailable()
-                        print("📝 Internet available after delayed check: \(internetAfterWait)")
-                        if !internetAfterWait {
-                            print("⚠️ Still no internet - skipping description bulk loading")
-                            return
-                        }
-                        // Continue with description loading on background thread if internet becomes available
-                    }
-                    return // Exit early when no internet, background task will handle retry
-                } else {
-                    print("⚠️ No internet available - waiting 5 seconds for network test to complete")
-                    Thread.sleep(forTimeInterval: 5.0) // Safe on background thread
-                    let internetAfterWait = isInternetAvailable()
-                    print("📝 Internet available after wait: \(internetAfterWait)")
-                    
-                    if !internetAfterWait {
-                        print("⚠️ Still no internet - skipping description bulk loading")
-                        return
-                    }
-                }
-            }
+            // Since network was already verified, we can proceed directly
+            print("📝 Network already verified - proceeding with description downloads")
             
             // Ensure description map is loaded before bulk loading
             print("📝 Loading description map file...")
@@ -814,19 +900,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             self.bandDescriptions.getAllDescriptions()
             print("📝 getAllDescriptions() allINotes call completed")
         }
+    }
+    
+    /// Performs Firebase reporting - only called after network test passes
+    private func performFirebaseReporting() {
+        print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified)")
         
-        // End background task after a delay (give time for operations to complete)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
-            if backgroundTask != .invalid {
-                print("🔄 Ending background task")
-                application.endBackgroundTask(backgroundTask)
-                backgroundTask = .invalid
-            }
+        DispatchQueue.global(qos: .utility).async {
+            print("🔥 Firebase reporting background queue started")
+            // Since network was already verified, we can proceed directly
+            self.reportData()
+            print("🔥 Firebase reporting completed")
         }
-        
-        //Messaging.messaging().disconnect()
-        print("Disconnected from FCM.")
-        reportData()
     }
 
 
