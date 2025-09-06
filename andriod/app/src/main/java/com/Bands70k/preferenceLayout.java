@@ -42,7 +42,6 @@ import java.util.zip.ZipInputStream;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static android.app.PendingIntent.getActivity;
-import static com.Bands70k.staticVariables.PERMISSIONS_STORAGE;
 import static com.Bands70k.staticVariables.context;
 import static com.Bands70k.staticVariables.eventYearArray;
 import static com.Bands70k.staticVariables.listState;

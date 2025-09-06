@@ -1,6 +1,5 @@
 package com.Bands70k;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -35,12 +34,6 @@ public class staticVariables {
 
     private static File eventYearFile;
 
-    // Storage Permissions
-    public static final int REQUEST_EXTERNAL_STORAGE = 1;
-    public static String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
 
 
 
@@ -384,27 +377,6 @@ public class staticVariables {
         venueLocation.put("Boleros Lounge", "Deck 4");
     }
 
-    /**
-     * Verifies and requests storage permissions for the given activity.
-     * @param activity The activity to request permissions for.
-     */
-    public static void verifyStoragePermissions(Activity activity){
-
-        // Check if we have write permission
-        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if(permission != PackageManager.PERMISSION_GRANTED)
-
-        {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
-
-    }
 
     /**
      * Gets the icon for a given event type.

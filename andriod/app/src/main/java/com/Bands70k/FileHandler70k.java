@@ -3,7 +3,6 @@ package com.Bands70k;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -32,10 +31,6 @@ public class FileHandler70k {
 
 
     public static final String directoryName = "/70kBands/";
-    public static final String oldDirectoryName = "/.70kBands/";
-
-
-    public static final String oldRootDir = Environment.getExternalStorageDirectory().toString();
 
     public static final File baseDirectory = new File(showBands.newRootDir + directoryName);
 
@@ -54,7 +49,6 @@ public class FileHandler70k {
 
     public static final File bandListCache = new File(showBands.newRootDir + directoryName + "bandListCache.data");
 
-    public static final File oldBandRankings = new File(oldRootDir + oldDirectoryName + "bandRankings.txt");
 
     public static final File rootNoMedia = new File(showBands.newRootDir + directoryName + ".nomedia");
     public static final File mediaNoMedia = new File(showBands.newRootDir + imageDirectory + ".nomedia");
@@ -64,56 +58,12 @@ public class FileHandler70k {
 
 
     /**
-     * Constructor for FileHandler70k. Ensures required directories exist and migrates old files.
+     * Constructor for FileHandler70k. Ensures required directories exist.
      */
     public FileHandler70k(){
         check70KDirExists();
-        this.moveOldFiles();
     }
 
-    /**
-     * Moves old files from legacy locations to the current directory structure.
-     */
-    private static void moveOldFiles(){
-
-        final File oldAlertData = new File(Environment.getExternalStorageDirectory() + "/70kAlertData.csv");
-        final File oldAlertFlag = new File(Environment.getExternalStorageDirectory() + "/70kAlertFlag.csv");
-        final File oldBandInfo = new File(Environment.getExternalStorageDirectory() + "/70kbandInfo.csv");
-        final File oldBandPrefs = new File(Environment.getExternalStorageDirectory() + "/70kbandPreferences.csv");
-        final File oldbandRankings = new File(Environment.getExternalStorageDirectory() + "/bandRankings.txt");
-        final File oldbandRankingsBk = new File(Environment.getExternalStorageDirectory() + "/bandRankings.bk");
-        final File oldSchedule = new File(Environment.getExternalStorageDirectory() + "/70kScheduleInfo.csv");
-
-        if (oldAlertData.exists()){
-            oldAlertData.renameTo(alertData);
-        }
-        if (oldAlertFlag.exists()){
-            oldAlertFlag.delete();
-        }
-        if (oldBandInfo.exists()){
-            oldBandInfo.renameTo(bandInfo);
-        }
-        if (oldBandPrefs.exists()){
-            oldBandPrefs.renameTo(bandPrefs);
-        }
-        if (oldbandRankings.exists()){
-            oldbandRankings.renameTo(bandRankings);
-        }
-        if (oldbandRankingsBk.exists()){
-            oldbandRankingsBk.renameTo(bandRankingsBk);
-        }
-        if (oldSchedule.exists()){
-            oldSchedule.renameTo(schedule);
-        }
-
-        if (oldBandRankings.exists()){
-            if (bandRankings.exists()){
-                bandRankings.delete();
-            }
-            oldBandRankings.renameTo(bandRankings);
-        }
-
-    }
 
 
     /**
