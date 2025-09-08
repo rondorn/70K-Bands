@@ -925,7 +925,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
-        print("AppDelegate: App entering foreground - performing background data refresh")
+        print("AppDelegate: App entering foreground - using same robust refresh as pull-to-refresh")
         
         // Move all potentially blocking operations to background thread
         DispatchQueue.global(qos: .utility).async {
@@ -933,10 +933,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("iCloud: App entering foreground, forcing iCloud synchronization in background")
             NSUbiquitousKeyValueStore.default.synchronize()
             
-            // Post background data refresh notification on main thread after sync completes
+            // Post foreground refresh notification on main thread after sync completes
             DispatchQueue.main.async {
-                print("iCloud: Foreground sync complete, posting background data refresh notification")
-                NotificationCenter.default.post(name: Notification.Name("BackgroundDataRefresh"), object: nil)
+                print("iCloud: Foreground sync complete, posting foreground refresh notification")
+                NotificationCenter.default.post(name: Notification.Name("ForegroundRefresh"), object: nil)
             }
         }
     }
