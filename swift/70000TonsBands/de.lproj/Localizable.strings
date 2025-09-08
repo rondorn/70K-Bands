@@ -81,7 +81,7 @@
 
 // Default description text
 "DefaultDescription70K" = "Kommentartext ist noch nicht verfügbar. Bitte warten Sie, bis Aaron seine Beschreibung hinzufügt. Sie können Ihre eigene hinzufügen, wenn Sie möchten, aber wenn seine verfügbar wird, wird sie Ihre Daten nicht überschreiben und nicht angezeigt werden.";
-"DefaultDescriptionMDF" = "Keine Notizen sind derzeit verfügbar, fügen Sie gerne Ihre eigenen hinzu.";
+"DefaultDescriptionMDF" = "Klicken Sie, um Ihre eigenen Notizen hinzuzufügen";
 
 "disableAttendedPrompt" = "Deaktivieren Sie diese Eingabeaufforderung";
 

@@ -264,6 +264,10 @@
     <string name="UserIdentifier">Käyttäjätunnus</string>
     <string name="Build">Versio</string>
     
+    <!-- Default description text -->
+    <string name="DefaultDescription70K">Kommenttiteksti ei ole vielä saatavilla. Odota, että Aaron lisää kuvauksensa. Voit lisätä omasi, jos haluat, mutta kun hänen kuvauksensa tulee saataville, se ei korvaa tietojasi eikä näy.</string>
+    <string name="DefaultDescriptionMDF">Kaksoisnapsauta lisätäksesi omat muistiinpanot</string>
+    
     <!-- Localized share text -->
     <string name="Choices">Valinnat</string>
     <string name="MustSeeBands">Pakollisia Bändejä</string>

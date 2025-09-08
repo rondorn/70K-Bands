@@ -82,6 +82,10 @@
 "AlertPreferences" = "Hälytysasetukset";
 "PreferenceHeader" = "Asetukset";
 
+// Default description text
+"DefaultDescription70K" = "Kommenttiteksti ei ole vielä saatavilla. Odota, että Aaron lisää kuvauksensa. Voit lisätä omasi, jos haluat, mutta kun hänen kuvauksensa tulee saataville, se ei korvaa tietojasi eikä näy.";
+"DefaultDescriptionMDF" = "Napsauta lisätäksesi omat muistiinpanot";
+
 "disableAttendedPrompt" = "Poista tämä kehote käytöstä";
 
 "EndofList" = "Luettelon loppu";

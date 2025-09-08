@@ -47,7 +47,7 @@ public class MyFcmListenerService extends FirebaseMessagingService {
     private void ShowNotification(String click_action) {
 
         Intent intent = new Intent(this, showBands.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 
         intent.putExtra("messageString", messageString);
 
