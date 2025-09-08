@@ -120,6 +120,9 @@ struct FestivalConfig {
     let specialEventsEnabledDefault: Bool
     let unofficalEventsEnabledDefault: Bool
     
+    // Comments not available message configuration
+    let commentsNotAvailableTranslationKey: String
+    
     private init() {
         print("🏛️ [MDF_DEBUG] FestivalConfig init() called")
         #if FESTIVAL_70K
@@ -157,6 +160,9 @@ struct FestivalConfig {
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
+        
+        // 70K comments not available message
+        self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         
         #elseif FESTIVAL_MDF
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
@@ -196,6 +202,9 @@ struct FestivalConfig {
         self.specialEventsEnabledDefault = false
         self.unofficalEventsEnabledDefault = false
         
+        // MDF comments not available message
+        self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
+        
         #else
         print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
         // Default to 70K configuration if no macro is defined
@@ -231,6 +240,9 @@ struct FestivalConfig {
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
+        
+        // Default comments not available message (same as 70K)
+        self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         #endif
         
         print("🏛️ [MDF_DEBUG] FestivalConfig init() completed")
@@ -274,6 +286,11 @@ struct FestivalConfig {
         #else
         return NSLocalizedString("DefaultDescription70K", comment: "Default description fallback")
         #endif
+    }
+    
+    /// Returns the localized comments not available message for the current festival
+    func getCommentsNotAvailableMessage() -> String {
+        return NSLocalizedString(commentsNotAvailableTranslationKey, comment: "Comments not available message for current festival")
     }
     
     // MARK: - Venue Helper Methods

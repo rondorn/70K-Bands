@@ -80,7 +80,7 @@
 
 // Default description text
 "DefaultDescription70K" = "El texto del comentario aún no está disponible. Por favor, espera a que Aaron agregue su descripción. Puedes agregar la tuya si lo deseas, pero cuando la suya esté disponible, no sobrescribirá tus datos y no se mostrará.";
-"DefaultDescriptionMDF" = "No hay notas disponibles en este momento, siéntete libre de agregar las tuyas.";
+"DefaultDescriptionMDF" = "Haz clic para agregar tus propias notas";
 
 "disableAttendedPrompt" = "Deshabilitar este aviso";
 

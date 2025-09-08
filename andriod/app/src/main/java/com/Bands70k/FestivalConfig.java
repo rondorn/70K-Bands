@@ -76,6 +76,9 @@ public class FestivalConfig {
     public final boolean specialEventsEnabledDefault;
     public final boolean unofficalEventsEnabledDefault;
     
+    // Comments not available message configuration
+    public final int commentsNotAvailableStringResourceId;
+    
     /**
      * Private constructor that initializes configuration based on build variant
      */
@@ -99,7 +102,7 @@ public class FestivalConfig {
             this.firebaseConfigFile = "google-services-mdf.json"; // Will use placeholder for now
             
             this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20250824";
+            this.subscriptionTopicTest = "Testing20250908";
             this.subscriptionUnofficalTopic = "unofficalEvents";
             
             // MDF-specific URLs (will be configured via pointer file)
@@ -130,6 +133,9 @@ public class FestivalConfig {
             this.specialEventsEnabledDefault = false;
             this.unofficalEventsEnabledDefault = false;
             
+            // MDF comments not available message
+            this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
+            
         } else {
             // Default to 70K configuration
             this.festivalName = "70,000 Tons of Metal";
@@ -143,7 +149,7 @@ public class FestivalConfig {
             this.firebaseConfigFile = "google-services-70k.json";
             
             this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20250824";
+            this.subscriptionTopicTest = "Testing20250908";
             this.subscriptionUnofficalTopic = "unofficalEvents";
             
             // 70K URLs will be determined by pointer file, these are fallbacks
@@ -172,6 +178,9 @@ public class FestivalConfig {
             this.meetAndGreetsEnabledDefault = true;
             this.specialEventsEnabledDefault = true;
             this.unofficalEventsEnabledDefault = true;
+            
+            // 70K comments not available message
+            this.commentsNotAvailableStringResourceId = R.string.DefaultDescription70K;
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");
@@ -242,6 +251,15 @@ public class FestivalConfig {
         } else {
             return context.getString(R.string.DefaultDescription70K);
         }
+    }
+    
+    /**
+     * Returns the localized comments not available message for the current festival
+     * @param context Android context for accessing string resources
+     * @return Localized comments not available message
+     */
+    public String getCommentsNotAvailableMessage(android.content.Context context) {
+        return context.getString(commentsNotAvailableStringResourceId);
     }
     
     /**
