@@ -314,6 +314,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleForegroundRefresh), name: Notification.Name("ForegroundRefresh"), object: nil)
         
         // Listen for when returning from preferences screen
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
@@ -3096,6 +3097,47 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     print("📱 Updating UI after background data refresh")
                     self.refreshBandList(reason: "Background data refresh from foreground")
                 }
+            }
+        }
+    }
+    
+    @objc func handleForegroundRefresh() {
+        print("MasterViewController: Foreground refresh triggered - using same robust system as pull-to-refresh")
+        
+        // Prevent conflicts with existing data collection processes
+        guard !isLoadingBandData, !bandNameHandle.readingBandFile else {
+            print("MasterViewController: Skipping foreground refresh - data collection already in progress")
+            return
+        }
+        
+        // Check if we're in the middle of first launch data loading
+        guard !cacheVariables.justLaunched || (!bandNameHandle.getBandNames().isEmpty && !schedule.schedulingData.isEmpty) else {
+            print("MasterViewController: Skipping foreground refresh - first launch still in progress")
+            return
+        }
+        
+        print("🔄 FOREGROUND-REFRESH: Using same robust pattern as pull-to-refresh")
+        
+        // STEP 1: Refresh from cache first (immediate UI update)
+        print("🔄 FOREGROUND-REFRESH: Step 1 - Showing cached data immediately")
+        refreshBandList(reason: "Foreground refresh - immediate cached display")
+        
+        // STEP 2: Start background network test and data collection (same as pull-to-refresh)
+        print("🔄 FOREGROUND-REFRESH: Step 2 - Starting background network test")
+        
+        // Use the same robust network test pattern as pull-to-refresh
+        performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+            guard let self = self else { return }
+            
+            if networkIsGood {
+                print("🔄 FOREGROUND-REFRESH: ✅ Network test passed - performing complete fresh data collection in background")
+                
+                // Do complete fresh data collection in background (same as pull-to-refresh)
+                self.performFreshDataCollection(reason: "Foreground refresh - network verified background update") 
+                
+            } else {
+                print("🔄 FOREGROUND-REFRESH: ❌ Network test failed - staying with cached data")
+                print("🔄 FOREGROUND-REFRESH: Background update skipped, user sees cached data")
             }
         }
     }
