@@ -306,33 +306,30 @@ func getPointerUrlData(keyValue: String) -> String {
         inTestEnvironment = true;
     #endif
     
-    // CRITICAL FIX: Use the resolved eventYear for data lookup instead of "Current"
-    // The pointer data is stored under the actual year (e.g., "2025") not under "Current"
+    // Use the user's preference as the pointer index (e.g., "Current", "2025", etc.)
     var pointerIndex = getScheduleUrl()
     
-    // If we're looking for URLs (not eventYear itself), we need to use the resolved year
-    if actualKeyValue != "eventYear" && eventYear > 0 {
-        pointerIndex = String(eventYear)
-        print("getPointerUrlData: Using resolved eventYear \(eventYear) as pointerIndex for \(actualKeyValue)")
-    }
-    
     // IMPROVED CACHING: Check memory cache first with proper cache key
-    // Create a cache key that includes both the pointer index and the actual key
+    // CRITICAL: Skip cache for eventYear lookups to avoid stale pointer issues
     let cacheKey = "\(pointerIndex):\(actualKeyValue)"
-    storePointerLock.sync() {
-        if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
-            dataString = cachedValue
-            print("getPointerUrlData: ✅ FAST CACHE HIT for \(cacheKey) = \(dataString)")
+    if actualKeyValue != "eventYear" {
+        storePointerLock.sync() {
+            if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
+                dataString = cachedValue
+                print("getPointerUrlData: ✅ FAST CACHE HIT for \(cacheKey) = \(dataString)")
+            }
         }
+        
+        // If we have valid cached data, return it immediately (no network call needed)
+        if !dataString.isEmpty {
+            print("getPointerUrlData: ✅ Returning cached data for \(actualKeyValue): \(dataString)")
+            return dataString
+        }
+    } else {
+        print("getPointerUrlData: ⚠️ Skipping cache for eventYear lookup to ensure fresh resolution")
     }
     
-    // If we have valid cached data, return it immediately (no network call needed)
-    if !dataString.isEmpty {
-        print("getPointerUrlData: ✅ Returning cached data for \(actualKeyValue): \(dataString)")
-        return dataString
-    }
-    
-    print("getPointerUrlData: ⚠️ Cache miss for \(cacheKey), will need to load pointer data")
+    print("getPointerUrlData: ⚠️ Cache miss for \(actualKeyValue), will need to load pointer data")
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
 
     print ("Files were Done setting 2 \(pointerIndex)")
@@ -400,8 +397,19 @@ func getPointerUrlData(keyValue: String) -> String {
         if (httpData.isEmpty == false){
             
             let dataArray = httpData.components(separatedBy: "\n")
+            // Safety check: Ensure we have valid data to process
+            guard !dataArray.isEmpty else {
+                print("getPointerUrlData: ⚠️ Data array is empty, skipping processing")
+                return getDefaultPointerValue(for: keyValue)
+            }
+            
             // Optimize: Process only necessary data for current year to avoid excessive loading
-            pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
+            do {
+                pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
+            } catch {
+                print("getPointerUrlData: ⚠️ Error processing pointer data: \(error)")
+                return getDefaultPointerValue(for: keyValue)
+            }
             
             // Save eventYearArray to disk once after processing all HTTP records (synchronous to ensure year is written before further processing)
             print("eventYearsInfoFile: Saving after processing HTTP pointer data")
@@ -465,12 +473,15 @@ func getPointerUrlData(keyValue: String) -> String {
             let userYearPreference = getArtistUrl()
             print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: User year preference: '\(userYearPreference)'")
             print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: userYearPreference.isYearString = \(userYearPreference.isYearString)")
+            print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: About to resolve eventYear for preference '\(userYearPreference)'")
+            print("🎯 [YEAR_RESOLUTION_DEBUG] Looking up '\(userYearPreference)' in pointer data")
+            print("🎯 [YEAR_RESOLUTION_DEBUG] Available pointer keys: \(Array(pointerValues.keys))")
             print("getPointerUrlData: User year preference: \(userYearPreference)")
             
             // CRITICAL FIX: If user selected a specific year (like "2025"), use that directly
             // This handles cases where the pointer file might not have all year entries
             if userYearPreference.isYearString && userYearPreference != "Current" {
-                print("getPointerUrlData: User selected specific year \(userYearPreference), using it directly")
+                print("🎯 [YEAR_RESOLUTION_DEBUG] ✅ User selected specific year \(userYearPreference), using it directly")
                 dataString = userYearPreference
             } else {
                 // For "Current" or other non-year preferences, look up in pointer data
@@ -481,10 +492,11 @@ func getPointerUrlData(keyValue: String) -> String {
                 dataString = pointerValues[userYearPreference]?["eventYear"] ?? ""
                 
                 if !dataString.isEmpty {
-                    print("getPointerUrlData: Found eventYear \(dataString) for preference \(userYearPreference)")
+                    print("🎯 [YEAR_RESOLUTION_DEBUG] ✅ Found eventYear \(dataString) for preference \(userYearPreference)")
                 } else {
                     // Fallback to Current if user preference has no data
-                    print("getPointerUrlData: No eventYear found for preference \(userYearPreference), trying Current")
+                    print("🎯 [YEAR_RESOLUTION_DEBUG] ❌ No eventYear found for preference \(userYearPreference), trying Current")
+                    print("🎯 [YEAR_RESOLUTION_DEBUG] pointerValues[\(userYearPreference)] = \(pointerValues[userYearPreference] ?? [:])")
                     dataString = pointerValues["Current"]?["eventYear"] ?? ""
                     
                     if !dataString.isEmpty {
@@ -710,6 +722,11 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
     }
     
     for record in dataArray {
+        // Skip empty records to prevent crashes
+        guard !record.isEmpty && record.contains("::") else {
+            continue
+        }
+        
         var valueArray = record.components(separatedBy: "::")
         
         if (valueArray.isEmpty == false && valueArray.count >= 3){
@@ -801,8 +818,14 @@ func setupDefaults() {
     
     // Trigger background update of schedule URL for next access (non-blocking)
     DispatchQueue.global(qos: .background).async {
-        let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
-        print("🚀 LAUNCH OPTIMIZATION: Background resolved scheduleURL = \(scheduleUrl)")
+        // Add safety delay to ensure app launch is complete before background operations
+        Thread.sleep(forTimeInterval: 1.0)
+        do {
+            let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
+            print("🚀 LAUNCH OPTIMIZATION: Background resolved scheduleURL = \(scheduleUrl)")
+        } catch {
+            print("🚀 LAUNCH OPTIMIZATION: Background scheduleURL resolution failed: \(error)")
+        }
     }
 
     // Priority data migration to Core Data completed - utility removed

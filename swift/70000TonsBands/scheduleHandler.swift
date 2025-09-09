@@ -133,13 +133,8 @@ open class scheduleHandler {
         readFiltersFile()
         print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
         
-        // CRITICAL: Update eventYear using NON-BLOCKING resolution for launch optimization
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Getting non-blocking eventYear resolution")
-        let newEventYear = ensureYearResolvedAtLaunch()
-        if newEventYear != eventYear {
-            print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
-            eventYear = newEventYear
-        }
+        // Use eventYear as-is (should be set correctly during app launch or year change)
+        print("🔍 [SCHEDULE_DEBUG] Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // Thread-safe dictionary operations
         let isOnScheduleQueue = DispatchQueue.getSpecific(key: scheduleHandlerQueueKey) != nil
@@ -655,12 +650,8 @@ open class scheduleHandler {
             return
         }
         
-        // CRITICAL: Update eventYear from pointer data like bandNamesHandler does
-        let newEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if newEventYear != eventYear {
-            print("🔄 populateSchedule: Updating eventYear from \(eventYear) to \(newEventYear)")
-            eventYear = newEventYear
-        }
+        // Use eventYear as-is (should be set correctly during app launch or year change)
+        print("🔄 populateSchedule: Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         print("[YEAR_CHANGE_DEBUG] Loading schedule data for year \(eventYear), forceDownload: \(forceDownload)")
         isLoadingSchedule = true
