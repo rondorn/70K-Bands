@@ -50,12 +50,8 @@ open class bandNamesHandler {
         
         print("🔄 Loading bands from Core Data...")
         
-        // CRITICAL: Update eventYear from pointer data like scheduleHandler does
-        let newEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if newEventYear != eventYear {
-            print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
-            eventYear = newEventYear
-        }
+        // Use eventYear as-is (should be set correctly during app launch or year change)
+        print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         staticBandName.sync {
             self.bandNames = [String: [String: String]]()
@@ -116,12 +112,8 @@ open class bandNamesHandler {
     func loadCachedDataImmediately() {
         print("🚀 bandNamesHandler: Loading cached data immediately (no network calls)")
         
-        // Ensure year is synchronized
-        let newEventYear = ensureYearResolvedAtLaunch()
-        if newEventYear != eventYear {
-            print("🔄 Updating eventYear from \(eventYear) to \(newEventYear)")
-            eventYear = newEventYear
-        }
+        // Use eventYear as-is (should be set correctly during app launch or year change)
+        print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // Load from Core Data cache immediately
         loadCacheFromCoreData()
@@ -284,7 +276,7 @@ open class bandNamesHandler {
         
         // Only download from network if explicitly forced
         if forceDownload && isInternetAvailable() == true {
-            eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+            // Use eventYear as-is (should be set correctly during app launch or year change)
             print("DEBUG_MARKER: Starting CSV download process (Core Data backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             
@@ -427,7 +419,7 @@ open class bandNamesHandler {
                 print("Band data retry attempt \(retryCount)/\(maxRetries)")
                 
                 if isInternetAvailable() == true {
-                    eventYear = Int(getPointerUrlData(keyValue: "eventYear"))!
+                    // Use eventYear as-is (should be set correctly during app launch or year change)
                     let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
                     print("Retrying: Getting band data from " + artistUrl + " (attempt \(retryCount))");
                     
@@ -456,9 +448,8 @@ open class bandNamesHandler {
                         self.cacheLoaded = false
                         print("DEBUG_MARKER: Reset cacheLoaded flag after CSV import")
                         
-                        // Ensure eventYear is synchronized before loading cache
-                        eventYear = ensureYearResolvedAtLaunch()
-                        print("DEBUG_MARKER: Synchronized eventYear to \(eventYear) before loading cache")
+                        // Use eventYear as-is (should be set correctly during app launch or year change)
+                        print("DEBUG_MARKER: Using eventYear = \(eventYear) (set by proper resolution chain)")
                         
                         loadCacheFromCoreData()
                         staticBandName.sync {
