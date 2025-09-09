@@ -400,10 +400,10 @@ class PreferencesViewModel: ObservableObject {
             print("⚠️ Failed to update eventYearFile: \(error)")
         }
         
-        // Now setup defaults will read the correct year
+        // Setup URLs but do NOT call setupDefaults() during year changes (it would override eventYear)
         setupCurrentYearUrls()
-        setupDefaults()
         eventYear = targetEventYear
+        print("🎯 Set eventYear = \(eventYear) during year change (skipped setupDefaults to avoid override)")
         
         print("🎯 Year pointers updated early - artistUrl: \(getArtistUrl()), scheduleUrl: \(getScheduleUrl()), eventYear: \(eventYear)")
         
