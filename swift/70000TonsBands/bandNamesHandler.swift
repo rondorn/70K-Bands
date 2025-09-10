@@ -202,11 +202,20 @@ open class bandNamesHandler {
         print("Done Loading bandName Data cache")
     }
     
-    /// Clears the static cache of band names.
+    /// Clears the static cache of band names - Thread Safe
     func clearCachedData() {
+        // Use barrier to ensure exclusive access during cache clearing
         staticBandName.async(flags: .barrier) {
-            cacheVariables.bandNamesStaticCache = [String: [String: String]]()
+            // Clear cache in a thread-safe manner
+            cacheVariables.bandNamesStaticCache.removeAll()
+            cacheVariables.bandNamesArrayStaticCache.removeAll()
+            
+            // Clear local cache
+            self.bandNames.removeAll()
+            self.bandNamesArray.removeAll()
             self.cacheLoaded = false
+            
+            print("🧹 [CACHE_DEBUG] Band names cache cleared safely")
         }
     }
     

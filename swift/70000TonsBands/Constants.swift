@@ -1073,23 +1073,88 @@ func isInternetAvailable() -> Bool {
     return NetworkStatusManager.shared.isInternetAvailable
 }
 
+// Thread-safe queue for cache operations
+let cacheVariablesQueue = DispatchQueue(label: "com.70kbands.cacheVariables", attributes: .concurrent)
+
 struct cacheVariables {
     
     // LEGACY: These cache variables are still used by some components during Core Data transition
     // TODO: Remove once all schedule/priority operations are fully migrated to Core Data
-    static var bandPriorityStorageCache = [String:Int]()
-    static var scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
-    static var scheduleTimeStaticCache = [TimeInterval : [[String : String]]]()
     
-    static var bandNamedStaticCache = [String :[String : String]]()
-    static var attendedStaticCache = [String : String]()
-    static var bandNamesStaticCache =  [String :[String : String]]()
-    static var bandNamesArrayStaticCache = [String]()
-    static var storePointerData = [String:String]()
-    static var bandDescriptionUrlCache = [String:String]()
-    static var bandDescriptionUrlDateCache = [String:String]()
-    static var lastModifiedDate:Date? = nil;
-    static var justLaunched: Bool = true
+    // Thread-safe cache access using concurrent queue with barriers for writes
+    private static var _bandPriorityStorageCache = [String:Int]()
+    private static var _scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
+    private static var _scheduleTimeStaticCache = [TimeInterval : [[String : String]]]()
+    private static var _bandNamedStaticCache = [String :[String : String]]()
+    private static var _attendedStaticCache = [String : String]()
+    private static var _bandNamesStaticCache =  [String :[String : String]]()
+    private static var _bandNamesArrayStaticCache = [String]()
+    private static var _storePointerData = [String:String]()
+    private static var _bandDescriptionUrlCache = [String:String]()
+    private static var _bandDescriptionUrlDateCache = [String:String]()
+    private static var _lastModifiedDate: Date? = nil
+    private static var _justLaunched: Bool = true
+    
+    // Thread-safe getters and setters
+    static var bandPriorityStorageCache: [String:Int] {
+        get { return cacheVariablesQueue.sync { _bandPriorityStorageCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandPriorityStorageCache = newValue } }
+    }
+    
+    static var scheduleStaticCache: [String : [TimeInterval : [String : String]]] {
+        get { return cacheVariablesQueue.sync { _scheduleStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _scheduleStaticCache = newValue } }
+    }
+    
+    static var scheduleTimeStaticCache: [TimeInterval : [[String : String]]] {
+        get { return cacheVariablesQueue.sync { _scheduleTimeStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _scheduleTimeStaticCache = newValue } }
+    }
+    
+    static var bandNamedStaticCache: [String :[String : String]] {
+        get { return cacheVariablesQueue.sync { _bandNamedStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandNamedStaticCache = newValue } }
+    }
+    
+    static var attendedStaticCache: [String : String] {
+        get { return cacheVariablesQueue.sync { _attendedStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _attendedStaticCache = newValue } }
+    }
+    
+    static var bandNamesStaticCache: [String :[String : String]] {
+        get { return cacheVariablesQueue.sync { _bandNamesStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandNamesStaticCache = newValue } }
+    }
+    
+    static var bandNamesArrayStaticCache: [String] {
+        get { return cacheVariablesQueue.sync { _bandNamesArrayStaticCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandNamesArrayStaticCache = newValue } }
+    }
+    
+    static var storePointerData: [String:String] {
+        get { return cacheVariablesQueue.sync { _storePointerData } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _storePointerData = newValue } }
+    }
+    
+    static var bandDescriptionUrlCache: [String:String] {
+        get { return cacheVariablesQueue.sync { _bandDescriptionUrlCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandDescriptionUrlCache = newValue } }
+    }
+    
+    static var bandDescriptionUrlDateCache: [String:String] {
+        get { return cacheVariablesQueue.sync { _bandDescriptionUrlDateCache } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _bandDescriptionUrlDateCache = newValue } }
+    }
+    
+    static var lastModifiedDate: Date? {
+        get { return cacheVariablesQueue.sync { _lastModifiedDate } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _lastModifiedDate = newValue } }
+    }
+    
+    static var justLaunched: Bool {
+        get { return cacheVariablesQueue.sync { _justLaunched } }
+        set { cacheVariablesQueue.async(flags: .barrier) { _justLaunched = newValue } }
+    }
 }
 
 extension Notification.Name {

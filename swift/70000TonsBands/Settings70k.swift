@@ -11,37 +11,49 @@ import Foundation
 // MARK: - Dynamic Venue Filtering System
 // Dictionary to store venue filter settings dynamically based on FestivalConfig
 private var venueFilterSettings: [String: Bool] = [:]
+// Thread-safe access queue for venue settings
+private let venueSettingsQueue = DispatchQueue(label: "com.70kbands.venueSettings", attributes: .concurrent)
 
-// Dynamic venue filter functions
+// Dynamic venue filter functions - Thread Safe
 func getShowVenueEvents(venueName: String) -> Bool {
-    // Initialize with true if not set (default to showing all venues)
-    return venueFilterSettings[venueName.lowercased(), default: true]
+    return venueSettingsQueue.sync {
+        // Initialize with true if not set (default to showing all venues)
+        return venueFilterSettings[venueName.lowercased(), default: true]
+    }
 }
 
 func setShowVenueEvents(venueName: String, show: Bool) {
-    venueFilterSettings[venueName.lowercased()] = show
+    venueSettingsQueue.async(flags: .barrier) {
+        venueFilterSettings[venueName.lowercased()] = show
+    }
 }
 
-// Helper function to initialize venue filters from FestivalConfig
+// Helper function to initialize venue filters from FestivalConfig - Thread Safe
 func initializeVenueFilters() {
     let venues = FestivalConfig.current.getAllVenueNames()
-    for venue in venues {
-        if venueFilterSettings[venue.lowercased()] == nil {
-            venueFilterSettings[venue.lowercased()] = true // Default to showing all venues
+    venueSettingsQueue.async(flags: .barrier) {
+        for venue in venues {
+            if venueFilterSettings[venue.lowercased()] == nil {
+                venueFilterSettings[venue.lowercased()] = true // Default to showing all venues
+            }
         }
     }
 }
 
-// Helper function to get all venue filter states
+// Helper function to get all venue filter states - Thread Safe
 func getAllVenueFilterStates() -> [String: Bool] {
-    return venueFilterSettings
+    return venueSettingsQueue.sync {
+        return venueFilterSettings
+    }
 }
 
-// Helper function to set all venues to a specific state
+// Helper function to set all venues to a specific state - Thread Safe
 func setAllVenueFilters(show: Bool) {
     let venues = FestivalConfig.current.getAllVenueNames()
-    for venue in venues {
-        venueFilterSettings[venue.lowercased()] = show
+    venueSettingsQueue.async(flags: .barrier) {
+        for venue in venues {
+            venueFilterSettings[venue.lowercased()] = show
+        }
     }
 }
 
