@@ -294,7 +294,16 @@ func getPointerUrlData(keyValue: String) -> String {
     var actualKeyValue = keyValue
     if keyValue == "reportUrl" {
         actualKeyValue = getLanguageSpecificKey(keyValue: keyValue)
-        print("getPointerUrlData: Using language-specific key: \(actualKeyValue) for original key: \(keyValue)")
+        print("🎯 [STATS_DEBUG] getPointerUrlData: Using language-specific key: \(actualKeyValue) for original key: \(keyValue)")
+    }
+    
+    // Special debugging for stats/reportUrl requests
+    if keyValue.hasPrefix("reportUrl") {
+        print("🎯 [STATS_DEBUG] ========== STATS URL RESOLUTION DEBUG ==========")
+        print("🎯 [STATS_DEBUG] Original keyValue: \(keyValue)")
+        print("🎯 [STATS_DEBUG] Actual keyValue: \(actualKeyValue)")
+        print("🎯 [STATS_DEBUG] User preference (artistUrl): \(getArtistUrl())")
+        print("🎯 [STATS_DEBUG] User preference (scheduleUrl): \(getScheduleUrl())")
     }
     
     if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
@@ -591,11 +600,12 @@ func getDefaultPointerValue(for keyValue: String) -> String {
         print("🚀 LAUNCH OPTIMIZATION: Default artistUrl = \(defaultUrl)")
         return defaultUrl
         
-    case "reportUrl", "reportUrl-en", "reportUrl-es":
-        // Use a basic report URL - this is non-critical for launch
-        let defaultUrl = "https://example.com/report"
-        print("🚀 LAUNCH OPTIMIZATION: Default reportUrl = \(defaultUrl)")
-        return defaultUrl
+    case let key where key.hasPrefix("reportUrl"):
+        // For reportUrl, we should NEVER use fallbacks - always get the correct URL from pointer data
+        // If we reach here, it means the pointer resolution failed, which should not happen
+        print("🚨 ERROR: reportUrl fallback should never be used! Key: \(key)")
+        print("🚨 This indicates a critical failure in pointer data resolution")
+        return ""
         
     default:
         // For unknown keys, return empty string - will be updated in background
@@ -1008,20 +1018,23 @@ func didVersionChangeFunction(){
 
 
 /// Populates the venueLocation dictionary with mappings from venue names to deck locations.
+/// Now uses FestivalConfig instead of hardcoded values.
 func setupVenueLocations(){
     
-    venueLocation[poolVenueText] = "Deck 11"
-    venueLocation[rinkVenueText] = "Deck 3"
-    venueLocation[loungeVenueText] = "Deck 5"
-    venueLocation[theaterVenueText] = "Deck 3/4"
-    venueLocation["Sports Bar"] = "Deck 4"
-    venueLocation["Viking Crown"] = "Deck 14"
-    venueLocation["Boleros Lounge"] = "Deck 4"
-    venueLocation["Solarium"] = "Deck 11"
-    venueLocation["Ale And Anchor Pub"] = "Deck 5"
-    venueLocation["Ale & Anchor Pub"] = "Deck 5"
-    venueLocation["Bull And Bear Pub"] = "Deck 5"
-    venueLocation["Bull & Bear Pub"] = "Deck 5"
+    // Clear any existing venue locations
+    venueLocation.removeAll()
+    
+    // Populate from FestivalConfig
+    let config = FestivalConfig.current
+    for venue in config.venues {
+        venueLocation[venue.name] = venue.location
+    }
+    
+    // Legacy compatibility - also add by the old text constants
+    venueLocation[poolVenueText] = config.getVenueLocation(for: "Pool")
+    venueLocation[rinkVenueText] = config.getVenueLocation(for: "Rink")
+    venueLocation[loungeVenueText] = config.getVenueLocation(for: "Lounge")
+    venueLocation[theaterVenueText] = config.getVenueLocation(for: "Theater")
 }
 
 /// Converts an event type string to a localized version for display.

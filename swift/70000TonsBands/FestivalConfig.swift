@@ -17,14 +17,16 @@ struct Venue {
     let swiftUIColor: Color
     let goingIcon: String
     let notGoingIcon: String
+    let location: String // Deck location (e.g., "Deck 11", "TBD")
     
-    init(name: String, color: String, goingIcon: String, notGoingIcon: String) {
+    init(name: String, color: String, goingIcon: String, notGoingIcon: String, location: String) {
         self.name = name
         self.color = color
         self.uiColor = UIColor(hex: color) ?? UIColor.gray
         self.swiftUIColor = Color(hex: color)
         self.goingIcon = goingIcon
         self.notGoingIcon = notGoingIcon
+        self.location = location
     }
 }
 
@@ -148,12 +150,20 @@ struct FestivalConfig {
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"
         
-        // 70K venues: Pool, Lounge, Theater, Rink with colors blue, green, yellow, red
+        // 70K venues: All venues with their deck locations
         self.venues = [
-            Venue(name: "Pool", color: "0000FF", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox"),
-            Venue(name: "Lounge", color: "008000", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox"),
-            Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox")
+            Venue(name: "Pool", color: "0000FF", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Lounge", color: "008000", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4"),
+            Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3"),
+            Venue(name: "Sports Bar", color: "FFA500", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Viking Crown", color: "800080", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14"),
+            Venue(name: "Boleros Lounge", color: "8B4513", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Solarium", color: "20B2AA", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Ale And Anchor Pub", color: "DAA520", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Ale & Anchor Pub", color: "DAA520", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5")
         ]
         
         // 70K event type filter visibility - all enabled
@@ -188,13 +198,13 @@ struct FestivalConfig {
         self.logoUrl = "mdf_logo"
         self.shareUrl = "http://www.facebook.com/MDFBands"
         
-        // MDF venues: Real venue names (Market, Power Plant, Nevermore, Soundstage, Angels Rock)
+        // MDF venues: Real venue names with Market Street addresses
         self.venues = [
-            Venue(name: "Market", color: "008000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Power Plant", color: "0000FF", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Nevermore", color: "FF69B4", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Soundstage", color: "FF0000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Angels Rock", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox")
+            Venue(name: "Market", color: "008000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market"),
+            Venue(name: "Power Plant", color: "0000FF", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market"),
+            Venue(name: "Nevermore", color: "FF69B4", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market"),
+            Venue(name: "Soundstage", color: "FF0000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market"),
+            Venue(name: "Angels Rock", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market")
         ]
         
         // MDF event type filter visibility - all disabled
@@ -228,12 +238,20 @@ struct FestivalConfig {
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"
         
-        // Default venues (same as 70K): Pool, Lounge, Theater, Rink with colors blue, green, yellow, red
+        // Default venues (same as 70K): All venues with their deck locations
         self.venues = [
-            Venue(name: "Pool", color: "0000FF", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox"),
-            Venue(name: "Lounge", color: "008000", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox"),
-            Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox"),
-            Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox")
+            Venue(name: "Pool", color: "0000FF", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Lounge", color: "008000", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Theater", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4"),
+            Venue(name: "Rink", color: "FF0000", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3"),
+            Venue(name: "Sports Bar", color: "FFA500", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Viking Crown", color: "800080", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14"),
+            Venue(name: "Boleros Lounge", color: "8B4513", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Solarium", color: "20B2AA", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Ale And Anchor Pub", color: "DAA520", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Ale & Anchor Pub", color: "DAA520", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5")
         ]
         
         // Default event type filter visibility (same as 70K) - all enabled
@@ -331,5 +349,10 @@ struct FestivalConfig {
     /// Get venue not going icon for a given venue name
     func getVenueNotGoingIcon(for venueName: String) -> String {
         return getVenueByPartialName(venueName)?.notGoingIcon ?? "Unknown-NotGoing-wBox"
+    }
+    
+    /// Get venue location for a given venue name
+    func getVenueLocation(for venueName: String) -> String {
+        return getVenueByPartialName(venueName)?.location ?? ""
     }
 }
