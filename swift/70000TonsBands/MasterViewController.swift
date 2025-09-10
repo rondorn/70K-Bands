@@ -436,12 +436,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func showMigrationResultsDialog(_ notification: NSNotification) {
+        print("🚨 RECEIVED MIGRATION DIALOG NOTIFICATION")
+        
         guard let dialogData = notification.object as? [String: Any],
               let migratedCount = dialogData["migratedCount"] as? Int,
               let finalCount = dialogData["finalCount"] as? Int,
               let dataSources = dialogData["dataSources"] as? [String],
               let issues = dialogData["issues"] as? [String],
-              let success = dialogData["success"] as? Bool else { return }
+              let success = dialogData["success"] as? Bool else { 
+            print("❌ FAILED TO PARSE MIGRATION DIALOG DATA")
+            return 
+        }
+        
+        print("🚨 PARSED DIALOG DATA - Creating UI dialog...")
         
         DispatchQueue.main.async {
             let title = success ? "Data Migration Complete" : "Data Migration Report"
@@ -475,7 +482,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             
+            print("🚨 PRESENTING MIGRATION DIALOG TO USER")
             self.present(alert, animated: true)
+            print("🚨 MIGRATION DIALOG PRESENTED SUCCESSFULLY")
         }
     }
 

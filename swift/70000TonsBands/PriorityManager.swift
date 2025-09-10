@@ -211,11 +211,9 @@ class PriorityManager {
         var migratedCount = 0
         var dataSources: [String] = []
         
-        // Show user we're starting migration
-        if !migrationCompleted {
-            DispatchQueue.main.async {
-                self.showToast("Old data detected, migrating...")
-            }
+        // Show user we're starting migration (always show if migration logic runs)
+        DispatchQueue.main.async {
+            self.showToast("Old data detected, migrating...")
         }
         
         // Track migration issues for user reporting
@@ -280,7 +278,12 @@ class PriorityManager {
         // Final status and flag setting with user feedback
         let finalCoreDataCount = getBandsWithPriorities([1, 2, 3]).count
         
-        // Show detailed migration results to user
+        // Add final issue if we expected data but didn't find it
+        if migrationCompleted && finalCoreDataCount == 0 && !legacyDataFound {
+            migrationIssues.append("Migration marked complete but no data found in Core Data")
+        }
+        
+        // ALWAYS show detailed migration results to user (for debugging and transparency)
         DispatchQueue.main.async {
             self.showMigrationResultsDialog(
                 migratedCount: migratedCount,
@@ -301,11 +304,6 @@ class PriorityManager {
         } else {
             print("ℹ️ No legacy priority data found to migrate")
             print("ℹ️ Current Core Data count: \(finalCoreDataCount) priorities")
-            
-            // Add final issue if we expected data but didn't find it
-            if migrationCompleted && finalCoreDataCount == 0 {
-                migrationIssues.append("Migration marked complete but no data found in Core Data")
-            }
             
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
@@ -603,9 +601,16 @@ class PriorityManager {
             "success": success
         ]
         
+        print("🚨 SENDING MIGRATION DIALOG NOTIFICATION:")
+        print("🚨   - Migrated: \(migratedCount)")
+        print("🚨   - Final: \(finalCount)")
+        print("🚨   - Sources: \(dataSources)")
+        print("🚨   - Issues: \(issues.count)")
+        print("🚨   - Success: \(success)")
+        
         // Post notification with detailed data
         NotificationCenter.default.post(name: Notification.Name("ShowMigrationResultsDialog"), object: dialogData)
-        print("📱 MIGRATION DIALOG: \(migratedCount) migrated, \(issues.count) issues")
+        print("📱 MIGRATION DIALOG NOTIFICATION SENT")
     }
     
     /// Enhanced file loading with issue tracking
