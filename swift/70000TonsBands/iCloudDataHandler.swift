@@ -1161,14 +1161,13 @@ class iCloudDataHandler {
     /// Checks for data that doesn't match the new format: {priority}:{uid}:{timestamp}
     /// If old format is detected, overwrites all iCloud data with current local data
     func detectAndMigrateOldPriorityData(){
-        /*
         print("iCloudPriority: Starting detectAndMigrateOldPriorityData operation")
         
         if (checkForIcloud() == true){
             print("iCloudPriority: iCloud enabled, checking for old priority data format")
             
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                let bandNameHandle = bandNamesHandler()
+                let bandNameHandle = bandNamesHandler.shared
                 let bandNames = bandNameHandle.getBandNames()
                 var oldFormatDetected = false
                 
@@ -1211,11 +1210,24 @@ class iCloudDataHandler {
                     print("iCloudPriority: Old priority data format detected! Migrating all data...")
                     print("iCloudPriority: Overwriting all iCloud priority data with current local data")
                     
-                    // Overwrite all iCloud data with local data
-                    self.writeAllPriorityData()
-                    self.writeAllScheduleData()  // Also ensure schedule data is written during migration
-                    
-                    print("iCloudPriority: Migration completed - all iCloud priority and schedule data updated to new format")
+                    // Ensure local data is migrated to Core Data first
+                    DispatchQueue.main.async {
+                        let priorityManager = PriorityManager()
+                        let status = priorityManager.getMigrationStatus()
+                        
+                        if !status.completed || status.coreDataCount == 0 {
+                            print("iCloudPriority: Forcing local migration before iCloud sync")
+                            priorityManager.forceReMigration()
+                        }
+                        
+                        // Now sync Core Data to iCloud
+                        DispatchQueue.global(qos: .background).async {
+                            self.writeAllPriorityData()
+                            self.writeAllScheduleData()  // Also ensure schedule data is written during migration
+                            
+                            print("iCloudPriority: Migration completed - all iCloud priority and schedule data updated to new format")
+                        }
+                    }
                 } else {
                     print("iCloudPriority: No old priority data format detected, no migration needed")
                 }
@@ -1225,7 +1237,6 @@ class iCloudDataHandler {
         }
         
         print("iCloudPriority: detectAndMigrateOldPriorityData operation completed")
-         */
     }
 
     /// Detects old iCloud schedule data format and migrates by overwriting with local data
