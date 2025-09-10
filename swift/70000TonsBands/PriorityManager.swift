@@ -218,6 +218,9 @@ class PriorityManager {
             }
         }
         
+        // Track migration issues for user reporting
+        var migrationIssues: [String] = []
+        
         // 1. ROBUST: Check multiple data sources in priority order
         
         // Source 1: Legacy cache (fastest)
@@ -231,7 +234,7 @@ class PriorityManager {
         }
         
         // Source 2: Legacy files (comprehensive path search)
-        let (priorityFileData, legacyFilePath) = loadLegacyPriorityFile()
+        let (priorityFileData, legacyFilePath, fileIssues) = loadLegacyPriorityFileWithIssues()
         if !priorityFileData.isEmpty {
             print("📁 Found \(priorityFileData.count) priorities in legacy file")
             migrateExistingPriorities(from: priorityFileData)
@@ -244,6 +247,9 @@ class PriorityManager {
             dataSources.append("file")
         }
         
+        // Track any file-related issues
+        migrationIssues.append(contentsOf: fileIssues)
+        
         // Source 3: ROBUST - Check UserDefaults backup (if we have one)
         if !legacyDataFound {
             let backupData = loadUserDefaultsBackup()
@@ -253,6 +259,8 @@ class PriorityManager {
                 legacyDataFound = true
                 migratedCount += backupData.count
                 dataSources.append("backup")
+            } else {
+                migrationIssues.append("No backup data found in UserDefaults")
             }
         }
         
@@ -272,14 +280,20 @@ class PriorityManager {
         // Final status and flag setting with user feedback
         let finalCoreDataCount = getBandsWithPriorities([1, 2, 3]).count
         
+        // Show detailed migration results to user
+        DispatchQueue.main.async {
+            self.showMigrationResultsDialog(
+                migratedCount: migratedCount,
+                finalCount: finalCoreDataCount,
+                dataSources: dataSources,
+                issues: migrationIssues,
+                success: legacyDataFound
+            )
+        }
+        
         if legacyDataFound {
             print("🎉 Legacy priority migration completed! Migrated \(migratedCount) priorities")
             print("🎉 Final Core Data count: \(finalCoreDataCount) priorities")
-            
-            // Show success toast to user
-            DispatchQueue.main.async {
-                self.showToast("Data migration successful: \(migratedCount) records migrated")
-            }
             
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
@@ -288,12 +302,9 @@ class PriorityManager {
             print("ℹ️ No legacy priority data found to migrate")
             print("ℹ️ Current Core Data count: \(finalCoreDataCount) priorities")
             
-            // Check if we expected data but didn't find it
+            // Add final issue if we expected data but didn't find it
             if migrationCompleted && finalCoreDataCount == 0 {
-                // Show failure toast to user
-                DispatchQueue.main.async {
-                    self.showToast("Data migration failed - no data found")
-                }
+                migrationIssues.append("Migration marked complete but no data found in Core Data")
             }
             
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
@@ -580,6 +591,72 @@ class PriorityManager {
         // Post notification that UI can listen to for showing toast
         NotificationCenter.default.post(name: Notification.Name("ShowToastNotification"), object: message)
         print("📱 TOAST: \(message)")
+    }
+    
+    /// Shows detailed migration results dialog to the user
+    private func showMigrationResultsDialog(migratedCount: Int, finalCount: Int, dataSources: [String], issues: [String], success: Bool) {
+        let dialogData: [String: Any] = [
+            "migratedCount": migratedCount,
+            "finalCount": finalCount,
+            "dataSources": dataSources,
+            "issues": issues,
+            "success": success
+        ]
+        
+        // Post notification with detailed data
+        NotificationCenter.default.post(name: Notification.Name("ShowMigrationResultsDialog"), object: dialogData)
+        print("📱 MIGRATION DIALOG: \(migratedCount) migrated, \(issues.count) issues")
+    }
+    
+    /// Enhanced file loading with issue tracking
+    private func loadLegacyPriorityFileWithIssues() -> ([String: Int], URL?, [String]) {
+        var priorityData: [String: Int] = [:]
+        var issues: [String] = []
+        
+        // CRITICAL FIX: Search BOTH path methods to handle iOS upgrades and device migrations
+        
+        // Method 1: Try the current/new path (.userDomainMask)
+        let newPathFile = getDocumentsDirectory().appendingPathComponent("data.txt")
+        if FileManager.default.fileExists(atPath: newPathFile.path) {
+            print("📁 Found legacy file at NEW path: \(newPathFile.path)")
+            let (data, url) = loadPriorityDataFromFile(newPathFile)
+            return (data, url, issues)
+        } else {
+            issues.append("No file found at new path: \(newPathFile.path)")
+        }
+        
+        // Method 2: Try the old path (.allDomainsMask) - for users who upgraded from older iOS/app versions
+        let oldDirs = NSSearchPathForDirectoriesInDomains(.documentDirectory, .allDomainsMask, true)
+        if !oldDirs.isEmpty {
+            let oldPathFile = URL(fileURLWithPath: oldDirs[0]).appendingPathComponent("data.txt")
+            if FileManager.default.fileExists(atPath: oldPathFile.path) {
+                print("📁 Found legacy file at OLD path: \(oldPathFile.path)")
+                let (data, url) = loadPriorityDataFromFile(oldPathFile)
+                return (data, url, issues)
+            } else {
+                issues.append("No file found at old path: \(oldPathFile.path)")
+            }
+        } else {
+            issues.append("Could not access old document directories")
+        }
+        
+        // Method 3: Try the Constants.swift directoryPath (legacy compatibility)
+        let dirs = NSSearchPathForDirectoriesInDomains(.documentDirectory, .allDomainsMask, true)
+        if !dirs.isEmpty {
+            let constantsPathFile = URL(fileURLWithPath: dirs[0]).appendingPathComponent("data.txt")
+            if FileManager.default.fileExists(atPath: constantsPathFile.path) {
+                print("📁 Found legacy file at CONSTANTS path: \(constantsPathFile.path)")
+                let (data, url) = loadPriorityDataFromFile(constantsPathFile)
+                return (data, url, issues)
+            } else {
+                issues.append("No file found at constants path: \(constantsPathFile.path)")
+            }
+        } else {
+            issues.append("Could not access constants document directories")
+        }
+        
+        issues.append("No legacy priority file found at any known path")
+        return (priorityData, nil, issues)
     }
     
     // MARK: - iCloud Sync Integration

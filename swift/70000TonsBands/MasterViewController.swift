@@ -318,6 +318,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Register for toast notifications from migration
         NotificationCenter.default.addObserver(self, selector: #selector(showToastMessage(_:)), name: Notification.Name("ShowToastNotification"), object: nil)
+        
+        // Register for detailed migration results dialog
+        NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
@@ -429,6 +432,50 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 alert.dismiss(animated: true)
             }
+        }
+    }
+    
+    @objc func showMigrationResultsDialog(_ notification: NSNotification) {
+        guard let dialogData = notification.object as? [String: Any],
+              let migratedCount = dialogData["migratedCount"] as? Int,
+              let finalCount = dialogData["finalCount"] as? Int,
+              let dataSources = dialogData["dataSources"] as? [String],
+              let issues = dialogData["issues"] as? [String],
+              let success = dialogData["success"] as? Bool else { return }
+        
+        DispatchQueue.main.async {
+            let title = success ? "Data Migration Complete" : "Data Migration Report"
+            
+            var message = ""
+            
+            if success {
+                message += "✅ Successfully migrated \(migratedCount) priority records\n"
+                message += "📊 Final count: \(finalCount) records in database\n"
+                
+                if !dataSources.isEmpty {
+                    message += "📁 Data sources: \(dataSources.joined(separator: ", "))\n"
+                }
+            } else {
+                message += "⚠️ No data found to migrate\n"
+                message += "📊 Current database count: \(finalCount) records\n"
+            }
+            
+            // Show issues if any
+            if !issues.isEmpty {
+                message += "\n🔍 Issues encountered:\n"
+                for (index, issue) in issues.prefix(5).enumerated() {
+                    message += "• \(issue)\n"
+                }
+                if issues.count > 5 {
+                    message += "... and \(issues.count - 5) more issues\n"
+                }
+                message += "\n📸 You can take a screenshot to report these issues."
+            }
+            
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            self.present(alert, animated: true)
         }
     }
 
