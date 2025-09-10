@@ -368,13 +368,20 @@ public class staticVariables {
      */
     public static void setupVenueLocations() {
 
-        venueLocation.put(poolVenueText, "Deck 11");
-        venueLocation.put(rinkVenueText, "Deck 3");
-        venueLocation.put(loungeVenueText, "Deck 5");
-        venueLocation.put(theaterVenueText, "Deck 3/4");
-        venueLocation.put("Sports Bar", "Deck 4");
-        venueLocation.put("Viking Crown", "Deck 14");
-        venueLocation.put("Boleros Lounge", "Deck 4");
+        // Clear any existing venue locations
+        venueLocation.clear();
+        
+        // Populate from FestivalConfig
+        FestivalConfig config = FestivalConfig.getInstance();
+        for (Venue venue : config.venues) {
+            venueLocation.put(venue.name, venue.location);
+        }
+        
+        // Legacy compatibility - also add by the old text constants
+        venueLocation.put(poolVenueText, config.getVenueLocation("Pool"));
+        venueLocation.put(rinkVenueText, config.getVenueLocation("Rink"));
+        venueLocation.put(loungeVenueText, config.getVenueLocation("Lounge"));
+        venueLocation.put(theaterVenueText, config.getVenueLocation("Theater"));
     }
 
 

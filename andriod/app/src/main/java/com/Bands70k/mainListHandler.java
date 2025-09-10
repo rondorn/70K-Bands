@@ -152,9 +152,79 @@ public class mainListHandler {
                     }
                 }
             }
-            Collections.sort(sortableBandNames);
-            Log.d("FILTER_DEBUG", "🏁 After schedule processing: sortableBandNames has " + sortableBandNames.size() + " items");
-            Log.d("populateBandInfo", "BandList has this many enties " + String.valueOf(bandList.size()));
+            // Separate events and bands for proper mixed display
+            List<String> eventsList = new ArrayList<String>();
+            List<String> bandsList = new ArrayList<String>();
+            
+            // Separate events from bands
+            // Events can have two formats:
+            // - Sort by time: "timeIndex:bandName" (timeIndex > 0)
+            // - Sort alphabetically: "bandName:timeIndex" (timeIndex > 0)
+            // Bands with zero events: "bandName:" (no timeIndex or timeIndex = 0)
+            for (String item : sortableBandNames) {
+                String[] parts = item.split(":");
+                boolean isEvent = false;
+                
+                if (parts.length >= 2) {
+                    // Check if first part is a timeIndex (sort by time format)
+                    try {
+                        Long timeIndex = Long.valueOf(parts[0]);
+                        if (timeIndex > 0) {
+                            eventsList.add(item);
+                            isEvent = true;
+                            Log.d("FILTER_DEBUG", "📅 Found EVENT (time format): " + item);
+                        }
+                    } catch (NumberFormatException e) {
+                        // First part is not a number, check if second part is a timeIndex (alphabetical sort format)
+                        try {
+                            Long timeIndex = Long.valueOf(parts[1]);
+                            if (timeIndex > 0) {
+                                eventsList.add(item);
+                                isEvent = true;
+                                Log.d("FILTER_DEBUG", "📅 Found EVENT (alpha format): " + item);
+                            }
+                        } catch (NumberFormatException e2) {
+                            // Neither part is a valid timeIndex > 0, this is a band with zero events
+                            Log.d("FILTER_DEBUG", "🎵 Item has no valid timeIndex: " + item);
+                        }
+                    }
+                } else {
+                    Log.d("FILTER_DEBUG", "🎵 Item has insufficient parts: " + item);
+                }
+                
+                if (!isEvent) {
+                    bandsList.add(item);
+                    Log.d("FILTER_DEBUG", "🎵 Added to BANDS list: " + item);
+                }
+            }
+            
+            // Sort events according to user preference (time or alphabetical)
+            if (staticVariables.preferences.getSortByTime()) {
+                // Events are already sorted by time due to the timeIndex prefix (e.g., "1234567890:BandName")
+                Collections.sort(eventsList);
+                Log.d("FILTER_DEBUG", "🕐 Sorting events by TIME");
+            } else {
+                // For alphabetical sorting, we need to sort by band name, not time
+                Collections.sort(eventsList, (a, b) -> {
+                    String bandA = getBandNameFromIndex(a);
+                    String bandB = getBandNameFromIndex(b);
+                    return bandA.compareToIgnoreCase(bandB);
+                });
+                Log.d("FILTER_DEBUG", "🔤 Sorting events ALPHABETICALLY");
+            }
+            
+            // Always sort bands alphabetically
+            Collections.sort(bandsList);
+            
+            // Clear and rebuild sortableBandNames with proper order: events first, then bands
+            sortableBandNames.clear();
+            sortableBandNames.addAll(eventsList);
+            
+            Log.d("FILTER_DEBUG", "🏁 After schedule processing: " + eventsList.size() + " events processed");
+            Log.d("populateBandInfo", "BandList has this many entries " + String.valueOf(bandList.size()));
+            
+            // Add bands with zero events to the bottom (always alphabetical)
+            List<String> bandsWithZeroEvents = new ArrayList<String>();
             for (String bandName : bandList){
 
                 if ( staticVariables.searchCriteria.isEmpty() == false) {
@@ -168,17 +238,29 @@ public class mainListHandler {
                 }
                 if (staticVariables.preferences.getShowWillAttend() == false) {
                     if (bandPresent.contains(bandName) == false) {
-                        // Only add artists to bottom if they have expired events that would have passed current filters
-                        if (shouldShowArtistWithExpiredEvents(bandName)) {
-                            sortableBandNames.add(bandName + ":");
+                        // Check if band passes current filters (ranking, etc.)
+                        if (applyFilters(bandName, null)) {
+                            bandsWithZeroEvents.add(bandName + ":");
                             if (numberOfEvents == 0) {
                                 numberOfBands++;
                             }
                             altNumberOfBands++;
+                            Log.d("FILTER_DEBUG", "🎵 Adding band with zero events: " + bandName);
                         }
                     }
                 }
             }
+            
+            // Sort bands with zero events alphabetically
+            Collections.sort(bandsWithZeroEvents);
+            
+            // Add bands with zero events after the scheduled events
+            sortableBandNames.addAll(bandsWithZeroEvents);
+            
+            Log.d("FILTER_DEBUG", "🎯 MIXED VIEW SUMMARY:");
+            Log.d("FILTER_DEBUG", "  📅 Events: " + eventsList.size() + " (sorted by " + (staticVariables.preferences.getSortByTime() ? "TIME" : "ALPHABET") + ")");
+            Log.d("FILTER_DEBUG", "  🎵 Bands with zero events: " + bandsWithZeroEvents.size() + " (sorted ALPHABETICALLY)");
+            Log.d("FILTER_DEBUG", "  📊 Total items: " + sortableBandNames.size());
 
         } else {
             Log.d("FILTER_DEBUG", "🚨 BandInfo.scheduleRecords is NULL or EMPTY! Using raw bandList with " + bandList.size() + " bands (no schedule released yet)");

@@ -532,12 +532,6 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */,
-				1145F0D42E69ED1A002B7511 /* CellDataCache.swift */,
-				11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */,
-				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
-				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
-				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -546,17 +540,20 @@
 				114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
 				1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */,
+				1145F0D42E69ED1A002B7511 /* CellDataCache.swift */,
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				1172EE512E5A292E006E3596 /* ConfigurationTest.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				1147D6E92E63C879000A98B0 /* CoreDataIndexManager.swift */,
 				1147D6DD2E63C549000A98B0 /* CoreDataManager.swift */,
+				1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */,
 				1147D6DE2E63C549000A98B0 /* CoreDataTest.swift */,
 				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */,
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
+				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
 				1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */,
 				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
@@ -569,6 +566,8 @@
 				110E084A2AECB6E100075618 /* DropDown+Appearance.swift */,
 				110E084D2AECB6E200075618 /* DropDownCell.swift */,
 				110E08472AECB6E100075618 /* DropDownCell.xib */,
+				11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */,
+				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
@@ -593,6 +592,7 @@
 				11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */,
 				1147D70C2E63E33C000A98B0 /* PriorityManager.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
+				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
 				11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */,
@@ -1527,7 +1527,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250908002;
+				CURRENT_PROJECT_VERSION = 20250908005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1555,7 +1555,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250908002;
+				MARKETING_VERSION = 20250908005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1611,7 +1611,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250908002;
+				CURRENT_PROJECT_VERSION = 20250908005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1636,7 +1636,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250908002;
+				MARKETING_VERSION = 20250908005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1833,7 +1833,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250908001;
+				CURRENT_PROJECT_VERSION = 20250908003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1854,7 +1854,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250908001;
+				MARKETING_VERSION = 20250908003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1910,7 +1910,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250908001;
+				CURRENT_PROJECT_VERSION = 20250908003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1935,7 +1935,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250908001;
+				MARKETING_VERSION = 20250908003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
