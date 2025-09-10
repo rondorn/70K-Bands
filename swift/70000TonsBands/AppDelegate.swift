@@ -1019,11 +1019,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         label.translatesAutoresizingMaskIntoConstraints = false
         
         placeholderController.view.addSubview(label)
+        
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: placeholderController.view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: placeholderController.view.centerYAnchor),
-            label.leadingAnchor.constraint(greaterThanOrEqualTo: placeholderController.view.leadingAnchor, constant: 20),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: placeholderController.view.trailingAnchor, constant: -20)
+            label.centerXAnchor.constraint(equalTo: placeholderController.view.safeAreaLayoutGuide.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: placeholderController.view.safeAreaLayoutGuide.centerYAnchor),
+            label.leadingAnchor.constraint(greaterThanOrEqualTo: placeholderController.view.safeAreaLayoutGuide.leadingAnchor, constant: 60),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: placeholderController.view.safeAreaLayoutGuide.trailingAnchor, constant: -60),
+            label.widthAnchor.constraint(lessThanOrEqualToConstant: 300)
         ])
         
         placeholderController.title = "Band Details"
