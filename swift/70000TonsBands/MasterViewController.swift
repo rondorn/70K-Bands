@@ -320,7 +320,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(showToastMessage(_:)), name: Notification.Name("ShowToastNotification"), object: nil)
         
         // Register for detailed migration results dialog
+        print("🔔 REGISTERING MIGRATION DIALOG OBSERVER IN MasterViewController")
         NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
+        print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
