@@ -197,6 +197,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Do any additional setup after loading the view, typically from a nib.
         if UIDevice.current.userInterfaceIdiom == .pad {
             splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+            splitViewController?.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
         }
         
         blankScreenActivityIndicator.hidesWhenStopped = true
@@ -292,6 +293,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bandSearch.tintColor = .lightGray
             bandSearch.barTintColor = .black
             bandSearch.searchTextField.backgroundColor = .black
+            bandSearch.searchTextField.textColor = .white
+            bandSearch.searchTextField.attributedPlaceholder = NSAttributedString(
+                string: "Search Criteria", 
+                attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
+            )
 
             
         }
@@ -1539,34 +1545,33 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
         
-        // Check if we have a mixture of events and bands, but ALL events are cruiser organized
+        // Check if we have events and what types they are
         let hasEvents = eventCount > 0
         let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
-        let allEventsAreCruiserOrganized = eventCounterUnoffical > 0 && eventCounterUnoffical == eventCount
+        let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
+        let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
         
-        if (hasEvents && hasBands && allEventsAreCruiserOrganized) {
-            // Mixed list with only cruiser organized events - show only band count
+        if (hasEvents && hasBands && allEventsAreUnofficial) {
+            // Rule 2: Mixed list with ALL events = 'Unofficial Event' - show band count, ignore unofficial events
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            // Don't override user's sort preference when there are only bands
-        } else if (listCount > 0 && eventCounterUnoffical < listCount){
-            // We have events and NOT ALL are unofficial - show event count
+        } else if (hasNonUnofficalEvents) {
+            // Rule 3 & 4: Has non-unofficial events - show event count, ignore bands
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
         } else {
-            // Default case - show band count
+            // Rule 1: All bands, 0 events (or only unofficial events with no bands) - show band count
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            // Don't override user's sort preference when there are only bands
         }
 
         var currentYearSetting = getScheduleUrl()
@@ -1978,6 +1983,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if UIDevice.current.userInterfaceIdiom == .pad {
             self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+            self.splitViewController!.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
         }
         
         self.extendedLayoutIncludesOpaqueBars = true
