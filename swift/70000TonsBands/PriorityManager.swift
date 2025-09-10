@@ -190,6 +190,20 @@ class PriorityManager {
             return
         }
         
+        // FRESH INSTALL CHECK: If no migration completed flag AND no Core Data AND no legacy data, this is a fresh install
+        if !migrationCompleted && coreDataCount == 0 {
+            let legacyCache = cacheVariables.bandPriorityStorageCache
+            let (legacyFileData, _, _) = loadLegacyPriorityFileWithIssues()
+            
+            if legacyCache.isEmpty && legacyFileData.isEmpty {
+                print("🆕 Fresh install detected - no legacy data found, marking migration as completed")
+                UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
+                UserDefaults.standard.synchronize()
+                return
+            }
+        }
+        
         // ROBUSTNESS: If migration says completed but Core Data is empty, try once more
         if migrationCompleted && coreDataCount == 0 {
             let retryCount = UserDefaults.standard.integer(forKey: "PriorityMigrationRetryCount")
