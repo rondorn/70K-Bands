@@ -211,10 +211,7 @@ class PriorityManager {
         var migratedCount = 0
         var dataSources: [String] = []
         
-        // Show user we're starting migration (always show if migration logic runs)
-        DispatchQueue.main.async {
-            self.showToast("Old data detected, migrating...")
-        }
+        // Migration will show detailed results dialog at the end
         
         // Track migration issues for user reporting
         var migrationIssues: [String] = []
@@ -609,8 +606,18 @@ class PriorityManager {
         print("🚨   - Success: \(success)")
         
         // Post notification with detailed data
+        print("📱 POSTING NOTIFICATION ON THREAD: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
         NotificationCenter.default.post(name: Notification.Name("ShowMigrationResultsDialog"), object: dialogData)
         print("📱 MIGRATION DIALOG NOTIFICATION SENT")
+        
+        // Additional verification - check if any observers are registered
+        print("📱 NOTIFICATION CENTER: \(NotificationCenter.default)")
+        
+        // Try posting a test notification to verify the system works
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            print("📱 SENDING TEST TOAST TO VERIFY NOTIFICATION SYSTEM...")
+            NotificationCenter.default.post(name: Notification.Name("ShowToastNotification"), object: "Test: Migration dialog should have appeared")
+        }
     }
     
     /// Enhanced file loading with issue tracking
