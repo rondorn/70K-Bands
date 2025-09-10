@@ -13,12 +13,14 @@ class Venue {
     public final String color; // Hex color string
     public final String goingIcon;
     public final String notGoingIcon;
+    public final String location; // Deck location (e.g., "Deck 11", "TBD")
     
-    public Venue(String name, String color, String goingIcon, String notGoingIcon) {
+    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location) {
         this.name = name;
         this.color = color;
         this.goingIcon = goingIcon;
         this.notGoingIcon = notGoingIcon;
+        this.location = location;
     }
 }
 
@@ -119,13 +121,13 @@ public class FestivalConfig {
             
             this.shareUrl = "http://www.facebook.com/MDFBands";
             
-            // MDF venues: Real venue names (Market, Power Plant, Nevermore, Soundstage, Angels Rock)
+            // MDF venues: Real venue names with Market Street addresses
             this.venues = Arrays.asList(
-                new Venue("Market", "008000", "icon_theater", "icon_theater_alt"),
-                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt"),
-                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt"),
-                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt"),
-                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt")
+                new Venue("Market", "008000", "icon_theater", "icon_theater_alt", "121 Market"),
+                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt", "34 Market"),
+                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt", "20 Market"),
+                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt", "124 Market"),
+                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt", "10 Market")
             );
             
             // MDF: Hide all event type filters by default
@@ -166,12 +168,20 @@ public class FestivalConfig {
             
             this.shareUrl = "http://www.facebook.com/70kBands";
             
-            // 70K venues: Pool, Lounge, Theater, Rink with colors blue, green, yellow, red
+            // 70K venues: All venues with their deck locations
             this.venues = Arrays.asList(
-                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt"),
-                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt"),
-                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt"),
-                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt")
+                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt", "Deck 11"),
+                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt", "Deck 5"),
+                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt", "Deck 3/4"),
+                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt", "Deck 3"),
+                new Venue("Sports Bar", "FFA500", "icon_unknown", "icon_unknown_alt", "Deck 4"),
+                new Venue("Viking Crown", "800080", "icon_unknown", "icon_unknown_alt", "Deck 14"),
+                new Venue("Boleros Lounge", "8B4513", "icon_unknown", "icon_unknown_alt", "Deck 4"),
+                new Venue("Solarium", "20B2AA", "icon_unknown", "icon_unknown_alt", "Deck 11"),
+                new Venue("Ale And Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5"),
+                new Venue("Ale & Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5"),
+                new Venue("Bull And Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5"),
+                new Venue("Bull & Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5")
             );
             
             // 70K: Show all event type filters by default (maintain existing behavior)
@@ -337,5 +347,13 @@ public class FestivalConfig {
     public String getVenueNotGoingIcon(String venueName) {
         Venue venue = getVenueByPartialName(venueName);
         return venue != null ? venue.notGoingIcon : "Unknown-NotGoing-wBox";
+    }
+    
+    /**
+     * Get venue location for a given venue name
+     */
+    public String getVenueLocation(String venueName) {
+        Venue venue = getVenueByPartialName(venueName);
+        return venue != null ? venue.location : "";
     }
 }

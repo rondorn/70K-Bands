@@ -6,6 +6,8 @@ package com.Bands70k;
 
 import android.app.Activity;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -2280,16 +2282,30 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Shows dialog for editing notes
+     * Shows dialog for editing notes with improved styling
      */
     private void showEditNoteDialog(String bandName) {
+        // Create custom dialog using our new layout
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Edit Note for " + bandName);
         
-        final EditText input = new EditText(this);
-        input.setTextColor(getResources().getColor(android.R.color.white));
-        input.setBackgroundColor(getResources().getColor(android.R.color.black));
+        // Inflate the custom layout
+        View dialogView = getLayoutInflater().inflate(R.layout.edit_note_dialog, null);
+        builder.setView(dialogView);
         
+        // Get references to the views
+        TextView titleView = dialogView.findViewById(R.id.edit_note_title);
+        final EditText input = dialogView.findViewById(R.id.edit_note_input);
+        Button cancelButton = dialogView.findViewById(R.id.cancel_button);
+        Button saveButton = dialogView.findViewById(R.id.save_button);
+        Button selectAllButton = dialogView.findViewById(R.id.select_all_button);
+        Button cutButton = dialogView.findViewById(R.id.cut_button);
+        Button copyButton = dialogView.findViewById(R.id.copy_button);
+        Button pasteButton = dialogView.findViewById(R.id.paste_button);
+        
+        // Set the title
+        titleView.setText("Edit Note for " + bandName);
+        
+        // Set current note content
         String currentNote = bandNote;
         if (bandHandler.getNoteIsBlank() == true) {
             currentNote = "";
@@ -2298,11 +2314,75 @@ public class showBandDetails extends Activity {
         currentNote = currentNote.replaceAll("<[^>]*>", ""); // Remove HTML tags
         input.setText(currentNote);
         
-        builder.setView(input);
+        // Get clipboard manager
+        final ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         
-        builder.setPositiveButton("Save Note", new DialogInterface.OnClickListener() {
+        // Set up text editing button functionality
+        selectAllButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View v) {
+                input.selectAll();
+                input.requestFocus();
+            }
+        });
+        
+        cutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int start = input.getSelectionStart();
+                int end = input.getSelectionEnd();
+                if (start != end) {
+                    String selectedText = input.getText().toString().substring(start, end);
+                    ClipData clip = ClipData.newPlainText("cut_text", selectedText);
+                    clipboard.setPrimaryClip(clip);
+                    input.getText().delete(start, end);
+                }
+                input.requestFocus();
+            }
+        });
+        
+        copyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int start = input.getSelectionStart();
+                int end = input.getSelectionEnd();
+                if (start != end) {
+                    String selectedText = input.getText().toString().substring(start, end);
+                    ClipData clip = ClipData.newPlainText("copied_text", selectedText);
+                    clipboard.setPrimaryClip(clip);
+                }
+                input.requestFocus();
+            }
+        });
+        
+        pasteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (clipboard.hasPrimaryClip()) {
+                    ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
+                    String pasteText = item.getText().toString();
+                    int start = input.getSelectionStart();
+                    int end = input.getSelectionEnd();
+                    input.getText().replace(start, end, pasteText);
+                }
+                input.requestFocus();
+            }
+        });
+        
+        // Create the dialog
+        final AlertDialog dialog = builder.create();
+        
+        // Set up button click listeners
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 String noteText = input.getText().toString().trim();
                 
                 // If note is empty or whitespace only, revert to original default content
@@ -2326,17 +2406,12 @@ public class showBandDetails extends Activity {
                 bandNote = noteText;
                 // IMAGE PRESERVATION FIX: Only refresh note section, not entire content
                 setupExtraDataSection(); // This will update the note display without affecting the image
+                
+                dialog.dismiss();
             }
         });
         
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        
-        builder.show();
+        dialog.show();
     }
     
     /**

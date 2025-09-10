@@ -273,7 +273,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            /*
+            
             preferenceButton.hidesSharedBackground = true
             statsButton.hidesSharedBackground = true
             shareButton.hidesSharedBackground = true
@@ -282,7 +282,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             statsButton.hidesSharedBackground = true
             titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
             titleButtonArea.rightBarButtonItem?.hidesSharedBackground = true
-            */
             
             preferenceButton.customView?.backgroundColor = .black
             statsButton.customView?.backgroundColor = .white 
