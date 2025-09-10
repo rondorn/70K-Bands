@@ -181,10 +181,25 @@ class PriorityManager {
     
     /// Performs one-time migration from legacy data sources to Core Data
     private func performLegacyMigrationIfNeeded() {
-        // Check if migration has already been completed
-        if UserDefaults.standard.bool(forKey: "PriorityMigrationCompleted") {
-            print("🎯 Priority migration already completed, skipping")
+        // PERFORMANCE: Quick exit if migration already completed successfully
+        let migrationCompleted = UserDefaults.standard.bool(forKey: "PriorityMigrationCompleted")
+        let coreDataCount = getBandsWithPriorities([1, 2, 3]).count
+        
+        if migrationCompleted && coreDataCount > 0 {
+            // Migration completed successfully - no performance impact
             return
+        }
+        
+        // ROBUSTNESS: If migration says completed but Core Data is empty, try once more
+        if migrationCompleted && coreDataCount == 0 {
+            let retryCount = UserDefaults.standard.integer(forKey: "PriorityMigrationRetryCount")
+            if retryCount >= 2 {
+                // Already tried twice, give up to avoid infinite loops
+                print("🎯 Priority migration attempted multiple times but failed, giving up")
+                return
+            }
+            print("🔧 Priority migration marked complete but Core Data empty - attempting recovery")
+            UserDefaults.standard.set(retryCount + 1, forKey: "PriorityMigrationRetryCount")
         }
         
         print("🔄 Checking for legacy priority data to migrate...")
@@ -194,17 +209,28 @@ class PriorityManager {
         
         var legacyDataFound = false
         var migratedCount = 0
+        var dataSources: [String] = []
         
-        // 1. Check for data in cacheVariables.bandPriorityStorageCache
+        // Show user we're starting migration
+        if !migrationCompleted {
+            DispatchQueue.main.async {
+                self.showToast("Old data detected, migrating...")
+            }
+        }
+        
+        // 1. ROBUST: Check multiple data sources in priority order
+        
+        // Source 1: Legacy cache (fastest)
         let legacyCache = cacheVariables.bandPriorityStorageCache
         if !legacyCache.isEmpty {
             print("📦 Found \(legacyCache.count) priorities in legacy cache")
             migrateExistingPriorities(from: legacyCache)
             legacyDataFound = true
             migratedCount += legacyCache.count
+            dataSources.append("cache")
         }
         
-        // 2. Check for data in old PriorityDataWrite.txt file (CRITICAL RECOVERY)
+        // Source 2: Legacy files (comprehensive path search)
         let (priorityFileData, legacyFilePath) = loadLegacyPriorityFile()
         if !priorityFileData.isEmpty {
             print("📁 Found \(priorityFileData.count) priorities in legacy file")
@@ -215,6 +241,19 @@ class PriorityManager {
             
             legacyDataFound = true
             migratedCount += priorityFileData.count
+            dataSources.append("file")
+        }
+        
+        // Source 3: ROBUST - Check UserDefaults backup (if we have one)
+        if !legacyDataFound {
+            let backupData = loadUserDefaultsBackup()
+            if !backupData.isEmpty {
+                print("💾 Found \(backupData.count) priorities in UserDefaults backup")
+                migrateExistingPriorities(from: backupData)
+                legacyDataFound = true
+                migratedCount += backupData.count
+                dataSources.append("backup")
+            }
         }
         
         // 3. Check iCloud as last resort (but be careful not to overwrite local data)
@@ -230,18 +269,33 @@ class PriorityManager {
             }
         }
         
-        // Final status and flag setting
+        // Final status and flag setting with user feedback
         let finalCoreDataCount = getBandsWithPriorities([1, 2, 3]).count
         
         if legacyDataFound {
             print("🎉 Legacy priority migration completed! Migrated \(migratedCount) priorities")
             print("🎉 Final Core Data count: \(finalCoreDataCount) priorities")
+            
+            // Show success toast to user
+            DispatchQueue.main.async {
+                self.showToast("Data migration successful: \(migratedCount) records migrated")
+            }
+            
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
             UserDefaults.standard.synchronize()
         } else {
             print("ℹ️ No legacy priority data found to migrate")
             print("ℹ️ Current Core Data count: \(finalCoreDataCount) priorities")
+            
+            // Check if we expected data but didn't find it
+            if migrationCompleted && finalCoreDataCount == 0 {
+                // Show failure toast to user
+                DispatchQueue.main.async {
+                    self.showToast("Data migration failed - no data found")
+                }
+            }
+            
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
             UserDefaults.standard.synchronize()
@@ -249,6 +303,7 @@ class PriorityManager {
         
         // Log final migration status for debugging
         print("📊 MIGRATION SUMMARY:")
+        print("📊   - Data sources found: \(dataSources.joined(separator: ", "))")
         print("📊   - Legacy cache entries: \(legacyCache.count)")
         print("📊   - Legacy file entries: \(priorityFileData.count)")
         print("📊   - Total migrated: \(migratedCount)")
@@ -442,16 +497,9 @@ class PriorityManager {
         return nil
     }
     
-    /// Attempts to recover priority data from iCloud (with safeguards)
+    /// Attempts to recover priority data from iCloud
     private func attemptICloudRecovery() {
         print("☁️ Attempting iCloud priority data recovery...")
-        
-        // Add safeguards to prevent overwriting existing data
-        let currentCount = getBandsWithPriorities([1, 2, 3]).count
-        if currentCount > 0 {
-            print("☁️ ⚠️ Skipping iCloud recovery - Core Data already has \(currentCount) priorities")
-            return
-        }
         
         // This would need to integrate with the existing iCloud system
         // For now, we'll trigger the existing iCloud migration
@@ -461,7 +509,6 @@ class PriorityManager {
             if iCloudHandler.checkForIcloud() {
                 print("☁️ iCloud available, attempting recovery...")
                 // The existing iCloud migration should handle this
-                // But we've already set the migration flag, so this is a one-time fallback
             } else {
                 print("☁️ iCloud not available for recovery")
             }
@@ -516,6 +563,23 @@ class PriorityManager {
     private func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
+    }
+    
+    /// ROBUST: Load priority data from UserDefaults backup (fallback data source)
+    private func loadUserDefaultsBackup() -> [String: Int] {
+        // Check if we have a backup in UserDefaults (this could be added in future versions)
+        if let backupData = UserDefaults.standard.dictionary(forKey: "PriorityBackup") as? [String: Int] {
+            print("💾 Found UserDefaults backup with \(backupData.count) entries")
+            return backupData
+        }
+        return [:]
+    }
+    
+    /// Shows a toast message to the user (non-blocking)
+    private func showToast(_ message: String) {
+        // Post notification that UI can listen to for showing toast
+        NotificationCenter.default.post(name: Notification.Name("ShowToastNotification"), object: message)
+        print("📱 TOAST: \(message)")
     }
     
     // MARK: - iCloud Sync Integration
