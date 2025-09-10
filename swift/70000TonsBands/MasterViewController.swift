@@ -315,6 +315,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudRefresh), name: Notification.Name("iCloudRefresh"), object: nil)
+        
+        // Register for toast notifications from migration
+        NotificationCenter.default.addObserver(self, selector: #selector(showToastMessage(_:)), name: Notification.Name("ShowToastNotification"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
@@ -412,6 +415,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let message = fcmToken
 
       }
+    }
+    
+    @objc func showToastMessage(_ notification: NSNotification) {
+        guard let message = notification.object as? String else { return }
+        
+        DispatchQueue.main.async {
+            // Simple toast implementation using UIAlertController
+            let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+            self.present(alert, animated: true)
+            
+            // Auto-dismiss after 2 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                alert.dismiss(animated: true)
+            }
+        }
     }
 
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
