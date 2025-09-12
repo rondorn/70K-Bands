@@ -3637,6 +3637,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.schedule.loadCachedDataImmediately()
         self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
         
+        // CRITICAL FIX: Clear justLaunched flag to prevent getting stuck in "waiting" mode
+        // This ensures the app shows cached data even if there are network/loading issues
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            if cacheVariables.justLaunched {
+                print("🔧 SAFETY: Clearing justLaunched flag after 3 seconds to prevent app from getting stuck")
+                cacheVariables.justLaunched = false
+            }
+            
+            // EMERGENCY FIX: If we still have no data after 3 seconds, force a download
+            let bandCount = self.bandNameHandle.getBandNames().count
+            let scheduleData = self.schedule.getBandSortedSchedulingData()
+            
+            if bandCount == 0 && scheduleData.isEmpty {
+                print("🚨 EMERGENCY: No data found after 3 seconds - forcing network download")
+                self.refreshDataWithBackgroundUpdate(reason: "Emergency: No data found after launch")
+            }
+        }
+        
         print("🚀 FIRST LAUNCH: Step 2 - Starting background network test with completion handler")
         
         // Step 2: Start background network test with completion handler
@@ -3697,6 +3715,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.bandNameHandle.loadCachedDataImmediately()
         self.schedule.loadCachedDataImmediately()
         self.refreshBandList(reason: "Subsequent launch - immediate CoreData display", skipDataLoading: true)
+        
+        // CRITICAL FIX: Clear justLaunched flag to prevent getting stuck in "waiting" mode
+        // This ensures the app shows cached data even if there are network/loading issues
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if cacheVariables.justLaunched {
+                print("🔧 SAFETY: Clearing justLaunched flag after 2 seconds to prevent app from getting stuck")
+                cacheVariables.justLaunched = false
+            }
+        }
         
         // Step 2: Check if we need background updates
         let lastLaunchKey = "LastAppLaunchDate"

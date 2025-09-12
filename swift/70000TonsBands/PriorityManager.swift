@@ -183,40 +183,31 @@ class PriorityManager {
     private func performLegacyMigrationIfNeeded() {
         // PERFORMANCE: Quick exit if migration already completed successfully
         let migrationCompleted = UserDefaults.standard.bool(forKey: "PriorityMigrationCompleted")
-        let coreDataCount = getBandsWithPriorities([1, 2, 3]).count
         
-        if migrationCompleted && coreDataCount > 0 {
-            // Migration completed successfully - no performance impact
+        if migrationCompleted {
+            // Migration already completed - no performance impact
             return
         }
         
-        // FRESH INSTALL CHECK: If no migration completed flag AND no Core Data AND no legacy data, this is a fresh install
-        if !migrationCompleted && coreDataCount == 0 {
-            let legacyCache = cacheVariables.bandPriorityStorageCache
-            let (legacyFileData, _, _) = loadLegacyPriorityFileWithIssues()
-            
-            if legacyCache.isEmpty && legacyFileData.isEmpty {
-                print("🆕 Fresh install detected - no legacy data found, marking migration as completed")
-                UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
-                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
-                UserDefaults.standard.synchronize()
-                return
-            }
+        let coreDataCount = getBandsWithPriorities([1, 2, 3]).count
+        
+        // Check if there's any legacy data to migrate
+        let legacyCache = cacheVariables.bandPriorityStorageCache
+        let (legacyFileData, _, _) = loadLegacyPriorityFileWithIssues()
+        
+        // FRESH INSTALL CHECK: If no legacy data exists, this is a fresh install
+        if legacyCache.isEmpty && legacyFileData.isEmpty {
+            print("🆕 Fresh install detected - no legacy data found, marking migration as completed")
+            UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityMigrationTimestamp")
+            UserDefaults.standard.synchronize()
+            return
         }
         
-        // ROBUSTNESS: If migration says completed but Core Data is empty, try once more
-        if migrationCompleted && coreDataCount == 0 {
-            let retryCount = UserDefaults.standard.integer(forKey: "PriorityMigrationRetryCount")
-            if retryCount >= 2 {
-                // Already tried twice, give up to avoid infinite loops
-                print("🎯 Priority migration attempted multiple times but failed, giving up")
-                return
-            }
-            print("🔧 Priority migration marked complete but Core Data empty - attempting recovery")
-            UserDefaults.standard.set(retryCount + 1, forKey: "PriorityMigrationRetryCount")
-        }
+        // LEGACY DATA EXISTS: Proceed with migration (whether Core Data exists or not)
+        print("📦 Legacy data found - proceeding with migration (Core Data count: \(coreDataCount))")
         
-        print("🔄 Checking for legacy priority data to migrate...")
+        print("🔄 Starting legacy priority data migration...")
         
         // Check if we've already found migrated files (for informational logging)
         checkForMigratedFiles()
@@ -233,7 +224,6 @@ class PriorityManager {
         // 1. ROBUST: Check multiple data sources in priority order
         
         // Source 1: Legacy cache (fastest)
-        let legacyCache = cacheVariables.bandPriorityStorageCache
         if !legacyCache.isEmpty {
             print("📦 Found \(legacyCache.count) priorities in legacy cache")
             migrateExistingPriorities(from: legacyCache)
@@ -242,22 +232,22 @@ class PriorityManager {
             dataSources.append("cache")
         }
         
-        // Source 2: Legacy files (comprehensive path search)
-        let (priorityFileData, legacyFilePath, fileIssues) = loadLegacyPriorityFileWithIssues()
-        if !priorityFileData.isEmpty {
-            print("📁 Found \(priorityFileData.count) priorities in legacy file")
-            migrateExistingPriorities(from: priorityFileData)
-            
+        // Source 2: Legacy files (comprehensive path search) 
+        if !legacyFileData.isEmpty {
+            print("📁 Found \(legacyFileData.count) priorities in legacy file")
+            migrateExistingPriorities(from: legacyFileData)
+
             // Rename the file after successful migration to prevent re-import
+            let (_, legacyFilePath, fileIssues) = loadLegacyPriorityFileWithIssues()
             renameLegacyFile(at: legacyFilePath)
-            
+
             legacyDataFound = true
-            migratedCount += priorityFileData.count
+            migratedCount += legacyFileData.count
             dataSources.append("file")
+            
+            // Track any file-related issues
+            migrationIssues.append(contentsOf: fileIssues)
         }
-        
-        // Track any file-related issues
-        migrationIssues.append(contentsOf: fileIssues)
         
         // Source 3: ROBUST - Check UserDefaults backup (if we have one)
         if !legacyDataFound {
@@ -325,7 +315,7 @@ class PriorityManager {
         print("📊 MIGRATION SUMMARY:")
         print("📊   - Data sources found: \(dataSources.joined(separator: ", "))")
         print("📊   - Legacy cache entries: \(legacyCache.count)")
-        print("📊   - Legacy file entries: \(priorityFileData.count)")
+        print("📊   - Legacy file entries: \(legacyFileData.count)")
         print("📊   - Total migrated: \(migratedCount)")
         print("📊   - Final Core Data count: \(finalCoreDataCount)")
         print("📊   - Migration completed at: \(Date())")

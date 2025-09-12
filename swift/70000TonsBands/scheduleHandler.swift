@@ -552,9 +552,14 @@ open class scheduleHandler {
         } else if needsNetworkFetch {
             // PERFORMANCE FIX: Only trigger network downloads during appropriate operations
             // Not during cache-only operations like priority changes, detail navigation, etc.
-            if cacheVariables.justLaunched {
+            if cacheVariables.justLaunched && cacheLoaded && !_schedulingData.isEmpty {
                 print("First app launch detected - deferring network download to proper loading sequence")
                 print("This prevents infinite retry loops when network is unavailable")
+            } else if cacheVariables.justLaunched && (!cacheLoaded || _schedulingData.isEmpty) {
+                print("🚨 EMERGENCY: First launch but no cached schedule data - forcing network download")
+                DispatchQueue.global(qos: .background).async {
+                    self.populateSchedule(forceDownload: true, isYearChangeOperation: false)
+                }
             } else {
                 print("No cached/Core Data data available - this should only happen during app launch or explicit refreshes")
                 print("Skipping automatic network download - network loading should only happen during app launch, foreground return, or pull-to-refresh")
