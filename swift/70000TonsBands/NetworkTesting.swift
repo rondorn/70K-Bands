@@ -438,8 +438,17 @@ open class NetworkTesting {
             print("🔥 NetworkTesting: LIVE HTTP request completed in \(elapsed)s")
             
             if let error = error {
-                print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - Network error: \(error.localizedDescription)")
-                liveTestResult = false
+                print("🔥 NetworkTesting: Network error: \(error.localizedDescription)")
+                
+                // Check if this is just a parsing error but we got a response
+                if let nsError = error as NSError?, nsError.code == -1017 {
+                    // "cannot parse response" - this means we got a response, so internet is available
+                    print("🔥 NetworkTesting: ✅ Parse error (-1017) but response received - internet is available")
+                    liveTestResult = true
+                } else {
+                    print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - Real network error")
+                    liveTestResult = false
+                }
             } else if let httpResponse = response as? HTTPURLResponse {
                 print("🔥 NetworkTesting: LIVE TEST got HTTP status: \(httpResponse.statusCode)")
                 if httpResponse.statusCode == 200 {
