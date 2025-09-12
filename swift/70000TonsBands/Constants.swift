@@ -584,9 +584,8 @@ func getDefaultPointerValue(for keyValue: String) -> String {
     case "eventYear":
         // Use FestivalConfig default year or current year
         let currentYear = Calendar.current.component(.year, from: Date())
-        let defaultYear = max(currentYear, 2024) // Ensure we don't go below 2024
-        print("🚀 LAUNCH OPTIMIZATION: Default eventYear = \(defaultYear)")
-        return String(defaultYear)
+        print("🚀 LAUNCH OPTIMIZATION: Default eventYear = \(currentYear) (no hardcoded fallback)")
+        return String(currentYear)
         
     case "scheduleUrl":
         // Use FestivalConfig default schedule URL
@@ -956,8 +955,8 @@ func ensureYearResolvedAtLaunch() -> Int {
     guard let yearInt = Int(resolvedYear), yearInt > 2000 && yearInt < 2030 else {
         print("🚀 LAUNCH OPTIMIZATION: Invalid year '\(resolvedYear)', using current year as fallback")
         let currentYear = Calendar.current.component(.year, from: Date())
-        let fallbackYear = max(currentYear, 2024)
-        return fallbackYear
+        print("🚀 LAUNCH OPTIMIZATION: Using current year \(currentYear) (no hardcoded minimum)")
+        return currentYear
     }
     
     print("🚀 LAUNCH OPTIMIZATION: Final resolved year (NON-BLOCKING): \(resolvedYear)")

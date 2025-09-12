@@ -216,10 +216,7 @@ public class OnlineStatus {
                 Boolean onlineCheck = testInternetAvailableSynchronous();
                 staticVariables.internetCheckCache = onlineCheck ? "true" : "false";
             },
-            // Pre-execute on UI thread
-            () -> {
-                staticVariables.internetCheckCache = "true";
-            },
+            null, // No pre-execute needed - let the background task set the actual result
             null // No post-execute needed
         );
     }
