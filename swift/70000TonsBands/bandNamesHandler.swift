@@ -180,11 +180,17 @@ open class bandNamesHandler {
             }
         } else if needsNetworkFetch || forceNetwork {
             // PERFORMANCE FIX: Only trigger network downloads during appropriate operations
-            if cacheVariables.justLaunched {
+            if cacheVariables.justLaunched && cacheLoaded && !bandNames.isEmpty {
                 print("First app launch detected - deferring network download to proper loading sequence")
                 print("This prevents infinite retry loops when network is unavailable")
                 // Don't automatically download on first launch - wait for proper sequence
                 completion?()
+                return
+            } else if cacheVariables.justLaunched && (!cacheLoaded || bandNames.isEmpty) {
+                print("🚨 EMERGENCY: First launch but no cached data - forcing network download")
+                DispatchQueue.global(qos: .default).async {
+                    self.gatherData(forceDownload: true, completion: completion)
+                }
                 return
             } else if forceNetwork {
                 // Only download if explicitly forced (app launch, foreground, pull-to-refresh)

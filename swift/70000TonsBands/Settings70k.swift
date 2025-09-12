@@ -14,6 +14,9 @@ private var venueFilterSettings: [String: Bool] = [:]
 // Thread-safe access queue for venue settings
 private let venueSettingsQueue = DispatchQueue(label: "com.70kbands.venueSettings", attributes: .concurrent)
 
+// Thread-safe queue for readFiltersFile operations
+private let filtersFileQueue = DispatchQueue(label: "com.70kbands.filtersFile", qos: .userInitiated)
+
 // Dynamic venue filter functions - Thread Safe
 func getShowVenueEvents(venueName: String) -> Bool {
     return venueSettingsQueue.sync {
@@ -469,6 +472,13 @@ func writeFiltersFile(){
 
 
 func readFiltersFile(){
+    // Thread-safe execution to prevent crashes from multiple simultaneous calls
+    filtersFileQueue.sync {
+        readFiltersFileInternal()
+    }
+}
+
+private func readFiltersFileInternal(){
     
     var tempCurrentTimeZone = "";
     
