@@ -2381,15 +2381,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("DEBUG: Set currentBandList for SwiftUI navigation - count: \(currentBandList.count)")
         
         if currentBandList.count == 0 {
-            var attempts = 0
-            while(currentBandList.count == 0 && attempts < 3){
-                print("goToDetailsScreenSwiftUI: Attempt \(attempts+1) to refresh band list")
-                refreshBandList(reason: "Cache refresh")
+            print("⚠️ goToDetailsScreenSwiftUI: Band list is empty - using fallback navigation")
+            // DEADLOCK FIX: Don't block main thread with synchronous refresh calls
+            // Instead, use the existing bands array or trigger async refresh
+            if !self.bands.isEmpty {
                 currentBandList = self.bands
-                attempts += 1
-            }
-            if currentBandList.count == 0 {
-                print("goToDetailsScreenSwiftUI: Band list still empty after 3 attempts")
+                print("🔧 Using existing bands array as fallback: \(currentBandList.count) bands")
+            } else {
+                print("🚨 No bands available - proceeding anyway to avoid deadlock")
+                // Trigger async refresh for next time, but don't block current navigation
+                DispatchQueue.global(qos: .background).async {
+                    self.refreshBandList(reason: "Background cache refresh after empty list")
+                }
             }
         }
         
@@ -3650,8 +3653,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let scheduleData = self.schedule.getBandSortedSchedulingData()
             
             if bandCount == 0 && scheduleData.isEmpty {
-                print("🚨 EMERGENCY: No data found after 3 seconds - forcing network download")
-                self.refreshDataWithBackgroundUpdate(reason: "Emergency: No data found after launch")
+                // Check if a year change is in progress - don't interfere
+                if MasterViewController.isYearChangeInProgress {
+                    print("🔄 EMERGENCY: No data found but year change in progress - skipping emergency download")
+                } else {
+                    print("🚨 EMERGENCY: No data found after 3 seconds - forcing network download")
+                    self.refreshDataWithBackgroundUpdate(reason: "Emergency: No data found after launch")
+                }
             }
         }
         

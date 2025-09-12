@@ -104,6 +104,7 @@ class PreferencesViewModel: ObservableObject {
     @Published var showYearChangeTimeoutWarning = false
     @Published var showBandEventChoice = false
     @Published var showNetworkError = false
+    @Published var showDownloadError = false
     @Published var showValidationError = false
     @Published var isLoadingData = false
     
@@ -299,6 +300,11 @@ class PreferencesViewModel: ObservableObject {
         cancelYearChange()
     }
     
+    func dismissDownloadError() {
+        showDownloadError = false
+        isLoadingData = false
+    }
+    
     func dismissTimeoutWarning() {
         showYearChangeTimeoutWarning = false
     }
@@ -391,7 +397,7 @@ class PreferencesViewModel: ObservableObject {
         cacheVariables.storePointerData = [String:String]()
         
         // CRITICAL: Update the eventYearFile FIRST to prevent reversion
-        let targetEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 2024
+        let targetEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
         do {
             let yearString = String(targetEventYear)
             try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
@@ -701,7 +707,7 @@ class PreferencesViewModel: ObservableObject {
             
             // FINAL YEAR VERIFICATION: Make sure year hasn't reverted
             let finalEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
-            let expectedYear = Int(eventYearChangeAttempt) ?? 0
+            let expectedYear = resolveYearToNumber(eventYearChangeAttempt)
             if finalEventYear != expectedYear {
                 print("🚨 CRITICAL: Year reverted at end! Expected \(expectedYear), got \(finalEventYear)")
                 print("🚨 This indicates a system conflict - check logs above")
@@ -770,12 +776,50 @@ class PreferencesViewModel: ObservableObject {
         }
     }
     
+    /// Helper function to properly resolve year strings including "Current" to actual year numbers
+    /// NEVER falls back to hardcoded years - always uses Current as ultimate fallback
+    private func resolveYearToNumber(_ yearString: String) -> Int {
+        if yearString == "Current" || yearString == "Default" {
+            // Use the pointer system to resolve "Current" to actual current year
+            let currentYear = Int(getPointerUrlData(keyValue: "eventYear"))
+            if let year = currentYear {
+                return year
+            } else {
+                // If even "Current" fails, use global eventYear as absolute last resort
+                print("⚠️ WARNING: Could not resolve 'Current' year - using global eventYear as fallback")
+                return eventYear
+            }
+        } else {
+            // Direct numeric year - but if parsing fails, fall back to Current, not hardcoded year
+            if let numericYear = Int(yearString) {
+                return numericYear
+            } else {
+                print("⚠️ WARNING: Could not parse year '\(yearString)' - falling back to Current")
+                return resolveYearToNumber("Current")
+            }
+        }
+    }
+    
     /// Reverts year change back to previous values when network test fails
     @MainActor
     private func revertYearChangeDueToNetworkFailure() async {
         print("🔄 REVERTING year change due to network failure")
+        await performYearChangeRevert(reason: "network failure")
+    }
+    
+    private func revertYearChangeDueToDownloadFailure() async {
+        print("🔄 REVERTING year change due to download failure")
+        await performYearChangeRevert(reason: "download failure")
+    }
+    
+    @MainActor
+    private func performYearChangeRevert(reason: String) async {
+        print("🔄 REVERTING year change due to \(reason)")
         print("🔄 Reverting from attempted year: \(eventYearChangeAttempt)")
         print("🔄 Reverting back to previous year: \(currentYearSetting)")
+        
+        // Show error message to user
+        showDownloadError = true
         
         // Revert URLs and pointers back to previous year
         setArtistUrl(currentYearSetting)
@@ -783,7 +827,7 @@ class PreferencesViewModel: ObservableObject {
         writeFiltersFile()
         
         // Revert the eventYearFile back to previous year
-        let previousEventYear = Int(currentYearSetting) ?? 2024
+        let previousEventYear = resolveYearToNumber(currentYearSetting)
         do {
             let yearString = String(previousEventYear)
             try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
@@ -801,6 +845,27 @@ class PreferencesViewModel: ObservableObject {
             displayYear = NSLocalizedString("Current", comment: "")
         }
         selectedYear = displayYear
+        
+        // Clear caches and restore previous year's data
+        print("🔄 Clearing caches and restoring previous year's data")
+        
+        // Clear the failed year's data from Core Data
+        CoreDataManager.shared.clearYearSpecificData()
+        
+        // Trigger a refresh to reload the previous year's data
+        if let masterView = masterView {
+            masterView.performBackgroundDataRefresh(
+                reason: "Restore previous year data after failed year change",
+                endRefreshControl: false,
+                shouldScrollToTop: false
+            ) {
+                print("🔄 Previous year data restoration completed")
+            }
+        }
+        
+        // Notify completion
+        MasterViewController.notifyYearChangeCompleted()
+        isLoadingData = false
         
         // Re-setup defaults to ensure consistency
         setupCurrentYearUrls()
@@ -847,7 +912,7 @@ class PreferencesViewModel: ObservableObject {
     private func waitForCoreDataPopulationAndContinueYearChange() async {
         print("🎯 STEP 5.5: Waiting for Core Data to be fully populated with new year's data")
         
-        let targetYear = Int(eventYearChangeAttempt) ?? eventYear
+        let targetYear = resolveYearToNumber(eventYearChangeAttempt)
         var attempts = 0
         let maxAttempts = 10
         let delaySeconds = 1.0
@@ -875,7 +940,19 @@ class PreferencesViewModel: ObservableObject {
             }
             
             if attempts == maxAttempts {
-                print("⚠️ Core Data population timeout - proceeding anyway with \(eventCount) events")
+                print("❌ Core Data population timeout - \(eventCount) events, \(bandCount) bands for year \(targetYear)")
+                
+                // Check if we got reasonable data for the target year
+                if eventCount < 10 && bandCount < 5 {
+                    print("❌ YEAR CHANGE FAILED - Insufficient data downloaded for year \(targetYear)")
+                    print("❌ Reverting to previous year due to data download failure")
+                    
+                    // Revert the year change due to download failure
+                    await revertYearChangeDueToDownloadFailure()
+                    return
+                }
+                
+                print("⚠️ Proceeding with limited data - \(eventCount) events, \(bandCount) bands")
                 break
             }
             
@@ -923,7 +1000,7 @@ class PreferencesViewModel: ObservableObject {
         
         // FINAL YEAR VERIFICATION: Make sure year hasn't reverted
         let finalEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
-        let expectedYear = Int(eventYearChangeAttempt) ?? 0
+        let expectedYear = resolveYearToNumber(eventYearChangeAttempt)
         if finalEventYear != expectedYear {
             print("🚨 CRITICAL: Year reverted at end! Expected \(expectedYear), got \(finalEventYear)")
             print("🚨 This indicates a system conflict - check logs above")

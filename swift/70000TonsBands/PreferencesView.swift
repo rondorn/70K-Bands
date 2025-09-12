@@ -249,6 +249,13 @@ struct AlertModifiers: ViewModifier {
             } message: {
                 Text(NSLocalizedString("yearChangeAborted", comment: ""))
             }
+            .alert("Year Change Failed", isPresented: $viewModel.showDownloadError) {
+                Button(NSLocalizedString("Ok", comment: "")) {
+                    viewModel.dismissDownloadError()
+                }
+            } message: {
+                Text("Failed to download data for the selected year. Reverted to previous year.")
+            }
     }
 }
 
