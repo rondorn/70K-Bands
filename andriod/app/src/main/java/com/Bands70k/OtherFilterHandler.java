@@ -3,6 +3,7 @@ package com.Bands70k;
 import static com.Bands70k.staticVariables.context;
 
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -103,6 +104,10 @@ public class OtherFilterHandler {
                     message = staticVariables.context.getString(R.string.SortingChronologically);
                 }
                 staticVariables.preferences.saveData();
+                
+                // CRITICAL FIX: Clear the cache when sort preference changes
+                Log.d("VIEW_MODE_DEBUG", "🔄 SORT CHANGE: Sort preference changed, clearing mainListHandler cache");
+                
                 setupOtherFilters();
                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
@@ -111,9 +116,13 @@ public class OtherFilterHandler {
 
 
     public void setupOtherFilters(){
+        setupOtherFilters(true); // Default to showing all filters for backward compatibility
+    }
 
-        if (staticVariables.showEventButtons == true){
-            // Separate event type filters from venue/location filters
+    public void setupOtherFilters(boolean showScheduleFilters){
+
+        if (staticVariables.showEventButtons == true && showScheduleFilters){
+            // SCHEDULE MODE: Show schedule-related filters
             
             // Check if any event type filters should be shown based on festival-specific settings
             boolean showAnyEventTypeFilters = staticVariables.preferences.getMeetAndGreetsEnabled() ||
@@ -152,22 +161,21 @@ public class OtherFilterHandler {
                 FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             }
             
-            // ALWAYS show location/venue filters when showEventButtons is true (regardless of event type settings)
+            // Show location/venue filters in Schedule mode
             FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
-
-            // ALWAYS show other sections when showEventButtons is true
+            
+            // Show flagged and sort sections in Schedule mode
             FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
-
             FilterButtonHandler.showMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.Brake4, "TextView", popupWindow);
             FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
-
-        } else {
-            // Hide ALL sections when showEventButtons is false
+            
+        } else if (staticVariables.showEventButtons == true && !showScheduleFilters) {
+            // BANDS ONLY MODE: Hide all schedule-related filters (event types, venues, flagged, sort)
             FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
@@ -176,11 +184,26 @@ public class OtherFilterHandler {
             FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
-
             FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake3, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
-
+            FilterButtonHandler.hideMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake4, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
+            
+        } else {
+            // NO EVENTS MODE: Hide ALL sections when showEventButtons is false
+            FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.Brake3, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.Brake4, "TextView", popupWindow);
             FilterButtonHandler.hideMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);

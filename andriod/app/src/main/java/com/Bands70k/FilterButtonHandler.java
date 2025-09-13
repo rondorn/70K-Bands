@@ -17,6 +17,7 @@ import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 
 //import com.google.android.material.snackbar.Snackbar;
@@ -56,6 +57,15 @@ public class FilterButtonHandler  {
 
                 popupWindow.showAsDropDown(filterMenuButton, 0, 0);
 
+                // View Mode Filter (Schedule/Bands Only) - show only when scheduled events are present
+                boolean hasScheduledEvents = staticVariables.showEventButtons;
+                boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
+                
+                ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
+                viewModeFilterHandle.setVisibility(hasScheduledEvents);
+                viewModeFilterHandle.setupViewModeFilters();
+                viewModeFilterHandle.setupViewModeListener(showBands);
+
                 MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
                 mustMightHandle.setupMustMightFilters();
                 mustMightHandle.setupMustMightListener(showBands);
@@ -69,7 +79,7 @@ public class FilterButtonHandler  {
                 venueFilterHandle.setupVenueListener(showBands);
 
                 OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
-                otherFilterHandle.setupOtherFilters();
+                otherFilterHandle.setupOtherFilters(showScheduleFilters);
                 otherFilterHandle.setupEventTypeListener(showBands);
 
             }
@@ -88,7 +98,21 @@ public class FilterButtonHandler  {
         if (message.isEmpty() == false) {
             HelpMessageHandler.showMessage(message, messageView);
         }
+        // CRITICAL FIX: Clear the mainListHandler cache
+        if (showBands.listHandler != null) {
+            Log.d("VIEW_MODE_DEBUG", "🔄 REFRESH: Actually clearing mainListHandler cache");
+            showBands.listHandler.clearCache();
+        }
+        
         showBands.refreshData();
+
+        // View Mode Filter (Schedule/Bands Only) - show only when scheduled events are present
+        boolean hasScheduledEvents = staticVariables.showEventButtons;
+        boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
+        
+        ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
+        viewModeFilterHandle.setVisibility(hasScheduledEvents);
+        viewModeFilterHandle.setupViewModeFilters();
 
         MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
         mustMightHandle.setupMustMightFilters();
@@ -100,7 +124,7 @@ public class FilterButtonHandler  {
         venueFilterHandle.setupVenueFilters();
 
         OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
-        otherFilterHandle.setupOtherFilters();
+        otherFilterHandle.setupOtherFilters(showScheduleFilters);
 
     }
 

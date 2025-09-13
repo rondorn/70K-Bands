@@ -73,6 +73,7 @@ var showOtherShows = true
 var showUnofficalEvents = true
 var showSpecialEvents = true
 var showMeetAndGreetEvents = true
+var showScheduleView = true // true = Schedule (mixed), false = Bands Only
 
 // New settings to control visibility of event type filters per festival
 var meetAndGreetsEnabled = true
@@ -295,6 +296,14 @@ func getShowMeetAndGreetEvents() -> Bool{
     return showMeetAndGreetEvents
 }
 
+func setShowScheduleView(_ value: Bool){
+    showScheduleView = value
+}
+
+func getShowScheduleView() -> Bool{
+    return showScheduleView
+}
+
 // MARK: - Event Type Filter Visibility Settings
 func setMeetAndGreetsEnabled(_ value: Bool){
     meetAndGreetsEnabled = value
@@ -432,6 +441,7 @@ func writeFiltersFile(){
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
+        prefsString += "showScheduleView:" + boolToString(getShowScheduleView()) + ";"
         
         // Event type filter visibility settings
         prefsString += "meetAndGreetsEnabled:" + boolToString(getMeetAndGreetsEnabled()) + ";"
@@ -557,6 +567,8 @@ private func readFiltersFileInternal(){
             
             case "showMeetAndGreetEvents":
                 setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+            case "showScheduleView":
+                setShowScheduleView(stringToBool(valueArray[1]))
             
             case "meetAndGreetsEnabled":
                 setMeetAndGreetsEnabled(stringToBool(valueArray[1]))
@@ -670,6 +682,7 @@ func establishDefaults(){
     setShowUnofficalEvents(true)
     setShowSpecialEvents(true)
     setShowMeetAndGreetEvents(true)
+    setShowScheduleView(true)
     
     // Set festival-specific defaults for event type filter visibility from FestivalConfig
     setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
