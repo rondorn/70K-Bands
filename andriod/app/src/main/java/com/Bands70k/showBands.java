@@ -1198,7 +1198,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         
         adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
-        bandNamesList.setAdapter(adapter);
+        // Note: setAdapter() moved to after the loop that populates the adapter
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
         BandInfo bandInfoNames = new BandInfo();
@@ -1228,9 +1228,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
         scheduleSortedBandNames = listHandler.getSortableBandNames();
+        Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: getSortableBandNames() returned " + scheduleSortedBandNames.size() + " items");
+        Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: Current sortByTime preference = " + staticVariables.preferences.getSortByTime());
 
         if (scheduleSortedBandNames.isEmpty() == true) {
+            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames is empty, calling populateBandInfo()");
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
+        } else {
+            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames already has " + scheduleSortedBandNames.size() + " items, skipping populateBandInfo()");
         }
 
         if (scheduleSortedBandNames.get(0).contains(":") == false) {
@@ -1244,6 +1250,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Integer counter = 0;
         attendedHandler.loadShowsAttended();
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
+        
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: About to iterate over scheduleSortedBandNames");
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames = " + (scheduleSortedBandNames != null ? "NOT NULL" : "NULL"));
+        
         for (String bandIndex : scheduleSortedBandNames) {
 
             Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex " + bandIndex + "-" + String.valueOf(staticVariables.eventYear));
@@ -1342,6 +1353,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 adapter.add(bandItem);
             }
 
+            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Finished processing loop, counter = " + counter);
+            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: adapter.getCount() = " + adapter.getCount());
+
+            // CRITICAL FIX: Set the adapter AFTER it has been populated with data
+            bandNamesList.setAdapter(adapter);
+            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Set adapter to ListView with " + adapter.getCount() + " items");
+
             if (counter == 0) {
                 String emptyDataMessage = "";
                 if (unfilteredBandCount > 1) {
@@ -1352,6 +1370,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
                 bandListItem bandItem = new bandListItem(emptyDataMessage);
                 adapter.add(bandItem);
+                
+                // Set adapter for empty data case too
+                bandNamesList.setAdapter(adapter);
+                Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Set adapter to ListView for empty data case with " + adapter.getCount() + " items");
             }
 
             //swip stuff

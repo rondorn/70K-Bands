@@ -142,6 +142,9 @@
 "Band Ranking Filters" = "Band Ranking Filters"; //menu header
 "Show Only Flagged As Attended" = "Show Only Flagged As Attended"; //menu header
 "Sorting Options" = "Sorting Options"; //menu header
+"View Mode" = "View Mode"; //menu header
+"Show Bands Only" = "Show Bands Only"; //menu option
+"Show Schedule" = "Show Schedule"; //menu option
 "Event Type Filters" = "Event Type Filters"; //menu header
 "Venue Filters" = "Venue Filters"; //menu header
 

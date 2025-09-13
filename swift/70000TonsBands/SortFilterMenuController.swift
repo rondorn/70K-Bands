@@ -22,41 +22,55 @@ func createrFilterMenu( controller: MasterViewController){
     
     controller.filterMenu.dataSource = [
         "Clear Filters",
-        "Clear All Filters",
-        "Band Ranking Filters",
-        "Must See Items",
-        "Might See Items",
-        "Wont See Items",
-        "Unknown Items"
+        "Clear All Filters"
     ]
-    if (eventCount > 0 && unofficalEventCount != eventCount){
+    
+    // Determine if we should show schedule-related filters
+    let hasScheduledEvents = (eventCount > 0 && unofficalEventCount != eventCount)
+    let showScheduleView = getShowScheduleView()
+    let showScheduleFilters = hasScheduledEvents && showScheduleView
+    
+    // Add Schedule/Bands Only filter section as FIRST section when scheduled events are present
+    if hasScheduledEvents {
+        controller.filterMenu.dataSource.append("View Mode Header")
+        controller.filterMenu.dataSource.append("View Mode Toggle")
+    }
+    
+    // Add Band Ranking Filters section (always shown)
+    controller.filterMenu.dataSource.append("Band Ranking Filters")
+    controller.filterMenu.dataSource.append("Must See Items")
+    controller.filterMenu.dataSource.append("Might See Items")
+    controller.filterMenu.dataSource.append("Wont See Items")
+    controller.filterMenu.dataSource.append("Unknown Items")
+    
+    // SCHEDULE-RELATED FILTERS: Only show when in Schedule mode AND scheduled events exist
+    if showScheduleFilters {
         controller.filterMenu.dataSource.append("Flagged Header")
         controller.filterMenu.dataSource.append("Flagged Items")
         controller.filterMenu.dataSource.append("Sort Header")
         controller.filterMenu.dataSource.append("Sort By")
     }
-    // Only show Event Type Filters section if at least one filter is enabled
+    
+    // EVENT TYPE FILTERS: Only show when in Schedule mode AND at least one filter is enabled
     let showEventTypeFilters = getMeetAndGreetsEnabled() || getSpecialEventsEnabled() || getUnofficalEventsEnabled()
     
-    if showEventTypeFilters {
+    if showEventTypeFilters && showScheduleFilters {
         controller.filterMenu.dataSource.append("Event Type Filters")
         
         // Conditionally add each event type filter based on settings
-        if (eventCount > 0 && unofficalEventCount != eventCount) {
-            if getMeetAndGreetsEnabled() {
-                controller.filterMenu.dataSource.append("Meet and Greet Events")
-            }
-            if getSpecialEventsEnabled() {
-                controller.filterMenu.dataSource.append("Special Events")
-            }
+        if getMeetAndGreetsEnabled() {
+            controller.filterMenu.dataSource.append("Meet and Greet Events")
+        }
+        if getSpecialEventsEnabled() {
+            controller.filterMenu.dataSource.append("Special Events")
         }
         if getUnofficalEventsEnabled() {
             controller.filterMenu.dataSource.append("Unoffical Events")
         }
     }
-    if (eventCount > 0 && unofficalEventCount != eventCount){
-        controller.filterMenu.dataSource.append("Location Header")
-        
+    
+    // VENUE FILTERS: Only show when in Schedule mode AND scheduled events exist
+    if showScheduleFilters {
         // Dynamically add venue options based on FestivalConfig
         let configuredVenues = FestivalConfig.current.getAllVenueNames()
         for venueName in configuredVenues {
@@ -101,6 +115,7 @@ func setupAllEntries(controller: MasterViewController){
         setupHeadersAndMisc(controller: controller, item: item, cellRow: cell)
         setupFlaggedOnlylMenuChoices(controller: controller, item: item, cellRow: cell)
         setupSortMenuChoices(controller: controller, item: item, cellRow: cell)
+        setupViewModeMenuChoices(controller: controller, item: item, cellRow: cell)
         setupClearAllMenuChoices(controller: controller, item: item, cellRow: cell)
         setupMustMightMenuChoices(controller: controller, item: item, cellRow: cell)
         setupEventTypeMenuChoices(controller: controller, item: item, cellRow: cell)
@@ -132,6 +147,8 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         
     } else if (item == "Venue Filters"){
         setupCell(header: true, titleText: NSLocalizedString("Venue Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+    } else if (item == "View Mode Header"){
+        setupCell(header: true, titleText: NSLocalizedString("View Mode", comment: ""), cellData: cellRow, imageName: "", disabled: false)
     }
 }
 
@@ -143,6 +160,7 @@ func setupClickResponse(controller: MasterViewController){
         setupClearClickResponse(controller: controller!, item: item)
         setupFlaggedOnlyResponse(controller: controller!, item: item)
         setupSortResponse(controller: controller!, item: item)
+        setupViewModeClickResponse(controller: controller!, item: item)
         setupEventTypeClickResponse(controller: controller!, item: item)
         setupVenueClickResponse(controller: controller!, item: item)
         print ("The respond from the chosen one is \(item) = \(index)")
@@ -232,6 +250,7 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         setShowSpecialEvents(true)
         setShowUnofficalEvents(true)
         setShowMeetAndGreetEvents(true)
+        setShowScheduleView(true) // Reset to Schedule view (default)
         setMustSeeOn(true)
         setMightSeeOn(true)
         setWontSeeOn(true)
@@ -654,5 +673,28 @@ func refreshAfterMenuSelected(controller: MasterViewController, message: String)
         ToastMessages(message).show(controller, cellLocation: visibleLocation, placeHigh: true)
     }
     
+}
+
+func setupViewModeClickResponse(controller: MasterViewController, item: String){
+    if (item == "View Mode Toggle"){
+        if (getShowScheduleView()){
+            setShowScheduleView(false)
+        } else {
+            setShowScheduleView(true)
+        }
+        refreshAfterMenuSelected(controller: controller, message: "")
+    }
+}
+
+func setupViewModeMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
+    if (item == "View Mode Toggle"){
+        if (getShowScheduleView()){
+            // Currently showing schedule - offer option to switch to bands only
+            setupCell(header: false, titleText: NSLocalizedString("Show Bands Only", comment: "") , cellData: cellRow, imageName: bandIconSort, disabled: false)
+        } else {
+            // Currently showing bands only - offer option to switch to schedule
+            setupCell(header: false, titleText: NSLocalizedString("Show Schedule", comment: "") , cellData: cellRow, imageName: scheduleIconSort, disabled: false)
+        }
+    }
 }
 

@@ -60,7 +60,25 @@ public class mainListHandler {
      */
     public List<String> getSortableBandNames(){
 
+        Log.d("CRITICAL_DEBUG", "🎯 GET_SORTABLE: getSortableBandNames() called, returning " + 
+              (this.sortableBandNames != null ? this.sortableBandNames.size() : "NULL") + " items");
+        Log.d("CRITICAL_DEBUG", "🎯 GET_SORTABLE: Current sortByTime preference = " + staticVariables.preferences.getSortByTime());
+        Log.d("CRITICAL_DEBUG", "🎯 GET_SORTABLE: sortableBandNames is " + (this.sortableBandNames == null ? "NULL" : (this.sortableBandNames.isEmpty() ? "EMPTY" : "POPULATED with " + this.sortableBandNames.size() + " items")));
         return this.sortableBandNames;
+    }
+
+    /**
+     * Clears the cached sortable band names to force re-processing.
+     */
+    public void clearCache(){
+        Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: Clearing sortableBandNames cache");
+        if (this.sortableBandNames != null) {
+            Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: Cleared " + this.sortableBandNames.size() + " cached items");
+            this.sortableBandNames.clear();
+        } else {
+            Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: sortableBandNames was already null");
+        }
+        this.sortableBandNames = null;
     }
 
 
@@ -199,17 +217,30 @@ public class mainListHandler {
             }
             
             // Sort events according to user preference (time or alphabetical)
-            if (staticVariables.preferences.getSortByTime()) {
+            // DEBUG: Check the exact preference value at branching point
+        boolean sortByTimeValue = staticVariables.preferences.getSortByTime();
+        Log.d("CRITICAL_DEBUG", "🔍 BRANCHING POINT: getSortByTime() = " + sortByTimeValue);
+        Log.d("CRITICAL_DEBUG", "🔍 PREFERENCE OBJECT: " + (staticVariables.preferences != null ? "NOT NULL" : "NULL"));
+        if (staticVariables.preferences != null) {
+            Log.d("CRITICAL_DEBUG", "🔍 PREFERENCE CLASS: " + staticVariables.preferences.getClass().getSimpleName());
+        }
+        
+        if (sortByTimeValue) {
                 // Events are already sorted by time due to the timeIndex prefix (e.g., "1234567890:BandName")
                 Collections.sort(eventsList);
                 Log.d("FILTER_DEBUG", "🕐 Sorting events by TIME");
             } else {
                 // For alphabetical sorting, we need to sort by band name, not time
+                Log.d("CRITICAL_DEBUG", "🔤 BEFORE alphabetical sort: eventsList.size() = " + eventsList.size());
+                Log.d("CRITICAL_DEBUG", "🔤 BEFORE sort - first 3 entries: " + (eventsList.size() > 0 ? eventsList.get(0) : "none") + ", " + (eventsList.size() > 1 ? eventsList.get(1) : "none") + ", " + (eventsList.size() > 2 ? eventsList.get(2) : "none"));
                 Collections.sort(eventsList, (a, b) -> {
                     String bandA = getBandNameFromIndex(a);
                     String bandB = getBandNameFromIndex(b);
+                    Log.d("CRITICAL_DEBUG", "🔤 Comparing: '" + bandA + "' vs '" + bandB + "'");
                     return bandA.compareToIgnoreCase(bandB);
                 });
+                Log.d("CRITICAL_DEBUG", "🔤 AFTER alphabetical sort: eventsList.size() = " + eventsList.size());
+                Log.d("CRITICAL_DEBUG", "🔤 AFTER sort - first 3 entries: " + (eventsList.size() > 0 ? eventsList.get(0) : "none") + ", " + (eventsList.size() > 1 ? eventsList.get(1) : "none") + ", " + (eventsList.size() > 2 ? eventsList.get(2) : "none"));
                 Log.d("FILTER_DEBUG", "🔤 Sorting events ALPHABETICALLY");
             }
             
@@ -269,6 +300,8 @@ public class mainListHandler {
             Collections.sort(sortableBandNames);
         }
 
+        Log.d("CRITICAL_DEBUG", "🎯 BEFORE_ADAPTER: About to call turnSortedListIntoArrayAdapter()");
+        Log.d("CRITICAL_DEBUG", "🎯 BEFORE_ADAPTER: sortableBandNames.size() = " + sortableBandNames.size());
         turnSortedListIntoArrayAdapter();
 
         //ensure that if there is no list for getShowWillAttend(), we turn this off and recollect
@@ -280,6 +313,8 @@ public class mainListHandler {
             Log.d("FILTER_DEBUG", "🔄 AFTER SETTING FALSE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
             sortableBandNames = populateBandInfo(bandInfo, bandList);
             Log.d("FILTER_DEBUG", "🔄 RECURSIVE CALL COMPLETE: returned " + sortableBandNames.size() + " bands, getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
+        } else {
+            Log.d("CRITICAL_DEBUG", "🎯 NO_RECURSIVE: sortableBandNames.isEmpty()=" + sortableBandNames.isEmpty() + ", getShowWillAttend()=" + staticVariables.preferences.getShowWillAttend());
         }
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
@@ -301,6 +336,7 @@ public class mainListHandler {
         Log.d("FILTER_DEBUG", "🏁 Input bands: " + bandList.size() + ", Output bands: " + sortableBandNames.size());
 
         //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
+        Log.d("CRITICAL_DEBUG", "🎯 POPULATE_RETURN: populateBandInfo() returning " + sortableBandNames.size() + " items");
         return sortableBandNames;
     }
 
@@ -463,6 +499,9 @@ public class mainListHandler {
 
         ArrayList<String> displayableBandList = new ArrayList<String>();
 
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Starting turnSortedListIntoArrayAdapter()");
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: sortableBandNames.size() = " + sortableBandNames.size());
+
         Integer counter = 0;
         for (String bandIndex: sortableBandNames){
             Log.d(TAG, "bandIndex=" + bandIndex);
@@ -472,15 +511,26 @@ public class mainListHandler {
             attendedListMap.put(counter, bandName + ":" + timeIndex);
             String line = buildLines(timeIndex, bandName);
 
+            boolean filterResult = checkFiltering(bandName);
+            boolean showWillAttend = staticVariables.preferences.getShowWillAttend();
+            Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Band '" + bandName + "' - filterResult=" + filterResult + ", showWillAttend=" + showWillAttend);
+
             if (checkFiltering(bandName) == true || staticVariables.preferences.getShowWillAttend() == true) {
                 displayableBandList.add(line);
                 bandNamesIndex.add(bandName);
                 counter = counter + 1;
+                Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Added band '" + bandName + "' to displayableBandList");
+            } else {
+                Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: FILTERED OUT band '" + bandName + "'");
             }
         }
 
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Final displayableBandList.size() = " + displayableBandList.size());
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Final bandNamesIndex.size() = " + bandNamesIndex.size());
+
         //setTextAppearance(context, android.R.attr.textAppearanceMedium)
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, displayableBandList);
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Created ArrayAdapter with " + displayableBandList.size() + " items");
     }
 
     public String getBandNameFromIndex(String value){
@@ -490,14 +540,17 @@ public class mainListHandler {
 
         if (indexData.length != 0) {
             if (isLong(indexData[0]) == false) {
+                Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning indexData[0]: '" + indexData[0] + "' from '" + value + "'");
                 return indexData[0];
 
             } else if (indexData.length == 2) {
                 if (isLong(indexData[1]) == false) {
+                    Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning indexData[1]: '" + indexData[1] + "' from '" + value + "'");
                     return indexData[1];
                 }
             }
         }
+        Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning original value: '" + value + "'");
         return value;
     }
 
