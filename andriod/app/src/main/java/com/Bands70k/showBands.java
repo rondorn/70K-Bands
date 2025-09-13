@@ -67,6 +67,7 @@ import com.baoyz.swipemenulistview.SwipeMenuListView;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.BufferedReader;
+import java.util.Collections;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -121,7 +122,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private BroadcastReceiver mRegistrationBroadcastReceiver;
     private boolean isReceiverRegistered;
 
-    private mainListHandler listHandler;
+    public mainListHandler listHandler;
     private bandListView adapter;
     private ListView listView;
 
@@ -215,6 +216,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandNamesList.setSelectionAfterHeaderView();
             }
         });
+
+        // CRASH FIX: Initialize bandNamesList
+        bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
+        Log.d("UI_INIT", "🔧 bandNamesList initialized: " + (bandNamesList != null ? "SUCCESS" : "FAILED"));
+        
+        // If adapter was prepared before UI was ready, set it now
+        if (bandNamesList != null && adapter != null) {
+            Log.d("UI_INIT", "🔧 Setting deferred adapter with " + adapter.getCount() + " items");
+            bandNamesList.setAdapter(adapter);
+        }
 
         handleSearch();
 
@@ -1128,57 +1139,170 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private String getBandNameFromIndex(String index) {
 
-        String bandName = "";
-        Long timeIndex = Long.valueOf(0);
-
+        Log.d("showBands.getBandNameFromIndex", "🔍 Processing index: " + index);
         String[] indexSplit = index.split(":");
 
-        if (indexSplit.length == 2) {
-
-            try {
-                timeIndex = Long.valueOf(indexSplit[0]);
-                bandName = indexSplit[1];
-
-            } catch (NumberFormatException e) {
-                bandName = indexSplit[0];
+        if (indexSplit.length >= 2) {
+            // Use timestamp detection to identify format
+            boolean firstPartIsTimestamp = isTimestamp(indexSplit[0]);
+            boolean secondPartIsTimestamp = isTimestamp(indexSplit[1]);
+            
+            String result;
+            if (firstPartIsTimestamp && !secondPartIsTimestamp) {
+                // Format: "timeIndex:bandName" -> return second part (band name)
+                result = indexSplit[1];
+                Log.d("showBands.getBandNameFromIndex", "🔍 TIME FORMAT detected, returning band name: '" + result + "'");
+            } else if (!firstPartIsTimestamp && secondPartIsTimestamp) {
+                // Format: "bandName:timeIndex" -> return first part (band name)
+                result = indexSplit[0];
+                Log.d("showBands.getBandNameFromIndex", "🔍 ALPHA FORMAT detected, returning band name: '" + result + "'");
+            } else {
+                // Fallback: use sort mode
+                if (staticVariables.preferences.getSortByTime()) {
+                    result = indexSplit[1]; // Time mode: second part is band name
+                    Log.d("showBands.getBandNameFromIndex", "🔍 FALLBACK TIME MODE, returning band name: '" + result + "'");
+                } else {
+                    result = indexSplit[0]; // Alphabetical mode: first part is band name
+                    Log.d("showBands.getBandNameFromIndex", "🔍 FALLBACK ALPHA MODE, returning band name: '" + result + "'");
+                }
             }
+            return result;
+        } else if (indexSplit.length == 1) {
+            // Single part, assume it's the band name
+            Log.d("showBands.getBandNameFromIndex", "🔍 SINGLE PART, returning: '" + indexSplit[0] + "'");
+            return indexSplit[0];
         }
-
-        if (bandName.isEmpty() == true) {
-            bandName = indexSplit[0];
-        }
-
-        return bandName;
+        
+        Log.d("showBands.getBandNameFromIndex", "🔍 FALLBACK, returning original index: '" + index + "'");
+        return index;
     }
 
     private Long getTimeIndexFromIndex(String index) {
 
-        Long timeIndex = Long.valueOf(0);
-        try {
-            String[] indexSplit = index.split(":");
+        Log.d("showBands.getTimeIndexFromIndex", "🔍 Processing index: " + index);
+        String[] indexSplit = index.split(":");
 
-            if (indexSplit.length == 2) {
-
-                try {
-                    timeIndex = Long.valueOf(indexSplit[0]);
-
-                } catch (NumberFormatException e) {
-                    timeIndex = Long.valueOf(indexSplit[1]);
+        if (indexSplit.length >= 2) {
+            // Use timestamp detection to identify format
+            boolean firstPartIsTimestamp = isTimestamp(indexSplit[0]);
+            boolean secondPartIsTimestamp = isTimestamp(indexSplit[1]);
+            
+            try {
+                Long result;
+                if (firstPartIsTimestamp && !secondPartIsTimestamp) {
+                    // Format: "timeIndex:bandName" -> return first part (time index)
+                    result = Long.valueOf(indexSplit[0]);
+                    Log.d("showBands.getTimeIndexFromIndex", "🔍 TIME FORMAT detected, returning time index: " + result);
+                } else if (!firstPartIsTimestamp && secondPartIsTimestamp) {
+                    // Format: "bandName:timeIndex" -> return second part (time index)
+                    result = Long.valueOf(indexSplit[1]);
+                    Log.d("showBands.getTimeIndexFromIndex", "🔍 ALPHA FORMAT detected, returning time index: " + result);
+                } else {
+                    // Fallback: use sort mode
+                    if (staticVariables.preferences.getSortByTime()) {
+                        result = Long.valueOf(indexSplit[0]); // Time mode: first part is time index
+                        Log.d("showBands.getTimeIndexFromIndex", "🔍 FALLBACK TIME MODE, returning time index: " + result);
+                    } else {
+                        result = Long.valueOf(indexSplit[1]); // Alphabetical mode: second part is time index
+                        Log.d("showBands.getTimeIndexFromIndex", "🔍 FALLBACK ALPHA MODE, returning time index: " + result);
+                    }
                 }
+                return result;
+            } catch (NumberFormatException e) {
+                Log.e("showBands.getTimeIndexFromIndex", "🚨 Failed to parse time index from: " + index, e);
+                return Long.valueOf(0);
             }
-
-        } catch (Exception error){
-            Log.d("getTimeIndexFromIndex", error.getMessage());
         }
-
-        return timeIndex;
+        
+        Log.d("showBands.getTimeIndexFromIndex", "🔍 FALLBACK, returning 0");
+        return Long.valueOf(0);
+    }
+    
+    /**
+     * Helper method to detect if a string represents a timestamp
+     * Timestamps are typically very large numbers (> 1000000)
+     * Band names like "1914" will be < 1000000
+     */
+    private boolean isTimestamp(String value) {
+        try {
+            Long number = Long.valueOf(value);
+            // Timestamps are typically very large numbers (> 1000000)
+            // Band names like "1914" will be < 1000000
+            boolean result = number > 1000000;
+            Log.d("showBands.isTimestamp", "🔢 isTimestamp('" + value + "') -> number=" + number + ", result=" + result);
+            return result;
+        } catch (NumberFormatException e) {
+            Log.d("showBands.isTimestamp", "🔢 isTimestamp('" + value + "') -> NOT A NUMBER, result=false");
+            return false;
+        }
     }
 
     private void displayBandData() {
 
         Log.d("DisplayListData", "starting display ");
+        
+        // Check view mode preference to determine which display method to use
+        boolean showScheduleView = staticVariables.preferences.getShowScheduleView();
+        Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: getShowScheduleView() = " + showScheduleView);
+        
+        if (showScheduleView) {
+            Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: Calling displayBandDataWithSchedule()");
+            displayBandDataWithSchedule();
+        } else {
+            Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: Calling displayBandDataWithoutSchedule()");
+            displayBandDataWithoutSchedule();
+        }
+    }
 
-        displayBandDataWithSchedule();
+    private void displayBandDataWithoutSchedule() {
+        
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Starting bands-only display");
+        
+        adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+        
+        BandInfo bandInfoNames = new BandInfo();
+        bandNames = bandInfoNames.getBandNames();
+        
+        if (bandNames.size() == 0) {
+            String emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            bandListItem bandItem = new bandListItem(emptyDataMessage);
+            adapter.add(bandItem);
+        } else {
+            // Sort bands alphabetically for bands-only view
+            Collections.sort(bandNames);
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Processing " + bandNames.size() + " bands");
+            
+            Integer counter = 0;
+            for (String bandName : bandNames) {
+                bandListItem bandItem = new bandListItem(bandName);
+                bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
+                adapter.add(bandItem);
+                counter++;
+            }
+            
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Added " + counter + " bands to adapter");
+        }
+        
+        // Set the adapter after processing all data
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Setting adapter with " + adapter.getCount() + " items");
+        if (bandNamesList != null) {
+            bandNamesList.setAdapter(adapter);
+            Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set successfully");
+        } else {
+            Log.w("VIEW_MODE_DEBUG", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
+            // Store adapter for later when UI is initialized
+            this.adapter = adapter;
+        }
+        
+        // Setup swipe and filters
+        setupSwipeList();
+        FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
+        filterButtonHandle.setUpFiltersButton(this);
+        
+        // Update band count display
+        TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
+        String headerText = String.valueOf(bandCount.getText());
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Finished display " + adapter.getCount() + " bands");
     }
 
     private void displayBandDataWithSchedule() {
@@ -1227,16 +1351,25 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
-        scheduleSortedBandNames = listHandler.getSortableBandNames();
-        Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: getSortableBandNames() returned " + scheduleSortedBandNames.size() + " items");
-        Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: Current sortByTime preference = " + staticVariables.preferences.getSortByTime());
-
-        if (scheduleSortedBandNames.isEmpty() == true) {
-            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames is empty, calling populateBandInfo()");
+        
+        // CRITICAL FIX: Force fresh data processing in alphabetical mode to prevent stale cache
+        if (!staticVariables.preferences.getSortByTime()) {
+            Log.d("DisplayListData", "🔧 CRITICAL: Alphabetical mode detected, clearing cache to force fresh data");
+            listHandler.clearCache();
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
             Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
         } else {
-            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames already has " + scheduleSortedBandNames.size() + " items, skipping populateBandInfo()");
+            scheduleSortedBandNames = listHandler.getSortableBandNames();
+            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: getSortableBandNames() returned " + scheduleSortedBandNames.size() + " items");
+            Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: Current sortByTime preference = " + staticVariables.preferences.getSortByTime());
+
+            if (scheduleSortedBandNames.isEmpty() == true) {
+                Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames is empty, calling populateBandInfo()");
+                scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+                Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
+            } else {
+                Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames already has " + scheduleSortedBandNames.size() + " items, skipping populateBandInfo()");
+            }
         }
 
         if (scheduleSortedBandNames.get(0).contains(":") == false) {
@@ -1353,37 +1486,42 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 adapter.add(bandItem);
             }
 
-            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Finished processing loop, counter = " + counter);
-            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: adapter.getCount() = " + adapter.getCount());
-
-            // CRITICAL FIX: Set the adapter AFTER it has been populated with data
-            bandNamesList.setAdapter(adapter);
-            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Set adapter to ListView with " + adapter.getCount() + " items");
-
-            if (counter == 0) {
-                String emptyDataMessage = "";
-                if (unfilteredBandCount > 1) {
-                    Log.d("populateBandInfo", "BandList has issues 2");
-                    emptyDataMessage = getResources().getString(R.string.data_filter_issue);
-                } else {
-                    emptyDataMessage = getResources().getString(R.string.waiting_for_data);
-                }
-                bandListItem bandItem = new bandListItem(emptyDataMessage);
-                adapter.add(bandItem);
-                
-                // Set adapter for empty data case too
-                bandNamesList.setAdapter(adapter);
-                Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Set adapter to ListView for empty data case with " + adapter.getCount() + " items");
-            }
-
-            //swip stuff
-            setupSwipeList();
-
-            FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
-            //filterButtonHandle.onCreate(null);
-            filterButtonHandle.setUpFiltersButton(this);
-
         }
+        
+        // Handle processing after the main loop
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Finished processing loop, counter = " + counter);
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: adapter.getCount() = " + adapter.getCount());
+
+        // Handle empty data case AFTER the loop
+        if (counter == 0) {
+            String emptyDataMessage = "";
+            if (unfilteredBandCount > 1) {
+                Log.d("populateBandInfo", "BandList has issues 2");
+                emptyDataMessage = getResources().getString(R.string.data_filter_issue);
+            } else {
+                emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            }
+            bandListItem bandItem = new bandListItem(emptyDataMessage);
+            adapter.add(bandItem);
+        }
+        
+        // CRITICAL FIX: Set the adapter after processing all data
+        Log.d("DisplayListData", "🔧 CRITICAL: Setting adapter with " + adapter.getCount() + " items");
+        if (bandNamesList != null) {
+            bandNamesList.setAdapter(adapter);
+            Log.d("DisplayListData", "🔧 SUCCESS: Adapter set successfully");
+        } else {
+            Log.w("DisplayListData", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
+            // Store adapter for later when UI is initialized
+            this.adapter = adapter;
+        }
+
+        //swip stuff
+        setupSwipeList();
+
+        FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
+        //filterButtonHandle.onCreate(null);
+        filterButtonHandle.setUpFiltersButton(this);
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
@@ -1585,6 +1723,40 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Only refresh if we're not returning from stats page to avoid blocking stats loading
         // The stats page should load immediately without waiting for main activity refresh
         if (!returningFromStatsPage) {
+            
+            // FRESH INSTALL FIX: Apply exact pull-to-refresh logic on first launch
+            // Check if this looks like a fresh install (no data loaded yet)
+            boolean isWaitingForData = false;
+            if (listHandler == null) {
+                isWaitingForData = true;
+            } else {
+                List<String> sortableNames = listHandler.getSortableBandNames();
+                if (sortableNames.isEmpty() || 
+                    (sortableNames.size() == 1 && sortableNames.get(0).contains("Waiting for data"))) {
+                    isWaitingForData = true;
+                }
+            }
+            
+            if (isWaitingForData) {
+                Log.d("FRESH_INSTALL", "🚀 Applying pull-to-refresh logic for fresh install");
+                
+                // Apply the EXACT same logic as pull-to-refresh
+                bandInfo = new BandInfo();
+                staticVariables.loadingNotes = false;
+                SynchronizationManager.signalNotesLoadingComplete();
+                
+                // Refresh description map cache (same as pull-to-refresh)
+                Log.d("DescriptionMap", "Refreshing description map cache on fresh install");
+                CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                descHandler.getDescriptionMap();
+                
+                // Apply the same refresh sequence as pull-to-refresh
+                refreshNewData();
+                reloadData();
+                
+                Log.d("FRESH_INSTALL", "🚀 Fresh install refresh sequence complete");
+                return; // Skip the normal refresh logic below
+            }
             // DETAILS RETURN FIX: Always refresh to show updated data, but preserve scroll position
             if (staticVariables.listPosition > 0) {
                 returningFromDetailsScreen = true;
@@ -1630,18 +1802,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
             }
         }, 200); // Quick check after resume completes
-        bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            // argument position gives the index of item which is clicked
-            public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
-
-                try {
-                    showClickChoices(position);
-                } catch (Exception error) {
-                    Log.e("Unable to find band", error.toString());
-                    System.exit(0);
+        Log.d("CLICK_DEBUG", "🔧 Setting up OnItemClickListener for bandNamesList");
+        if (bandNamesList != null) {
+            bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                // argument position gives the index of item which is clicked
+                public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
+                    Log.d("CLICK_DEBUG", "🖱️ OnItemClickListener triggered! Position: " + position);
+                    try {
+                        showClickChoices(position);
+                    } catch (Exception error) {
+                        Log.e("CLICK_DEBUG", "🚨 Error in showClickChoices: " + error.toString(), error);
+                        System.exit(0);
+                    }
                 }
-            }
-        });
+            });
+            Log.d("CLICK_DEBUG", "🔧 OnItemClickListener set successfully");
+        } else {
+            Log.e("CLICK_DEBUG", "🚨 Cannot set OnItemClickListener - bandNamesList is null!");
+        }
 
         handleSearch();
 
@@ -1682,15 +1860,46 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     public void showClickChoices(final int position) {
 
+        Log.d("CLICK_DEBUG", "🖱️ showClickChoices called with position: " + position);
+        
+        if (listHandler == null) {
+            Log.e("CLICK_DEBUG", "🚨 listHandler is null!");
+            return;
+        }
+        
+        if (listHandler.bandNamesIndex == null) {
+            Log.e("CLICK_DEBUG", "🚨 listHandler.bandNamesIndex is null!");
+            return;
+        }
+        
+        if (position >= listHandler.bandNamesIndex.size()) {
+            Log.e("CLICK_DEBUG", "🚨 Position " + position + " is out of bounds! bandNamesIndex size: " + listHandler.bandNamesIndex.size());
+            return;
+        }
+
         final String selectedBand = listHandler.bandNamesIndex.get(position);
+        Log.d("CLICK_DEBUG", "🖱️ selectedBand: " + selectedBand);
 
         currentListForDetails = listHandler.bandNamesIndex;
         currentListPosition = position;
 
+        if (scheduleSortedBandNames == null) {
+            Log.e("CLICK_DEBUG", "🚨 scheduleSortedBandNames is null!");
+            return;
+        }
+        
+        if (position >= scheduleSortedBandNames.size()) {
+            Log.e("CLICK_DEBUG", "🚨 Position " + position + " is out of bounds! scheduleSortedBandNames size: " + scheduleSortedBandNames.size());
+            return;
+        }
+
         String bandIndex = scheduleSortedBandNames.get(position);
+        Log.d("CLICK_DEBUG", "🖱️ bandIndex: " + bandIndex);
 
         String bandName = getBandNameFromIndex(bandIndex);
         Long timeIndex = getTimeIndexFromIndex(bandIndex);
+        
+        Log.d("CLICK_DEBUG", "🖱️ Parsed bandName: " + bandName + ", timeIndex: " + timeIndex);
 
         //bypass prompt if appropriate
         if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false) {
@@ -1840,6 +2049,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     public void showDetailsScreen(int position, String selectedBand) {
 
+        Log.d("NAVIGATION_DEBUG", "🚀 showDetailsScreen called - position: " + position + ", band: " + selectedBand);
+        
         getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
         BandInfo.setSelectedBand(selectedBand);
@@ -1849,7 +2060,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("ListPosition", "Saved list position: " + position + " for band: " + selectedBand);
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
+        Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails activity");
         startActivity(showDetails);
+        Log.d("NAVIGATION_DEBUG", "🚀 showBandDetails activity started");
     }
 
     @Override
@@ -1942,13 +2155,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             () -> {
                 Log.d("Refresh", "Refresh Stage = Post-Start");
                 
-                // ANIMATION FIX: Only refresh if we don't have scroll preservation active
-                if (staticVariables.savedScrollPosition < 0) {
-                    refreshData();
-                    Log.d("onPostExecuteRefresh", "Post-execute refresh (no scroll preservation)");
-                } else {
-                    Log.d("onPostExecuteRefresh", "Skipping post-execute refresh - scroll preservation active");
-                }
+                // FRESH INSTALL FIX: Always refresh display after data download
+                // This ensures downloaded data is displayed even on fresh install
+                refreshData();
+                Log.d("onPostExecuteRefresh", "Post-execute refresh (displaying downloaded data)");
+                
+                // Note: Scroll preservation is handled within refreshData() if needed
 
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
                 
