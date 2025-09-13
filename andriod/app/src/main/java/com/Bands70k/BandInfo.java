@@ -313,29 +313,23 @@ public class BandInfo {
      */
     public void getDownloadtUrls(){
 
-        Log.d("DownloadUrls", "🔧 getDownloadtUrls() called");
-        Log.d("DownloadUrls", "🔧 staticVariables.artistURL = " + staticVariables.artistURL);
-        Log.d("DownloadUrls", "🔧 staticVariables.scheduleURL = " + staticVariables.scheduleURL);
-        
         // Use staticVariables URLs if available, otherwise fall back to FestivalConfig defaults
         String artistUrl = staticVariables.artistURL;
         String scheduleUrl = staticVariables.scheduleURL;
         
         if (artistUrl == null || artistUrl.isEmpty()) {
             artistUrl = FestivalConfig.getInstance().artistUrlDefault;
-            Log.d("DownloadUrls", "🔧 Using fallback artistUrl: " + artistUrl);
+            Log.d("DownloadUrls", "Using fallback artistUrl");
         }
         
         if (scheduleUrl == null || scheduleUrl.isEmpty()) {
             scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
-            Log.d("DownloadUrls", "🔧 Using fallback scheduleUrl: " + scheduleUrl);
+            Log.d("DownloadUrls", "Using fallback scheduleUrl");
         }
 
         downloadUrls.put("artistUrl", artistUrl);
         downloadUrls.put("scheduleUrl", scheduleUrl);
         downloadUrls.put("descriptionMap", staticVariables.preferences.getDescriptionMapUrl());
-        
-        Log.d("DownloadUrls", "🔧 Final downloadUrls: " + downloadUrls.toString());
 
     }
 

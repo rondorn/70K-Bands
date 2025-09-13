@@ -1740,21 +1740,40 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             if (isWaitingForData) {
                 Log.d("FRESH_INSTALL", "🚀 Applying pull-to-refresh logic for fresh install");
                 
-                // Apply the EXACT same logic as pull-to-refresh
-                bandInfo = new BandInfo();
-                staticVariables.loadingNotes = false;
-                SynchronizationManager.signalNotesLoadingComplete();
+                // PERFORMANCE FIX: Move heavy operations to background thread to prevent ANR
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // Apply the EXACT same logic as pull-to-refresh (in background)
+                            bandInfo = new BandInfo();
+                            staticVariables.loadingNotes = false;
+                            SynchronizationManager.signalNotesLoadingComplete();
+                            
+                            // Refresh description map cache (same as pull-to-refresh)
+                            Log.d("DescriptionMap", "Refreshing description map cache on fresh install");
+                            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                            descHandler.getDescriptionMap();
+                            
+                            // Apply the same refresh sequence as pull-to-refresh (on UI thread)
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        refreshNewData();
+                                        reloadData();
+                                        Log.d("FRESH_INSTALL", "🚀 Fresh install refresh sequence complete");
+                                    } catch (Exception e) {
+                                        Log.e("FRESH_INSTALL", "🚨 Error in UI refresh: " + e.getMessage(), e);
+                                    }
+                                }
+                            });
+                        } catch (Exception e) {
+                            Log.e("FRESH_INSTALL", "🚨 Error in background refresh: " + e.getMessage(), e);
+                        }
+                    }
+                }).start();
                 
-                // Refresh description map cache (same as pull-to-refresh)
-                Log.d("DescriptionMap", "Refreshing description map cache on fresh install");
-                CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                descHandler.getDescriptionMap();
-                
-                // Apply the same refresh sequence as pull-to-refresh
-                refreshNewData();
-                reloadData();
-                
-                Log.d("FRESH_INSTALL", "🚀 Fresh install refresh sequence complete");
                 return; // Skip the normal refresh logic below
             }
             // DETAILS RETURN FIX: Always refresh to show updated data, but preserve scroll position
@@ -1802,23 +1821,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
             }
         }, 200); // Quick check after resume completes
-        Log.d("CLICK_DEBUG", "🔧 Setting up OnItemClickListener for bandNamesList");
         if (bandNamesList != null) {
             bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 // argument position gives the index of item which is clicked
                 public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
-                    Log.d("CLICK_DEBUG", "🖱️ OnItemClickListener triggered! Position: " + position);
                     try {
                         showClickChoices(position);
                     } catch (Exception error) {
-                        Log.e("CLICK_DEBUG", "🚨 Error in showClickChoices: " + error.toString(), error);
+                        Log.e("CLICK_DEBUG", "Error in showClickChoices: " + error.toString(), error);
                         System.exit(0);
                     }
                 }
             });
-            Log.d("CLICK_DEBUG", "🔧 OnItemClickListener set successfully");
         } else {
-            Log.e("CLICK_DEBUG", "🚨 Cannot set OnItemClickListener - bandNamesList is null!");
+            Log.e("CLICK_DEBUG", "Cannot set OnItemClickListener - bandNamesList is null!");
         }
 
         handleSearch();
@@ -1860,46 +1876,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     public void showClickChoices(final int position) {
 
-        Log.d("CLICK_DEBUG", "🖱️ showClickChoices called with position: " + position);
-        
-        if (listHandler == null) {
-            Log.e("CLICK_DEBUG", "🚨 listHandler is null!");
-            return;
-        }
-        
-        if (listHandler.bandNamesIndex == null) {
-            Log.e("CLICK_DEBUG", "🚨 listHandler.bandNamesIndex is null!");
+        if (listHandler == null || listHandler.bandNamesIndex == null) {
+            Log.e("CLICK_DEBUG", "listHandler or bandNamesIndex is null!");
             return;
         }
         
         if (position >= listHandler.bandNamesIndex.size()) {
-            Log.e("CLICK_DEBUG", "🚨 Position " + position + " is out of bounds! bandNamesIndex size: " + listHandler.bandNamesIndex.size());
+            Log.e("CLICK_DEBUG", "Position out of bounds: " + position);
             return;
         }
 
         final String selectedBand = listHandler.bandNamesIndex.get(position);
-        Log.d("CLICK_DEBUG", "🖱️ selectedBand: " + selectedBand);
-
         currentListForDetails = listHandler.bandNamesIndex;
         currentListPosition = position;
 
-        if (scheduleSortedBandNames == null) {
-            Log.e("CLICK_DEBUG", "🚨 scheduleSortedBandNames is null!");
-            return;
-        }
-        
-        if (position >= scheduleSortedBandNames.size()) {
-            Log.e("CLICK_DEBUG", "🚨 Position " + position + " is out of bounds! scheduleSortedBandNames size: " + scheduleSortedBandNames.size());
+        if (scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
+            Log.e("CLICK_DEBUG", "scheduleSortedBandNames issue at position: " + position);
             return;
         }
 
         String bandIndex = scheduleSortedBandNames.get(position);
-        Log.d("CLICK_DEBUG", "🖱️ bandIndex: " + bandIndex);
-
         String bandName = getBandNameFromIndex(bandIndex);
         Long timeIndex = getTimeIndexFromIndex(bandIndex);
-        
-        Log.d("CLICK_DEBUG", "🖱️ Parsed bandName: " + bandName + ", timeIndex: " + timeIndex);
 
         //bypass prompt if appropriate
         if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false) {
