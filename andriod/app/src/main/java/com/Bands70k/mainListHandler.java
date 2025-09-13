@@ -66,19 +66,15 @@ public class mainListHandler {
         Log.d("CRITICAL_DEBUG", "🎯 GET_SORTABLE: sortableBandNames is " + (this.sortableBandNames == null ? "NULL" : (this.sortableBandNames.isEmpty() ? "EMPTY" : "POPULATED with " + this.sortableBandNames.size() + " items")));
         return this.sortableBandNames;
     }
-
+    
     /**
-     * Clears the cached sortable band names to force re-processing.
+     * Clear the cached sortableBandNames to force fresh data processing
      */
     public void clearCache(){
-        Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: Clearing sortableBandNames cache");
+        Log.d("CACHE_DEBUG", "🧹 Clearing sortableBandNames cache (was " + (sortableBandNames != null ? sortableBandNames.size() : 0) + " items)");
         if (this.sortableBandNames != null) {
-            Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: Cleared " + this.sortableBandNames.size() + " cached items");
             this.sortableBandNames.clear();
-        } else {
-            Log.d("CRITICAL_DEBUG", "🔄 CLEAR_CACHE: sortableBandNames was already null");
         }
-        this.sortableBandNames = null;
     }
 
 
@@ -538,39 +534,79 @@ public class mainListHandler {
         Log.d("getBandNameFromIndex", "getBandNameFromIndex value is " + value);
         String[] indexData = value.split(":");
 
-        if (indexData.length != 0) {
-            if (isLong(indexData[0]) == false) {
-                Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning indexData[0]: '" + indexData[0] + "' from '" + value + "'");
-                return indexData[0];
-
-            } else if (indexData.length == 2) {
-                if (isLong(indexData[1]) == false) {
-                    Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning indexData[1]: '" + indexData[1] + "' from '" + value + "'");
-                    return indexData[1];
+        if (indexData.length >= 2) {
+            // Use timestamp detection to identify format
+            boolean firstPartIsTimestamp = isTimestamp(indexData[0]);
+            boolean secondPartIsTimestamp = isTimestamp(indexData[1]);
+            
+            String result;
+            if (firstPartIsTimestamp && !secondPartIsTimestamp) {
+                // Format: "timeIndex:bandName" -> return second part (band name)
+                result = indexData[1];
+                Log.d("getBandNameFromIndex", "🔍 TIME FORMAT detected, returning band name: '" + result + "'");
+            } else if (!firstPartIsTimestamp && secondPartIsTimestamp) {
+                // Format: "bandName:timeIndex" -> return first part (band name)
+                result = indexData[0];
+                Log.d("getBandNameFromIndex", "🔍 ALPHA FORMAT detected, returning band name: '" + result + "'");
+            } else {
+                // Fallback: use sort mode
+                if (staticVariables.preferences.getSortByTime()) {
+                    result = indexData[1]; // Time mode: second part is band name
+                    Log.d("getBandNameFromIndex", "🔍 FALLBACK TIME MODE, returning band name: '" + result + "'");
+                } else {
+                    result = indexData[0]; // Alphabetical mode: first part is band name
+                    Log.d("getBandNameFromIndex", "🔍 FALLBACK ALPHA MODE, returning band name: '" + result + "'");
                 }
             }
+            return result;
+        } else if (indexData.length == 1) {
+            // Single part, assume it's the band name
+            Log.d("getBandNameFromIndex", "🔍 SINGLE PART, returning: '" + indexData[0] + "'");
+            return indexData[0];
         }
-        Log.d("CRITICAL_DEBUG", "🔤 getBandNameFromIndex returning original value: '" + value + "'");
+        Log.d("getBandNameFromIndex", "🔍 FALLBACK, returning original value: '" + value + "'");
         return value;
     }
 
     private Long getBandTimeFromIndex(String value){
 
+        Log.d("getBandTimeFromIndex", "🔍 Processing value: " + value);
         String[] indexData = value.split(":");
-        Long timeIndex = Long.valueOf(0);
 
-        if (indexData.length != 0) {
-            if (isLong(indexData[0]) == true) {
-                return Long.valueOf(indexData[0]);
-
-            } else if (indexData.length == 2) {
-                if (isLong(indexData[1]) == true) {
-                    return Long.valueOf(indexData[1]);
+        if (indexData.length >= 2) {
+            // Use timestamp detection to identify format
+            boolean firstPartIsTimestamp = isTimestamp(indexData[0]);
+            boolean secondPartIsTimestamp = isTimestamp(indexData[1]);
+            
+            try {
+                Long result;
+                if (firstPartIsTimestamp && !secondPartIsTimestamp) {
+                    // Format: "timeIndex:bandName" -> return first part (time index)
+                    result = Long.valueOf(indexData[0]);
+                    Log.d("getBandTimeFromIndex", "🔍 TIME FORMAT detected, returning time index: " + result);
+                } else if (!firstPartIsTimestamp && secondPartIsTimestamp) {
+                    // Format: "bandName:timeIndex" -> return second part (time index)
+                    result = Long.valueOf(indexData[1]);
+                    Log.d("getBandTimeFromIndex", "🔍 ALPHA FORMAT detected, returning time index: " + result);
+                } else {
+                    // Fallback: use sort mode
+                    if (staticVariables.preferences.getSortByTime()) {
+                        result = Long.valueOf(indexData[0]); // Time mode: first part is time index
+                        Log.d("getBandTimeFromIndex", "🔍 FALLBACK TIME MODE, returning time index: " + result);
+                    } else {
+                        result = Long.valueOf(indexData[1]); // Alphabetical mode: second part is time index
+                        Log.d("getBandTimeFromIndex", "🔍 FALLBACK ALPHA MODE, returning time index: " + result);
+                    }
                 }
+                return result;
+            } catch (NumberFormatException e) {
+                Log.e("getBandTimeFromIndex", "🚨 Failed to parse time index from: " + value, e);
+                return Long.valueOf(0);
             }
         }
-
-        return timeIndex;
+        
+        Log.d("getBandTimeFromIndex", "🔍 FALLBACK, returning 0");
+        return Long.valueOf(0);
     }
 
     /**
@@ -857,19 +893,23 @@ public class mainListHandler {
         return returnValue;
     }
 
-    public static boolean isLong(String value) {
+    /**
+     * Helper method to detect if a string represents a timestamp
+     * Timestamps are typically very large numbers (> 1000000)
+     * Band names like "1914" will be < 1000000
+     */
+    private boolean isTimestamp(String value) {
         try {
-            Long.parseLong(value);
-        } catch(Exception e) {
-            Log.d("mainListHandler", "long of " + value + " is false");
+            Long number = Long.valueOf(value);
+            // Timestamps are typically very large numbers (> 1000000)
+            // Band names like "1914" will be < 1000000
+            boolean result = number > 1000000;
+            Log.d("TIMESTAMP_DEBUG", "🔢 isTimestamp('" + value + "') -> number=" + number + ", result=" + result);
+            return result;
+        } catch (NumberFormatException e) {
+            Log.d("TIMESTAMP_DEBUG", "🔢 isTimestamp('" + value + "') -> NOT A NUMBER, result=false");
             return false;
         }
-        // only got here if we didn't return false
-        if (value.length() < 10){
-            return false;
-        }
-        Log.d("mainListHandler", "long of " + value + " is true");
-        return true;
     }
 
 }

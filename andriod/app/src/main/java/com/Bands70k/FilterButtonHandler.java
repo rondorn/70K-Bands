@@ -62,7 +62,7 @@ public class FilterButtonHandler  {
                 boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
                 
                 ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
-                viewModeFilterHandle.setVisibility(hasScheduledEvents);
+                viewModeFilterHandle.setViewModeSectionVisibility(hasScheduledEvents);
                 viewModeFilterHandle.setupViewModeFilters();
                 viewModeFilterHandle.setupViewModeListener(showBands);
 
@@ -111,7 +111,7 @@ public class FilterButtonHandler  {
         boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
         
         ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
-        viewModeFilterHandle.setVisibility(hasScheduledEvents);
+        viewModeFilterHandle.setViewModeSectionVisibility(hasScheduledEvents);
         viewModeFilterHandle.setupViewModeFilters();
 
         MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
