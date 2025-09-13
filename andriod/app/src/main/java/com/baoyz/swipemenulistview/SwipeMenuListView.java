@@ -247,10 +247,22 @@ public class SwipeMenuListView extends ListView {
                         mOnSwipeListener.onSwipeEnd(mTouchPosition);
                     }
                     ev.setAction(MotionEvent.ACTION_CANCEL);
-                    super.onTouchEvent(ev);
-                    return true;
+                } else if (mTouchState == TOUCH_STATE_NONE) {
+                    // CLICK FIX: Handle normal clicks when no swipe occurred
+                    float clickDx = Math.abs(ev.getX() - mDownX);
+                    float clickDy = Math.abs(ev.getY() - mDownY);
+                    if (clickDx < MAX_X && clickDy < MAX_Y && mTouchPosition >= 0) {
+                        // This is a tap, not a swipe - trigger the item click
+                        View clickView = getChildAt(mTouchPosition - getFirstVisiblePosition());
+                        if (clickView != null) {
+                            performItemClick(clickView, mTouchPosition, getItemIdAtPosition(mTouchPosition));
+                            // Prevent further processing to avoid double-clicks
+                            return true;
+                        }
+                    }
                 }
-                break;
+                super.onTouchEvent(ev);
+                return true;
         }
         return super.onTouchEvent(ev);
     }
