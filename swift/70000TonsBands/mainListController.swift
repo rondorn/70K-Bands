@@ -8,6 +8,7 @@
 
 import UIKit
 import Foundation
+import CoreData
 
 var bands = [String]() //main list of bands
 
@@ -84,6 +85,17 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     } else {
         print("🔍 [FILTER] ✅ Including Unofficial Events: ['Unofficial Event', 'Cruiser Organized']")
         print("🔧 [UNOFFICIAL_DEBUG] ✅ UNOFFICIAL EVENTS INCLUDED in mainListController")
+    }
+    
+    // 3. BANDS ONLY FILTER - Note: We handle this differently than other filters
+    // In Bands Only mode, we want to show ALL bands but exclude events from the final result
+    // This is handled in the post-processing step, not in the Core Data query
+    let showScheduleView = getShowScheduleView()
+    print("🔍 [VIEW_MODE_DEBUG] getShowScheduleView() = \(showScheduleView)")
+    if !showScheduleView {
+        print("🔍 [VIEW_MODE_DEBUG] 🎵 BANDS ONLY MODE - Will filter events in post-processing")
+    } else {
+        print("🔍 [VIEW_MODE_DEBUG] ✅ SCHEDULE MODE - Including both events and bands")
     }
     
     // Apply exclusion filter only if there are types to exclude
@@ -421,6 +433,78 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     bandCount = bandOnlyStrings.count
     bandCounter = bandOnlyStrings.count
     eventCounter = eventStrings.count
+    
+    // POST-PROCESSING: Apply Bands Only filter if needed
+    if !showScheduleView {
+        print("🔍 [VIEW_MODE_DEBUG] 🎵 Applying Bands Only filter - using Core Data query for all bands")
+        
+        // Use Core Data to get all unique band names for the current year
+        // This respects all the existing filters (priority, venue, event type, expiration)
+        let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
+        var bandPredicates: [NSPredicate] = []
+        
+        // 1. Year filter
+        bandPredicates.append(NSPredicate(format: "eventYear == %d", eventYear))
+        
+        // 2. Apply same filters as events for consistency
+        // Priority filtering will be applied post-query
+        
+        // 3. If "Hide Expired Events" is enabled, only show bands that have non-expired events OR no events
+        if getHideExpireScheduleData() {
+            let currentTime = Date().timeIntervalSince1970
+            // Show bands that either have no events OR have at least one non-expired event
+            let noEventsOrNonExpiredPredicate = NSPredicate(format: "events.@count == 0 OR SUBQUERY(events, $event, $event.timeIndex > %f).@count > 0", currentTime)
+            bandPredicates.append(noEventsOrNonExpiredPredicate)
+        }
+        
+        let combinedBandPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: bandPredicates)
+        bandRequest.predicate = combinedBandPredicate
+        bandRequest.sortDescriptors = [NSSortDescriptor(key: "bandName", ascending: true)]
+        
+        var allBandNames: [String] = []
+        do {
+            let bands = try coreDataManager.context.fetch(bandRequest)
+            print("🔍 [VIEW_MODE_DEBUG] 🎵 Core Data returned \(bands.count) bands")
+            
+            // Apply priority filtering (same as existing logic)
+            for band in bands {
+                guard let bandName = band.bandName, !bandName.isEmpty else { continue }
+                
+                let priority = priorityManager.getPriority(for: bandName)
+                
+                // Apply priority filters
+                if priority == 1 && !getMustSeeOn() { continue }
+                if priority == 2 && !getMightSeeOn() { continue }
+                if priority == 3 && !getWontSeeOn() { continue }
+                if priority == 0 && !getUnknownSeeOn() { continue }
+                
+                allBandNames.append(bandName)
+            }
+        } catch {
+            print("❌ [VIEW_MODE_DEBUG] Error fetching bands: \(error)")
+            allBandNames = []
+        }
+        
+        print("🔍 [VIEW_MODE_DEBUG] 🎵 After priority filtering: \(allBandNames.count) bands")
+        
+        // Debug: Show some examples
+        if allBandNames.isEmpty {
+            print("🔍 [VIEW_MODE_DEBUG] ⚠️ NO BANDS FOUND!")
+        } else {
+            print("🔍 [VIEW_MODE_DEBUG] ✅ Found \(allBandNames.count) bands. First 5:")
+            for (index, bandName) in allBandNames.prefix(5).enumerated() {
+                print("🔍 [VIEW_MODE_DEBUG] [\(index)] Band: '\(bandName)'")
+            }
+        }
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        print("🚀 getFilteredScheduleData COMPLETE (BANDS ONLY) - Time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms - Total: \(allBandNames.count) entries")
+        
+        return allBandNames
+    }
+    
+    // SCHEDULE VIEW: Preserve existing behavior - events first, then bands at bottom
+    // This already respects "Hide Expired Events" and all other filters
     
     let endTime = CFAbsoluteTimeGetCurrent()
     print("🚀 getFilteredScheduleData COMPLETE - Time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms - Total: \(combinedResults.count) entries")
