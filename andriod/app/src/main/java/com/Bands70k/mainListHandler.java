@@ -765,12 +765,14 @@ public class mainListHandler {
         } else if (numberOfUnofficalEvents == numberOfEvents){
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = true;
+            Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events: numberOfUnofficalEvents=" + numberOfUnofficalEvents + ", numberOfEvents=" + numberOfEvents + ", showUnofficalEventButtons=" + staticVariables.showUnofficalEventButtons);
             displayText = yearDisplay + " " + altNumberOfBands + " " + staticVariables.context.getString(R.string.Bands) +  filteringText;
             staticVariables.staticBandCount = Integer.valueOf(altNumberOfBands);
 
         } else if (numberOfEvents != 0) {
             staticVariables.showEventButtons = true;
-            staticVariables.showUnofficalEventButtons = true;
+            // UNOFFICIAL EVENTS FIX: Only show unofficial events filter when unofficial events actually exist
+            staticVariables.showUnofficalEventButtons = (numberOfUnofficalEvents > 0);
             displayText = yearDisplay + " " + numberOfEvents + " " + staticVariables.context.getString(R.string.Events) + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 
