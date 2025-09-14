@@ -136,13 +136,23 @@ public class FilterButtonHandler  {
      */
     public static void hideMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
-        if (sectionType == "TextView") {
+        if ("TextView".equals(sectionType)) {
             TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setVisibility(View.GONE);
+            if (menuSection != null) {
+                menuSection.setVisibility(View.GONE);
+                Log.d("UNOFFICIAL_DEBUG", "🔧 HIDING TextView section: " + sectionName);
+            } else {
+                Log.w("UNOFFICIAL_DEBUG", "⚠️ TextView section not found: " + sectionName);
+            }
         }
-        if (sectionType == "LinearLayout") {
+        if ("LinearLayout".equals(sectionType)) {
             LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setVisibility(View.GONE);
+            if (menuSection != null) {
+                menuSection.setVisibility(View.GONE);
+                Log.d("UNOFFICIAL_DEBUG", "🔧 HIDING LinearLayout section: " + sectionName);
+            } else {
+                Log.w("UNOFFICIAL_DEBUG", "⚠️ LinearLayout section not found: " + sectionName);
+            }
         }
     }
 
@@ -154,13 +164,17 @@ public class FilterButtonHandler  {
      */
     public static void disableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
-        if (sectionType == "TextView") {
+        if ("TextView".equals(sectionType)) {
             TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setEnabled(false);
+            if (menuSection != null) {
+                menuSection.setEnabled(false);
+            }
         }
-        if (sectionType == "LinearLayout") {
+        if ("LinearLayout".equals(sectionType)) {
             LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setEnabled(false);
+            if (menuSection != null) {
+                menuSection.setEnabled(false);
+            }
         }
     }
 
@@ -172,13 +186,17 @@ public class FilterButtonHandler  {
      */
     public static void enableMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
-        if (sectionType == "TextView") {
+        if ("TextView".equals(sectionType)) {
             TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setEnabled(true);
+            if (menuSection != null) {
+                menuSection.setEnabled(true);
+            }
         }
-        if (sectionType == "LinearLayout") {
+        if ("LinearLayout".equals(sectionType)) {
             LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setEnabled(true);
+            if (menuSection != null) {
+                menuSection.setEnabled(true);
+            }
         }
     }
 
@@ -190,13 +208,23 @@ public class FilterButtonHandler  {
      */
     public static void showMenuSection(Integer sectionName, String sectionType, PopupWindow popupWindow){
 
-        if (sectionType == "TextView") {
+        if ("TextView".equals(sectionType)) {
             TextView menuSection = (TextView) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setVisibility(View.VISIBLE);
+            if (menuSection != null) {
+                menuSection.setVisibility(View.VISIBLE);
+                Log.d("UNOFFICIAL_DEBUG", "🔧 SHOWING TextView section: " + sectionName);
+            } else {
+                Log.w("UNOFFICIAL_DEBUG", "⚠️ TextView section not found: " + sectionName);
+            }
         }
-        if (sectionType == "LinearLayout") {
+        if ("LinearLayout".equals(sectionType)) {
             LinearLayout menuSection = (LinearLayout) popupWindow.getContentView().findViewById(sectionName);
-            menuSection.setVisibility(View.VISIBLE);
+            if (menuSection != null) {
+                menuSection.setVisibility(View.VISIBLE);
+                Log.d("UNOFFICIAL_DEBUG", "🔧 SHOWING LinearLayout section: " + sectionName);
+            } else {
+                Log.w("UNOFFICIAL_DEBUG", "⚠️ LinearLayout section not found: " + sectionName);
+            }
         }
     }
 

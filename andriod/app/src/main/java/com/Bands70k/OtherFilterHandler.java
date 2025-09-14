@@ -120,37 +120,56 @@ public class OtherFilterHandler {
     }
 
     public void setupOtherFilters(boolean showScheduleFilters){
+        
+        Log.d("UNOFFICIAL_DEBUG", "🔧 setupOtherFilters called - showScheduleFilters=" + showScheduleFilters + ", showEventButtons=" + staticVariables.showEventButtons + ", showUnofficalEventButtons=" + staticVariables.showUnofficalEventButtons);
 
-        if (staticVariables.showEventButtons == true && showScheduleFilters){
+        if ((staticVariables.showEventButtons == true || staticVariables.showUnofficalEventButtons == true) && showScheduleFilters){
             // SCHEDULE MODE: Show schedule-related filters
             
-            // Check if any event type filters should be shown based on festival-specific settings
+            // Check if we have ONLY unofficial events (special case)
+            boolean hasOnlyUnofficalEvents = staticVariables.showUnofficalEventButtons && !staticVariables.showEventButtons;
+            
+            // Check if any event type filters should be shown
             boolean showAnyEventTypeFilters = staticVariables.preferences.getMeetAndGreetsEnabled() ||
                                              staticVariables.preferences.getSpecialEventsEnabled() ||
-                                             staticVariables.preferences.getUnofficalEventsEnabled();
+                                             staticVariables.showUnofficalEventButtons;
+            
+            Log.d("UNOFFICIAL_DEBUG", "🔧 hasOnlyUnofficalEvents=" + hasOnlyUnofficalEvents + ", showAnyEventTypeFilters=" + showAnyEventTypeFilters);
             
             if (showAnyEventTypeFilters) {
-                // Show event type header only if at least one event type filter is enabled
-                FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
-                FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow);
-                
-                // Conditionally show each event type filter based on festival settings
-                if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
-                    FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
-                } else {
+                if (hasOnlyUnofficalEvents) {
+                    // ONLY UNOFFICIAL EVENTS: Show only unofficial filter, hide header and others
+                    Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events - hiding other filters and header");
+                    FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow); // Hide header
+                    FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow); // Hide break
                     FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
-                }
-                
-                if (staticVariables.preferences.getSpecialEventsEnabled()) {
-                    FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
-                } else {
                     FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
-                }
-                
-                if (staticVariables.preferences.getUnofficalEventsEnabled()) {
                     FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                 } else {
-                    FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                    // MIXED OR OFFICIAL EVENTS: Show header and filters based on festival settings and data
+                    Log.d("UNOFFICIAL_DEBUG", "🔧 Mixed/official events - showing standard filters and header");
+                    FilterButtonHandler.showMenuSection(R.id.eventTypeHeader, "TextView", popupWindow); // Show header
+                    FilterButtonHandler.showMenuSection(R.id.Brake5, "TextView", popupWindow); // Show break
+                    
+                    if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
+                        FilterButtonHandler.showMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                    } else {
+                        FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                    }
+                    
+                    if (staticVariables.preferences.getSpecialEventsEnabled()) {
+                        FilterButtonHandler.showMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                    } else {
+                        FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                    }
+                    
+                    if (staticVariables.showUnofficalEventButtons) {
+                        Log.d("UNOFFICIAL_DEBUG", "🔧 Showing unofficial events filter");
+                        FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                    } else {
+                        Log.d("UNOFFICIAL_DEBUG", "🔧 Hiding unofficial events filter");
+                        FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                    }
                 }
             } else {
                 // Hide event type filters section when all are disabled
@@ -161,18 +180,33 @@ public class OtherFilterHandler {
                 FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             }
             
-            // Show location/venue filters in Schedule mode
-            FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
-            
-            // Show flagged and sort sections in Schedule mode
-            FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.Brake4, "TextView", popupWindow);
-            FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
+            if (!hasOnlyUnofficalEvents) {
+                // Show location/venue filters in Schedule mode (but not when only unofficial events)
+                Log.d("UNOFFICIAL_DEBUG", "🔧 Showing location/venue, flagged, and sort sections");
+                FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.Brake6, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
+                
+                // Show flagged and sort sections in Schedule mode (but not when only unofficial events)
+                FilterButtonHandler.showMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.Brake3, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.Brake4, "TextView", popupWindow);
+                FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
+            } else {
+                // Hide location/venue, flagged, and sort sections when only unofficial events
+                Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events - hiding location/venue, flagged, and sort sections");
+                FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.showOnlyAttendedHeader, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.Brake3, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.onlyShowAttendedAll, "LinearLayout", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.sortOptionHeader, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.Brake4, "TextView", popupWindow);
+                FilterButtonHandler.hideMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
+            }
             
         } else if (staticVariables.showEventButtons == true && !showScheduleFilters) {
             // BANDS ONLY MODE: Hide all schedule-related filters (event types, venues, flagged, sort)
