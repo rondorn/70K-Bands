@@ -140,6 +140,11 @@
     <string name="band_ranking_filters">Band Ranking Filters</string>
     <!-- menu header -->
     <string name="show_only_flagged_as_attended">Show Only Flagged As Attended</string>
+    
+    <!-- View Mode Filter Strings -->
+    <string name="view_mode">View Mode</string>
+    <string name="show_schedule">Show Schedule</string>
+    <string name="show_bands_only">Show Bands Only</string>
     <!-- help text -->
     <string name="sorting_options">Sorting Options</string>
     <!-- menu header -->
@@ -223,9 +228,6 @@
     <string name="special_other_event_filter_off">Special/Other Event Filter Off</string>
     <!-- sorting -->
     <string name="sort_by_name">Sort By Name</string>
-    <string name="view_mode_header">View Mode</string>
-    <string name="show_bands_only">Show Bands Only</string>
-    <string name="show_schedule">Show Schedule</string>
     <!-- menu choice -->
     <string name="sort_by_time">Sort By Time</string>
     <!-- band preference filter -->

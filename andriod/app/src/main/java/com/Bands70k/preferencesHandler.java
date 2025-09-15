@@ -45,7 +45,6 @@ public class preferencesHandler {
     private Boolean showLoungeShows = true;
     private Boolean showOtherShows = true;
     private Boolean showUnofficalEvents = true;
-    private Boolean showScheduleView = true; // true = Schedule (mixed), false = Bands Only
 
     private Boolean showMust = true;
     private Boolean showMight = true;
@@ -71,6 +70,9 @@ public class preferencesHandler {
     private String pointerUrl = "Default";
 
     private Boolean sortByTime = true;
+    
+    // View mode preference: true = Schedule view, false = Bands-only view
+    private Boolean showScheduleView = true;
 
     private Integer loadCounter = 0;
 
@@ -118,9 +120,6 @@ public class preferencesHandler {
 
                         case "showUnofficalEvents":
                             setShowUnofficalEvents(Boolean.valueOf(RowData[1]));
-                            break;
-                        case "showScheduleView":
-                            setShowScheduleView(Boolean.valueOf(RowData[1]));
                             break;
                         
                         case "meetAndGreetsEnabled":
@@ -218,9 +217,10 @@ public class preferencesHandler {
                             setAlertOnlyForShowWillAttend(Boolean.valueOf(RowData[1]));
 
                         case "sortByTime":
-                            Log.d("CRITICAL_DEBUG", "🔧 LOADING sortByTime preference: " + RowData[1]);
                             setSortByTime(Boolean.valueOf(RowData[1]));
-                            Log.d("CRITICAL_DEBUG", "🔧 LOADED sortByTime preference, now getSortByTime() = " + getSortByTime());
+
+                        case "showScheduleView":
+                            setShowScheduleView(Boolean.valueOf(RowData[1]));
 
                         case "hideExpiredEvents":
                             setHideExpiredEvents(Boolean.valueOf(RowData[1]));
@@ -338,7 +338,6 @@ public class preferencesHandler {
         dataString += "showClinics," + showClinicEvents.toString() + "\n";
         dataString += "showListeningParties," + showAlbumListen.toString() + "\n";
         dataString += "showUnofficalEvents," + showUnofficalEvents.toString() + "\n";
-        dataString += "showScheduleView," + showScheduleView.toString() + "\n";
 
         // Event type filter visibility settings (ensure they're initialized before saving)
         initializeEventTypeFilterVisibilityImmediate();
@@ -366,6 +365,7 @@ public class preferencesHandler {
         dataString += "scheduleUrl," + scheduleUrl + "\n";
         dataString += "pointerUrl," + pointerUrl + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
+        dataString += "showScheduleView," + getShowScheduleView().toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
         dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";
@@ -390,14 +390,6 @@ public class preferencesHandler {
 
     public void setShowUnofficalEvents(Boolean showUnofficalEvents) {
         this.showUnofficalEvents = showUnofficalEvents;
-    }
-
-    public Boolean getShowScheduleView() {
-        return showScheduleView;
-    }
-
-    public void setShowScheduleView(Boolean showScheduleView) {
-        this.showScheduleView = showScheduleView;
     }
 
     public Boolean getAlertForUnofficalEvents() {
@@ -586,8 +578,18 @@ public class preferencesHandler {
         sortByTime = value;
     }
     public Boolean getSortByTime() {
-        Log.d("CRITICAL_DEBUG", "🔧 getSortByTime() called, returning: " + sortByTime);
         return sortByTime;
+    }
+
+    public Boolean getShowScheduleView() {
+        if (showScheduleView == null) {
+            showScheduleView = true;
+        }
+        return showScheduleView;
+    }
+    
+    public void setShowScheduleView(Boolean value) {
+        this.showScheduleView = value;
     }
 
     public Boolean getShowMust() {

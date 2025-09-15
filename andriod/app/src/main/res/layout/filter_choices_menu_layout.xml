@@ -12,6 +12,57 @@
     android:background="#323232"
     android:orientation="vertical">
 
+    <!-- View Mode Filter Section -->
+    <TextView
+        android:id="@+id/viewModeHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+		android:layout_marginBottom="10dp"
+        android:enabled="false"
+        android:text="@string/view_mode"
+        android:textAppearance="?android:textAppearanceSmall"
+        android:textColor="@color/custom_colors" />
+    <TextView
+        android:id="@+id/viewModeBrake"
+        android:layout_width="330dp"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"/>
+    <LinearLayout
+        android:id="@+id/viewModeToggleAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#323232"
+        android:clickable="true"
+        android:contextClickable="true"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/viewModeToggle"
+            android:layout_width="230dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+		android:layout_marginBottom="10dp"
+            android:clickable="false"
+            android:text="@string/show_schedule"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textStyle="bold"
+            android:textColor="@color/custom_colors" />
+        <ImageView
+            android:id="@+id/viewModeToggleIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginTop="10dp"
+		android:layout_marginBottom="10dp"
+            android:clickable="false"
+            android:src="@drawable/icon_sort_time" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/viewModeToggleBrake"
+        android:layout_width="330dp"
+        android:layout_height="0.25dp"
+        android:background="@android:color/darker_gray"/>
+    
     <TextView
         android:id="@+id/clearFilterHeader"
         android:layout_marginTop="10dp"
@@ -38,64 +89,6 @@
         android:textColor="@color/custom_colors"
         android:textAppearance="?android:textAppearanceMedium"
         android:textStyle="bold"/>
-    
-    <!-- View Mode Section (Schedule/Bands Only) - Only shown when scheduled events are present -->
-    <TextView
-        android:id="@+id/viewModeHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:enabled="false"
-        android:text="@string/view_mode_header"
-        android:textAppearance="?android:textAppearanceSmall"
-        android:textColor="@color/custom_colors"
-        android:visibility="gone" />
-    <TextView
-        android:id="@+id/viewModeBrake"
-        android:layout_width="330dp"
-        android:layout_height="1dp"
-        android:background="@android:color/darker_gray"
-        android:visibility="gone" />
-    <LinearLayout
-        android:id="@+id/viewModeToggleAll"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#323232"
-        android:clickable="true"
-        android:contextClickable="true"
-        android:orientation="horizontal"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/viewModeToggle"
-            android:layout_width="230dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:clickable="false"
-            android:text="@string/show_bands_only"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:textStyle="bold"
-            android:textColor="@color/custom_colors" />
-
-        <ImageView
-            android:id="@+id/viewModeToggleIcon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            android:clickable="false"
-            android:src="@drawable/icon_sort_az" />
-    </LinearLayout>
-    <TextView
-        android:id="@+id/viewModeToggleBrake"
-        android:layout_width="330dp"
-        android:layout_height="0.25dp"
-        android:background="@android:color/darker_gray"
-        android:visibility="gone" />
-        
     <TextView
         android:id="@+id/bandRankingHeader"
         android:layout_width="wrap_content"
