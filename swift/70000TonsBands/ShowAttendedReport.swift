@@ -62,11 +62,7 @@ class showAttendenceReport {
                 
                 let indexArray = index.key.split(separator: ":")
                 
-                print("ShareDebug: Processing attended event key: '\(index.key)'")
-                print("ShareDebug: Split into \(indexArray.count) components: \(indexArray)")
-                
                 guard indexArray.count >= 6 else {
-                    print("ShareDebug: Skipping key with insufficient components: \(indexArray.count)")
                     continue
                 }
                 
@@ -78,41 +74,25 @@ class showAttendenceReport {
                 let year = String(indexArray[5])
                 let status = String(showsAttendedArray[index.key]!)
                 
-                print("ShareDebug: Parsed - band: '\(bandName)', location: '\(location)', time: '\(hour):\(min)', eventType: '\(eventType)', year: '\(year)', status: '\(status)'")
-                print("ShareDebug: Current eventYear: \(eventYear), comparing with parsed year: '\(year)'")
-                
                 if (year != String(eventYear)){
-                    print("ShareDebug: Skipping event due to year mismatch: '\(year)' != '\(String(eventYear))'")
                     continue
                 }
                 if (status == "sawNone"){
-                    print("ShareDebug: Skipping event due to sawNone status")
                     continue
                 }
                 
-                print("ShareDebug: Event passed filters - processing for report")
-                
                 // Extract just the status without timestamp
                 let statusOnly = String(status.split(separator: ":")[0])
-                print("ShareDebug: Status extracted - original: '\(status)', statusOnly: '\(statusOnly)'")
                 
-                if (bandName == "Vio-Lence"){
-                    print ("Violence data is \(location) - \(hour) - \(min) - \(eventType) - \(year) - \(status)")
-                }
                 var validateEvent = false
-                print("ShareDebug: Checking if band '\(bandName)' exists in scheduleData...")
                 if scheduleData.index(forKey: bandName) != nil {
-                    print("ShareDebug: Band '\(bandName)' found in scheduleData")
                     validateEvent = true
-                } else {
-                    print("ShareDebug: Band '\(bandName)' NOT found in scheduleData - available bands: \(Array(scheduleData.keys).prefix(10))")
                 }
                 
                 if validateEvent {
                     // Do additional time-based validation
                     var timeValidated = false
                     for timeIndex in scheduleData[bandName]!.keys {
-                        print ("ShareDebug: Checking timeIndex in scheduleData[bandName]: \(scheduleData[bandName]?[timeIndex])")
                         if (scheduleData[bandName]?[timeIndex]?["Location"] == location &&
                             scheduleData[bandName]?[timeIndex]?["Type"] == eventType &&
                             scheduleData[bandName]?[timeIndex]?["Start Time"] == hour + ":" + min){
@@ -122,17 +102,13 @@ class showAttendenceReport {
                     }
                     
                     if timeValidated {
-                        print("ShareDebug: Event time validated, calling getEventTypeCounts and getBandCounts")
                         getEventTypeCounts(eventType: eventType, sawStatus: statusOnly)
                         getBandCounts(eventType: eventType, bandName: bandName, sawStatus: statusOnly)
                         tempEventCount += 1
-                        print("ShareDebug: Event processed successfully, tempEventCount now: \(tempEventCount)")
                     } else {
-                        print("ShareDebug: Event time validation failed - skipping event")
                         continue
                     }
                 } else {
-                    print("ShareDebug: Event validation failed - skipping event")
                     continue
                 }
                 

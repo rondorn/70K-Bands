@@ -234,3 +234,12 @@
 "User Identifier" = "User Identifier";
 "Build" = "Build";
 
+
+// Event sharing localization
+"EventsAttended" = "Events Attended";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Meet & Greets";
+"ClinicsPlural" = "Clínics";
+"SpecialEventsPlural" = "Special Events";
+"CruiseEventsPlural" = "Cruiser Organized Events";
+"UnofficialEventsPlural" = "Unoffical Events";

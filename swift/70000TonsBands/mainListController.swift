@@ -161,6 +161,9 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     let filteredEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: combinedPredicate)
     print("🔍 [FILTER] Core Data returned \(filteredEvents.count) filtered events")
     
+    // DEBUG: God Dethroned event count (avoid accessing relationships on background thread)
+    print("🔍 [DEBUG_GOD_DETHRONED] Total filtered events: \(filteredEvents.count)")
+    
     // DEBUG: Check what event types we actually got and compare to expected
     print("🔍 [FILTER] ===== EVENT TYPE DEBUGGING =====")
     print("🔍 [FILTER] Expected unofficial types: '\(unofficalEventType)', '\(unofficalEventTypeOld)'")
@@ -212,7 +215,20 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                   let location = event.location,
                   let eventType = event.eventType else { return false }
             
-            let startTime = String(event.timeIndex)
+            // Use the raw startTime from the event data (same as GUI uses)
+            let startTime = event.startTime ?? ""
+            
+            // SAFETY: Skip events with no startTime data
+            if startTime.isEmpty {
+                print("🔍 [ATTENDANCE_FILTER] ⚠️ Skipping '\(bandName)' - no startTime data")
+                return false // Don't include in filtered results
+            }
+            
+            // DEBUG: Show startTime for God Dethroned
+            if bandName.contains("God Dethroned") {
+                print("🔍 [TIMESTAMP_DEBUG] God Dethroned: using raw startTime='\(startTime)'")
+            }
+            
             let eventYearString = String(eventYear)
             let attendedStatus = attendedHandle.getShowAttendedStatus(
                 band: bandName,
@@ -222,8 +238,12 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                 eventYearString: eventYearString
             )
             
+            let key = "\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
+            let willShow = attendedStatus != sawNoneStatus
+            print("🔍 [ATTENDANCE_FILTER] '\(bandName)' key='\(key)' status='\(attendedStatus)' willShow=\(willShow)")
+            
             // Only show events marked as attending
-            return attendedStatus != sawNoneStatus
+            return willShow
         }
         print("🔍 [FILTER] After attendance filtering: \(finalEvents.count) events")
     } else {
@@ -231,6 +251,14 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     }
     
     print("📋 Final filtered events: \(finalEvents.count)")
+    
+    // Reset count - will be set appropriately based on view mode
+    attendingCount = 0
+    
+    // TODO: Add bands-only mode counting if needed later
+    // For now, events-based counting should be sufficient since most flagged items are events
+    
+    print("🔍 [ATTENDING_COUNT_FIX] Final attendingCount = \(attendingCount)")
     
     // Convert events to string format: "timeIndex:bandName" OR "timeIndex:eventName" for standalone events  
     let eventStrings = finalEvents.compactMap { event -> String? in
@@ -398,6 +426,13 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     
     // Combine events and band-only entries (never both for the same band)
     var combinedResults = eventStrings + bandOnlyStrings
+    
+    // In bands-only mode, we don't show events, so no flagged events to count
+    if !getShowScheduleView() {
+        print("🔍 [GUI_ICON_COUNT] Bands-only mode - no events to count, attendingCount remains 0")
+    } else {
+        print("🔍 [GUI_ICON_COUNT] Schedule view - will count as GUI shows event icons")
+    }
     
     // Apply final sorting with Events first, then Bands
     combinedResults.sort { item1, item2 in
@@ -755,9 +790,12 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
     
     if (timeIndex.isZero == false){
         let willAttendStartTime = CFAbsoluteTimeGetCurrent()
-        if (willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle) == true){
+        let willAttendResult = willAttenedFilters(bandName: bandName,timeIndex: timeIndex, schedule: schedule, attendedHandle: attendedHandle)
+        if willAttendResult == true {
             attendingCount = attendingCount + 1;
-            print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] attendingCount is \(attendingCount) after adding 1")
+            print ("🔍 [ATTENDING_COUNT_DEBUG] ✅ Band '\(bandName)' is flagged - attendingCount now \(attendingCount)")
+        } else {
+            print ("🔍 [ATTENDING_COUNT_DEBUG] ❌ Band '\(bandName)' not flagged - willAttenedFilters returned false")
         }
         let willAttendEndTime = CFAbsoluteTimeGetCurrent()
         if (willAttendEndTime - willAttendStartTime) > 0.001 { // Only log if it takes more than 1ms
@@ -1033,9 +1071,11 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
         let location = timeData[locationField],
         let startTimeValue = timeData[startTimeField]
     else {
-        print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] willAttenedFilters: Missing data for band: \(bandName), timeIndex: \(timeIndex)")
+        print("🔍 [WILL_ATTEND_DEBUG] ❌ Missing data for band: \(bandName), timeIndex: \(timeIndex)")
         return false
     }
+    
+    print("🔍 [WILL_ATTEND_DEBUG] Checking band '\(bandName)' at '\(location)' startTime '\(startTimeValue)'")
     if timeIndex.isZero {
         showEvent = false
     } else {
@@ -1047,12 +1087,16 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
             eventType: eventType,
             eventYearString: String(eventYear)
         )
+        print("🔍 [WILL_ATTEND_DEBUG] Status for '\(bandName)': '\(status)' (sawNoneStatus = '\(sawNoneStatus)')")
         let attendedEndTime = CFAbsoluteTimeGetCurrent()
         if (attendedEndTime - attendedStartTime) > 0.001 { // Only log if it takes more than 1ms
             print("🕐 [\(String(format: "%.3f", attendedEndTime))] getShowAttendedStatus for '\(bandName)' took \(String(format: "%.3f", (attendedEndTime - attendedStartTime) * 1000))ms")
         }
         if status == sawNoneStatus {
             showEvent = false
+            print("🔍 [WILL_ATTEND_DEBUG] Setting showEvent = false because status == sawNoneStatus")
+        } else {
+            print("🔍 [WILL_ATTEND_DEBUG] Status is NOT sawNoneStatus, showEvent remains \(showEvent)")
         }
     }
     
@@ -1279,6 +1323,12 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleButton = false
     
         let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
+        
+        // COUNT FLAGGED EVENTS: If GUI shows an icon, increment the count
+        if !icon.isEqual(UIImage()) {
+            attendingCount += 1
+            print("🔍 [GUI_ICON_COUNT] ✅ GUI showing icon for '\(bandName)' - attendingCount now \(attendingCount)")
+        }
         
         attendedView.image = icon
         eventTypeImageView.image = eventIcon

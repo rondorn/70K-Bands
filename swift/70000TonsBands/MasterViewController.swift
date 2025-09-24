@@ -1627,7 +1627,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
         let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
         
-        if (hasEvents && hasBands && allEventsAreUnofficial) {
+        // CRITICAL FIX: Check view mode first - if "Show Bands Only", always show "Bands"
+        let showScheduleView = getShowScheduleView()
+        
+        if !showScheduleView {
+            // "Show Bands Only" mode - ALWAYS show band count, never "Events"
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            print("🎵 [VIEW_MODE_FIX] Show Bands Only mode - showing \(labeleCounter) bands")
+        } else if (hasEvents && hasBands && allEventsAreUnofficial) {
             // Rule 2: Mixed list with ALL events = 'Unofficial Event' - show band count, ignore unofficial events
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
@@ -2712,12 +2723,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                             try data.write(to: fileUrl)
                             // Refresh the currently displayed web view if it exists
                             DispatchQueue.main.async {
+                                print("🔄 [STATS_REFRESH] Background download complete, attempting to refresh web view")
                                 if let currentWebViewController = self.getCurrentWebViewController(),
                                    let webDisplay = currentWebViewController.webDisplay {
+                                    print("🔄 [STATS_REFRESH] ✅ Found web view controller, refreshing with new content")
                                     let request = URLRequest(url: fileUrl)
                                     webDisplay.load(request)
+                                } else {
+                                    print("🔄 [STATS_REFRESH] ❌ No web view controller found to refresh")
+                                    print("🔄 [STATS_REFRESH] getCurrentWebViewController() returned: \(self.getCurrentWebViewController() != nil ? "not nil" : "nil")")
                                 }
-                                // Note: We don't present a new web view here since we already have one
                             }
                         } catch {
                             // Only show error if we didn't already show cached content
