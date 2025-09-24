@@ -18,6 +18,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private static var isYearChangeInProgress: Bool = false
     static var isCsvDownloadInProgress: Bool = false
     static let backgroundRefreshLock = NSLock()
+    
+    // MARK: - Deadlock Prevention
+    private static var yearChangeStartTime: Date?
+    private static var deadlockDetectionTimer: Timer?
     private var backgroundOperationQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 3
@@ -31,11 +35,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Year change starting - cancelling ALL background operations")
         isYearChangeInProgress = true
         currentDataRefreshOperationId = UUID()
+        yearChangeStartTime = Date()
+        
+        // ADD DEADLOCK DETECTION TIMER
+        deadlockDetectionTimer?.invalidate()
+        deadlockDetectionTimer = Timer.scheduledTimer(withTimeInterval: 45.0, repeats: false) { _ in
+            print("🚨 DEADLOCK DETECTED: Year change has been running for 45+ seconds")
+            print("🚨 EMERGENCY RECOVERY: Forcing year change completion")
+            
+            notifyYearChangeCompleted()
+            
+            // Post emergency notification
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: Notification.Name("EmergencyYearChangeRecovery"), 
+                    object: nil
+                )
+            }
+        }
     }
     
     static func notifyYearChangeCompleted() {
         print("✅ [YEAR_CHANGE_DEADLOCK_FIX] Year change completed - background operations can resume")
         isYearChangeInProgress = false
+        
+        // Cancel deadlock detection
+        deadlockDetectionTimer?.invalidate()
+        deadlockDetectionTimer = nil
+        
+        if let startTime = yearChangeStartTime {
+            let duration = Date().timeIntervalSince(startTime)
+            print("📊 Year change took \(String(format: "%.2f", duration)) seconds")
+            yearChangeStartTime = nil
+        }
     }
     
     private func cancelAllBackgroundOperations() {
@@ -328,6 +360,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleForegroundRefresh), name: Notification.Name("ForegroundRefresh"), object: nil)
+        
+        // Register for iCloud loading notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingStarted), name: Notification.Name("iCloudLoadingStarted"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingCompleted), name: Notification.Name("iCloudLoadingCompleted"), object: nil)
         
         // Listen for when returning from preferences screen
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
@@ -3058,6 +3094,52 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             // Refresh the band list to show updated attended statuses
             self.refreshBandList(reason: "iCloud attended data restored")
+        }
+    }
+    
+    @objc func handleiCloudLoadingStarted() {
+        print("iCloud: Loading started - showing progress indicator")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Ensure view is loaded before accessing outlets
+            guard self.isViewLoaded else {
+                print("iCloud: Warning - view not loaded yet, skipping UI updates")
+                return
+            }
+            
+            // Show loading indicator (with nil check)
+            if let indicator = self.blankScreenActivityIndicator {
+                indicator.startAnimating()
+            } else {
+                print("iCloud: Warning - blankScreenActivityIndicator is nil")
+            }
+            
+            // Update navigation title to show loading status
+            self.navigationItem.title = "Loading iCloud Data..."
+        }
+    }
+    
+    @objc func handleiCloudLoadingCompleted() {
+        print("iCloud: Loading completed - hiding progress indicator")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Ensure view is loaded before accessing outlets
+            guard self.isViewLoaded else {
+                print("iCloud: Warning - view not loaded yet, skipping UI updates")
+                return
+            }
+            
+            // Hide loading indicator (with nil check)
+            if let indicator = self.blankScreenActivityIndicator {
+                indicator.stopAnimating()
+            } else {
+                print("iCloud: Warning - blankScreenActivityIndicator is nil")
+            }
+            
+            // Restore original navigation title
+            self.navigationItem.title = "70K Bands"
         }
     }
     
