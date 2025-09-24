@@ -749,25 +749,32 @@ class PreferencesViewModel: ObservableObject {
                     print("🐛 [REVERT_DEBUG] User preference hideExpiredEvents: \(hideExpiredEvents)")
                 }
                 
-                // Ensure schedule data is loaded (same as Band/Event List choices)
+                // For "Current" year - DON'T dismiss immediately, wait for data to load
+                print("🎯 Current year change detected - waiting for data to load before dismissing")
+                
+                // Keep loading state active - don't dismiss yet
+                // isLoadingData should remain true
+                
+                // Auto-enable hideExpiredEvents for Current year
+                hideExpiredEvents = true
+                setHideExpireScheduleData(true)
+                
+                // Wait for the data to actually load before dismissing
                 Task {
-                    // Start timing to ensure minimum loading display time
-                    let loadingStartTime = Date()
+                    print("🎯 Current year: Starting data loading process")
                     
+                    // Ensure schedule data is loaded
                     await ensureScheduleDataLoaded()
                     
+                    // Wait a bit more to ensure all data is properly loaded
+                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                    
                     await MainActor.run {
-                        // Refresh display
+                        // Refresh display to show new data
                         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
                         masterView.refreshData(isUserInitiated: true)
-                    }
-                    
-                    // Navigate immediately after data is loaded - no artificial delays
-                    let loadingElapsed = Date().timeIntervalSince(loadingStartTime)
-                    print("🎯 Current year: Loading took \(loadingElapsed)s, navigating immediately")
-                    
-                    DispatchQueue.main.async {
-                        print("🎯 Current year data loaded - navigating immediately")
+                        
+                        print("🎯 Current year: Data loading complete - now dismissing preferences")
                         self.isLoadingData = false
                         self.navigateBackToMainScreen()
                     }

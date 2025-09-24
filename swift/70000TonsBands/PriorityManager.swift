@@ -21,54 +21,68 @@ class PriorityManager {
     ///   - bandName: Name of the band
     ///   - priority: Priority value (0=Unknown, 1=Must See, 2=Might See, 3=Won't See)
     ///   - timestamp: Optional timestamp, defaults to current time
-    func setPriority(for bandName: String, priority: Int, timestamp: Double? = nil) {
+    ///   - completion: Optional completion handler
+    func setPriority(for bandName: String, priority: Int, timestamp: Double? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
         print("🎯 Setting priority for \(bandName) = \(priority)")
         
-        coreDataManager.context.performAndWait {
-            // Get or create the band directly to avoid nested performAndWait
-            let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
-            bandRequest.predicate = NSPredicate(format: "bandName == %@", bandName)
-            bandRequest.fetchLimit = 1
-            
-            let band: Band
+        // Use background context to prevent deadlocks
+        let context = coreDataManager.persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        
+        context.perform {
             do {
-                band = try coreDataManager.context.fetch(bandRequest).first ?? {
-                    let newBand = Band(context: coreDataManager.context)
+                // Get or create the band
+                let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
+                bandRequest.predicate = NSPredicate(format: "bandName == %@", bandName)
+                bandRequest.fetchLimit = 1
+                
+                let band: Band
+                let fetchedBands = try context.fetch(bandRequest)
+                if let existingBand = fetchedBands.first {
+                    band = existingBand
+                } else {
+                    let newBand = Band(context: context)
                     newBand.bandName = bandName
-                    return newBand
-                }()
-            } catch {
-                print("❌ Error fetching/creating band: \(error)")
-                return
-            }
-            
-            // Get or create the priority record directly without nested Core Data calls
-            let priorityRequest: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            priorityRequest.predicate = NSPredicate(format: "band == %@", band)
-            priorityRequest.fetchLimit = 1
-            
-            let userPriority: UserPriority
-            do {
-                userPriority = try coreDataManager.context.fetch(priorityRequest).first ?? {
-                    let newUserPriority = UserPriority(context: coreDataManager.context)
+                    band = newBand
+                }
+                
+                // Get or create the priority record
+                let priorityRequest: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
+                priorityRequest.predicate = NSPredicate(format: "band == %@", band)
+                priorityRequest.fetchLimit = 1
+                
+                let userPriority: UserPriority
+                let fetchedPriorities = try context.fetch(priorityRequest)
+                if let existingPriority = fetchedPriorities.first {
+                    userPriority = existingPriority
+                } else {
+                    let newUserPriority = UserPriority(context: context)
                     newUserPriority.band = band
                     newUserPriority.priorityLevel = 0
                     newUserPriority.createdAt = Date()
                     newUserPriority.updatedAt = Date()
-                    return newUserPriority
-                }()
+                    userPriority = newUserPriority
+                }
+                
+                // Update the priority
+                userPriority.priorityLevel = Int16(priority)
+                userPriority.updatedAt = Date()
+                
+                // Save to Core Data
+                if context.hasChanges {
+                    try context.save()
+                }
+                
+                DispatchQueue.main.async {
+                    completion(true)
+                }
+                
             } catch {
-                print("❌ Error fetching/creating user priority: \(error)")
-                return
+                print("❌ Error setting priority: \(error)")
+                DispatchQueue.main.async {
+                    completion(false)
+                }
             }
-            
-            // Update the priority
-            userPriority.priorityLevel = Int16(priority)
-            userPriority.updatedAt = Date()
-            // Note: deviceUID and lastModified fields need to be added to the Core Data model
-            
-            // Save to Core Data
-            coreDataManager.saveContext()
         }
         
         // Sync to iCloud (background thread)
@@ -86,14 +100,17 @@ class PriorityManager {
     func getPriority(for bandName: String) -> Int {
         var priority = 0
         
-        coreDataManager.context.performAndWait {
+        // Use main context for read operations to avoid deadlocks
+        let context = coreDataManager.persistentContainer.viewContext
+        
+        context.performAndWait {
             // Fetch UserPriority directly by joining with Band to avoid nested Core Data calls
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             request.predicate = NSPredicate(format: "band.bandName == %@", bandName)
             request.fetchLimit = 1
             
             do {
-                if let userPriority = try coreDataManager.context.fetch(request).first {
+                if let userPriority = try context.fetch(request).first {
                     priority = Int(userPriority.priorityLevel)
                 }
             } catch {
