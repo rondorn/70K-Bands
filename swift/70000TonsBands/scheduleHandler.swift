@@ -283,15 +283,7 @@ open class scheduleHandler {
             var timeIndexCounts: [TimeInterval: Int] = [:]
             
             for event in events {
-                // Debug: Check why Show events might be skipped
-                if event.eventType == "Show" {
-                    print("🔍 [SHOW_DEBUG] Processing Show event:")
-                    print("🔍 [SHOW_DEBUG] - event.band = \(event.band?.description ?? "nil")")
-                    print("🔍 [SHOW_DEBUG] - event.band?.bandName = \(event.band?.bandName ?? "nil")")
-                    print("🔍 [SHOW_DEBUG] - event.location = \(event.location ?? "nil")")
-                    print("🔍 [SHOW_DEBUG] - event.timeIndex = \(event.timeIndex)")
-                }
-                
+
                 // CRITICAL FIX: Don't skip unofficial events even if they lack band associations
                 let eventType = event.eventType ?? ""
                 let isUnofficialEvent = eventType == "Unofficial Event" || eventType == "Cruiser Organized"
