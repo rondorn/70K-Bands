@@ -502,6 +502,19 @@ open class ShowsAttended {
         return getShowAttendedLastChange(index: index)
     }
     
+    // DEBUG: List all attendance keys for debugging
+    func debugListAllAttendanceKeys() {
+        showsAttendedQueue.sync {
+            print("🔍 [ATTENDANCE_DEBUG] === ALL ATTENDANCE KEYS ===")
+            let sortedKeys = self._showsAttendedArray.keys.sorted()
+            for key in sortedKeys {
+                let value = self._showsAttendedArray[key] ?? "nil"
+                print("🔍 [ATTENDANCE_DEBUG] Key: '\(key)' -> Value: '\(value)'")
+            }
+            print("🔍 [ATTENDANCE_DEBUG] === TOTAL: \(sortedKeys.count) keys ===")
+        }
+    }
+    
     /**
      Forces migration of all attended data to ensure proper timestamp format.
      This method should be called when restoring data from iCloud to ensure consistency.

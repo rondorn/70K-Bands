@@ -225,8 +225,11 @@ func setupFlaggedOnlylMenuChoices(controller: MasterViewController, item: String
             setupCell(header: false, titleText: NSLocalizedString("Show All Events", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: false)
         }
         if (attendingCount == 0){
+            print("🔍 [FLAGGED_FILTER_DEBUG] ❌ Disabling 'Show Flagged Events Only' - attendingCount = \(attendingCount)")
             setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: true)
             cellRow.optionLabel.textColor = UIColor.darkGray
+        } else {
+            print("🔍 [FLAGGED_FILTER_DEBUG] ✅ Enabling 'Show Flagged Events Only' - attendingCount = \(attendingCount)")
         }
     }
 }
