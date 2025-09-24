@@ -215,9 +215,6 @@
 		119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
 		119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
-		11A7391F2E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A7391E2E84831900A7C0F8 /* BackgroundCoreDataManager.swift */; };
-		11A739202E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A7391E2E84831900A7C0F8 /* BackgroundCoreDataManager.swift */; };
-		11A739212E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A7391E2E84831900A7C0F8 /* BackgroundCoreDataManager.swift */; };
 		11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
@@ -388,7 +385,6 @@
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
 		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
 		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
-		11A7391E2E84831900A7C0F8 /* BackgroundCoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundCoreDataManager.swift; sourceTree = "<group>"; };
 		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
 		11AC1D641A6827F300267A8F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		11AC1D661A6827FC00267A8F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -536,7 +532,6 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				11A7391E2E84831900A7C0F8 /* BackgroundCoreDataManager.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -1135,7 +1130,6 @@
 				1147D6D92E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
 				1175C93E2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
 				1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
-				11A739212E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */,
 				1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
 				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				1147D7022E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
@@ -1208,7 +1202,6 @@
 				1147D6DA2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
 				1175C93C2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
 				1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
-				11A7391F2E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */,
 				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
@@ -1281,7 +1274,6 @@
 				1147D6DB2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
 				1172EE102E5A1C4D006E3596 /* DetailHostingController.swift in Sources */,
 				1172EE112E5A1C4D006E3596 /* DetailView.swift in Sources */,
-				11A739202E84831900A7C0F8 /* BackgroundCoreDataManager.swift in Sources */,
 				1172EE122E5A1C4D006E3596 /* DetailViewModel.swift in Sources */,
 				1172EE132E5A1C4D006E3596 /* BandDescriptionTranslator.swift in Sources */,
 				1147D6FE2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
