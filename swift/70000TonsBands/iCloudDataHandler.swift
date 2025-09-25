@@ -499,11 +499,12 @@ class iCloudDataHandler {
                 return nil 
             }
         } else if currentPriority != 0 {
-            // Local data exists but no timestamp - allow iCloud update if it's from different device and has a timestamp
-            if timestampValue > 0 {
-                print("iCloudPriority: Allowing iCloud update for \(bandName) - has timestamp from different device")
+            // CRITICAL FIX: Local data exists but no timestamp - be conservative and preserve local data
+            // Only allow iCloud update if iCloud data is significantly newer (24 hours) to prevent data loss
+            if timestampValue > 0 && timestampValue > (Date().timeIntervalSince1970 - 86400) {
+                print("iCloudPriority: Allowing iCloud update for \(bandName) - iCloud data is recent (within 24h) and has timestamp")
             } else {
-                print("iCloudPriority: Skipping \(bandName) - no timestamps available for comparison")
+                print("iCloudPriority: Skipping \(bandName) - preserving local data (no timestamp conflict or iCloud data too old)")
                 return nil
             }
         }
