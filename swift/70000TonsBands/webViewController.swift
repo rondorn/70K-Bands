@@ -53,8 +53,9 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         //self.webDisplay.mediaPlaybackRequiresUserAction = false
 
         self.activityIndicator.hidesWhenStopped = true;
-        print ("Loading url of " + url)
+        print ("🎯 [STATS_DEBUG] WebView loading URL: " + url)
         let requestURL = URL(string: url)
+        print ("🎯 [STATS_DEBUG] Parsed URL: \(requestURL?.absoluteString ?? "nil")")
         
         if (webMessageHelp.isEmpty == false){
             ToastMessages(webMessageHelp).show(self, cellLocation: self.view.frame,  placeHigh: false)
@@ -62,7 +63,10 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         webMessageHelp = String()
         if (requestURL != nil){
             let request = URLRequest(url: requestURL!)
+            print ("🎯 [STATS_DEBUG] WebView attempting to load request: \(request.url?.absoluteString ?? "nil")")
             self.webDisplay.load(request)
+        } else {
+            print ("🎯 [STATS_DEBUG] ❌ WebView failed to parse URL: \(url)")
         }
         
         activityIndicator.hidesWhenStopped = true
@@ -119,6 +123,19 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!) {
         endActivity()
+    }
+    
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        endActivity()
+        print("❌ WebView failed to load: \(error.localizedDescription)")
+        print("❌ Failed URL: \(webView.url?.absoluteString ?? "unknown")")
+        
+        // Show error message to user
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: "Loading Error", message: "Failed to load stats page: \(error.localizedDescription)", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        }
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {

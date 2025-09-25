@@ -100,10 +100,13 @@ class PriorityManager {
     func getPriority(for bandName: String) -> Int {
         var priority = 0
         
-        // Use main context for read operations to avoid deadlocks
-        let context = coreDataManager.persistentContainer.viewContext
+        // Use background context to prevent deadlocks during iCloud sync
+        let context = coreDataManager.persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
         
-        context.performAndWait {
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        context.perform {
             // Fetch UserPriority directly by joining with Band to avoid nested Core Data calls
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             request.predicate = NSPredicate(format: "band.bandName == %@", bandName)
@@ -116,6 +119,15 @@ class PriorityManager {
             } catch {
                 print("❌ Error fetching priority for band \(bandName): \(error)")
             }
+            
+            semaphore.signal()
+        }
+        
+        // Wait with timeout to prevent deadlocks
+        let timeoutResult = semaphore.wait(timeout: .now() + 2.0)
+        if timeoutResult == .timedOut {
+            print("⚠️ Priority fetch timed out for \(bandName) - preventing deadlock")
+            return 0
         }
         
         return priority
@@ -127,19 +139,34 @@ class PriorityManager {
     func getPriorityLastChange(for bandName: String) -> Double {
         var timestamp = 0.0
         
-        coreDataManager.context.performAndWait {
+        // Use background context to prevent deadlocks during iCloud sync
+        let context = coreDataManager.persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        context.perform {
             // Fetch UserPriority directly by joining with Band to avoid nested Core Data calls
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             request.predicate = NSPredicate(format: "band.bandName == %@", bandName)
             request.fetchLimit = 1
             
             do {
-                if let userPriority = try coreDataManager.context.fetch(request).first {
+                if let userPriority = try context.fetch(request).first {
                     timestamp = userPriority.updatedAt?.timeIntervalSince1970 ?? 0.0
                 }
             } catch {
                 print("❌ Error fetching priority timestamp for band \(bandName): \(error)")
             }
+            
+            semaphore.signal()
+        }
+        
+        // Wait with timeout to prevent deadlocks
+        let timeoutResult = semaphore.wait(timeout: .now() + 2.0)
+        if timeoutResult == .timedOut {
+            print("⚠️ Priority timestamp fetch timed out for \(bandName) - preventing deadlock")
+            return 0.0
         }
         
         return timestamp
@@ -150,12 +177,17 @@ class PriorityManager {
     func getAllPriorities() -> [String: Int] {
         var result: [String: Int] = [:]
         
-        // Ensure Core Data operations happen on the correct thread
-        coreDataManager.context.performAndWait {
+        // Use background context to prevent deadlocks during iCloud sync
+        let context = coreDataManager.persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        context.perform {
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             
             do {
-                let priorities = try coreDataManager.context.fetch(request)
+                let priorities = try context.fetch(request)
                 
                 for priority in priorities {
                     if let bandName = priority.band?.bandName {
@@ -167,6 +199,15 @@ class PriorityManager {
             } catch {
                 print("❌ Error fetching priorities: \(error)")
             }
+            
+            semaphore.signal()
+        }
+        
+        // Wait with timeout to prevent deadlocks
+        let timeoutResult = semaphore.wait(timeout: .now() + 5.0)
+        if timeoutResult == .timedOut {
+            print("⚠️ GetAllPriorities timed out - preventing deadlock")
+            return [:]
         }
         
         return result
@@ -178,17 +219,32 @@ class PriorityManager {
     func getBandsWithPriorities(_ priorities: [Int]) -> [String] {
         var result: [String] = []
         
-        coreDataManager.context.performAndWait {
+        // Use background context to prevent deadlocks during iCloud sync
+        let context = coreDataManager.persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        context.perform {
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             let priorityPredicates = priorities.map { NSPredicate(format: "priorityLevel == %d", $0) }
             request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: priorityPredicates)
             
             do {
-                let userPriorities = try coreDataManager.context.fetch(request)
+                let userPriorities = try context.fetch(request)
                 result = userPriorities.compactMap { $0.band?.bandName }
             } catch {
                 print("❌ Error fetching bands with priorities \(priorities): \(error)")
             }
+            
+            semaphore.signal()
+        }
+        
+        // Wait with timeout to prevent deadlocks
+        let timeoutResult = semaphore.wait(timeout: .now() + 3.0)
+        if timeoutResult == .timedOut {
+            print("⚠️ GetBandsWithPriorities timed out - preventing deadlock")
+            return []
         }
         
         return result
@@ -735,19 +791,21 @@ class PriorityManager {
         
         // Use async to prevent blocking
         DispatchQueue.global(qos: .utility).async {
-            // Process all updates within a single Core Data operation
-            self.coreDataManager.context.performAndWait {
+            // Use background context to prevent deadlocks during iCloud sync
+            let context = self.coreDataManager.persistentContainer.newBackgroundContext()
+            context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+            
+            context.perform {
                 let currentUID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
                 var updatedCount = 0
                 
                 for (bandName, priority, timestamp, deviceUID) in updates {
                     // Get current local data (within the same context)
-                    // Use internal fetch since we're already in performAndWait
                     let request: NSFetchRequest<Band> = Band.fetchRequest()
                     request.predicate = NSPredicate(format: "bandName == %@", bandName)
                     request.fetchLimit = 1
                     
-                    let band = try? self.coreDataManager.context.fetch(request).first
+                    let band = try? context.fetch(request).first
                     let userPriority = band?.userPriority
                     let currentPriority = Int(userPriority?.priorityLevel ?? 0)
                     let localTimestamp = userPriority?.updatedAt?.timeIntervalSince1970 ?? 0

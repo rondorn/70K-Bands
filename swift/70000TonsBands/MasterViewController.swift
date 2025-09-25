@@ -2743,6 +2743,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Only present the web view if we don't already have one
         if currentWebViewController == nil {
+            print("🎯 [STATS_DEBUG] Presenting WebView with file URL: \(fileUrl.absoluteString)")
+            print("🎯 [STATS_DEBUG] File exists: \(fileExists)")
             presentWebView(url: fileUrl.absoluteString, isLoading: !fileExists)
         }
 
@@ -3655,6 +3657,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Also update the other arrays to maintain consistency
         bandsByName = newBands
         
+        // CRITICAL FIX: Rebuild CellDataCache after year changes to populate UI cache with priority data
+        // This ensures priority data is displayed correctly after year changes
+        print("🔄 Rebuilding CellDataCache after band data merge - reason: '\(reason)'")
+        CellDataCache.shared.rebuildCache(
+            from: newBands,
+            sortBy: getSortedBy(),
+            reason: "Band data merge: \(reason)"
+        ) {
+            print("✅ CellDataCache rebuild completed after band data merge")
+        }
+        
         // Immediately reload the table view to ensure consistency
         DispatchQueue.main.async {
             self.tableView.reloadData()
@@ -3677,6 +3690,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Update the arrays atomically
         bands = newBands
         bandsByName = newBands
+        
+        // CRITICAL FIX: Rebuild CellDataCache after full data refresh to populate UI cache with priority data
+        // This ensures priority data is displayed correctly after year changes
+        print("🔄 Rebuilding CellDataCache after full data refresh - reason: '\(reason)'")
+        CellDataCache.shared.rebuildCache(
+            from: newBands,
+            sortBy: getSortedBy(),
+            reason: "Full data refresh: \(reason)"
+        ) {
+            print("✅ CellDataCache rebuild completed after full data refresh")
+        }
         
         // Immediately reload the table view to ensure consistency
         DispatchQueue.main.async {
