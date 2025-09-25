@@ -330,34 +330,23 @@ class CoreDataManager {
     func clearAllData() {
         // Use background context for heavy deletion work to prevent blocking UI
         backgroundContext.performAndWait {
-            print("🧹 CoreDataManager: Clearing all data from Core Data")
+            print("🧹 CoreDataManager: Clearing year-specific data from Core Data")
+            print("🚨 CRITICAL: UserPriority and UserAttendance records are NEVER deleted")
+            print("🚨 UserPriority: year-agnostic user preferences (likes/dislikes)")
+            print("🚨 UserAttendance: year-specific but should be preserved for historical records")
             
             // Use individual object deletion to properly handle relationships
             // This is slower but prevents crashes from dangling references
             
-            // 1. Delete UserAttendance records (safest first)
-            let attendanceRequest: NSFetchRequest<UserAttendance> = UserAttendance.fetchRequest()
-            do {
-                let attendances = try backgroundContext.fetch(attendanceRequest)
-                for attendance in attendances {
-                    backgroundContext.delete(attendance)
-                }
-                print("🧹 Deleted \(attendances.count) UserAttendance records")
-            } catch {
-                print("❌ Error fetching UserAttendance: \(error)")
-            }
+            // 1. PROTECTED: UserAttendance records are NEVER deleted
+            // Attendance data represents historical records of what user attended
+            // These should be preserved even when changing years
+            print("🛡️ PROTECTED: UserAttendance records are preserved - historical attendance data")
             
-            // 2. Delete UserPriority records
-            let priorityRequest: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            do {
-                let priorities = try backgroundContext.fetch(priorityRequest)
-                for priority in priorities {
-                    backgroundContext.delete(priority)
-                }
-                print("🧹 Deleted \(priorities.count) UserPriority records")
-            } catch {
-                print("❌ Error fetching UserPriority: \(error)")
-            }
+            // 2. PROTECTED: UserPriority records are NEVER deleted
+            // Priority data represents user preferences that are year-agnostic
+            // If someone likes Dark Tranquillity in 2012, they should still like them in 2025
+            print("🛡️ PROTECTED: UserPriority records are preserved - user preferences are year-agnostic")
             
             // 3. Delete Event records
             let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()

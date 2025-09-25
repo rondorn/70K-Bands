@@ -368,20 +368,17 @@ class PriorityManager {
         print("📊 Migrated: \(migratedCount), Skipped: \(skippedCount)")
     }
     
-    /// Clears all cached priority data (replaces dataHandler.clearCachedData)
+    /// DEPRECATED: This method should NEVER be called - priority data is year-agnostic and must be preserved
+    /// Priority data represents user preferences that persist across all years
+    /// If someone likes Dark Tranquillity in 2012, they should still like them in 2025
+    @available(*, deprecated, message: "Priority data should NEVER be cleared - it's year-agnostic user preferences")
     func clearAllPriorities() {
-        coreDataManager.context.performAndWait {
-            let request: NSFetchRequest<NSFetchRequestResult> = UserPriority.fetchRequest()
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
-            
-            do {
-                try coreDataManager.context.execute(deleteRequest)
-                coreDataManager.saveContext()
-                print("🗑️ Cleared all priority data")
-            } catch {
-                print("❌ Error clearing priorities: \(error)")
-            }
-        }
+        print("🚨 CRITICAL ERROR: clearAllPriorities() called - this should NEVER happen!")
+        print("🚨 Priority data is year-agnostic and must be preserved across all years")
+        print("🚨 This method is deprecated and will be removed - priority data should NEVER be deleted")
+        
+        // DO NOT DELETE ANYTHING - just log the error
+        print("🛡️ PROTECTED: No priority data was deleted - user preferences are preserved")
     }
     
     /// Emergency migration function for users who lost data
