@@ -306,6 +306,26 @@ class CoreDataManager {
             band.noteworthy = noteworthy
             band.priorYears = priorYears
             
+            // CRITICAL FIX: Load existing userPriority relationship to preserve priority data
+            // This prevents priority data from being lost during CSV import/year changes
+            if band.userPriority == nil {
+                // Try to find existing priority data for this band (year-agnostic)
+                let priorityRequest: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
+                priorityRequest.predicate = NSPredicate(format: "band.bandName == %@", name)
+                priorityRequest.fetchLimit = 1
+                
+                do {
+                    if let existingPriority = try context.fetch(priorityRequest).first {
+                        // Link the existing priority to this band
+                        band.userPriority = existingPriority
+                        existingPriority.band = band
+                        print("🔄 [PRIORITY_PRESERVATION] Linked existing priority for band: \(name)")
+                    }
+                } catch {
+                    print("❌ [PRIORITY_PRESERVATION] Error loading priority for \(name): \(error)")
+                }
+            }
+            
             resultBand = band
         }
         return resultBand

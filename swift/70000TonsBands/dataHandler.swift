@@ -52,14 +52,17 @@ class dataHandler {
     }
     
     /// DEPRECATED: Clears cached data - kept for compatibility
+    /// CRITICAL: Priority data cache is NEVER cleared - it represents user preferences
     func clearCachedData(){
         print("[LEGACY] clearCachedData called - this is deprecated, use PriorityManager instead")
-        // Clear legacy cache if it exists
-        staticData.async(flags: .barrier) {
-            cacheVariables.bandPriorityStorageCache = [String:Int]()
-        }
-        bandPriorityStorage.removeAll()
-        bandPriorityTimestamps.removeAll()
+        print("🛡️ PROTECTED: Priority data cache is NEVER cleared - user preferences are preserved")
+        
+        // DO NOT clear priority data - it represents user preferences that should persist
+        // The legacy cache clearing is disabled to prevent data loss during year changes
+        print("🛡️ PROTECTED: bandPriorityStorageCache, bandPriorityStorage, and bandPriorityTimestamps are preserved")
+        
+        // Only clear non-priority caches if any exist
+        // Priority data must be preserved across all year changes
     }
     
     // MARK: - Legacy File Reading (Migration Only)
