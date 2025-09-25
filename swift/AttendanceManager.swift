@@ -204,18 +204,18 @@ class AttendanceManager {
         print("📊 Migrated: \(migratedCount), Skipped: \(skippedCount)")
     }
     
-    /// Clears all attendance data (replaces ShowsAttended.clearAllData)
+    /// DEPRECATED: This method should NEVER be called - attendance data represents historical records
+    /// Attendance data should be preserved as it represents what the user actually attended
+    /// Even when changing years, historical attendance should be preserved
+    @available(*, deprecated, message: "Attendance data should NEVER be cleared - it represents historical records")
     func clearAllAttendance() {
-        let request: NSFetchRequest<NSFetchRequestResult> = UserAttendance.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+        print("🚨 CRITICAL ERROR: clearAllAttendance() called - this should NEVER happen!")
+        print("🚨 Attendance data represents historical records of what user attended")
+        print("🚨 This data should be preserved even when changing years")
+        print("🚨 This method is deprecated and will be removed - attendance data should NEVER be deleted")
         
-        do {
-            try coreDataManager.context.execute(deleteRequest)
-            coreDataManager.saveContext()
-            print("🗑️ Cleared all attendance data")
-        } catch {
-            print("❌ Error clearing attendance data: \(error)")
-        }
+        // DO NOT DELETE ANYTHING - just log the error
+        print("🛡️ PROTECTED: No attendance data was deleted - historical records are preserved")
     }
     
     // MARK: - Private Helpers
