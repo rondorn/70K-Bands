@@ -368,6 +368,13 @@ class iCloudDataHandler {
             let bandNameHandle = bandNamesHandler.shared
             let bandNames = bandNameHandle.getBandNames()
             
+            // CRITICAL FIX: If no bands are loaded locally, read ALL iCloud priority data
+            if bandNames.isEmpty {
+                print("iCloudPriority: No local bands loaded, reading ALL iCloud priority data for restoration")
+                self.readAlliCloudPriorityDataForRestoration()
+                return
+            }
+            
             print("iCloudPriority: Reading priority data for \(bandNames.count) bands using optimized bulk processing")
             
             // Pre-compute common values to avoid repeated calculations
@@ -438,20 +445,96 @@ class iCloudDataHandler {
             
             // Apply all updates in batch using Core Data PriorityManager
             print("iCloudPriority: Applying \(priorityUpdates.count) priority updates...")
+            
+            // CRITICAL FIX: Track completion of all Core Data writes
+            var completedWrites = 0
+            let totalWrites = priorityUpdates.count
+            
             for (bandName, priority, timestamp, deviceUID) in priorityUpdates {
-                self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: priority, timestamp: timestamp, deviceUID: deviceUID)
+                self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: priority, timestamp: timestamp, deviceUID: deviceUID) { success in
+                    completedWrites += 1
+                    print("iCloudPriority: Write \(completedWrites)/\(totalWrites) completed for \(bandName)")
+                    
+                    // When all writes are complete, notify UI
+                    if completedWrites == totalWrites {
+                        print("iCloudPriority: All \(totalWrites) Core Data writes completed, notifying UI")
+                        self.iCloudDataisLoading = false
+                        
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+                            NotificationCenter.default.post(name: Notification.Name("RefreshDisplay"), object: nil)
+                            print("iCloudPriority: Display refresh notification sent after all priority updates")
+                        }
+                    }
+                }
             }
             
-            self.iCloudDataisLoading = false;
-            print("iCloudPriority: Optimized read operation completed with \(priorityUpdates.count) updates applied")
-            
-            // Notify UI that iCloud data is ready
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
-            }
+            print("iCloudPriority: Optimized read operation started with \(priorityUpdates.count) updates")
         }
         
         print("iCloudPriority: readAllPriorityData operation completed")
+    }
+    
+    /// Reads ALL iCloud priority data for restoration after delete/reinstall
+    /// This method doesn't depend on local band names and reads all available iCloud data
+    private func readAlliCloudPriorityDataForRestoration() {
+        print("iCloudPriority: Starting restoration read of ALL iCloud priority data")
+        
+        guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else {
+            print("iCloudPriority: Could not get device UID, aborting restoration")
+            self.iCloudDataisLoading = false
+            return
+        }
+        
+        // Get ALL keys from iCloud Key-Value Store
+        let allKeys = NSUbiquitousKeyValueStore.default.dictionaryRepresentation.keys
+        let priorityKeys = allKeys.filter { $0.hasPrefix("bandName:") }
+        
+        print("iCloudPriority: Found \(priorityKeys.count) priority keys in iCloud for restoration")
+        
+        var priorityUpdates: [(String, Int, Double, String)] = []
+        
+        for key in priorityKeys {
+            guard let value = NSUbiquitousKeyValueStore.default.string(forKey: key) else {
+                continue
+            }
+            
+            // Extract band name from key
+            let bandName = String(key.dropFirst("bandName:".count))
+            
+            // Process priority data
+            if let update = self.processPriorityRecord(bandName: bandName, value: value, currentUid: currentUid) {
+                priorityUpdates.append(update)
+            }
+        }
+        
+        // Apply all updates in batch using Core Data PriorityManager
+        print("iCloudPriority: Applying \(priorityUpdates.count) priority updates from restoration...")
+        
+        // CRITICAL FIX: Track completion of all Core Data writes
+        var completedWrites = 0
+        let totalWrites = priorityUpdates.count
+        
+        for (bandName, priority, timestamp, deviceUID) in priorityUpdates {
+            self.priorityManager.updatePriorityFromiCloud(bandName: bandName, priority: priority, timestamp: timestamp, deviceUID: deviceUID) { success in
+                completedWrites += 1
+                print("iCloudPriority: Restoration write \(completedWrites)/\(totalWrites) completed for \(bandName)")
+                
+                // When all writes are complete, notify UI
+                if completedWrites == totalWrites {
+                    print("iCloudPriority: All \(totalWrites) restoration Core Data writes completed, notifying UI")
+                    self.iCloudDataisLoading = false
+                    
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
+                        NotificationCenter.default.post(name: Notification.Name("RefreshDisplay"), object: nil)
+                        print("iCloudPriority: Display refresh notification sent after all restoration updates")
+                    }
+                }
+            }
+        }
+        
+        print("iCloudPriority: Restoration read started with \(priorityUpdates.count) updates")
     }
     
     /// Processes a single priority record efficiently for bulk operations
@@ -461,9 +544,23 @@ class iCloudDataHandler {
     ///   - currentUid: The current device UID
     /// - Returns: Tuple of (bandName, priority, timestamp, deviceUID) if update is needed, nil otherwise
     private func processPriorityRecord(bandName: String, value: String, currentUid: String) -> (String, Int, Double, String)? {
-        guard !value.isEmpty && value != "5" else { 
-            print("iCloudPriority: Skipping \(bandName) - empty or no data (\(value))")
-            return nil 
+        // Get current local priority to determine if local data is null
+        let currentPriority = self.priorityManager.getPriority(for: bandName)
+        
+        // CRITICAL FIX: If local data is null (priority = 0), iCloud data should ALWAYS be written
+        if currentPriority == 0 {
+            // Local data is null - iCloud data should always be written regardless of other rules
+            if value.isEmpty || value == "null" || value == "5" {
+                print("iCloudPriority: Skipping \(bandName) - iCloud data is also null/empty, no update needed")
+                return nil
+            }
+            print("iCloudPriority: Local data is null for \(bandName), iCloud data will be written regardless of other rules")
+        } else {
+            // Local data exists - apply normal rules (don't let null iCloud override real local data)
+            guard !value.isEmpty && value != "null" && value != "5" else { 
+                print("iCloudPriority: Skipping \(bandName) - null/empty iCloud value should not override real local data (\(value))")
+                return nil 
+            }
         }
         
         let tempData = value.split(separator: ":")
@@ -477,34 +574,43 @@ class iCloudDataHandler {
         }
         
         let uidValue = String(tempData[1])
-        let currentPriority = self.priorityManager.getPriority(for: bandName)
         
         print("iCloudPriority: Processing \(bandName) - iCloud: \(newPriority):\(uidValue):\(timestampValue), local: \(currentPriority)")
         
-        // RULE 1: Never overwrite local data if UID matches current device
-        if uidValue == currentUid {
-            print("iCloudPriority: Skipping \(bandName) - UID matches current device")
+        // RULE 1: Only skip if UID matches current device AND local data exists
+        // CRITICAL FIX: After delete/reinstall, local data is null, so we need to restore iCloud data even from same device
+        if uidValue == currentUid && currentPriority != 0 {
+            print("iCloudPriority: Skipping \(bandName) - UID matches current device and local data exists")
             return nil
         }
         
-        // RULE 2: Only update if iCloud data is newer than local data
+        if uidValue == currentUid && currentPriority == 0 {
+            print("iCloudPriority: Restoring \(bandName) from same device - local data is null after delete/reinstall")
+        }
+        
+        // RULE 2: Handle timestamp comparison based on local data state
         let localTimestamp = self.priorityManager.getPriorityLastChange(for: bandName)
         
         print("iCloudPriority: Timestamp comparison for \(bandName) - local: \(localTimestamp), iCloud: \(timestampValue)")
         
-        if localTimestamp > 0 {
-            // Only update if iCloud timestamp is NEWER (>) than local timestamp
+        // CRITICAL FIX: Different logic based on whether local data is null
+        if currentPriority == 0 {
+            // Local data is null - iCloud data should ALWAYS be written (already handled above)
+            print("iCloudPriority: Local data is null for \(bandName), proceeding with iCloud update")
+        } else if localTimestamp > 0 {
+            // Local data exists with timestamp - only update if iCloud is STRICTLY NEWER
             guard timestampValue > localTimestamp else {
-                print("iCloudPriority: Skipping \(bandName) - iCloud timestamp not newer")
+                print("iCloudPriority: Skipping \(bandName) - iCloud timestamp (\(timestampValue)) not newer than local (\(localTimestamp))")
                 return nil 
             }
-        } else if currentPriority != 0 {
-            // CRITICAL FIX: Local data exists but no timestamp - be conservative and preserve local data
-            // Only allow iCloud update if iCloud data is significantly newer (24 hours) to prevent data loss
-            if timestampValue > 0 && timestampValue > (Date().timeIntervalSince1970 - 86400) {
-                print("iCloudPriority: Allowing iCloud update for \(bandName) - iCloud data is recent (within 24h) and has timestamp")
+        } else {
+            // Local data exists but no timestamp - be VERY conservative
+            // Only allow iCloud update if iCloud data is significantly newer (48 hours) to prevent data loss
+            let recentThreshold = Date().timeIntervalSince1970 - 172800 // 48 hours
+            if timestampValue > recentThreshold {
+                print("iCloudPriority: Allowing iCloud update for \(bandName) - iCloud data is very recent (within 48h)")
             } else {
-                print("iCloudPriority: Skipping \(bandName) - preserving local data (no timestamp conflict or iCloud data too old)")
+                print("iCloudPriority: Skipping \(bandName) - preserving local data (iCloud data too old or no timestamp)")
                 return nil
             }
         }
@@ -763,10 +869,9 @@ class iCloudDataHandler {
                 // Ensure local attended data is saved to disk for offline use
                 attendedHandle.saveShowsAttended()
                 self.iCloudScheduleDataisLoading = false;
-                // Notify UI that iCloud data is ready
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Notification.Name("iCloudDataReady"), object: nil)
-                }
+                // CRITICAL FIX: Don't send iCloudDataReady here - let priority data loading handle it
+                // The priority data loading will send iCloudDataReady after Core Data writes complete
+                print("iCloudSchedule: Schedule data loading completed, waiting for priority data to finish")
             }
         } else {
             print("iCloudSchedule: iCloud disabled, skipping schedule data read")

@@ -659,7 +659,9 @@ private func readFiltersFileInternal(){
         alertTracker = [String]()
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
-        localNotification.addNotifications()
+        // DEFERRED NOTIFICATION SETUP: Don't call addNotifications() during app launch
+        // This prevents deadlock during launch. Notifications will be set up after app is ready.
+        print("🔔 [NOTIFICATION_DEFER] Deferring notification setup to prevent launch deadlock")
     }
 }
 

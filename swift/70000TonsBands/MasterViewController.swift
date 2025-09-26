@@ -1002,6 +1002,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshDisplayAfterWake2(){
         cleanupEasterEggPlayer()
+        
+        // CRITICAL FIX: If this is triggered by iCloud data restoration, force refresh
+        if MasterViewController.isRefreshingBandList {
+            print("🔄 refreshDisplayAfterWake2: Forcing completion of existing refresh to allow iCloud data display")
+            MasterViewController.isRefreshingBandList = false
+            MasterViewController.refreshBandListSafetyTimer?.invalidate()
+            MasterViewController.refreshBandListSafetyTimer = nil
+        }
+        
         // Simple cache refresh for screen navigation - no background operations needed
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -3073,6 +3082,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func iCloudDataReadyHandler() {
         print("iCloud data ready, forcing reload of all caches and band file.")
+        
+        // CRITICAL FIX: Force completion of any existing refresh to allow iCloud data to be displayed
+        if MasterViewController.isRefreshingBandList {
+            print("🔄 iCloudDataReadyHandler: Forcing completion of existing refresh to allow iCloud data display")
+            MasterViewController.isRefreshingBandList = false
+            MasterViewController.refreshBandListSafetyTimer?.invalidate()
+            MasterViewController.refreshBandListSafetyTimer = nil
+        }
+        
         // Move all data loading to background to avoid GUI blocking
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -3084,10 +3102,31 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.schedule.getCachedData()
             
             DispatchQueue.main.async {
-                print("Calling refreshBandList from iCloudDataReadyHandler with reason: iCloud data ready (after forced reload)")
-                self.refreshBandList(reason: "iCloud data ready (after forced reload)")
+                print("🔄 iCloudDataReadyHandler: Bypassing refresh blocking to force UI update with iCloud data")
+                
+                // CRITICAL FIX: Directly call the refresh logic without going through refreshBandList
+                // This bypasses the isRefreshingBandList check entirely
+                self.forceRefreshWithiCloudData()
             }
         }
+    }
+    
+    /// Forces a refresh specifically for iCloud data restoration, bypassing all blocking logic
+    private func forceRefreshWithiCloudData() {
+        print("🔄 forceRefreshWithiCloudData: Starting forced refresh for iCloud data display")
+        
+        // Save the current scroll position
+        let previousOffset = self.tableView.contentOffset
+        
+        // Force refresh the display without any blocking checks
+        // Get current bands and pass them to safelyMergeBandData
+        let currentBands = self.bands
+        self.safelyMergeBandData(currentBands, reason: "iCloud data restoration - forced refresh")
+        
+        // Restore scroll position
+        self.tableView.setContentOffset(previousOffset, animated: false)
+        
+        print("🔄 forceRefreshWithiCloudData: Completed forced refresh for iCloud data display")
     }
     
     @objc func iCloudAttendedDataRestoredHandler() {
