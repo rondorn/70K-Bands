@@ -30,6 +30,9 @@ class WebViewController: UIViewController, WKNavigationDelegate {
             self.navigationItem.backBarButtonItem = backItem
         }
         
+        // Fix WebView layout for iPad landscape - ensure it takes full available space
+        setupWebViewConstraints()
+        
         // Style the navigation bar to match the rest of the app
         if let navController = self.navigationController {
             navController.navigationBar.barStyle = .blackTranslucent
@@ -87,6 +90,8 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: { _ in
             self.updateSplitViewDisplayMode(for: size)
+            // Re-setup constraints for new orientation
+            self.setupWebViewConstraints()
         }, completion: nil)
     }
 
@@ -169,6 +174,33 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     @objc func closeButtonTapped() {
         print("WebView Close button tapped")
         dismiss(animated: true, completion: nil)
+    }
+    
+    /// Sets up WebView constraints to ensure it takes full available space, especially on iPad landscape
+    private func setupWebViewConstraints() {
+        // Remove any existing constraints that might be limiting the WebView
+        webDisplay.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Remove all existing constraints
+        webDisplay.removeFromSuperview()
+        view.addSubview(webDisplay)
+        
+        // Set up constraints to fill the entire view
+        NSLayoutConstraint.activate([
+            webDisplay.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webDisplay.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            webDisplay.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            webDisplay.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+        
+        // Ensure the activity indicator is centered
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            activityIndicator.centerXAnchor.constraint(equalTo: webDisplay.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: webDisplay.centerYAnchor)
+        ])
+        
+        print("🔧 WebView constraints set up for full screen display")
     }
 }
 
