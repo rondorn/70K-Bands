@@ -41,10 +41,14 @@ open class scheduleHandler {
     // Thread-safe accessors (100% compatible with original)
     var schedulingData: [String : [TimeInterval : [String : String]]] {
         get {
+            // CRITICAL FIX: Check cache status outside sync to prevent deadlock
+            if !cacheLoaded {
+                // Call loadCacheFromCoreData() outside the sync block to prevent deadlock
+                // This allows readFiltersFile() to call back into scheduleHandler methods safely
+                loadCacheFromCoreData()
+            }
+            
             return scheduleHandlerQueue.sync { 
-                if !cacheLoaded {
-                    loadCacheFromCoreData()
-                }
                 return dictionaryQueue.sync { 
                     return _schedulingData 
                 }
@@ -119,17 +123,28 @@ open class scheduleHandler {
     
     /// Loads schedule data from Core Data into memory cache for fast access
     private func loadCacheFromCoreData() {
+        // CRITICAL FIX: Add thread safety since this is now called outside sync blocks
         guard !cacheLoaded else { 
             print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache already loaded, returning early")
             return 
         }
         
+        // Prevent multiple simultaneous loads
+        guard !isDataLoadingInProgress else {
+            print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Data loading already in progress, waiting...")
+            return
+        }
+        
+        isDataLoadingInProgress = true
+        defer { isDataLoadingInProgress = false }
+        
         print("🔄 Loading schedule from Core Data...")
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Starting load process")
         
-        // CRITICAL: Load user preferences FIRST to ensure correct year resolution
+        // CRITICAL FIX: Call readFiltersFile() OUTSIDE the sync block to prevent deadlock
+        // This prevents the deadlock where readFiltersFile() calls back into scheduleHandler methods
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Loading user preferences before year resolution")
-        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler calling readFiltersFile() - this could be the race condition!")
+        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler calling readFiltersFile() - moved outside sync to prevent deadlock")
         readFiltersFile()
         print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
         

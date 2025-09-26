@@ -408,6 +408,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //generate user data
         print ("Firebase, calling ")
 
+        // DEFERRED NOTIFICATION SETUP: Set up notifications after app launch is complete
+        // This prevents deadlock during launch by deferring the notification setup
+        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
+            print("🔔 [NOTIFICATION_DEFER] Setting up deferred notifications after app launch")
+            let localNotification = localNoticationHandler()
+            localNotification.addNotifications()
+            print("🔔 [NOTIFICATION_DEFER] Deferred notification setup completed")
+        }
+
         return true
     
     }
@@ -624,6 +633,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             let userDataHandle = userDataHandler()
             let userDataReportHandle = firebaseUserWrite()
             userDataReportHandle.writeData()
+            
+            // Set up notifications when app becomes active (in case they weren't set up during launch)
+            print("🔔 [NOTIFICATION_DEFER] Setting up notifications on app become active")
+            let localNotification = localNoticationHandler()
+            localNotification.addNotifications()
             
             // Post refresh notification on main thread after background operations complete
             DispatchQueue.main.async {
