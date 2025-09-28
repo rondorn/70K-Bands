@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreData
 
 /// Handles the combined image list that merges artist and event images
 /// Artists take priority over events when both have image URLs
@@ -24,7 +25,9 @@ class CombinedImageListHandler {
             return imageListQueue.sync { _combinedImageList }
         }
         set {
-            imageListQueue.async(flags: .barrier) { self._combinedImageList = newValue }
+            imageListQueue.async(flags: .barrier) {
+                self._combinedImageList = newValue
+            }
         }
     }
     
@@ -96,6 +99,51 @@ class CombinedImageListHandler {
                         print("No image URL found for event: \(bandName)")
                     }
                 }
+            }
+            
+            // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
+            // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
+            print("📋 Fetching events directly from Core Data (including those without bands)...")
+            let coreDataManager = CoreDataManager.shared
+            let context = coreDataManager.context
+            
+            let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
+            // Filter for current year events only
+            let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+            eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+            
+            do {
+                let allEvents = try context.fetch(eventRequest)
+                print("📋 Found \(allEvents.count) events in Core Data for year \(currentYear)")
+                
+                for event in allEvents {
+                    // Get the event name from the identifier (which contains the band/event name)
+                    guard let identifier = event.identifier else { continue }
+                    
+                    // Extract the event name from the identifier (format: "bandName_eventId")
+                    let eventName = identifier.components(separatedBy: "_").first ?? identifier
+                    
+                    // Check if this event has an image URL
+                    if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[eventName] == nil {
+                            newCombinedList[eventName] = eventImageUrl
+                            print("📋 Added Core Data event image URL for '\(eventName)': \(eventImageUrl)")
+                        } else {
+                            print("📋 Skipped Core Data event image URL for '\(eventName)' (already has URL): \(eventImageUrl)")
+                        }
+                    } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[eventName] == nil {
+                            newCombinedList[eventName] = descriptionUrl
+                            print("📋 Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
+                        } else {
+                            print("📋 Skipped Core Data event description URL for '\(eventName)' (already has URL): \(descriptionUrl)")
+                        }
+                    }
+                }
+            } catch {
+                print("❌ Error fetching events from Core Data: \(error)")
             }
             
             // Update the combined list
@@ -195,6 +243,47 @@ class CombinedImageListHandler {
                 }
             }
             
+            // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
+            // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
+            print("📋 [ASYNC] Fetching events directly from Core Data (including those without bands)...")
+            let coreDataManager = CoreDataManager.shared
+            let context = coreDataManager.context
+            
+            let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
+            // Filter for current year events only
+            let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+            eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+            
+            do {
+                let allEvents = try context.fetch(eventRequest)
+                print("📋 [ASYNC] Found \(allEvents.count) events in Core Data for year \(currentYear)")
+                
+                for event in allEvents {
+                    // Get the event name from the identifier (which contains the band/event name)
+                    guard let identifier = event.identifier else { continue }
+                    
+                    // Extract the event name from the identifier (format: "bandName_eventId")
+                    let eventName = identifier.components(separatedBy: "_").first ?? identifier
+                    
+                    // Check if this event has an image URL
+                    if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[eventName] == nil {
+                            newCombinedList[eventName] = eventImageUrl
+                            print("📋 [ASYNC] Added Core Data event image URL for '\(eventName)': \(eventImageUrl)")
+                        }
+                    } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                        // Only add if not already present (artist takes priority)
+                        if newCombinedList[eventName] == nil {
+                            newCombinedList[eventName] = descriptionUrl
+                            print("📋 [ASYNC] Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
+                        }
+                    }
+                }
+            } catch {
+                print("❌ [ASYNC] Error fetching events from Core Data: \(error)")
+            }
+            
             // Update the list and save it (on main queue for thread safety)
             DispatchQueue.main.async {
                 self.combinedImageList = newCombinedList
@@ -270,6 +359,53 @@ class CombinedImageListHandler {
                     }
                 }
             }
+        }
+        
+        // CRITICAL FIX: Also check events directly from Core Data that don't have associated bands
+        // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
+        print("📋 Checking Core Data events (including those without bands) for image URL changes...")
+        let coreDataManager = CoreDataManager.shared
+        let context = coreDataManager.context
+        
+        let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
+        // Filter for current year events only
+        let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+        eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+        
+        do {
+            let allEvents = try context.fetch(eventRequest)
+            print("📋 Checking \(allEvents.count) Core Data events for year \(currentYear)")
+            
+            for event in allEvents {
+                // Get the event name from the identifier (which contains the band/event name)
+                guard let identifier = event.identifier else { continue }
+                
+                // Extract the event name from the identifier (format: "bandName_eventId")
+                let eventName = identifier.components(separatedBy: "_").first ?? identifier
+                
+                // Check if this event has an image URL
+                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                    // Only add if not already present (artist takes priority)
+                    if expectedList[eventName] == nil {
+                        expectedList[eventName] = eventImageUrl
+                        if currentList[eventName] != eventImageUrl {
+                            print("📋 Core Data event image URL changed for '\(eventName)': '\(currentList[eventName] ?? "nil")' -> '\(eventImageUrl)'")
+                            hasChanges = true
+                        }
+                    }
+                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                    // Only add if not already present (artist takes priority)
+                    if expectedList[eventName] == nil {
+                        expectedList[eventName] = descriptionUrl
+                        if currentList[eventName] != descriptionUrl {
+                            print("📋 Core Data event description URL changed for '\(eventName)': '\(currentList[eventName] ?? "nil")' -> '\(descriptionUrl)'")
+                            hasChanges = true
+                        }
+                    }
+                }
+            }
+        } catch {
+            print("❌ Error fetching events from Core Data for regeneration check: \(error)")
         }
         
         // Check if any entries were removed (bands/events no longer exist)
