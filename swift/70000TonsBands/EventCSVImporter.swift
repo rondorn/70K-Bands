@@ -92,6 +92,31 @@ class EventCSVImporter {
                     continue
                 }
                 
+                // CRITICAL FIX: Skip special event types that shouldn't create band entries
+                // These are events without actual bands (like "All Star Jam", "Meet & Greet", etc.)
+                let specialEventTypes = [
+                    "All Star Jam", "Meet & Greet", "Meet and Greet", "Q&A", "Q & A",
+                    "Panel Discussion", "Workshop", "Seminar", "Awards", "Award Ceremony",
+                    "Closing Ceremony", "Opening Ceremony", "Festival", "Event", "Special Event"
+                ]
+                
+                let eventTypeFromCSV = lineData["Type"] ?? ""
+                let isSpecialEvent = specialEventTypes.contains { specialType in
+                    bandName.localizedCaseInsensitiveContains(specialType) || 
+                    eventTypeFromCSV.localizedCaseInsensitiveContains(specialType)
+                }
+                
+                if isSpecialEvent {
+                    skippedCount += 1
+                    if rowIndex <= 5 {
+                        print("⚠️ [MDF_DEBUG] Row \(rowIndex) SKIPPED - Special event type (no band):")
+                        print("   Band: '\(bandName)'")
+                        print("   Type: '\(eventTypeFromCSV)'")
+                        print("   Reason: Special event without actual band")
+                    }
+                    continue
+                }
+                
                 // Debug processing for first few events
                 if rowIndex <= 3 {
                     print("✅ [MDF_DEBUG] Row \(rowIndex) PROCESSING:")
@@ -363,6 +388,35 @@ class EventCSVImporter {
             print("🗑️ Cleared all event data from Core Data")
         } catch {
             print("❌ Error clearing event data: \(error)")
+        }
+    }
+    
+    /// Clean up orphaned bands that have no events (fake band entries)
+    /// This should be called during year changes to remove bands created for special events
+    func cleanupOrphanedBands() {
+        print("🧹 [CLEANUP] Starting orphaned bands cleanup...")
+        
+        let request: NSFetchRequest<Band> = Band.fetchRequest()
+        request.predicate = NSPredicate(format: "events.@count == 0")
+        
+        do {
+            let orphanedBands = try coreDataManager.context.fetch(request)
+            print("🧹 [CLEANUP] Found \(orphanedBands.count) orphaned bands with no events")
+            
+            for band in orphanedBands {
+                print("🗑️ [CLEANUP] Removing orphaned band: '\(band.bandName ?? "Unknown")' (Year: \(band.eventYear))")
+                coreDataManager.context.delete(band)
+            }
+            
+            if !orphanedBands.isEmpty {
+                coreDataManager.saveContext()
+                print("✅ [CLEANUP] Removed \(orphanedBands.count) orphaned bands")
+            } else {
+                print("✅ [CLEANUP] No orphaned bands found")
+            }
+            
+        } catch {
+            print("❌ [CLEANUP] Error cleaning up orphaned bands: \(error)")
         }
     }
     

@@ -391,6 +391,22 @@ class CoreDataManager {
             } catch {
                 print("❌ Error fetching Bands: \(error)")
             }
+            
+            // 5. CRITICAL FIX: Clean up any orphaned bands that might have been created
+            // This prevents fake band entries for special events from persisting
+            let orphanedBandRequest: NSFetchRequest<Band> = Band.fetchRequest()
+            orphanedBandRequest.predicate = NSPredicate(format: "events.@count == 0")
+            do {
+                let orphanedBands = try backgroundContext.fetch(orphanedBandRequest)
+                for band in orphanedBands {
+                    backgroundContext.delete(band)
+                }
+                if !orphanedBands.isEmpty {
+                    print("🧹 [CLEANUP] Deleted \(orphanedBands.count) orphaned bands with no events")
+                }
+            } catch {
+                print("❌ Error cleaning up orphaned bands: \(error)")
+            }
         }
     }
     

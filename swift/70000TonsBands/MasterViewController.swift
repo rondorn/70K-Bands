@@ -1469,11 +1469,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("Handling return from preferences screen after year change")
         print("No additional refresh needed - data was already refreshed during year change")
         
-        // No action needed - year change process already refreshed all data
-        // Just ensure the display is updated
-        DispatchQueue.main.async {
-            // Trigger a display refresh to ensure UI is in sync
-            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+        // CRITICAL FIX: Clean up orphaned bands (fake band entries for special events)
+        // This prevents events like "All Star Jam" from appearing as bands in the list
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("🧹 [CLEANUP] Starting orphaned bands cleanup after year change...")
+            let eventImporter = EventCSVImporter()
+            eventImporter.cleanupOrphanedBands()
+            
+            // Trigger a display refresh to ensure UI shows correct band count
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+            }
         }
     }
     
