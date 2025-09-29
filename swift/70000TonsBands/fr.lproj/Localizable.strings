@@ -230,3 +230,5 @@
 "Information" = "Information";
 "User Identifier" = "Identifiant utilisateur";
 "Build" = "Version";
+
+"year_change_loading" = "Chargement des données pour la nouvelle année, veuillez patienter...";

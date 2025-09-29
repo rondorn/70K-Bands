@@ -245,3 +245,5 @@
 "OpenYouTubeApp"="Abrir aplicativo do YouTube";
 "AllLinksOpenInExternalBrowser"="Todos os links abrem no navegador externo";
 "DetailScreenSection"="Tela de detalhes";
+
+"year_change_loading" = "Carregando dados para o novo ano, aguarde...";

@@ -105,7 +105,7 @@ class CombinedImageListHandler {
             // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
             print("📋 Fetching events directly from Core Data (including those without bands)...")
             let coreDataManager = CoreDataManager.shared
-            let context = coreDataManager.context
+            let context = coreDataManager.persistentContainer.newBackgroundContext()
             
             let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
             // Filter for current year events only
@@ -247,7 +247,7 @@ class CombinedImageListHandler {
             // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
             print("📋 [ASYNC] Fetching events directly from Core Data (including those without bands)...")
             let coreDataManager = CoreDataManager.shared
-            let context = coreDataManager.context
+            let context = coreDataManager.persistentContainer.newBackgroundContext()
             
             let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
             // Filter for current year events only

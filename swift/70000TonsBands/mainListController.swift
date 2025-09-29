@@ -974,7 +974,12 @@ func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
     
     var filteredBands = [String]()
     var localMessage = ""
-    if (bandNameHandle.getBandNames().count == 0){
+    
+    // Check if a year change is in progress
+    if MasterViewController.isYearChangeInProgress {
+        localMessage = NSLocalizedString("year_change_loading", comment: "Loading data for new year...")
+        print("🔄 [YEAR_CHANGE_UI] Showing year change loading message")
+    } else if (bandNameHandle.getBandNames().count == 0){
         localMessage = NSLocalizedString("waiting_for_data", comment: "")
     } else {
         localMessage = NSLocalizedString("data_filter_issue", comment: "")
