@@ -120,6 +120,7 @@
 
 "waiting_for_data" = "Waiting for data to load, please standby....";
 "data_filter_issue" = "All data is being filtered out, please remove filters to view data";
+"year_change_loading" = "Loading data for new year, please wait...";
 
 "SelectYearLabel"="Select The Year To Display";
 "NoteFontSize"="Note Font Size Large";

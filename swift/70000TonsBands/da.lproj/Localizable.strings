@@ -207,3 +207,5 @@
 "SpecialEventsPlural" = "Specielle Begivenheder";
 "CruiseEventsPlural" = "Krydstogt Begivenheder";
 "UnofficialEventsPlural" = "Uofficielle Begivenheder";
+
+"year_change_loading" = "Indlæser data for nyt år, vent venligst...";

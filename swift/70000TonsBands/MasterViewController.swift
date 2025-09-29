@@ -15,7 +15,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // MARK: - Year Change Thread Management
     private static var currentDataRefreshOperationId: UUID = UUID()
-    private static var isYearChangeInProgress: Bool = false
+    static var isYearChangeInProgress: Bool = false
     static var isCsvDownloadInProgress: Bool = false
     static let backgroundRefreshLock = NSLock()
     

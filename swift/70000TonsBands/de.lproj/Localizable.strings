@@ -240,4 +240,6 @@
 "SpecialEventsPlural" = "Spezielle Veranstaltungen";
 "CruiseEventsPlural" = "Kreuzfahrt Veranstaltungen";
 "UnofficialEventsPlural" = "Inoffizielle Veranstaltungen";
+
+"year_change_loading" = "Lade Daten für das neue Jahr, bitte warten...";
   

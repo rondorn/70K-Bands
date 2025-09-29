@@ -214,3 +214,5 @@
 "SpecialEventsPlural" = "Erikoistapahtumat";
 "CruiseEventsPlural" = "Risteilytapahtumat";
 "UnofficialEventsPlural" = "Epäviralliset Tapahtumat";
+
+"year_change_loading" = "Ladataan uuden vuoden tietoja, odota...";
