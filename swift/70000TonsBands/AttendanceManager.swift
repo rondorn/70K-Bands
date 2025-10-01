@@ -41,7 +41,7 @@ class AttendanceManager {
         
         // Update the attendance
         userAttendance.attendanceStatus = Int16(status)
-        userAttendance.eventYear = Int32(eventYear) ?? Int32(eventYear)
+        userAttendance.eventYear = Int32(eventYear) ?? Int32(eventYear)!
         userAttendance.updatedAt = Date()
         
         // CRITICAL: Ensure index is set for iCloud restoration
@@ -212,9 +212,20 @@ class AttendanceManager {
     /// - Returns: Attendance status (0 if not found)
     func getAttendanceStatusByIndex(index: String) -> Int {
         guard let attendance = getUserAttendanceByIndex(index: index) else {
+            // Only log for specific bands we know have data
+            if index.contains("Grave:") || index.contains("Destruction:") || index.contains("Hellbutcher:") {
+                print("❌ [AttendanceManager] No attendance found for index: \(index)")
+            }
             return 0
         }
-        return Int(attendance.attendanceStatus)
+        let status = Int(attendance.attendanceStatus)
+        
+        // Log found records for debugging
+        if index.contains("Grave:") || index.contains("Destruction:") || index.contains("Hellbutcher:") || status != 0 {
+            print("✅ [AttendanceManager] Found status \(status) for index: \(index)")
+        }
+        
+        return status
     }
     
     /// Gets all attendance records by index (for iCloud sync)
@@ -460,8 +471,21 @@ class AttendanceManager {
         request.predicate = NSPredicate(format: "index == %@", index)
         request.fetchLimit = 1
         
+        // Log the query for specific bands
+        if index.contains("Grave:") || index.contains("Destruction:") || index.contains("Hellbutcher:") {
+            print("🔍 [AttendanceManager] Querying Core Data for index: '\(index)'")
+        }
+        
         do {
-            return try coreDataManager.context.fetch(request).first
+            let result = try coreDataManager.context.fetch(request).first
+            if index.contains("Grave:") || index.contains("Destruction:") || index.contains("Hellbutcher:") {
+                if let attendance = result {
+                    print("✅ [AttendanceManager] Core Data returned record with status: \(attendance.attendanceStatus)")
+                } else {
+                    print("❌ [AttendanceManager] Core Data returned nil for this index")
+                }
+            }
+            return result
         } catch {
             print("❌ Error fetching user attendance by index: \(error)")
             return nil
@@ -530,14 +554,22 @@ class AttendanceManager {
     /// Format: "bandName:location:startTime:eventType:eventYear"
     private func parseAttendanceIndex(_ index: String) -> [String: String] {
         let components = index.split(separator: ":")
-        guard components.count >= 5 else { return [:] }
+        // Note: startTime format "HH:MM" contains a colon, so we need to account for that
+        // Expected format: bandName:location:HH:MM:eventType:eventYear (6 components)
+        guard components.count >= 6 else {
+            print("❌ parseAttendanceIndex: Invalid component count \(components.count) for index: \(index)")
+            return [:]
+        }
+        
+        // Reconstruct startTime from components[2] and components[3]
+        let startTime = String(components[2]) + ":" + String(components[3])
         
         return [
             "bandName": String(components[0]),
             "location": String(components[1]),
-            "startTime": String(components[2]),
-            "eventType": String(components[3]),
-            "eventYear": String(components[4])
+            "startTime": startTime,
+            "eventType": String(components[4]),
+            "eventYear": String(components[5])
         ]
     }
 }

@@ -3289,43 +3289,44 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // Step 5: Load iCloud data (only after core data is available)
                 print("☁️ Step 5: Loading iCloud data...")
-                self.loadICloudData()
-                print("✅ iCloud data loaded")
-                
-                // Step 6: Load description map (only after core data is available)
-                print("📝 Step 6: Loading description map...")
-                self.bandDescriptions.getDescriptionMapFile()
-                self.bandDescriptions.getDescriptionMap()
-                print("✅ Description map loaded")
-                
-                // Step 7: Load combined image URL map (only after core data is available)
-                print("🖼️ Step 7: Loading combined image URL map...")
-                self.loadCombinedImageList()
-                print("✅ Combined image list loaded")
-                
-                // Now determine if content has changed
-                print("🔍 Determining if content has changed...")
-                
-                if !newDataDownloaded {
-                    print("⚠️ Unable to download new data, assuming content has changed")
-                    contentChanged = true
-                } else {
-                    print("✅ New data downloaded, assuming content has changed")
-                    contentChanged = true
-                }
-                
-                if contentChanged {
-                    // Clear all caches only if content changed
-                    print("🧹 Content changed, clearing all caches")
-                    self.clearAllCaches()
-                } else {
-                    print("ℹ️ No content changes detected, keeping existing cache")
-                }
-                
-                // Refresh the UI on main thread after background data loading
-                DispatchQueue.main.async {
-                    print("📱 Updating UI after background data refresh")
-                    self.refreshBandList(reason: "Background data refresh from foreground")
+                self.loadICloudData {
+                    print("✅ iCloud data loaded")
+                    
+                    // Step 6: Load description map (only after core data is available)
+                    print("📝 Step 6: Loading description map...")
+                    self.bandDescriptions.getDescriptionMapFile()
+                    self.bandDescriptions.getDescriptionMap()
+                    print("✅ Description map loaded")
+                    
+                    // Step 7: Load combined image URL map (only after core data is available)
+                    print("🖼️ Step 7: Loading combined image URL map...")
+                    self.loadCombinedImageList()
+                    print("✅ Combined image list loaded")
+                    
+                    // Now determine if content has changed
+                    print("🔍 Determining if content has changed...")
+                    
+                    if !newDataDownloaded {
+                        print("⚠️ Unable to download new data, assuming content has changed")
+                        contentChanged = true
+                    } else {
+                        print("✅ New data downloaded, assuming content has changed")
+                        contentChanged = true
+                    }
+                    
+                    if contentChanged {
+                        // Clear all caches only if content changed
+                        print("🧹 Content changed, clearing all caches")
+                        self.clearAllCaches()
+                    } else {
+                        print("ℹ️ No content changes detected, keeping existing cache")
+                    }
+                    
+                    // Refresh the UI on main thread after background data loading
+                    DispatchQueue.main.async {
+                        print("📱 Updating UI after background data refresh")
+                        self.refreshBandList(reason: "Background data refresh from foreground")
+                    }
                 }
             }
         }
@@ -3599,26 +3600,55 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Actually refresh schedule data
                 self.schedule.populateSchedule(forceDownload: false)
                 
-                // Load iCloud data (both read and write to ensure sync)
+                // Load iCloud data using new Core Data sync system
                 let iCloudGroup = DispatchGroup()
                 
                 iCloudGroup.enter()
                 DispatchQueue.global(qos: .utility).async {
-                    let iCloudHandle = iCloudDataHandler()
+                    let coreDataiCloudSync = CoreDataiCloudSync()
+                    
                     // First write local data to iCloud to ensure it's backed up
-                    iCloudHandle.writeAllPriorityData()
-                    iCloudHandle.writeAllScheduleData()
+                    coreDataiCloudSync.syncPrioritiesToiCloud()
+                    coreDataiCloudSync.syncAttendanceToiCloud()
+                    
                     // Then read any remote changes from iCloud
-                    iCloudHandle.readAllPriorityData()
-                    iCloudHandle.readAllScheduleData()
-                    // Also restore attended data from iCloud
-                    iCloudHandle.readCloudAttendedData(attendedHandle: self.attendedHandle)
-                    iCloudGroup.leave()
+                    print("iCloud Debug: Starting Core Data iCloud sync...")
+                    
+                    let syncGroup = DispatchGroup()
+                    
+                    // Sync priorities from iCloud
+                    syncGroup.enter()
+                    coreDataiCloudSync.syncPrioritiesFromiCloud {
+                        print("iCloud Debug: Priority sync completed")
+                        syncGroup.leave()
+                    }
+                    
+                    // Sync attendance from iCloud
+                    syncGroup.enter()
+                    coreDataiCloudSync.syncAttendanceFromiCloud {
+                        print("iCloud Debug: Attendance sync completed")
+                        syncGroup.leave()
+                    }
+                    
+                    // Wait for both syncs to complete
+                    syncGroup.notify(queue: .global(qos: .utility)) {
+                        print("iCloud Debug: All Core Data sync completed")
+                        iCloudGroup.leave()
+                    }
                 }
                 
                 // 3f. Generate consolidated image list then refresh the GUI
                 iCloudGroup.notify(queue: .main) {
                     print("Full data refresh (\(reason)): Step 3f - All data loaded, generating consolidated image list")
+                    
+                    // CRITICAL: Ensure all attendance records have index field and link to events
+                    let attendanceManager = AttendanceManager()
+                    attendanceManager.ensureAllAttendanceRecordsHaveIndex()
+                    attendanceManager.linkAttendanceRecordsToEvents()
+                    
+                    // DEBUG: Test attendance restoration system
+                    print("🧪 Testing attendance restoration system...")
+                    attendanceManager.testAttendanceRestoration()
                     
                     // Generate consolidated image list immediately after both artist and schedule data are loaded
                     CombinedImageListHandler.shared.generateCombinedImageList(
@@ -3760,24 +3790,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     /// Load iCloud data after core data is available
-    private func loadICloudData() {
+    private func loadICloudData(completion: (() -> Void)? = nil) {
         print("☁️ Loading iCloud data...")
         
-        // Now that we have core data, we can safely sync with iCloud
-        let iCloudHandle = iCloudDataHandler()
+        // Use new Core Data iCloud sync system
+        let coreDataiCloudSync = CoreDataiCloudSync()
         
-        // Check for old iCloud data format and migrate if needed
-        // This must happen BEFORE reading iCloud data to prevent conflicts
-        print("☁️ Reading iCloud priority data...")
-        iCloudHandle.readAllPriorityData()
+        // First write local data to iCloud
+        coreDataiCloudSync.syncPrioritiesToiCloud()
+        coreDataiCloudSync.syncAttendanceToiCloud()
         
-        print("☁️ Reading iCloud schedule data...")
-        iCloudHandle.readAllScheduleData()
+        // Then read remote changes from iCloud, waiting for both to complete
+        let syncGroup = DispatchGroup()
         
-        // Note: Attended data restoration is handled in the main data refresh flow
-        // to prevent duplicate processing and ensure proper sequencing
+        // Sync priorities from iCloud
+        syncGroup.enter()
+        coreDataiCloudSync.syncPrioritiesFromiCloud {
+            print("☁️ Priority sync completed")
+            syncGroup.leave()
+        }
         
-        print("✅ iCloud data loading completed")
+        // Sync attendance from iCloud
+        syncGroup.enter()
+        coreDataiCloudSync.syncAttendanceFromiCloud {
+            print("☁️ Attendance sync completed")
+            syncGroup.leave()
+        }
+        
+        // Wait for both syncs to complete
+        syncGroup.notify(queue: .main) {
+            print("✅ iCloud data loading completed")
+            completion?()
+        }
     }
     
     /// Load combined image list after core data is available
@@ -3868,6 +3912,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                         self.bandDescriptions.getDescriptionMapFile()
                                         self.bandDescriptions.getDescriptionMap()
                                         print("🚀 FIRST LAUNCH: Description map download completed")
+                                        
+                                        // Step 7: Load iCloud data
+                                        print("🚀 FIRST LAUNCH: Step 7 - Loading iCloud data")
+                                        self.loadICloudData {
+                                            print("🚀 FIRST LAUNCH: iCloud data loaded")
+                                            
+                                            // Final refresh to show iCloud data
+                                            DispatchQueue.main.async {
+                                                print("🚀 FIRST LAUNCH: Final refresh with iCloud data")
+                                                self.refreshBandList(reason: "First launch - iCloud data loaded")
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -4055,19 +4111,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                             
                             // Load iCloud data
                             print("📡 FRESH DATA COLLECTION: Step 4 - Loading iCloud data")
-                            self.loadICloudData()
-                            
-                            // Load combined image list
-                            print("📡 FRESH DATA COLLECTION: Step 5 - Loading combined image list")
-                            self.loadCombinedImageList()
-                            
-                            print("📡 FRESH DATA COLLECTION: All fresh data collection completed for: \(reason)")
-                            
-                            // Notify CoreDataPreloadManager that fresh data is available
-                            // This allows it to restart if it was stuck in cache-only mode
-                            DispatchQueue.main.async {
-                                print("📡 FRESH DATA COLLECTION: Notifying CoreDataPreloadManager of fresh data availability")
-                                self.preloadManager.resetAndRestartIfNeeded()
+                            self.loadICloudData {
+                                // Load combined image list
+                                print("📡 FRESH DATA COLLECTION: Step 5 - Loading combined image list")
+                                self.loadCombinedImageList()
+                                
+                                print("📡 FRESH DATA COLLECTION: All fresh data collection completed for: \(reason)")
+                                
+                                // Notify CoreDataPreloadManager that fresh data is available
+                                // This allows it to restart if it was stuck in cache-only mode
+                                DispatchQueue.main.async {
+                                    print("📡 FRESH DATA COLLECTION: Notifying CoreDataPreloadManager of fresh data availability")
+                                    self.preloadManager.resetAndRestartIfNeeded()
+                                }
                             }
                         }
                     }
