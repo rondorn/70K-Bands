@@ -11,6 +11,9 @@ import CoreData
 open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
+    // NEW: Use Core Data AttendanceManager for all operations
+    private let attendanceManager = AttendanceManager()
+    
     // Thread-safe queue and backing store for showsAttendedArray
     private let showsAttendedQueue = DispatchQueue(label: "com.yourapp.showsAttendedQueue", attributes: .concurrent)
     private var _showsAttendedArray = [String : String]()
@@ -213,47 +216,53 @@ open class ShowsAttended {
      - Returns: The new attendance status as a string.
      */
     func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
-        let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
-        if (currentArray.count == 0){
-            loadShowsAttended();
-        }
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        // Reduced logging for performance
-        var value = ""
-        let currentStatus = getShowAttendedStatusRaw(index: index)
-        print("DEBUG: addShowsAttended - currentStatus: '\(String(describing: currentStatus))', currentArray.isEmpty: \(currentArray.isEmpty)")
         
-        // Treat nil and sawNoneStatus as the same thing - both represent "Will Not Attend"
-        if (currentArray.isEmpty == true || currentStatus == nil || currentStatus == sawNoneStatus) {
-            // Null or "Will Not Attend" -> "Will Attend"
+        // NEW: Use Core Data AttendanceManager instead of old system
+        let currentStatus = attendanceManager.getAttendanceStatusByIndex(index: index)
+        print("🔍 [ShowsAttended] addShowsAttended - currentStatus: \(currentStatus) for '\(band)'")
+        
+        // Determine new status based on current status
+        var newStatus: Int
+        switch currentStatus {
+        case 0, 3: // No status or Won't Attend -> Will Attend
+            newStatus = 2
+            print("🔍 [ShowsAttended] Setting to Will Attend (2)")
+        case 2 where eventType == showType: // Will Attend -> Will Attend Some (only for shows)
+            newStatus = 1
+            print("🔍 [ShowsAttended] Setting to Will Attend Some (1)")
+        case 1: // Will Attend Some -> Won't Attend
+            newStatus = 3
+            print("🔍 [ShowsAttended] Setting to Won't Attend (3)")
+        case 2: // Will Attend for non-show events -> Won't Attend
+            newStatus = 3
+            print("🔍 [ShowsAttended] Setting to Won't Attend (3) for non-show event")
+        default: // Fallback
+            newStatus = 2
+            print("🔍 [ShowsAttended] Fallback: setting to Will Attend (2)")
+        }
+        
+        // Update using Core Data
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus)
+        
+        // Convert to string status for return value
+        var value = ""
+        switch newStatus {
+        case 2:
             value = sawAllStatus
-            print("DEBUG: addShowsAttended - Setting to Will Attend (sawAllStatus)")
-        } else if (currentStatus == sawAllStatus && eventType == showType ){
-            // "Will Attend" -> "Will Attend Some" (only for shows, not other event types)
+        case 1:
             value = sawSomeStatus
-            print("DEBUG: addShowsAttended - Setting to Will Attend Some (sawSomeStatus)")
-        } else if (currentStatus == sawSomeStatus){
-            // "Will Attend Some" -> "Will Not Attend"
+        case 3:
             value = sawNoneStatus
-            print("DEBUG: addShowsAttended - Setting to Will Not Attend (sawNoneStatus)")
-        } else if (currentStatus == sawAllStatus) {
-            // "Will Attend" for non-show events -> "Will Not Attend"
+        default:
             value = sawNoneStatus
-            print("DEBUG: addShowsAttended - Setting to Will Not Attend (sawNoneStatus) for non-show event")
-        } else {
-            // fallback - treats any unrecognized value as "Will Not Attend" -> "Will Attend"
-            value = sawAllStatus
-            print("DEBUG: addShowsAttended - Fallback: unrecognized status '\(String(describing: currentStatus))', setting to Will Attend")
         }
-        let timestamp = String(format: "%.0f", Date().timeIntervalSince1970)
-        changeShowAttendedStatus(index: index, status: value + ":" + timestamp)
-        staticLastModifiedDate.async(flags: .barrier) {
-            cacheVariables.lastModifiedDate = Date()
-        }
+        
+        print("🔍 [ShowsAttended] addShowsAttended completed: '\(band)' -> '\(value)'")
         return value
     }
     
@@ -264,7 +273,25 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
-        // Reduced logging for performance
+        // Parse status to get numeric value
+        let statusParts = status.components(separatedBy: ":")
+        let statusString = statusParts[0]
+        let numericStatus: Int
+        switch statusString {
+        case sawAllStatus:
+            numericStatus = 2
+        case sawSomeStatus:
+            numericStatus = 1
+        case sawNoneStatus:
+            numericStatus = 3
+        default:
+            numericStatus = 0
+        }
+        
+        // NEW: Use Core Data AttendanceManager
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus)
+        
+        // Keep old system for backward compatibility (legacy cache)
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
@@ -377,17 +404,29 @@ open class ShowsAttended {
         if (eventType == unofficalEventTypeOld){
             eventTypeVariable = unofficalEventType;
         }
+        
+        // NEW: Use Core Data AttendanceManager instead of old system
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
-        let raw = getShowAttendedStatusRaw(index: index)
+        let status = attendanceManager.getAttendanceStatusByIndex(index: index)
+        
+        // Convert numeric status to string status
         var value = ""
-        // Reduced logging for performance
-        if (raw == sawAllStatus){
+        switch status {
+        case 2: // Attended
             value = sawAllStatus
-        } else if (raw == sawSomeStatus){
+        case 1: // Will Attend Some
             value = sawSomeStatus
-        } else {
-            value = sawNoneStatus;
+        case 3: // Won't Attend
+            value = sawNoneStatus
+        default: // 0 or unknown
+            value = sawNoneStatus
         }
+        
+        // DEBUG: Log every query for bands that should have data
+        if band == "Grave" || band == "Destruction" || band == "Hellbutcher" || status != 0 {
+            print("🔍 [ShowsAttended] Query: '\(band)' index: '\(index)' -> status: \(status) -> value: '\(value)'")
+        }
+        
         return value
     }
     

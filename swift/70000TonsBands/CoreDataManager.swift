@@ -801,8 +801,13 @@ class CoreDataManager {
         let userAttendance = UserAttendance(context: context)
         userAttendance.event = event
         userAttendance.attendanceStatus = status
+        userAttendance.eventYear = event.eventYear
         userAttendance.createdAt = Date()
         userAttendance.updatedAt = Date()
+        
+        // CRITICAL: Set the index field for iCloud restoration
+        userAttendance.index = "\(event.band?.bandName ?? ""):\(event.location ?? ""):\(event.startTime ?? ""):\(event.eventType ?? ""):\(event.eventYear)"
+        
         return userAttendance
     }
 }

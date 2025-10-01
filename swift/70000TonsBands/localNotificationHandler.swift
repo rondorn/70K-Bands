@@ -55,6 +55,7 @@ class localNoticationHandler {
         var alertStatus = false
         
         let attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
+        print ("AttendedAlertDebug: \(attendedStatus) for \(bandName) - \(location) - \(startTime) - \(eventType) - \(eventYear)")
         
         print ("Checking for alert for getOnlyAlertForAttendedValue \(getOnlyAlertForAttendedValue())")
         if (getOnlyAlertForAttendedValue() == true){

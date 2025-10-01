@@ -323,9 +323,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         NSUbiquitousKeyValueStore.default.synchronize()
         print("iCloud: Test value written to iCloud")
 
-        // Migrate iCloud data before registering for notifications
-        iCloudHandle.detectAndMigrateOldPriorityData()
-        iCloudHandle.detectAndMigrateOldScheduleData()
+        // MIGRATION DISABLED: Old migration system interferes with new Core Data iCloud sync
+        // The new CoreDataiCloudSync system handles all iCloud operations
+        // iCloudHandle.detectAndMigrateOldPriorityData()
+        // iCloudHandle.detectAndMigrateOldScheduleData()
 
         // Register for notification of iCloud key-value changes, but do an intial load
         NotificationCenter.default.addObserver(self,
@@ -378,13 +379,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 if !isLoadingSchedule {
                     print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
                     
-                    let iCloudHandle = iCloudDataHandler()
-                    // IMPORTANT: Check for old iCloud data format and migrate if needed
-                    // This must happen BEFORE reading iCloud data to prevent conflicts
-                    iCloudHandle.readAllPriorityData()
-                    iCloudHandle.readAllScheduleData()
-                    // Note: Attended data restoration is now handled centrally in MasterViewController
-                    // to prevent duplicate processing and ensure proper sequencing
+                    // Use new Core Data iCloud sync system
+                    let coreDataiCloudSync = CoreDataiCloudSync()
+                    
+                    // Sync priorities from iCloud
+                    coreDataiCloudSync.syncPrioritiesFromiCloud {
+                        print("iCloud: Priority sync completed")
+                    }
+                    
+                    // Sync attendance from iCloud
+                    coreDataiCloudSync.syncAttendanceFromiCloud {
+                        print("iCloud: Attendance sync completed")
+                    }
+                    
+                    // Write local data to iCloud
+                    coreDataiCloudSync.syncPrioritiesToiCloud()
+                    coreDataiCloudSync.syncAttendanceToiCloud()
                     
                     print("iCloud: Launch sync completed, refreshing display...")
                     
@@ -990,11 +1000,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("iCloud: Skipping iCloud data sync because a read operation is already in progress.")
                 return
             }
-            let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.readAllPriorityData()
-            iCloudHandle.readAllScheduleData()
-            // Note: Attended data restoration is now handled centrally in MasterViewController
-            // to prevent duplicate processing and ensure proper sequencing
+            
+            // NEW: Use Core Data iCloud sync system instead of old iCloudDataHandler
+            let coreDataiCloudSync = CoreDataiCloudSync()
+            
+            // Sync priorities from iCloud
+            coreDataiCloudSync.syncPrioritiesFromiCloud {
+                print("iCloud: Priority sync completed from external change")
+            }
+            
+            // Sync attendance from iCloud
+            coreDataiCloudSync.syncAttendanceFromiCloud {
+                print("iCloud: Attendance sync completed from external change")
+            }
+            
+            // Write local data to iCloud
+            coreDataiCloudSync.syncPrioritiesToiCloud()
+            coreDataiCloudSync.syncAttendanceToiCloud()
             
             print("iCloud: External change processing completed, refreshing GUI...")
             

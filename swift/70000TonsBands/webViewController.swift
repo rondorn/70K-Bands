@@ -16,6 +16,9 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    private var loadingTimeout: Timer?
+    private let loadingTimeoutInterval: TimeInterval = 30.0 // 30 seconds timeout
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -110,6 +113,12 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         // Dispose of any resources that can be recreated.
     }
     
+    deinit {
+        // Clean up timer and observer
+        loadingTimeout?.invalidate()
+        webDisplay.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
+    }
+    
     func webViewDidStartLoad(_ webView: UIWebView){
         startActivity()
     }
@@ -135,17 +144,43 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         print("❌ WebView failed to load: \(error.localizedDescription)")
         print("❌ Failed URL: \(webView.url?.absoluteString ?? "unknown")")
         
-        // Show error message to user
+        // Check if it's a network error that might be temporary
+        let nsError = error as NSError
+        let isNetworkError = nsError.domain == NSURLErrorDomain && (
+            nsError.code == NSURLErrorNotConnectedToInternet ||
+            nsError.code == NSURLErrorNetworkConnectionLost ||
+            nsError.code == NSURLErrorTimedOut ||
+            nsError.code == NSURLErrorCannotConnectToHost
+        )
+        
         DispatchQueue.main.async {
-            let alert = UIAlertController(title: "Loading Error", message: "Failed to load stats page: \(error.localizedDescription)", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            self.present(alert, animated: true)
+            if isNetworkError {
+                // For network errors, show a retry option
+                let alert = UIAlertController(title: "Network Error", message: "Unable to load stats page. Check your internet connection and try again.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
+                    // Retry loading the same URL
+                    if let url = webView.url {
+                        let request = URLRequest(url: url)
+                        webView.load(request)
+                    }
+                })
+                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                self.present(alert, animated: true)
+            } else {
+                // For other errors, show a simple error message
+                let alert = UIAlertController(title: "Loading Error", message: "Failed to load stats page: \(error.localizedDescription)", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
         }
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if keyPath == "estimatedProgress" {
-            endActivity()
+            // Only end activity when progress reaches 1.0 (100%)
+            if let progress = change?[.newKey] as? Double, progress >= 1.0 {
+                endActivity()
+            }
         }
     }
 
@@ -153,10 +188,33 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         print ("WebView start busy Animation")
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
+        
+        // Set up timeout timer
+        loadingTimeout?.invalidate()
+        loadingTimeout = Timer.scheduledTimer(withTimeInterval: loadingTimeoutInterval, repeats: false) { [weak self] _ in
+            print("⏰ WebView loading timeout after \(self?.loadingTimeoutInterval ?? 30) seconds")
+            self?.endActivity()
+            
+            // Show timeout error
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "Loading Timeout", message: "The stats page is taking too long to load. Please check your internet connection and try again.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
+                    // Retry loading the current URL
+                    if let url = self?.webDisplay.url {
+                        let request = URLRequest(url: url)
+                        self?.webDisplay.load(request)
+                    }
+                })
+                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                self?.present(alert, animated: true)
+            }
+        }
     }
     
     func endActivity(){
         print ("WebView end busy Animation")
+        loadingTimeout?.invalidate()
+        loadingTimeout = nil
         activityIndicator.isHidden = true
         activityIndicator.stopAnimating()
     }
@@ -178,11 +236,19 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     
     /// Sets up WebView constraints to ensure it takes full available space, especially on iPad landscape
     private func setupWebViewConstraints() {
+        // Only set up constraints if they haven't been set up already
+        guard webDisplay.superview == nil || webDisplay.constraints.isEmpty else {
+            print("🔧 WebView constraints already set up, skipping")
+            return
+        }
+        
         // Remove any existing constraints that might be limiting the WebView
         webDisplay.translatesAutoresizingMaskIntoConstraints = false
         
-        // Remove all existing constraints
-        webDisplay.removeFromSuperview()
+        // Only remove from superview if it's already added
+        if webDisplay.superview != nil {
+            webDisplay.removeFromSuperview()
+        }
         view.addSubview(webDisplay)
         
         // Set up constraints to fill the entire view
@@ -193,12 +259,14 @@ class WebViewController: UIViewController, WKNavigationDelegate {
             webDisplay.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
         
-        // Ensure the activity indicator is centered
-        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            activityIndicator.centerXAnchor.constraint(equalTo: webDisplay.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: webDisplay.centerYAnchor)
-        ])
+        // Ensure the activity indicator is centered (only if not already constrained)
+        if activityIndicator.constraints.isEmpty {
+            activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                activityIndicator.centerXAnchor.constraint(equalTo: webDisplay.centerXAnchor),
+                activityIndicator.centerYAnchor.constraint(equalTo: webDisplay.centerYAnchor)
+            ])
+        }
         
         print("🔧 WebView constraints set up for full screen display")
     }

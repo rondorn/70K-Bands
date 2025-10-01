@@ -397,7 +397,8 @@ class PreferencesViewModel: ObservableObject {
         cacheVariables.storePointerData = [String:String]()
         
         // CRITICAL: Update the eventYearFile FIRST to prevent reversion
-        let targetEventYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        // Use resolveYearToNumber to get the correct target year instead of stale pointer data
+        let targetEventYear = resolveYearToNumber(eventYearChangeAttempt)
         do {
             let yearString = String(targetEventYear)
             try yearString.write(toFile: eventYearFile, atomically: false, encoding: String.Encoding.utf8)
@@ -786,19 +787,26 @@ class PreferencesViewModel: ObservableObject {
     /// Helper function to properly resolve year strings including "Current" to actual year numbers
     /// NEVER falls back to hardcoded years - always uses Current as ultimate fallback
     private func resolveYearToNumber(_ yearString: String) -> Int {
+        print("🐛 [YEAR_DEBUG] resolveYearToNumber called with: '\(yearString)'")
+        
         if yearString == "Current" || yearString == "Default" {
-            // Use the pointer system to resolve "Current" to actual current year
-            let currentYear = Int(getPointerUrlData(keyValue: "eventYear"))
-            if let year = currentYear {
-                return year
+            // For "Current", use the pointer system to get the actual current year
+            // This ensures we get 2026 even when eventYear is still 2025 during year changes
+            let pointerValue = getPointerUrlData(keyValue: "eventYear")
+            print("🐛 [YEAR_DEBUG] - getPointerUrlData('eventYear') returned: '\(pointerValue)'")
+            
+            if let currentYear = Int(pointerValue) {
+                print("🐛 [YEAR_DEBUG] - resolved to year from pointer: \(currentYear)")
+                return currentYear
             } else {
-                // If even "Current" fails, use global eventYear as absolute last resort
-                print("⚠️ WARNING: Could not resolve 'Current' year - using global eventYear as fallback")
+                // Fallback to global eventYear if pointer fails
+                print("🐛 [YEAR_DEBUG] - pointer failed, using global eventYear: \(eventYear)")
                 return eventYear
             }
         } else {
             // Direct numeric year - but if parsing fails, fall back to Current, not hardcoded year
             if let numericYear = Int(yearString) {
+                print("🐛 [YEAR_DEBUG] - direct numeric year: \(numericYear)")
                 return numericYear
             } else {
                 print("⚠️ WARNING: Could not parse year '\(yearString)' - falling back to Current")
@@ -923,6 +931,11 @@ class PreferencesViewModel: ObservableObject {
         var attempts = 0
         let maxAttempts = 10
         let delaySeconds = 1.0
+        
+        print("🐛 [YEAR_DEBUG] waitForCoreDataPopulationAndContinueYearChange:")
+        print("🐛 [YEAR_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
+        print("🐛 [YEAR_DEBUG] - resolved targetYear: \(targetYear)")
+        print("🐛 [YEAR_DEBUG] - current eventYear: \(eventYear)")
         
         while attempts < maxAttempts {
             attempts += 1
