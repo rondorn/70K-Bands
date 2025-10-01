@@ -259,6 +259,12 @@
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
 		11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
+		11E2F2452E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */; };
+		11E2F2462E8D78530004D6F4 /* AttendanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */; };
+		11E2F2472E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */; };
+		11E2F2482E8D78530004D6F4 /* AttendanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */; };
+		11E2F2492E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */; };
+		11E2F24A2E8D78530004D6F4 /* AttendanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */; };
 		11E4EDAA2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		11E6F41B2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
@@ -416,6 +422,8 @@
 		11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = localNotificationHandler.swift; sourceTree = "<group>"; };
 		11DCE9BC1A86F9E000A25FB8 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = OnMyWayToDeath.wav; sourceTree = "<group>"; };
+		11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttendanceManager.swift; sourceTree = "<group>"; };
+		11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataiCloudSync.swift; sourceTree = "<group>"; };
 		11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings70k.swift; sourceTree = "<group>"; };
 		11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CustomListEntry.xib; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
@@ -532,6 +540,8 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
+				11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -1115,6 +1125,8 @@
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
+				11E2F2492E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */,
+				11E2F24A2E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
@@ -1187,6 +1199,8 @@
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
+				11E2F2472E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */,
+				11E2F2482E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
@@ -1259,6 +1273,8 @@
 				1172EE012E5A1C4D006E3596 /* variableStore.swift in Sources */,
 				1172EE022E5A1C4D006E3596 /* Constants.swift in Sources */,
 				1172EE032E5A1C4D006E3596 /* DropDownCell.swift in Sources */,
+				11E2F2452E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */,
+				11E2F2462E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				1172EE042E5A1C4D006E3596 /* iCloudDataHandler.swift in Sources */,
 				1172EE052E5A1C4D006E3596 /* firebaseUserWrite.swift in Sources */,
 				1172EE062E5A1C4D006E3596 /* firebaseEventDataWrite.swift in Sources */,
@@ -1527,7 +1543,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250928503;
+				CURRENT_PROJECT_VERSION = 20251001001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1555,7 +1571,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250928503;
+				MARKETING_VERSION = 20251001001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1611,7 +1627,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250928503;
+				CURRENT_PROJECT_VERSION = 20251001001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1636,7 +1652,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250928503;
+				MARKETING_VERSION = 20251001001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1833,7 +1849,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250928503;
+				CURRENT_PROJECT_VERSION = 20251001001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1854,7 +1870,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250928503;
+				MARKETING_VERSION = 20251001001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1910,7 +1926,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20250928503;
+				CURRENT_PROJECT_VERSION = 20251001001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1935,7 +1951,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20250928503;
+				MARKETING_VERSION = 20251001001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

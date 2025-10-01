@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import UIKit
 
 /// Handles iCloud synchronization for Core Data entities
 /// Replaces the legacy iCloud sync system with Core Data integration
@@ -33,26 +34,35 @@ class CoreDataiCloudSync {
             var processedCount = 0
             var updatedCount = 0
             
-            // Process all iCloud keys that start with "bandName:"
+            // Collect all priority records to process
+            var recordsToProcess: [(bandName: String, value: String)] = []
             for key in allKeys {
                 if key.hasPrefix("bandName:") {
                     let bandName = String(key.dropFirst("bandName:".count))
-                    
                     if let value = iCloudStore.string(forKey: key), !value.isEmpty {
-                        if self.processiCloudPriorityRecord(bandName: bandName, value: value) {
-                            updatedCount += 1
-                        }
-                        processedCount += 1
+                        recordsToProcess.append((bandName: bandName, value: value))
                     }
                 }
             }
             
-            print("☁️ iCloud priority sync completed")
-            print("📊 Processed: \(processedCount), Updated: \(updatedCount)")
-            
-            // Notify completion on main thread
+            // Process all records on the main thread (Core Data requirement)
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name("iCloudPrioritySyncCompleted"), object: nil)
+                for record in recordsToProcess {
+                    if self.processiCloudPriorityRecord(bandName: record.bandName, value: record.value) {
+                        updatedCount += 1
+                    }
+                    processedCount += 1
+                }
+                
+                print("☁️ Found \(priorityKeys.count) priority keys in iCloud")
+                print("📊 Priority - Processed: \(processedCount), Updated: \(updatedCount)")
+                
+                if priorityKeys.count == 0 {
+                    print("⚠️ NO PRIORITY KEYS FOUND IN iCLOUD!")
+                    print("⚠️ This suggests priority data was never written to iCloud")
+                }
+                
+                print("☁️ iCloud priority sync completed")
                 completion()
             }
         }
@@ -63,7 +73,8 @@ class CoreDataiCloudSync {
     func syncPrioritiesToiCloud() {
         print("☁️ Starting priority sync to iCloud...")
         
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Perform Core Data operations on main thread
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             let allPriorities = self.priorityManager.getAllPriorities()
@@ -152,30 +163,51 @@ class CoreDataiCloudSync {
             let iCloudStore = NSUbiquitousKeyValueStore.default
             let allKeys = iCloudStore.dictionaryRepresentation.keys
             
+            print("☁️ Found \(allKeys.count) total keys in iCloud")
+            
             var processedCount = 0
             var updatedCount = 0
+            var attendanceKeys: [String] = []
             
-            // Process all iCloud keys that start with "eventName:"
+            // Collect all attendance records to process
+            var recordsToProcess: [(key: String, value: String)] = []
             for key in allKeys {
                 if key.hasPrefix("eventName:") {
+                    attendanceKeys.append(key)
                     if let value = iCloudStore.string(forKey: key), !value.isEmpty {
-                        if self.processiCloudAttendanceRecord(key: key, value: value) {
-                            updatedCount += 1
-                        }
-                        processedCount += 1
+                        recordsToProcess.append((key: key, value: value))
                     }
                 }
             }
             
-            print("☁️ iCloud attendance sync completed")
-            print("📊 Processed: \(processedCount), Updated: \(updatedCount)")
-            
-            // Link any unlinked attendance records to events
+            // Process all records on the main thread (Core Data requirement)
             DispatchQueue.main.async {
+                for record in recordsToProcess {
+                    print("☁️ Processing attendance key: \(record.key) = \(record.value)")
+                    if self.processiCloudAttendanceRecord(key: record.key, value: record.value) {
+                        updatedCount += 1
+                    }
+                    processedCount += 1
+                }
+                
+                print("☁️ Found \(attendanceKeys.count) attendance keys in iCloud")
+                print("📊 Attendance - Processed: \(processedCount), Updated: \(updatedCount)")
+                
+                if attendanceKeys.count == 0 {
+                    print("⚠️ NO ATTENDANCE KEYS FOUND IN iCLOUD!")
+                    print("⚠️ This suggests attendance data was never written to iCloud")
+                }
+                
+                print("☁️ iCloud attendance sync completed")
+                
+                // Link any unlinked attendance records to events on main thread
+                print("🔗 Linking attendance records to events...")
                 self.attendanceManager.linkAttendanceRecordsToEvents()
+                print("🔗 Linking completed")
                 
                 // Notify completion
                 NotificationCenter.default.post(name: Notification.Name("iCloudAttendanceSyncCompleted"), object: nil)
+                print("☁️ Attendance sync completion handler called")
                 completion()
             }
         }
@@ -186,7 +218,8 @@ class CoreDataiCloudSync {
     func syncAttendanceToiCloud() {
         print("☁️ Starting attendance sync to iCloud...")
         
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Perform Core Data operations on main thread
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             let allAttendance = self.attendanceManager.getAllAttendanceDataByIndex()
@@ -225,31 +258,56 @@ class CoreDataiCloudSync {
     ///   - value: iCloud value string (format: status:uid:timestamp)
     /// - Returns: True if the record was updated, false otherwise
     private func processiCloudAttendanceRecord(key: String, value: String) -> Bool {
+        print("☁️ Processing iCloud attendance record: \(key) = \(value)")
+        
         // Parse the key to extract event details
+        // Note: Time format "HH:MM" contains a colon, so we need to reconstruct it
         let keyComponents = key.components(separatedBy: ":")
-        guard keyComponents.count >= 6,
+        guard keyComponents.count >= 7,  // eventName + band + location + HH + MM + type + year
               keyComponents[0] == "eventName" else {
-            print("❌ Invalid iCloud attendance key format: \(key)")
+            print("❌ Invalid iCloud attendance key format: \(key) (components: \(keyComponents.count))")
             return false
         }
         
         let bandName = keyComponents[1]
         let location = keyComponents[2]
-        let startTime = keyComponents[3]
-        let eventType = keyComponents[4]
-        let eventYearString = keyComponents[5]
+        let startTime = keyComponents[3] + ":" + keyComponents[4]  // Reconstruct "HH:MM"
+        let eventType = keyComponents[5]
+        let eventYearString = keyComponents[6]
         
         // Create the attendance index
         let attendanceIndex = "\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
+        print("☁️ Created attendance index: \(attendanceIndex)")
         
         // Parse the value (format: status:uid:timestamp)
         let valueComponents = value.components(separatedBy: ":")
         guard valueComponents.count >= 3,
-              let status = Int(valueComponents[0]),
               let timestamp = Double(valueComponents[2]) else {
-            print("❌ Invalid iCloud attendance value format: \(value)")
+            print("❌ Invalid iCloud attendance value format: \(value) (components: \(valueComponents.count))")
             return false
         }
+        
+        // Convert status string to numeric value
+        let statusString = valueComponents[0]
+        let status: Int
+        switch statusString {
+        case "sawAll":
+            status = 2  // Attended
+        case "sawSome":
+            status = 1  // Will Attend Some
+        case "sawNone":
+            status = 3  // Won't Attend
+        default:
+            // Try to parse as integer
+            if let numericStatus = Int(statusString) {
+                status = numericStatus
+            } else {
+                print("❌ Unknown status format: \(statusString)")
+                return false
+            }
+        }
+        
+        print("☁️ Converted status: \(statusString) -> \(status)")
         
         let uidValue = valueComponents[1]
         
@@ -259,28 +317,40 @@ class CoreDataiCloudSync {
             return false
         }
         
-        // RULE 1: Never overwrite local data if UID matches current device
-        if uidValue == currentUid {
+        print("☁️ Device UID: \(currentUid), iCloud UID: \(uidValue)")
+        
+        // RULE 1: Only skip if UID matches current device AND local data exists
+        let localStatus = attendanceManager.getAttendanceStatusByIndex(index: attendanceIndex)
+        print("☁️ Local status for index \(attendanceIndex): \(localStatus)")
+        
+        if uidValue == currentUid && localStatus != 0 {
+            print("☁️ Skipping - same device UID and local data exists")
             return false
         }
         
-        // RULE 2: Only update if iCloud data is newer than local data
-        let localStatus = attendanceManager.getAttendanceStatusByIndex(index: attendanceIndex)
-        if localStatus != 0 {
-            // Local data exists, check if we should update
+        // RULE 2: If local data exists and UID is different, check timestamps
+        if localStatus != 0 && uidValue != currentUid {
+            // Local data exists from different device, check if we should update
             // For now, we'll be conservative and not overwrite existing local data
             // This could be enhanced to check timestamps if needed
+            print("☁️ Skipping - local data exists from different device")
             return false
+        }
+        
+        // RULE 3: If no local data exists, use iCloud data regardless of UID
+        if localStatus == 0 {
+            print("☁️ No local data exists, using iCloud data")
         }
         
         // Update the attendance record using index-based method
-        DispatchQueue.main.async {
-            self.attendanceManager.setAttendanceStatusByIndex(
-                index: attendanceIndex,
-                status: status,
-                timestamp: timestamp
-            )
-        }
+        print("☁️ Updating attendance record: \(attendanceIndex) -> \(status)")
+        
+        // Update directly - we're already on the correct thread
+        attendanceManager.setAttendanceStatusByIndex(
+            index: attendanceIndex,
+            status: status,
+            timestamp: timestamp
+        )
         
         print("✅ Updated attendance from iCloud: \(attendanceIndex) -> \(status)")
         return true
@@ -312,25 +382,36 @@ class CoreDataiCloudSync {
         
         print("☁️ Processing \(bandName) - iCloud: \(priority):\(deviceUID):\(timestamp), currentUID: \(currentUID)")
         
-        // RULE 1: Never overwrite local data if UID matches current device
-        if deviceUID == currentUID {
-            print("☁️ Skipping \(bandName) - UID matches current device")
-            return false
-        }
-        
-        // RULE 2: Only update if iCloud data is newer than local data
+        // Get local data to determine if we should restore from iCloud
         let localTimestamp = priorityManager.getPriorityLastChange(for: bandName)
         let currentPriority = priorityManager.getPriority(for: bandName)
         
-        if localTimestamp > 0 {
-            guard timestamp > localTimestamp else {
-                print("☁️ Skipping \(bandName) - iCloud not newer (\(timestamp) <= \(localTimestamp))")
+        print("☁️ Local state for \(bandName): priority=\(currentPriority), timestamp=\(localTimestamp)")
+        
+        // RULE 1: Only skip if UID matches current device AND local data exists
+        if deviceUID == currentUID && currentPriority != 0 {
+            print("☁️ Skipping \(bandName) - same device UID and local data exists")
+            return false
+        }
+        
+        // RULE 2: If local data exists from different device, check timestamps
+        if currentPriority != 0 && deviceUID != currentUID {
+            // Local data exists from different device
+            if localTimestamp > 0 {
+                guard timestamp > localTimestamp else {
+                    print("☁️ Skipping \(bandName) - iCloud not newer (\(timestamp) <= \(localTimestamp))")
+                    return false
+                }
+            } else {
+                // Local data exists but no timestamp - be conservative
+                print("☁️ Skipping \(bandName) - local data exists from different device, no timestamp comparison")
                 return false
             }
-        } else if currentPriority != 0 {
-            // Local data exists but no timestamp - be conservative
-            print("☁️ Skipping \(bandName) - local data exists but no timestamp")
-            return false
+        }
+        
+        // RULE 3: If no local data exists, use iCloud data regardless of UID
+        if currentPriority == 0 {
+            print("☁️ No local data exists, using iCloud data")
         }
         
         // Update Core Data with iCloud data
