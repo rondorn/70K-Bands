@@ -54,11 +54,11 @@ class CoreDataiCloudSync {
                     processedCount += 1
                 }
                 
-                print("☁️ Found \(priorityKeys.count) priority keys in iCloud")
+                print("☁️ Found \(recordsToProcess.count) priority records in iCloud")
                 print("📊 Priority - Processed: \(processedCount), Updated: \(updatedCount)")
                 
-                if priorityKeys.count == 0 {
-                    print("⚠️ NO PRIORITY KEYS FOUND IN iCLOUD!")
+                if recordsToProcess.count == 0 {
+                    print("⚠️ NO PRIORITY RECORDS FOUND IN iCLOUD!")
                     print("⚠️ This suggests priority data was never written to iCloud")
                 }
                 

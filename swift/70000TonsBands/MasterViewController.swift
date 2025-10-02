@@ -1666,6 +1666,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
   
+    /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"
+    /// 
+    /// ⚠️ REGRESSION WARNING: This function has been fixed multiple times for the same bug!
+    /// ⚠️ DO NOT MODIFY without reading the detailed comments inside this function!
+    /// ⚠️ The logic is complex and specific - test ALL scenarios before changing!
     func updateCountLable(){
         
         setFilterTitleText()
@@ -1674,44 +1679,133 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
         
-        // Check if we have events and what types they are
+        // CRITICAL FIX: Calculate eventCounterUnoffical from current Core Data
+        // Since we moved to Core Data, the old loops that counted unofficial events are bypassed
+        // We need to count unofficial events directly from the current filtered data
+        eventCounterUnoffical = 0
+        let coreDataManager = CoreDataManager.shared
+        let currentYear = Int32(eventYear)
+        let allEvents = coreDataManager.fetchEvents(forYear: currentYear)
+        
+        for event in allEvents {
+            let eventType = event.eventType ?? ""
+            if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+                eventCounterUnoffical += 1
+                print("📊 [COUNT_DEBUG] Found unofficial event: '\(eventType)' for \(event.band?.bandName ?? "Unknown")")
+            }
+        }
+        
+        print("📊 [COUNT_DEBUG] updateCountLable: listCount=\(listCount), eventCount=\(eventCount), bandCount=\(bandCount), eventCounterUnoffical=\(eventCounterUnoffical)")
+        
+        // ========================================================================
+        // CRITICAL REGRESSION PREVENTION: EVENT/BAND COUNT DISPLAY LOGIC
+        // ========================================================================
+        // This function has been fixed multiple times for the same regression.
+        // DO NOT MODIFY without understanding these rules completely!
+        //
+        // RULES FOR DISPLAYING "{x} Events" vs "{x} Bands" at top of list:
+        //
+        // 1. If there are ONLY bands (no events): 
+        //    → Display "{x} Bands"
+        //
+        // 2. If there are ONLY events (no bands):
+        //    → Display "{x} Events" 
+        //
+        // 3. If there are MIXTURES of bands and events:
+        //    a) If ALL events are "Unofficial" or "Cruiser Organized":
+        //       → Display "{x} Bands" (ignore event count)
+        //    b) If ANY events are NOT "Unofficial" or "Cruiser Organized":
+        //       → Display "{x} Events" (ignore band count)
+        //
+        // SPECIAL CASE: "Show Bands Only" mode ALWAYS shows "{x} Bands"
+        // ========================================================================
+        
+        // Calculate what we have in the current list
         let hasEvents = eventCount > 0
         let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
         let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
         let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
         
+        // DEBUG: Show the logic calculations
+        print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents) (eventCount=\(eventCount))")
+        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (bandCount=\(bandCount), listCount-unofficial=\(listCount - eventCounterUnoffical))")
+        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
+        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
+        
         // CRITICAL FIX: Check view mode first - if "Show Bands Only", always show "Bands"
         let showScheduleView = getShowScheduleView()
+        print("📊 [LOGIC_DEBUG] showScheduleView: \(showScheduleView)")
         
         if !showScheduleView {
-            // "Show Bands Only" mode - ALWAYS show band count, never "Events"
+            // ========================================================================
+            // SPECIAL CASE: "Show Bands Only" mode
+            // ALWAYS show band count, NEVER show "Events" regardless of content
+            // ========================================================================
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
             print("🎵 [VIEW_MODE_FIX] Show Bands Only mode - showing \(labeleCounter) bands")
-        } else if (hasEvents && hasBands && allEventsAreUnofficial) {
-            // Rule 2: Mixed list with ALL events = 'Unofficial Event' - show band count, ignore unofficial events
+            
+        } else if !hasEvents && hasBands {
+            // ========================================================================
+            // RULE 1: ONLY bands, NO events
+            // Display "{x} Bands"
+            // ========================================================================
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-        } else if (hasNonUnofficalEvents) {
-            // Rule 3 & 4: Has non-unofficial events - show event count, ignore bands
+            print("📊 [COUNT_LOGIC] Rule 1: Only bands (\(labeleCounter)) - showing Bands")
+            
+        } else if hasEvents && !hasBands {
+            // ========================================================================
+            // RULE 2: ONLY events, NO bands  
+            // Display "{x} Events"
+            // ========================================================================
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-        } else {
-            // Rule 1: All bands, 0 events (or only unofficial events with no bands) - show band count
+            print("📊 [COUNT_LOGIC] Rule 2: Only events (\(labeleCounter)) - showing Events")
+            
+        } else if (hasEvents && hasBands && allEventsAreUnofficial) {
+            // ========================================================================
+            // RULE 3a: MIXTURE with ALL events being "Unofficial" or "Cruiser Organized"
+            // Display "{x} Bands" (ignore unofficial event count)
+            // ========================================================================
             labeleCounter = listCount - eventCounterUnoffical
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            print("📊 [COUNT_LOGIC] Rule 3a: Mixed with ALL unofficial events - showing \(labeleCounter) Bands (ignoring \(eventCounterUnoffical) unofficial events)")
+            
+        } else if (hasNonUnofficalEvents) {
+            // ========================================================================
+            // RULE 3b: MIXTURE with ANY events being official (NOT "Unofficial" or "Cruiser Organized")
+            // Display "{x} Events" (ignore band count)
+            // ========================================================================
+            labeleCounter = listCount
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
+            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (ignoring bands)")
+            
+        } else {
+            // ========================================================================
+            // FALLBACK: Should not reach here, but default to bands for safety
+            // ========================================================================
+            labeleCounter = listCount - eventCounterUnoffical
+            if (labeleCounter < 0){
+                labeleCounter = 0
+            }
+            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
+            print("⚠️ [COUNT_LOGIC] Fallback case - showing \(labeleCounter) Bands")
         }
 
         var currentYearSetting = getScheduleUrl()
@@ -2767,9 +2861,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         // Then attempt to download new content and refresh the view
         if Reachability.isConnectedToNetwork() {
-            let dynamicStatsUrl = getPointerUrlData(keyValue: "reportUrl")
-            print("[YEAR_CHANGE_DEBUG] statsButtonTapped: Retrieved reportUrl: \(dynamicStatsUrl)")
-            if let url = URL(string: dynamicStatsUrl) {
+            // Get the report URL on a background thread to avoid main thread blocking
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
+                let dynamicStatsUrl = getPointerUrlData(keyValue: "reportUrl")
+                print("[YEAR_CHANGE_DEBUG] statsButtonTapped: Retrieved reportUrl: \(dynamicStatsUrl)")
+                
+                if let url = URL(string: dynamicStatsUrl), !dynamicStatsUrl.isEmpty {
                 let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
                     guard let self = self else { return }
                     
@@ -2806,9 +2905,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         }
                     }
                 }
-                task.resume()
-            } else {
-                print("Invalid stats URL: \(dynamicStatsUrl)")
+                    task.resume()
+                } else {
+                    print("Invalid stats URL: \(dynamicStatsUrl)")
+                    DispatchQueue.main.async {
+                        self.presentNoDataView(message: "Could not get stats URL from server.")
+                    }
+                }
             }
         } else if !fileExists {
             // Only show no data message if there's no cached file
