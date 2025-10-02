@@ -929,7 +929,7 @@ class PreferencesViewModel: ObservableObject {
         
         let targetYear = resolveYearToNumber(eventYearChangeAttempt)
         var attempts = 0
-        let maxAttempts = 10
+        let maxAttempts = 5
         let delaySeconds = 1.0
         
         print("🐛 [YEAR_DEBUG] waitForCoreDataPopulationAndContinueYearChange:")
