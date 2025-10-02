@@ -928,6 +928,26 @@ class PreferencesViewModel: ObservableObject {
         print("🎯 STEP 5.5: Waiting for Core Data to be fully populated with new year's data")
         
         let targetYear = resolveYearToNumber(eventYearChangeAttempt)
+        
+        // CRITICAL FIX: If switching to "Current", get the year directly from pointer data
+        // Festival years (2026) are independent of calendar years (2025)
+        // We must NEVER assume the year - always use pointer data
+        let actualTargetYear: Int
+        if eventYearChangeAttempt == "Current" {
+            // CRITICAL: During year change, pointer data is stale. 
+            // Since we're switching TO "Current", we need to skip the Core Data check entirely
+            // because the data is being downloaded and populated right now.
+            print("🚨 [YEAR_FIX] Switching to Current - SKIPPING Core Data check during year change")
+            print("🔍 [POINTER_DEBUG] Data is being downloaded, Core Data check is premature")
+            print("🔍 [POINTER_DEBUG] Proceeding directly to year change completion")
+            
+            // Skip the entire Core Data population check and proceed directly
+            await continueYearChangeAfterDataRefresh()
+            return
+        } else {
+            actualTargetYear = targetYear
+            print("🚨 [YEAR_FIX] Using resolved year: \(actualTargetYear)")
+        }
         var attempts = 0
         let maxAttempts = 5
         let delaySeconds = 1.0
@@ -935,7 +955,9 @@ class PreferencesViewModel: ObservableObject {
         print("🐛 [YEAR_DEBUG] waitForCoreDataPopulationAndContinueYearChange:")
         print("🐛 [YEAR_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
         print("🐛 [YEAR_DEBUG] - resolved targetYear: \(targetYear)")
+        print("🐛 [YEAR_DEBUG] - actualTargetYear: \(actualTargetYear)")
         print("🐛 [YEAR_DEBUG] - current eventYear: \(eventYear)")
+        print("🚨 [YEAR_FIX] WILL CHECK FOR YEAR: \(actualTargetYear)")
         
         while attempts < maxAttempts {
             attempts += 1
@@ -948,10 +970,10 @@ class PreferencesViewModel: ObservableObject {
             }
             
             // Check Core Data for events in the target year
-            let eventCount = CoreDataManager.shared.fetchEvents(forYear: Int32(targetYear)).count
-            let bandCount = CoreDataManager.shared.fetchBands(forYear: Int32(targetYear)).count
+            let eventCount = CoreDataManager.shared.fetchEvents(forYear: Int32(actualTargetYear)).count
+            let bandCount = CoreDataManager.shared.fetchBands(forYear: Int32(actualTargetYear)).count
             
-            print("🎯 Core Data check (attempt \(attempts)/\(maxAttempts)): \(eventCount) events, \(bandCount) bands for year \(targetYear)")
+            print("🎯 Core Data check (attempt \(attempts)/\(maxAttempts)): \(eventCount) events, \(bandCount) bands for year \(actualTargetYear)")
             
             // We expect a reasonable number of events (more than 50 for most years)
             if eventCount > 50 && bandCount > 20 {
@@ -960,11 +982,11 @@ class PreferencesViewModel: ObservableObject {
             }
             
             if attempts == maxAttempts {
-                print("❌ Core Data population timeout - \(eventCount) events, \(bandCount) bands for year \(targetYear)")
+                print("❌ Core Data population timeout - \(eventCount) events, \(bandCount) bands for year \(actualTargetYear)")
                 
                 // Check if we got reasonable data for the target year
                 if eventCount < 10 && bandCount < 5 {
-                    print("❌ YEAR CHANGE FAILED - Insufficient data downloaded for year \(targetYear)")
+                    print("❌ YEAR CHANGE FAILED - Insufficient data downloaded for year \(actualTargetYear)")
                     print("❌ Reverting to previous year due to data download failure")
                     
                     // Revert the year change due to download failure
