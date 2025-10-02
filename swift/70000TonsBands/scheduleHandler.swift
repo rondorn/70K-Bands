@@ -834,9 +834,10 @@ open class scheduleHandler {
     
     // MARK: - Legacy API Methods (100% Compatible)
     
-    func DownloadCsv() {
+    func DownloadCsv(forceMainThread: Bool = false) {
         print("🔧 [SCHEDULE_DEBUG] ========== SCHEDULE CSV DownloadCsv() STARTING ==========")
         print("🔧 [SCHEDULE_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+        print("🔧 [SCHEDULE_DEBUG] forceMainThread: \(forceMainThread)")
         
         // CRITICAL FIX: Capture eventYear at start to prevent race condition with bandNamesHandler
         let capturedEventYear = eventYear
@@ -900,17 +901,46 @@ open class scheduleHandler {
             print("🔧 [UNOFFICIAL_DEBUG] 🚀 STARTING CSV IMPORT PROCESS...")
             print("🔧 [YEAR_SYNC_DEBUG] Pre-import: global eventYear = \(eventYear), using captured year \(capturedEventYear)")
             
-            // CRITICAL FIX: Temporarily set global eventYear to captured value during import
-            // to prevent race condition with bandNamesHandler that might change eventYear mid-operation
-            let originalEventYear = eventYear
-            eventYear = capturedEventYear
-            print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
-            
-            let importSuccess = csvImporter.importEventsFromCSVString(httpData)
-            
-            // Restore original global eventYear after import
-            eventYear = originalEventYear
-            print("🔧 [YEAR_SYNC_DEBUG] Restored global eventYear to \(eventYear) after import")
+            // OPTION D: Force CSV import to main thread during year changes to prevent Core Data crashes
+            // This is safe because we're showing a loading indicator on the preferences screen
+            let importSuccess: Bool
+            if forceMainThread && !Thread.isMainThread {
+                print("🧵 [OPTION_D] Forcing CSV import to main thread to prevent Core Data crashes")
+                print("🧵 [OPTION_D] User will wait on preferences screen while data loads safely")
+                
+                var result = false
+                DispatchQueue.main.sync {
+                    print("🧵 [OPTION_D] Now on main thread - performing import")
+                    
+                    // CRITICAL FIX: Temporarily set global eventYear to captured value during import
+                    // to prevent race condition with bandNamesHandler that might change eventYear mid-operation
+                    let originalEventYear = eventYear
+                    eventYear = capturedEventYear
+                    print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
+                    
+                    result = csvImporter.importEventsFromCSVString(httpData)
+                    
+                    // Restore original global eventYear after import
+                    eventYear = originalEventYear
+                    print("🔧 [YEAR_SYNC_DEBUG] Restored global eventYear to \(eventYear) after import")
+                }
+                importSuccess = result
+                print("🧵 [OPTION_D] Import completed on main thread, result: \(importSuccess)")
+            } else {
+                print("🧵 [OPTION_D] Performing import on current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+                
+                // CRITICAL FIX: Temporarily set global eventYear to captured value during import
+                // to prevent race condition with bandNamesHandler that might change eventYear mid-operation
+                let originalEventYear = eventYear
+                eventYear = capturedEventYear
+                print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
+                
+                importSuccess = csvImporter.importEventsFromCSVString(httpData)
+                
+                // Restore original global eventYear after import
+                eventYear = originalEventYear
+                print("🔧 [YEAR_SYNC_DEBUG] Restored global eventYear to \(eventYear) after import")
+            }
             
             print("🔧 [UNOFFICIAL_DEBUG] 📊 CSV IMPORT RESULT: \(importSuccess ? "SUCCESS" : "FAILED")")
             
@@ -925,13 +955,10 @@ open class scheduleHandler {
                     print("🔧 [CONTEXT_DEBUG] Starting context synchronization process...")
                     print("🔧 [CONTEXT_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
                     
-                    // Force view context to process pending changes
-                    self.coreDataManager.viewContext.performAndWait {
-                        print("🔧 [CONTEXT_DEBUG] Inside performAndWait - forcing context merge...")
-                        // This ensures any pending merges are processed
-                    }
-                    
-                    print("🔧 [CONTEXT_DEBUG] Context performAndWait completed")
+                    // DEADLOCK FIX: Don't use performAndWait on main thread - it causes deadlocks!
+                    // We're already on main thread via DispatchQueue.main.async, so we can safely
+                    // access the view context directly. The main thread IS the viewContext's thread.
+                    print("🔧 [DEADLOCK_FIX] Skipping performAndWait - already on main thread")
                     
                     // Now check Core Data after context synchronization using captured year
                     print("🔧 [YEAR_SYNC_DEBUG] Using captured year \(capturedEventYear) for post-import check (global eventYear = \(eventYear))")

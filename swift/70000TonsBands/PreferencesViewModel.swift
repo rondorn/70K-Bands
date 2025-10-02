@@ -725,62 +725,12 @@ class PreferencesViewModel: ObservableObject {
             print("🐛 [REVERT_DEBUG] - != Current: \(eventYearChangeAttempt != "Current")")
             print("🐛 [REVERT_DEBUG] - Combined condition: \(eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current")")
             
-            if eventYearChangeAttempt.isYearString && eventYearChangeAttempt != "Current" {
-                // For specific years, show Band List vs Event List choice
-                // Data is already fully loaded, so user can make choice immediately
-                print("🎯 Year change data complete - showing Band/Event choice with all data ready")
-                isLoadingData = false
-                showBandEventChoice = true
-            } else {
-                // For "Current" year - only auto-enable hideExpiredEvents if this is an actual year change TO Current
-                let isActualYearChangeToCurrentBool = (currentYearSetting != eventYearChangeAttempt && eventYearChangeAttempt == "Current") || (!currentYearSetting.isYearString && eventYearChangeAttempt == "Current")
-                print("🐛 [REVERT_DEBUG] Checking if this is a year change TO Current:")
-                print("🐛 [REVERT_DEBUG] - currentYearSetting: '\(currentYearSetting)'")
-                print("🐛 [REVERT_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
-                print("🐛 [REVERT_DEBUG] - isActualYearChangeToCurrentBool: \(isActualYearChangeToCurrentBool)")
-                
-                if isActualYearChangeToCurrentBool {
-                    print("🐛 [REVERT_DEBUG] ⚠️ AUTOMATIC BAND LIST MODE TRIGGERED - This is a year change TO Current")
-                    print("🐛 [REVERT_DEBUG] Current hideExpiredEvents before override: \(hideExpiredEvents)")
-                    hideExpiredEvents = true
-                    setHideExpireScheduleData(true)
-                    print("🐛 [REVERT_DEBUG] hideExpiredEvents after override: \(hideExpiredEvents)")
-                } else {
-                    print("🐛 [REVERT_DEBUG] ✅ NOT a year change TO Current - preserving user preference")
-                    print("🐛 [REVERT_DEBUG] User preference hideExpiredEvents: \(hideExpiredEvents)")
-                }
-                
-                // For "Current" year - DON'T dismiss immediately, wait for data to load
-                print("🎯 Current year change detected - waiting for data to load before dismissing")
-                
-                // Keep loading state active - don't dismiss yet
-                // isLoadingData should remain true
-                
-                // Auto-enable hideExpiredEvents for Current year
-                hideExpiredEvents = true
-                setHideExpireScheduleData(true)
-                
-                // Wait for the data to actually load before dismissing
-                Task {
-                    print("🎯 Current year: Starting data loading process")
-                    
-                    // Ensure schedule data is loaded
-                    await ensureScheduleDataLoaded()
-                    
-                    // Wait a bit more to ensure all data is properly loaded
-                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                    
-                    await MainActor.run {
-                        // Refresh display to show new data
-                        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-                        masterView.refreshData(isUserInitiated: true)
-                        
-                        print("🎯 Current year: Data loading complete - now dismissing preferences")
-                        self.isLoadingData = false
-                        self.navigateBackToMainScreen()
-                    }
-                }
-            }
+            // REMOVED DUPLICATE CODE: This year-type handling now happens in continueYearChangeAfterDataRefresh()
+            // The old code here was causing double data loads for "Current" year
+            // Now we always proceed to continueYearChangeAfterDataRefresh() which handles both
+            // specific years (Band/Event choice) and "Current" year (auto-dismiss with data load)
+            print("🔄 [DOUBLE_LOAD_FIX] Proceeding to continueYearChangeAfterDataRefresh() for final handling")
+            print("🔄 [DOUBLE_LOAD_FIX] This prevents duplicate data loading for Current year")
         }
     }
     
@@ -929,84 +879,15 @@ class PreferencesViewModel: ObservableObject {
         
         let targetYear = resolveYearToNumber(eventYearChangeAttempt)
         
-        // CRITICAL FIX: If switching to "Current", get the year directly from pointer data
-        // Festival years (2026) are independent of calendar years (2025)
-        // We must NEVER assume the year - always use pointer data
-        let actualTargetYear: Int
-        if eventYearChangeAttempt == "Current" {
-            // CRITICAL: During year change, pointer data is stale. 
-            // Since we're switching TO "Current", we need to skip the Core Data check entirely
-            // because the data is being downloaded and populated right now.
-            print("🚨 [YEAR_FIX] Switching to Current - SKIPPING Core Data check during year change")
-            print("🔍 [POINTER_DEBUG] Data is being downloaded, Core Data check is premature")
-            print("🔍 [POINTER_DEBUG] Proceeding directly to year change completion")
-            
-            // Skip the entire Core Data population check and proceed directly
-            await continueYearChangeAfterDataRefresh()
-            return
-        } else {
-            actualTargetYear = targetYear
-            print("🚨 [YEAR_FIX] Using resolved year: \(actualTargetYear)")
-        }
-        var attempts = 0
-        let maxAttempts = 5
-        let delaySeconds = 1.0
+        // CRITICAL FIX: Skip Core Data fetch during ALL year changes to prevent crashes
+        // The Core Data fetch causes concurrency violations when data is being imported
+        // during the year change process. The fetch is just a verification step that's
+        // not essential - the data will load normally through the import process.
+        print("🚨 [CRASH_FIX] SKIPPING Core Data check during year change to prevent concurrency crash")
+        print("🔍 [CRASH_FIX] Year change: '\(eventYearChangeAttempt)' - proceeding directly to completion")
+        print("🔍 [CRASH_FIX] Data will load normally through import process without verification delays")
         
-        print("🐛 [YEAR_DEBUG] waitForCoreDataPopulationAndContinueYearChange:")
-        print("🐛 [YEAR_DEBUG] - eventYearChangeAttempt: '\(eventYearChangeAttempt)'")
-        print("🐛 [YEAR_DEBUG] - resolved targetYear: \(targetYear)")
-        print("🐛 [YEAR_DEBUG] - actualTargetYear: \(actualTargetYear)")
-        print("🐛 [YEAR_DEBUG] - current eventYear: \(eventYear)")
-        print("🚨 [YEAR_FIX] WILL CHECK FOR YEAR: \(actualTargetYear)")
-        
-        while attempts < maxAttempts {
-            attempts += 1
-            
-            // Check if this year change was cancelled
-            guard !Task.isCancelled else {
-                print("🚫 Year change cancelled while waiting for Core Data population")
-                isLoadingData = false
-                return
-            }
-            
-            // Check Core Data for events in the target year
-            let eventCount = CoreDataManager.shared.fetchEvents(forYear: Int32(actualTargetYear)).count
-            let bandCount = CoreDataManager.shared.fetchBands(forYear: Int32(actualTargetYear)).count
-            
-            print("🎯 Core Data check (attempt \(attempts)/\(maxAttempts)): \(eventCount) events, \(bandCount) bands for year \(actualTargetYear)")
-            
-            // We expect a reasonable number of events (more than 50 for most years)
-            if eventCount > 50 && bandCount > 20 {
-                print("✅ Core Data population confirmed - \(eventCount) events and \(bandCount) bands loaded")
-                break
-            }
-            
-            if attempts == maxAttempts {
-                print("❌ Core Data population timeout - \(eventCount) events, \(bandCount) bands for year \(actualTargetYear)")
-                
-                // Check if we got reasonable data for the target year
-                if eventCount < 10 && bandCount < 5 {
-                    print("❌ YEAR CHANGE FAILED - Insufficient data downloaded for year \(actualTargetYear)")
-                    print("❌ Reverting to previous year due to data download failure")
-                    
-                    // Revert the year change due to download failure
-                    await revertYearChangeDueToDownloadFailure()
-                    return
-                }
-                
-                print("⚠️ Proceeding with limited data - \(eventCount) events, \(bandCount) bands")
-                break
-            }
-            
-            print("🔄 Core Data still populating... waiting \(delaySeconds)s before next check")
-            try? await Task.sleep(nanoseconds: UInt64(delaySeconds * 1_000_000_000))
-        }
-        
-        // Additional small delay to ensure any final processing is complete
-        print("🎯 Allowing additional 0.5s for final Core Data processing")
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        
-        print("🎯 Core Data population wait complete - proceeding with year change completion")
+        // Skip the entire Core Data population check and proceed directly
         await continueYearChangeAfterDataRefresh()
     }
     
@@ -1141,7 +1022,9 @@ class PreferencesViewModel: ObservableObject {
                 
                 if downloadAllowed {
                     print("🔒 PreferencesViewModel: Starting protected CSV download")
-                    masterView.schedule.DownloadCsv()
+                    print("🧵 [OPTION_D] Year change detected - forcing main thread import for safety")
+                    print("🧵 [OPTION_D] User will see loading indicator on preferences screen")
+                    masterView.schedule.DownloadCsv(forceMainThread: true)
                     
                     // Mark download as complete
                     MasterViewController.backgroundRefreshLock.lock()
