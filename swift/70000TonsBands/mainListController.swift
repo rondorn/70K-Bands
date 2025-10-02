@@ -631,8 +631,15 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 presentCheck.append(bandName);
                                 let event = schedule.getData(bandName, index: timeIndex, variable: typeField)
                                 eventCounter = eventCounter + 1
-                                if (event == unofficalEventType){
+                                print("📊 [COUNT_DEBUG] Processing event: '\(event)' for \(bandName)")
+                                print("📊 [COUNT_DEBUG] Checking against unofficalEventType: '\(unofficalEventType)'")
+                                print("📊 [COUNT_DEBUG] Checking against unofficalEventTypeOld: '\(unofficalEventTypeOld)'")
+                                // Count BOTH "Unofficial Event" and "Cruiser Organized" as unofficial events
+                                if (event == unofficalEventType || event == unofficalEventTypeOld){
                                     eventCounterUnoffical = eventCounterUnoffical + 1
+                                    print("📊 [COUNT_DEBUG] ✅ Counted unofficial event: '\(event)' for \(bandName) (total unofficial: \(eventCounterUnoffical))")
+                                } else {
+                                    print("📊 [COUNT_DEBUG] ❌ NOT counting event: '\(event)' for \(bandName) (not matching unofficial types)")
                                 }
                             }
                         }
@@ -718,8 +725,15 @@ func determineBandOrScheduleList (_ allBands:[String], sortedBy: String, schedul
                                 let indexText = bandName + ";" + location + ";" + event + ";" + startTime
                                 timeIndexMap[String(timeIndex) + ":" + bandName] = indexText
                                 eventCounter = eventCounter + 1
-                                if (event == unofficalEventType){
+                                print("📊 [COUNT_DEBUG] Processing event (2nd location): '\(event)' for \(bandName)")
+                                print("📊 [COUNT_DEBUG] Checking against unofficalEventType: '\(unofficalEventType)'")
+                                print("📊 [COUNT_DEBUG] Checking against unofficalEventTypeOld: '\(unofficalEventTypeOld)'")
+                                // Count BOTH "Unofficial Event" and "Cruiser Organized" as unofficial events
+                                if (event == unofficalEventType || event == unofficalEventTypeOld){
                                     eventCounterUnoffical = eventCounterUnoffical + 1
+                                    print("📊 [COUNT_DEBUG] ✅ Counted unofficial event (2nd location): '\(event)' for \(bandName) (total unofficial: \(eventCounterUnoffical))")
+                                } else {
+                                    print("📊 [COUNT_DEBUG] ❌ NOT counting event (2nd location): '\(event)' for \(bandName) (not matching unofficial types)")
                                 }
                             }
                         }
