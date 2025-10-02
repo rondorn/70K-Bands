@@ -1682,16 +1682,70 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // CRITICAL FIX: Calculate eventCounterUnoffical from current Core Data
         // Since we moved to Core Data, the old loops that counted unofficial events are bypassed
         // We need to count unofficial events directly from the current filtered data
-        eventCounterUnoffical = 0
+        // FULLY ASYNC: NO blocking of main thread to prevent deadlocks
+        eventCounterUnoffical = 0  // Start with 0, will update asynchronously
         let coreDataManager = CoreDataManager.shared
         let currentYear = Int32(eventYear)
-        let allEvents = coreDataManager.fetchEvents(forYear: currentYear)
         
-        for event in allEvents {
-            let eventType = event.eventType ?? ""
-            if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
-                eventCounterUnoffical += 1
-                print("📊 [COUNT_DEBUG] Found unofficial event: '\(eventType)' for \(event.band?.bandName ?? "Unknown")")
+        print("📊 [ASYNC_COUNT] Starting async event count for year \(currentYear)")
+        print("📊 [ASYNC_COUNT] Display will update briefly when count completes")
+        
+        // Perform Core Data fetch fully asynchronously - NO BLOCKING
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            print("📊 [ASYNC_COUNT] Fetching events on background thread...")
+            let allEvents = coreDataManager.fetchEvents(forYear: currentYear)
+            print("📊 [ASYNC_COUNT] Fetched \(allEvents.count) events")
+            
+            var count = 0
+            for event in allEvents {
+                let eventType = event.eventType ?? ""
+                if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+                    count += 1
+                }
+            }
+            
+            print("📊 [ASYNC_COUNT] Count completed: \(count) unofficial events")
+            
+            // Update the counter and refresh display on main thread
+            DispatchQueue.main.async {
+                // Only update if the year hasn't changed since we started counting
+                if Int32(eventYear) == currentYear {
+                    eventCounterUnoffical = count
+                    print("📊 [ASYNC_COUNT] Updated eventCounterUnoffical to \(count)")
+                    
+                    // Just update the title directly without recursing into updateCountLable
+                    self.setFilterTitleText()
+                    let lableCounterString: String
+                    let labeleCounter: Int
+                    
+                    // Use the same logic from updateCountLable to determine display
+                    let hasEvents = eventCount > 0
+                    let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
+                    let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
+                    
+                    if !getShowScheduleView() || (!hasEvents && hasBands) || (hasEvents && hasBands && allEventsAreUnofficial) {
+                        // Show bands
+                        labeleCounter = listCount - eventCounterUnoffical
+                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
+                    } else {
+                        // Show events
+                        labeleCounter = listCount
+                        lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
+                    }
+                    
+                    let currentYearSetting = getScheduleUrl()
+                    if currentYearSetting != "Current" && currentYearSetting != "Default" {
+                        self.titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+                    } else {
+                        self.titleButton.title = String(labeleCounter) + lableCounterString
+                    }
+                    
+                    print("📊 [ASYNC_COUNT] Display updated: \(self.titleButton.title ?? "nil")")
+                } else {
+                    print("📊 [ASYNC_COUNT] Year changed during count, skipping update")
+                }
             }
         }
         
