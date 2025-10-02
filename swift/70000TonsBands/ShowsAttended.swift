@@ -40,30 +40,42 @@ open class ShowsAttended {
      Loads cached show attendance data, using a static cache if available.
      */
     func getCachedData(){
+        // DEADLOCK FIX: Changed staticAttended.sync() to .async to prevent blocking
+        // This method is called during ShowsAttended() initialization, which happens on main thread
+        // Using sync() can cause deadlocks, especially during year changes
+        print("📊 [DEADLOCK_FIX] getCachedData: Using async to prevent blocking")
         var staticCacheUsed = false
-        staticAttended.sync() {
-            if (cacheVariables.attendedStaticCache.isEmpty == true){
-                loadShowsAttended()
-            } else {
-                staticCacheUsed = true
+        
+        // Check cache status synchronously first (safe, no nested calls)
+        let cacheIsEmpty = staticAttended.sync { cacheVariables.attendedStaticCache.isEmpty }
+        
+        if cacheIsEmpty {
+            print("📊 [DEADLOCK_FIX] Cache empty, loading shows attended")
+            loadShowsAttended()
+        } else {
+            print("📊 [DEADLOCK_FIX] Using static cache")
+            staticCacheUsed = true
+            
+            // Copy from static cache to instance - do this asynchronously
+            staticAttended.async {
                 self.showsAttendedArray = cacheVariables.attendedStaticCache
                 
                 // Even when using static cache, check if migration is needed
-                let currentArray = showsAttendedQueue.sync { self._showsAttendedArray }
+                let currentArray = self.showsAttendedQueue.sync { self._showsAttendedArray }
                 var needsMigration = false
                 let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
                 
                 for (key, value) in currentArray {
                     let parts = value.split(separator: ":")
                     if parts.count == 1 {
-                        mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
+                        self.mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
                         needsMigration = true
                     }
                 }
                 
                 if needsMigration {
                     print("Migrated old attendance data from static cache to new format with timestamps.")
-                    saveShowsAttended()
+                    self.saveShowsAttended()
                     // Update the static cache with migrated data
                     staticAttended.async(flags: .barrier) {
                         for (key, value) in self.showsAttendedArray {
@@ -112,10 +124,19 @@ open class ShowsAttended {
     
     /**
      Loads show attendance data from persistent storage and updates the static cache.
+     
+     THREAD SAFETY: This method performs file I/O and should ideally be called on a background thread,
+     but it's designed to not block if called from main thread by avoiding nested sync calls.
      */
     func loadShowsAttended(){
-        let bandNameHandle = bandNamesHandler.shared
-        let allBands = bandNameHandle.getBandNames()
+        print("📊 [THREAD_SAFE] loadShowsAttended: Starting on thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+        
+        // DEADLOCK FIX: Defer bandNames fetching to avoid blocking on staticBandName.sync
+        // We don't actually use 'allBands' in this method, so we can skip it entirely
+        // let bandNameHandle = bandNamesHandler.shared
+        // let allBands = bandNameHandle.getBandNames()  // ← This was causing deadlock!
+        print("📊 [DEADLOCK_FIX] Skipping bandNameHandle.getBandNames() - not needed for loading")
+        
         let artistUrl = getScheduleUrl()
         var unuiqueSpecial = [String]()
         do {
