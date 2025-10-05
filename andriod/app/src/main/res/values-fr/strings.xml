@@ -115,7 +115,7 @@
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Actuel</string>
 
-    <string name="backupPrompt">Collez l\'URL du fichier userExport.zip stocké sur DropBox ou un autre service similaire.</string>
+    <string name="backupPrompt">Collez l\'URL du fichier zip d\'exportation de données stocké sur DropBox ou un autre service similaire.</string>
     <string name="importButtonName">Importation</string>
 
     <!-- new section for the filter menu control -->

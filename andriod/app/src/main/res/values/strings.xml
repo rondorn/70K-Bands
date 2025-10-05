@@ -131,7 +131,7 @@
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Current</string>
 
-    <string name="backupPrompt">Paste in the URL to the userExport.zip stored on DropBox or other similar service</string>
+    <string name="backupPrompt">Paste in the URL to the data export zip file stored on DropBox or other similar service</string>
     <string name="importButtonName">Import</string>
 
     <!-- new section for the filter menu control -->
