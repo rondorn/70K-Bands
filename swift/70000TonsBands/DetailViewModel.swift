@@ -201,6 +201,7 @@ class DetailViewModel: ObservableObject {
     // MARK: - Initialization
     
     init(bandName: String) {
+        
         self.bandName = bandName
         loadBandData()
         
@@ -489,6 +490,38 @@ class DetailViewModel: ObservableObject {
     func navigateToNext() {
         print("DEBUG: navigateToNext() called") 
         swipeToNextRecord(direction: "Next")
+    }
+    
+    // MARK: - Boundary Checking
+    
+    func isAtStart() -> Bool {
+        return !canNavigateToPrevious()
+    }
+    
+    func isAtEnd() -> Bool {
+        return !canNavigateToNext()
+    }
+    
+    private func canNavigateToPrevious() -> Bool {
+        let currentIndex = findCurrentBandIndex()
+        return currentIndex > 0
+    }
+    
+    private func canNavigateToNext() -> Bool {
+        let currentIndex = findCurrentBandIndex()
+        let totalBands = currentBandList.count
+        return currentIndex < totalBands - 1
+    }
+    
+    private func findCurrentBandIndex() -> Int {
+        for (index, bandIndex) in currentBandList.enumerated() {
+            let bandFromIndex = getBandFromIndex(index: bandIndex)
+            let bandNameFromIndex = bandNameFromIndex(index: bandFromIndex)
+            if bandNameFromIndex == bandName {
+                return index
+            }
+        }
+        return -1
     }
     
     func toggleAttendedStatus(for event: ScheduleEvent) {
@@ -1661,11 +1694,13 @@ class DetailViewModel: ObservableObject {
         
         if nextBandName.isEmpty {
             if direction == "Next" {
-                message = "End of List" // Use simple message for now
+                message = NSLocalizedString("EndofList", comment: "Message shown when at end of band list")
             } else {
-                message = "Already at Start" // Use simple message for now
+                message = NSLocalizedString("AlreadyAtStart", comment: "Message shown when at start of band list")
             }
-            print("DEBUG: Showing boundary message: \(message)")
+            print("DEBUG: Showing boundary message: '\(message)'")
+            print("DEBUG: Localized string for EndofList: '\(NSLocalizedString("EndofList", comment: ""))'")
+            print("DEBUG: Localized string for AlreadyAtStart: '\(NSLocalizedString("AlreadyAtStart", comment: ""))'")
             toastManager.show(message: message, placeHigh: false)
         } else {
             // Save notes for the current band before switching
