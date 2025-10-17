@@ -75,7 +75,7 @@ public class showsAttendedReport {
      * @return The formatted events attended report as a string.
      */
     private String buildEventsAttendedReport() {
-        String message = "🤘 " + FestivalConfig.getInstance().appName + " - " + staticVariables.context.getString(R.string.EventsAttended) + "\n\n";
+        String message = "🤘 " + staticVariables.context.getString(R.string.HereAreMy) + " " + FestivalConfig.getInstance().appName + " - " + staticVariables.context.getString(R.string.EventsAttended) + "\n\n";
         
         // Define event type order and emojis
         String[] eventTypeOrder = {"Show", "Meet and Greet", "Clinic", "Special Event", "Cruiser Organized", "Unofficial Event"};

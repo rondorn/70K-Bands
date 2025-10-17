@@ -501,13 +501,49 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
             let bands = try coreDataManager.context.fetch(bandRequest)
             print("🔍 [VIEW_MODE_DEBUG] 🎵 Core Data returned \(bands.count) bands")
             
-            // Apply priority filtering (same as existing logic)
+            // Apply priority and fake band filtering (same as Schedule View logic)
             for band in bands {
                 guard let bandName = band.bandName, !bandName.isEmpty else { continue }
                 
-                let priority = priorityManager.getPriority(for: bandName)
+                // BANDS ONLY FIX: Filter out fake bands created from standalone events
+                // Check if band is associated ONLY with unofficial/special events
+                let allEventsForBand = band.events?.allObjects as? [Event] ?? []
+                let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
+                
+                // Check if ALL events for this band are fake event types
+                let isAllFakeEvents = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
+                    let eventType = event.eventType ?? ""
+                    return fakeEventTypes.contains(eventType)
+                }
+                
+                if isAllFakeEvents {
+                    print("🎭 [BANDS_ONLY_DEBUG] Filtering out fake band: '\(bandName)' (only has fake event types)")
+                    continue
+                }
+                
+                // BANDS ONLY FIX: Pattern matching for non-band events (like "Mon-Monday Metal Madness")
+                let standaloneEventPatterns = [
+                    "Meet and Greet", "Clinic", "Listening Party", 
+                    "Cruiser Organized", "Unofficial Event", "Show",
+                    // Day-specific events
+                    "Mon-", "Tue-", "Wed-", "Thu-", "Fri-", "Sat-", "Sun-",
+                    // Time-specific events  
+                    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+                    // Common event identifiers
+                    "Event", "Activity", "Party", "Session"
+                ]
+                
+                let isFakeBandByPattern = standaloneEventPatterns.contains { pattern in
+                    bandName.localizedCaseInsensitiveContains(pattern)
+                }
+                
+                if isFakeBandByPattern {
+                    print("🎭 [BANDS_ONLY_DEBUG] Filtering out fake band by pattern: '\(bandName)'")
+                    continue
+                }
                 
                 // Apply priority filters
+                let priority = priorityManager.getPriority(for: bandName)
                 if priority == 1 && !getMustSeeOn() { continue }
                 if priority == 2 && !getMightSeeOn() { continue }
                 if priority == 3 && !getWontSeeOn() { continue }

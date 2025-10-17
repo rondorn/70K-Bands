@@ -283,4 +283,5 @@
     <string name="DefaultDescription70K">Le texte de commentaire n\'est pas encore disponible. Veuillez attendre qu\'Aaron ajoute sa description. Vous pouvez ajouter la vôtre si vous le souhaitez, mais lorsque la sienne sera disponible, elle n\'écrasera pas vos données et ne s\'affichera pas.</string>
     <string name="DefaultDescriptionMDF">Double-cliquez pour ajouter vos propres notes</string>
 
+    <string name="HereAreMy">Voici mes</string>
 </resources>

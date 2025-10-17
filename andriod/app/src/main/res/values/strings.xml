@@ -291,4 +291,6 @@
     <!-- Default description text -->
     <string name="DefaultDescription70K">Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.</string>
     <string name="DefaultDescriptionMDF">Double click to add your own notes</string>
+
+    <string name="HereAreMy">Here are my</string>
 </resources>

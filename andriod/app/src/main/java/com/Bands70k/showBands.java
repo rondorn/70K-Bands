@@ -678,13 +678,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             @Override
             public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
 
-                // Add bounds checking to prevent IndexOutOfBoundsException
-                if (scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
-                    Log.e("SWIPE_DEBUG", "scheduleSortedBandNames issue at position: " + position + 
-                          ", list size: " + (scheduleSortedBandNames != null ? scheduleSortedBandNames.size() : "null"));
-                    return false;
-                }
-                
                 String bandIndex = scheduleSortedBandNames.get(position);
 
                 String bandName = getBandNameFromIndex(bandIndex);
@@ -834,7 +827,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                 Uri zipFileUri = FileProvider.getUriForFile(
                         context,
-                        context.getPackageName() + ".fileprovider",
+                        "com.Bands70k",
                         zipFile);
 
                 Intent sharingIntent = new Intent(Intent.ACTION_SEND);
@@ -968,7 +961,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private String buildShareMessage() {
 
-        String message = "🤘 " + FestivalConfig.getInstance().appName + " " + getString(R.string.Choices) + "\n\n";
+        String message = "🤘 " + staticVariables.context.getString(R.string.HereAreMy) + " " + FestivalConfig.getInstance().appName + " " + getString(R.string.Choices) + "\n\n";
         
         // Collect must-see and might-see bands
         java.util.List<String> mustSeeBands = new java.util.ArrayList<>();
@@ -1295,13 +1288,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         if (bandNamesList != null) {
             bandNamesList.setAdapter(adapter);
             Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set successfully");
-            
-            // MINIMAL FIX: Initialize scheduleSortedBandNames for swipe menu compatibility
-            scheduleSortedBandNames = new ArrayList<>();
-            for (String bandName : bandNames) {
-                scheduleSortedBandNames.add(bandName + ":0"); // Format: "bandName:timeIndex" (0 for no schedule)
-            }
-            Log.d("VIEW_MODE_DEBUG", "🎵 SWIPE FIX: Initialized scheduleSortedBandNames with " + scheduleSortedBandNames.size() + " items");
         } else {
             Log.w("VIEW_MODE_DEBUG", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
             // Store adapter for later when UI is initialized
@@ -1629,27 +1615,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         displayBandData();
         
-        // YEAR CHANGE FIX: Ensure click handlers are set up after data refresh
-        // This was missing compared to app startup which calls populateBandList() -> setupSwipeList()
-        setupSwipeList();
-        
-        // CLICK LISTENER FIX: Ensure regular click listener is set up after refresh
-        // The ListView adapter reset during refresh can clear the click listener
-        if (bandNamesList != null) {
-            bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
-                    try {
-                        showClickChoices(position);
-                    } catch (Exception error) {
-                        Log.e("CLICK_DEBUG", "Error in showClickChoices: " + error.toString(), error);
-                    }
-                }
-            });
-            Log.d("CLICK_DEBUG", "Regular click listener set up after refresh");
-        } else {
-            Log.e("CLICK_DEBUG", "Cannot set OnItemClickListener after refresh - bandNamesList is null!");
-        }
-        
         // Restore scroll position if it was saved
         restoreScrollPosition();
         
@@ -1917,7 +1882,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         
         if (position >= listHandler.bandNamesIndex.size()) {
-            Log.e("CLICK_DEBUG", "Position out of bounds: " + position + ", size: " + listHandler.bandNamesIndex.size());
+            Log.e("CLICK_DEBUG", "Position out of bounds: " + position);
             return;
         }
 
@@ -1926,8 +1891,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         currentListPosition = position;
 
         if (scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
-            Log.e("CLICK_DEBUG", "scheduleSortedBandNames issue at position: " + position + 
-                  ", size: " + (scheduleSortedBandNames != null ? scheduleSortedBandNames.size() : "null"));
+            Log.e("CLICK_DEBUG", "scheduleSortedBandNames issue at position: " + position);
             return;
         }
 
@@ -1937,15 +1901,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         //bypass prompt if appropriate
         if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false) {
-            showDetailsScreen(position, selectedBand);
-            return;
-        }
-
-        // YEAR SWITCH FIX: Validate schedule data before accessing
-        if (BandInfo.scheduleRecords == null || !BandInfo.scheduleRecords.containsKey(bandName) || 
-            BandInfo.scheduleRecords.get(bandName).scheduleByTime == null || 
-            !BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex)) {
-            Log.w("CLICK_DEBUG", "Schedule data missing for band: " + bandName + ", timeIndex: " + timeIndex + " - going directly to details");
             showDetailsScreen(position, selectedBand);
             return;
         }

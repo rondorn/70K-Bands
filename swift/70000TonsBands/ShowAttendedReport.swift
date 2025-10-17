@@ -182,7 +182,7 @@ class showAttendenceReport {
      */
     func buildMustMightReport()->String {
         
-        var intro = "🤘 " + FestivalConfig.current.appName + " " + NSLocalizedString("Choices", comment: "") + "\n\n"
+        var intro = "🤘 " + NSLocalizedString("HereAreMy", comment: "") + " " + FestivalConfig.current.appName + " " + NSLocalizedString("Choices", comment: "") + "\n\n"
         var mustSeeBands: [String] = []
         var mightSeeBands: [String] = []
         
@@ -228,7 +228,8 @@ class showAttendenceReport {
      - Returns: The formatted events attended report as a string.
      */
     func buildEventsAttendedReport() -> String {
-        var message = "🤘 " + FestivalConfig.current.appName + " - " + NSLocalizedString("EventsAttended", comment: "") + "\n\n"
+        var message = "🤘 " + NSLocalizedString("HereAreMy", comment: "") + " " + FestivalConfig.current.appName + " - " + NSLocalizedString("EventsAttended", comment: "") + "\n\n"
+        
         
         assembleReport()
         

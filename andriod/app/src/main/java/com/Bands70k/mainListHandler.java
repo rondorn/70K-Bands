@@ -291,9 +291,25 @@ public class mainListHandler {
 
         } else {
             Log.d("FILTER_DEBUG", "🚨 BandInfo.scheduleRecords is NULL or EMPTY! Using raw bandList with " + bandList.size() + " bands (no schedule released yet)");
-            sortableBandNames = bandList;
-            numberOfBands = bandList.size();
+            
+            // SEARCH FIX: Apply search filtering even when there's no schedule
+            if (staticVariables.searchCriteria.isEmpty() == false) {
+                Log.d("searchCriteria", "Filtering bands-only view with: " + staticVariables.searchCriteria);
+                for (String bandName : bandList) {
+                    if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase())) {
+                        sortableBandNames.add(bandName);
+                        Log.d("searchCriteria", "Including band: " + bandName);
+                    } else {
+                        Log.d("searchCriteria", "Filtering out band: " + bandName);
+                    }
+                }
+            } else {
+                sortableBandNames = bandList;
+            }
+            
+            numberOfBands = sortableBandNames.size();
             Collections.sort(sortableBandNames);
+            Log.d("FILTER_DEBUG", "🔍 After search filtering: " + sortableBandNames.size() + " bands remaining");
         }
 
         Log.d("CRITICAL_DEBUG", "🎯 BEFORE_ADAPTER: About to call turnSortedListIntoArrayAdapter()");

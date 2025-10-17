@@ -194,3 +194,32 @@
 "Events" = "Eventos";
 
 "SearchCriteria" = "Criterios de búsqueda";
+
+
+// Localized share text
+"Choices" = "Opciones";
+"MustSeeBands" = "Bandas Que Debo Ver";
+"MightSeeBands" = "Bandas Que Podría Ver";
+
+// Event sharing localization
+"EventsAttended" = "Eventos Asistidos";
+"ShowsPlural" = "Shows";
+"MeetAndGreetsPlural" = "Meet & Greets";
+"ClinicsPlural" = "Clínicas";
+"SpecialEventsPlural" = "Eventos Especiales";
+"CruiseEventsPlural" = "Eventos del Crucero";
+"UnofficialEventsPlural" = "Eventos No Oficiales";
+
+// Keyboard toolbar buttons
+"Select All" = "Seleccionar todo";
+"Copy" = "Copiar";
+"Paste" = "Pegar";
+
+// Information section
+"Information" = "Información";
+"User Identifier" = "Identificador de usuario";
+"Build" = "Versión";
+
+"year_change_loading" = "Cargando datos para el nuevo año, por favor espere...";
+
+"HereAreMy" = "Aquí están mis";

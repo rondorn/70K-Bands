@@ -104,7 +104,7 @@ public class FestivalConfig {
             this.firebaseConfigFile = "google-services-mdf.json"; // Will use placeholder for now
             
             this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20250908";
+            this.subscriptionTopicTest = "Testing20251016";
             this.subscriptionUnofficalTopic = "unofficalEvents";
             
             // MDF-specific URLs (will be configured via pointer file)
@@ -119,7 +119,7 @@ public class FestivalConfig {
             this.notificationChannelName = "MDFBandsCustomSound1";
             this.notificationChannelDescription = "Channel for the MDF Bands local show alerts with custom sound";
             
-            this.shareUrl = "http://www.facebook.com/MDFBands";
+            this.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388";
             
             // MDF venues: Real venue names with Market Street addresses
             this.venues = Arrays.asList(
@@ -150,9 +150,9 @@ public class FestivalConfig {
             
             this.firebaseConfigFile = "google-services-70k.json";
             
-            this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20250908";
-            this.subscriptionUnofficalTopic = "unofficalEvents";
+            this.subscriptionTopic = "mdf_global";
+            this.subscriptionTopicTest = "Testing20251016";
+            this.subscriptionUnofficalTopic = "global";
             
             // 70K URLs will be determined by pointer file, these are fallbacks
             this.artistUrlDefault = ""; // Will be set by pointer file
