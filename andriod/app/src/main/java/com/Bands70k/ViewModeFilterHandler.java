@@ -43,6 +43,18 @@ public class ViewModeFilterHandler {
                 staticVariables.preferences.setShowScheduleView(!currentMode);
                 Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: New mode after toggle: " + staticVariables.preferences.getShowScheduleView());
                 
+                // AUTO SORT FIX: Automatically switch sort mode based on view mode
+                // Bands Only → Sort Alphabetically, Schedule View → Sort by Time
+                if (staticVariables.preferences.getShowScheduleView()) {
+                    // Switching to Schedule View → Sort by Time
+                    staticVariables.preferences.setSortByTime(true);
+                    Log.d("VIEW_MODE_DEBUG", "🔄 AUTO SORT: Switched to Sort by Time for Schedule View");
+                } else {
+                    // Switching to Bands Only → Sort Alphabetically
+                    staticVariables.preferences.setSortByTime(false);
+                    Log.d("VIEW_MODE_DEBUG", "🔄 AUTO SORT: Switched to Sort Alphabetically for Bands Only View");
+                }
+                
                 // Save the preference to file
                 staticVariables.preferences.saveData();
                 Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: Preference saved to file");

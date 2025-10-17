@@ -196,7 +196,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = ""
         
         self.logoUrl = "mdf_logo"
-        self.shareUrl = "http://www.facebook.com/MDFBands"
+        self.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388"
         
         // MDF venues: Real venue names with Market Street addresses
         self.venues = [

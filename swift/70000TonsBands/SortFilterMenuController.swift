@@ -681,9 +681,17 @@ func refreshAfterMenuSelected(controller: MasterViewController, message: String)
 func setupViewModeClickResponse(controller: MasterViewController, item: String){
     if (item == "View Mode Toggle"){
         if (getShowScheduleView()){
+            // Switching to Bands Only mode
             setShowScheduleView(false)
+            // AUTO SORT FIX: Automatically set alphabetical sort for Bands Only
+            setSortedBy("name")
+            print("🔄 [VIEW_MODE_DEBUG] Switched to Bands Only - Auto-set Sort Alphabetically")
         } else {
+            // Switching to Schedule View mode
             setShowScheduleView(true)
+            // AUTO SORT FIX: Automatically set time-based sort for Schedule View
+            setSortedBy("time")
+            print("🔄 [VIEW_MODE_DEBUG] Switched to Schedule View - Auto-set Sort by Time")
         }
         refreshAfterMenuSelected(controller: controller, message: "")
     }
