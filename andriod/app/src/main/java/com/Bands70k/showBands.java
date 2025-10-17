@@ -221,6 +221,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
         Log.d("UI_INIT", "🔧 bandNamesList initialized: " + (bandNamesList != null ? "SUCCESS" : "FAILED"));
         
+        // CLICK LISTENER FIX: Set up click listener immediately after initialization
+        setupClickListener();
+        
         // If adapter was prepared before UI was ready, set it now
         if (bandNamesList != null && adapter != null) {
             Log.d("UI_INIT", "🔧 Setting deferred adapter with " + adapter.getCount() + " items");
@@ -530,6 +533,30 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     }
 
+    /**
+     * CLICK LISTENER FIX: Centralized method to ensure click listener is always set
+     * This must be called after bandNamesList is initialized and whenever the list is refreshed
+     */
+    private void setupClickListener() {
+        if (bandNamesList != null) {
+            Log.d("CLICK_LISTENER_FIX", "✅ Setting up click listener for bandNamesList");
+            bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                // argument position gives the index of item which is clicked
+                public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
+                    try {
+                        Log.d("CLICK_LISTENER_FIX", "✅ Click detected at position: " + position);
+                        showClickChoices(position);
+                    } catch (Exception error) {
+                        Log.e("CLICK_DEBUG", "Error in showClickChoices: " + error.toString(), error);
+                        System.exit(0);
+                    }
+                }
+            });
+        } else {
+            Log.e("CLICK_LISTENER_FIX", "❌ Cannot set OnItemClickListener - bandNamesList is null!");
+        }
+    }
+
     private void setupSwipeList() {
 
         List<String> sortedList = new ArrayList<>();
@@ -662,6 +689,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         });
 
         setupOnSwipeListener();
+        
+        // CLICK LISTENER FIX: Ensure click listener is set after swipe menu setup
+        // The swipe menu can sometimes override or clear the click listener
+        setupClickListener();
 
         /*
          * Sets up a SwipeRefreshLayout.OnRefreshListener that is invoked when the user
@@ -1043,6 +1074,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void populateBandList() {
 
         bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
+        
+        // CLICK LISTENER FIX: Ensure click listener is set when list is re-initialized
+        setupClickListener();
 
         if (fileDownloaded == false) {
             refreshNewData();
@@ -1821,21 +1855,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
             }
         }, 200); // Quick check after resume completes
-        if (bandNamesList != null) {
-            bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                // argument position gives the index of item which is clicked
-                public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
-                    try {
-                        showClickChoices(position);
-                    } catch (Exception error) {
-                        Log.e("CLICK_DEBUG", "Error in showClickChoices: " + error.toString(), error);
-                        System.exit(0);
-                    }
-                }
-            });
-        } else {
-            Log.e("CLICK_DEBUG", "Cannot set OnItemClickListener - bandNamesList is null!");
-        }
+        
+        // CLICK LISTENER FIX: Always re-establish click listener on resume
+        // This ensures it's present even if it was cleared by system or other operations
+        setupClickListener();
 
         handleSearch();
 
