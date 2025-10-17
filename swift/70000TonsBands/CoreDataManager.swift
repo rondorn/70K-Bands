@@ -484,14 +484,41 @@ class CoreDataManager {
     
     func fetchEvents(forYear year: Int32) -> [Event] {
         var result: [Event] = []
+        let maxRetries = 3
+        var attempt = 0
+        
         viewContext.performAndWait {
-            let request: NSFetchRequest<Event> = Event.fetchRequest()
-            request.predicate = NSPredicate(format: "eventYear == %d", year)
-            do {
-                result = try viewContext.fetch(request)
-            } catch {
-                print("Fetch events for year error: \(error)")
-                result = []
+            while attempt < maxRetries {
+                do {
+                    // Add defensive checks before fetch
+                    guard viewContext.persistentStoreCoordinator != nil else {
+                        print("ERROR: Core Data context has no persistent store coordinator")
+                        break
+                    }
+                    
+                    let request: NSFetchRequest<Event> = Event.fetchRequest()
+                    request.predicate = NSPredicate(format: "eventYear == %d", year)
+                    
+                    result = try viewContext.fetch(request)
+                    print("DEBUG: Successfully fetched \(result.count) events for year \(year) on attempt \(attempt + 1)")
+                    break // Success, exit retry loop
+                } catch {
+                    attempt += 1
+                    print("ERROR: Fetch events for year \(year) - attempt \(attempt) failed: \(error)")
+                    
+                    if attempt < maxRetries {
+                        // Try to refresh the context on retry
+                        viewContext.refreshAllObjects()
+                        
+                        // Exponential backoff: 0.1s, 0.2s, 0.4s
+                        let delay = 0.1 * pow(2.0, Double(attempt - 1))
+                        print("DEBUG: Retrying in \(delay) seconds...")
+                        Thread.sleep(forTimeInterval: delay)
+                    } else {
+                        print("ERROR: All \(maxRetries) attempts failed for year \(year)")
+                        result = []
+                    }
+                }
             }
         }
         return result
@@ -500,14 +527,41 @@ class CoreDataManager {
     /// Fetch events with custom predicate (for filtering)
     func fetchEvents(forYear year: Int32, predicate: NSPredicate) -> [Event] {
         var result: [Event] = []
+        let maxRetries = 3
+        var attempt = 0
+        
         viewContext.performAndWait {
-            let request: NSFetchRequest<Event> = Event.fetchRequest()
-            request.predicate = predicate
-            do {
-                result = try viewContext.fetch(request)
-            } catch {
-                print("Fetch events with predicate error: \(error)")
-                result = []
+            while attempt < maxRetries {
+                do {
+                    // Add defensive checks before fetch
+                    guard viewContext.persistentStoreCoordinator != nil else {
+                        print("ERROR: Core Data context has no persistent store coordinator")
+                        break
+                    }
+                    
+                    let request: NSFetchRequest<Event> = Event.fetchRequest()
+                    request.predicate = predicate
+                    
+                    result = try viewContext.fetch(request)
+                    print("DEBUG: Successfully fetched \(result.count) events with predicate on attempt \(attempt + 1)")
+                    break // Success, exit retry loop
+                } catch {
+                    attempt += 1
+                    print("ERROR: Fetch events with predicate - attempt \(attempt) failed: \(error)")
+                    
+                    if attempt < maxRetries {
+                        // Try to refresh the context on retry
+                        viewContext.refreshAllObjects()
+                        
+                        // Exponential backoff: 0.1s, 0.2s, 0.4s
+                        let delay = 0.1 * pow(2.0, Double(attempt - 1))
+                        print("DEBUG: Retrying in \(delay) seconds...")
+                        Thread.sleep(forTimeInterval: delay)
+                    } else {
+                        print("ERROR: All \(maxRetries) attempts failed for predicate fetch")
+                        result = []
+                    }
+                }
             }
         }
         return result
@@ -515,14 +569,41 @@ class CoreDataManager {
     
     func fetchEventsForBand(_ bandName: String, forYear year: Int32) -> [Event] {
         var result: [Event] = []
+        let maxRetries = 3
+        var attempt = 0
+        
         viewContext.performAndWait {
-            let request: NSFetchRequest<Event> = Event.fetchRequest()
-            request.predicate = NSPredicate(format: "band.bandName == %@ AND eventYear == %d", bandName, year)
-            do {
-                result = try viewContext.fetch(request)
-            } catch {
-                print("Fetch events for band and year error: \(error)")
-                result = []
+            while attempt < maxRetries {
+                do {
+                    // Add defensive checks before fetch
+                    guard viewContext.persistentStoreCoordinator != nil else {
+                        print("ERROR: Core Data context has no persistent store coordinator")
+                        break
+                    }
+                    
+                    let request: NSFetchRequest<Event> = Event.fetchRequest()
+                    request.predicate = NSPredicate(format: "band.bandName == %@ AND eventYear == %d", bandName, year)
+                    
+                    result = try viewContext.fetch(request)
+                    print("DEBUG: Successfully fetched \(result.count) events for band '\(bandName)' year \(year) on attempt \(attempt + 1)")
+                    break // Success, exit retry loop
+                } catch {
+                    attempt += 1
+                    print("ERROR: Fetch events for band '\(bandName)' year \(year) - attempt \(attempt) failed: \(error)")
+                    
+                    if attempt < maxRetries {
+                        // Try to refresh the context on retry
+                        viewContext.refreshAllObjects()
+                        
+                        // Exponential backoff: 0.1s, 0.2s, 0.4s
+                        let delay = 0.1 * pow(2.0, Double(attempt - 1))
+                        print("DEBUG: Retrying in \(delay) seconds...")
+                        Thread.sleep(forTimeInterval: delay)
+                    } else {
+                        print("ERROR: All \(maxRetries) attempts failed for band '\(bandName)' year \(year)")
+                        result = []
+                    }
+                }
             }
         }
         return result
