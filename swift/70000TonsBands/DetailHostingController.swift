@@ -59,6 +59,9 @@ class DetailHostingController: UIHostingController<AnyView> {
             navigationController.navigationBar.barStyle = UIBarStyle.blackTranslucent
             navigationController.navigationBar.tintColor = UIColor.white
             navigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+            
+            // Disable interactive pop gesture recognizer
+            navigationController.interactivePopGestureRecognizer?.isEnabled = false
         }
     }
     
@@ -77,7 +80,8 @@ class DetailHostingController: UIHostingController<AnyView> {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
+        // Disable interactive pop gesture recognizer
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         // The SwiftUI view will handle saving notes in its onDisappear modifier
     }
     

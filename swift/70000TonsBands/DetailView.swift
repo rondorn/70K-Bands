@@ -17,6 +17,7 @@ struct DetailView: View {
     
     init(bandName: String) {
         self._viewModel = StateObject(wrappedValue: DetailViewModel(bandName: bandName))
+        
     }
     
     var body: some View {
@@ -135,7 +136,7 @@ struct DetailView: View {
             }
         }
         .gesture(
-            DragGesture(minimumDistance: 50)
+            DragGesture(minimumDistance: 10)
                 .onChanged { gesture in
                     if !blockSwiping {
                         // Show drag feedback
@@ -147,7 +148,25 @@ struct DetailView: View {
                     
                     // Check if it's a valid swipe
                     if abs(swipeDistance) > 120 && !blockSwiping {
-                        performCarouselAnimation(swipeDistance: swipeDistance)
+                        // Check boundaries before starting animation
+                        let isSwipeLeft = swipeDistance < 0  // Swipe left = next
+                        let isSwipeRight = swipeDistance > 0  // Swipe right = previous
+                        
+                        let canNavigate = (isSwipeLeft && !viewModel.isAtEnd()) || 
+                                        (isSwipeRight && !viewModel.isAtStart())
+                        
+                        if canNavigate {
+                            performCarouselAnimation(swipeDistance: swipeDistance)
+                        } else {
+                            // At boundary - show toast without animation
+                            if isSwipeLeft {
+                                viewModel.navigateToNext()  // This will show "End of List" toast
+                            } else {
+                                viewModel.navigateToPrevious()  // This will show "Already at Start" toast
+                            }
+                            // Snap back immediately without animation
+                            offset = 0
+                        }
                     } else {
                         // Snap back if insufficient swipe
                         withAnimation(.easeOut(duration: 0.2)) {
