@@ -98,8 +98,8 @@ public class showBandDetails extends Activity {
     private TextView userNotesText;
     private TextView linksLabel;
     private ImageView websiteLink, metalArchivesLink, wikipediaLink, youtubeLink;
-    private TextView countryValue, genreValue, lastCruiseValue, noteValue;
-    private LinearLayout countryRow, genreRow, lastCruiseRow, noteRow;
+    private TextView countryValue, genreValue, lastCruiseValue, csvNoteworthyValue, noteValue;
+    private LinearLayout countryRow, genreRow, lastCruiseRow, csvNoteworthyRow, noteRow;
     private Button unknownButton, mustButton, mightButton, wontButton;
     
     // WebView navigation text buttons
@@ -1147,10 +1147,12 @@ public class showBandDetails extends Activity {
         countryValue = findViewById(R.id.country_value);
         genreValue = findViewById(R.id.genre_value);
         lastCruiseValue = findViewById(R.id.last_cruise_value);
+        csvNoteworthyValue = findViewById(R.id.csv_noteworthy_value);
         noteValue = findViewById(R.id.note_value);
         countryRow = findViewById(R.id.country_row);
         genreRow = findViewById(R.id.genre_row);
         lastCruiseRow = findViewById(R.id.last_cruise_row);
+        csvNoteworthyRow = findViewById(R.id.csv_noteworthy_row);
         noteRow = findViewById(R.id.note_row);
         
         // Ranking buttons
@@ -1208,10 +1210,12 @@ public class showBandDetails extends Activity {
         countryValue = findViewById(R.id.country_value);
         genreValue = findViewById(R.id.genre_value);
         lastCruiseValue = findViewById(R.id.last_cruise_value);
+        csvNoteworthyValue = findViewById(R.id.csv_noteworthy_value);
         noteValue = findViewById(R.id.note_value);
         countryRow = findViewById(R.id.country_row);
         genreRow = findViewById(R.id.genre_row);
         lastCruiseRow = findViewById(R.id.last_cruise_row);
+        csvNoteworthyRow = findViewById(R.id.csv_noteworthy_row);
         noteRow = findViewById(R.id.note_row);
         
         // Ranking buttons
@@ -2946,7 +2950,18 @@ public class showBandDetails extends Activity {
             lastCruiseRow.setVisibility(View.GONE);
         }
         
-        // Note - Get note data without HTML conversion for native TextView
+        // CSV Noteworthy - small read-only field from CSV showing "Act III set", "WWI themed", etc.
+        String csvNoteworthy = BandInfo.getNote(bandName);
+        Log.d("CSV_NOTEWORTHY_DEBUG", "Band: " + bandName + " | CSV noteworthy: '" + csvNoteworthy + "'");
+        if (!csvNoteworthy.trim().isEmpty()) {
+            csvNoteworthyValue.setText(csvNoteworthy.trim());
+            csvNoteworthyRow.setVisibility(View.VISIBLE);
+            hasExtraData = true;
+        } else {
+            csvNoteworthyRow.setVisibility(View.GONE);
+        }
+        
+        // Editable Note - Get note data without HTML conversion for native TextView
         String rawNote = "";
         if (bandNote != null && !bandNote.trim().isEmpty()) {
             rawNote = bandNote;
