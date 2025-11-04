@@ -194,6 +194,7 @@ class EventCSVImporter {
                 event.notes = lineData["Notes"]
                 event.descriptionUrl = lineData["Description URL"]
                 event.eventImageUrl = lineData["ImageURL"]
+                event.eventImageDate = lineData["ImageDate"]
                 
                 // Set timestamps
                 if existingEvent == nil {
@@ -364,6 +365,7 @@ class EventCSVImporter {
             case "Notes": return event.notes ?? ""
             case "Description URL": return event.descriptionUrl ?? ""
             case "ImageURL": return event.eventImageUrl ?? ""
+            case "ImageDate": return event.eventImageDate ?? ""
             default: return ""
             }
         } catch {

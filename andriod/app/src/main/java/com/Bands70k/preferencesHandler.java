@@ -219,8 +219,9 @@ public class preferencesHandler {
                         case "sortByTime":
                             setSortByTime(Boolean.valueOf(RowData[1]));
 
-                        case "showScheduleView":
-                            setShowScheduleView(Boolean.valueOf(RowData[1]));
+                        // REMOVED: showScheduleView - this is now session-only, always defaults to true
+                        // case "showScheduleView":
+                        //     setShowScheduleView(Boolean.valueOf(RowData[1]));
 
                         case "hideExpiredEvents":
                             setHideExpiredEvents(Boolean.valueOf(RowData[1]));
@@ -253,6 +254,16 @@ public class preferencesHandler {
             // CRITICAL: Initialize festival-specific event type filter visibility settings IMMEDIATELY
             // to prevent null values from affecting other filtering logic
             initializeEventTypeFilterVisibilityImmediate();
+            
+            // SESSION-ONLY: showScheduleView always defaults to true on every app launch
+            // Ensure sortByTime matches: Schedule View = Sort by Time (true)
+            Log.d("VIEW_MODE_SESSION", "🔄 App launch: showScheduleView initialized to true (session-only)");
+            if (!getSortByTime()) {
+                Log.d("VIEW_MODE_SESSION", "🔄 App launch: Resetting sortByTime to true to match schedule view");
+                setSortByTime(true);
+                // Save the corrected sort preference
+                saveData();
+            }
             
             removeFiltersForShowWillAttend();
         }
@@ -365,7 +376,8 @@ public class preferencesHandler {
         dataString += "scheduleUrl," + scheduleUrl + "\n";
         dataString += "pointerUrl," + pointerUrl + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
-        dataString += "showScheduleView," + getShowScheduleView().toString() + "\n";
+        // REMOVED: showScheduleView - session-only, never saved to disk
+        // dataString += "showScheduleView," + getShowScheduleView().toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
         dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
         dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";

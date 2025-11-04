@@ -80,13 +80,14 @@ open class imageHandler {
     /// - Parameters:
     ///   - urlString: The URL string for the image
     ///   - bandName: The name of the band
+    ///   - cacheFilename: Optional custom cache filename (without directory path). If nil, uses bandName + "_v2.png"
     ///   - completion: Completion handler called with the processed image
-    func downloadAndCacheImage(urlString: String, bandName: String, completion: @escaping (UIImage?) -> Void) {
+    func downloadAndCacheImage(urlString: String, bandName: String, cacheFilename: String? = nil, completion: @escaping (UIImage?) -> Void) {
         // Check if we're at the concurrent download limit
         if activeDownloads >= maxConcurrentDownloads {
             print("⏸️ Download limit reached (\(activeDownloads)/\(maxConcurrentDownloads)) - queuing download for \(bandName)")
             downloadQueue.async {
-                self.downloadAndCacheImage(urlString: urlString, bandName: bandName, completion: completion)
+                self.downloadAndCacheImage(urlString: urlString, bandName: bandName, cacheFilename: cacheFilename, completion: completion)
             }
             return
         }
@@ -131,11 +132,13 @@ open class imageHandler {
             let processedImage = image
             
             // Cache the processed image as PNG to preserve quality (v2 = high quality PNG)
-            let imageStoreFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(bandName + "_v2.png"))
+            // Use custom filename if provided (for date-based schedule images), otherwise use default
+            let filename = cacheFilename ?? (bandName + "_v2.png")
+            let imageStoreFile = URL(fileURLWithPath: getDocumentsDirectory().appendingPathComponent(filename))
             do {
                 let imageData = processedImage.pngData()
                 try imageData?.write(to: imageStoreFile, options: [.atomic])
-                print("Successfully cached processed image for \(bandName) as PNG")
+                print("Successfully cached processed image for \(bandName) as \(filename)")
             } catch {
                 print("Error caching image for \(bandName): \(error)")
             }

@@ -14,13 +14,20 @@ class Venue {
     public final String goingIcon;
     public final String notGoingIcon;
     public final String location; // Deck location (e.g., "Deck 11", "TBD")
+    public final boolean showInFilters; // Whether this venue should appear in the filters menu
     
-    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location) {
+    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location, boolean showInFilters) {
         this.name = name;
         this.color = color;
         this.goingIcon = goingIcon;
         this.notGoingIcon = notGoingIcon;
         this.location = location;
+        this.showInFilters = showInFilters;
+    }
+    
+    // Constructor with default showInFilters = true for backward compatibility
+    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location) {
+        this(name, color, goingIcon, notGoingIcon, location, true);
     }
 }
 
@@ -121,13 +128,13 @@ public class FestivalConfig {
             
             this.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388";
             
-            // MDF venues: Real venue names with Market Street addresses
+            // MDF venues: Real venue names with Market Street addresses (all shown in filters)
             this.venues = Arrays.asList(
-                new Venue("Market", "008000", "icon_theater", "icon_theater_alt", "121 Market"),
-                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt", "34 Market"),
-                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt", "20 Market"),
-                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt", "124 Market"),
-                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt", "10 Market")
+                new Venue("Market", "008000", "icon_theater", "icon_theater_alt", "121 Market", true),
+                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt", "34 Market", true),
+                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt", "20 Market", true),
+                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt", "124 Market", true),
+                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt", "10 Market", true)
             );
             
             // MDF: Hide all event type filters by default
@@ -145,8 +152,8 @@ public class FestivalConfig {
             this.appName = "70K Bands";
             this.packageName = "com.Bands70k";
             
-            this.defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1";
-            this.defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1";
+            this.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1";
+            this.defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1";
             
             this.firebaseConfigFile = "google-services-70k.json";
             
@@ -168,20 +175,20 @@ public class FestivalConfig {
             
             this.shareUrl = "http://www.facebook.com/70kBands";
             
-            // 70K venues: All venues with their deck locations
+            // 70K venues: Main venues shown in filters, others grouped as "Other"
             this.venues = Arrays.asList(
-                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt", "Deck 11"),
-                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt", "Deck 5"),
-                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt", "Deck 3/4"),
-                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt", "Deck 3"),
-                new Venue("Sports Bar", "FFA500", "icon_unknown", "icon_unknown_alt", "Deck 4"),
-                new Venue("Viking Crown", "800080", "icon_unknown", "icon_unknown_alt", "Deck 14"),
-                new Venue("Boleros Lounge", "8B4513", "icon_unknown", "icon_unknown_alt", "Deck 4"),
-                new Venue("Solarium", "20B2AA", "icon_unknown", "icon_unknown_alt", "Deck 11"),
-                new Venue("Ale And Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5"),
-                new Venue("Ale & Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5"),
-                new Venue("Bull And Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5"),
-                new Venue("Bull & Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5")
+                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt", "Deck 11", true),
+                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt", "Deck 5", true),
+                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt", "Deck 3/4", true),
+                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt", "Deck 3", true),
+                new Venue("Sports Bar", "FFA500", "icon_unknown", "icon_unknown_alt", "Deck 4", false),
+                new Venue("Viking Crown", "800080", "icon_unknown", "icon_unknown_alt", "Deck 14", false),
+                new Venue("Boleros Lounge", "8B4513", "icon_unknown", "icon_unknown_alt", "Deck 4", false),
+                new Venue("Solarium", "20B2AA", "icon_unknown", "icon_unknown_alt", "Deck 11", false),
+                new Venue("Ale And Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
+                new Venue("Ale & Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
+                new Venue("Bull And Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
+                new Venue("Bull & Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5", false)
             );
             
             // 70K: Show all event type filters by default (maintain existing behavior)
@@ -315,12 +322,26 @@ public class FestivalConfig {
     }
     
     /**
-     * Get all venue names
+     * Get all venue names (including those not shown in filters)
      */
     public List<String> getAllVenueNames() {
         List<String> names = new ArrayList<>();
         for (Venue venue : venues) {
             names.add(venue.name);
+        }
+        return names;
+    }
+    
+    /**
+     * Get venue names that should appear in the filter menu (showInFilters = true)
+     * Venues with showInFilters = false are handled by the "Other Venues" filter
+     */
+    public List<String> getFilterVenueNames() {
+        List<String> names = new ArrayList<>();
+        for (Venue venue : venues) {
+            if (venue.showInFilters) {
+                names.add(venue.name);
+            }
         }
         return names;
     }

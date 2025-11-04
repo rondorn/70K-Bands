@@ -809,7 +809,9 @@ public class CustomerDescriptionHandler {
         }
 
         try {
-            File changeFileFlag = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
+            // Note: Date is now embedded in the filename itself (bandName.note-DATE)
+            // No need for separate changeFileFlag file anymore - fileExists() handles cache invalidation
+            
             File bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
             
             // If a custom note exists, do NOT overwrite with default note from server
@@ -818,11 +820,13 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false) {
-                Log.d("70K_NOTE_DEBUG", "getDescription, re-downloading default data due to change! " + bandName);
-            } else if (bandNoteHandler.fileExists() == true) {
-                Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! " + bandName);
+            // Check if we have a cached note with the current date
+            // fileExists() automatically cleans up obsolete cache and returns true only if current date cache exists
+            if (bandNoteHandler.fileExists() == true) {
+                Log.d("70K_NOTE_DEBUG", "getDescription, cached note exists with current date for " + bandName + ", skipping download");
                 return;
+            } else {
+                Log.d("70K_NOTE_DEBUG", "getDescription, no cached note with current date for " + bandName + ", downloading");
             }
             
             // Check if year has changed and reload description map if needed
@@ -928,22 +932,24 @@ public class CustomerDescriptionHandler {
         }
 
         try {
-
-            File changeFileFlag = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
+            // Note: Date is now embedded in the filename itself (bandName.note-DATE)
+            // No need for separate changeFileFlag file anymore - fileExists() handles cache invalidation
+            
             File bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
             // PATCH: If a custom note exists, do NOT overwrite with default note from server
             if (bandCustNoteFile.exists()) {
                 Log.d("70K_NOTE_DEBUG", "Custom note exists for " + bandName + ", skipping default note download and overwrite.");
                 return;
             }
-            if (bandNoteHandler.fileExists() == true && changeFileFlag.exists() == false && bandCustNoteFile.exists() == false){
-                Log.d("70K_NOTE_DEBUG", "getDescription, re-downloading default data due to change! " + bandName);
-
-            } else if (bandNoteHandler.fileExists() == true){
-                Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! "+ bandName);
+            
+            // Check if we have a cached note with the current date
+            // fileExists() automatically cleans up obsolete cache and returns true only if current date cache exists
+            if (bandNoteHandler.fileExists() == true) {
+                Log.d("70K_NOTE_DEBUG", "getDescription, cached note exists with current date for " + bandName + ", skipping download");
                 return;
+            } else {
+                Log.d("70K_NOTE_DEBUG", "getDescription, no cached note with current date for " + bandName + ", downloading");
             }
-            Log.d("70K_NOTE_DEBUG", "getDescription, NOT re-downloading default data due to change! "+ bandName);
             String normalizedBandName = normalizeBandName(bandName);
             if (descriptionMapData.containsKey(normalizedBandName) == false) {
                 descriptionMapData = new HashMap<String,String>();
