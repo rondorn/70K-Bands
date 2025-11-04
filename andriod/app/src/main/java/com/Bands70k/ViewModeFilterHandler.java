@@ -37,11 +37,11 @@ public class ViewModeFilterHandler {
         viewModeToggleAll.setOnClickListener(new LinearLayout.OnClickListener() {
             public void onClick(View context) {
                 
-                // Toggle the view mode
+                // Toggle the view mode (session-only, not saved to disk)
                 boolean currentMode = staticVariables.preferences.getShowScheduleView();
                 Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: Current mode before toggle: " + currentMode);
                 staticVariables.preferences.setShowScheduleView(!currentMode);
-                Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: New mode after toggle: " + staticVariables.preferences.getShowScheduleView());
+                Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: New mode after toggle (session-only): " + staticVariables.preferences.getShowScheduleView());
                 
                 // AUTO SORT FIX: Automatically switch sort mode based on view mode
                 // Bands Only → Sort Alphabetically, Schedule View → Sort by Time
@@ -55,9 +55,9 @@ public class ViewModeFilterHandler {
                     Log.d("VIEW_MODE_DEBUG", "🔄 AUTO SORT: Switched to Sort Alphabetically for Bands Only View");
                 }
                 
-                // Save the preference to file
+                // Save sort preference (but NOT showScheduleView - it's session-only)
                 staticVariables.preferences.saveData();
-                Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: Preference saved to file");
+                Log.d("VIEW_MODE_DEBUG", "🔄 TOGGLE: Sort preference saved to file (showScheduleView is session-only)");
                 
                 // Update the UI immediately
                 setupViewModeFilters();
