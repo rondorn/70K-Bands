@@ -15,7 +15,11 @@ public class UserDataExportImport {
 
     public static String exportDataToZip() {
 
-        String zipFile = FileHandler70k.baseDirectory.getAbsolutePath() + "/userExport.zip";
+        // Generate festival-specific filename: 70kBandsUserData.zip or MDFBandsUserData.zip
+        FestivalConfig config = FestivalConfig.getInstance();
+        String festivalType = config.getFestivalType(); // "70K" or "MDF"
+        String zipFileName = festivalType.equals("70K") ? "70kBandsUserData.zip" : "MDFBandsUserData.zip";
+        String zipFile = FileHandler70k.baseDirectory.getAbsolutePath() + "/" + zipFileName;
         File userDir = FileHandler70k.baseDirectory;
 
         try {
@@ -29,8 +33,8 @@ public class UserDataExportImport {
                 if (fileName.contains("cachedImages")) {
                     Log.d("", "byPassing cache image Dir");
 
-                } else if (fileName.equals("userExport.zip") == true){
-                    Log.d("", "byPassing cprevious backup");
+                } else if (fileName.endsWith("UserData.zip")){
+                    Log.d("", "byPassing previous backup");
 
                 } else {
                     Log.d("", "Adding file: " + fileName);

@@ -123,23 +123,42 @@ public class OtherFilterHandler {
         
         Log.d("UNOFFICIAL_DEBUG", "🔧 setupOtherFilters called - showScheduleFilters=" + showScheduleFilters + ", showEventButtons=" + staticVariables.showEventButtons + ", showUnofficalEventButtons=" + staticVariables.showUnofficalEventButtons);
 
-        if ((staticVariables.showEventButtons == true || staticVariables.showUnofficalEventButtons == true) && showScheduleFilters){
+        // Show schedule filters if:
+        // 1. We have events OR
+        // 2. We have unofficial events enabled (even if currently hidden) OR
+        // 3. We have unofficial events visible
+        boolean shouldShowScheduleFilters = (staticVariables.showEventButtons || 
+                                            staticVariables.showUnofficalEventButtons || 
+                                            staticVariables.preferences.getUnofficalEventsEnabled()) && 
+                                           showScheduleFilters;
+        
+        if (shouldShowScheduleFilters){
             // SCHEDULE MODE: Show schedule-related filters
             
             // Check if we have ONLY unofficial events (special case)
+            // This includes both:
+            // 1. When unofficial events are visible and no regular events exist
+            // 2. When no events are visible but unofficial events might exist (hidden)
             boolean hasOnlyUnofficalEvents = staticVariables.showUnofficalEventButtons && !staticVariables.showEventButtons;
+            boolean mightHaveOnlyUnofficalEventsHidden = !staticVariables.showEventButtons && 
+                                                         !staticVariables.showUnofficalEventButtons && 
+                                                         staticVariables.preferences.getUnofficalEventsEnabled();
+            boolean treatAsOnlyUnofficalEvents = hasOnlyUnofficalEvents || mightHaveOnlyUnofficalEventsHidden;
             
-            // Check if any event type filters should be shown
+            // Check if any event type filters should be shown (based on festival config)
             boolean showAnyEventTypeFilters = staticVariables.preferences.getMeetAndGreetsEnabled() ||
                                              staticVariables.preferences.getSpecialEventsEnabled() ||
-                                             staticVariables.showUnofficalEventButtons;
+                                             staticVariables.preferences.getUnofficalEventsEnabled();
             
-            Log.d("UNOFFICIAL_DEBUG", "🔧 hasOnlyUnofficalEvents=" + hasOnlyUnofficalEvents + ", showAnyEventTypeFilters=" + showAnyEventTypeFilters);
+            Log.d("UNOFFICIAL_DEBUG", "🔧 hasOnlyUnofficalEvents=" + hasOnlyUnofficalEvents + 
+                  ", mightHaveOnlyUnofficalEventsHidden=" + mightHaveOnlyUnofficalEventsHidden + 
+                  ", treatAsOnlyUnofficalEvents=" + treatAsOnlyUnofficalEvents + 
+                  ", showAnyEventTypeFilters=" + showAnyEventTypeFilters);
             
             if (showAnyEventTypeFilters) {
-                if (hasOnlyUnofficalEvents) {
-                    // ONLY UNOFFICIAL EVENTS: Show only unofficial filter, hide header and others
-                    Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events - hiding other filters and header");
+                if (treatAsOnlyUnofficalEvents) {
+                    // ONLY UNOFFICIAL EVENTS (shown or hidden): Show only unofficial filter, hide header and others
+                    Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events (or hidden) - showing only unofficial filter");
                     FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow); // Hide header
                     FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow); // Hide break
                     FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
@@ -163,11 +182,12 @@ public class OtherFilterHandler {
                         FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
                     }
                     
-                    if (staticVariables.showUnofficalEventButtons) {
+                    // Show unofficial events filter if enabled in festival config (regardless of current visibility)
+                    if (staticVariables.preferences.getUnofficalEventsEnabled()) {
                         Log.d("UNOFFICIAL_DEBUG", "🔧 Showing unofficial events filter");
                         FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                     } else {
-                        Log.d("UNOFFICIAL_DEBUG", "🔧 Hiding unofficial events filter");
+                        Log.d("UNOFFICIAL_DEBUG", "🔧 Hiding unofficial events filter - not enabled for this festival");
                         FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                     }
                 }
@@ -180,7 +200,7 @@ public class OtherFilterHandler {
                 FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
             }
             
-            if (!hasOnlyUnofficalEvents) {
+            if (!treatAsOnlyUnofficalEvents) {
                 // Show location/venue filters in Schedule mode (but not when only unofficial events)
                 Log.d("UNOFFICIAL_DEBUG", "🔧 Showing location/venue, flagged, and sort sections");
                 FilterButtonHandler.showMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
@@ -195,8 +215,8 @@ public class OtherFilterHandler {
                 FilterButtonHandler.showMenuSection(R.id.Brake4, "TextView", popupWindow);
                 FilterButtonHandler.showMenuSection(R.id.sortOptionAll, "LinearLayout", popupWindow);
             } else {
-                // Hide location/venue, flagged, and sort sections when only unofficial events
-                Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events - hiding location/venue, flagged, and sort sections");
+                // Hide location/venue, flagged, and sort sections when only unofficial events (or when they're hidden)
+                Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events (or hidden) - hiding location/venue, flagged, and sort sections");
                 FilterButtonHandler.hideMenuSection(R.id.locationFilterHeader, "TextView", popupWindow);
                 FilterButtonHandler.hideMenuSection(R.id.Brake6, "TextView", popupWindow);
                 FilterButtonHandler.hideMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);

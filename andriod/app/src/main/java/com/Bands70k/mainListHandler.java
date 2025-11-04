@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.appcompat.widget.SearchView;
 import androidx.collection.ArraySet;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -438,24 +439,24 @@ public class mainListHandler {
 
         // Get the current festival configuration
         FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        List<String> filterVenues = festivalConfig.getFilterVenueNames();
 
-        // Check if this venue is one of the configured festival venues
-        boolean isConfiguredVenue = false;
-        for (String configuredVenue : configuredVenues) {
-            if (venue.equals(configuredVenue)) {
-                // Check if this specific venue is enabled
-                showVenue = getVenueShowState(configuredVenue);
-                isConfiguredVenue = true;
-                Log.d("VenueFilter", "Configured venue " + configuredVenue + " show state: " + showVenue);
+        // Check if this venue is one of the filter venues (showInFilters=true)
+        boolean isFilterVenue = false;
+        for (String filterVenue : filterVenues) {
+            if (venue.equals(filterVenue)) {
+                // Check if this specific filter venue is enabled
+                showVenue = getVenueShowState(filterVenue);
+                isFilterVenue = true;
+                Log.d("VenueFilter", "Filter venue " + filterVenue + " show state: " + showVenue);
                 break;
             }
         }
         
-        // If not a configured venue, treat as "Other"
-        if (!isConfiguredVenue) {
+        // If not a filter venue, treat as "Other" (includes venues with showInFilters=false)
+        if (!isFilterVenue) {
             showVenue = staticVariables.preferences.getShowOtherShows();
-            Log.d("VenueFilter", "Other venue '" + venue + "' show state: " + showVenue);
+            Log.d("VenueFilter", "Other venue '" + venue + "' (showInFilters=false or unknown) show state: " + showVenue);
         }
 
         return showVenue;
@@ -510,6 +511,12 @@ public class mainListHandler {
     private void turnSortedListIntoArrayAdapter(){
 
         ArrayList<String> displayableBandList = new ArrayList<String>();
+        
+        // CRITICAL FIX: Clear bandNamesIndex and attendedListMap before repopulating to prevent accumulation of old data
+        // This ensures these lists stay in sync with the displayed adapter list
+        bandNamesIndex.clear();
+        attendedListMap.clear();
+        Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Cleared bandNamesIndex and attendedListMap before repopulating");
 
         Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: Starting turnSortedListIntoArrayAdapter()");
         Log.d("CRITICAL_DEBUG", "🎯 ADAPTER: sortableBandNames.size() = " + sortableBandNames.size());
@@ -643,19 +650,19 @@ public class mainListHandler {
                  staticVariables.preferences.getShowAlbumListen() &&
                  staticVariables.preferences.getShowUnofficalEvents());
                  
-        // Check venue filters using dynamic system
+        // Check venue filters using dynamic system (only check filter venues + Other)
         boolean venueFiltersDefault = true;
         FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        java.util.List<String> filterVenues = festivalConfig.getFilterVenueNames();
         
-        // Check all configured venues
-        for (String venueName : configuredVenues) {
+        // Check all filter venues (showInFilters=true)
+        for (String venueName : filterVenues) {
             if (!staticVariables.preferences.getShowVenueEvents(venueName)) {
                 venueFiltersDefault = false;
                 break;
             }
         }
-        // Also check "Other" venues
+        // Also check "Other" venues (includes venues with showInFilters=false)
         if (!staticVariables.preferences.getShowVenueEvents("Other")) {
             venueFiltersDefault = false;
         }
@@ -789,6 +796,7 @@ public class mainListHandler {
             staticVariables.showEventButtons = true;
             // UNOFFICIAL EVENTS FIX: Only show unofficial events filter when unofficial events actually exist
             staticVariables.showUnofficalEventButtons = (numberOfUnofficalEvents > 0);
+            
             displayText = yearDisplay + " " + numberOfEvents + " " + staticVariables.context.getString(R.string.Events) + filteringText;
             staticVariables.staticBandCount = Integer.valueOf(numberOfEvents);
 

@@ -1584,10 +1584,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             venueFiltersActive = !(getShowPoolShows() && getShowRinkShows() && getShowOtherShows() && getShowLoungeShows() && getShowTheaterShows())
         } else {
             // Normal operation - use dynamic venue system
-            let configuredVenues = FestivalConfig.current.getAllVenueNames()
-            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig venues: \(configuredVenues)")
+            // Only check filter venues (showInFilters=true) - other venues are handled by "Other Venues"
+            let configuredVenues = FestivalConfig.current.getFilterVenueNames()
+            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig filter venues: \(configuredVenues)")
             
-            // Check all configured venues from FestivalConfig
+            // Check all filter venues from FestivalConfig
             for venueName in configuredVenues {
                 if !getShowVenueEvents(venueName: venueName) {
                     venueFiltersActive = true
@@ -1649,7 +1650,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var showEventMenu = false
         
-        if (scheduleReleased == true && (eventCount != unofficalEventCount && unfilteredEventCount > 0)){
+        if (scheduleReleased == true && (eventCount != eventCounterUnoffical && unfilteredEventCount > 0)){
             showEventMenu = true
         }
         
@@ -1661,7 +1662,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             showEventMenu = false
         }
         
-        print ("Show schedule choices = 1-\(scheduleReleased)  2-\(eventCount) 3-\(unofficalEventCount) 4-\(unfilteredCurrentEventCount) 5-\(unfilteredEventCount) 6-\(unfilteredCruiserEventCount) 7-\(showEventMenu)")
+        print ("Show schedule choices = 1-\(scheduleReleased)  2-\(eventCount) 3-\(eventCounterUnoffical) 4-\(unfilteredCurrentEventCount) 5-\(unfilteredEventCount) 6-\(unfilteredCruiserEventCount) 7-\(showEventMenu)")
         return showEventMenu
     }
     
@@ -1722,12 +1723,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     // Use the same logic from updateCountLable to determine display
                     let hasEvents = eventCount > 0
-                    let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
+                    // CRITICAL FIX: Only subtract unofficial events if they're being shown
+                    // If hidden, listCount already excludes them
+                    let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
+                    let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
                     let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
                     
                     if !getShowScheduleView() || (!hasEvents && hasBands) || (hasEvents && hasBands && allEventsAreUnofficial) {
                         // Show bands
-                        labeleCounter = listCount - eventCounterUnoffical
+                        labeleCounter = listCount - unofficialCountToSubtract
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
                     } else {
                         // Show events
@@ -1776,13 +1780,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Calculate what we have in the current list
         let hasEvents = eventCount > 0
-        let hasBands = bandCount > 0 || (listCount - eventCounterUnoffical) > 0
+        // CRITICAL FIX: Only subtract unofficial events if they're being shown
+        // If hidden, listCount already excludes them
+        let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
+        let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
         let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
         let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
         
         // DEBUG: Show the logic calculations
         print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents) (eventCount=\(eventCount))")
-        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (bandCount=\(bandCount), listCount-unofficial=\(listCount - eventCounterUnoffical))")
+        print("📊 [LOGIC_DEBUG] getShowUnofficalEvents: \(getShowUnofficalEvents())")
+        print("📊 [LOGIC_DEBUG] unofficialCountToSubtract: \(unofficialCountToSubtract)")
+        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (bandCount=\(bandCount), listCount-unofficial=\(listCount - unofficialCountToSubtract))")
         print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
         print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
         
@@ -1795,7 +1804,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // SPECIAL CASE: "Show Bands Only" mode
             // ALWAYS show band count, NEVER show "Events" regardless of content
             // ========================================================================
-            labeleCounter = listCount - eventCounterUnoffical
+            labeleCounter = listCount - unofficialCountToSubtract
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
@@ -1807,7 +1816,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // RULE 1: ONLY bands, NO events
             // Display "{x} Bands"
             // ========================================================================
-            labeleCounter = listCount - eventCounterUnoffical
+            labeleCounter = listCount - unofficialCountToSubtract
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
@@ -1831,7 +1840,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // RULE 3a: MIXTURE with ALL events being "Unofficial" or "Cruiser Organized"
             // Display "{x} Bands" (ignore unofficial event count)
             // ========================================================================
-            labeleCounter = listCount - eventCounterUnoffical
+            labeleCounter = listCount - unofficialCountToSubtract
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
@@ -1854,7 +1863,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // ========================================================================
             // FALLBACK: Should not reach here, but default to bands for safety
             // ========================================================================
-            labeleCounter = listCount - eventCounterUnoffical
+            labeleCounter = listCount - unofficialCountToSubtract
             if (labeleCounter < 0){
                 labeleCounter = 0
             }

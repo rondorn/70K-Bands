@@ -856,9 +856,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 zipFile = new File(zipFileName);
                 Log.d("", "Zip file name 2 is  " + zipFile.getAbsolutePath());
 
+                // Use dynamic authority based on current application ID (works for both 70K and MDF)
+                String authority = context.getPackageName() + ".fileprovider";
                 Uri zipFileUri = FileProvider.getUriForFile(
                         context,
-                        "com.Bands70k",
+                        authority,
                         zipFile);
 
                 Intent sharingIntent = new Intent(Intent.ACTION_SEND);
@@ -866,10 +868,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 sharingIntent.setType("application/zip");
                 sharingIntent.putExtra(Intent.EXTRA_STREAM, zipFileUri);
 
-                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Sharing File...");
-                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing File...");
+                // Use descriptive subject with actual filename
+                String fileName = zipFile.getName();
+                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Backup: " + fileName);
+                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing user data backup: " + fileName);
 
-                startActivity(Intent.createChooser(sharingIntent, "Share File"));
+                startActivity(Intent.createChooser(sharingIntent, "Share Backup File"));
 
                 dialog.dismiss();
                 sharedZipFile = true;
@@ -1297,6 +1301,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
         
+        // Initialize listHandler if not already initialized
+        if (listHandler == null) {
+            listHandler = new mainListHandler(showBands.this);
+        }
+        
+        // CRITICAL FIX: Clear both lists before repopulating to ensure sync with adapter
+        listHandler.bandNamesIndex.clear();
+        scheduleSortedBandNames.clear();
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Cleared bandNamesIndex and scheduleSortedBandNames before populating");
+        
         if (bandNames.size() == 0) {
             String emptyDataMessage = getResources().getString(R.string.waiting_for_data);
             bandListItem bandItem = new bandListItem(emptyDataMessage);
@@ -1311,10 +1325,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandListItem bandItem = new bandListItem(bandName);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
                 adapter.add(bandItem);
+                // CRITICAL FIX: Add band name to both lists to keep in sync with adapter
+                listHandler.bandNamesIndex.add(bandName);
+                scheduleSortedBandNames.add(bandName);
                 counter++;
             }
             
             Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Added " + counter + " bands to adapter");
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: bandNamesIndex.size() = " + listHandler.bandNamesIndex.size());
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
+            
+            // Verify sync between adapter and both lists
+            if (adapter.getCount() != listHandler.bandNamesIndex.size() || adapter.getCount() != scheduleSortedBandNames.size()) {
+                Log.e("SYNC_ERROR", "🚨 MISMATCH: adapter has " + adapter.getCount() + " items but bandNamesIndex has " + listHandler.bandNamesIndex.size() + " and scheduleSortedBandNames has " + scheduleSortedBandNames.size() + " items!");
+            } else {
+                Log.d("SYNC_SUCCESS", "✅ Adapter, bandNamesIndex, and scheduleSortedBandNames are in sync with " + adapter.getCount() + " items");
+            }
         }
         
         // Set the adapter after processing all data
@@ -1418,6 +1444,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         attendedHandler.loadShowsAttended();
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         
+        // CRITICAL FIX: Clear bandNamesIndex before repopulating to ensure sync with adapter
+        listHandler.bandNamesIndex.clear();
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Cleared bandNamesIndex before populating");
+        
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: About to iterate over scheduleSortedBandNames");
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames = " + (scheduleSortedBandNames != null ? "NOT NULL" : "NULL"));
@@ -1511,6 +1541,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
                 counter = counter + 1;
                 adapter.add(bandItem);
+                // CRITICAL FIX: Add band name to index to keep in sync with adapter
+                listHandler.bandNamesIndex.add(bandName);
             } else {
 
                 bandIndex = bandIndex.replaceAll(":", "");
@@ -1518,6 +1550,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandIndex));
                 counter = counter + 1;
                 adapter.add(bandItem);
+                // CRITICAL FIX: Add band name to index to keep in sync with adapter
+                listHandler.bandNamesIndex.add(bandIndex);
             }
 
         }
@@ -1525,6 +1559,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Handle processing after the main loop
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Finished processing loop, counter = " + counter);
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: adapter.getCount() = " + adapter.getCount());
+        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: bandNamesIndex.size() = " + listHandler.bandNamesIndex.size());
+        
+        // Verify sync between adapter and bandNamesIndex
+        if (adapter.getCount() != listHandler.bandNamesIndex.size()) {
+            Log.e("SYNC_ERROR", "🚨 MISMATCH: adapter has " + adapter.getCount() + " items but bandNamesIndex has " + listHandler.bandNamesIndex.size() + " items!");
+        } else {
+            Log.d("SYNC_SUCCESS", "✅ Adapter and bandNamesIndex are in sync with " + adapter.getCount() + " items");
+        }
 
         // Handle empty data case AFTER the loop
         if (counter == 0) {

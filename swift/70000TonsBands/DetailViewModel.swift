@@ -56,6 +56,8 @@ struct ScheduleEvent: Identifiable {
     let rawStartTime: String
     let originalEventType: String  // Original eventType for attendance tracking
     let rawLocation: String  // Original location without venue suffix for attendance tracking
+    let imageUrl: String  // Image URL for this event (from schedule)
+    let imageDate: String  // Image date for cache invalidation (from schedule)
 }
 
 // MARK: - DetailViewModel
@@ -305,10 +307,11 @@ class DetailViewModel: ObservableObject {
         
         // Ensure we're on the main thread for UI updates
         DispatchQueue.main.async {
+            // IMPORTANT: Load schedule events BEFORE image so we have imageDate available
+            self.loadScheduleEvents()
             self.loadBandImage()
             self.loadBandDetails()
             self.loadBandLinks()
-            self.loadScheduleEvents()
             self.loadNotes()
             self.loadPriority()
             self.setupTranslationButton()
@@ -1020,22 +1023,66 @@ class DetailViewModel: ObservableObject {
         
         let imageHandle = imageHandler()
         
+        // Check if this is a schedule image with a date (for cache invalidation)
+        // Schedule images (artistsSchedule) use date-based filenames to allow cache replacement when the date changes
+        var scheduleImageDate: String? = nil
+        print("🔍 DEBUG: Checking for schedule image date. scheduleEvents.count: \(scheduleEvents.count)")
+        print("🔍 DEBUG: imageURL from CombinedImageListHandler: '\(imageURL)'")
+        if let firstEvent = scheduleEvents.first {
+            print("🔍 DEBUG: First event - imageUrl: '\(firstEvent.imageUrl)', imageDate: '\(firstEvent.imageDate)'")
+            if !firstEvent.imageDate.isEmpty && !firstEvent.imageUrl.isEmpty {
+                // Check if the schedule imageUrl matches the URL we're loading
+                // This ensures we only use date-based caching for schedule images, not artist images
+                if firstEvent.imageUrl == imageURL {
+                    scheduleImageDate = firstEvent.imageDate
+                    print("📅 Schedule image detected with date: \(firstEvent.imageDate) for \(bandName)")
+                    print("📅 Schedule imageURL matches: \(firstEvent.imageUrl)")
+                } else {
+                    print("⚠️ DEBUG: Schedule imageUrl '\(firstEvent.imageUrl)' doesn't match loading URL '\(imageURL)'")
+                    print("⚠️ DEBUG: This is likely an artist image taking priority over schedule image")
+                }
+            } else {
+                print("⚠️ DEBUG: First event has empty imageDate or imageUrl")
+            }
+        } else {
+            print("⚠️ DEBUG: No schedule events found for \(bandName)")
+        }
+        
         // Check if cached image exists first (without returning placeholder)
         // Use versioned cache naming to distinguish old (low quality) from new (high quality) images
         let dirs = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
         let directoryPath = URL(fileURLWithPath: dirs[0])
         let oldImageStore = directoryPath.appendingPathComponent(bandName + ".png")      // Old cache format
-        let newImageStore = directoryPath.appendingPathComponent(bandName + "_v2.png")  // New cache format (PNG, no inversion)
+        
+        // Determine cache filename based on whether this is a schedule image with a date
+        let newImageStore: URL
+        if let imageDate = scheduleImageDate {
+            // Schedule image with date - use date-based filename for cache invalidation
+            newImageStore = directoryPath.appendingPathComponent(bandName + "_schedule_" + imageDate + ".png")
+            print("🗓️ Using date-based cache filename: \(bandName)_schedule_\(imageDate).png")
+            print("🗓️ Full path: \(newImageStore.path)")
+        } else {
+            // Artist image or schedule image without date - use standard v2 format
+            newImageStore = directoryPath.appendingPathComponent(bandName + "_v2.png")
+            print("📸 Using standard cache filename: \(bandName)_v2.png")
+        }
         
         // Check for new cache first
+        print("🔍 Checking if cache file exists at: \(newImageStore.path)")
+        let cacheExists = FileManager.default.fileExists(atPath: newImageStore.path)
+        print("🔍 Cache exists: \(cacheExists)")
+        
         if let newCachedImageData = UIImage(contentsOfFile: newImageStore.path) {
             // New cache exists - use it immediately
-            print("✅ Using new cached image for \(bandName) - no placeholder needed")
+            print("✅ Using cached image for \(bandName) from: \(newImageStore.lastPathComponent)")
             DispatchQueue.main.async {
                 self.isLoadingImage = false // Ensure loading state is cleared
                 self.bandImage = newCachedImageData
             }
             return
+        } else if scheduleImageDate != nil {
+            // No cache with current date - clean up any old schedule images with different dates
+            cleanupOldScheduleImages(bandName: bandName, currentDate: scheduleImageDate!, directoryPath: directoryPath)
         }
         
         // Check for old cache
@@ -1070,7 +1117,8 @@ class DetailViewModel: ObservableObject {
             // Only download individual images if not currently doing bulk downloads
             if !imageHandle.downloadingAllImages {
                 print("🔄 No cache found - attempting download for \(bandName)")
-                downloadAndCacheImage(imageURL: imageURL, imageHandle: imageHandle)
+                print("🔄 Will download from: \(imageURL)")
+                downloadAndCacheImage(imageURL: imageURL, imageHandle: imageHandle, scheduleImageDate: scheduleImageDate)
             } else {
                 print("⏸️ Skipping individual image download for \(bandName) - bulk download in progress")
                 // Don't show placeholder during bulk download - let it load when bulk completes
@@ -1083,7 +1131,7 @@ class DetailViewModel: ObservableObject {
         }
     }
     
-    private func downloadAndCacheImage(imageURL: String, imageHandle: imageHandler) {
+    private func downloadAndCacheImage(imageURL: String, imageHandle: imageHandler, scheduleImageDate: String?) {
         // Keep image area empty during download - don't set bandImage to anything initially
         print("🔄 Starting download for \(bandName) - keeping image area empty")
         
@@ -1092,7 +1140,16 @@ class DetailViewModel: ObservableObject {
             self.isLoadingImage = true
         }
         
-        imageHandle.downloadAndCacheImage(urlString: imageURL, bandName: bandName) { [weak self] processedImage in
+        // Determine custom cache filename if this is a schedule image with a date
+        let customFilename: String?
+        if let imageDate = scheduleImageDate {
+            customFilename = bandName + "_schedule_" + imageDate + ".png"
+            print("🗓️ Using custom cache filename for download: \(customFilename!)")
+        } else {
+            customFilename = nil
+        }
+        
+        imageHandle.downloadAndCacheImage(urlString: imageURL, bandName: bandName, cacheFilename: customFilename) { [weak self] processedImage in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
@@ -1107,6 +1164,33 @@ class DetailViewModel: ObservableObject {
                     self.bandImage = self.getFestivalDefaultLogo()
                 }
             }
+        }
+    }
+    
+    /// Cleans up old schedule images with different dates
+    /// - Parameters:
+    ///   - bandName: The name of the band
+    ///   - currentDate: The current ImageDate from the schedule
+    ///   - directoryPath: The documents directory URL
+    private func cleanupOldScheduleImages(bandName: String, currentDate: String, directoryPath: URL) {
+        print("🧹 Checking for old schedule images to clean up for \(bandName)")
+        
+        do {
+            let files = try FileManager.default.contentsOfDirectory(at: directoryPath, includingPropertiesForKeys: nil)
+            let prefix = bandName + "_schedule_"
+            let currentFilename = bandName + "_schedule_" + currentDate + ".png"
+            
+            for file in files {
+                let filename = file.lastPathComponent
+                // Check if this is a schedule image for this band but with a different date
+                if filename.hasPrefix(prefix) && filename != currentFilename && filename.hasSuffix(".png") {
+                    print("🗑️ Deleting old schedule image: \(filename)")
+                    try FileManager.default.removeItem(at: file)
+                    print("✅ Successfully deleted old schedule image: \(filename)")
+                }
+            }
+        } catch {
+            print("⚠️ Error cleaning up old schedule images: \(error)")
         }
     }
     
@@ -1238,6 +1322,8 @@ class DetailViewModel: ObservableObject {
                 let endTime = eventData[endTimeField] ?? ""
                 let eventType = eventData[typeField] ?? ""
                 let notes = eventData[notesField] ?? ""
+                let imageUrl = eventData[imageUrlField] ?? ""
+                let imageDate = eventData[imageUrlDateField] ?? ""
                 
                 let formattedStartTime = formatTimeValue(timeValue: startTime)
                 let formattedEndTime = formatTimeValue(timeValue: endTime)
@@ -1294,7 +1380,9 @@ class DetailViewModel: ObservableObject {
                     bandName: bandName,
                     rawStartTime: startTime,
                     originalEventType: eventType,  // Keep original eventType for attendance tracking
-                    rawLocation: location  // Keep original location without venue suffix for attendance tracking
+                    rawLocation: location,  // Keep original location without venue suffix for attendance tracking
+                    imageUrl: imageUrl,
+                    imageDate: imageDate
                 )
                 
                 newScheduleEvents.append(event)

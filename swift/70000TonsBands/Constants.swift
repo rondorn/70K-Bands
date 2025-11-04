@@ -132,6 +132,7 @@ var urlField = "URL"
 var urlDateField = "Date"
 var descriptionUrlField = "Description URL"
 var imageUrlField = "ImageURL"
+var imageUrlDateField = "ImageDate"
 
 var loadUrlCounter = 0
 
@@ -153,6 +154,8 @@ var bandNoteWorthy = [String: String]()
 var bandListIndexCache = 0
 
 //number of unoffical events
+// DEPRECATED: Use eventCounterUnoffical instead (defined at line 48)
+// This variable is kept for backward compatibility but is no longer used
 var unofficalEventCount = 0
 
 let chevronRight = UIImage(systemName: "chevron.right")

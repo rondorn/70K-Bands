@@ -33,15 +33,103 @@ public class BandNotes {
 
         bandName = bandValue;
         oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
-        bandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+        // Use date-based filename for cache invalidation (like iOS)
+        bandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + getNoteFileName());
         bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
+    }
+    
+    /**
+     * Gets the appropriate note filename based on whether a custom note exists and the date.
+     * This matches the iOS implementation for cache invalidation when the descriptionMap date changes.
+     * @return The filename to use for the note (with date embedded if available)
+     */
+    private String getNoteFileName() {
+        String approvedFileName;
+        String custCommentFileName = bandName + ".note_cust";
+        
+        // Check if we have a date for this band in the descriptionMap
+        String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(bandName));
+        
+        if (dateModified != null && !dateModified.equals("null") && !dateModified.isEmpty()) {
+            // Date available - use date-based filename for cache invalidation
+            String defaultCommentFileName = bandName + ".note-" + dateModified;
+            
+            File custCommentFile = new File(showBands.newRootDir + FileHandler70k.directoryName + custCommentFileName);
+            
+            if (custCommentFile.exists()) {
+                // Custom note exists - use it
+                approvedFileName = custCommentFileName;
+                Log.d("70K_NOTE_DEBUG", "Using custom note filename: " + approvedFileName);
+            } else {
+                // No custom note - use date-based default filename
+                approvedFileName = defaultCommentFileName;
+                Log.d("70K_NOTE_DEBUG", "Using date-based default filename: " + approvedFileName);
+            }
+        } else {
+            // No date available - fall back to custom filename
+            approvedFileName = custCommentFileName;
+            Log.d("70K_NOTE_DEBUG", "No date available, using custom filename: " + approvedFileName);
+        }
+        
+        return approvedFileName;
     }
 
     /**
+     * Cleans up obsolete cached note files with old dates.
+     * When the descriptionMap date changes, this removes the old cached file
+     * so a fresh version will be downloaded with the new date.
+     */
+    private void cleanupObsoleteCache() {
+        try {
+            String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(bandName));
+            
+            if (currentDate == null || currentDate.equals("null") || currentDate.isEmpty()) {
+                return; // No date info available, nothing to clean up
+            }
+            
+            File dir = new File(showBands.newRootDir + FileHandler70k.directoryName);
+            if (!dir.exists() || !dir.isDirectory()) {
+                return;
+            }
+            
+            // Find all note files for this band with different dates
+            File[] files = dir.listFiles((directory, filename) -> {
+                // Match: BandName.note-OLDDATE (but not the current date)
+                return filename.startsWith(bandName + ".note-") && 
+                       !filename.equals(bandName + ".note-" + currentDate) &&
+                       !filename.endsWith(".note_cust"); // Don't delete custom notes
+            });
+            
+            if (files != null) {
+                for (File obsoleteFile : files) {
+                    if (obsoleteFile.delete()) {
+                        Log.d("70K_NOTE_DEBUG", "Deleted obsolete cached note: " + obsoleteFile.getName());
+                    } else {
+                        Log.w("70K_NOTE_DEBUG", "Failed to delete obsolete cached note: " + obsoleteFile.getName());
+                    }
+                }
+            }
+            
+            // Also clean up the old static filename format if it exists
+            File oldStaticFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+            if (oldStaticFile.exists()) {
+                if (oldStaticFile.delete()) {
+                    Log.d("70K_NOTE_DEBUG", "Deleted old static cached note: " + oldStaticFile.getName());
+                }
+            }
+            
+        } catch (Exception e) {
+            Log.e("70K_NOTE_DEBUG", "Error cleaning up obsolete cache for " + bandName + ": " + e.getMessage());
+        }
+    }
+    
+    /**
      * Checks if the band note file exists.
+     * Cleans up obsolete cached files before checking.
      * @return True if the note file exists, false otherwise.
      */
     public boolean fileExists(){
+        cleanupObsoleteCache();
         return bandNoteFile.exists();
     }
 
@@ -191,9 +279,12 @@ public class BandNotes {
 
             FileHandler70k.writeObject(bandNameDataHash, bandNoteFile);
 
-            File bandNoteDateFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + "-" + dateModified);
-            FileHandler70k.saveData(dateModified, bandNoteDateFile);
-            Log.d("70K_NOTE_DEBUG", "Default note data saved for " + bandNoteFile);
+            // Note: Date is now embedded in the filename itself (bandName.note-DATE)
+            // No need to create a separate date file anymore
+            Log.d("70K_NOTE_DEBUG", "Default note data saved for " + bandNoteFile + " with date: " + dateModified);
+            
+            // Clean up any obsolete cached files with old dates
+            cleanupObsoleteCache();
         } else {
             Log.d("70K_NOTE_DEBUG", "Default note NOT saved (conditions not met) for " + bandName);
             bandNoteFile.delete();
@@ -249,6 +340,9 @@ public class BandNotes {
             FileHandler70k.writeObject(bandNameDataHash, bandCustNoteFile);
 
             Log.d("70K_NOTE_DEBUG", "Custom note data saved for " + bandNoteFile + " and " + bandCustNoteFile);
+            
+            // Clean up any obsolete cached files with old dates
+            cleanupObsoleteCache();
 
         } else {
             Log.d("70K_NOTE_DEBUG", "Custom note NOT saved (conditions not met) for " + bandName);

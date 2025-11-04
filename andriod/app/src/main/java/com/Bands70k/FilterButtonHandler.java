@@ -236,19 +236,19 @@ public class FilterButtonHandler  {
 
         Boolean blockChange = false;
         
-        // Check if all venues are hidden using dynamic venue system
+        // Check if all venues are hidden using dynamic venue system (only check filter venues + Other)
         FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        java.util.List<String> filterVenues = festivalConfig.getFilterVenueNames();
         
         boolean anyVenueVisible = false;
-        // Check all configured venues
-        for (String venueName : configuredVenues) {
+        // Check all filter venues (showInFilters=true)
+        for (String venueName : filterVenues) {
             if (staticVariables.preferences.getShowVenueEvents(venueName)) {
                 anyVenueVisible = true;
                 break;
             }
         }
-        // Also check "Other" venues
+        // Also check "Other" venues (includes venues with showInFilters=false)
         if (staticVariables.preferences.getShowVenueEvents("Other")) {
             anyVenueVisible = true;
         }

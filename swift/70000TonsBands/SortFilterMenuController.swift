@@ -26,7 +26,7 @@ func createrFilterMenu( controller: MasterViewController){
     ]
     
     // Determine if we should show schedule-related filters
-    let hasScheduledEvents = (eventCount > 0 && unofficalEventCount != eventCount)
+    let hasScheduledEvents = (eventCount > 0 && eventCounterUnoffical != eventCount)
     let showScheduleView = getShowScheduleView()
     let showScheduleFilters = hasScheduledEvents && showScheduleView
     
@@ -51,28 +51,38 @@ func createrFilterMenu( controller: MasterViewController){
         controller.filterMenu.dataSource.append("Sort By")
     }
     
-    // EVENT TYPE FILTERS: Only show when in Schedule mode AND at least one filter is enabled
-    let showEventTypeFilters = getMeetAndGreetsEnabled() || getSpecialEventsEnabled() || getUnofficalEventsEnabled()
+    // EVENT TYPE FILTERS: Handle scheduled and unofficial event filters separately
     
-    if showEventTypeFilters && showScheduleFilters {
+    // Show scheduled event type filters (Meet & Greet, Special Events) only when scheduled events exist
+    let showScheduledEventTypeFilters = showScheduleFilters && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
+    
+    // Show unofficial events filter if enabled and in schedule view (even if only unofficial events exist)
+    let showUnofficalEventFilter = getUnofficalEventsEnabled() && showScheduleView
+    
+    // Add event type filter section if any event type filters should be shown
+    if showScheduledEventTypeFilters || showUnofficalEventFilter {
         controller.filterMenu.dataSource.append("Event Type Filters")
         
-        // Conditionally add each event type filter based on settings
-        if getMeetAndGreetsEnabled() {
-            controller.filterMenu.dataSource.append("Meet and Greet Events")
+        // Only show Meet & Greet and Special Events when scheduled events exist
+        if showScheduleFilters {
+            if getMeetAndGreetsEnabled() {
+                controller.filterMenu.dataSource.append("Meet and Greet Events")
+            }
+            if getSpecialEventsEnabled() {
+                controller.filterMenu.dataSource.append("Special Events")
+            }
         }
-        if getSpecialEventsEnabled() {
-            controller.filterMenu.dataSource.append("Special Events")
-        }
-        if getUnofficalEventsEnabled() {
+        
+        // Show Unofficial Events filter even when only unofficial events exist (as long as in schedule view)
+        if showUnofficalEventFilter {
             controller.filterMenu.dataSource.append("Unoffical Events")
         }
     }
     
     // VENUE FILTERS: Only show when in Schedule mode AND scheduled events exist
     if showScheduleFilters {
-        // Dynamically add venue options based on FestivalConfig
-        let configuredVenues = FestivalConfig.current.getAllVenueNames()
+        // Dynamically add venue options based on FestivalConfig (only venues with showInFilters=true)
+        let configuredVenues = FestivalConfig.current.getFilterVenueNames()
         for venueName in configuredVenues {
             controller.filterMenu.dataSource.append("\(venueName) Venue")
         }
@@ -135,7 +145,7 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         setupCell(header: true, titleText: NSLocalizedString("Band Ranking Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
     } else if (item == "Flagged Header"){
-        if (eventCount > 0 && unofficalEventCount != eventCount){
+        if (eventCount > 0 && eventCounterUnoffical != eventCount){
             setupCell(header: true, titleText: NSLocalizedString("Show Only Flagged As Attended", comment: "") , cellData: cellRow, imageName: unknownIcon, disabled: false)
         }
         
@@ -283,8 +293,8 @@ func setupClearAllMenuChoices(controller: MasterViewController, item: String, ce
 
 func setupVenueClickResponse(controller: MasterViewController, item: String){
     
-    // Handle dynamic venues from FestivalConfig
-    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    // Handle dynamic venues from FestivalConfig (only venues with showInFilters=true)
+    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
     
     for venueName in configuredVenues {
         if (item == "\(venueName) Venue" && blockTurningAllFiltersOn(controller:controller) == false){
@@ -339,8 +349,8 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
 
 func setupVenueMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
     
-    // Handle dynamic venues from FestivalConfig
-    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    // Handle dynamic venues from FestivalConfig (only venues with showInFilters=true)
+    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
     
     for venueName in configuredVenues {
         if (item == "\(venueName) Venue"){
@@ -365,10 +375,10 @@ func setupVenueMenuChoices(controller: MasterViewController, item: String, cellR
     // Handle "Other Venue" (catch-all for non-configured venues)
     if (item == "Other Venue"){
         var currentIcon = unknownIconAlt
-        var currentText = NSLocalizedString("Show Other Events", comment: "")
+        var currentText = NSLocalizedString("Show Other Venues", comment: "")
         if (getShowOtherShows() == true){
             currentIcon = unknownIcon
-            currentText = NSLocalizedString("Hide Other Events", comment: "")
+            currentText = NSLocalizedString("Hide Other Venues", comment: "")
         }
         setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
         if (getShowOnlyWillAttened() == true){
@@ -612,8 +622,8 @@ func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
     var message = ""
     var venueCouner = 0
     
-    // Check if all dynamic venues are disabled
-    let configuredVenues = FestivalConfig.current.getAllVenueNames()
+    // Check if all dynamic venues are disabled (only venues with showInFilters=true)
+    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
     var allVenuesDisabled = true
     
     // Check dynamic venues
@@ -693,7 +703,14 @@ func setupViewModeClickResponse(controller: MasterViewController, item: String){
             setSortedBy("time")
             print("🔄 [VIEW_MODE_DEBUG] Switched to Schedule View - Auto-set Sort by Time")
         }
-        refreshAfterMenuSelected(controller: controller, message: "")
+        
+        // Close the menu immediately since view mode changes what menu items are shown
+        controller.filterMenu.hide()
+        
+        // Refresh data and rebuild menu for next time it's opened
+        writeFiltersFile()
+        controller.quickRefresh_Pre()
+        NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshGUI"), object: nil)
     }
 }
 

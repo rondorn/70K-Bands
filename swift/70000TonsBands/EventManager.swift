@@ -294,56 +294,58 @@ class EventManager {
         
         // 3. VENUE FILTERING (DYNAMIC approach using FestivalConfig venues)
         // This ensures new venues from different festivals are handled automatically
-        var excludedVenues: [String] = []
         
-        // Get the configurable venues from FestivalConfig
-        let configuredVenues = FestivalConfig.current.getAllVenueNames()
+        // Get the filter venues from FestivalConfig (only venues with showInFilters=true)
+        let filterVenues = FestivalConfig.current.getFilterVenueNames()
         
-        // Process each configured venue
-        for venueName in configuredVenues {
-            if !getShowVenueEvents(venueName: venueName) {
-                excludedVenues.append(venueName)
-                print("🔍 DEBUG: ❌ EXCLUDING \(venueName) venues")
-            } else {
+        // Build list of enabled filter venues
+        var enabledFilterVenues: [String] = []
+        
+        for venueName in filterVenues {
+            if getShowVenueEvents(venueName: venueName) {
+                enabledFilterVenues.append(venueName)
                 print("🔍 DEBUG: ✅ Including \(venueName) venues")
+            } else {
+                print("🔍 DEBUG: ❌ EXCLUDING \(venueName) venues")
             }
         }
         
-        if !getShowOtherShows() {
-            print("🔍 DEBUG: ❌ EXCLUDING Other venues (catch-all for non-configured venues)")
+        // Build the venue filter predicate
+        var venuePredicateParts: [NSPredicate] = []
+        
+        // Add predicates for enabled filter venues
+        // Use BEGINSWITH for exact venue matching to avoid "Lounge" matching "Boleros Lounge"
+        for venueName in enabledFilterVenues {
+            venuePredicateParts.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
+        }
+        
+        // Handle "Other" venues - if enabled, include venues not matching any filter venue
+        if getShowOtherShows() {
+            print("🔍 DEBUG: ✅ Including Other venues (venues with showInFilters=false)")
+            // If Other venues are enabled, we need to add a predicate for "NOT any filter venue"
+            if !filterVenues.isEmpty {
+                var filterVenuePredicates: [NSPredicate] = []
+                for venueName in filterVenues {
+                    // Use BEGINSWITH for exact venue matching
+                    filterVenuePredicates.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
+                }
+                let notFilterVenuesPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: 
+                    NSCompoundPredicate(orPredicateWithSubpredicates: filterVenuePredicates))
+                venuePredicateParts.append(notFilterVenuesPredicate)
+            }
         } else {
-            print("🔍 DEBUG: ✅ Including Other venues (catch-all for non-configured venues)")
+            print("🔍 DEBUG: ❌ EXCLUDING Other venues (venues with showInFilters=false)")
         }
         
-        // Apply venue exclusion filter
-        var venueExclusionPredicates: [NSPredicate] = []
-        
-        // Handle individual venue exclusions for all configured venues
-        for venue in excludedVenues {
-            venueExclusionPredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", venue))
-        }
-        
-        // Handle "Other" venues exclusion (catch-all for non-configured venues)
-        if !getShowOtherShows() {
-            // Exclude venues that are NOT any of the configured venues (catch-all)
-            var mainVenuePredicates: [NSPredicate] = []
-            for venueName in configuredVenues {
-                mainVenuePredicates.append(NSPredicate(format: "location CONTAINS[cd] %@", venueName))
-            }
-            if !mainVenuePredicates.isEmpty {
-                let mainVenuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: mainVenuePredicates)
-                venueExclusionPredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: mainVenuePredicate))
-            }
-        }
-        
-        // Apply combined venue exclusion filter
-        if !venueExclusionPredicates.isEmpty {
-            let combinedVenueExclusion = NSCompoundPredicate(orPredicateWithSubpredicates: venueExclusionPredicates)
-            let venueExclusionPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: combinedVenueExclusion)
-            eventPredicates.append(venueExclusionPredicate)
-            print("🔍 DEBUG: Applied venue exclusion filter (including catch-all for Other venues)")
+        // Apply the venue filter: show events that match enabled venues OR other venues (if enabled)
+        if !venuePredicateParts.isEmpty {
+            let venuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: venuePredicateParts)
+            eventPredicates.append(venuePredicate)
+            print("🔍 DEBUG: Applied venue filter: enabled=\(enabledFilterVenues), other=\(getShowOtherShows())")
         } else {
-            print("🔍 DEBUG: No venues excluded - showing ALL venues")
+            // No venues enabled and Other venues disabled = hide all venues
+            print("🔍 DEBUG: ⚠️ No venues enabled - this will show no events")
+            eventPredicates.append(NSPredicate(value: false)) // Force no results
         }
         
         // 4. TIME FILTERING (upcoming events only if hideExpiredScheduleData is enabled)
@@ -641,7 +643,8 @@ class EventManager {
                 "Type": event.eventType ?? "",
                 "Notes": event.notes ?? "",
                 "Description URL": event.descriptionUrl ?? "",
-                "ImageURL": event.eventImageUrl ?? ""
+                "ImageURL": event.eventImageUrl ?? "",
+                "ImageDate": event.eventImageDate ?? ""
             ]
             
             result[bandName]?[event.timeIndex] = eventData
@@ -667,7 +670,8 @@ class EventManager {
                 "Type": event.eventType ?? "",
                 "Notes": event.notes ?? "",
                 "Description URL": event.descriptionUrl ?? "",
-                "ImageURL": event.eventImageUrl ?? ""
+                "ImageURL": event.eventImageUrl ?? "",
+                "ImageDate": event.eventImageDate ?? ""
             ]
             
             result[event.timeIndex] = eventData

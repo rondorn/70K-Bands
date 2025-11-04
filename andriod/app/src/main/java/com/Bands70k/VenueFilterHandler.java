@@ -33,7 +33,7 @@ public class VenueFilterHandler {
     }
     
     public void setupVenueListener(showBands showBands){
-        Log.d("VenueFilterHandler", "Setting up dynamic venue listeners for " + festivalConfig.getAllVenueNames());
+        Log.d("VenueFilterHandler", "Setting up dynamic venue listeners for filter venues: " + festivalConfig.getFilterVenueNames());
         
         // Clear any existing venue sections
         if (dynamicVenueContainer != null) {
@@ -43,14 +43,14 @@ public class VenueFilterHandler {
             venueImageViews.clear();
         }
         
-        // Create venue filter sections dynamically based on FestivalConfig
-        List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        // Create venue filter sections ONLY for venues with showInFilters=true
+        List<String> filterVenues = festivalConfig.getFilterVenueNames();
         
-        for (String venueName : configuredVenues) {
+        for (String venueName : filterVenues) {
             createVenueFilterSection(venueName, showBands);
         }
         
-        // Always add "Other" section for venues not explicitly defined
+        // Always add "Other" section for venues with showInFilters=false
         createVenueFilterSection("Other", showBands);
         
         // Populate all the venue sections with their initial text and icons
@@ -192,21 +192,21 @@ public class VenueFilterHandler {
     }
 
     public void setupVenueFilters(){
-        Log.d("VenueFilterHandler", "Setting up venue filter UI for " + festivalConfig.getAllVenueNames());
+        Log.d("VenueFilterHandler", "Setting up venue filter UI for filter venues: " + festivalConfig.getFilterVenueNames());
         
         // If we don't have stored references (e.g., after Clear Filters), rebuild them by scanning the container
         if (venueTextViews.isEmpty() && dynamicVenueContainer != null) {
             rebuildVenueReferences();
         }
         
-        // Update UI for each dynamically created venue section
-        List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        // Update UI for each dynamically created venue section (only showInFilters=true venues)
+        List<String> filterVenues = festivalConfig.getFilterVenueNames();
         
-        for (String venueName : configuredVenues) {
+        for (String venueName : filterVenues) {
             updateVenueFilterUI(venueName);
         }
         
-        // Always update "Other" section
+        // Always update "Other" section (for showInFilters=false venues)
         updateVenueFilterUI("Other");
     }
     
@@ -220,7 +220,8 @@ public class VenueFilterHandler {
         venueTextViews.clear();
         venueImageViews.clear();
         
-        List<String> allVenueNames = new ArrayList<>(festivalConfig.getAllVenueNames());
+        // Only rebuild references for filter venues (showInFilters=true) plus "Other"
+        List<String> allVenueNames = new ArrayList<>(festivalConfig.getFilterVenueNames());
         allVenueNames.add("Other");
         
         // Scan through child views to find venue sections
