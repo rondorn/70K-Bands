@@ -84,6 +84,7 @@ public class staticVariables {
 
     public static Map<String, String> showNotesMap = new HashMap<String, String>();
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
+    public static Map<String, String> imageDateMap = new HashMap<String, String>(); // ImageDate for cache invalidation (schedule images only)
     public static Map<String, String> descriptionMapModData = new HashMap<String, String>();
     public static List<String> eventYearArray = new ArrayList<String>();
     
@@ -141,6 +142,7 @@ public class staticVariables {
     public final static String schedDescriptionURLRow = "Description URL";
     public final static String schedNotesRow = "Notes";
     public final static String schedImageURLRow = "ImageURL";
+    public final static String schedImageDateRow = "ImageDate";
 
 
     public final static String mustSeeKey = "mustSee";

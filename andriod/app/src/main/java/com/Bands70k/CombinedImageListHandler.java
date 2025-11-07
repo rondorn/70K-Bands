@@ -127,8 +127,30 @@ public class CombinedImageListHandler {
                     if (imageUrl != null && !imageUrl.trim().isEmpty()) {
                         // Only add if not already present (artist takes priority)
                         if (!newCombinedList.containsKey(bandName)) {
-                            newCombinedList.put(bandName, imageUrl);
-                            Log.d(TAG, "Added event image URL for " + bandName + ": " + imageUrl);
+                            // Get ImageDate if available for this event
+                            String imageDate = null;
+                            if (staticVariables.imageDateMap != null && staticVariables.imageDateMap.containsKey(bandName)) {
+                                imageDate = staticVariables.imageDateMap.get(bandName);
+                            }
+                            
+                            // Store as JSON if date exists, otherwise just URL string (backward compatible)
+                            if (imageDate != null && !imageDate.trim().isEmpty()) {
+                                try {
+                                    JSONObject imageInfo = new JSONObject();
+                                    imageInfo.put("url", imageUrl);
+                                    imageInfo.put("date", imageDate);
+                                    newCombinedList.put(bandName, imageInfo.toString());
+                                    Log.d(TAG, "Added event image URL for " + bandName + " with date " + imageDate + ": " + imageUrl);
+                                } catch (JSONException e) {
+                                    // Fallback to simple URL if JSON creation fails
+                                    newCombinedList.put(bandName, imageUrl);
+                                    Log.e(TAG, "Error creating JSON for " + bandName + ", using simple URL: " + e.getMessage());
+                                }
+                            } else {
+                                // No date - store as simple URL string (backward compatible)
+                                newCombinedList.put(bandName, imageUrl);
+                                Log.d(TAG, "Added event image URL for " + bandName + " (no date): " + imageUrl);
+                            }
                         } else {
                             Log.d(TAG, "Skipped event image URL for " + bandName + " (artist already has image): " + imageUrl);
                         }
@@ -155,6 +177,7 @@ public class CombinedImageListHandler {
     
     /**
      * Gets the image URL for a given name (artist or event).
+     * Handles both simple URL strings and JSON format (for schedule images with dates).
      * @param name The name to look up
      * @return The image URL or empty string if not found
      */
@@ -164,12 +187,80 @@ public class CombinedImageListHandler {
             Log.d(TAG, "Year changed detected, combined list cleared - will need regeneration");
         }
         
-        String url = combinedImageList.get(name);
-        if (url == null) {
-            url = "";
+        String value = combinedImageList.get(name);
+        if (value == null) {
+            // Fallback to reading directly from source data if combined list is empty
+            // This handles the case where we cleared the list during regeneration
+            if (staticVariables.imageUrlMap != null && staticVariables.imageUrlMap.containsKey(name)) {
+                String url = staticVariables.imageUrlMap.get(name);
+                Log.d(TAG, "Getting image URL for '" + name + "' from source data (fallback): " + url);
+                return url;
+            }
+            
+            // Also check artist images
+            String artistUrl = BandInfo.getImageUrl(name);
+            if (artistUrl != null && !artistUrl.trim().isEmpty()) {
+                Log.d(TAG, "Getting image URL for '" + name + "' from artist data (fallback): " + artistUrl);
+                return artistUrl;
+            }
+            
+            Log.d(TAG, "Getting image URL for '" + name + "': not found");
+            return "";
         }
-        Log.d(TAG, "Getting image URL for '" + name + "': " + url);
-        return url;
+        
+        // Check if value is JSON (schedule image with date) or simple URL string
+        if (value.trim().startsWith("{")) {
+            try {
+                JSONObject imageInfo = new JSONObject(value);
+                String url = imageInfo.getString("url");
+                Log.d(TAG, "Getting image URL for '" + name + "' (with date): " + url);
+                return url;
+            } catch (JSONException e) {
+                // Not valid JSON, treat as simple URL string
+                Log.d(TAG, "Getting image URL for '" + name + "': " + value);
+                return value;
+            }
+        } else {
+            // Simple URL string (artist image or schedule without date)
+            Log.d(TAG, "Getting image URL for '" + name + "': " + value);
+            return value;
+        }
+    }
+    
+    /**
+     * Gets the ImageDate for a given name (schedule events only).
+     * @param name The name to look up
+     * @return The ImageDate or null if not found or not a schedule image
+     */
+    public String getImageDate(String name) {
+        String value = combinedImageList.get(name);
+        if (value == null) {
+            // Fallback to reading directly from source data if combined list is empty
+            // This handles the case where we cleared the list during regeneration
+            if (staticVariables.imageDateMap != null && staticVariables.imageDateMap.containsKey(name)) {
+                String date = staticVariables.imageDateMap.get(name);
+                Log.d(TAG, "Getting image date for '" + name + "' from source data (fallback): " + date);
+                return date;
+            }
+            return null;
+        }
+        
+        // Only schedule images with dates are stored as JSON
+        if (value.trim().startsWith("{")) {
+            try {
+                JSONObject imageInfo = new JSONObject(value);
+                if (imageInfo.has("date")) {
+                    String date = imageInfo.getString("date");
+                    Log.d(TAG, "Getting image date for '" + name + "': " + date);
+                    return date;
+                }
+            } catch (JSONException e) {
+                // Not valid JSON
+            }
+        }
+        
+        // No date (artist image or schedule without date)
+        return null;
     }
     
     /**
@@ -196,16 +287,58 @@ public class CombinedImageListHandler {
             }
         }
         
-        // Check if any new events have been added
+        // Check if any new events have been added or ImageDate changed
         if (staticVariables.imageUrlMap != null) {
             for (Map.Entry<String, String> entry : staticVariables.imageUrlMap.entrySet()) {
                 String bandName = entry.getKey();
                 String imageUrl = entry.getValue();
                 
                 if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                    String currentUrl = currentList.get(bandName);
+                    String currentValue = currentList.get(bandName);
+                    
+                    // Get current ImageDate from source data
+                    String currentImageDate = null;
+                    if (staticVariables.imageDateMap != null && staticVariables.imageDateMap.containsKey(bandName)) {
+                        currentImageDate = staticVariables.imageDateMap.get(bandName);
+                    }
+                    
+                    // Check if URL changed
+                    String currentUrl = null;
+                    String currentDate = null;
+                    if (currentValue != null) {
+                        if (currentValue.trim().startsWith("{")) {
+                            // JSON format - extract URL and date
+                            try {
+                                JSONObject imageInfo = new JSONObject(currentValue);
+                                currentUrl = imageInfo.getString("url");
+                                if (imageInfo.has("date")) {
+                                    currentDate = imageInfo.getString("date");
+                                }
+                            } catch (JSONException e) {
+                                // Not valid JSON, treat as simple URL
+                                currentUrl = currentValue;
+                            }
+                        } else {
+                            // Simple URL string
+                            currentUrl = currentValue;
+                        }
+                    }
+                    
+                    // Check if URL changed
                     if (currentUrl == null || !currentUrl.equals(imageUrl)) {
-                        Log.d(TAG, "New event image detected for " + bandName + ", regeneration needed");
+                        Log.d(TAG, "Event image URL changed for " + bandName + ", regeneration needed");
+                        return true;
+                    }
+                    
+                    // Check if ImageDate changed
+                    if (currentImageDate != null && !currentImageDate.trim().isEmpty()) {
+                        if (currentDate == null || !currentDate.equals(currentImageDate.trim())) {
+                            Log.d(TAG, "Event image date changed for " + bandName + " (old: " + currentDate + ", new: " + currentImageDate + "), regeneration needed");
+                            return true;
+                        }
+                    } else if (currentDate != null) {
+                        // Date was removed (shouldn't happen, but handle it)
+                        Log.d(TAG, "Event image date removed for " + bandName + ", regeneration needed");
                         return true;
                     }
                 }
@@ -345,6 +478,14 @@ public class CombinedImageListHandler {
             Log.i(TAG, "Regeneration needed - year changed: " + yearChanged + 
                       ", list empty: " + combinedImageList.isEmpty() + 
                       ", data hash changed: " + !newSourceDataHash.equals(lastSourceDataHash));
+            
+            // CRITICAL: Clear the old cached list immediately to prevent stale data from being used
+            // This ensures that getImageDate() and getImageUrl() don't return old data
+            // during the regeneration process
+            synchronized (lock) {
+                combinedImageList.clear();
+                Log.d(TAG, "Cleared old combined list to prevent stale data during regeneration");
+            }
             
             generateCombinedImageList(bandInfo, new Runnable() {
                 @Override

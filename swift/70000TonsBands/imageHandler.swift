@@ -104,7 +104,9 @@ open class imageHandler {
         // Create a URLRequest with timeout for slow connections
         var request = URLRequest(url: url)
         request.timeoutInterval = 30.0 // 30 second timeout
-        request.cachePolicy = .returnCacheDataElseLoad // Use cache when available
+        // Always reload from server to ensure we get fresh images when ImageDate changes
+        // The file-based caching system handles persistent caching with date invalidation
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             defer {
@@ -175,7 +177,7 @@ open class imageHandler {
         }
     }
     
-    private func processBulkImagesInBatches(imageEntries: [(String, String)], batchSize: Int, delay: TimeInterval) {
+    private func processBulkImagesInBatches(imageEntries: [(String, ImageInfo)], batchSize: Int, delay: TimeInterval) {
         guard !imageEntries.isEmpty else {
             print("🖼️ Bulk image loading completed - all batches processed")
             downloadingAllImages = false
@@ -191,15 +193,33 @@ open class imageHandler {
         let group = DispatchGroup()
         
         // Process current batch
-        for (bandName, imageURL) in currentBatch {
+        for (bandName, imageInfo) in currentBatch {
+            let imageURL = imageInfo.url
+            let imageDate = imageInfo.date
+            
             let oldImageStoreName = bandName + ".png"        // Old cache format
-            let newImageStoreName = bandName + "_v2.png"     // New cache format (high quality PNG)
+            
+            // Determine cache filename based on whether image has a date
+            let newImageStoreName: String
+            let customFilename: String?
+            if let date = imageDate, !date.isEmpty {
+                // Schedule image with date - use date-based filename
+                newImageStoreName = bandName + "_schedule_" + date + ".png"
+                customFilename = newImageStoreName
+                print("🗓️ Processing \(bandName) with date-based cache: \(newImageStoreName)")
+            } else {
+                // Artist image or schedule without date - use standard format
+                newImageStoreName = bandName + "_v2.png"
+                customFilename = nil
+                print("📸 Processing \(bandName) with standard cache: \(newImageStoreName)")
+            }
+            
             let oldImageStoreFile = directoryPath.appendingPathComponent(oldImageStoreName)
             let newImageStoreFile = directoryPath.appendingPathComponent(newImageStoreName)
             
-            // Check if we already have the new high-quality cache
+            // Check if we already have the cache
             if FileManager.default.fileExists(atPath: newImageStoreFile.path) {
-                print("⏭️ Skipping \(bandName) - already have high-quality cache")
+                print("⏭️ Skipping \(bandName) - already have cache at \(newImageStoreName)")
             } else {
                 // Check if we have old cache that should be upgraded
                 if FileManager.default.fileExists(atPath: oldImageStoreFile.path) {
@@ -212,10 +232,10 @@ open class imageHandler {
                     }
                 }
                 
-                // Download and cache with new format
+                // Download and cache with appropriate format
                 group.enter()
-                print("🖼️ Downloading high-quality image for \(bandName) from \(imageURL)")
-                downloadAndCacheImage(urlString: imageURL, bandName: bandName) { downloadedImage in
+                print("🖼️ Downloading image for \(bandName) from \(imageURL)")
+                self.downloadAndCacheImage(urlString: imageURL, bandName: bandName, cacheFilename: customFilename) { downloadedImage in
                     if downloadedImage != nil {
                         print("✅ Successfully downloaded and cached high-quality image for \(bandName)")
                     } else {

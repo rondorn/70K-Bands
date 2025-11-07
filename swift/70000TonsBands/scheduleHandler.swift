@@ -340,6 +340,8 @@ open class scheduleHandler {
                         eventData[typeField] = eventType
                         eventData[notesField] = event.notes ?? ""
                         eventData[descriptionUrlField] = event.descriptionUrl ?? ""
+                        eventData[imageUrlField] = event.eventImageUrl ?? ""
+                        eventData[imageUrlDateField] = event.eventImageDate ?? ""
                         
                         // Store in schedulingData dictionary
                         if self._schedulingData[fakeBandName] == nil {
@@ -377,6 +379,7 @@ open class scheduleHandler {
                 eventData[notesField] = event.notes ?? ""
                 eventData[descriptionUrlField] = event.descriptionUrl ?? ""
                 eventData[imageUrlField] = event.eventImageUrl ?? ""
+                eventData[imageUrlDateField] = event.eventImageDate ?? ""
                 // CRITICAL: Include the unique identifier in the event data
                 eventData["identifier"] = event.identifier ?? "\(timeIndex):\(bandName)"
                 

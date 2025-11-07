@@ -164,6 +164,16 @@ public class scheduleInfo {
                         if (RowData.length > labelKeys.get(staticVariables.schedImageURLRow)) {
                             if (RowData[labelKeys.get(staticVariables.schedImageURLRow)].length() > 5) {
                                 staticVariables.imageUrlMap.put(bandName, RowData[labelKeys.get(staticVariables.schedImageURLRow)]);
+                                
+                                // Parse and store ImageDate if available (for cache invalidation)
+                                if (labelKeys.containsKey(staticVariables.schedImageDateRow) && 
+                                    RowData.length > labelKeys.get(staticVariables.schedImageDateRow)) {
+                                    String imageDate = RowData[labelKeys.get(staticVariables.schedImageDateRow)];
+                                    if (imageDate != null && !imageDate.trim().isEmpty()) {
+                                        staticVariables.imageDateMap.put(bandName, imageDate.trim());
+                                        Log.d("ScheduleImageDate", "Parsed ImageDate '" + imageDate.trim() + "' for band '" + bandName + "'");
+                                    }
+                                }
                             }
                         }
 

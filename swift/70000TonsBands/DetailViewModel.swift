@@ -260,8 +260,10 @@ class DetailViewModel: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             guard let self = self else { return }
-            print("🖼️ DetailViewModel: Image list updated, refreshing image for '\(self.bandName)'")
-            self.loadBandImage()
+            print("🖼️ DetailViewModel: Image list updated, reloading all data for '\(self.bandName)'")
+            // Reload all band data including schedule events to get updated ImageDate values
+            // This ensures ImageDate changes in the CSV trigger proper cache invalidation
+            self.loadBandData()
         }
         
         // Listen for band description updates to refresh the display when new content is downloaded
@@ -1008,45 +1010,38 @@ class DetailViewModel: ObservableObject {
         // Reset loading state at the start
         isLoadingImage = false
         
-        let imageURL = CombinedImageListHandler.shared.getImageUrl(for: bandName)
+        // Get image info (URL + date) from combined handler
+        guard let imageInfo = CombinedImageListHandler.shared.getImageInfo(for: bandName) else {
+            // No valid image info - could be due to async generation in progress or genuinely no image
+            print("❌ No image info for \(bandName) - showing festival-specific placeholder (async generation may be in progress)")
+            DispatchQueue.main.async {
+                self.isLoadingImage = false
+                self.bandImage = self.getFestivalDefaultLogo()
+            }
+            return
+        }
+        
+        let imageURL = imageInfo.url
+        let imageDate = imageInfo.date
+        
         print("Loading image for \(bandName) from URL: \(imageURL)")
+        if let date = imageDate, !date.isEmpty {
+            print("📅 Image has expiration date: \(date) (cache invalidation enabled)")
+        } else {
+            print("📸 Image has no expiration date (standard caching)")
+        }
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
-            // No valid URL - could be due to async generation in progress or genuinely no image
-            print("❌ No valid URL for \(bandName) - showing festival-specific placeholder (async generation may be in progress)")
+            print("❌ Invalid URL for \(bandName) - showing festival-specific placeholder")
             DispatchQueue.main.async {
-                self.isLoadingImage = false // Ensure loading state is cleared
+                self.isLoadingImage = false
                 self.bandImage = self.getFestivalDefaultLogo()
             }
             return
         }
         
         let imageHandle = imageHandler()
-        
-        // Check if this is a schedule image with a date (for cache invalidation)
-        // Schedule images (artistsSchedule) use date-based filenames to allow cache replacement when the date changes
-        var scheduleImageDate: String? = nil
-        print("🔍 DEBUG: Checking for schedule image date. scheduleEvents.count: \(scheduleEvents.count)")
-        print("🔍 DEBUG: imageURL from CombinedImageListHandler: '\(imageURL)'")
-        if let firstEvent = scheduleEvents.first {
-            print("🔍 DEBUG: First event - imageUrl: '\(firstEvent.imageUrl)', imageDate: '\(firstEvent.imageDate)'")
-            if !firstEvent.imageDate.isEmpty && !firstEvent.imageUrl.isEmpty {
-                // Check if the schedule imageUrl matches the URL we're loading
-                // This ensures we only use date-based caching for schedule images, not artist images
-                if firstEvent.imageUrl == imageURL {
-                    scheduleImageDate = firstEvent.imageDate
-                    print("📅 Schedule image detected with date: \(firstEvent.imageDate) for \(bandName)")
-                    print("📅 Schedule imageURL matches: \(firstEvent.imageUrl)")
-                } else {
-                    print("⚠️ DEBUG: Schedule imageUrl '\(firstEvent.imageUrl)' doesn't match loading URL '\(imageURL)'")
-                    print("⚠️ DEBUG: This is likely an artist image taking priority over schedule image")
-                }
-            } else {
-                print("⚠️ DEBUG: First event has empty imageDate or imageUrl")
-            }
-        } else {
-            print("⚠️ DEBUG: No schedule events found for \(bandName)")
-        }
+        let scheduleImageDate = (imageDate != nil && !imageDate!.isEmpty) ? imageDate : nil
         
         // Check if cached image exists first (without returning placeholder)
         // Use versioned cache naming to distinguish old (low quality) from new (high quality) images

@@ -9,6 +9,17 @@
 import Foundation
 import CoreData
 
+/// Stores image information including URL and optional expiration date
+struct ImageInfo: Codable {
+    let url: String
+    let date: String?  // ImageDate for cache invalidation (schedule images only)
+    
+    init(url: String, date: String? = nil) {
+        self.url = url
+        self.date = date
+    }
+}
+
 /// Handles the combined image list that merges artist and event images
 /// Artists take priority over events when both have image URLs
 class CombinedImageListHandler {
@@ -17,10 +28,10 @@ class CombinedImageListHandler {
     private let imageListQueue = DispatchQueue(label: "com.yourapp.combinedImageList", attributes: .concurrent)
     
     // Private backing store for the combined image list
-    private var _combinedImageList: [String: String] = [:]
+    private var _combinedImageList: [String: ImageInfo] = [:]
     
     // Thread-safe accessor
-    var combinedImageList: [String: String] {
+    var combinedImageList: [String: ImageInfo] {
         get {
             return imageListQueue.sync { _combinedImageList }
         }
@@ -55,7 +66,7 @@ class CombinedImageListHandler {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            var newCombinedList: [String: String] = [:]
+            var newCombinedList: [String: ImageInfo] = [:]
             
             // Get all band names and their image URLs (URL lookup only, no downloads)
             let bandNames = bandNameHandle.getBandNames()
@@ -63,8 +74,9 @@ class CombinedImageListHandler {
             for bandName in bandNames {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
-                    newCombinedList[bandName] = imageUrl
-                    print("📋 Added image URL for \(bandName): \(imageUrl)")
+                    // Artist images don't have dates - use nil
+                    newCombinedList[bandName] = ImageInfo(url: imageUrl, date: nil)
+                    print("📋 Added artist image URL for \(bandName): \(imageUrl)")
                 }
             }
             
@@ -82,15 +94,22 @@ class CombinedImageListHandler {
                     if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
-                            newCombinedList[bandName] = imageUrl
-                            print("📋 Added event image URL for \(bandName): \(imageUrl)")
+                            // Get ImageDate if available for schedule images
+                            let imageDate = eventData[imageUrlDateField] as? String
+                            newCombinedList[bandName] = ImageInfo(url: imageUrl, date: imageDate)
+                            if let date = imageDate, !date.isEmpty {
+                                print("📋 Added event image URL for \(bandName) with date \(date): \(imageUrl)")
+                            } else {
+                                print("📋 Added event image URL for \(bandName) (no date): \(imageUrl)")
+                            }
                         } else {
                             print("📋 Skipped event image URL for \(bandName) (artist already has URL): \(imageUrl)")
                         }
                     } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
-                            newCombinedList[bandName] = descriptionUrl
+                            // Description URLs don't have dates
+                            newCombinedList[bandName] = ImageInfo(url: descriptionUrl, date: nil)
                             print("Added event description URL for \(bandName): \(descriptionUrl)")
                         } else {
                             print("📋 Skipped event description URL for \(bandName) (artist already has URL): \(descriptionUrl)")
@@ -127,15 +146,22 @@ class CombinedImageListHandler {
                     if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[eventName] == nil {
-                            newCombinedList[eventName] = eventImageUrl
-                            print("📋 Added Core Data event image URL for '\(eventName)': \(eventImageUrl)")
+                            // Get ImageDate if available for this event
+                            let imageDate = event.eventImageDate
+                            newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: imageDate)
+                            if let date = imageDate, !date.isEmpty {
+                                print("📋 Added Core Data event image URL for '\(eventName)' with date \(date): \(eventImageUrl)")
+                            } else {
+                                print("📋 Added Core Data event image URL for '\(eventName)' (no date): \(eventImageUrl)")
+                            }
                         } else {
                             print("📋 Skipped Core Data event image URL for '\(eventName)' (already has URL): \(eventImageUrl)")
                         }
                     } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[eventName] == nil {
-                            newCombinedList[eventName] = descriptionUrl
+                            // Description URLs don't have dates
+                            newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
                             print("📋 Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
                         } else {
                             print("📋 Skipped Core Data event description URL for '\(eventName)' (already has URL): \(descriptionUrl)")
@@ -178,9 +204,23 @@ class CombinedImageListHandler {
             return ""
         }
         
-        let url = currentList[name] ?? ""
+        let url = currentList[name]?.url ?? ""
         print("CombinedImageListHandler: Getting image URL for '\(name)': \(url)")
         return url
+    }
+    
+    /// Gets the complete image info (URL and date) for a given name
+    /// - Parameter name: The name to look up
+    /// - Returns: The ImageInfo or nil if not found
+    func getImageInfo(for name: String) -> ImageInfo? {
+        let currentList = combinedImageList
+        
+        if currentList.isEmpty {
+            triggerAsyncGenerationIfNeeded()
+            return nil
+        }
+        
+        return currentList[name]
     }
     
     /// Triggers async generation of the image list if not already in progress
@@ -214,13 +254,14 @@ class CombinedImageListHandler {
             print("CombinedImageListHandler: Found \(bandNames.count) artists, generating list asynchronously")
             
             // Generate the combined list
-            var newCombinedList: [String: String] = [:]
+            var newCombinedList: [String: ImageInfo] = [:]
             
             // Process band names
             for bandName in bandNames {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
-                    newCombinedList[bandName] = imageUrl
+                    // Artist images don't have dates
+                    newCombinedList[bandName] = ImageInfo(url: imageUrl, date: nil)
                 }
             }
             
@@ -232,12 +273,15 @@ class CombinedImageListHandler {
                     if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
-                            newCombinedList[bandName] = imageUrl
+                            // Get ImageDate if available
+                            let imageDate = eventData[imageUrlDateField] as? String
+                            newCombinedList[bandName] = ImageInfo(url: imageUrl, date: imageDate)
                         }
                     } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
-                            newCombinedList[bandName] = descriptionUrl
+                            // Description URLs don't have dates
+                            newCombinedList[bandName] = ImageInfo(url: descriptionUrl, date: nil)
                         }
                     }
                 }
@@ -269,13 +313,16 @@ class CombinedImageListHandler {
                     if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[eventName] == nil {
-                            newCombinedList[eventName] = eventImageUrl
+                            // Get ImageDate if available
+                            let imageDate = event.eventImageDate
+                            newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: imageDate)
                             print("📋 [ASYNC] Added Core Data event image URL for '\(eventName)': \(eventImageUrl)")
                         }
                     } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[eventName] == nil {
-                            newCombinedList[eventName] = descriptionUrl
+                            // Description URLs don't have dates
+                            newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
                             print("📋 [ASYNC] Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
                         }
                     }
@@ -313,7 +360,7 @@ class CombinedImageListHandler {
         }
         
         // Build what the new list should look like and compare
-        var expectedList: [String: String] = [:]
+        var expectedList: [String: ImageInfo] = [:]
         var hasChanges = false
         
         // Get all band names and their image URLs
@@ -323,10 +370,11 @@ class CombinedImageListHandler {
         for bandName in bandNames {
             let imageUrl = bandNameHandle.getBandImageUrl(bandName)
             if !imageUrl.isEmpty {
-                expectedList[bandName] = imageUrl
-                // Check if this is different from current list
-                if currentList[bandName] != imageUrl {
-                    print("📋 Artist image URL changed for \(bandName): '\(currentList[bandName] ?? "nil")' -> '\(imageUrl)'")
+                let expectedInfo = ImageInfo(url: imageUrl, date: nil)
+                expectedList[bandName] = expectedInfo
+                // Check if this is different from current list (compare URL only for artists)
+                if currentList[bandName]?.url != imageUrl {
+                    print("📋 Artist image URL changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' -> '\(imageUrl)'")
                     hasChanges = true
                 }
             }
@@ -342,18 +390,23 @@ class CombinedImageListHandler {
                 if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
                     // Only add if not already present (artist takes priority)
                     if expectedList[bandName] == nil {
-                        expectedList[bandName] = imageUrl
-                        if currentList[bandName] != imageUrl {
-                            print("📋 Event image URL changed for \(bandName): '\(currentList[bandName] ?? "nil")' -> '\(imageUrl)'")
+                        // Get ImageDate if available
+                        let imageDate = eventData[imageUrlDateField] as? String
+                        let expectedInfo = ImageInfo(url: imageUrl, date: imageDate)
+                        expectedList[bandName] = expectedInfo
+                        // Check if URL or date changed
+                        if currentList[bandName]?.url != imageUrl || currentList[bandName]?.date != imageDate {
+                            print("📋 Event image changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' (date: '\(currentList[bandName]?.date ?? "nil")') -> '\(imageUrl)' (date: '\(imageDate ?? "nil")')")
                             hasChanges = true
                         }
                     }
                 } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
                     // Only add if not already present (artist takes priority)
                     if expectedList[bandName] == nil {
-                        expectedList[bandName] = descriptionUrl
-                        if currentList[bandName] != descriptionUrl {
-                            print("📋 Event description URL changed for \(bandName): '\(currentList[bandName] ?? "nil")' -> '\(descriptionUrl)'")
+                        let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
+                        expectedList[bandName] = expectedInfo
+                        if currentList[bandName]?.url != descriptionUrl {
+                            print("📋 Event description URL changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' -> '\(descriptionUrl)'")
                             hasChanges = true
                         }
                     }
@@ -387,18 +440,23 @@ class CombinedImageListHandler {
                 if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                     // Only add if not already present (artist takes priority)
                     if expectedList[eventName] == nil {
-                        expectedList[eventName] = eventImageUrl
-                        if currentList[eventName] != eventImageUrl {
-                            print("📋 Core Data event image URL changed for '\(eventName)': '\(currentList[eventName] ?? "nil")' -> '\(eventImageUrl)'")
+                        // Get ImageDate if available
+                        let imageDate = event.eventImageDate
+                        let expectedInfo = ImageInfo(url: eventImageUrl, date: imageDate)
+                        expectedList[eventName] = expectedInfo
+                        // Check if URL or date changed
+                        if currentList[eventName]?.url != eventImageUrl || currentList[eventName]?.date != imageDate {
+                            print("📋 Core Data event image changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' (date: '\(currentList[eventName]?.date ?? "nil")') -> '\(eventImageUrl)' (date: '\(imageDate ?? "nil")')")
                             hasChanges = true
                         }
                     }
                 } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                     // Only add if not already present (artist takes priority)
                     if expectedList[eventName] == nil {
-                        expectedList[eventName] = descriptionUrl
-                        if currentList[eventName] != descriptionUrl {
-                            print("📋 Core Data event description URL changed for '\(eventName)': '\(currentList[eventName] ?? "nil")' -> '\(descriptionUrl)'")
+                        let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
+                        expectedList[eventName] = expectedInfo
+                        if currentList[eventName]?.url != descriptionUrl {
+                            print("📋 Core Data event description URL changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(descriptionUrl)'")
                             hasChanges = true
                         }
                     }
@@ -434,9 +492,11 @@ class CombinedImageListHandler {
     /// Saves the combined image list to disk
     private func saveCombinedImageList() {
         do {
-            let jsonData = try JSONSerialization.data(withJSONObject: combinedImageList, options: .prettyPrinted)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let jsonData = try encoder.encode(combinedImageList)
             try jsonData.write(to: combinedImageListFile)
-            print("Combined image list saved to disk")
+            print("Combined image list saved to disk with \(combinedImageList.count) entries")
         } catch {
             print("Error saving combined image list: \(error)")
         }
@@ -451,9 +511,26 @@ class CombinedImageListHandler {
         
         do {
             let jsonData = try Data(contentsOf: combinedImageListFile)
-            if let loadedList = try JSONSerialization.jsonObject(with: jsonData) as? [String: String] {
+            let decoder = JSONDecoder()
+            
+            // Try to decode as new format first
+            if let loadedList = try? decoder.decode([String: ImageInfo].self, from: jsonData) {
                 combinedImageList = loadedList
-                print("Combined image list loaded from disk with \(loadedList.count) entries")
+                print("Combined image list loaded from disk with \(loadedList.count) entries (new format)")
+            }
+            // Fall back to old format for backward compatibility
+            else if let oldFormatList = try? JSONSerialization.jsonObject(with: jsonData) as? [String: String] {
+                print("⚠️ Loading old format combined image list, converting to new format...")
+                var convertedList: [String: ImageInfo] = [:]
+                for (name, url) in oldFormatList {
+                    convertedList[name] = ImageInfo(url: url, date: nil)
+                }
+                combinedImageList = convertedList
+                // Save in new format immediately
+                saveCombinedImageList()
+                print("Combined image list converted and saved in new format with \(convertedList.count) entries")
+            } else {
+                print("❌ Error: Could not decode combined image list in any known format")
             }
         } catch {
             print("Error loading combined image list: \(error)")
