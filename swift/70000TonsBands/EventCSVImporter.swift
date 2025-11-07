@@ -194,7 +194,25 @@ class EventCSVImporter {
                 event.notes = lineData["Notes"]
                 event.descriptionUrl = lineData["Description URL"]
                 event.eventImageUrl = lineData["ImageURL"]
-                event.eventImageDate = lineData["ImageDate"]
+                
+                // CRITICAL: Get ImageDate and log for debugging
+                let imageDateFromCSV = lineData["ImageDate"] ?? ""
+                let trimmedImageDate = imageDateFromCSV.trimmingCharacters(in: .whitespacesAndNewlines)
+                event.eventImageDate = trimmedImageDate.isEmpty ? nil : trimmedImageDate
+                
+                // DEBUG: Log ImageDate parsing for ALL events with ImageURL
+                if let imageUrl = lineData["ImageURL"], !imageUrl.isEmpty {
+                    if !trimmedImageDate.isEmpty {
+                        print("📅 [CSV_IMPORT] Parsed ImageDate '\(trimmedImageDate)' for band '\(lineData["Band"] ?? "unknown")' with ImageURL: \(imageUrl)")
+                    } else {
+                        print("⚠️ [CSV_IMPORT] Band '\(lineData["Band"] ?? "unknown")' has ImageURL but ImageDate is empty or missing")
+                        print("⚠️ [CSV_IMPORT] Raw ImageDate value: '\(imageDateFromCSV)' (length: \(imageDateFromCSV.count))")
+                        // Also log all available keys to see what CSV parser is returning
+                        if rowIndex <= 5 {
+                            print("⚠️ [CSV_IMPORT] Available CSV keys: \(lineData.keys.sorted())")
+                        }
+                    }
+                }
                 
                 // Set timestamps
                 if existingEvent == nil {

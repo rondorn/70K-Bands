@@ -206,6 +206,20 @@ class ScheduleCSVImporter {
                 print("🔧 [UNOFFICIAL_DEBUG] - About to call createOrUpdateEvent...")
             }
             
+            // Get ImageDate from CSV (trim whitespace, use nil if empty)
+            let imageDateFromCSV = lineData[imageUrlDateField] ?? ""
+            let trimmedImageDate = imageDateFromCSV.trimmingCharacters(in: .whitespacesAndNewlines)
+            let eventImageDate = trimmedImageDate.isEmpty ? nil : trimmedImageDate
+            
+            // DEBUG: Log ImageDate parsing for events with ImageURL
+            if let imageUrl = lineData[imageUrlField], !imageUrl.isEmpty {
+                if !trimmedImageDate.isEmpty {
+                    print("📅 [CSV_IMPORT] Parsed ImageDate '\(trimmedImageDate)' for band '\(bandName)' with ImageURL: \(imageUrl)")
+                } else {
+                    print("⚠️ [CSV_IMPORT] Band '\(bandName)' has ImageURL but ImageDate is empty or missing")
+                }
+            }
+            
             // Find existing event or create new one with calculated time indices
             let event = createOrUpdateEvent(context: context,
                 band: band,
@@ -220,7 +234,8 @@ class ScheduleCSVImporter {
                 eventYear: Int32(eventYear),
                 notes: lineData[notesField],
                 descriptionUrl: lineData[descriptionUrlField],
-                eventImageUrl: lineData[imageUrlField]
+                eventImageUrl: lineData[imageUrlField],
+                eventImageDate: eventImageDate
             )
             
             // Debug Show events after creation
@@ -464,7 +479,8 @@ class ScheduleCSVImporter {
         eventYear: Int32?,
         notes: String?,
         descriptionUrl: String?,
-        eventImageUrl: String?
+        eventImageUrl: String?,
+        eventImageDate: String?
     ) -> Event {
         // Try to find existing event using bandName and timeIndex (more reliable than object comparison)
         let request: NSFetchRequest<Event> = Event.fetchRequest()
@@ -489,6 +505,7 @@ class ScheduleCSVImporter {
             event.notes = notes
             event.descriptionUrl = descriptionUrl
             event.eventImageUrl = eventImageUrl
+            event.eventImageDate = eventImageDate
             
             return event
         } catch {
@@ -508,6 +525,7 @@ class ScheduleCSVImporter {
             event.notes = notes
             event.descriptionUrl = descriptionUrl
             event.eventImageUrl = eventImageUrl
+            event.eventImageDate = eventImageDate
             return event
         }
     }
