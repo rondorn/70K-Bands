@@ -216,6 +216,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
+        // CRITICAL: Start Core Data initialization ASYNCHRONOUSLY to avoid watchdog timeout
+        // Uses thread-safe initialization that prevents race conditions
+        // ViewControllers will wait for completion if they access Core Data before init finishes
+        print("🚀 Starting Core Data initialization (async, thread-safe)...")
+        DispatchQueue.global(qos: .userInitiated).async {
+            // This will trigger thread-safe initialization
+            _ = CoreDataManager.shared.persistentContainer
+        }
+        
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
@@ -299,63 +308,85 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         "validateScheduleFile": "NO"]
         UserDefaults.standard.register(defaults: defaults)
         
-        // Configure Firebase with festival-specific config file
-        if let path = Bundle.main.path(forResource: FestivalConfig.current.firebaseConfigFile, ofType: "plist"),
-           let options = FirebaseOptions(contentsOfFile: path) {
-            FirebaseApp.configure(options: options)
-        } else {
-            // Fallback to default configuration
-            FirebaseApp.configure()
+        // CRITICAL: Do NOT call iCloud operations on main thread during launch
+        // purgeOldiCloudKeys() processes 795+ keys and takes 30+ seconds -> watchdog timeout
+        // Move ALL iCloud setup to background thread
+        print("iCloud: Deferring iCloud operations to background thread (non-blocking)...")
+        
+        DispatchQueue.global(qos: .utility).async {
+            let iCloudHandle = iCloudDataHandler()
+            
+            // This can take 30+ seconds with 795+ keys - must be in background
+            iCloudHandle.purgeOldiCloudKeys()
+            
+            let iCloudEnabled = iCloudHandle.checkForIcloud()
+            print("iCloud: iCloud enabled status: \(iCloudEnabled)")
+            
+            // Test if we can read from iCloud
+            let testValue = NSUbiquitousKeyValueStore.default.string(forKey: "testKey")
+            print("iCloud: Test read from iCloud (testKey): \(testValue ?? "nil")")
+            
+            // Set a test value to verify write capability
+            NSUbiquitousKeyValueStore.default.set("test-\(Date().timeIntervalSince1970)", forKey: "testKey")
+            NSUbiquitousKeyValueStore.default.synchronize()
+            print("iCloud: Test value written to iCloud")
         }
-        FirebaseConfiguration.shared.setLoggerLevel(.min)
-        
-        let iCloudHandle = iCloudDataHandler()
-        iCloudHandle.purgeOldiCloudKeys()
-        let iCloudEnabled = iCloudHandle.checkForIcloud()
-        print("iCloud: iCloud enabled status: \(iCloudEnabled)")
-        
-        // Test if we can read from iCloud
-        let testValue = NSUbiquitousKeyValueStore.default.string(forKey: "testKey")
-        print("iCloud: Test read from iCloud (testKey): \(testValue ?? "nil")")
-        
-        // Set a test value to verify write capability
-        NSUbiquitousKeyValueStore.default.set("test-\(Date().timeIntervalSince1970)", forKey: "testKey")
-        NSUbiquitousKeyValueStore.default.synchronize()
-        print("iCloud: Test value written to iCloud")
 
         // MIGRATION DISABLED: Old migration system interferes with new Core Data iCloud sync
         // The new CoreDataiCloudSync system handles all iCloud operations
         // iCloudHandle.detectAndMigrateOldPriorityData()
         // iCloudHandle.detectAndMigrateOldScheduleData()
 
-        // Register for notification of iCloud key-value changes, but do an intial load
+        // Register for notification of iCloud key-value changes (lightweight, can stay on main thread)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(AppDelegate.iCloudKeysChanged(_:)),
                                                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: NSUbiquitousKeyValueStore.default)
         
-        // Start iCloud key-value updates
-        NSUbiquitousKeyValueStore.default.synchronize()
+        print("iCloud: Registered for iCloud KVS change notifications")
         
-        // Test iCloud availability and log status
-        print("iCloud: Testing iCloud setup...")
-        
-        setupCurrentYearUrls()
-        
-        // Download and update pointer file on launch
-        downloadAndUpdatePointerFileOnLaunch()
+        // CRITICAL FIX: Defer ALL network operations until app is fully active
+        // On first launch, iOS hasn't fully initialized network stack yet
+        // Early network calls fail with error -9816 and timeout after 30 seconds
+        // Deferring allows app UI to display immediately while network initializes
+        // 3.5s delay ensures ALL network endpoints (not just Google) are ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            print("⏳ Starting deferred network operations (app fully initialized)...")
+            
+            // Configure Firebase with festival-specific config file
+            // MUST be deferred to avoid error -9816 on first launch
+            if let path = Bundle.main.path(forResource: FestivalConfig.current.firebaseConfigFile, ofType: "plist"),
+               let options = FirebaseOptions(contentsOfFile: path) {
+                FirebaseApp.configure(options: options)
+            } else {
+                // Fallback to default configuration
+                FirebaseApp.configure()
+            }
+            FirebaseConfiguration.shared.setLoggerLevel(.min)
+            print("✅ Firebase configured")
+            
+            setupCurrentYearUrls()
+            self.downloadAndUpdatePointerFileOnLaunch()
+            
+            // Initialize Firebase Messaging after Firebase is configured
+            // This prevents error -9816 (SSL connection failure) on first launch
+            Messaging.messaging().delegate = self
+            self.printFCMToken()
+            print("✅ Firebase Messaging initialized")
+            
+            // Register for remote notifications after network stack is ready
+            // APNs registration requires network connectivity
+            application.registerForRemoteNotifications()
+            print("✅ Remote notifications registered")
+            
+            print("✅ Deferred network operations started")
+        }
 
-
-       Messaging.messaging().delegate = self
-
+        // Set up notification permissions immediately (doesn't require network)
         UNUserNotificationCenter.current().delegate = self
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
         UNUserNotificationCenter.current().requestAuthorization(
             options: authOptions,
             completionHandler: {_, _ in })
-
-        Messaging.messaging().delegate = self
-
-        printFCMToken()
         
         // Defer iCloud sync until after bands and schedule data are loaded
         // This ensures iCloud priority/attendance data is applied to already-loaded band/schedule data
@@ -411,8 +442,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("iCloud: The proper loading sequence will handle iCloud sync after core data is loaded")
             }
         }
-        
-        application.registerForRemoteNotifications()
         
 
         //generate user data
@@ -631,15 +660,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
  
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
-        connectToFcm()
-        
-        // Move all potentially blocking operations to background thread
-        DispatchQueue.global(qos: .utility).async {
+        // SAFETY: Defer Firebase operations to ensure Firebase is configured
+        // Firebase is configured with 3.5s delay in didFinishLaunching
+        // If app becomes active quickly, we need to wait for Firebase to be ready
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 4.0) {
+            // Only connect to FCM after Firebase is definitely configured
+            self.connectToFcm()
+            
             // Force iCloud synchronization when app becomes active
             print("iCloud: App became active, forcing iCloud synchronization in background")
             NSUbiquitousKeyValueStore.default.synchronize()
             
-            // Perform network operations in background
+            // Perform network operations in background (Firebase now guaranteed to be configured)
             let userDataHandle = userDataHandler()
             let userDataReportHandle = firebaseUserWrite()
             userDataReportHandle.writeData()

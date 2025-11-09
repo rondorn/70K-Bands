@@ -830,8 +830,10 @@ func setupDefaults() {
     
     // Trigger background update of schedule URL for next access (non-blocking)
     DispatchQueue.global(qos: .background).async {
-        // Add safety delay to ensure app launch is complete before background operations
-        Thread.sleep(forTimeInterval: 1.0)
+        // CRITICAL: Increase delay to 3.5 seconds to ensure network stack is ready
+        // On first launch, iOS needs ~3-4 seconds for ALL network endpoints to be ready
+        // Early calls fail with error -9816 and timeout after 30 seconds
+        Thread.sleep(forTimeInterval: 3.5)
         do {
             let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl")
             print("🚀 LAUNCH OPTIMIZATION: Background resolved scheduleURL = \(scheduleUrl)")

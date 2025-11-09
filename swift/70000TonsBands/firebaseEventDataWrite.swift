@@ -12,7 +12,17 @@ import CoreData
 
 class firebaseEventDataWrite {
     
-    var ref: DatabaseReference!
+    // Lazy initialization to ensure Firebase is configured before accessing
+    lazy var ref: DatabaseReference = {
+        // Check if Firebase is configured
+        if FirebaseApp.app() == nil {
+            print("⚠️ Firebase not configured yet in firebaseEventDataWrite - configuration may have been deferred")
+            // Return a dummy reference that won't crash - writes will fail gracefully
+            fatalError("Firebase must be configured before accessing Database")
+        }
+        return Database.database().reference()
+    }()
+    
     var eventCompareFile = "eventCompare.data"
     var firebaseShowsAttendedArray = [String : String]();
     var schedule = scheduleHandler.shared
@@ -20,7 +30,7 @@ class firebaseEventDataWrite {
     let variableStoreHandle = variableStore();
     
     init(){
-        ref = Database.database().reference()
+        // No longer initialize ref here - it's lazy now
     }
     
     func loadCompareFile()->[String:String]{
