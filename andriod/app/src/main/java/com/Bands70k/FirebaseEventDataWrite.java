@@ -67,9 +67,33 @@ public class FirebaseEventDataWrite {
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
             showsAttended attendedHandler = new showsAttended();
             Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+            
+            // Get current year for filtering
+            String currentYear = String.valueOf(staticVariables.eventYear);
+            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtering for current year: " + currentYear);
+            
+            // Filter events to only include current year
+            Map<String, String> currentYearEvents = new HashMap<>();
+            int totalEvents = showsAttendedArray.size();
+            int filteredOutCount = 0;
+            
+            for (String index : showsAttendedArray.keySet()) {
+                String[] indexArray = index.split(":");
+                if (indexArray.length == 6) {
+                    String eventYear = indexArray[5];
+                    if (eventYear.equals(currentYear)) {
+                        currentYearEvents.put(index, showsAttendedArray.get(index));
+                    } else {
+                        filteredOutCount++;
+                    }
+                }
+            }
+            
+            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + currentYearEvents.size() + 
+                    " events for year " + currentYear + " (excluded " + filteredOutCount + " from other years)");
 
-            if (checkIfDataHasChanged(showsAttendedArray)) {
-                for (String index : showsAttendedArray.keySet()) {
+            if (checkIfDataHasChanged(currentYearEvents)) {
+                for (String index : currentYearEvents.keySet()) {
 
                     HashMap<String, Object> eventData = new HashMap<>();
 
@@ -95,7 +119,7 @@ public class FirebaseEventDataWrite {
                     // Sanitize index for Firebase path (contains band name which may have invalid characters)
                     String sanitizedIndex = sanitizeForFirebase(index);
 
-                    String attendedStatus = showsAttendedArray.get(index);
+                    String attendedStatus = currentYearEvents.get(index);
                     Log.d("FireBaseBandDataWrite", "showsAttendedArray - " + showsAttendedArray.get(index));
                     
                     // Store both original and sanitized data for reference
