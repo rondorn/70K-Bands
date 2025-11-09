@@ -211,18 +211,16 @@ open class CustomBandDescription {
     
     /// Loads all band descriptions from the description map file.
     /// WARNING: This function performs heavy I/O and network operations.
-    /// It should ONLY be called when the app is in the background state.
+    /// It should ONLY be called from a background queue (not on main thread).
+    /// IMPORTANT: This method is already called from DispatchQueue.global - do not call from main thread!
     func getAllDescriptions(){
         
-        // Ensure this is only called when app is in background
-        guard UIApplication.shared.applicationState == .background else {
-            print("⚠️ BLOCKED: getAllDescriptions() called while app is in foreground - this should only run in background")
-            return
-        }
-        
+        // Safeguard: Prevent concurrent execution
+        // Note: UIApplication.shared.applicationState removed to fix Main Thread Checker violation
+        // This method is intentionally called from background threads
         if (downloadingAllComments == false){
             downloadingAllComments = true
-            print ("commentFile looping through bands (background state confirmed)")
+            print ("commentFile looping through bands (background queue)")
             
             for record in self.bandDescriptionUrl{
                 let bandName = record.key
@@ -233,7 +231,7 @@ open class CustomBandDescription {
             }
             
             downloadingAllComments = false
-            print ("commentFile processing completed (background state)")
+            print ("commentFile processing completed (background queue)")
         }
     }
     

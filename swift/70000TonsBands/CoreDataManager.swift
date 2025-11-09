@@ -11,20 +11,50 @@ import CoreData
 class CoreDataManager {
     static let shared = CoreDataManager()
     
+    // Thread-safe initialization using dispatch_once pattern
+    private var _persistentContainer: NSPersistentContainer?
+    private let initQueue = DispatchQueue(label: "com.rdorn.coredata.init", qos: .userInitiated)
+    
     private init() {
-        // Enable automatic merging of changes from background contexts
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(contextDidSave(_:)),
-            name: .NSManagedObjectContextDidSave,
-            object: nil
-        )
+        // Initialization happens via initializeIfNeeded()
     }
     
-    // MARK: - Core Data Stack
+    /// Thread-safe initialization - can be called from any thread
+    /// Will only initialize once, subsequent calls return immediately
+    private func initializeIfNeeded() {
+        guard _persistentContainer == nil else { return }
+        
+        initQueue.sync {
+            // Double-check inside lock
+            guard _persistentContainer == nil else { return }
+            
+            print("🚀 CoreDataManager: Starting Core Data initialization...")
+            let startTime = Date()
+            
+            _persistentContainer = createPersistentContainer()
+            
+            let elapsedTime = Date().timeIntervalSince(startTime)
+            print("✅ CoreDataManager: Initialized in \(String(format: "%.3f", elapsedTime)) seconds")
+        }
+    }
     
-    lazy var persistentContainer: NSPersistentContainer = {
+    /// Creates and configures the persistent container
+    private func createPersistentContainer() -> NSPersistentContainer {
         let container = NSPersistentContainer(name: "DataModel")
+        
+        // Configure store description for optimal concurrency BEFORE loading
+        if let storeDescription = container.persistentStoreDescriptions.first {
+            // Enable WAL (Write-Ahead Logging) to prevent reader/writer blocking
+            // This significantly reduces Core Data race conditions
+            storeDescription.setOption([
+                "journal_mode": "WAL",           // Write-Ahead Logging prevents deadlocks
+                "synchronous": "NORMAL",         // Balanced safety/performance
+                "cache_size": "10000"           // Larger cache for better performance
+            ] as NSDictionary, forKey: NSSQLitePragmasOption)
+            
+            print("✅ SQLite WAL mode enabled for concurrency safety")
+        }
+        
         container.loadPersistentStores { _, error in
             if let error = error {
                 print("❌ CRITICAL Core Data error: \(error)")
@@ -33,15 +63,20 @@ class CoreDataManager {
         }
         
         // Configure main context for UI operations
+        // automaticallyMergesChangesFromParent safely handles background context saves
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // Enable remote notifications for multi-context synchronization
-        container.viewContext.automaticallyMergesChangesFromParent = true
-        
-        print("✅ Core Data stack initialized successfully")
+        print("✅ Core Data stack initialized successfully with WAL mode")
         return container
-    }()
+    }
+    
+    /// Thread-safe accessor for persistent container
+    /// Initializes on first access if needed
+    var persistentContainer: NSPersistentContainer {
+        initializeIfNeeded()
+        return _persistentContainer!
+    }
     
     // Main thread context - ONLY use this on main thread
     var viewContext: NSManagedObjectContext {
@@ -91,17 +126,6 @@ class CoreDataManager {
         // Always return viewContext to prevent object/context mismatches
         // Background operations should use performBackgroundTask instead
         return viewContext
-    }
-    
-    @objc private func contextDidSave(_ notification: Notification) {
-        guard let context = notification.object as? NSManagedObjectContext else { return }
-        
-        // Merge changes into view context if needed
-        if context != viewContext {
-            viewContext.perform {
-                self.viewContext.mergeChanges(fromContextDidSave: notification)
-            }
-        }
     }
     
     // MARK: - Save Context
@@ -171,11 +195,15 @@ class CoreDataManager {
     }
     
     func performBackgroundTaskAsync<T>(_ operation: @escaping (NSManagedObjectContext) throws -> T, completion: @escaping (T?) -> Void) {
-        backgroundContext.perform {
+        // Create a NEW background context for each operation to prevent concurrent access issues
+        let context = persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        
+        context.perform {
             do {
-                let result = try operation(self.backgroundContext)
-                if self.backgroundContext.hasChanges {
-                    try self.backgroundContext.save()
+                let result = try operation(context)
+                if context.hasChanges {
+                    try context.save()
                 }
                 DispatchQueue.main.async {
                     completion(result)
@@ -193,10 +221,19 @@ class CoreDataManager {
     
     func fetchBands() -> [Band] {
         var result: [Band] = []
-        context.performAndWait {
+        viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<Band> = Band.fetchRequest()
             do {
-                result = try context.fetch(request)
+                result = try viewContext.fetch(request)
             } catch {
                 print("Fetch bands error: \(error)")
                 result = []
@@ -207,11 +244,20 @@ class CoreDataManager {
     
     func fetchBands(forYear year: Int32) -> [Band] {
         var result: [Band] = []
-        context.performAndWait {
+        viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<Band> = Band.fetchRequest()
             request.predicate = NSPredicate(format: "eventYear == %d", year)
             do {
-                result = try context.fetch(request)
+                result = try viewContext.fetch(request)
             } catch {
                 print("Fetch bands for year error: \(error)")
                 result = []
@@ -222,13 +268,22 @@ class CoreDataManager {
     
     func fetchBand(byName name: String) -> Band? {
         var result: Band? = nil
-        context.performAndWait {
+        viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<Band> = Band.fetchRequest()
             request.predicate = NSPredicate(format: "bandName == %@", name)
             request.fetchLimit = 1
             
             do {
-                result = try context.fetch(request).first
+                result = try viewContext.fetch(request).first
             } catch {
                 print("Fetch band by name error: \(error)")
                 result = nil
@@ -471,6 +526,15 @@ class CoreDataManager {
     func fetchEvents() -> [Event] {
         var result: [Event] = []
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<Event> = Event.fetchRequest()
             do {
                 result = try viewContext.fetch(request)
@@ -488,6 +552,15 @@ class CoreDataManager {
         var attempt = 0
         
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             while attempt < maxRetries {
                 do {
                     // Add defensive checks before fetch
@@ -531,6 +604,15 @@ class CoreDataManager {
         var attempt = 0
         
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             while attempt < maxRetries {
                 do {
                     // Add defensive checks before fetch
@@ -573,6 +655,15 @@ class CoreDataManager {
         var attempt = 0
         
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             while attempt < maxRetries {
                 do {
                     // Add defensive checks before fetch
@@ -612,6 +703,15 @@ class CoreDataManager {
     func fetchEvent(byTimeIndex timeIndex: Double, eventName: String, forYear year: Int32) -> Event? {
         var result: Event?
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<Event> = Event.fetchRequest()
             // For standalone events, we look for events where the event name matches and timeIndex matches
             // This handles cases where:
@@ -840,6 +940,15 @@ class CoreDataManager {
     func fetchUserPriorities() -> [UserPriority] {
         var result: [UserPriority] = []
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
             
             do {
@@ -866,6 +975,15 @@ class CoreDataManager {
     func fetchUserAttendances() -> [UserAttendance] {
         var result: [UserAttendance] = []
         viewContext.performAndWait {
+            // Temporarily disable automatic merges during fetch to prevent collection mutation
+            let originalMergesSetting = viewContext.automaticallyMergesChangesFromParent
+            viewContext.automaticallyMergesChangesFromParent = false
+            
+            defer {
+                // Re-enable merges after fetch completes (even if error occurs)
+                viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
+            }
+            
             let request: NSFetchRequest<UserAttendance> = UserAttendance.fetchRequest()
             
             do {

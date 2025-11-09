@@ -188,7 +188,11 @@ open class bandNamesHandler {
                 return
             } else if cacheVariables.justLaunched && (!cacheLoaded || bandNames.isEmpty) {
                 print("🚨 EMERGENCY: First launch but no cached data - forcing network download")
-                DispatchQueue.global(qos: .default).async {
+                // DIAGNOSTIC: Using 30-second delay to test if this is truly a timing issue
+                // If error -9816 still occurs after 30 seconds, it's NOT initialization delay
+                // It's something specific about how we're calling the network
+                DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + 30.0) {
+                    print("⏳ EMERGENCY: Starting deferred band data download after 30-SECOND diagnostic delay")
                     self.gatherData(forceDownload: true, completion: completion)
                 }
                 return

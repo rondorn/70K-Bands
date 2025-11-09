@@ -19,22 +19,35 @@ class PreferencesViewModel: ObservableObject {
     
     // MARK: - Published Properties
     @Published var hideExpiredEvents: Bool = false {
-        didSet { setHideExpireScheduleData(hideExpiredEvents) }
+        didSet { 
+            setHideExpireScheduleData(hideExpiredEvents)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var promptForAttended: Bool = false {
-        didSet { setPromptForAttended(promptForAttended) }
+        didSet { 
+            setPromptForAttended(promptForAttended)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     
     // Alert Preferences
     @Published var alertOnMustSee: Bool = true {
-        didSet { setMustSeeAlertValue(alertOnMustSee) }
+        didSet { 
+            setMustSeeAlertValue(alertOnMustSee)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertOnMightSee: Bool = true {
-        didSet { setMightSeeAlertValue(alertOnMightSee) }
+        didSet { 
+            setMightSeeAlertValue(alertOnMightSee)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertOnlyForWillAttend: Bool = false {
         didSet { 
             setOnlyAlertForAttendedValue(alertOnlyForWillAttend)
+            writeFiltersFile()  // Immediately persist to prevent reversion
             // Reset notifications when this changes
             let localNotification = localNoticationHandler()
             localNotification.clearNotifications()
@@ -55,6 +68,7 @@ class PreferencesViewModel: ObservableObject {
             if minutesBeforeAlert >= 0 && minutesBeforeAlert <= 60 {
                 print("🎯 Minutes before alert changed: \(previousValue) -> \(minutesBeforeAlert)")
                 setMinBeforeAlertValue(minutesBeforeAlert)
+                writeFiltersFile()  // Immediately persist to prevent reversion
                 // Reset notifications when minutes change
                 let localNotification = localNoticationHandler()
                 localNotification.clearNotifications()
@@ -68,33 +82,60 @@ class PreferencesViewModel: ObservableObject {
         }
     }
     @Published var alertForShows: Bool = true {
-        didSet { setAlertForShowsValue(alertForShows) }
+        didSet { 
+            setAlertForShowsValue(alertForShows)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertForSpecialEvents: Bool = true {
-        didSet { setAlertForSpecialValue(alertForSpecialEvents) }
+        didSet { 
+            setAlertForSpecialValue(alertForSpecialEvents)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertForCruiserOrganized: Bool = false {
-        didSet { setAlertForUnofficalEventsValue(alertForCruiserOrganized) }
+        didSet { 
+            setAlertForUnofficalEventsValue(alertForCruiserOrganized)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertForMeetAndGreet: Bool = false {
-        didSet { setAlertForMandGValue(alertForMeetAndGreet) }
+        didSet { 
+            setAlertForMandGValue(alertForMeetAndGreet)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertForClinics: Bool = false {
-        didSet { setAlertForClinicEvents(alertForClinics) }
+        didSet { 
+            setAlertForClinicEvents(alertForClinics)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var alertForAlbumListening: Bool = false {
-        didSet { setAlertForListeningEvents(alertForAlbumListening) }
+        didSet { 
+            setAlertForListeningEvents(alertForAlbumListening)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     
     // Detail Screen
     @Published var noteFontSizeLarge: Bool = false {
-        didSet { setNotesFontSizeLargeValue(noteFontSizeLarge) }
+        didSet { 
+            setNotesFontSizeLargeValue(noteFontSizeLarge)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var openYouTubeApp: Bool = true {
-        didSet { setOpenYouTubeAppValue(openYouTubeApp) }
+        didSet { 
+            setOpenYouTubeAppValue(openYouTubeApp)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     @Published var allLinksOpenInExternalBrowser: Bool = false {
-        didSet { setAllLinksOpenInExternalBrowserValue(allLinksOpenInExternalBrowser) }
+        didSet { 
+            setAllLinksOpenInExternalBrowserValue(allLinksOpenInExternalBrowser)
+            writeFiltersFile()  // Immediately persist to prevent reversion
+        }
     }
     
     // Year Selection and UI State
