@@ -101,11 +101,17 @@ public class FireBaseBandDataWrite {
 
     /**
      * Builds the band ranking array from current band info and rankings.
+     * Note: getBandNames() returns bands for the current year based on the loaded CSV.
+     * Year filtering happens at CSV load time via staticVariables.eventYear.
      */
     private void buildBandRankArray(){
 
         BandInfo bandInfoNames = new BandInfo();
         List<String> bandNames = bandInfoNames.getBandNames();
+        
+        String currentYear = String.valueOf(staticVariables.eventYear);
+        Log.d("FireBaseBandDataWrite", "🔥 firebase BAND_WRITE: Building band array for current year: " + currentYear);
+        Log.d("FireBaseBandDataWrite", "🔥 firebase BAND_WRITE: Found " + bandNames.size() + " bands from getBandNames()");
 
         for (String bandName: bandNames) {
 
@@ -127,6 +133,8 @@ public class FireBaseBandDataWrite {
             bandRanks.put(bandName, ranking);
 
         }
+        
+        Log.d("FireBaseBandDataWrite", "🔥 firebase BAND_WRITE: Built priority array for " + bandRanks.size() + " bands");
 
     }
 
