@@ -567,7 +567,11 @@ open class scheduleHandler {
                 print("This prevents infinite retry loops when network is unavailable")
             } else if cacheVariables.justLaunched && (!cacheLoaded || _schedulingData.isEmpty) {
                 print("🚨 EMERGENCY: First launch but no cached schedule data - forcing network download")
-                DispatchQueue.global(qos: .background).async {
+                // DIAGNOSTIC: Using 30-second delay to test if this is truly a timing issue
+                // If error -9816 still occurs after 30 seconds, it's NOT initialization delay
+                // It's something specific about how we're calling the network
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 30.0) {
+                    print("⏳ EMERGENCY: Starting deferred schedule download after 30-SECOND diagnostic delay")
                     self.populateSchedule(forceDownload: true, isYearChangeOperation: false)
                 }
             } else {

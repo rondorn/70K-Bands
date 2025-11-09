@@ -4013,10 +4013,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🚀 FIRST LAUNCH: Step 1 - Loading and displaying CoreData/cached data immediately")
         
-        // Step 1: Load and display CoreData/cached data immediately (completely non-blocking)
-        self.bandNameHandle.loadCachedDataImmediately()
-        self.schedule.loadCachedDataImmediately()
-        self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
+        // CRITICAL: Do NOT wait for Core Data on main thread - could take 20+ seconds on slow devices
+        // Instead, load data in background once Core Data is ready
+        print("🔍 Loading data in background once Core Data is ready...")
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
+            _ = CoreDataManager.shared.persistentContainer
+            print("✅ Core Data ready in background")
+            
+            // Step 1: Load and display CoreData/cached data
+            self.bandNameHandle.loadCachedDataImmediately()
+            self.schedule.loadCachedDataImmediately()
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
+            }
+            
+            self.continueFirstLaunchAfterDataLoad()
+        }
+    }
+    
+    /// Continue first launch sequence after initial data load
+    private func continueFirstLaunchAfterDataLoad() {
         
         // CRITICAL FIX: Clear justLaunched flag to prevent getting stuck in "waiting" mode
         // This ensures the app shows cached data even if there are network/loading issues
@@ -4107,12 +4129,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func performOptimizedSubsequentLaunch() {
         print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying CoreData/cached data immediately (non-blocking)")
         
-        // Step 1: Load CoreData/cached data immediately and display (ALWAYS show cached data first)
-        print("🚀 [MDF_DEBUG] Subsequent launch - loading CoreData/cached data")
-        print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        self.bandNameHandle.loadCachedDataImmediately()
-        self.schedule.loadCachedDataImmediately()
-        self.refreshBandList(reason: "Subsequent launch - immediate CoreData display", skipDataLoading: true)
+        // CRITICAL: Do NOT wait for Core Data on main thread - could take 20+ seconds on slow devices
+        // Instead, load data in background once Core Data is ready
+        print("🔍 Loading data in background once Core Data is ready...")
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
+            _ = CoreDataManager.shared.persistentContainer
+            print("✅ Core Data ready in background")
+            
+            // Step 1: Load CoreData/cached data immediately and display (ALWAYS show cached data first)
+            print("🚀 [MDF_DEBUG] Subsequent launch - loading CoreData/cached data")
+            print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+            self.bandNameHandle.loadCachedDataImmediately()
+            self.schedule.loadCachedDataImmediately()
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Subsequent launch - immediate CoreData display", skipDataLoading: true)
+            }
+            
+            self.continueSubsequentLaunchAfterDataLoad()
+        }
+    }
+    
+    /// Continue subsequent launch sequence after initial data load
+    private func continueSubsequentLaunchAfterDataLoad() {
         
         // CRITICAL FIX: Clear justLaunched flag to prevent getting stuck in "waiting" mode
         // This ensures the app shows cached data even if there are network/loading issues
@@ -4181,8 +4225,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func performRobustNetworkTest() -> Bool {
         print("🌐 ROBUST TEST: Starting real HTTP request to test network")
         
-        // Test with a lightweight, fast endpoint
-        guard let url = URL(string: "https://www.google.com/generate_204") else {
+        // CRITICAL FIX: Test with actual Dropbox URL to ensure Dropbox is reachable
+        // Testing Google doesn't prove Dropbox works - they may have different network paths
+        // Use a small pointer file for the test
+        guard let url = URL(string: "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1") else {
             print("🌐 ROBUST TEST: ❌ Invalid test URL")
             return false
         }
