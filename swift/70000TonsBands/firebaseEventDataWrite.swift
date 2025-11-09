@@ -12,25 +12,18 @@ import CoreData
 
 class firebaseEventDataWrite {
     
-    // Lazy initialization to ensure Firebase is configured before accessing
-    lazy var ref: DatabaseReference = {
-        // Check if Firebase is configured
-        if FirebaseApp.app() == nil {
-            print("⚠️ Firebase not configured yet in firebaseEventDataWrite - configuration may have been deferred")
-            // Return a dummy reference that won't crash - writes will fail gracefully
-            fatalError("Firebase must be configured before accessing Database")
-        }
-        return Database.database().reference()
-    }()
-    
+    var ref: DatabaseReference!
     var eventCompareFile = "eventCompare.data"
     var firebaseShowsAttendedArray = [String : String]();
     var schedule = scheduleHandler.shared
     let attended = ShowsAttended()
     let variableStoreHandle = variableStore();
     
+    // NEW: Use Core Data AttendanceManager to read attendance data
+    let attendanceManager = AttendanceManager()
+    
     init(){
-        // No longer initialize ref here - it's lazy now
+        ref = Database.database().reference()
     }
     
     func loadCompareFile()->[String:String]{
@@ -88,7 +81,14 @@ class firebaseEventDataWrite {
             
     func writeEvent(index: String, status: String){
         
+        print("🔥 firebase EVENT_WRITE: writeEvent() called for index: \(index), status: \(status)")
+        
         let indexArray = index.split(separator: ":")
+        
+        guard indexArray.count >= 6 else {
+            print("🔥 firebase EVENT_WRITE: ❌ ERROR - Invalid index format: \(index) (parts: \(indexArray.count), expected: 6)")
+            return
+        }
     
         let bandName = String(indexArray[0])
         let location = String(indexArray[1])
@@ -97,14 +97,21 @@ class firebaseEventDataWrite {
         let eventType = String(indexArray[4])
         let year = String(indexArray[5])
         
+        print("🔥 firebase EVENT_WRITE: Parsed - Band: \(bandName), Location: \(location), Time: \(startTimeHour):\(startTimeMin), Type: \(eventType), Year: \(year)")
+        
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
+            print("🔥 firebase EVENT_WRITE: Background write started for \(bandName)")
             self.firebaseShowsAttendedArray = self.loadCompareFile();
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
             // Get sanitized identifier from Core Data, fallback to computation
             let sanitizedIndex = self.getSanitizedIdentifierForEvent(index)
+            print("🔥 firebase EVENT_WRITE: Sanitized index: \(sanitizedIndex)")
+            
+            let firebasePath = "showData/\(uid)/\(year)/\(sanitizedIndex)"
+            print("🔥 firebase EVENT_WRITE: Writing to path: \(firebasePath)")
             
             self.ref.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
                 "originalIdentifier": index, // Store original for reference
@@ -117,9 +124,9 @@ class firebaseEventDataWrite {
                 "status": status]){
                     (error:Error?, ref:DatabaseReference) in
                     if let error = error {
-                        print("Writing firebase data could not be saved: \(error).")
+                        print("🔥 firebase EVENT_WRITE: ❌ Writing firebase event data could not be saved: \(error)")
                     } else {
-                        print("Writing firebase data saved successfully!")
+                        print("🔥 firebase EVENT_WRITE: ✅ Writing firebase event data saved successfully for \(bandName)!")
                         self.firebaseShowsAttendedArray[index] = status
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
                     }
@@ -130,32 +137,98 @@ class firebaseEventDataWrite {
 
     func writeData (){
         
+        print("🔥 firebase EVENT_WRITE: writeData() called - Starting event data write process")
+        print("🔥 firebase EVENT_WRITE: inTestEnvironment = \(inTestEnvironment)")
+        
         if (inTestEnvironment == false){
+            print("🔥 firebase EVENT_WRITE: Not in test environment, proceeding with write")
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
+                print("🔥 firebase EVENT_WRITE: Background queue started")
                 self.firebaseShowsAttendedArray = self.loadCompareFile();
+                print("🔥 firebase EVENT_WRITE: Loaded compare file with \(self.firebaseShowsAttendedArray.count) entries")
                 
                 let uid = (UIDevice.current.identifierForVendor?.uuidString)!
+                print("🔥 firebase EVENT_WRITE: Device UID = \(uid)")
                 
                 if (uid.isEmpty == false){
-                    let showsAttendedArray = self.attended.getShowsAttended();
+                    print("🔥 firebase EVENT_WRITE: UID is valid, getting attended events from Core Data")
                     
-                    self.schedule.buildTimeSortedSchedulingData();
+                    // Get current year from global eventYear variable
+                    let currentYear = eventYear
+                    print("🔥 firebase EVENT_WRITE: Filtering for current year: \(currentYear)")
                     
-                    if (self.schedule.getBandSortedSchedulingData().count > 0){
-                        for index in showsAttendedArray {
-                            if (self.firebaseShowsAttendedArray[index.key] != index.value || didVersionChange == true){
-                                self.writeEvent(index: index.key, status: index.value)
+                    // NEW: Read attendance data from Core Data instead of old file system
+                    let attendanceData = self.attendanceManager.getAllAttendanceDataByIndex()
+                    print("🔥 firebase EVENT_WRITE: Found \(attendanceData.count) total attendance records in Core Data")
+                    
+                    // Convert Core Data format to format expected by Firebase write code
+                    // Core Data format: [index: ["status": Int, "eventYear": Int, "lastModified": Double]]
+                    // Expected format: [index: "statusValue"]
+                    // FILTER: Only include events for the current year
+                    var showsAttendedArray: [String: String] = [:]
+                    var filteredOutCount = 0
+                    
+                    for (index, data) in attendanceData {
+                        // Filter by year - only include current year
+                        if let recordYear = data["eventYear"] as? Int, recordYear == currentYear {
+                            if let status = data["status"] as? Int {
+                                // Convert status to EVENT status string (not band priority)
+                                // Event statuses: sawAll, sawSome, sawNone
+                                let statusString: String
+                                switch status {
+                                case 1: statusString = sawSomeStatus  // Will Attend Some -> "sawSome"
+                                case 2: statusString = sawAllStatus   // Will Attend / Attended -> "sawAll"
+                                case 3: statusString = sawNoneStatus  // Won't Attend -> "sawNone"
+                                default: statusString = sawNoneStatus // Unknown defaults to sawNone
+                                }
+                                showsAttendedArray[index] = statusString
                             }
+                        } else {
+                            filteredOutCount += 1
                         }
                     }
+                    print("🔥 firebase EVENT_WRITE: Filtered to \(showsAttendedArray.count) events for year \(currentYear) (excluded \(filteredOutCount) from other years)")
+                    
+                    self.schedule.buildTimeSortedSchedulingData();
+                    print("🔥 firebase EVENT_WRITE: Built time-sorted schedule data")
+                    
+                    let scheduleCount = self.schedule.getBandSortedSchedulingData().count
+                    print("🔥 firebase EVENT_WRITE: Schedule data count = \(scheduleCount)")
+                    
+                    if (scheduleCount > 0){
+                        print("🔥 firebase EVENT_WRITE: Schedule data exists, processing \(showsAttendedArray.count) events")
+                        var processedCount = 0
+                        var skippedCount = 0
+                        var writtenCount = 0
+                        
+                        for index in showsAttendedArray {
+                            processedCount += 1
+                            let cachedValue = self.firebaseShowsAttendedArray[index.key]
+                            let currentValue = index.value
+                            
+                            if (cachedValue != currentValue || didVersionChange == true){
+                                print("🔥 firebase EVENT_WRITE: Event \(processedCount)/\(showsAttendedArray.count): \(index.key) - Writing (cached: \(cachedValue ?? "nil"), current: \(currentValue), versionChanged: \(didVersionChange))")
+                                self.writeEvent(index: index.key, status: index.value)
+                                writtenCount += 1
+                            } else {
+                                skippedCount += 1
+                                if skippedCount <= 3 {
+                                    print("🔥 firebase EVENT_WRITE: Event \(processedCount)/\(showsAttendedArray.count): \(index.key) - Skipped (already written)")
+                                }
+                            }
+                        }
+                        print("🔥 firebase EVENT_WRITE: Processing complete - Written: \(writtenCount), Skipped: \(skippedCount), Total: \(processedCount)")
+                    } else {
+                        print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Schedule data is empty! Cannot write events.")
+                    }
+                } else {
+                    print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - UID is empty!")
                 }
             }
         } else {
-
             //this is being done soley to prevent capturing garbage stats data within my app!
-            print ("Bypassed firebase event data writes due to being in simulator!!!")
-            
+            print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Bypassed firebase event data writes due to being in simulator!!!")
         }
     }
     

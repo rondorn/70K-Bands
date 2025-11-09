@@ -147,10 +147,17 @@ class firebaseBandDataWrite {
     
     func buildBandRankArray(){
         
-        let bandNameHandle = bandNamesHandler.shared
+        // Get current year from global eventYear variable
+        let currentYear = Int32(eventYear)
+        print("🔥 firebase BAND_WRITE: Filtering bands for current year: \(currentYear)")
         
-        let allBands = bandNameHandle.getBandNames()
-        for bandName in allBands {
+        // Get bands for the current year only
+        let coreDataManager = CoreDataManager.shared
+        let bandsForCurrentYear = coreDataManager.fetchBands(forYear: currentYear)
+        print("🔥 firebase BAND_WRITE: Found \(bandsForCurrentYear.count) bands for year \(currentYear)")
+        
+        for band in bandsForCurrentYear {
+            guard let bandName = band.bandName else { continue }
             
             let priorityManager = PriorityManager()
             let rankingNumber = String(priorityManager.getPriority(for: bandName))
@@ -158,6 +165,8 @@ class firebaseBandDataWrite {
             
             bandRank[bandName] = rankingString;
         }
+        
+        print("🔥 firebase BAND_WRITE: Built priority array for \(bandRank.count) bands")
     }
     
     
