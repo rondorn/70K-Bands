@@ -15,18 +15,34 @@ class firebaseUserWrite {
     var ref: DatabaseReference!
     
     init(){
+        let initTime = Date()
+        print("🔥 [TIMING] firebaseUserWrite.init() CALLED at \(initTime.timeIntervalSince1970)")
+        print("🔥 [TIMING] AppDelegate.isFirebaseConfigured = \(AppDelegate.isFirebaseConfigured)")
+        
+        // Check if FirebaseApp is actually configured
+        if FirebaseApp.app() != nil {
+            print("🔥 [TIMING] FirebaseApp.app() is NOT NIL (Firebase IS configured)")
+        } else {
+            print("❌ [TIMING] FirebaseApp.app() is NIL (Firebase NOT configured)")
+        }
+        
+        print("🔥 [TIMING] About to call Database.database().reference()")
         
         ref = Database.database().reference()
+        
+        print("🔥 [TIMING] Database.database().reference() SUCCESS at \(Date().timeIntervalSince1970)")
     }
     
     func writeData (){
+        let writeDataTime = Date()
+        print("🔥 [TIMING] firebaseUserWrite.writeData() CALLED at \(writeDataTime.timeIntervalSince1970)")
         
         //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
         if (inTestEnvironment == false){
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
                 
                 let randomInt = Int.random(in: 5..<25)
-                print ("Writing Firebase  sleeping \(randomInt)");
+                print ("🔥 [TIMING] Writing Firebase sleeping \(randomInt) seconds");
                 sleep(UInt32(randomInt))
                 let userDataHandle = userDataHandler()
                 print ("Writing Firebase  UserID is \(userDataHandle.uid)");
