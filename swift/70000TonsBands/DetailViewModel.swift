@@ -1007,13 +1007,73 @@ class DetailViewModel: ObservableObject {
     }
     
     private func loadBandImage() {
+        print("🖼️ [IMAGE_DEBUG] ============================================")
+        print("🖼️ [IMAGE_DEBUG] loadBandImage called for '\(bandName)'")
+        print("🖼️ [IMAGE_DEBUG] Current time: \(Date())")
+        print("🖼️ [IMAGE_DEBUG] ============================================")
+        
         // Reset loading state at the start
         isLoadingImage = false
         
         // Get image info (URL + date) from combined handler
-        guard let imageInfo = CombinedImageListHandler.shared.getImageInfo(for: bandName) else {
-            // No valid image info - could be due to async generation in progress or genuinely no image
-            print("❌ No image info for \(bandName) - showing festival-specific placeholder (async generation may be in progress)")
+        print("🔍 [IMAGE_DEBUG] About to call CombinedImageListHandler.shared.getImageInfo for '\(bandName)'")
+        var imageInfo = CombinedImageListHandler.shared.getImageInfo(for: bandName)
+        
+        // DEBUG: Extensive logging for image loading issue
+        if imageInfo == nil {
+            print("❌ [IMAGE_DEBUG] No imageInfo found for '\(bandName)'")
+            print("📊 [IMAGE_DEBUG] Diagnosing why imageInfo is nil...")
+            
+            // Check if CombinedImageListHandler has any data at all
+            let allImageInfo = CombinedImageListHandler.shared.combinedImageList
+            print("📊 [IMAGE_DEBUG] Total entries in combinedImageList: \(allImageInfo.count)")
+            
+            if allImageInfo.isEmpty {
+                print("❌ [IMAGE_DEBUG] CombinedImageList is EMPTY - this is the problem!")
+                print("🔍 [IMAGE_DEBUG] Checking if bandNamesHandler has data...")
+                let bandNames = bandNamesHandler.shared.getBandNames()
+                print("🔍 [IMAGE_DEBUG] bandNamesHandler has \(bandNames.count) bands")
+                if bandNames.count > 0 {
+                    print("🔍 [IMAGE_DEBUG] Sample bands: \(bandNames.prefix(5))")
+                    print("🔍 [IMAGE_DEBUG] Checking image URLs for sample bands...")
+                    for sampleBand in bandNames.prefix(3) {
+                        let imageUrl = bandNamesHandler.shared.getBandImageUrl(sampleBand)
+                        print("🔍 [IMAGE_DEBUG]   \(sampleBand) -> '\(imageUrl)'")
+                    }
+                }
+                
+                print("🔍 [IMAGE_DEBUG] Checking if scheduleHandler has data...")
+                let scheduleData = scheduleHandler.shared.schedulingData
+                print("🔍 [IMAGE_DEBUG] scheduleHandler has \(scheduleData.count) entries")
+            } else {
+                print("📊 [IMAGE_DEBUG] CombinedImageList has data but no entry for '\(bandName)'")
+                print("🔍 [IMAGE_DEBUG] Available band names in combinedImageList:")
+                let availableBands = Array(allImageInfo.keys.prefix(10))
+                for band in availableBands {
+                    print("🔍 [IMAGE_DEBUG]   - '\(band)' -> '\(allImageInfo[band]?.url ?? "NO URL")'")
+                }
+                
+                // Check for case-insensitive or close matches
+                let lowercaseBandName = bandName.lowercased()
+                let possibleMatches = allImageInfo.keys.filter { $0.lowercased().contains(lowercaseBandName) || lowercaseBandName.contains($0.lowercased()) }
+                if !possibleMatches.isEmpty {
+                    print("🔍 [IMAGE_DEBUG] Possible case-insensitive matches: \(possibleMatches)")
+                }
+            }
+            
+            // Show default image since we don't have image info
+            print("❌ [IMAGE_DEBUG] Showing default logo for '\(bandName)'")
+            DispatchQueue.main.async {
+                self.isLoadingImage = false
+                self.bandImage = self.getFestivalDefaultLogo()
+            }
+            return
+        }
+        
+        print("✅ [IMAGE_DEBUG] Found imageInfo for '\(bandName)'")
+        guard let imageInfo = imageInfo else {
+            // Should never reach here, but guard against it
+            print("❌ [IMAGE_DEBUG] UNEXPECTED: imageInfo is nil after nil check")
             DispatchQueue.main.async {
                 self.isLoadingImage = false
                 self.bandImage = self.getFestivalDefaultLogo()
@@ -1032,12 +1092,23 @@ class DetailViewModel: ObservableObject {
         }
         
         guard !imageURL.isEmpty && imageURL != "http://" else {
-            print("❌ Invalid URL for \(bandName) - showing festival-specific placeholder")
+            print("❌ IMAGE_LOAD: Invalid/empty URL for '\(bandName)' - showing festival-specific placeholder (NOT cached)")
+            print("   URL was: '\(imageURL)'")
             DispatchQueue.main.async {
                 self.isLoadingImage = false
                 self.bandImage = self.getFestivalDefaultLogo()
             }
             return
+        }
+        
+        // Additional URL validation - check for placeholder/default URLs
+        let lowercaseURL = imageURL.lowercased()
+        let suspiciousPatterns = ["placeholder", "default", "logo", "coming-soon", "tba", "tbd"]
+        for pattern in suspiciousPatterns {
+            if lowercaseURL.contains(pattern) {
+                print("⚠️ IMAGE_LOAD: Suspicious URL pattern '\(pattern)' detected for '\(bandName)' - may be placeholder")
+                print("   URL: \(imageURL)")
+            }
         }
         
         let imageHandle = imageHandler()
@@ -1152,10 +1223,11 @@ class DetailViewModel: ObservableObject {
                 self.isLoadingImage = false
                 
                 if let image = processedImage {
-                    print("✅ Download successful for \(self.bandName) - displaying image")
+                    print("✅ IMAGE_LOAD: Download successful for '\(self.bandName)' - displaying real image")
                     self.bandImage = image
                 } else {
-                    print("❌ Download failed for \(self.bandName) - showing festival-specific placeholder")
+                    print("❌ IMAGE_LOAD: Download FAILED for '\(self.bandName)' - showing festival placeholder (NOT cached)")
+                    print("   Failed URL: \(imageURL)")
                     self.bandImage = self.getFestivalDefaultLogo()
                 }
             }

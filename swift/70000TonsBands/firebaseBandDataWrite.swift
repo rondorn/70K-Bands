@@ -13,16 +13,36 @@ import CoreData
 
 class firebaseBandDataWrite {
     
-    var ref: DatabaseReference!
+    var ref: DatabaseReference?
     var bandCompareFile = "bandCompare.data"
     var firebaseBandAttendedArray = [String : String]();
     var bandRank: [String : String] = [String : String]();
     let variableStoreHandle = variableStore();
+    private var initializationAttempts = 0
+    private let maxInitAttempts = 3
     
     init(){
-        
-        ref = Database.database().reference()
-        
+        initializeFirebaseReference()
+    }
+    
+    /// Attempts to initialize Firebase Database reference with retry logic
+    private func initializeFirebaseReference(attempt: Int = 1) {
+        // Check if Firebase is configured
+        if AppDelegate.isFirebaseConfigured {
+            ref = Database.database().reference()
+            print("✅ [FIREBASE_BAND] Firebase Database reference initialized successfully")
+        } else {
+            print("⚠️ [FIREBASE_BAND] Firebase not yet configured (attempt \(attempt)/\(maxInitAttempts))")
+            
+            if attempt < maxInitAttempts {
+                // Retry after 2 second delay
+                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    self?.initializeFirebaseReference(attempt: attempt + 1)
+                }
+            } else {
+                print("❌ [FIREBASE_BAND] Failed to initialize Firebase after \(maxInitAttempts) attempts - will skip analytics")
+            }
+        }
     }
     
     
@@ -82,6 +102,12 @@ class firebaseBandDataWrite {
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
+            // Check if Firebase reference is initialized
+            guard let firebaseRef = self.ref else {
+                print("⚠️ [FIREBASE_BAND] Cannot write band data: Firebase reference not initialized, skipping analytics")
+                return
+            }
+            
             self.firebaseBandAttendedArray = self.loadCompareFile()
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
@@ -94,7 +120,7 @@ class firebaseBandDataWrite {
             // Use provided sanitized name or fall back to computing it
             let sanitizedBandName = sanitizedName ?? self.sanitizeBandNameForFirebase(bandName)
             
-            self.ref.child("bandData/").child(uid).child(String(eventYear)).child(sanitizedBandName).setValue([
+            firebaseRef.child("bandData/").child(uid).child(String(eventYear)).child(sanitizedBandName).setValue([
                 "bandName": bandName,
                 "sanitizedKey": sanitizedBandName, // Store for reference/debugging
                 "ranking": ranking,
@@ -117,6 +143,13 @@ class firebaseBandDataWrite {
     }
     
     func writeData (){
+        print("🔥 [FIREBASE_BAND] writeData() called in background")
+        
+        // Check if Firebase reference is initialized
+        guard self.ref != nil else {
+            print("⚠️ [FIREBASE_BAND] Firebase reference not initialized, skipping band analytics reporting")
+            return
+        }
         
         if inTestEnvironment == false {
             // LEGACY: dataHandle.refreshData() no longer needed - priorities handled by PriorityManager

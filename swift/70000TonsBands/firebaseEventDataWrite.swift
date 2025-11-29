@@ -12,7 +12,7 @@ import CoreData
 
 class firebaseEventDataWrite {
     
-    var ref: DatabaseReference!
+    var ref: DatabaseReference?
     var eventCompareFile = "eventCompare.data"
     var firebaseShowsAttendedArray = [String : String]();
     var schedule = scheduleHandler.shared
@@ -21,9 +21,31 @@ class firebaseEventDataWrite {
     
     // NEW: Use Core Data AttendanceManager to read attendance data
     let attendanceManager = AttendanceManager()
+    private var initializationAttempts = 0
+    private let maxInitAttempts = 3
     
     init(){
-        ref = Database.database().reference()
+        initializeFirebaseReference()
+    }
+    
+    /// Attempts to initialize Firebase Database reference with retry logic
+    private func initializeFirebaseReference(attempt: Int = 1) {
+        // Check if Firebase is configured
+        if AppDelegate.isFirebaseConfigured {
+            ref = Database.database().reference()
+            print("✅ [FIREBASE_EVENT] Firebase Database reference initialized successfully")
+        } else {
+            print("⚠️ [FIREBASE_EVENT] Firebase not yet configured (attempt \(attempt)/\(maxInitAttempts))")
+            
+            if attempt < maxInitAttempts {
+                // Retry after 2 second delay
+                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    self?.initializeFirebaseReference(attempt: attempt + 1)
+                }
+            } else {
+                print("❌ [FIREBASE_EVENT] Failed to initialize Firebase after \(maxInitAttempts) attempts - will skip analytics")
+            }
+        }
     }
     
     func loadCompareFile()->[String:String]{
@@ -102,6 +124,13 @@ class firebaseEventDataWrite {
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
             print("🔥 firebase EVENT_WRITE: Background write started for \(bandName)")
+            
+            // Check if Firebase reference is initialized
+            guard let firebaseRef = self.ref else {
+                print("⚠️ [FIREBASE_EVENT] Cannot write event data: Firebase reference not initialized, skipping analytics")
+                return
+            }
+            
             self.firebaseShowsAttendedArray = self.loadCompareFile();
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
@@ -113,7 +142,7 @@ class firebaseEventDataWrite {
             let firebasePath = "showData/\(uid)/\(year)/\(sanitizedIndex)"
             print("🔥 firebase EVENT_WRITE: Writing to path: \(firebasePath)")
             
-            self.ref.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
+            firebaseRef.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
                 "originalIdentifier": index, // Store original for reference
                 "sanitizedKey": sanitizedIndex, // Store sanitized for debugging
                 "bandName": bandName,
@@ -139,6 +168,12 @@ class firebaseEventDataWrite {
         
         print("🔥 firebase EVENT_WRITE: writeData() called - Starting event data write process")
         print("🔥 firebase EVENT_WRITE: inTestEnvironment = \(inTestEnvironment)")
+        
+        // Check if Firebase reference is initialized
+        guard self.ref != nil else {
+            print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping event analytics reporting")
+            return
+        }
         
         if (inTestEnvironment == false){
             print("🔥 firebase EVENT_WRITE: Not in test environment, proceeding with write")
