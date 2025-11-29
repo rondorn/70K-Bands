@@ -1193,6 +1193,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             
+            // CRITICAL FIX: Detect if we loaded data for year 0 with very few bands
+            // This indicates the year hasn't been resolved yet - retry after delay
+            if eventYear == 0 && bandsResult.count < 10 {
+                print("⚠️ [YEAR_0_RETRY] Detected year 0 with only \(bandsResult.count) bands - waiting for year resolution")
+                MasterViewController.isRefreshingBandList = false
+                MasterViewController.refreshBandListSafetyTimer?.invalidate()
+                MasterViewController.refreshBandListSafetyTimer = nil
+                
+                // Wait 2 seconds for year to be resolved, then retry up to 3 times
+                self.retryBandListWithCorrectYear(attempt: 1, maxAttempts: 3, delay: 2.0, reason: reason, scrollToTop: scrollToTop)
+                return
+            }
+            
             // Safely merge new band data with existing data to prevent race conditions
             self.safelyMergeBandData(bandsResult, reason: reason)
             
@@ -1310,6 +1323,28 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    /// Retries band list refresh after detecting year 0 with minimal bands
+    /// Waits for eventYear to be properly resolved before retrying
+    private func retryBandListWithCorrectYear(attempt: Int, maxAttempts: Int, delay: TimeInterval, reason: String, scrollToTop: Bool) {
+        print("🔄 [YEAR_0_RETRY] Attempt \(attempt)/\(maxAttempts) - waiting \(delay)s for year resolution")
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self = self else { return }
+            
+            // Check if year has been resolved
+            if eventYear != 0 {
+                print("✅ [YEAR_0_RETRY] Year resolved to \(eventYear) - retrying band list refresh")
+                self.refreshBandList(reason: "\(reason) [year 0 retry - resolved to \(eventYear)]", scrollToTop: scrollToTop)
+            } else if attempt < maxAttempts {
+                print("⚠️ [YEAR_0_RETRY] Year still 0 after \(delay)s - retrying (attempt \(attempt + 1)/\(maxAttempts))")
+                self.retryBandListWithCorrectYear(attempt: attempt + 1, maxAttempts: maxAttempts, delay: delay, reason: reason, scrollToTop: scrollToTop)
+            } else {
+                print("❌ [YEAR_0_RETRY] Year still 0 after \(maxAttempts) attempts - giving up")
+                // Show the data we have (year 0 data) rather than nothing
+                self.refreshBandList(reason: "\(reason) [year 0 retry failed]", scrollToTop: scrollToTop)
+            }
+        }
+    }
 
     @objc func OnOrientationChange(){
         // DEADLOCK FIX: Never block main thread - use async delay instead

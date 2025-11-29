@@ -38,6 +38,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // Flag to track if pointer file download has been attempted on this launch
     private var hasAttemptedPointerDownloadOnLaunch = false
     
+    // Flag to track if Firebase has been configured
+    // Must be static so it can be accessed from other classes
+    static var isFirebaseConfigured = false
+    
     /**
      Downloads the pointer file to a temporary location, and if successful, replaces the existing pointer file
      and forces a reload of in-memory data. This should only be called on app launch.
@@ -211,6 +215,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
+        let launchTime = Date()
+        print("🚀 [TIMING] didFinishLaunchingWithOptions CALLED at \(launchTime.timeIntervalSince1970)")
         print("🚀 [MDF_DEBUG] AppDelegate.didFinishLaunchingWithOptions CALLED")
         print("🚀 [MDF_DEBUG] Festival Config: \(FestivalConfig.current.festivalShortName)")
         print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
@@ -349,7 +355,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Early network calls fail with error -9816 and timeout after 30 seconds
         // Deferring allows app UI to display immediately while network initializes
         // 3.5s delay ensures ALL network endpoints (not just Google) are ready
+        print("🚀 [TIMING] Scheduling Firebase configuration for +3.5s from launch")
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            let firebaseConfigTime = Date()
+            print("🔥 [TIMING] Firebase configuration STARTING at \(firebaseConfigTime.timeIntervalSince1970)")
             print("⏳ Starting deferred network operations (app fully initialized)...")
             
             // Configure Firebase with festival-specific config file
@@ -357,11 +366,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             if let path = Bundle.main.path(forResource: FestivalConfig.current.firebaseConfigFile, ofType: "plist"),
                let options = FirebaseOptions(contentsOfFile: path) {
                 FirebaseApp.configure(options: options)
+                print("🔥 [TIMING] Firebase configured with file: \(FestivalConfig.current.firebaseConfigFile)")
             } else {
                 // Fallback to default configuration
                 FirebaseApp.configure()
+                print("🔥 [TIMING] Firebase configured with DEFAULT config")
             }
             FirebaseConfiguration.shared.setLoggerLevel(.min)
+            
+            // Set flag to indicate Firebase is now configured
+            AppDelegate.isFirebaseConfigured = true
+            let firebaseCompleteTime = Date()
+            print("✅ [TIMING] Firebase configured COMPLETE at \(firebaseCompleteTime.timeIntervalSince1970)")
             print("✅ Firebase configured")
             
             setupCurrentYearUrls()
@@ -660,10 +676,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
  
     // [START connect_on_active]
     func applicationDidBecomeActive(_ application: UIApplication) {
+        let becameActiveTime = Date()
+        print("📱 [TIMING] applicationDidBecomeActive CALLED at \(becameActiveTime.timeIntervalSince1970)")
+        print("📱 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
+        
         // SAFETY: Defer Firebase operations to ensure Firebase is configured
         // Firebase is configured with 3.5s delay in didFinishLaunching
         // If app becomes active quickly, we need to wait for Firebase to be ready
+        print("📱 [TIMING] Scheduling Firebase operations for +4.0s from becameActive")
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 4.0) {
+            let operationsTime = Date()
+            print("🔥 [TIMING] Firebase operations STARTING at \(operationsTime.timeIntervalSince1970)")
+            print("🔥 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
+            
             // Only connect to FCM after Firebase is definitely configured
             self.connectToFcm()
             
@@ -673,7 +698,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // Perform network operations in background (Firebase now guaranteed to be configured)
             let userDataHandle = userDataHandler()
+            print("🔥 [TIMING] About to create firebaseUserWrite instance")
             let userDataReportHandle = firebaseUserWrite()
+            print("🔥 [TIMING] firebaseUserWrite instance created successfully")
             userDataReportHandle.writeData()
             
             // Set up notifications when app becomes active (in case they weren't set up during launch)

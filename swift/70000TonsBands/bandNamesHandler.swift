@@ -23,6 +23,7 @@ open class bandNamesHandler {
     private var bandNames = [String: [String: String]]()
     private var bandNamesArray = [String]()
     private var cacheLoaded = false
+    private var cachedForYear: Int = -1  // Track which year the cache was loaded for
     
     // Threading and state management (same as original)
     private let readingBandFileQueue = DispatchQueue(label: "com.yourapp.readingBandFileQueue")
@@ -101,7 +102,8 @@ open class bandNamesHandler {
             }
             
             self.cacheLoaded = true
-            print("✅ Loaded \(self.bandNamesArray.count) bands from Core Data into cache")
+            self.cachedForYear = eventYear
+            print("✅ Loaded \(self.bandNamesArray.count) bands from Core Data into cache for year \(eventYear)")
         }
     }
     
@@ -224,6 +226,7 @@ open class bandNamesHandler {
             self.bandNames.removeAll()
             self.bandNamesArray.removeAll()
             self.cacheLoaded = false
+            self.cachedForYear = -1
             
             print("🧹 [CACHE_DEBUG] Band names cache cleared safely")
         }
@@ -640,13 +643,24 @@ open class bandNamesHandler {
     func getBandNames() -> [String] {
         var result: [String] = []
         var needsCache = false
+        
         staticBandName.sync {
-            if self.bandNames.isEmpty {
+            // CRITICAL FIX: Check if cache is for the current year
+            // If year has changed (e.g., from 0 to 2026), invalidate cache
+            if self.cachedForYear != eventYear && self.cachedForYear != -1 {
+                print("⚠️ [CACHE_INVALIDATION] Cache is for year \(self.cachedForYear) but current year is \(eventYear) - invalidating cache")
+                self.cacheLoaded = false
+                self.cachedForYear = -1
+                self.bandNames = [:]
+                self.bandNamesArray = []
+                needsCache = true
+            } else if self.bandNames.isEmpty {
                 needsCache = true
             } else {
                 result = Array(self.bandNames.keys).sorted()
             }
         }
+        
         if needsCache {
             getCachedData()
             // After loading, try again to get the result

@@ -133,6 +133,15 @@ open class imageHandler {
             // No image processing needed - use original image
             let processedImage = image
             
+            // CRITICAL: Validate this is a real downloaded image, not a default/fallback
+            // Only cache images that were successfully downloaded from remote URLs
+            // NEVER cache default festival logos or system fallback images
+            guard self?.isValidImageForCaching(processedImage, bandName: bandName) == true else {
+                print("⚠️ CACHE_GUARD: Refusing to cache image for \(bandName) - appears to be default/fallback")
+                completion(processedImage)
+                return
+            }
+            
             // Cache the processed image as PNG to preserve quality (v2 = high quality PNG)
             // Use custom filename if provided (for date-based schedule images), otherwise use default
             let filename = cacheFilename ?? (bandName + "_v2.png")
@@ -140,9 +149,9 @@ open class imageHandler {
             do {
                 let imageData = processedImage.pngData()
                 try imageData?.write(to: imageStoreFile, options: [.atomic])
-                print("Successfully cached processed image for \(bandName) as \(filename)")
+                print("✅ Successfully cached processed image for \(bandName) as \(filename)")
             } catch {
-                print("Error caching image for \(bandName): \(error)")
+                print("❌ Error caching image for \(bandName): \(error)")
             }
             
             completion(processedImage)
@@ -257,6 +266,51 @@ open class imageHandler {
                 self.downloadingAllImages = false
             }
         }
+    }
+    
+    /// Validates that an image is appropriate for caching
+    /// NEVER cache default festival logos or system fallback images
+    /// - Parameters:
+    ///   - image: The image to validate
+    ///   - bandName: The band name (for logging)
+    /// - Returns: True if the image should be cached, false if it's a default/fallback
+    private func isValidImageForCaching(_ image: UIImage, bandName: String) -> Bool {
+        // Get all possible festival logo images that should NEVER be cached
+        let festivalLogoNames = [
+            FestivalConfig.current.logoUrl,
+            "70000tons-logo",
+            "ProgPowerUSA_Black",
+            "mdflogo",
+            "wackenlogo"
+        ]
+        
+        // Try to load each festival logo and compare
+        for logoName in festivalLogoNames {
+            if let festivalLogo = UIImage(named: logoName) {
+                // Compare image data to detect if this is a festival logo
+                if let imageData = image.pngData(),
+                   let logoData = festivalLogo.pngData(),
+                   imageData == logoData {
+                    print("🚫 CACHE_GUARD: Detected festival logo '\(logoName)' for \(bandName) - blocking cache")
+                    return false
+                }
+                
+                // Also compare by size as a fallback check
+                if image.size == festivalLogo.size {
+                    print("⚠️ CACHE_GUARD: Image size matches festival logo '\(logoName)' for \(bandName) - suspicious, blocking cache")
+                    return false
+                }
+            }
+        }
+        
+        // Check for system fallback images (very small or invalid)
+        if image.size.width < 10 || image.size.height < 10 {
+            print("🚫 CACHE_GUARD: Image too small for \(bandName) (\(image.size.width)x\(image.size.height)) - blocking cache")
+            return false
+        }
+        
+        print("✅ CACHE_GUARD: Image validation passed for \(bandName) - safe to cache")
+        return true
     }
 
 }

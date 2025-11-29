@@ -891,6 +891,12 @@ func checkAndHandleYearChange(newYear: String) {
         bandNamesHandler.shared.clearCachedData()
         // LEGACY: Priority cache clearing now handled by PriorityManager if needed
         dataHandler().clearCachedData()
+        
+        // CRITICAL: Clear combined image list cache when year changes
+        // This forces regeneration with the new year's data
+        CombinedImageListHandler.shared.clearCache()
+        print("checkAndHandleYearChange: Cleared CombinedImageListHandler cache")
+        
         if let masterView = masterView {
             masterView.schedule.clearCache()
             
