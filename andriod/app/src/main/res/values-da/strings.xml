@@ -281,4 +281,9 @@
     <string name="DefaultDescriptionMDF">Dobbeltklik for at tilføje dine egne noter</string>
 
     <string name="HereAreMy">Her er mine</string>
+    
+    <!-- Bulk download progress indicators -->
+    <string name="bulk_image_download">Massebilleddownload</string>
+    <string name="bulk_note_download">Massenotedownload</string>
+    <string name="bulk_data_upload">Massedataupload</string>
 </resources>

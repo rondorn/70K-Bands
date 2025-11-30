@@ -572,17 +572,11 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            // Background loading is now handled by ImageDownloadService (foreground service)
-            // This ensures network access works on Android 15+
-            // Check if service is already running
-            if (ImageDownloadService.isRunning()) {
-                Log.d("CustomerDescriptionHandler", "BackgroundNetworkService already running, skipping");
-                return;
-            }
-            
-            // Service will be started by ImageHandler.startBackgroundLoadingOnPause()
-            // which handles all background network operations (images, notes, Firebase)
-            Log.d("CustomerDescriptionHandler", "Background loading will be handled by BackgroundNetworkService");
+            // DEPRECATED: No longer starts background loading.
+            // All downloads now happen in foreground only (after 30 seconds) to avoid Android 15 restrictions.
+            Log.d("CustomerDescriptionHandler", "startBackgroundLoadingOnPause called but background loading is disabled");
+            Log.d("CustomerDescriptionHandler", "All downloads now happen in foreground only (after 30 seconds)");
+            // No longer starting background downloads - all downloads happen in foreground
         }
     }
 

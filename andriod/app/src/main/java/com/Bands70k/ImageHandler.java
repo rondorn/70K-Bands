@@ -595,59 +595,15 @@ public class ImageHandler {
     }
     
     /**
-     * Starts background loading of all images when app goes to background.
-     * This method should be called from the main activity's onPause() method.
-     * Prevents bulk loading immediately after year change to avoid inappropriate downloads.
-     * 
-     * Uses ImageDownloadService (foreground service) for Android 15+ background network access.
+     * DEPRECATED: No longer starts background loading.
+     * All downloads now happen in foreground only (after 30 seconds) to avoid Android 15 restrictions.
+     * This method is kept for compatibility but does nothing.
      */
+    @Deprecated
     public void startBackgroundLoadingOnPause() {
-        synchronized (lock) {
-            Log.d("ImageHandler", "startBackgroundLoadingOnPause called - isAppInBackground: " + Bands70k.isAppInBackground());
-            
-            // CRITICAL SAFETY CHECK: Only proceed if app is actually in background AND fully initialized
-            if (!Bands70k.isAppInBackground()) {
-                Log.d("ImageHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT in background!");
-                return;
-            }
-            
-            if (!showBands.appFullyInitialized) {
-                Log.d("ImageHandler", "BLOCKED: startBackgroundLoadingOnPause called but app is NOT fully initialized!");
-                return;
-            }
-            
-            // Check if it's too soon after a year change (prevent bulk loading for 10 seconds)
-            long timeSinceYearChange = System.currentTimeMillis() - lastYearChangeTime.get();
-            if (timeSinceYearChange < 10000) { // 10 seconds
-                Log.d("ImageHandler", "Skipping bulk loading - too soon after year change (" + timeSinceYearChange + "ms)");
-                return;
-            }
-            
-            // Check if service is already running
-            if (ImageDownloadService.isRunning()) {
-                Log.d("ImageHandler", "ImageDownloadService already running, skipping");
-                return;
-            }
-            
-            // Start foreground service for background downloads (required for Android 15+)
-            Log.d("ImageHandler", "Starting ImageDownloadService for background image downloads");
-            try {
-                Context context = Bands70k.getAppContext();
-                if (context != null) {
-                    Intent serviceIntent = new Intent(context, ImageDownloadService.class);
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        context.startForegroundService(serviceIntent);
-                    } else {
-                        context.startService(serviceIntent);
-                    }
-                    Log.d("ImageHandler", "ImageDownloadService started successfully");
-                } else {
-                    Log.e("ImageHandler", "Cannot start ImageDownloadService - context is null");
-                }
-            } catch (Exception e) {
-                Log.e("ImageHandler", "Error starting ImageDownloadService", e);
-            }
-        }
+        Log.d("ImageHandler", "startBackgroundLoadingOnPause called but background loading is disabled");
+        Log.d("ImageHandler", "All downloads now happen in foreground only (after 30 seconds)");
+        // No longer starting background downloads - all downloads happen in foreground
     }
 
     /**

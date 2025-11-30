@@ -284,4 +284,9 @@
     <string name="DefaultDescriptionMDF">Double-cliquez pour ajouter vos propres notes</string>
 
     <string name="HereAreMy">Voici mes</string>
+    
+    <!-- Bulk download progress indicators -->
+    <string name="bulk_image_download">Téléchargement d\'images en masse</string>
+    <string name="bulk_note_download">Téléchargement de notes en masse</string>
+    <string name="bulk_data_upload">Téléversement de données en masse</string>
 </resources>

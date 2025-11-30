@@ -99,6 +99,9 @@ public class preferenceLayout  extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
+        
+        // Update activity reference for progress indicator if downloads are running
+        ForegroundDownloadManager.setCurrentActivity(this);
         setContentView(R.layout.preferences);
 
         //staticVariables.preferences.loadData();

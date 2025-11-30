@@ -2,6 +2,7 @@ package com.Bands70k;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DatabaseError;
 
 import android.util.Log;
 
@@ -72,11 +73,16 @@ public class FireBaseBandDataWrite {
 
             if (checkIfDataHasChanged() == true) {
                 //FirebaseDatabase.getInstance().goOnline();
+                
+                // OPTIMIZATION: Use batch write instead of individual writes
+                String eventYear = String.valueOf(staticVariables.eventYear);
+                DatabaseReference bandDataRef = mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear);
+                
+                Map<String, Object> batchUpdate = new HashMap<>();
+                
                 for (String bandName : bandRanks.keySet()) {
-
                     HashMap<String, Object> bandData = new HashMap<>();
 
-                    String eventYear = String.valueOf(staticVariables.eventYear);
                     String ranking = bandRanks.get(bandName);
                     String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
 
@@ -86,13 +92,22 @@ public class FireBaseBandDataWrite {
                     bandData.put("userID", staticVariables.userID);
                     bandData.put("year", eventYear);
 
-                    Log.d("FireBaseBandDataWrite", "Writing band data " + bandData.toString() + " (sanitized: " + sanitizedBandName + ")");
-                    try {
-                        // Use sanitized band name for Firebase path
-                        mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear).child(sanitizedBandName).setValue(bandData);
-                    } catch (Exception error){
-                        Log.e("FireBaseBandDataWrite", "Writing band data Failed" + error.toString());
-                    }
+                    // Add to batch update map
+                    batchUpdate.put(sanitizedBandName, bandData);
+                }
+                
+                Log.d("FireBaseBandDataWrite", "🔥 BATCH_WRITE: Writing " + batchUpdate.size() + " band entries in single batch");
+                try {
+                    // Single batch write for all band data
+                    bandDataRef.updateChildren(batchUpdate, (error, ref) -> {
+                        if (error != null) {
+                            Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
+                        } else {
+                            Log.d("FireBaseBandDataWrite", "Batch write successful for " + batchUpdate.size() + " bands");
+                        }
+                    });
+                } catch (Exception error){
+                    Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }
