@@ -283,4 +283,9 @@
     <string name="UnofficialEventsPlural">Epäviralliset Tapahtumat</string>
 
     <string name="HereAreMy">Tässä ovat minun</string>
+    
+    <!-- Bulk download progress indicators -->
+    <string name="bulk_image_download">Massakuvien lataus</string>
+    <string name="bulk_note_download">Massamuistiinpanojen lataus</string>
+    <string name="bulk_data_upload">Massatietojen lähetys</string>
 </resources>

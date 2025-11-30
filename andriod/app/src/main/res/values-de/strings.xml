@@ -282,4 +282,9 @@
     <string name="DefaultDescriptionMDF">Doppelklicken Sie, um Ihre eigenen Notizen hinzuzufügen</string>
 
     <string name="HereAreMy">Hier sind meine</string>
+    
+    <!-- Bulk download progress indicators -->
+    <string name="bulk_image_download">Massenbild-Download</string>
+    <string name="bulk_note_download">Massennotiz-Download</string>
+    <string name="bulk_data_upload">Massendaten-Upload</string>
 </resources>

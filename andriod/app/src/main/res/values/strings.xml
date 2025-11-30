@@ -293,4 +293,9 @@
     <string name="DefaultDescriptionMDF">Double click to add your own notes</string>
 
     <string name="HereAreMy">Here are my</string>
+    
+    <!-- Bulk download progress indicators -->
+    <string name="bulk_image_download">Bulk Image Download</string>
+    <string name="bulk_note_download">Bulk Note Download</string>
+    <string name="bulk_data_upload">Bulk Data Upload</string>
 </resources>

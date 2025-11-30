@@ -114,7 +114,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private static Boolean returningFromStatsPage = false;
     
     // INTERMITTENT POSITION LOSS FIX: Flag to track when we're returning from details screen
-    private static Boolean returningFromDetailsScreen = false;
+    public static Boolean returningFromDetailsScreen = false;
 
     //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
@@ -937,8 +937,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         preferencesButton.setOnClickListener(new Button.OnClickListener() {
             // argument position gives the index of item which is clicked
             public void onClick(View v) {
-                Intent showPreferences = new Intent(showBands.this, preferenceLayout.class);
-                startActivityForResult(showPreferences, 1);
+        Intent showPreferences = new Intent(showBands.this, preferenceLayout.class);
+        // Update activity reference for progress indicator if downloads are running
+        ForegroundDownloadManager.setCurrentActivity(showBands.this);
+        startActivityForResult(showPreferences, 1);
             }
         });
 
@@ -1135,6 +1137,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("refreshNewData", "refreshNewData - 5");
     }
 
+    @Override
+    public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        Log.d("BackgroundFlag", "onUserLeaveHint() called - user trying to leave app");
+        
+        // No longer showing blocking dialog - downloads continue in background with minimal floating indicator
+        Log.d("BackgroundFlag", "Downloads continue in background (if any) with minimal indicator");
+    }
+    
     @Override
     public void onStop() {
         super.onStop();
@@ -1870,6 +1881,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // Reset flags after refresh
                 staticVariables.listPosition = 0;
                 returningFromDetailsScreen = false;
+                
+                // Restore progress indicator if downloads are still running
+                if (ForegroundDownloadManager.isDownloading()) {
+                    Log.d("ListPosition", "Downloads still running, restoring progress indicator");
+                    ForegroundDownloadManager.setCurrentActivity(showBands.this);
+                }
             } else {
                 Log.d("ListPosition", "Normal onResume - proceeding with refresh");
                 refreshNewData();
@@ -2125,6 +2142,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
         Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails activity");
+        // Update activity reference for progress indicator if downloads are running
+        ForegroundDownloadManager.setCurrentActivity(showBands.this);
         startActivity(showDetails);
         Log.d("NAVIGATION_DEBUG", "🚀 showBandDetails activity started");
     }
@@ -2239,6 +2258,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(false);
                 fileDownloaded = true;
+                
+                // Start bulk downloads after CSV processing completes
+                Log.d("Refresh", "CSV processing complete, starting bulk downloads");
+                ForegroundDownloadManager.startDownloadsAfterCSV(showBands.this);
                 
                 Log.d("Refresh", "Refresh Stage = Post-Stop");
             }

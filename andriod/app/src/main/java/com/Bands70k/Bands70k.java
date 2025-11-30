@@ -144,6 +144,9 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             
             ImageHandler imageHandler = ImageHandler.getInstance();
             imageHandler.cancelBackgroundTask();
+            
+            // Start 30-second timer for foreground downloads
+            ForegroundDownloadManager.onAppForegrounded();
         }
         Log.d("AppLifecycle", "Activity started: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
     }
@@ -154,14 +157,19 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         if (!isAppInBackground && activityCount == 0) {
             // No activities are visible - app went to background
             isAppInBackground = true;
-            Log.i("AppLifecycle", "App went to BACKGROUND - starting bulk loading");
+            Log.i("AppLifecycle", "App went to BACKGROUND");
             
-            // Start bulk loading when app truly goes to background
-            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-            descHandler.startBackgroundLoadingOnPause();
+            // Cancel foreground download timer
+            ForegroundDownloadManager.onAppBackgrounded();
             
-            ImageHandler imageHandler = ImageHandler.getInstance();
-            imageHandler.startBackgroundLoadingOnPause();
+            // NO LONGER starting background downloads - all downloads happen in foreground only
+            // This avoids Android 15 background network restrictions
+            Log.i("AppLifecycle", "App went to background - downloads only happen in foreground");
+            
+            // Cancel any running downloads if app backgrounds (they should complete in foreground)
+            if (ForegroundDownloadManager.isDownloading()) {
+                Log.i("AppLifecycle", "Downloads in progress - user should wait or they'll continue in service");
+            }
         }
         Log.d("AppLifecycle", "Activity stopped: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
     }
