@@ -136,6 +136,9 @@ public class showBandDetails extends Activity {
 
         super.onCreate(savedInstanceState);
         
+        // Update activity reference for progress indicator if downloads are running
+        ForegroundDownloadManager.setCurrentActivity(this);
+        
             setContentView(R.layout.band_details_native);
         
         // Initialize swipe gesture detector

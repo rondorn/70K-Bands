@@ -9,9 +9,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    <!-- Foreground service permissions for background image downloads (Android 14+) -->
+    <!-- Foreground service permission for background network operations (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <application
         android:name="Bands70k"
         android:allowBackup="true"
@@ -83,11 +82,9 @@
         </receiver>
         <service 
             android:name=".BackgroundService"
-            android:foregroundServiceType="dataSync"
             android:exported="false" />
         <service 
             android:name=".ImageDownloadService"
-            android:foregroundServiceType="dataSync"
             android:exported="false" />
         <service
             android:exported="true"

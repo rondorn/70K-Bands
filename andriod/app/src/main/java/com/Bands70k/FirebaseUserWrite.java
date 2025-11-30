@@ -2,6 +2,8 @@ package com.Bands70k;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DatabaseError;
+import java.util.Map;
 
 import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
@@ -90,8 +92,17 @@ public class FirebaseUserWrite {
                 
                 ThreadManager.getInstance().runOnUiThreadDelayed(() -> {
                     ThreadManager.getInstance().executeNetwork(() -> {
-                        Log.d("FirebaseUserWrite", "Writing user data " + userData.toString());
-                        mDatabase.child("userData/").child(staticVariables.userID).setValue(userData);
+                        Log.d("FirebaseUserWrite", "🔥 BATCH_WRITE: Writing user data " + userData.toString());
+                        // User data is already a single write, but using updateChildren for consistency
+                        Map<String, Object> batchUpdate = new HashMap<>();
+                        batchUpdate.put(staticVariables.userID, userData);
+                        mDatabase.child("userData/").updateChildren(batchUpdate, (error, ref) -> {
+                            if (error != null) {
+                                Log.e("FirebaseUserWrite", "Batch write failed: " + error.getMessage());
+                            } else {
+                                Log.d("FirebaseUserWrite", "Batch write successful for user data");
+                            }
+                        });
                     });
                 }, delayMs);
             }

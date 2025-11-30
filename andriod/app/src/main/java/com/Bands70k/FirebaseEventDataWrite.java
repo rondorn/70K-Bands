@@ -3,6 +3,9 @@ package com.Bands70k;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DatabaseError;
+import java.util.Set;
+import java.util.HashSet;
 
 import android.util.Log;
 
@@ -92,9 +95,32 @@ public class FirebaseEventDataWrite {
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + currentYearEvents.size() + 
                     " events for year " + currentYear + " (excluded " + filteredOutCount + " from other years)");
 
-            if (checkIfDataHasChanged(currentYearEvents)) {
-                for (String index : currentYearEvents.keySet()) {
+            // Build set of known events from schedule (events the app knows about)
+            Set<String> knownEventIdentifiers = buildKnownEventIdentifiers(currentYear);
+            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Found " + knownEventIdentifiers.size() + " known events in schedule");
+            
+            // Filter to only include events that the app knows about
+            Map<String, String> knownEventsOnly = new HashMap<>();
+            int unknownEventCount = 0;
+            for (String index : currentYearEvents.keySet()) {
+                if (knownEventIdentifiers.contains(index)) {
+                    knownEventsOnly.put(index, currentYearEvents.get(index));
+                } else {
+                    unknownEventCount++;
+                    Log.d("FirebaseEventDataWrite", "Excluding unknown event: " + index);
+                }
+            }
+            
+            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + knownEventsOnly.size() + 
+                    " known events (excluded " + unknownEventCount + " unknown events)");
 
+            if (checkIfDataHasChanged(knownEventsOnly)) {
+                // OPTIMIZATION: Use batch write instead of individual writes
+                DatabaseReference showDataRef = mDatabase.child("showData/").child(staticVariables.userID).child(currentYear);
+                
+                Map<String, Object> batchUpdate = new HashMap<>();
+                
+                for (String index : knownEventsOnly.keySet()) {
                     HashMap<String, Object> eventData = new HashMap<>();
 
                     String[] indexArray = index.split(":");
@@ -106,10 +132,6 @@ public class FirebaseEventDataWrite {
                     String eventType = indexArray[4];
                     String eventYear = "";
 
-                    for (String data : indexArray) {
-                        Log.d("FireBaseBandDataWrite", "showsAttendedArrayData - " + data);
-                    }
-
                     if (indexArray.length == 6) {
                         eventYear = indexArray[5];
                     } else {
@@ -119,8 +141,7 @@ public class FirebaseEventDataWrite {
                     // Sanitize index for Firebase path (contains band name which may have invalid characters)
                     String sanitizedIndex = sanitizeForFirebase(index);
 
-                    String attendedStatus = currentYearEvents.get(index);
-                    Log.d("FireBaseBandDataWrite", "showsAttendedArray - " + showsAttendedArray.get(index));
+                    String attendedStatus = knownEventsOnly.get(index);
                     
                     // Store both original and sanitized data for reference
                     eventData.put("originalIdentifier", index); // Original identifier for reference
@@ -132,10 +153,22 @@ public class FirebaseEventDataWrite {
                     eventData.put("eventType", eventType);
                     eventData.put("status", attendedStatus);
 
-                    Log.d("FireBaseBandDataWrite", "Writing band event data - " + index + " -> " + sanitizedIndex + " - " + eventData.toString());
-
-                    // Use sanitized index for Firebase path
-                    mDatabase.child("showData/").child(staticVariables.userID).child(eventYear).child(sanitizedIndex).setValue(eventData);
+                    // Add to batch update map
+                    batchUpdate.put(sanitizedIndex, eventData);
+                }
+                
+                Log.d("FirebaseEventDataWrite", "🔥 BATCH_WRITE: Writing " + batchUpdate.size() + " event entries in single batch");
+                try {
+                    // Single batch write for all event data
+                    showDataRef.updateChildren(batchUpdate, (error, ref) -> {
+                        if (error != null) {
+                            Log.e("FirebaseEventDataWrite", "Batch write failed: " + error.getMessage());
+                        } else {
+                            Log.d("FirebaseEventDataWrite", "Batch write successful for " + batchUpdate.size() + " events");
+                        }
+                    });
+                } catch (Exception error){
+                    Log.e("FirebaseEventDataWrite", "Batch write exception: " + error.toString());
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }
@@ -185,5 +218,56 @@ public class FirebaseEventDataWrite {
         Log.e("writing event data","Has changed is " + result.toString());
 
         return result;
+    }
+    
+    /**
+     * Builds a set of event identifiers for events that the app knows about (from schedule).
+     * Format: "bandName:location:startTime:eventType:year"
+     * @param currentYear The current event year
+     * @return Set of known event identifiers
+     */
+    private Set<String> buildKnownEventIdentifiers(String currentYear) {
+        Set<String> knownEvents = new HashSet<>();
+        
+        try {
+            if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+                Log.d("FirebaseEventDataWrite", "No schedule records available");
+                return knownEvents;
+            }
+            
+            // Iterate through all bands in schedule
+            for (Map.Entry<String, scheduleTimeTracker> bandEntry : BandInfo.scheduleRecords.entrySet()) {
+                String bandName = bandEntry.getKey();
+                scheduleTimeTracker scheduleTracker = bandEntry.getValue();
+                
+                if (scheduleTracker == null || scheduleTracker.scheduleByTime == null) {
+                    continue;
+                }
+                
+                // Iterate through all events for this band
+                for (Map.Entry<Long, scheduleHandler> eventEntry : scheduleTracker.scheduleByTime.entrySet()) {
+                    scheduleHandler scheduleItem = eventEntry.getValue();
+                    
+                    if (scheduleItem == null) {
+                        continue;
+                    }
+                    
+                    String location = scheduleItem.getShowLocation();
+                    String startTime = scheduleItem.getStartTimeString();
+                    String eventType = scheduleItem.getShowType();
+                    
+                    // Build event identifier matching showsAttended format
+                    // Format: "bandName:location:startTime:eventType:year"
+                    String eventIdentifier = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + currentYear;
+                    knownEvents.add(eventIdentifier);
+                }
+            }
+            
+            Log.d("FirebaseEventDataWrite", "Built " + knownEvents.size() + " known event identifiers from schedule");
+        } catch (Exception e) {
+            Log.e("FirebaseEventDataWrite", "Error building known event identifiers: " + e.getMessage());
+        }
+        
+        return knownEvents;
     }
 }
