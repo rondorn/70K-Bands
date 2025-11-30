@@ -50,6 +50,18 @@ func getBands() -> [String]{
 func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager, attendedHandle: ShowsAttended) -> [String] {
     let startTime = CFAbsoluteTimeGetCurrent()
     print("🚀 CORE DATA FILTERING START with user preferences - eventYear: \(eventYear)")
+    print("🔒 [THREAD_SAFETY] getFilteredScheduleData called on thread: \(Thread.current), isMain: \(Thread.isMainThread)")
+    
+    // CRITICAL: This function MUST run on main thread because it accesses Core Data viewContext objects
+    // If called from background thread, dispatch to main thread synchronously
+    if !Thread.isMainThread {
+        print("⚠️ [THREAD_SAFETY] getFilteredScheduleData called from background thread - dispatching to main")
+        var result: [String] = []
+        DispatchQueue.main.sync {
+            result = getFilteredScheduleData(sortedBy: sortedBy, priorityManager: priorityManager, attendedHandle: attendedHandle)
+        }
+        return result
+    }
     
     let coreDataManager = CoreDataManager.shared
     
@@ -168,8 +180,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     // 4. EXPIRATION FILTER (if enabled)
     if getHideExpireScheduleData() {
         let currentTime = Date().timeIntervalSince1970
-        predicates.append(NSPredicate(format: "timeIndex > %f", currentTime))
-        print("🔍 [FILTER] Hiding expired events before \(currentTime)")
+        predicates.append(NSPredicate(format: "endTimeIndex > %f", currentTime))
+        print("🔍 [FILTER] Hiding expired events (ended before) \(currentTime)")
     }
     
     // EXECUTE FILTERED QUERY

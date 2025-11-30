@@ -47,20 +47,29 @@ open class bandNamesHandler {
     
     /// Loads band data from Core Data into memory cache for fast access
     private func loadCacheFromCoreData() {
-        guard !cacheLoaded else { return }
+        print("🔍 [HANG_DEBUG] bandNamesHandler.loadCacheFromCoreData() ENTERED")
+        guard !cacheLoaded else {
+            print("🔍 [HANG_DEBUG] Cache already loaded, returning")
+            return
+        }
         
         print("🔄 Loading bands from Core Data...")
+        print("🔍 [HANG_DEBUG] Cache not loaded, proceeding with load")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
+        print("🔍 [HANG_DEBUG] About to enter staticBandName.sync")
         staticBandName.sync {
+            print("🔍 [HANG_DEBUG] Inside staticBandName.sync, clearing data structures")
             self.bandNames = [String: [String: String]]()
             self.bandNamesArray = [String]()
             
             // CRITICAL FIX: Filter bands by the current event year
+            print("🔍 [HANG_DEBUG] About to call coreDataManager.fetchBands for year \(eventYear)")
             let bands = self.coreDataManager.fetchBands(forYear: Int32(eventYear))
             print("🔄 Fetched \(bands.count) bands from Core Data for year \(eventYear)")
+            print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands")
             
             for band in bands {
                 guard let bandName = band.bandName, !bandName.isEmpty else { continue }
@@ -113,20 +122,25 @@ open class bandNamesHandler {
     /// PERFORMANCE OPTIMIZED: Load data from cache immediately (no network calls)
     func loadCachedDataImmediately() {
         print("🚀 bandNamesHandler: Loading cached data immediately (no network calls)")
+        print("🔍 [HANG_DEBUG] bandNamesHandler.loadCachedDataImmediately() STARTED")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // Load from Core Data cache immediately
+        print("🔍 [HANG_DEBUG] About to call loadCacheFromCoreData()")
         loadCacheFromCoreData()
+        print("🔍 [HANG_DEBUG] loadCacheFromCoreData() COMPLETED")
         
         var isEmpty = false
         staticBandName.sync {
             isEmpty = self.bandNames.isEmpty
         }
+        print("🔍 [HANG_DEBUG] Checked if bandNames is empty: \(isEmpty)")
         
         if isEmpty {
             print("⚠️ bandNamesHandler: No cached data available")
+            print("🔍 [HANG_DEBUG] No cached band data found")
         } else {
             print("✅ bandNamesHandler: Loaded \(self.bandNamesArray.count) cached bands immediately")
         }
