@@ -572,13 +572,17 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            // Only start background loading if not already running
-            if (!isRunning.get()) {
-                Log.d("CustomerDescriptionHandler", "Starting background loading due to app going to background");
-                getAllDescriptions();
-            } else {
-                Log.d("CustomerDescriptionHandler", "Background loading already running, skipping");
+            // Background loading is now handled by ImageDownloadService (foreground service)
+            // This ensures network access works on Android 15+
+            // Check if service is already running
+            if (ImageDownloadService.isRunning()) {
+                Log.d("CustomerDescriptionHandler", "BackgroundNetworkService already running, skipping");
+                return;
             }
+            
+            // Service will be started by ImageHandler.startBackgroundLoadingOnPause()
+            // which handles all background network operations (images, notes, Firebase)
+            Log.d("CustomerDescriptionHandler", "Background loading will be handled by BackgroundNetworkService");
         }
     }
 

@@ -1145,9 +1145,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // This prevents inappropriate bulk loading during internal navigation (main list ↔ details screen)
         // and only starts bulk loading when the ENTIRE app goes to background
         
-        // Only run essential background tasks
-        FireBaseAsyncBandEventWrite backgroundTask = new FireBaseAsyncBandEventWrite();
-        backgroundTask.execute();
+        // Firebase reporting is now handled by ImageDownloadService (foreground service)
+        // which is started by Bands70k.onActivityStopped() when app goes to background
+        // This ensures network access works on Android 15+
+        Log.d("BackgroundFlag", "Firebase reporting will be handled by BackgroundNetworkService");
     }
 
     private void reloadData() {

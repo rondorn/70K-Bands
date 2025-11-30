@@ -13,8 +13,8 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        versionCode 302511091
-        versionName "302511091"
+        versionCode 302511301
+        versionName "302511301"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
