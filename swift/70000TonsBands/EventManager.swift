@@ -351,7 +351,7 @@ class EventManager {
         // 4. TIME FILTERING (upcoming events only if hideExpiredScheduleData is enabled)
         if getHideExpireScheduleData() {
             let currentTime = Date().timeIntervalSince1970
-            let timePredicate = NSPredicate(format: "timeIndex > %f", currentTime)
+            let timePredicate = NSPredicate(format: "endTimeIndex > %f", currentTime)
             eventPredicates.append(timePredicate)
         }
         

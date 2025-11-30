@@ -14,6 +14,7 @@ struct DetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var offset: CGFloat = 0
     @State private var blockSwiping = false
+    @State private var dragStartX: CGFloat = 0
     
     init(bandName: String) {
         self._viewModel = StateObject(wrappedValue: DetailViewModel(bandName: bandName))
@@ -139,40 +140,70 @@ struct DetailView: View {
             DragGesture(minimumDistance: 10)
                 .onChanged { gesture in
                     if !blockSwiping {
+                        // Capture starting X position on first change
+                        if dragStartX == 0 {
+                            dragStartX = gesture.startLocation.x
+                        }
                         // Show drag feedback
                         offset = gesture.translation.width * 0.3
                     }
                 }
                 .onEnded { gesture in
                     let swipeDistance = gesture.translation.width
+                    let edgeThreshold: CGFloat = 15  // Distance from left edge to trigger back gesture
+                    let isEdgeSwipe = dragStartX < edgeThreshold
                     
-                    // Check if it's a valid swipe
-                    if abs(swipeDistance) > 120 && !blockSwiping {
-                        // Check boundaries before starting animation
-                        let isSwipeLeft = swipeDistance < 0  // Swipe left = next
-                        let isSwipeRight = swipeDistance > 0  // Swipe right = previous
-                        
-                        let canNavigate = (isSwipeLeft && !viewModel.isAtEnd()) || 
-                                        (isSwipeRight && !viewModel.isAtStart())
-                        
-                        if canNavigate {
-                            performCarouselAnimation(swipeDistance: swipeDistance)
-                        } else {
-                            // At boundary - show toast without animation
-                            if isSwipeLeft {
-                                viewModel.navigateToNext()  // This will show "End of List" toast
-                            } else {
-                                viewModel.navigateToPrevious()  // This will show "Already at Start" toast
+                    if !blockSwiping {
+                        // Right swipe from edge: Back to list (iOS edge swipe pattern)
+                        if swipeDistance > 50 && isEdgeSwipe {
+                            blockSwiping = true
+                            // Animate the view sliding out to the right
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                offset = UIScreen.main.bounds.width
                             }
-                            // Snap back immediately without animation
-                            offset = 0
+                            // Dismiss after animation completes
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                presentationMode.wrappedValue.dismiss()
+                            }
                         }
-                    } else {
-                        // Snap back if insufficient swipe
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            offset = 0
+                        // Right swipe from center (>120px): Previous entry in carousel
+                        else if swipeDistance > 120 && !isEdgeSwipe {
+                            let isAtStart = viewModel.isAtStart()
+                            
+                            if !isAtStart {
+                                // Perform carousel animation to previous entry
+                                performCarouselAnimation(swipeDistance: swipeDistance)
+                            } else {
+                                // At start - show toast without animation
+                                viewModel.navigateToPrevious()  // This will show "Already at Start" toast
+                                // Snap back immediately without animation
+                                offset = 0
+                            }
+                        }
+                        // Left swipe (>120px): Next entry in carousel
+                        else if swipeDistance < -120 {
+                            let isAtEnd = viewModel.isAtEnd()
+                            
+                            if !isAtEnd {
+                                // Perform carousel animation to next entry
+                                performCarouselAnimation(swipeDistance: swipeDistance)
+                            } else {
+                                // At end - show toast without animation
+                                viewModel.navigateToNext()  // This will show "End of List" toast
+                                // Snap back immediately without animation
+                                offset = 0
+                            }
+                        }
+                        // Insufficient swipe - snap back
+                        else {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                offset = 0
+                            }
                         }
                     }
+                    
+                    // Reset drag start position
+                    dragStartX = 0
                 }
         )
     }

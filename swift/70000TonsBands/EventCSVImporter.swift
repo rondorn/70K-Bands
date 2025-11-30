@@ -156,6 +156,16 @@ class EventCSVImporter {
                 event.endTime = lineData["End Time"] ?? ""
                 event.timeIndex = timeIndex
                 
+                // Calculate end time index (CRITICAL for proper event filtering)
+                let endTime = lineData["End Time"] ?? ""
+                let endTimeIndex = getDateIndex(date, timeString: endTime, band: bandName)
+                event.endTimeIndex = endTimeIndex
+                
+                if rowIndex <= 3 {
+                    print("🕐 [MDF_DEBUG] Row \(rowIndex) End Time Index: \(endTimeIndex)")
+                    print("🕐 [MDF_DEBUG] Row \(rowIndex) Duration: \((endTimeIndex - timeIndex) / 60) minutes")
+                }
+                
                 // Debug year assignment
                 if rowIndex <= 3 {
                     print("🎯 [MDF_DEBUG] Row \(rowIndex) YEAR ASSIGNMENT:")

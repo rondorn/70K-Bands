@@ -123,20 +123,27 @@ open class scheduleHandler {
     
     /// Loads schedule data from Core Data into memory cache for fast access
     private func loadCacheFromCoreData() {
+        print("🔍 [HANG_DEBUG] scheduleHandler.loadCacheFromCoreData() ENTERED")
         // CRITICAL FIX: Add thread safety since this is now called outside sync blocks
         guard !cacheLoaded else { 
             print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache already loaded, returning early")
+            print("🔍 [HANG_DEBUG] Cache already loaded, returning")
             return 
         }
         
         // Prevent multiple simultaneous loads
         guard !isDataLoadingInProgress else {
             print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Data loading already in progress, waiting...")
+            print("🔍 [HANG_DEBUG] Data loading in progress, returning")
             return
         }
         
+        print("🔍 [HANG_DEBUG] Setting isDataLoadingInProgress = true")
         isDataLoadingInProgress = true
-        defer { isDataLoadingInProgress = false }
+        defer {
+            print("🔍 [HANG_DEBUG] Defer block: setting isDataLoadingInProgress = false")
+            isDataLoadingInProgress = false
+        }
         
         print("🔄 Loading schedule from Core Data...")
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Starting load process")
@@ -145,20 +152,25 @@ open class scheduleHandler {
         // This prevents the deadlock where readFiltersFile() calls back into scheduleHandler methods
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Loading user preferences before year resolution")
         print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler calling readFiltersFile() - moved outside sync to prevent deadlock")
+        print("🔍 [HANG_DEBUG] About to call readFiltersFile()")
         readFiltersFile()
         print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
+        print("🔍 [HANG_DEBUG] readFiltersFile() COMPLETED")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔍 [SCHEDULE_DEBUG] Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // Thread-safe dictionary operations
+        print("🔍 [HANG_DEBUG] Checking if on scheduleHandlerQueue")
         let isOnScheduleQueue = DispatchQueue.getSpecific(key: scheduleHandlerQueueKey) != nil
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: isOnScheduleQueue = \(isOnScheduleQueue)")
         
         // SIMPLIFIED: Since getCachedData() already calls this from within scheduleHandlerQueue.sync,
         // we can always call the internal method directly to avoid nested sync deadlock
         print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Calling internal method directly (avoiding nested sync)")
+        print("🔍 [HANG_DEBUG] About to call loadCacheFromCoreDataInternal()")
         self.loadCacheFromCoreDataInternal()
+        print("🔍 [HANG_DEBUG] loadCacheFromCoreDataInternal() COMPLETED")
     }
     
     private func loadCacheFromCoreDataInternal(useYear: Int? = nil) {
@@ -469,20 +481,27 @@ open class scheduleHandler {
     /// PERFORMANCE OPTIMIZED: Load schedule data from cache immediately (no network calls)
     func loadCachedDataImmediately() {
         print("🚀 scheduleHandler: Loading cached data immediately (no network calls)")
+        print("🔍 [HANG_DEBUG] scheduleHandler.loadCachedDataImmediately() STARTED")
         
         // Year synchronization is now handled by loadCacheFromCoreData() - no need to duplicate
         print("🚀 scheduleHandler: Year resolution will be handled by loadCacheFromCoreData() if needed")
         
         // Load from Core Data cache immediately (thread-safe)
+        print("🔍 [HANG_DEBUG] About to enter scheduleHandlerQueue.sync")
         var eventCount = 0
         scheduleHandlerQueue.sync {
+            print("🔍 [HANG_DEBUG] Inside scheduleHandlerQueue, calling loadCacheFromCoreData()")
             loadCacheFromCoreData()
+            print("🔍 [HANG_DEBUG] loadCacheFromCoreData() completed, entering dictionaryQueue")
             eventCount = dictionaryQueue.sync {
                 return self._schedulingData.count
             }
+            print("🔍 [HANG_DEBUG] Got event count: \(eventCount)")
         }
+        print("🔍 [HANG_DEBUG] Exited scheduleHandlerQueue.sync")
         if eventCount == 0 {
             print("⚠️ scheduleHandler: No cached schedule data available")
+            print("🔍 [HANG_DEBUG] No cached schedule data found")
         } else {
             print("✅ scheduleHandler: Loaded \(eventCount) cached events immediately")
         }

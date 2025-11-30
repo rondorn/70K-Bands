@@ -4047,29 +4047,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚀 [MDF_DEBUG] First launch - showing CoreData immediately, then testing network")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🚀 FIRST LAUNCH: Step 1 - Loading and displaying CoreData/cached data immediately")
+        print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() called")
         
         // CRITICAL: Do NOT wait for Core Data on main thread - could take 20+ seconds on slow devices
         // Instead, load data in background once Core Data is ready
         print("🔍 Loading data in background once Core Data is ready...")
+        print("🔍 [HANG_DEBUG] About to dispatch to background queue")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
-            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
-            _ = CoreDataManager.shared.persistentContainer
-            print("✅ Core Data ready in background")
-            
-            // Step 1: Load and display CoreData/cached data
-            self.bandNameHandle.loadCachedDataImmediately()
-            self.schedule.loadCachedDataImmediately()
-            
-            // Update UI on main thread
-            DispatchQueue.main.async {
-                self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
+            print("🔍 [HANG_DEBUG] Background queue STARTED for first launch")
+            guard let self = self else {
+                print("🔍 [HANG_DEBUG] self is nil, returning")
+                return
             }
             
+            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
+            print("🔍 [HANG_DEBUG] Accessing CoreDataManager.shared.persistentContainer")
+            _ = CoreDataManager.shared.persistentContainer
+            print("✅ Core Data ready in background")
+            print("🔍 [HANG_DEBUG] CoreData persistentContainer ready")
+            
+            // Step 1: Load and display CoreData/cached data
+            print("🔍 [HANG_DEBUG] Calling bandNameHandle.loadCachedDataImmediately()")
+            self.bandNameHandle.loadCachedDataImmediately()
+            print("🔍 [HANG_DEBUG] bandNameHandle.loadCachedDataImmediately() COMPLETED")
+            
+            print("🔍 [HANG_DEBUG] Calling schedule.loadCachedDataImmediately()")
+            self.schedule.loadCachedDataImmediately()
+            print("🔍 [HANG_DEBUG] schedule.loadCachedDataImmediately() COMPLETED")
+            
+            // Update UI on main thread
+            print("🔍 [HANG_DEBUG] About to dispatch refreshBandList to main thread")
+            DispatchQueue.main.async {
+                print("🔍 [HANG_DEBUG] refreshBandList dispatch block STARTED on main thread")
+                self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
+                print("🔍 [HANG_DEBUG] refreshBandList COMPLETED")
+            }
+            
+            print("🔍 [HANG_DEBUG] Calling continueFirstLaunchAfterDataLoad()")
             self.continueFirstLaunchAfterDataLoad()
+            print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() background work COMPLETED")
         }
+        print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() main function RETURNING (background work continues)")
     }
     
     /// Continue first launch sequence after initial data load

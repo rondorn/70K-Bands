@@ -12,25 +12,28 @@ import Firebase
 
 class firebaseUserWrite {
     
-    var ref: DatabaseReference!
+    var ref: DatabaseReference? // Changed to optional
+    private let maxAttempts = 3
+    private let retryDelay: TimeInterval = 2.0
     
     init(){
-        let initTime = Date()
-        print("🔥 [TIMING] firebaseUserWrite.init() CALLED at \(initTime.timeIntervalSince1970)")
-        print("🔥 [TIMING] AppDelegate.isFirebaseConfigured = \(AppDelegate.isFirebaseConfigured)")
-        
-        // Check if FirebaseApp is actually configured
-        if FirebaseApp.app() != nil {
-            print("🔥 [TIMING] FirebaseApp.app() is NOT NIL (Firebase IS configured)")
+        initializeFirebaseReference()
+    }
+    
+    private func initializeFirebaseReference(attempt: Int = 1) {
+        if AppDelegate.isFirebaseConfigured {
+            ref = Database.database().reference()
+            print("✅ Firebase User Data reference initialized successfully")
         } else {
-            print("❌ [TIMING] FirebaseApp.app() is NIL (Firebase NOT configured)")
+            print("⚠️ Firebase not yet configured for User Data (attempt \(attempt)/\(maxAttempts))")
+            if attempt < maxAttempts {
+                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay) { [weak self] in
+                    self?.initializeFirebaseReference(attempt: attempt + 1)
+                }
+            } else {
+                print("❌ Failed to initialize Firebase User Data reference after \(maxAttempts) attempts")
+            }
         }
-        
-        print("🔥 [TIMING] About to call Database.database().reference()")
-        
-        ref = Database.database().reference()
-        
-        print("🔥 [TIMING] Database.database().reference() SUCCESS at \(Date().timeIntervalSince1970)")
     }
     
     func writeData (){
@@ -40,6 +43,12 @@ class firebaseUserWrite {
         //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
         if (inTestEnvironment == false){
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                
+                // Guard against Firebase not being configured
+                guard let firebaseRef = self.ref else {
+                    print("⚠️ Firebase User Data reference not initialized, skipping write")
+                    return
+                }
                 
                 let randomInt = Int.random(in: 5..<25)
                 print ("🔥 [TIMING] Writing Firebase sleeping \(randomInt) seconds");
@@ -52,7 +61,7 @@ class firebaseUserWrite {
                     
                     print ("Writing Firebase  firebase data to userData start");
                     
-                    self.ref.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
+                    firebaseRef.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
                                                                                     "country": userDataHandle.country,
                                                                                     "language": userDataHandle.language,
                                                                                     "platform": "iOS",

@@ -1,5 +1,7 @@
 package com.Bands70k;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -68,7 +70,9 @@ public class ImageHandler {
      */
     public ImageHandler(String bandNameValue){
         this.bandName = bandNameValue;
-        bandImageFile = new File(FileHandler70k.imageDirectory + bandName + ".png");
+        // Use same path logic as other methods to ensure consistency
+        String cacheFilename = getCacheFilename(bandNameValue);
+        bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + cacheFilename);
     }
 
     /**
@@ -167,69 +171,82 @@ public class ImageHandler {
     }
     
     /**
-     * Checks if the cached image is valid.
+     * Checks if the cached image exists (for display purposes).
      * 
-     * For artist images (no ImageDate): Only checks if file exists - these should never expire.
-     * For schedule images (has ImageDate): Checks both file existence AND URL changes - these expire when date or URL changes.
+     * DISPLAY STRATEGY: If the file exists, it's valid for display!
+     * - Date expiration is handled automatically by filename (getCacheFilename includes date)
+     * - URL changes do NOT prevent display (show what we have, update in background)
      * 
      * @param bandName The name of the band
      * @param imageFile The cached image file
-     * @return True if the cached image is valid, false if invalid or file doesn't exist
+     * @return True if the cached image exists, false otherwise
      */
     boolean isCachedImageValid(String bandName, File imageFile) {
+        // Simple check: if file exists, use it for display!
+        boolean exists = imageFile.exists();
+        
+        if (exists) {
+            Log.d("ImageFile", "Cached image found for " + bandName + " - using it");
+        } else {
+            Log.d("ImageFile", "No cached image for " + bandName);
+        }
+        
+        return exists;
+    }
+    
+    /**
+     * Checks if the cached image needs updating (for background loading purposes).
+     * This is used during background loading to determine if we should re-download.
+     * 
+     * BACKGROUND LOADING STRATEGY:
+     * - If file doesn't exist, needs update
+     * - If file exists but URL changed, needs update (only for schedule images)
+     * - If file exists and URL matches, no update needed
+     * 
+     * @param bandName The name of the band
+     * @param imageFile The cached image file
+     * @return True if the image needs updating, false if cached image is current
+     */
+    boolean needsImageUpdate(String bandName, File imageFile) {
         if (!imageFile.exists()) {
-            return false;
+            Log.d("ImageFile", "No cached image for " + bandName + " - needs download");
+            return true;
         }
         
         // Check if this is a schedule image (has ImageDate)
         CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
         String imageDate = combinedHandler.getImageDate(bandName);
         
-        // If no ImageDate, this is an artist image - these should never expire
-        // Just check if file exists (already checked above)
+        // Artist images (no ImageDate) never need updating once downloaded
         if (imageDate == null || imageDate.trim().isEmpty()) {
-            Log.d("ImageFile", "Artist image found for " + bandName + " (no expiration)");
-            return true;
+            Log.d("ImageFile", "Artist image exists for " + bandName + " - no update needed");
+            return false;
         }
         
-        // This is a schedule image with ImageDate - need to check URL changes
-        // Note: Date changes are already handled by filename (getCacheFilename includes date)
-        Log.d("ImageFile", "Schedule image found for " + bandName + " with date " + imageDate + ", checking URL validity");
-        
-        // Get current URL
+        // Schedule image - check if URL changed
         String currentUrl = combinedHandler.getImageUrl(bandName);
-        
-        // Fallback to BandInfo if not found in combined list
         if (currentUrl == null || currentUrl.trim().isEmpty()) {
             currentUrl = BandInfo.getImageUrl(bandName);
         }
         
         if (currentUrl == null || currentUrl.trim().isEmpty() || currentUrl.equals(" ")) {
-            // No URL available, consider cached image valid (might be a placeholder)
-            return true;
+            // No URL available, no update possible
+            return false;
         }
         
-        // Get stored URL hash
+        // Check stored URL
         File urlHashFile = getUrlHashFile(imageFile);
-        String storedUrlHash = null;
-        String storedUrl = null; // Also store the actual URL for comparison
+        String storedUrl = null;
         
         if (urlHashFile.exists()) {
             try {
                 java.io.FileReader reader = new java.io.FileReader(urlHashFile);
                 java.io.BufferedReader bufferedReader = new java.io.BufferedReader(reader);
                 String line = bufferedReader.readLine();
-                if (line != null) {
-                    // Check if line contains both hash and URL (format: "hash|url") or just hash
-                    if (line.contains("|")) {
-                        String[] parts = line.split("\\|", 2);
-                        storedUrlHash = parts[0].trim();
-                        if (parts.length > 1) {
-                            storedUrl = parts[1].trim();
-                        }
-                    } else {
-                        // Old format - just hash
-                        storedUrlHash = line.trim();
+                if (line != null && line.contains("|")) {
+                    String[] parts = line.split("\\|", 2);
+                    if (parts.length > 1) {
+                        storedUrl = parts[1].trim();
                     }
                 }
                 bufferedReader.close();
@@ -239,59 +256,20 @@ public class ImageHandler {
             }
         }
         
-        // Compute current URL hash
-        String currentUrlHash = String.valueOf(currentUrl.hashCode());
-        
-        // If no stored hash exists, assume the cached image is from an older version
-        // and might be invalid - delete it to force re-download
-        if (storedUrlHash == null || storedUrlHash.trim().isEmpty()) {
-            Log.d("ImageFile", "No URL hash found for schedule image " + imageFile.getName() + ", deleting to force re-download");
-            imageFile.delete();
-            urlHashFile.delete(); // Also delete the hash file if it exists
-            return false;
-        }
-        
-        // Compare hashes AND actual URLs (hash collisions are possible, so check URL directly)
-        boolean hashMatches = storedUrlHash.trim().equals(currentUrlHash);
-        boolean urlMatches = (storedUrl != null && storedUrl.equals(currentUrl));
-        
-        Log.d("ImageFile", "URL validation for " + bandName + ": stored hash=" + storedUrlHash + ", current hash=" + currentUrlHash + ", hash matches=" + hashMatches);
-        if (storedUrl != null) {
-            Log.d("ImageFile", "URL comparison: stored='" + storedUrl + "', current='" + currentUrl + "', URL matches=" + urlMatches);
-        } else {
-            Log.d("ImageFile", "Old format hash file detected (no URL stored) for " + bandName + ", will compare URLs directly");
-        }
-        
-        // CRITICAL: If stored URL is null (old format), we can't verify URL match, so force re-download
-        // This ensures old cached images get updated with new format that includes URL
+        // If no stored URL, assume it needs update (old format or first download)
         if (storedUrl == null || storedUrl.trim().isEmpty()) {
-            Log.d("ImageFile", "Old format hash file (no URL) for " + bandName + ", deleting to force re-download with new format");
-            imageFile.delete();
-            urlHashFile.delete();
-            return false;
+            Log.d("ImageFile", "No stored URL for " + bandName + " - needs update");
+            return true;
         }
         
-        // If hash matches but we have stored URL, also check URL directly to avoid hash collisions
-        if (hashMatches && !urlMatches) {
-            Log.d("ImageFile", "Hash collision detected! Hash matches but URL differs for " + bandName + ", deleting cached image");
-            Log.d("ImageFile", "  Stored URL: " + storedUrl);
-            Log.d("ImageFile", "  Current URL: " + currentUrl);
-            imageFile.delete();
-            urlHashFile.delete();
-            return false;
+        // Compare URLs
+        if (!storedUrl.equals(currentUrl)) {
+            Log.d("ImageFile", "URL changed for " + bandName + " - needs update");
+            return true;
         }
         
-        // If hash doesn't match, URL definitely changed
-        if (!hashMatches) {
-            Log.d("ImageFile", "URL changed for schedule image " + bandName + " (old hash: " + storedUrlHash + ", new hash: " + currentUrlHash + "), deleting cached image");
-            imageFile.delete();
-            urlHashFile.delete();
-            return false;
-        }
-        
-        // URL matches (both hash and actual URL), cached image is valid
-        Log.d("ImageFile", "Schedule image valid for " + bandName + " (URL matches)");
-        return true;
+        Log.d("ImageFile", "Cached image is current for " + bandName + " - no update needed");
+        return false;
     }
     
     /**
@@ -427,25 +405,15 @@ public class ImageHandler {
             return null;
         }
 
-        Log.e("loadImageFile", "does image file exist " + bandImageFile.getAbsolutePath());
-        /*
-        if (bandImageFile.exists() == false) {
+        Log.d("loadImageFile", "getImage called for " + this.bandName + " at " + bandImageFile.getAbsolutePath());
 
-            AsyncImageLoader myImageTask = new AsyncImageLoader();
-            myImageTask.execute(bandName);
-
-            Log.e("loadImageFile", "image file already exists Downloading image file from URL" + BandInfo.getImageUrl(this.bandName));
-
-        }
-        */
-
-        // Check if cached image is valid (exists and URL matches)
+        // Simple check: if cached image exists, use it
         if (isCachedImageValid(this.bandName, bandImageFile)) {
             localURL = bandImageFile.toURI();
-            Log.d("loadImageFile", "image file exists and URL matches " + localURL.toString());
+            Log.d("loadImageFile", "Using cached image for " + this.bandName);
         } else {
             localURL = null;
-            Log.d("loadImageFile", "image file does not exist or URL changed " + bandImageFile.getAbsolutePath());
+            Log.d("loadImageFile", "No cached image for " + this.bandName);
         }
 
         return localURL;
@@ -454,6 +422,12 @@ public class ImageHandler {
     /**
      * Gets the image for a band immediately, loading it if needed.
      * This method is used when the details screen needs to load an image immediately.
+     * 
+     * CACHE-FIRST STRATEGY:
+     * 1. If cached image exists, USE IT (regardless of online/offline or URL changes)
+     * 2. If no cached image exists AND online, download it
+     * 3. If no cached image exists AND offline, return null
+     * 
      * @return The image URI or null if not available.
      */
     public URI getImageImmediate(){
@@ -468,22 +442,23 @@ public class ImageHandler {
 
         Log.d("loadImageFile", "getImageImmediate called for " + this.bandName + ", file exists: " + bandImageFile.exists());
 
-        // Check if cached image is valid (exists and URL matches)
-        // Date changes are automatically handled by filename - if date changes, filename changes, so file won't exist
-        // URL changes are handled by URL hash validation in isCachedImageValid
-        if (!isCachedImageValid(this.bandName, bandImageFile)) {
-            Log.d("loadImageFile", "Image file does not exist or URL changed, downloading immediately for " + this.bandName);
-            downloadImageImmediate();
-        } else {
-            Log.d("loadImageFile", "Cached image is valid for " + this.bandName);
-        }
-
-        if (bandImageFile.exists() == true){
+        // SIMPLE CACHE-FIRST LOGIC: Use cache if exists, otherwise download if online
+        if (isCachedImageValid(this.bandName, bandImageFile)) {
+            // Cached image exists - use it!
             localURL = bandImageFile.toURI();
-            Log.d("loadImageFile", "image file exists " + localURL.toString());
+            Log.d("loadImageFile", "Using cached image for " + this.bandName);
         } else {
-            localURL = null;
-            Log.d("loadImageFile", "image file does not exist after download attempt " + bandImageFile.getAbsolutePath());
+            // No cached image - download if online
+            Log.d("loadImageFile", "No cached image for " + this.bandName + ", attempting download");
+            downloadImageImmediate();
+            
+            if (bandImageFile.exists()) {
+                localURL = bandImageFile.toURI();
+                Log.d("loadImageFile", "Image downloaded successfully for " + this.bandName);
+            } else {
+                localURL = null;
+                Log.d("loadImageFile", "Image not available for " + this.bandName);
+            }
         }
 
         return localURL;
@@ -491,9 +466,16 @@ public class ImageHandler {
 
     /**
      * Downloads the image for a band immediately, bypassing background loading pause.
+     * IMPORTANT: Only downloads if device is online - cached images should already be loaded via getImage().
      */
     private void downloadImageImmediate() {
         try {
+            // CRITICAL FIX: Check if device is online before attempting download
+            if (!OnlineStatus.isOnline()) {
+                Log.d("loadImageFile", "Device is offline, skipping image download for " + this.bandName);
+                return;
+            }
+            
             // Use CombinedImageListHandler to get image URL and date
             CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
             String imageUrl = combinedHandler.getImageUrl(this.bandName);
@@ -616,6 +598,8 @@ public class ImageHandler {
      * Starts background loading of all images when app goes to background.
      * This method should be called from the main activity's onPause() method.
      * Prevents bulk loading immediately after year change to avoid inappropriate downloads.
+     * 
+     * Uses ImageDownloadService (foreground service) for Android 15+ background network access.
      */
     public void startBackgroundLoadingOnPause() {
         synchronized (lock) {
@@ -639,12 +623,29 @@ public class ImageHandler {
                 return;
             }
             
-            // Only start background loading if not already running
-            if (!isRunning.get()) {
-                Log.d("ImageHandler", "Starting background loading due to app going to background");
-                getAllRemoteImages();
-            } else {
-                Log.d("ImageHandler", "Background loading already running, skipping");
+            // Check if service is already running
+            if (ImageDownloadService.isRunning()) {
+                Log.d("ImageHandler", "ImageDownloadService already running, skipping");
+                return;
+            }
+            
+            // Start foreground service for background downloads (required for Android 15+)
+            Log.d("ImageHandler", "Starting ImageDownloadService for background image downloads");
+            try {
+                Context context = Bands70k.getAppContext();
+                if (context != null) {
+                    Intent serviceIntent = new Intent(context, ImageDownloadService.class);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent);
+                    } else {
+                        context.startService(serviceIntent);
+                    }
+                    Log.d("ImageHandler", "ImageDownloadService started successfully");
+                } else {
+                    Log.e("ImageHandler", "Cannot start ImageDownloadService - context is null");
+                }
+            } catch (Exception e) {
+                Log.e("ImageHandler", "Error starting ImageDownloadService", e);
             }
         }
     }
@@ -664,6 +665,7 @@ public class ImageHandler {
 
     /**
      * Loads all remote images in the background using the combined image list.
+     * This handles image expiration and updates during background loading.
      */
     private void loadAllRemoteImagesInBackground(){
 
@@ -682,12 +684,12 @@ public class ImageHandler {
             bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + cacheFilename);
             
             Log.d("ImageFile", "Checking cached image for " + bandNameTmp + " at " + bandImageFile.getAbsolutePath());
-            // Check if cached image is valid (exists and URL matches)
-            if (!isCachedImageValid(this.bandName, bandImageFile)) {
-                Log.d("ImageFile", "Cached image invalid or missing for " + bandNameTmp + ", downloading");
+            // Check if image needs updating (URL changed, missing, etc.)
+            if (needsImageUpdate(this.bandName, bandImageFile)) {
+                Log.d("ImageFile", "Image needs update for " + bandNameTmp + ", downloading");
                 this.getRemoteImage();
             } else {
-                Log.d("ImageFile", "Cached image valid for " + bandNameTmp + ", skipping download");
+                Log.d("ImageFile", "Image is current for " + bandNameTmp + ", skipping download");
             }
         }
     }
@@ -772,12 +774,12 @@ class AsyncAllImageLoader extends AsyncTask<String, Void, ArrayList<String>> {
             imageHandler.bandName = bandNameTmp;
             String cacheFilename = imageHandler.getCacheFilename(bandNameTmp);
             imageHandler.bandImageFile = new File(FileHandler70k.baseImageDirectory + "/" + cacheFilename);
-            // Check if cached image is valid (exists and URL matches)
-            if (!imageHandler.isCachedImageValid(bandNameTmp, imageHandler.bandImageFile)) {
-                Log.d("AsyncTask", "Cached image invalid or missing for " + bandNameTmp + ", downloading");
+            // Check if image needs updating during background loading
+            if (imageHandler.needsImageUpdate(bandNameTmp, imageHandler.bandImageFile)) {
+                Log.d("AsyncTask", "Image needs update for " + bandNameTmp + ", downloading");
                 imageHandler.getRemoteImage();
             } else {
-                Log.d("AsyncTask", "Cached image valid for " + bandNameTmp + ", skipping download");
+                Log.d("AsyncTask", "Image is current for " + bandNameTmp + ", skipping download");
             }
         }
 
