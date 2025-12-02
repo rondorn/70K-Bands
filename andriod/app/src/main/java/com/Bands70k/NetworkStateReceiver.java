@@ -40,6 +40,35 @@ public class NetworkStateReceiver extends BroadcastReceiver {
                     Log.d(TAG, "Network type: " + activeNetwork.getTypeName());
                     Log.d(TAG, "Network subtype: " + activeNetwork.getSubtypeName());
                 }
+                
+                // CRITICAL FIX: If network just became available and we're waiting for data,
+                // trigger a refresh to download data
+                // Use ForegroundDownloadManager to get current activity
+                if (isConnected) {
+                    android.app.Activity currentActivity = ForegroundDownloadManager.getCurrentActivity();
+                    
+                    if (currentActivity instanceof showBands) {
+                        showBands showBandsActivity = (showBands) currentActivity;
+                        
+                        // Check if we're still waiting for data (showing "waiting for data" message)
+                        if (showBandsActivity.listHandler != null) {
+                            java.util.List<String> sortableNames = showBandsActivity.listHandler.getSortableBandNames();
+                            boolean isWaitingForData = sortableNames.isEmpty() || 
+                                (sortableNames.size() == 1 && sortableNames.get(0).contains("Waiting for data"));
+                            
+                            if (isWaitingForData && !staticVariables.loadingBands) {
+                                Log.d(TAG, "Network available and waiting for data - triggering refresh");
+                                // Trigger refresh on UI thread
+                                currentActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showBandsActivity.refreshNewData();
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
             }
         }
     }

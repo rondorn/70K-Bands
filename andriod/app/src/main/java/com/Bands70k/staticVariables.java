@@ -327,6 +327,12 @@ public class staticVariables {
         if (eventYear == 0) {
             getEventYear();
         }
+        
+        // Final safety check - ensure eventYear is never 0 after initialization
+        if (eventYear == 0) {
+            Log.w("staticVariablesInitialize", "⚠️ eventYear is still 0 after getEventYear(), attempting resolution...");
+            eventYear = ensureEventYearIsSet();
+        }
 
         if (userID.isEmpty() == true) {
             userID = Settings.Secure.getString(staticVariables.context.getContentResolver(),
@@ -496,17 +502,180 @@ public class staticVariables {
      */
     public static void getEventYear(){
 
+        // CRITICAL FIX: Try to read from cached file first (works offline)
+        // Try common year filenames (2024, 2025, 2026, etc.) to find the cached year
+        if (eventYearRaw == 0) {
+            // Try to read from cached event year files
+            for (int year = 2024; year <= 2030; year++) {
+                File cachedYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + year + ".txt");
+                if (cachedYearFile.exists()) {
+                    try {
+                        String cachedYear = FileHandler70k.loadData(cachedYearFile).trim();
+                        if (!cachedYear.isEmpty()) {
+                            eventYearRaw = Integer.valueOf(cachedYear);
+                            eventYear = eventYearRaw;
+                            Log.d("EventYear", "Read event year from cached file: " + eventYear);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        Log.w("EventYear", "Error reading cached year file " + year + ".txt: " + e.getMessage());
+                    }
+                }
+            }
+            
+            // If no cached file found, try to extract from showsAttended data
+            try {
+                showsAttended attendedHandler = new showsAttended();
+                Map<String, String> showsAttendedData = attendedHandler.getShowsAttended();
+                if (showsAttendedData != null && !showsAttendedData.isEmpty()) {
+                    // Extract year from first entry (format: "band:location:startTime:eventType:year")
+                    String firstIndex = showsAttendedData.keySet().iterator().next();
+                    String[] indexParts = firstIndex.split(":");
+                    if (indexParts.length >= 6) {
+                        String extractedYear = indexParts[5];
+                        eventYearRaw = Integer.valueOf(extractedYear);
+                        eventYear = eventYearRaw;
+                        Log.d("EventYear", "Extracted event year from showsAttended data: " + eventYear);
+                        // Save it for future use
+                        eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+                        writeEventYearFile();
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("EventYear", "Error extracting year from showsAttended data: " + e.getMessage());
+            }
+        }
+        
         eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
 
         if (eventYearRaw == 0){
             eventYear = readEventYearFile();
-
+            // After reading, verify it's not still 0
+            if (eventYear == 0) {
+                eventYear = ensureEventYearIsSet();
+            }
         } else {
             eventYear = eventYearRaw;
-
             writeEventYearFile();
         }
+        
+        // Final safety check - ensure eventYear is never 0
+        if (eventYear == 0) {
+            eventYear = ensureEventYearIsSet();
+        }
 
+    }
+    
+    // Guard flag to prevent infinite recursion
+    private static boolean isResolvingEventYear = false;
+    
+    /**
+     * Ensures eventYear is set to a valid value using multiple fallback strategies.
+     * This method tries multiple sources in order:
+     * 1. Cached event year files
+     * 2. showsAttended data extraction (direct file read to avoid recursion)
+     * 3. Online lookup (if online)
+     * 4. Default fallback year
+     * 
+     * @return A valid event year (never 0)
+     */
+    public static Integer ensureEventYearIsSet() {
+        // Prevent infinite recursion
+        if (isResolvingEventYear) {
+            Log.w("EventYear", "⚠️ Recursion detected in ensureEventYearIsSet(), using default year");
+            Integer defaultYear = 2026;
+            eventYearRaw = defaultYear;
+            eventYear = defaultYear;
+            return eventYear;
+        }
+        
+        isResolvingEventYear = true;
+        try {
+            Log.w("EventYear", "⚠️ eventYear is 0! Attempting to resolve...");
+            
+            // Strategy 1: Try to read from cached event year files
+            for (int year = 2024; year <= 2030; year++) {
+                File cachedYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + year + ".txt");
+                if (cachedYearFile.exists()) {
+                    try {
+                        String cachedYear = FileHandler70k.loadData(cachedYearFile).trim();
+                        if (!cachedYear.isEmpty()) {
+                            Integer resolvedYear = Integer.valueOf(cachedYear);
+                            eventYearRaw = resolvedYear;
+                            eventYear = resolvedYear;
+                            eventYearFile = cachedYearFile;
+                            Log.d("EventYear", "✅ Resolved from cached file: " + eventYear);
+                            return eventYear;
+                        }
+                    } catch (Exception e) {
+                        Log.w("EventYear", "Error reading cached year file " + year + ".txt: " + e.getMessage());
+                    }
+                }
+            }
+            
+            // Strategy 2: Extract from showsAttended data file directly (avoid creating object to prevent recursion)
+            try {
+                File showsAttendedFile = FileHandler70k.showsAttendedFile;
+                if (showsAttendedFile.exists()) {
+                    Map<String, String> showsAttendedData = FileHandler70k.readObject(showsAttendedFile);
+                    if (showsAttendedData != null && !showsAttendedData.isEmpty()) {
+                        // Try all entries to find a valid year
+                        for (String index : showsAttendedData.keySet()) {
+                            String[] indexParts = index.split(":");
+                            if (indexParts.length >= 6) {
+                                try {
+                                    String extractedYear = indexParts[5];
+                                    Integer resolvedYear = Integer.valueOf(extractedYear);
+                                    if (resolvedYear >= 2020 && resolvedYear <= 2030) { // Sanity check
+                                        eventYearRaw = resolvedYear;
+                                        eventYear = resolvedYear;
+                                        eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+                                        writeEventYearFile();
+                                        Log.d("EventYear", "✅ Resolved from showsAttended data file: " + eventYear);
+                                        return eventYear;
+                                    }
+                                } catch (NumberFormatException e) {
+                                    // Skip invalid year format
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("EventYear", "Error extracting year from showsAttended file: " + e.getMessage());
+            }
+            
+            // Strategy 3: Try online lookup if available
+            if (OnlineStatus.isOnline()) {
+                try {
+                    Log.d("EventYear", "Attempting online lookup...");
+                    lookupUrls();
+                    if (eventYearRaw != 0) {
+                        eventYear = eventYearRaw;
+                        eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+                        writeEventYearFile();
+                        Log.d("EventYear", "✅ Resolved from online lookup: " + eventYear);
+                        return eventYear;
+                    }
+                } catch (Exception e) {
+                    Log.w("EventYear", "Error during online lookup: " + e.getMessage());
+                }
+            }
+            
+            // Strategy 4: Default fallback (should be updated annually)
+            Integer defaultYear = 2026; // Update this each year
+            Log.e("EventYear", "⚠️ All resolution strategies failed! Using default year: " + defaultYear);
+            eventYearRaw = defaultYear;
+            eventYear = defaultYear;
+            eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+            writeEventYearFile();
+            
+            return eventYear;
+        } finally {
+            isResolvingEventYear = false;
+        }
     }
 
     /**

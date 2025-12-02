@@ -32,6 +32,12 @@ public class scheduleInfo {
                 ||  staticVariables.inUnitTests == true
                 || FileHandler70k.schedule.exists() == false) {
                 
+            // CRITICAL FIX: Validate URL before attempting download
+            if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+                Log.e("ScheduleLine", "Schedule URL is null or empty, cannot download schedule data");
+                return new HashMap<String, scheduleTimeTracker>(); // Return empty map
+            }
+                
             CacheHashManager cacheManager = CacheHashManager.getInstance();
             // Create temp file for hash comparison
             File tempSchedule = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kScheduleInfo.csv.temp");
