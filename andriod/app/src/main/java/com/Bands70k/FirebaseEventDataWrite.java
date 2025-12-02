@@ -71,6 +71,10 @@ public class FirebaseEventDataWrite {
             showsAttended attendedHandler = new showsAttended();
             Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
             
+            // Ensure eventYear is set before using it
+            if (staticVariables.eventYear == 0) {
+                staticVariables.ensureEventYearIsSet();
+            }
             // Get current year for filtering
             String currentYear = String.valueOf(staticVariables.eventYear);
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtering for current year: " + currentYear);

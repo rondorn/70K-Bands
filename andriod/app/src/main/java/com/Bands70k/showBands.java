@@ -1084,10 +1084,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // CLICK LISTENER FIX: Ensure click listener is set when list is re-initialized
         setupClickListener();
 
-        if (fileDownloaded == false) {
+        // OFFLINE FIX: Check for cached files directly for faster offline loading
+        // This ensures events appear quickly even when offline
+        boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+        
+        if (fileDownloaded == false && !hasCachedData) {
+            // No cached data - need to download
             refreshNewData();
-
         } else {
+            // We have cached data (either fileDownloaded=true or files exist) - load from cache
             reloadData();
         }
 
@@ -1164,7 +1169,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private void reloadData() {
 
-        if (fileDownloaded == true) {
+        // OFFLINE FIX: Check for cached files directly, not just fileDownloaded flag
+        // This ensures events load quickly even when offline
+        boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+        
+        if (fileDownloaded == true || hasCachedData) {
             Log.d("BandData Loaded", "from Cache");
 
             Log.d("reloadData", "reloadData - 1");
@@ -1475,6 +1484,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 String bandName = getBandNameFromIndex(bandIndex);
                 Long timeIndex = getTimeIndexFromIndex(bandIndex);
 
+                // Ensure eventYear is set before using it
+                if (staticVariables.eventYear == 0) {
+                    staticVariables.ensureEventYearIsSet();
+                }
                 String eventYear = String.valueOf(staticVariables.eventYear);
 
                 bandListItem bandItem = new bandListItem(bandName);
@@ -1703,8 +1716,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         displayBandData();
         
-        // Restore scroll position if it was saved
-        restoreScrollPosition();
+        // CRITICAL FIX: Ensure list is visible after refresh, especially on first install
+        // This is important because saveScrollPosition() might have hidden it
+        if (bandNamesList != null) {
+            // If no scroll position was saved (first install), make sure list is visible immediately
+            if (staticVariables.savedScrollPosition < 0) {
+                bandNamesList.setVisibility(View.VISIBLE);
+                bandNamesList.requestLayout();
+                Log.d("FRESH_INSTALL", "Ensuring list is visible after refreshData (no saved position)");
+            } else {
+                // Restore scroll position if it was saved
+                restoreScrollPosition();
+            }
+        }
         
         // ANIMATION FIX: Safety fallback - ensure list is visible even if restore fails
         bandNamesList.postDelayed(new Runnable() {
@@ -1812,6 +1836,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // The stats page should load immediately without waiting for main activity refresh
         if (!returningFromStatsPage) {
             
+            // FRESH INSTALL FIX: Only trigger refresh if data loading is NOT already in progress
+            // This prevents duplicate downloads on first install (onCreate already started loading)
+            if (staticVariables.loadingBands) {
+                Log.d("FRESH_INSTALL", "Data loading already in progress from onCreate, skipping onResume refresh");
+                return; // Don't interfere with the initial load
+            }
+            
             // FRESH INSTALL FIX: Apply exact pull-to-refresh logic on first launch
             // Check if this looks like a fresh install (no data loaded yet)
             boolean isWaitingForData = false;
@@ -1888,8 +1919,21 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     ForegroundDownloadManager.setCurrentActivity(showBands.this);
                 }
             } else {
-                Log.d("ListPosition", "Normal onResume - proceeding with refresh");
-                refreshNewData();
+                Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
+                
+                // OFFLINE FIX: If offline and we have cached data, just reload from cache
+                // This is much faster than trying to refresh (which waits for network)
+                boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+                if (!OnlineStatus.isOnline() && hasCachedData) {
+                    Log.d("OFFLINE_FIX", "Offline with cached data - reloading from cache immediately");
+                    // Just reload from cache - much faster than refreshNewData()
+                    reloadData();
+                    // Still need to refresh the display
+                    refreshData();
+                } else {
+                    // Online or no cached data - do normal refresh
+                    refreshNewData();
+                }
             }
         } else {
             Log.d("DisplayListData", "Skipping refresh - returning from stats page");
@@ -2201,12 +2245,48 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 SynchronizationManager.signalBandLoadingStarted();
                 staticVariables.loadingBands = true;
 
+                // CRITICAL FIX: Check if we have cached data - if so, skip network wait for faster offline loading
+                boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+                
+                if (hasCachedData && !OnlineStatus.isOnline()) {
+                    // We have cached data and we're offline - skip network wait and load from cache immediately
+                    Log.d("AsyncTask", "Offline with cached data - loading from cache immediately (no network wait)");
+                } else {
+                    // CRITICAL FIX: Wait for network to be available before attempting download
+                    // This is especially important on Android API 30 and below where network detection
+                    // can be delayed on first install
+                    // BUT: Only wait if we don't have cached data (first install scenario)
+                    if (!hasCachedData) {
+                        int maxWaitAttempts = 20; // Wait up to 10 seconds (20 * 500ms)
+                        int waitAttempt = 0;
+                        while (!OnlineStatus.isOnline() && waitAttempt < maxWaitAttempts) {
+                            try {
+                                Thread.sleep(500); // Wait 500ms between checks
+                                waitAttempt++;
+                                if (waitAttempt % 4 == 0) { // Log every 2 seconds
+                                    Log.d("AsyncTask", "Waiting for network connectivity... (attempt " + waitAttempt + "/" + maxWaitAttempts + ")");
+                                }
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                Log.w("AsyncTask", "Interrupted while waiting for network", e);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!OnlineStatus.isOnline()) {
+                        Log.w("AsyncTask", "Network not available, will use cached data if available");
+                    } else {
+                        Log.d("AsyncTask", "Network available, proceeding with download");
+                    }
+                }
+
                 Log.d("AsyncTask", "Downloading data");
                 try {
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();
                 } catch (Exception error) {
-                    Log.d("bandInfo", error.getMessage());
+                    Log.e("bandInfo", "Error downloading band data: " + error.getMessage(), error);
                 } finally {
                     // Always signal completion, even if there was an error
                     staticVariables.loadingBands = false;
@@ -2258,6 +2338,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(false);
                 fileDownloaded = true;
+                
+                // CRITICAL FIX: Ensure UI is updated after data load completes
+                // This is especially important on first install when "waiting for data" is shown
+                if (bandNamesList != null && adapter != null) {
+                    Log.d("FRESH_INSTALL", "Ensuring list is visible and adapter is updated after data load");
+                    bandNamesList.setVisibility(View.VISIBLE);
+                    bandNamesList.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+                    bandNamesList.requestLayout();
+                }
                 
                 // Start bulk downloads after CSV processing completes
                 Log.d("Refresh", "CSV processing complete, starting bulk downloads");
