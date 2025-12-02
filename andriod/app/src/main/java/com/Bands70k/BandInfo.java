@@ -350,18 +350,34 @@ public class BandInfo {
                 ||  staticVariables.inUnitTests == true
                 || FileHandler70k.bandInfo.exists() == false) {
 
-            if (downloadUrls.get("artistUrl") == null){
+            if (downloadUrls.get("artistUrl") == null || downloadUrls.get("artistUrl").isEmpty()){
                 staticVariablesInitialize();
                 getDownloadtUrls();
             }
-            System.out.println("inside DownloadBandFile " + downloadUrls.get("artistUrl"));
+            
+            // CRITICAL FIX: Validate URL before attempting download
+            String artistUrl = downloadUrls.get("artistUrl");
+            if (artistUrl == null || artistUrl.trim().isEmpty()) {
+                Log.e("BandInfo", "Artist URL is null or empty, cannot download. Initializing static variables and retrying...");
+                staticVariablesInitialize();
+                getDownloadtUrls();
+                artistUrl = downloadUrls.get("artistUrl");
+                
+                // If still empty after initialization, log error and skip download
+                if (artistUrl == null || artistUrl.trim().isEmpty()) {
+                    Log.e("BandInfo", "Artist URL still empty after initialization. Cannot download band data.");
+                    return ParseBandCSV(); // Return existing data if available
+                }
+            }
+            
+            System.out.println("inside DownloadBandFile " + artistUrl);
             
             // Create temp file for hash comparison
             File tempBandInfo = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandInfo.csv.temp");
             boolean downloadSuccessful = false;
             
             try {
-                URL u = new URL(downloadUrls.get("artistUrl"));
+                URL u = new URL(artistUrl);
                 InputStream is = u.openStream();
 
                 DataInputStream dis = new DataInputStream(is);
@@ -509,3 +525,4 @@ public class BandInfo {
         return bandDetails;
     }
 }
+

@@ -150,6 +150,10 @@ public class showsAttended {
 
     public String addShowsAttended (String band, String location, String startTime, String eventType) {
 
+        // Ensure eventYear is set before using it
+        if (staticVariables.eventYear == 0) {
+            staticVariables.ensureEventYearIsSet();
+        }
         String eventYear = String.valueOf(staticVariables.eventYear);
 
         String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
@@ -160,6 +164,10 @@ public class showsAttended {
 
     public String addShowsAttended (String band, String location, String startTime, String eventType, String attendedStatus) {
 
+        // Ensure eventYear is set before using it
+        if (staticVariables.eventYear == 0) {
+            staticVariables.ensureEventYearIsSet();
+        }
         String eventYear = String.valueOf(staticVariables.eventYear);
 
         String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
