@@ -209,6 +209,9 @@
 		117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
+		11895B972EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
+		11895B982EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
+		11895B992EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
 		11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */; };
 		119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
 		119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
@@ -388,6 +391,7 @@
 		1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
+		11895B962EE4C8EB008CC4A9 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
 		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
 		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
@@ -540,6 +544,7 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11895B962EE4C8EB008CC4A9 /* DataManager.swift */,
 				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
 				11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
@@ -1059,6 +1064,7 @@
 				1154F6311A5758BF003F4764 /* imageHandler.swift in Sources */,
 				1172EE582E5A292E006E3596 /* preferenceDefault.swift in Sources */,
 				1172EE592E5A292E006E3596 /* ConfigurationTest.swift in Sources */,
+				11895B982EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				1172EE5A2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				111A936E2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
@@ -1133,6 +1139,7 @@
 				1187BE1320D6AFC8002F070F /* ToastMessages.swift in Sources */,
 				1172EE622E5A292E006E3596 /* preferenceDefault.swift in Sources */,
 				1172EE632E5A292E006E3596 /* ConfigurationTest.swift in Sources */,
+				11895B992EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				1172EE642E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				111A936D2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
@@ -1207,6 +1214,7 @@
 				1172EDFA2E5A1C4D006E3596 /* imageHandler.swift in Sources */,
 				1172EE5B2E5A292E006E3596 /* preferenceDefault.swift in Sources */,
 				1172EE5C2E5A292E006E3596 /* ConfigurationTest.swift in Sources */,
+				11895B972EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				1172EE5D2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				1172EDFB2E5A1C4D006E3596 /* SwiftUITranslationHelper.swift in Sources */,
 				1172EDFC2E5A1C4D006E3596 /* userDataHandler.swift in Sources */,
