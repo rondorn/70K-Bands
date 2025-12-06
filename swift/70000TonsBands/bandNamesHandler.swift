@@ -38,9 +38,39 @@ open class bandNamesHandler {
     
     private init() {
         // Initialize eventYear from global variable (defined in Constants.swift)
-        // Use the global eventYear variable directly
+        // Load cached year before loading data
+        loadCachedYearIfNeeded()
         print("🔄 bandNamesHandler (Core Data) singleton initialized - Loading from Core Data")
         getCachedData()
+    }
+    
+    /// Loads the cached year from file if eventYear is still 0
+    private func loadCachedYearIfNeeded() {
+        guard eventYear == 0 else {
+            print("📅 [BAND_INIT] eventYear already set to \(eventYear)")
+            return
+        }
+        
+        print("📅 [BAND_INIT] eventYear is 0, attempting to load cached year")
+        
+        // Try to load from cache file
+        if FileManager.default.fileExists(atPath: eventYearFile) {
+            do {
+                let cachedYearString = try String(contentsOfFile: eventYearFile, encoding: .utf8)
+                if let yearInt = Int(cachedYearString.trimmingCharacters(in: .whitespacesAndNewlines)), yearInt > 0 {
+                    eventYear = yearInt
+                    print("📅 [BAND_INIT] Loaded cached year: \(eventYear)")
+                    return
+                }
+            } catch {
+                print("📅 [BAND_INIT] Failed to read cached year file: \(error)")
+            }
+        }
+        
+        // If no cache or invalid, use current calendar year as fallback
+        let currentYear = Calendar.current.component(.year, from: Date())
+        eventYear = currentYear
+        print("📅 [BAND_INIT] No cached year, using current year: \(eventYear)")
     }
     
     // MARK: - Core Data Cache Management

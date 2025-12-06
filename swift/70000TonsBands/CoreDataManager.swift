@@ -243,6 +243,13 @@ class CoreDataManager {
     }
     
     func fetchBands(forYear year: Int32) -> [Band] {
+        // CRITICAL: Never allow operations with year == 0
+        guard year > 0 else {
+            print("❌ CRITICAL: fetchBands called with invalid year: \(year)")
+            print("❌ Stack trace: \(Thread.callStackSymbols.prefix(5).joined(separator: "\n"))")
+            return []
+        }
+        
         var result: [Band] = []
         viewContext.performAndWait {
             // Temporarily disable automatic merges during fetch to prevent collection mutation
