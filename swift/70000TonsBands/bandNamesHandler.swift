@@ -16,7 +16,7 @@ open class bandNamesHandler {
     static let shared = bandNamesHandler()
     
     // Core Data components
-    private let coreDataManager = CoreDataManager.shared
+    private let dataManager = DataManager.shared
     private let csvImporter = BandCSVImporter()
     
     // Cache for performance (mirrors original structure)
@@ -96,8 +96,8 @@ open class bandNamesHandler {
             self.bandNamesArray = [String]()
             
             // CRITICAL FIX: Filter bands by the current event year
-            print("🔍 [HANG_DEBUG] About to call coreDataManager.fetchBands for year \(eventYear)")
-            let bands = self.coreDataManager.fetchBands(forYear: Int32(eventYear))
+            print("🔍 [HANG_DEBUG] About to call dataManager.fetchBands for year \(eventYear)")
+            let bands = self.dataManager.fetchBands(forYear: eventYear)
             print("🔄 Fetched \(bands.count) bands from Core Data for year \(eventYear)")
             print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands")
             
@@ -398,7 +398,7 @@ open class bandNamesHandler {
                 }
                 
                 // Smart import detection: Force import if we have large CSV but few bands for current year
-                let currentBandCount = CoreDataManager.shared.fetchBands(forYear: Int32(eventYear)).count
+                let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
                 if httpData.count > 10000 && currentBandCount < 20 {
                     print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) bands in Core Data")
                     clearStoredChecksum()
@@ -434,7 +434,7 @@ open class bandNamesHandler {
                     
                     // Even if data hasn't changed, we should run cleanup to remove invalid bands
                     // This handles cases where test data or old bands exist in Core Data
-                    let currentBandCount = CoreDataManager.shared.fetchBands(forYear: Int32(eventYear)).count
+                    let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
                     let csvLineCount = httpData.components(separatedBy: .newlines).count - 1 // Subtract header
                     
                     if currentBandCount != csvLineCount {
@@ -727,7 +727,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 let imageUrl = bandData.imageUrl ?? ""
                 if !imageUrl.isEmpty {
                     result = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
@@ -751,7 +751,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 let officialSite = bandData.officialSite ?? ""
                 if !officialSite.isEmpty {
                     result = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
@@ -775,7 +775,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if wikipediaUrl.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
                 wikipediaUrl = bandData.wikipedia ?? ""
                 print("🔧 OFFLINE MODE: Retrieved wikipedia '\(wikipediaUrl)' from Core Data for band '\(bandName)'")
             }
@@ -803,7 +803,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if youTubeUrl.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
                 youTubeUrl = bandData.youtube ?? ""
                 print("🔧 OFFLINE MODE: Retrieved youtube '\(youTubeUrl)' from Core Data for band '\(bandName)'")
             }
@@ -829,7 +829,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: bandName, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
                 result = bandData.metalArchives ?? ""
                 print("🔧 OFFLINE MODE: Retrieved metalArchives '\(result)' from Core Data for band '\(bandName)'")
             }
@@ -849,7 +849,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 result = bandData.country ?? ""
                 print("🔧 OFFLINE MODE: Retrieved country '\(result)' from Core Data for band '\(band)'")
             }
@@ -869,7 +869,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 result = bandData.genre ?? ""
                 print("🔧 OFFLINE MODE: Retrieved genre '\(result)' from Core Data for band '\(band)'")
             }
@@ -889,7 +889,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if result.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 result = bandData.noteworthy ?? ""
                 print("🔧 OFFLINE MODE: Retrieved noteworthy '\(result)' from Core Data for band '\(band)'")
             }
@@ -909,7 +909,7 @@ open class bandNamesHandler {
         
         // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
         if previousYears == nil || previousYears!.isEmpty {
-            if let bandData = coreDataManager.fetchBand(byName: band, eventYear: Int32(eventYear)) {
+            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
                 previousYears = bandData.priorYears
                 print("🔧 OFFLINE MODE: Retrieved priorYears '\(previousYears ?? "")' from Core Data for band '\(band)'")
             }

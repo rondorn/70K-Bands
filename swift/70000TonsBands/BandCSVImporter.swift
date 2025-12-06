@@ -11,7 +11,8 @@ import CoreData
 
 class BandCSVImporter {
     
-    private let coreDataManager = CoreDataManager.shared
+    private let dataManager = DataManager.shared
+    private let coreDataManager = CoreDataManager.shared // Still needed for performSafeBackgroundTask
     
     // MARK: - Band Name Sanitization
     
@@ -221,7 +222,7 @@ class BandCSVImporter {
         
         // Verify the data was actually saved by checking on main context
         DispatchQueue.main.async {
-            let totalBandsInCoreData = self.coreDataManager.fetchBands(forYear: Int32(eventYear)).count
+            let totalBandsInCoreData = self.dataManager.fetchBands(forYear: eventYear).count
             print("DEBUG_MARKER: Core Data now contains \(totalBandsInCoreData) bands for year \(eventYear)")
         }
         
@@ -248,7 +249,7 @@ class BandCSVImporter {
         print("🌐 Starting band data download and import...")
         
         // Only download if forced or if we have no bands for current year in database
-        let existingBandCount = coreDataManager.fetchBands(forYear: Int32(eventYear)).count
+        let existingBandCount = dataManager.fetchBands(forYear: eventYear).count
         
         if !forceDownload && existingBandCount > 0 {
             print("📚 Bands already in database (\(existingBandCount) bands), skipping download")
