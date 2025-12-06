@@ -215,7 +215,54 @@ let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFil
 let versionInfoFile = getDocumentsDirectory().appendingPathComponent("versionInfoFile")
 let eventYearsInfoFile = "eventYearsInfoFile"
 
-var eventYear:Int = 0
+// CRITICAL: eventYear should NEVER be 0 except temporarily on first install
+// before pointer file is downloaded. Always use cache and update when needed.
+private var _eventYear:Int = 0
+private let eventYearLock = NSLock()
+
+var eventYear:Int {
+    get {
+        eventYearLock.lock()
+        defer { eventYearLock.unlock() }
+        return _eventYear
+    }
+    set {
+        // NEVER allow setting to 0 after initial setup
+        guard newValue > 0 else {
+            print("❌ CRITICAL: Attempted to set eventYear to invalid value: \(newValue)")
+            eventYearLock.lock()
+            let current = _eventYear
+            eventYearLock.unlock()
+            print("❌ Rejecting change - keeping current value: \(current)")
+            return
+        }
+        
+        eventYearLock.lock()
+        let needsUpdate = (_eventYear != newValue)
+        if needsUpdate {
+            print("📅 Updating eventYear from \(_eventYear) to \(newValue)")
+            _eventYear = newValue
+        }
+        eventYearLock.unlock()
+        
+        // Only do file I/O and cache updates if changed (outside of locks to prevent deadlock)
+        if needsUpdate {
+            // Save to cache file for next launch
+            do {
+                try String(newValue).write(toFile: eventYearFile, atomically: true, encoding: .utf8)
+                print("✅ Cached eventYear \(newValue) to file")
+            } catch {
+                print("❌ Failed to cache eventYear to file: \(error)")
+            }
+            
+            // Update memory cache (storePointerLock is separate from eventYearLock - no nesting!)
+            storePointerLock.sync {
+                cacheVariables.storePointerData["Current:eventYear"] = String(newValue)
+                print("✅ Updated eventYear in memory cache")
+            }
+        }
+    }
+}
 
 //defaults preferences
 // artistUrlDefault and scheduleUrlDefault are now defined in preferenceDefault.swift using FestivalConfig
@@ -814,8 +861,20 @@ func setupDefaults() {
     
     print ("Trying to get the year  \(eventYear)")
     
+    // CRITICAL: eventYear should NEVER be 0 except on very first install
     // Use robust year resolution that handles launch scenarios
-    eventYear = ensureYearResolvedAtLaunch()
+    let resolvedYear = ensureYearResolvedAtLaunch()
+    
+    // SAFETY CHECK: If year is 0, use current calendar year as fallback
+    if resolvedYear == 0 {
+        print("❌ CRITICAL: eventYear resolved to 0 - using current year as fallback")
+        let currentYear = Calendar.current.component(.year, from: Date())
+        eventYear = currentYear
+        print("📅 Set eventYear to current year: \(currentYear)")
+    } else {
+        eventYear = resolvedYear
+        print("📅 Set eventYear to resolved year: \(resolvedYear)")
+    }
     
     print("🎯 [MDF_DEBUG] GLOBAL eventYear RESOLUTION:")
     print("   Festival: \(FestivalConfig.current.festivalShortName)")
@@ -964,6 +1023,19 @@ func ensureYearResolvedAtLaunch() -> Int {
         
         // Trigger background pointer update for next time (non-blocking)
         triggerBackgroundPointerUpdate()
+    } else {
+        // We have cached year - check if user is on "Current" and if pointer file has newer year
+        let yearPreference = getScheduleUrl() // Returns "Current" or specific year like "2025"
+        if yearPreference == "Current" {
+            print("🚀 LAUNCH OPTIMIZATION: User on 'Current', checking for year updates in background")
+            DispatchQueue.global(qos: .utility).async {
+                // Wait for app to fully launch before checking
+                Thread.sleep(forTimeInterval: 5.0)
+                checkForYearChangeInPointerFile(cachedYear: resolvedYear)
+            }
+        } else {
+            print("🚀 LAUNCH OPTIMIZATION: User on specific year '\(yearPreference)', not checking for updates")
+        }
     }
     
     // Validate the year
@@ -979,6 +1051,80 @@ func ensureYearResolvedAtLaunch() -> Int {
     print("🎯 [MDF_DEBUG] Non-blocking eventYear resolution returned: \(resolvedYear)")
     
     return Int(resolvedYear)!
+}
+
+/// Checks if the year in the pointer file has changed compared to cached year
+/// ONLY updates if user is on "Current" preference and pointer has newer year
+/// This respects user's explicit year choice from preferences
+/// - Parameter cachedYear: The currently cached year value
+func checkForYearChangeInPointerFile(cachedYear: String) {
+    print("📅 Checking if pointer file 'Current' year has changed (cached: \(cachedYear))")
+    
+    // Only proceed if user preference is set to "Current"
+    let yearPreference = getScheduleUrl()
+    guard yearPreference == "Current" else {
+        print("📅 User has explicit year selection '\(yearPreference)' - not auto-updating")
+        return
+    }
+    
+    // Download fresh pointer file
+    let pointerUrl = FestivalConfig.current.defaultStorageUrl
+    let httpData = getUrlData(urlString: pointerUrl)
+    
+    guard !httpData.isEmpty else {
+        print("📅 Could not download pointer file - skipping year check")
+        return
+    }
+    
+    // Parse the pointer file to get Current::eventYear
+    let dataArray = httpData.components(separatedBy: "\n")
+    var pointerFileYear: String?
+    
+    for line in dataArray {
+        // Look for line like "Current::eventYear::2026"
+        if line.hasPrefix("Current::eventYear::") {
+            let components = line.components(separatedBy: "::")
+            if components.count >= 3 {
+                pointerFileYear = components[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                print("📅 Found 'Current' year in pointer file: \(pointerFileYear ?? "nil")")
+                break
+            }
+        }
+    }
+    
+    guard let newYearString = pointerFileYear, 
+          !newYearString.isEmpty,
+          let newYearInt = Int(newYearString),
+          let cachedYearInt = Int(cachedYear) else {
+        print("📅 Could not parse year from pointer file or cached year")
+        return
+    }
+    
+    // Only update if pointer file has NEWER year than cached year
+    guard newYearInt > cachedYearInt else {
+        print("📅 Pointer file year (\(newYearInt)) is not newer than cached (\(cachedYearInt)) - no update")
+        return
+    }
+    
+    // Pointer file has newer year and user is on "Current" - trigger year change!
+    print("📅 ✅ Pointer file has NEWER year: \(newYearInt) > cached: \(cachedYearInt)")
+    print("📅 User preference is 'Current' - triggering automatic year update...")
+    
+    // Update eventYear and trigger year change process
+    DispatchQueue.main.async {
+        print("📅 Updating eventYear from \(cachedYearInt) to \(newYearInt)")
+        eventYear = newYearInt
+        checkAndHandleYearChange(newYear: newYearString)
+        
+        print("📅 ✅ Automatically updated to year \(newYearInt) from pointer file")
+        
+        // Post notification that year was auto-updated
+        NotificationCenter.default.post(
+            name: Notification.Name("YearChangedAutomatically"),
+            object: nil,
+            userInfo: ["newYear": newYearInt, "oldYear": cachedYearInt]
+        )
+    }
 }
 
 /// Sets up the current year URLs for artist and schedule data, writing a flag file if needed.
