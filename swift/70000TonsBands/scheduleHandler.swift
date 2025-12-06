@@ -16,7 +16,7 @@ open class scheduleHandler {
     static let shared = scheduleHandler()
     
     // Core Data components
-    private let coreDataManager = CoreDataManager.shared
+    private let dataManager = DataManager.shared
     private let csvImporter = ScheduleCSVImporter()
     
     // Thread-safe queue for all scheduling data access
@@ -190,7 +190,7 @@ open class scheduleHandler {
         
         // CRITICAL DEBUG: Check unofficial events BEFORE cleanup
         print("🔧 [CONTEXT_DEBUG] Checking unofficial events BEFORE cleanup...")
-        let preCleanupEvents = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        let preCleanupEvents = self.dataManager.fetchEvents(forYear: yearToUse)
         let preCleanupUnofficial = preCleanupEvents.filter { event in
             let eventType = event.eventType ?? ""
             return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
@@ -206,11 +206,11 @@ open class scheduleHandler {
         print("🧹 [CLEANUP] Running cleanup for problematic events")
         print("🚨 [CLEANUP_DEBUG] CRITICAL: About to cleanup with currentYear = \(yearToUse)")
         print("🚨 [CLEANUP_DEBUG] This will DELETE ALL events with eventYear != \(yearToUse)")
-        self.coreDataManager.cleanupProblematicEvents(currentYear: yearToUse)
+        self.dataManager.cleanupProblematicEvents(currentYear: yearToUse)
         
         // CRITICAL DEBUG: Check unofficial events AFTER cleanup
         print("🔧 [CONTEXT_DEBUG] Checking unofficial events AFTER cleanup...")
-        let postCleanupEvents = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        let postCleanupEvents = self.dataManager.fetchEvents(forYear: yearToUse)
         let postCleanupUnofficial = postCleanupEvents.filter { event in
             let eventType = event.eventType ?? ""
             return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
@@ -225,7 +225,7 @@ open class scheduleHandler {
             print("🔧 [CONTEXT_DEBUG] 🚨 This suggests cleanup is removing them!")
         }
         
-        let events = self.coreDataManager.fetchEvents(forYear: Int32(yearToUse))
+        let events = self.dataManager.fetchEvents(forYear: yearToUse)
         print("🔄 Fetched \(events.count) events from Core Data for year \(yearToUse)")
         
         // CRITICAL DEBUG: Check for unofficial events specifically
@@ -245,7 +245,7 @@ open class scheduleHandler {
         }
         
         // Debug: Check if there are any events at all in Core Data
-        let allEvents = self.coreDataManager.fetchEvents()
+        let allEvents = self.dataManager.fetchEvents()
         print("🔍 DEBUG: Total events in Core Data (all years): \(allEvents.count)")
         
         // CRITICAL DEBUG: Check for unofficial events across ALL years
@@ -779,7 +779,7 @@ open class scheduleHandler {
                 }
                 
                 // Smart import detection: Force import if we have large CSV but few events
-                let currentEventCount = coreDataManager.fetchEvents(forYear: Int32(eventYear)).count
+                let currentEventCount = dataManager.fetchEvents(forYear: eventYear).count
                 if httpData.count > 1000 && currentEventCount < 5 {
                     print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentEventCount) events in Core Data")
                     storedChecksum = nil // Force import
@@ -988,7 +988,7 @@ open class scheduleHandler {
                     
                     // Now check Core Data after context synchronization using captured year
                     print("🔧 [YEAR_SYNC_DEBUG] Using captured year \(capturedEventYear) for post-import check (global eventYear = \(eventYear))")
-                    let justImportedEvents = self.coreDataManager.fetchEvents(forYear: Int32(capturedEventYear))
+                    let justImportedEvents = self.dataManager.fetchEvents(forYear: capturedEventYear)
                     let justImportedUnofficial = justImportedEvents.filter { event in
                         let eventType = event.eventType ?? ""
                         return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
@@ -1070,7 +1070,7 @@ open class scheduleHandler {
     
     func getCurrentIndex(_ bandName: String) -> TimeInterval {
         let currentDate = Date()
-        let events = coreDataManager.fetchEvents(forYear: Int32(eventYear))
+        let events = dataManager.fetchEvents(forYear: eventYear)
         
         // Find the event for this band that's closest to current time
         var closestIndex: TimeInterval = 0
@@ -1234,7 +1234,7 @@ open class scheduleHandler {
         print("🔍 [BAND_EVENTS_DEBUG] Getting events for band: '\(bandName)', includeExpired: \(includeExpired)")
         
         // Get events directly from Core Data
-        let events = coreDataManager.fetchEventsForBand(bandName, forYear: Int32(eventYear))
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
         var eventDataArray: [[String: String]] = []
         
         let currentTime = Date().timeIntervalSince1970
