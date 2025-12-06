@@ -103,6 +103,9 @@ class DetailViewModel: ObservableObject {
     // Store reference to prevent deallocation of translation controller
     private var currentTranslationController: Any?
     
+    // Store reference to prevent deallocation of image handler during async downloads
+    private var imageHandle: imageHandler = imageHandler()
+    
     // Notes editing
     @Published var isNotesEditable: Bool = true
     
@@ -1111,7 +1114,7 @@ class DetailViewModel: ObservableObject {
             }
         }
         
-        let imageHandle = imageHandler()
+        // Use stored imageHandle to prevent deallocation during async operations
         let scheduleImageDate = (imageDate != nil && !imageDate!.isEmpty) ? imageDate : nil
         
         // Check if cached image exists first (without returning placeholder)
@@ -1181,10 +1184,10 @@ class DetailViewModel: ObservableObject {
         // No cache exists - attempt download without showing placeholder first
         if isInternetAvailable() {
             // Only download individual images if not currently doing bulk downloads
-            if !imageHandle.downloadingAllImages {
+            if !self.imageHandle.downloadingAllImages {
                 print("🔄 No cache found - attempting download for \(bandName)")
                 print("🔄 Will download from: \(imageURL)")
-                downloadAndCacheImage(imageURL: imageURL, imageHandle: imageHandle, scheduleImageDate: scheduleImageDate)
+                downloadAndCacheImage(imageURL: imageURL, imageHandle: self.imageHandle, scheduleImageDate: scheduleImageDate)
             } else {
                 print("⏸️ Skipping individual image download for \(bandName) - bulk download in progress")
                 // Don't show placeholder during bulk download - let it load when bulk completes

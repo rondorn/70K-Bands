@@ -1,18 +1,15 @@
 source 'https://github.com/CocoaPods/Specs.git'
-#use_frameworks!
-pod 'AWSSNS'
-pod 'Bolts'
-
-link_with '70K Bands', '70K BandTests'
+platform :ios, '12.0'
 
 target '70K Bands' do
-	platform :ios, '8.0'
-#	pod 'AWSMobileAnalytics', '~> 2.3.0'
-	pod 'AWSSNS', '~> 2.3.0’
+	use_frameworks!
+	pod 'AWSSNS', '~> 2.3.0'
+	pod 'Bolts'
+	pod 'SQLite.swift', '~> 0.15.3'
 end
 
 target '70K BandsTests' do
-        platform :ios, '8.0'
-#        pod 'AWSMobileAnalytics', '~> 2.3.0'
-        pod 'AWSSNS', '~> 2.3.0’
+	use_frameworks!
+	pod 'AWSSNS', '~> 2.3.0'
+	pod 'SQLite.swift', '~> 0.15.3'
 end
