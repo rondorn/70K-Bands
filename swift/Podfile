@@ -4,15 +4,19 @@ platform :ios, '15.0'
 use_frameworks!
 
 target '70K Bands' do
-	pod 'Firebase/Core'
-	pod 'Firebase/Messaging'
-	pod 'Firebase/Database'
+	pod 'Firebase/Core', '~> 8.15.0'
+	pod 'Firebase/Messaging', '~> 8.15.0'
+	pod 'Firebase/Database', '~> 8.15.0'
+        pod 'AWSSNS', '~> 2.3.0'
+        pod 'Bolts'
 end
 
 target '70K BandsTests' do
-        pod 'Firebase/Core'
-        pod 'Firebase/Messaging'
-	pod 'Firebase/Database'
+        pod 'Firebase/Core', '~> 8.15.0'
+        pod 'Firebase/Messaging', '~> 8.15.0'
+	pod 'Firebase/Database', '~> 8.15.0'
+        pod 'AWSSNS', '~> 2.3.0'
+        pod 'Bolts'
 end
 
 post_install do |installer|

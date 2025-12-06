@@ -168,7 +168,6 @@
 		1172EE302E5A1C4D006E3596 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
 		1172EE312E5A1C4D006E3596 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
 		1172EE322E5A1C4D006E3596 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
-		1172EE332E5A1C4D006E3596 /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */; };
 		1172EE362E5A1C4D006E3596 /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1172EE372E5A1C4D006E3596 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
 		1172EE382E5A1C4D006E3596 /* ApiKeys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 11AC1D7C1A682AF100267A8F /* ApiKeys.plist */; };
@@ -274,6 +273,7 @@
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
 		11FBBE1E232F26E100109035 /* NotificationPayload.apns in Resources */ = {isa = PBXBuildFile; fileRef = 11FBBE1D232F26E000109035 /* NotificationPayload.apns */; };
 		11FD1F1E20E006C100BE0141 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
+		4F67BE347E058E3E472A7FAB /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */; };
 		C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -430,10 +430,10 @@
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
 		7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_BandsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
-		FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
+		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -454,6 +454,7 @@
 				11AC1D671A6827FC00267A8F /* CFNetwork.framework in Frameworks */,
 				11AC1D651A6827F300267A8F /* AudioToolbox.framework in Frameworks */,
 				06C68AAEA9EABE099DB7F774 /* Pods_70K_Bands.framework in Frameworks */,
+				4F67BE347E058E3E472A7FAB /* Pods_70K_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,7 +482,6 @@
 				1172EE302E5A1C4D006E3596 /* CloudKit.framework in Frameworks */,
 				1172EE312E5A1C4D006E3596 /* CFNetwork.framework in Frameworks */,
 				1172EE322E5A1C4D006E3596 /* AudioToolbox.framework in Frameworks */,
-				1172EE332E5A1C4D006E3596 /* Pods_70K_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,10 +658,10 @@
 		EB50CED3291C1995D716A750 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */,
-				FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */,
 				0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */,
 				7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */,
+				77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */,
+				6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -714,13 +714,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1172EE442E5A1C4D006E3596 /* Build configuration list for PBXNativeTarget "MDF Bands" */;
 			buildPhases = (
-				1172EDF62E5A1C4D006E3596 /* [CP] Check Pods Manifest.lock */,
 				1172EDF72E5A1C4D006E3596 /* Sources */,
 				1172EE272E5A1C4D006E3596 /* Frameworks */,
 				1172EE342E5A1C4D006E3596 /* Embed Foundation Extensions */,
 				119717BD2E5E4F8400D500C9 /* Copy Firebase Config */,
 				1172EE352E5A1C4D006E3596 /* Resources */,
-				1172EE432E5A1C4D006E3596 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -877,68 +875,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		1172EDF62E5A1C4D006E3596 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-70K Bands-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		1172EE432E5A1C4D006E3596 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
-				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
-				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
-				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
-				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
-				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		119717BC2E5E4ED000D500C9 /* Copy Firebase Config */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -982,31 +918,35 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
+				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
+				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
+				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
+				"${BUILT_PRODUCTS_DIR}/SQLite.swift/SQLite.framework",
 				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
 				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SQLite.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
@@ -1022,31 +962,35 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
+				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
+				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
+				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
+				"${BUILT_PRODUCTS_DIR}/SQLite.swift/SQLite.framework",
 				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
 				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SQLite.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
 			);
@@ -1532,7 +1476,7 @@
 		};
 		1154F62B1A575893003F4764 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */;
+			baseConfigurationReference = 77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -1617,7 +1561,7 @@
 		};
 		1154F62C1A575893003F4764 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */;
+			baseConfigurationReference = 6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -1838,7 +1782,6 @@
 		};
 		1172EE452E5A1C4D006E3596 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 720D716CA3F1BF8DE24AB9CE /* Pods-70K Bands.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -1916,7 +1859,6 @@
 		};
 		1172EE462E5A1C4D006E3596 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FBA4681FDBFEA91C47EA097B /* Pods-70K Bands.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;

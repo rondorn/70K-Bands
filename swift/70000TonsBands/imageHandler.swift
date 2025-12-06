@@ -83,6 +83,9 @@ open class imageHandler {
     ///   - cacheFilename: Optional custom cache filename (without directory path). If nil, uses bandName + "_v2.png"
     ///   - completion: Completion handler called with the processed image
     func downloadAndCacheImage(urlString: String, bandName: String, cacheFilename: String? = nil, completion: @escaping (UIImage?) -> Void) {
+        print("📥 downloadAndCacheImage called for '\(bandName)' with URL: \(urlString)")
+        print("📥 cacheFilename: \(cacheFilename ?? "nil (will use default)")")
+        
         // Check if we're at the concurrent download limit
         if activeDownloads >= maxConcurrentDownloads {
             print("⏸️ Download limit reached (\(activeDownloads)/\(maxConcurrentDownloads)) - queuing download for \(bandName)")
@@ -136,8 +139,21 @@ open class imageHandler {
             // CRITICAL: Validate this is a real downloaded image, not a default/fallback
             // Only cache images that were successfully downloaded from remote URLs
             // NEVER cache default festival logos or system fallback images
-            guard self?.isValidImageForCaching(processedImage, bandName: bandName) == true else {
+            print("🔍 BUILD_VERSION: imageHandler.swift COMPILED AT 2025-01-XX")
+            print("🔍 ABOUT TO CALL isValidImageForCaching for '\(bandName)'")
+            print("🔍 Calling with URL: '\(urlString)'")
+            print("🔍 self is nil? \(self == nil)")
+            guard let strongSelf = self else {
+                print("❌ ERROR: self is nil in downloadAndCacheImage completion!")
+                completion(processedImage)
+                return
+            }
+            let isValid = strongSelf.isValidImageForCaching(processedImage, bandName: bandName, url: urlString)
+            print("🔍 VALIDATION_RESULT: isValidImageForCaching returned: \(isValid) for '\(bandName)'")
+            guard isValid else {
                 print("⚠️ CACHE_GUARD: Refusing to cache image for \(bandName) - appears to be default/fallback")
+                print("⚠️ URL was: \(urlString)")
+                print("⚠️ Image size: \(processedImage.size.width)x\(processedImage.size.height)")
                 completion(processedImage)
                 return
             }
@@ -274,42 +290,44 @@ open class imageHandler {
     ///   - image: The image to validate
     ///   - bandName: The band name (for logging)
     /// - Returns: True if the image should be cached, false if it's a default/fallback
-    private func isValidImageForCaching(_ image: UIImage, bandName: String) -> Bool {
-        // Get all possible festival logo images that should NEVER be cached
-        let festivalLogoNames = [
-            FestivalConfig.current.logoUrl,
-            "70000tons-logo",
-            "ProgPowerUSA_Black",
-            "mdflogo",
-            "wackenlogo"
-        ]
-        
-        // Try to load each festival logo and compare
-        for logoName in festivalLogoNames {
-            if let festivalLogo = UIImage(named: logoName) {
-                // Compare image data to detect if this is a festival logo
-                if let imageData = image.pngData(),
-                   let logoData = festivalLogo.pngData(),
-                   imageData == logoData {
-                    print("🚫 CACHE_GUARD: Detected festival logo '\(logoName)' for \(bandName) - blocking cache")
-                    return false
-                }
-                
-                // Also compare by size as a fallback check
-                if image.size == festivalLogo.size {
-                    print("⚠️ CACHE_GUARD: Image size matches festival logo '\(logoName)' for \(bandName) - suspicious, blocking cache")
-                    return false
-                }
-            }
-        }
+    private func isValidImageForCaching(_ image: UIImage, bandName: String, url: String) -> Bool {
+        // BUILD MARKER - If you see this, the function is compiled correctly
+        let buildMarker = "BUILD_2025_JAN_XX_V2"
+        print("🔍🔍🔍 VALIDATION_START for '\(bandName)' [\(buildMarker)]")
+        print("🔍 Image size: \(image.size.width)x\(image.size.height)")
+        print("🔍 URL: '\(url)'")
         
         // Check for system fallback images (very small or invalid)
         if image.size.width < 10 || image.size.height < 10 {
-            print("🚫 CACHE_GUARD: Image too small for \(bandName) (\(image.size.width)x\(image.size.height)) - blocking cache")
+            print("🚫 VALIDATION_FAIL: Image too small")
+            return false
+        }
+        print("✅ Size check passed")
+        
+        // Get festival logo filename
+        let festivalLogoName = FestivalConfig.current.logoUrl
+        print("🔍 Festival logo asset name: '\(festivalLogoName)'")
+        
+        // Extract just the filename from the URL (last path component)
+        let urlComponents = url.components(separatedBy: "/")
+        let urlFilename = urlComponents.last ?? ""
+        print("🔍 URL filename extracted: '\(urlFilename)'")
+        print("🔍 URL filename lowercased: '\(urlFilename.lowercased())'")
+        print("🔍 Festival logo lowercased: '\(festivalLogoName.lowercased())'")
+        
+        // Check if the URL filename contains the festival logo name
+        let lowercaseUrlFilename = urlFilename.lowercased()
+        let lowercaseLogoName = festivalLogoName.lowercased()
+        
+        let contains = lowercaseUrlFilename.contains(lowercaseLogoName)
+        print("🔍 Does '\(lowercaseUrlFilename)' contain '\(lowercaseLogoName)'? \(contains)")
+        
+        if contains {
+            print("🚫 VALIDATION_FAIL: Filename matches festival logo")
             return false
         }
         
-        print("✅ CACHE_GUARD: Image validation passed for \(bandName) - safe to cache")
+        print("✅ VALIDATION_PASS: Image is cacheable")
         return true
     }
 
