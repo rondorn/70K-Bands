@@ -250,7 +250,7 @@ open class CustomBandDescription {
         let normalizedBandName = normalizeBandName(bandName)
         
         if bandDescriptionUrlDate.keys.contains(normalizedBandName){
-            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: bandDescriptionUrl[normalizedBandName]!)
+            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: String(describing: bandDescriptionUrl[normalizedBandName]!))
             
             defaultBandNote = defaultBandNote.filter {!$0.isWhitespace}
             
@@ -273,7 +273,7 @@ open class CustomBandDescription {
         let normalizedBandName = normalizeBandName(bandName)
         
         if bandDescriptionUrlDate.keys.contains(normalizedBandName){
-            let defaultCommentFileName = bandName + "_comment.note-" + bandDescriptionUrlDate[normalizedBandName]!;
+            let defaultCommentFileName = bandName + "_comment.note-" + String(describing: bandDescriptionUrlDate[normalizedBandName]!);
             
             
             let custCommentFile = directoryPath.appendingPathComponent( custCommentFileName)
@@ -429,10 +429,11 @@ open class CustomBandDescription {
             //bandDescriptionLock.sync() {
             if (bandDescriptionUrl.index(forKey: normalizedBandName) != nil && bandDescriptionUrl[normalizedBandName] != nil){
                 
-                print ("DEBUG_commentFile: downloading URL \(bandDescriptionUrl[normalizedBandName])")
+                let urlString = String(describing: bandDescriptionUrl[normalizedBandName]!)
+                print ("DEBUG_commentFile: downloading URL \(urlString)")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
-                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: self.bandDescriptionUrl[normalizedBandName]! )
+                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: urlString)
                 }
             } else {
                 print ("DEBUG_commentFile: No URL for band '\(normalizedBandName)' - \(bandDescriptionUrl)")
@@ -648,14 +649,15 @@ open class CustomBandDescription {
                 
                 print ("commentFile descriptiopnMap Adding \(normalizedBandName) with url \(urlString)")
                 
-                // Safely update the dictionaries
-                bandDescriptionUrl[normalizedBandName] = urlString
-                bandDescriptionUrlDate[normalizedBandName] = urlDate
+                // Safely update the dictionaries - ensure String type
+                let urlDateString = String(describing: urlDate)
+                bandDescriptionUrl[normalizedBandName] = String(describing: urlString)
+                bandDescriptionUrlDate[normalizedBandName] = urlDateString
                 
                 // Update cache variables safely
                 bandDescriptionLock.async(flags: .barrier) {
-                    cacheVariables.bandDescriptionUrlCache[normalizedBandName] = urlString
-                    cacheVariables.bandDescriptionUrlDateCache[normalizedBandName] = urlDate
+                    cacheVariables.bandDescriptionUrlCache[normalizedBandName] = String(describing: urlString)
+                    cacheVariables.bandDescriptionUrlDateCache[normalizedBandName] = urlDateString
                 }
                 
                 processedCount += 1
@@ -687,7 +689,10 @@ open class CustomBandDescription {
     /// - Returns: The description URL string for the band.
     func getDescriptionUrl(_ band: String) -> String {
         let normalizedBand = normalizeBandName(band)
-        return bandDescriptionUrl[normalizedBand] ?? ""
+        if let urlValue = bandDescriptionUrl[normalizedBand] {
+            return String(describing: urlValue)
+        }
+        return ""
     }
     
     /// Returns the date of the description for a given band, or an empty string if not found.
@@ -695,7 +700,10 @@ open class CustomBandDescription {
     /// - Returns: The date string for the band's description.
     func getDescriptionDate(_ band: String) -> String {
         let normalizedBand = normalizeBandName(band)
-        return bandDescriptionUrlDate[normalizedBand] ?? ""
+        if let dateValue = bandDescriptionUrlDate[normalizedBand] {
+            return String(describing: dateValue)
+        }
+        return ""
     }
     
     /// Check if band data is available before attempting to load descriptions
