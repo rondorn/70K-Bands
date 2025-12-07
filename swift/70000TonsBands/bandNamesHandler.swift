@@ -89,61 +89,61 @@ open class bandNamesHandler {
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
-        print("🔍 [HANG_DEBUG] About to enter staticBandName.sync")
-        staticBandName.sync {
-            print("🔍 [HANG_DEBUG] Inside staticBandName.sync, clearing data structures")
-            self.bandNames = [String: [String: String]]()
-            self.bandNamesArray = [String]()
+        // SQLITE FIX: No sync block needed - SQLite.swift is thread-safe
+        print("🔍 [HANG_DEBUG] Clearing data structures (no sync needed with SQLite)")
+        self.bandNames = [String: [String: String]]()
+        self.bandNamesArray = [String]()
+        
+        // CRITICAL FIX: Filter bands by the current event year
+        print("🔍 [HANG_DEBUG] About to call dataManager.fetchBands for year \(eventYear)")
+        print("🔍 [HANG_DEBUG] dataManager type: \(type(of: self.dataManager))")
+        let bands = self.dataManager.fetchBands(forYear: eventYear)
+        print("🔄 Fetched \(bands.count) bands from SQLite for year \(eventYear)")
+        print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands for year \(eventYear)")
+        
+        for band in bands {
+            let bandName = band.bandName
+            guard !bandName.isEmpty else { continue }
             
-            // CRITICAL FIX: Filter bands by the current event year
-            print("🔍 [HANG_DEBUG] About to call dataManager.fetchBands for year \(eventYear)")
-            let bands = self.dataManager.fetchBands(forYear: eventYear)
-            print("🔄 Fetched \(bands.count) bands from Core Data for year \(eventYear)")
-            print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands")
+            var bandData = [String: String]()
+            bandData["bandName"] = bandName
             
-            for band in bands {
-                guard let bandName = band.bandName, !bandName.isEmpty else { continue }
-                
-                var bandData = [String: String]()
-                bandData["bandName"] = bandName
-                
-                // Map Core Data fields to legacy dictionary format
-                if let imageUrl = band.imageUrl, !imageUrl.isEmpty {
-                    bandData["bandImageUrl"] = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
-                }
-                if let officialSite = band.officialSite, !officialSite.isEmpty {
-                    bandData["officalUrls"] = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
-                }
-                if let wikipedia = band.wikipedia, !wikipedia.isEmpty {
-                    bandData["wikipediaLink"] = wikipedia
-                }
-                if let youtube = band.youtube, !youtube.isEmpty {
-                    bandData["youtubeLinks"] = youtube
-                }
-                if let metalArchives = band.metalArchives, !metalArchives.isEmpty {
-                    bandData["metalArchiveLinks"] = metalArchives
-                }
-                if let country = band.country, !country.isEmpty {
-                    bandData["bandCountry"] = country
-                }
-                if let genre = band.genre, !genre.isEmpty {
-                    bandData["bandGenre"] = genre
-                }
-                if let noteworthy = band.noteworthy, !noteworthy.isEmpty {
-                    bandData["bandNoteWorthy"] = noteworthy
-                }
-                if let priorYears = band.priorYears, !priorYears.isEmpty {
-                    bandData["priorYears"] = priorYears
-                }
-                
-                self.bandNames[bandName] = bandData
-                self.bandNamesArray.append(bandName)
+            // Map SQLite fields to legacy dictionary format
+            if let imageUrl = band.imageUrl, !imageUrl.isEmpty {
+                bandData["bandImageUrl"] = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
+            }
+            if let officialSite = band.officialSite, !officialSite.isEmpty {
+                bandData["officalUrls"] = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
+            }
+            if let wikipedia = band.wikipedia, !wikipedia.isEmpty {
+                bandData["wikipediaLink"] = wikipedia
+            }
+            if let youtube = band.youtube, !youtube.isEmpty {
+                bandData["youtubeLinks"] = youtube
+            }
+            if let metalArchives = band.metalArchives, !metalArchives.isEmpty {
+                bandData["metalArchiveLinks"] = metalArchives
+            }
+            if let country = band.country, !country.isEmpty {
+                bandData["bandCountry"] = country
+            }
+            if let genre = band.genre, !genre.isEmpty {
+                bandData["bandGenre"] = genre
+            }
+            if let noteworthy = band.noteworthy, !noteworthy.isEmpty {
+                bandData["bandNoteWorthy"] = noteworthy
+            }
+            if let priorYears = band.priorYears, !priorYears.isEmpty {
+                bandData["priorYears"] = priorYears
             }
             
-            self.cacheLoaded = true
-            self.cachedForYear = eventYear
-            print("✅ Loaded \(self.bandNamesArray.count) bands from Core Data into cache for year \(eventYear)")
+            self.bandNames[bandName] = bandData
+            self.bandNamesArray.append(bandName)
         }
+        
+        self.cacheLoaded = true
+        self.cachedForYear = eventYear
+        print("✅ Loaded \(self.bandNamesArray.count) bands from SQLite into cache for year \(eventYear)")
     }
     
     // MARK: - Original API Methods (100% Compatible)
@@ -322,6 +322,7 @@ open class bandNamesHandler {
         print("🔧 [BAND_DEBUG] ========== BAND NAMES gatherData() STARTING ==========")
         print("🔧 [BAND_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
         print("🔧 [BAND_DEBUG] forceDownload: \(forceDownload), isYearChangeOperation: \(isYearChangeOperation)")
+        print("🚀 [COMPLETION_DEBUG] gatherData called with completion: \(completion == nil ? "NIL" : "NOT NIL")")
         
         // Thread management: prevent concurrent operations unless it's a year change
         if isLoadingBandData {
@@ -579,7 +580,9 @@ open class bandNamesHandler {
             } else {
                 print("⏭️ Data unchanged - using existing cache")
                 // Data hasn't changed, just call completion
+                print("🚀 [COMPLETION_DEBUG] About to call completion handler (completion is \(completion == nil ? "NIL" : "NOT NIL"))")
                 completion?()
+                print("🚀 [COMPLETION_DEBUG] Completion handler called")
             }
         } else if !cacheVariables.justLaunched {
             print("Skipping cache population: bandNames is empty and app is not just launched.")

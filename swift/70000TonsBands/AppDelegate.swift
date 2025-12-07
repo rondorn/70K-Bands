@@ -222,14 +222,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
-        // CRITICAL: Start Core Data initialization ASYNCHRONOUSLY to avoid watchdog timeout
-        // Uses thread-safe initialization that prevents race conditions
-        // ViewControllers will wait for completion if they access Core Data before init finishes
-        print("🚀 Starting Core Data initialization (async, thread-safe)...")
-        DispatchQueue.global(qos: .userInitiated).async {
-            // This will trigger thread-safe initialization
-            _ = CoreDataManager.shared.persistentContainer
-        }
+        // REMOVED: Core Data initialization is now handled by CoreDataToSQLiteMigrator
+        // Core Data is ONLY initialized if migration is needed (i.e., old Core Data exists)
+        // On first launch, Core Data is NOT initialized, avoiding unnecessary overhead
+        // Migration check happens in setupDefaults() which is called below
+        print("ℹ️  Core Data initialization deferred to migration check (only if needed)")
         
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
@@ -311,8 +308,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         "alertForMandG": "NO",
                         "alertForClinics": "NO", 
                         "alertForListening": "NO",
-                        "validateScheduleFile": "NO"]
+                        "validateScheduleFile": "NO",
+                        "PointerUrl": "Prod"]
         UserDefaults.standard.register(defaults: defaults)
+        print("🔧 [POINTER_DEBUG] Registered default PointerUrl = 'Prod'")
         
         // CRITICAL: Do NOT call iCloud operations on main thread during launch
         // purgeOldiCloudKeys() processes 795+ keys and takes 30+ seconds -> watchdog timeout
@@ -683,14 +682,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // SAFETY: Defer Firebase operations to ensure Firebase is configured
         // Firebase is configured with 3.5s delay in didFinishLaunching
         // If app becomes active quickly, we need to wait for Firebase to be ready
-        print("📱 [TIMING] Scheduling Firebase operations for +4.0s from becameActive")
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 4.0) {
+        // Increased to 5.0s to ensure Firebase is fully initialized
+        print("📱 [TIMING] Scheduling Firebase operations for +5.0s from becameActive")
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 5.0) {
             let operationsTime = Date()
             print("🔥 [TIMING] Firebase operations STARTING at \(operationsTime.timeIntervalSince1970)")
             print("🔥 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
             
             // Only connect to FCM after Firebase is definitely configured
-            self.connectToFcm()
+            if AppDelegate.isFirebaseConfigured {
+                self.connectToFcm()
+            } else {
+                print("⚠️ [TIMING] Firebase NOT configured yet, skipping FCM connection")
+            }
             
             // Force iCloud synchronization when app becomes active
             print("iCloud: App became active, forcing iCloud synchronization in background")
@@ -698,10 +702,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // Perform network operations in background (Firebase now guaranteed to be configured)
             let userDataHandle = userDataHandler()
-            print("🔥 [TIMING] About to create firebaseUserWrite instance")
-            let userDataReportHandle = firebaseUserWrite()
-            print("🔥 [TIMING] firebaseUserWrite instance created successfully")
-            userDataReportHandle.writeData()
+            
+            // SAFETY: Only use Firebase if it's actually configured
+            if AppDelegate.isFirebaseConfigured {
+                print("🔥 [TIMING] About to create firebaseUserWrite instance")
+                let userDataReportHandle = firebaseUserWrite()
+                print("🔥 [TIMING] firebaseUserWrite instance created successfully")
+                userDataReportHandle.writeData()
+            } else {
+                print("⚠️ [TIMING] Firebase NOT configured yet, skipping Firebase operations")
+            }
             
             // Set up notifications when app becomes active (in case they weren't set up during launch)
             print("🔔 [NOTIFICATION_DEFER] Setting up notifications on app become active")
@@ -1009,6 +1019,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         
         print("AppDelegate: App entering foreground - using same robust refresh as pull-to-refresh")
+        
+        // CRITICAL: Synchronize UserDefaults to pick up any Settings.bundle changes (like PointerUrl)
+        UserDefaults.standard.synchronize()
+        print("🔧 [POINTER_DEBUG] UserDefaults synchronized in applicationWillEnterForeground")
         
         // Move all potentially blocking operations to background thread
         DispatchQueue.global(qos: .utility).async {

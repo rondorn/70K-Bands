@@ -11,7 +11,7 @@ class EventManager {
         print("📊 [MDF_DEBUG] EventManager.init() called")
         print("📊 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         self.coreDataManager = coreDataManager
-        self.csvImporter = EventCSVImporter(coreDataManager: coreDataManager)
+        self.csvImporter = EventCSVImporter()  // No parameters - uses DataManager.shared internally
         print("📊 [MDF_DEBUG] EventManager.init() completed - csvImporter created")
     }
     

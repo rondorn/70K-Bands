@@ -363,11 +363,23 @@ class PriorityManager {
     
     /// Performs one-time migration from legacy data sources to Core Data
     private func performLegacyMigrationIfNeeded() {
-        // PERFORMANCE: Quick exit if migration already completed successfully
+        // NOTE: Legacy file migration is now handled by CoreDataToSQLiteMigrator
+        // which runs during app startup and migrates directly to SQLite
+        // This function now just marks migration as complete for backwards compatibility
+        
         let migrationCompleted = UserDefaults.standard.bool(forKey: "PriorityMigrationCompleted")
         
         if migrationCompleted {
             // Migration already completed - no performance impact
+            return
+        }
+        
+        // Check if the new SQLite migrator handled the file migration
+        let sqliteMigrationCompleted = UserDefaults.standard.bool(forKey: "hasCompletedFileToSQLiteMigration_v1")
+        if sqliteMigrationCompleted {
+            print("✅ Legacy priorities migrated to SQLite by CoreDataToSQLiteMigrator")
+            UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
+            UserDefaults.standard.synchronize()
             return
         }
         

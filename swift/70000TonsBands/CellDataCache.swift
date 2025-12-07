@@ -417,7 +417,7 @@ class CellDataCache {
                     if day.isEmpty {
                         let dateFormatter = DateFormatter()
                         dateFormatter.dateFormat = "MMM d"
-                        day = dateFormatter.string(from: Date(timeIntervalSince1970: timeIndex))
+                        day = dateFormatter.string(from: Date(timeIntervalSinceReferenceDate: timeIndex)) // FIX: Match storage format
                     }
                 }
             }

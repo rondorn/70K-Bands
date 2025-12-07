@@ -39,75 +39,50 @@ class ScheduleCSVImporter {
         print("🔧 [UNOFFICIAL_DEBUG] =============================================")
         
         // Parse CSV
-        guard let csvData = try? CSV(csvStringToParse: csvString) else {
+        guard let csvData = try? CSV(string: csvString) else {
             print("DEBUG_MARKER: Failed to parse CSV")
             return false
         }
         
         print("DEBUG_MARKER: CSV parsed successfully, found \(csvData.rows.count) rows")
-        print("🔍 [CSV_HEADERS_DEBUG] CSV headers: \(csvData.headers)")
-        print("🔍 [CSV_FIELDS_DEBUG] Looking for fields:")
-        print("  - bandField: '\(bandField)'")
-        print("  - locationField: '\(locationField)'")
-        print("  - dateField: '\(dateField)'")
-        print("  - startTimeField: '\(startTimeField)'")
-        print("  - endTimeField: '\(endTimeField)'")
-        print("  - typeField: '\(typeField)'")
         
-        // SAFETY CHECK: Validate CSV has reasonable number of rows before deleting anything
-        // A typical event schedule should have at least 50+ events
-        // If CSV has fewer than 10 rows, it's likely corrupt/incomplete - keep existing data
-        if csvData.rows.count < 10 {
-            print("⚠️ [EVENT_SAFETY] CSV has only \(csvData.rows.count) rows - likely corrupt or incomplete")
-            print("⚠️ [EVENT_SAFETY] Import ABORTED - keeping existing database data to prevent data loss")
+        // Get field indices
+        guard let bandNameField = csvData.header.firstIndex(of: "Name"),
+              let locationField = csvData.header.firstIndex(of: "Location"),
+              let dateField = csvData.header.firstIndex(of: "Date"),
+              let dayField = csvData.header.firstIndex(of: "Day"),
+              let startTimeField = csvData.header.firstIndex(of: "StartTime"),
+              let endTimeField = csvData.header.firstIndex(of: "EndTime"),
+              let eventTypeField = csvData.header.firstIndex(of: "EventType") else {
+            print("DEBUG_MARKER: Required CSV columns not found")
             return false
         }
         
-        // STEP 1: DELETE ALL old events for this year (CSV validation passed)
-        // This ensures test data doesn't persist when production data is downloaded
-        print("🗑️ [EVENT_CLEANUP] STEP 1: Deleting ALL old events for year \(eventYear)")
-        let existingEvents = dataManager.fetchEvents(forYear: eventYear)
-        print("🗑️ [EVENT_CLEANUP] Found \(existingEvents.count) existing events to delete")
-        
-        for event in existingEvents {
-            dataManager.deleteEvent(bandName: event.bandName, timeIndex: event.timeIndex, eventYear: eventYear)
-        }
-        print("🗑️ [EVENT_CLEANUP] Deleted \(existingEvents.count) old events for year \(eventYear)")
-        
-        // STEP 2: Import new events from CSV
-        print("🚀 [EVENT_IMPORT] STEP 2: Importing \(csvData.rows.count) events from CSV")
+        let notesField = csvData.header.firstIndex(of: "Notes")
+        let descriptionUrlField = csvData.header.firstIndex(of: "DescriptionURL")
+        let imageUrlField = csvData.header.firstIndex(of: "ImageURL")
         
         var successCount = 0
         var errorCount = 0
         var skippedUnofficialCount = 0
         
-        // CSV rows are dictionaries with string keys matching the header names
-        for (rowIndex, lineData) in csvData.rows.enumerated() {
-            guard let bandName = lineData[bandField],
-                  let location = lineData[locationField],
-                  let date = lineData[dateField],
-                  let day = lineData[dayField],
-                  let startTime = lineData[startTimeField],
-                  let endTime = lineData[endTimeField],
-                  let eventType = lineData[typeField] else {
-                print("DEBUG_MARKER: Skipping row with missing required fields")
+        for lineData in csvData.rows {
+            guard lineData.count > max(bandNameField, locationField, dateField, dayField, startTimeField, endTimeField, eventTypeField) else {
+                print("DEBUG_MARKER: Skipping malformed row")
                 errorCount += 1
                 continue
             }
             
+            let bandName = lineData[bandNameField]
+            let location = lineData[locationField]
+            let date = lineData[dateField]
+            let day = lineData[dayField]
+            let startTime = lineData[startTimeField]
+            let endTime = lineData[endTimeField]
+            let eventType = lineData[eventTypeField]
+            
             // Check if this is an unofficial event
             let isUnofficialEvent = (eventType == "Unofficial Event" || eventType == "Cruiser Organized")
-            
-            if isUnofficialEvent || rowIndex < 3 {
-                print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1):")
-                print("  - bandName: '\(bandName)'")
-                print("  - location: '\(location)'")
-                print("  - date: '\(date)'")
-                print("  - day: '\(day)'")
-                print("  - startTime: '\(startTime)'")
-                print("  - endTime: '\(endTime)'")
-                print("  - eventType: '\(eventType)'")
-            }
             
             // Calculate time indices
             let startTimeIndex = calculateTimeIndex(date: date, time: startTime)
@@ -149,9 +124,9 @@ class ScheduleCSVImporter {
                 endTime: endTime,
                 eventType: eventType,
                 eventYear: eventYear,
-                notes: lineData[notesField],
-                descriptionUrl: lineData[descriptionUrlField],
-                eventImageUrl: lineData[imageUrlField]
+                notes: notesField != nil ? lineData[notesField!] : nil,
+                descriptionUrl: descriptionUrlField != nil ? lineData[descriptionUrlField!] : nil,
+                eventImageUrl: imageUrlField != nil ? lineData[imageUrlField!] : nil
             )
             
             if isUnofficialEvent {
@@ -181,37 +156,17 @@ class ScheduleCSVImporter {
     
     private func calculateTimeIndex(date: String, time: String) -> Double {
         let formatter = DateFormatter()
+        formatter.dateFormat = "M/d/yyyy h:mm a"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(identifier: "America/New_York")
         
         let dateTimeString = "\(date) \(time)"
-        
-        print("🔍 [DATE_PARSE_DEBUG] Attempting to parse: '\(dateTimeString)'")
-        print("🔍 [DATE_PARSE_DEBUG] - Date component: '\(date)'")
-        print("🔍 [DATE_PARSE_DEBUG] - Time component: '\(time)'")
-        
-        // Try multiple date formats to handle different CSV formats
-        let formats = [
-            "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
-            "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
-            "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")
-            "MM/dd/yyyy H:mm",     // Padded date + single digit hour
-            "M/d/yyyy h:mm a",     // 12-hour with AM/PM
-            "MM/dd/yyyy h:mm a",   // Padded + 12-hour with AM/PM
-        ]
-        
-        for (index, format) in formats.enumerated() {
-            formatter.dateFormat = format
-            if let parsedDate = formatter.date(from: dateTimeString) {
-                let timeIndex = parsedDate.timeIntervalSinceReferenceDate
-                print("✅ [DATE_PARSE_SUCCESS] Format \(index + 1) worked: '\(format)' -> timeIndex: \(timeIndex)")
-                return timeIndex
-            }
+        guard let parsedDate = formatter.date(from: dateTimeString) else {
+            return -1
         }
         
-        print("❌ [DATE_PARSE_ERROR] Failed to parse: '\(dateTimeString)'")
-        print("❌ [DATE_PARSE_ERROR] Tried all \(formats.count) formats but none matched")
-        return -1
+        return parsedDate.timeIntervalSinceReferenceDate
     }
 }
+
 

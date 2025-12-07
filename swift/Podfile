@@ -9,6 +9,16 @@ target '70K Bands' do
 	pod 'Firebase/Database', '~> 8.15.0'
         pod 'AWSSNS', '~> 2.3.0'
         pod 'Bolts'
+        pod 'SQLite.swift', '~> 0.15.3'
+end
+
+target 'MDF Bands' do
+	pod 'Firebase/Core', '~> 8.15.0'
+	pod 'Firebase/Messaging', '~> 8.15.0'
+	pod 'Firebase/Database', '~> 8.15.0'
+        pod 'AWSSNS', '~> 2.3.0'
+        pod 'Bolts'
+        pod 'SQLite.swift', '~> 0.15.3'
 end
 
 target '70K BandsTests' do
@@ -17,6 +27,7 @@ target '70K BandsTests' do
 	pod 'Firebase/Database', '~> 8.15.0'
         pod 'AWSSNS', '~> 2.3.0'
         pod 'Bolts'
+        pod 'SQLite.swift', '~> 0.15.3'
 end
 
 post_install do |installer|

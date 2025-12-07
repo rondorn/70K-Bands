@@ -88,6 +88,8 @@ var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFi
 let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
+// TODO: OPTIMIZATION - Remove all sync blocks since SQLite.swift is thread-safe
+// Keeping for now to avoid breaking existing code, but they're no longer needed
 let staticBandName = DispatchQueue(label: "staticBandName")
 let staticData = DispatchQueue(label: "staticData")
 let storePointerLock = DispatchQueue(label: "storePointerLock")
@@ -356,10 +358,115 @@ func getPointerUrlData(keyValue: String) -> String {
         print("🎯 [STATS_DEBUG] User preference (scheduleUrl): \(getScheduleUrl())")
     }
     
-    if (UserDefaults.standard.string(forKey: "PointerUrl") == testingSetting){
-        defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
-        inTestEnvironment = true;
+    // Synchronize UserDefaults to ensure we read the latest value from Settings.bundle
+    UserDefaults.standard.synchronize()
+    
+    // ONE-TIME FIX: Clear corrupted LastUsedPointerUrl if it exists but data is actually from Testing
+    // This fixes the situation where Testing data is in DB but LastUsedPointerUrl says Production
+    let needsCorruptionFix = !UserDefaults.standard.bool(forKey: "PointerUrlCorruptionFixed_v1")
+    if needsCorruptionFix {
+        print("🔧 [POINTER_DEBUG] 🚨 CORRUPTION FIX: Clearing LastUsedPointerUrl to force fresh state detection")
+        UserDefaults.standard.removeObject(forKey: "LastUsedPointerUrl")
+        UserDefaults.standard.set(true, forKey: "PointerUrlCorruptionFixed_v1")
+        UserDefaults.standard.synchronize()
+    }
+    
+    let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "NOT_SET"
+    print("🔧 [POINTER_DEBUG] PointerUrl preference = '\(pointerUrlPref)' (checking for '\(testingSetting)')")
+    print("🔧 [POINTER_DEBUG] Current defaultStorageUrl = '\(defaultStorageUrl)'")
+    
+    // Determine which pointer URL should be used based on current preference
+    let targetPointerUrl: String
+    if (pointerUrlPref == testingSetting) {
+        targetPointerUrl = FestivalConfig.current.defaultStorageUrlTest
+        inTestEnvironment = true
+    } else {
+        targetPointerUrl = FestivalConfig.current.defaultStorageUrl
+    }
+    
+    // CRITICAL: Track which pointer URL was ACTUALLY used to load current data
+    // This is the only reliable way to detect when data needs to be refreshed
+    let lastUsedPointerUrl = UserDefaults.standard.string(forKey: "LastUsedPointerUrl") ?? "NOT_SET"
+    print("🔧 [POINTER_DEBUG] Last used pointer URL: '\(lastUsedPointerUrl)'")
+    print("🔧 [POINTER_DEBUG] Target pointer URL: '\(targetPointerUrl)'")
+    
+    // Compare the actual pointer URL used to load data vs what we should be using now
+    let needsCacheClearing = (lastUsedPointerUrl != targetPointerUrl)
+    
+    if needsCacheClearing {
+        print("🔧 [POINTER_DEBUG] ⚠️ POINTER URL DATA MISMATCH DETECTED!")
+        print("🔧 [POINTER_DEBUG] Current data loaded from: '\(lastUsedPointerUrl)'")
+        print("🔧 [POINTER_DEBUG] Should be using: '\(targetPointerUrl)'")
+        print("🔧 [POINTER_DEBUG] 🗑️ CLEARING ALL CACHES to force fresh download")
         
+        // 1. Clear pointer cache
+        cacheVariables.storePointerData = [String:String]()
+        
+        // 2. Delete cached pointer file
+        let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+        if FileManager.default.fileExists(atPath: cachedPointerFile) {
+            do {
+                try FileManager.default.removeItem(atPath: cachedPointerFile)
+                print("🔧 [POINTER_DEBUG] 🗑️ Deleted cached pointer file")
+            } catch {
+                print("🔧 [POINTER_DEBUG] ⚠️ Failed to delete cached pointer file: \(error)")
+            }
+        }
+        
+        // 3. Clear year-specific Core Data (bands and events, but preserve user priorities/attendance)
+        print("🔧 [POINTER_DEBUG] 🗑️ Clearing Core Data bands and events")
+        CoreDataManager.shared.clearYearSpecificData()
+        
+        // 4. Delete band and schedule cache files to force re-download
+        let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile.txt")
+        let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
+        
+        if FileManager.default.fileExists(atPath: bandFile) {
+            do {
+                try FileManager.default.removeItem(atPath: bandFile)
+                print("🔧 [POINTER_DEBUG] 🗑️ Deleted cached band file")
+            } catch {
+                print("🔧 [POINTER_DEBUG] ⚠️ Failed to delete band file: \(error)")
+            }
+        }
+        
+        if FileManager.default.fileExists(atPath: scheduleFile) {
+            do {
+                try FileManager.default.removeItem(atPath: scheduleFile)
+                print("🔧 [POINTER_DEBUG] 🗑️ Deleted cached schedule file")
+            } catch {
+                print("🔧 [POINTER_DEBUG] ⚠️ Failed to delete schedule file: \(error)")
+            }
+        }
+        
+        // 5. Clear all static caches
+        print("🔧 [POINTER_DEBUG] 🗑️ Clearing static caches")
+        cacheVariables.scheduleStaticCache = [:]
+        cacheVariables.scheduleTimeStaticCache = [:]
+        cacheVariables.bandNamesStaticCache = [:]
+        cacheVariables.bandNamesArrayStaticCache = []
+        cacheVariables.bandDescriptionUrlCache = [:]
+        cacheVariables.bandDescriptionUrlDateCache = [:]
+        cacheVariables.attendedStaticCache = [:]
+        
+        // 6. Set flag to force CSV re-download on next launch
+        UserDefaults.standard.set(true, forKey: "ForceCSVDownload")
+        UserDefaults.standard.synchronize()
+        
+        // 7. CRITICAL: Save the target URL (not preference) so we can detect when data doesn't match
+        // This will be updated again after successful data download to reflect what was actually loaded
+        UserDefaults.standard.set(targetPointerUrl, forKey: "LastUsedPointerUrl")
+        UserDefaults.standard.synchronize()
+        print("🔧 [POINTER_DEBUG] ✅ Saved target pointer URL for future comparison")
+        print("🔧 [POINTER_DEBUG] ✅ All caches cleared - fresh data will be downloaded on next use")
+    }
+    
+    // Apply the correct pointer URL
+    defaultStorageUrl = targetPointerUrl
+    if (pointerUrlPref == testingSetting){
+        print("🔧 [POINTER_DEBUG] ✅ SWITCHED to TEST pointer: '\(defaultStorageUrl)'")
+    } else {
+        print("🔧 [POINTER_DEBUG] ✅ Using PRODUCTION pointer: '\(defaultStorageUrl)'")
     }
     #if targetEnvironment(simulator)
         inTestEnvironment = true;
@@ -853,6 +960,11 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
 
 /// Loads user defaults and venue locations, and sets the current event year from pointer data.
 func setupDefaults() {
+    
+    // CRITICAL: Migrate Core Data to SQLite FIRST, before any data access
+    print("🔄 Starting Core Data → SQLite migration check...")
+    CoreDataToSQLiteMigrator.shared.migrateIfNeeded()
+    print("✅ Migration check complete")
         
     readFiltersFile()
     setupVenueLocations()
