@@ -273,7 +273,11 @@ open class CustomBandDescription {
         let normalizedBandName = normalizeBandName(bandName)
         
         if bandDescriptionUrlDate.keys.contains(normalizedBandName){
-            let defaultCommentFileName = bandName + "_comment.note-" + String(describing: bandDescriptionUrlDate[normalizedBandName]!);
+            // CRASH FIX: Safely unwrap the date value to avoid corrupt cached data
+            // If the value is not a proper String, use empty string as fallback
+            let urlDateValue = bandDescriptionUrlDate[normalizedBandName] ?? ""
+            let urlDateString = String(describing: urlDateValue)
+            let defaultCommentFileName = bandName + "_comment.note-" + urlDateString
             
             
             let custCommentFile = directoryPath.appendingPathComponent( custCommentFileName)
@@ -626,16 +630,18 @@ open class CustomBandDescription {
         for (index, lineData) in csvData.rows.enumerated() {
             do {
                 // Safely extract and validate the data before using it
+                // NOTE: Date field is OPTIONAL - description map CSV doesn't always have it
                 guard let bandName = lineData[bandField],
                       let urlString = lineData[urlField],
-                      let urlDate = lineData[urlDateField],
                       !bandName.isEmpty,
-                      !urlString.isEmpty,
-                      !urlDate.isEmpty else {
+                      !urlString.isEmpty else {
                     print ("commentFile  Unable to parse descriptionMap line \(index): \(lineData)")
                     errorCount += 1
                     continue
                 }
+                
+                // Get the date field if it exists, otherwise use empty string
+                let urlDate = lineData[urlDateField] ?? ""
                 
                 // Normalize the band name
                 let normalizedBandName = normalizeBandName(bandName)
