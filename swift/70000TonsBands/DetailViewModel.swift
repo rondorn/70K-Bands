@@ -1022,55 +1022,31 @@ class DetailViewModel: ObservableObject {
         print("🔍 [IMAGE_DEBUG] About to call CombinedImageListHandler.shared.getImageInfo for '\(bandName)'")
         var imageInfo = CombinedImageListHandler.shared.getImageInfo(for: bandName)
         
-        // DEBUG: Extensive logging for image loading issue
-        if imageInfo == nil {
-            print("❌ [IMAGE_DEBUG] No imageInfo found for '\(bandName)'")
-            print("📊 [IMAGE_DEBUG] Diagnosing why imageInfo is nil...")
-            
-            // Check if CombinedImageListHandler has any data at all
-            let allImageInfo = CombinedImageListHandler.shared.combinedImageList
-            print("📊 [IMAGE_DEBUG] Total entries in combinedImageList: \(allImageInfo.count)")
-            
-            if allImageInfo.isEmpty {
-                print("❌ [IMAGE_DEBUG] CombinedImageList is EMPTY - this is the problem!")
-                print("🔍 [IMAGE_DEBUG] Checking if bandNamesHandler has data...")
-                let bandNames = bandNamesHandler.shared.getBandNames()
-                print("🔍 [IMAGE_DEBUG] bandNamesHandler has \(bandNames.count) bands")
-                if bandNames.count > 0 {
-                    print("🔍 [IMAGE_DEBUG] Sample bands: \(bandNames.prefix(5))")
-                    print("🔍 [IMAGE_DEBUG] Checking image URLs for sample bands...")
-                    for sampleBand in bandNames.prefix(3) {
-                        let imageUrl = bandNamesHandler.shared.getBandImageUrl(sampleBand)
-                        print("🔍 [IMAGE_DEBUG]   \(sampleBand) -> '\(imageUrl)'")
-                    }
-                }
-                
-                print("🔍 [IMAGE_DEBUG] Checking if scheduleHandler has data...")
-                let scheduleData = scheduleHandler.shared.schedulingData
-                print("🔍 [IMAGE_DEBUG] scheduleHandler has \(scheduleData.count) entries")
+        // FALLBACK LOGIC: If image map is empty OR has invalid URL, try direct SQLite lookups
+        let imageURLFromMap = imageInfo?.url ?? ""
+        let isValidURL = !imageURLFromMap.isEmpty && 
+                         imageURLFromMap != "http://" && 
+                         imageURLFromMap.trimmingCharacters(in: .whitespaces).count > 0
+        
+        if imageInfo == nil || !isValidURL {
+            if imageInfo == nil {
+                print("❌ [IMAGE_DEBUG] No imageInfo found in map for '\(bandName)' - trying fallback lookups")
             } else {
-                print("📊 [IMAGE_DEBUG] CombinedImageList has data but no entry for '\(bandName)'")
-                print("🔍 [IMAGE_DEBUG] Available band names in combinedImageList:")
-                let availableBands = Array(allImageInfo.keys.prefix(10))
-                for band in availableBands {
-                    print("🔍 [IMAGE_DEBUG]   - '\(band)' -> '\(allImageInfo[band]?.url ?? "NO URL")'")
-                }
-                
-                // Check for case-insensitive or close matches
-                let lowercaseBandName = bandName.lowercased()
-                let possibleMatches = allImageInfo.keys.filter { $0.lowercased().contains(lowercaseBandName) || lowercaseBandName.contains($0.lowercased()) }
-                if !possibleMatches.isEmpty {
-                    print("🔍 [IMAGE_DEBUG] Possible case-insensitive matches: \(possibleMatches)")
-                }
+                print("❌ [IMAGE_DEBUG] Invalid URL in map for '\(bandName)' (URL='\(imageURLFromMap)') - trying fallback lookups")
             }
             
-            // Show default image since we don't have image info
-            print("❌ [IMAGE_DEBUG] Showing default logo for '\(bandName)'")
-            DispatchQueue.main.async {
-                self.isLoadingImage = false
-                self.bandImage = self.getFestivalDefaultLogo()
+            // Try fallback: direct SQLite lookup
+            if let fallbackURL = getImageURLFromSQLiteFallback(bandName: bandName) {
+                print("✅ [IMAGE_FALLBACK] Found image URL via SQLite fallback: \(fallbackURL)")
+                imageInfo = ImageInfo(url: fallbackURL, date: nil)
+            } else {
+                print("❌ [IMAGE_FALLBACK] All fallback methods failed for '\(bandName)' - showing default logo")
+                DispatchQueue.main.async {
+                    self.isLoadingImage = false
+                    self.bandImage = self.getFestivalDefaultLogo()
+                }
+                return
             }
-            return
         }
         
         print("✅ [IMAGE_DEBUG] Found imageInfo for '\(bandName)'")
@@ -1290,6 +1266,56 @@ class DetailViewModel: ObservableObject {
         // This method is now deprecated in favor of versioned cache naming
         // Old images are handled individually when encountered
         print("⚠️ clearAllCachedImages called but using versioned cache approach instead")
+    }
+    
+    /// Fallback method to get image URL directly from SQLite when image map is empty or missing entry
+    /// Tries in order: 1) Band table, 2) Event table, 3) Returns nil for default image
+    private func getImageURLFromSQLiteFallback(bandName: String) -> String? {
+        print("🔍 [IMAGE_FALLBACK] Step 1: Checking SQLite bands table for '\(bandName)'")
+        
+        // Helper function to validate URLs (checks for whitespace-only strings too)
+        func isValidImageURL(_ url: String?) -> Bool {
+            guard let url = url else { return false }
+            let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmed.isEmpty && trimmed != "http://" && trimmed.count > 0
+        }
+        
+        // Step 1: Try to get image URL from bands table
+        let dataManager = DataManager.shared
+        if let band = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
+            if let imageUrl = band.imageUrl, isValidImageURL(imageUrl) {
+                print("✅ [IMAGE_FALLBACK] Found image URL in bands table: \(imageUrl)")
+                return imageUrl
+            } else {
+                print("⚠️ [IMAGE_FALLBACK] Band exists but has no valid image URL (imageUrl: '\(band.imageUrl ?? "nil")')")
+            }
+        } else {
+            print("⚠️ [IMAGE_FALLBACK] Band not found in bands table")
+        }
+        
+        // Step 2: Try to get image URL from events table (schedule images)
+        print("🔍 [IMAGE_FALLBACK] Step 2: Checking SQLite events table for '\(bandName)'")
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+        
+        if !events.isEmpty {
+            print("🔍 [IMAGE_FALLBACK] Found \(events.count) events for '\(bandName)'")
+            
+            // Try to find an event with an image URL
+            for event in events {
+                if let eventImageUrl = event.eventImageUrl, isValidImageURL(eventImageUrl) {
+                    print("✅ [IMAGE_FALLBACK] Found image URL in events table: \(eventImageUrl)")
+                    return eventImageUrl
+                }
+            }
+            
+            print("⚠️ [IMAGE_FALLBACK] Events exist but none have valid image URLs (all empty/whitespace)")
+        } else {
+            print("⚠️ [IMAGE_FALLBACK] No events found for '\(bandName)'")
+        }
+        
+        // Step 3: All fallbacks failed
+        print("❌ [IMAGE_FALLBACK] No valid image URL found in any SQLite table")
+        return nil
     }
     
     private func loadImageFromCache(imageURL: String, imageHandle: imageHandler) {
@@ -1595,7 +1621,7 @@ class DetailViewModel: ObservableObject {
         // PERFORMANCE FIX: Detail screen should only read cached priority data, never save
         isLoadingPriority = true
         
-        let priorityManager = PriorityManager()
+        let priorityManager = SQLitePriorityManager.shared
         let priority = priorityManager.getPriority(for: bandName)
         
         if priority != 0 {
@@ -1621,7 +1647,7 @@ class DetailViewModel: ObservableObject {
         let priorityCopy = selectedPriority
         
         DispatchQueue.global(qos: .utility).async {
-            let priorityManager = PriorityManager()
+            let priorityManager = SQLitePriorityManager.shared
             priorityManager.setPriority(for: bandNameCopy, priority: priorityCopy)
             print("DEBUG: savePriority() completed for '\(bandNameCopy)' with priority: \(priorityCopy)")
         }

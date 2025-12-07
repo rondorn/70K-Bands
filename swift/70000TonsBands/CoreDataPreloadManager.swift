@@ -292,7 +292,7 @@ class CoreDataPreloadManager {
         cellCache.configure(
             schedule: scheduleHandler.shared,
             dataHandle: dataHandler(), 
-            priorityManager: PriorityManager(),
+            priorityManager: SQLitePriorityManager.shared,
             attendedHandle: ShowsAttended()
         )
     }

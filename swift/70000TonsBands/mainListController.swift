@@ -47,7 +47,7 @@ func getBands() -> [String]{
 ///   - priorityManager: Priority manager for band rankings
 ///   - attendedHandle: Attendance tracking handler
 /// - Returns: Filtered events and bands for UI display
-func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager, attendedHandle: ShowsAttended) -> [String] {
+func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended) -> [String] {
     let startTime = CFAbsoluteTimeGetCurrent()
     print("🚀 CORE DATA FILTERING START with user preferences - eventYear: \(eventYear)")
     print("🔒 [THREAD_SAFETY] getFilteredScheduleData called on thread: \(Thread.current), isMain: \(Thread.isMainThread)")
@@ -654,7 +654,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
 // instead of loop-based processing. The old function contained debug code that was
 // causing confusion about event counting since it was never executed.
 
-func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended)-> Bool{
+func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHandler, dataHandle: dataHandler, priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended)-> Bool{
     let startTime = CFAbsoluteTimeGetCurrent()
     var include = false;
     
@@ -710,7 +710,7 @@ func applyFilters(bandName:String, timeIndex:TimeInterval, schedule: scheduleHan
                         print("🔍 [MAIN_LIST_DEBUG] Testing venue '\(locationValue)' for event type '\(eventType)'")
                         if venueFiltering(locationValue) == true {
                             print("🔍 [MAIN_LIST_DEBUG] ✅ Venue '\(locationValue)' passed venueFiltering")
-                            if (rankFiltering(bandName, priorityManager: PriorityManager()) == true){
+                            if (rankFiltering(bandName, priorityManager: SQLitePriorityManager.shared) == true){
                                 print("🔍 [MAIN_LIST_DEBUG] ✅ Band '\(bandName)' passed rankFiltering - EVENT INCLUDED")
                             if (eventType == unofficalEventType || eventType == unofficalEventTypeOld){
                                 eventCounterUnoffical = eventCounterUnoffical + 1
@@ -750,7 +750,7 @@ func getFilteredBands(
     bandNameHandle: bandNamesHandler,
     schedule: scheduleHandler,
     dataHandle: dataHandler,
-    priorityManager: PriorityManager,
+    priorityManager: SQLitePriorityManager,
     attendedHandle: ShowsAttended,
     searchCriteria: String,
     completion: @escaping ([String]) -> Void
@@ -908,7 +908,7 @@ extension String {
     }
 }
 
-func rankFiltering(_ bandName: String, priorityManager: PriorityManager) -> Bool {
+func rankFiltering(_ bandName: String, priorityManager: SQLitePriorityManager) -> Bool {
     
     var showBand = true;
     
@@ -1077,7 +1077,7 @@ func venueFiltering(_ venue: String) -> Bool {
     return showVenue
 }
 
-func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, priorityManager: PriorityManager, attendedHandle: ShowsAttended){
+func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, cell: UITableViewCell, dataHandle: dataHandler, priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended){
     
     var rankLocationSchedule = false
         

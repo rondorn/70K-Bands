@@ -20,7 +20,7 @@ class firebaseEventDataWrite {
     let variableStoreHandle = variableStore();
     
     // NEW: Use Core Data AttendanceManager to read attendance data
-    let attendanceManager = AttendanceManager()
+    let attendanceManager = SQLiteAttendanceManager.shared
     private var initializationAttempts = 0
     private let maxInitAttempts = 3
     

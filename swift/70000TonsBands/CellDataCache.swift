@@ -87,7 +87,7 @@ class CellDataCache {
     // Dependencies (injected for thread safety)
     private weak var schedule: scheduleHandler?
     private weak var dataHandle: dataHandler?
-    private weak var priorityManager: PriorityManager?
+    private weak var priorityManager: SQLitePriorityManager?
     private weak var attendedHandle: ShowsAttended?
     
     // MARK: - Public Interface
@@ -99,7 +99,7 @@ class CellDataCache {
     /// Configure cache dependencies
     func configure(schedule: scheduleHandler, 
                    dataHandle: dataHandler, 
-                   priorityManager: PriorityManager, 
+                   priorityManager: SQLitePriorityManager, 
                    attendedHandle: ShowsAttended) {
         self.schedule = schedule
         self.dataHandle = dataHandle

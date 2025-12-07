@@ -19,6 +19,7 @@ protocol DataManagerProtocol {
     func fetchBands() -> [BandData]
     func fetchBand(byName name: String, eventYear year: Int) -> BandData?
     func createOrUpdateBand(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?) -> BandData
+    func createBandIfNotExists(name: String, eventYear: Int) -> Bool
     func deleteBand(name: String, eventYear: Int)
     
     // MARK: - Event Operations
@@ -87,6 +88,31 @@ class CoreDataDataManager: DataManagerProtocol {
             priorYears: priorYears
         )
         return BandData(from: band)
+    }
+    
+    func createBandIfNotExists(name: String, eventYear: Int) -> Bool {
+        // Check if band exists in Core Data
+        if let _ = coreDataManager.fetchBand(byName: name, eventYear: Int32(eventYear)) {
+            print("✅ CoreDataDataManager: Band '\(name)' for year \(eventYear) already exists - preserving existing data")
+            return true
+        }
+        
+        // Band doesn't exist, create minimal entry
+        _ = coreDataManager.createOrUpdateBand(
+            name: name,
+            eventYear: Int32(eventYear),
+            officialSite: nil,
+            imageUrl: nil,
+            youtube: nil,
+            metalArchives: nil,
+            wikipedia: nil,
+            country: nil,
+            genre: nil,
+            noteworthy: nil,
+            priorYears: nil
+        )
+        print("✅ CoreDataDataManager: Created minimal band entry for '\(name)' year \(eventYear)")
+        return true
     }
     
     func deleteBand(name: String, eventYear: Int) {

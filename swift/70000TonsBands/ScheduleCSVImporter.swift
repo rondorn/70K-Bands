@@ -122,20 +122,9 @@ class ScheduleCSVImporter {
                 continue
             }
             
-            // Ensure band exists in SQLite
-            _ = dataManager.createOrUpdateBand(
-                name: bandName,
-                eventYear: eventYear,
-                officialSite: nil,
-                imageUrl: nil,
-                youtube: nil,
-                metalArchives: nil,
-                wikipedia: nil,
-                country: nil,
-                genre: nil,
-                noteworthy: nil,
-                priorYears: nil
-            )
+            // Ensure band exists in SQLite WITHOUT overwriting existing data
+            // This won't destroy imageUrl and other metadata from the bands CSV import
+            _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
             
             // Create event in SQLite
             _ = dataManager.createOrUpdateEvent(
