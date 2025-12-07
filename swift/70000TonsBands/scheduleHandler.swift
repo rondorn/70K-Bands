@@ -121,53 +121,21 @@ open class scheduleHandler {
     
     // MARK: - Core Data Cache Management
     
-    /// Loads schedule data from Core Data into memory cache for fast access
+    /// Loads schedule data from SQLite into memory cache for fast access
+    /// SQLITE FIX: Simplified to work with thread-safe SQLite (no complex locking needed)
     private func loadCacheFromCoreData() {
         print("🔍 [HANG_DEBUG] scheduleHandler.loadCacheFromCoreData() ENTERED")
-        // CRITICAL FIX: Add thread safety since this is now called outside sync blocks
+        
+        // Simple check - if already loaded, don't reload
         guard !cacheLoaded else { 
             print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache already loaded, returning early")
-            print("🔍 [HANG_DEBUG] Cache already loaded, returning")
             return 
         }
         
-        // Prevent multiple simultaneous loads
-        guard !isDataLoadingInProgress else {
-            print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Data loading already in progress, waiting...")
-            print("🔍 [HANG_DEBUG] Data loading in progress, returning")
-            return
-        }
+        print("🔄 Loading schedule from SQLite (thread-safe)...")
+        print("🔍 [SCHEDULE_DEBUG] Using eventYear = \(eventYear)")
         
-        print("🔍 [HANG_DEBUG] Setting isDataLoadingInProgress = true")
-        isDataLoadingInProgress = true
-        defer {
-            print("🔍 [HANG_DEBUG] Defer block: setting isDataLoadingInProgress = false")
-            isDataLoadingInProgress = false
-        }
-        
-        print("🔄 Loading schedule from Core Data...")
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Starting load process")
-        
-        // CRITICAL FIX: Call readFiltersFile() OUTSIDE the sync block to prevent deadlock
-        // This prevents the deadlock where readFiltersFile() calls back into scheduleHandler methods
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Loading user preferences before year resolution")
-        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler calling readFiltersFile() - moved outside sync to prevent deadlock")
-        print("🔍 [HANG_DEBUG] About to call readFiltersFile()")
-        readFiltersFile()
-        print("🔧 [UNOFFICIAL_DEBUG] scheduleHandler finished readFiltersFile() - showUnofficalEvents is now: \(getShowUnofficalEvents())")
-        print("🔍 [HANG_DEBUG] readFiltersFile() COMPLETED")
-        
-        // Use eventYear as-is (should be set correctly during app launch or year change)
-        print("🔍 [SCHEDULE_DEBUG] Using eventYear = \(eventYear) (set by proper resolution chain)")
-        
-        // Thread-safe dictionary operations
-        print("🔍 [HANG_DEBUG] Checking if on scheduleHandlerQueue")
-        let isOnScheduleQueue = DispatchQueue.getSpecific(key: scheduleHandlerQueueKey) != nil
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: isOnScheduleQueue = \(isOnScheduleQueue)")
-        
-        // SIMPLIFIED: Since getCachedData() already calls this from within scheduleHandlerQueue.sync,
-        // we can always call the internal method directly to avoid nested sync deadlock
-        print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Calling internal method directly (avoiding nested sync)")
+        // SQLite is thread-safe, just load directly
         print("🔍 [HANG_DEBUG] About to call loadCacheFromCoreDataInternal()")
         self.loadCacheFromCoreDataInternal()
         print("🔍 [HANG_DEBUG] loadCacheFromCoreDataInternal() COMPLETED")
@@ -198,7 +166,7 @@ open class scheduleHandler {
         print("🔧 [CONTEXT_DEBUG] BEFORE cleanup: \(preCleanupUnofficial.count) unofficial events found")
         if preCleanupUnofficial.count > 0 {
             for event in preCleanupUnofficial.prefix(3) {
-                print("🔧 [CONTEXT_DEBUG] - PRE-CLEANUP Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
+                print("🔧 [CONTEXT_DEBUG] - PRE-CLEANUP Event: \(event.bandName), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
             }
         }
         
@@ -218,7 +186,7 @@ open class scheduleHandler {
         print("🔧 [CONTEXT_DEBUG] AFTER cleanup: \(postCleanupUnofficial.count) unofficial events found")
         if postCleanupUnofficial.count > 0 {
             for event in postCleanupUnofficial.prefix(3) {
-                print("🔧 [CONTEXT_DEBUG] - POST-CLEANUP Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
+                print("🔧 [CONTEXT_DEBUG] - POST-CLEANUP Event: \(event.bandName), type: \(event.eventType ?? "nil"), year: \(event.eventYear)")
             }
         } else if preCleanupUnofficial.count > 0 {
             print("🔧 [CONTEXT_DEBUG] 🚨 CRITICAL: Had \(preCleanupUnofficial.count) unofficial events BEFORE cleanup, but 0 AFTER cleanup!")
@@ -236,7 +204,7 @@ open class scheduleHandler {
         print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(unofficialEvents.count) unofficial events in Core Data for year \(yearToUse)")
         if unofficialEvents.count > 0 {
             for event in unofficialEvents.prefix(3) {
-                let bandName = event.band?.bandName ?? "nil"
+                let bandName = event.bandName
                 let eventType = event.eventType ?? "nil"
                 print("🔧 [UNOFFICIAL_DEBUG] - Event: band='\(bandName)', type='\(eventType)', timeIndex=\(event.timeIndex)")
             }
@@ -256,7 +224,7 @@ open class scheduleHandler {
         print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(allUnofficialEvents.count) unofficial events in Core Data (ALL YEARS)")
         if allUnofficialEvents.count > 0 {
             for event in allUnofficialEvents.prefix(3) {
-                let bandName = event.band?.bandName ?? "nil"
+                let bandName = event.bandName
                 let eventType = event.eventType ?? "nil"
                 print("🔧 [UNOFFICIAL_DEBUG] - All Years Event: band='\(bandName)', type='\(eventType)', year=\(event.eventYear), timeIndex=\(event.timeIndex)")
             }
@@ -278,7 +246,7 @@ open class scheduleHandler {
             if zeroTimeIndexEvents.count > 0 {
                 print("🚨 [TIMEINDEX_AUDIT] Events with timeIndex = 0.0:")
                 for event in zeroTimeIndexEvents.prefix(5) { // Show first 5
-                    let bandName = event.band?.bandName ?? "Unknown"
+                    let bandName = event.bandName
                     let eventType = event.eventType ?? "Unknown"
                     let date = event.date ?? "Unknown"
                     let startTime = event.startTime ?? "Unknown"
@@ -316,15 +284,13 @@ open class scheduleHandler {
                 let isUnofficialEvent = eventType == "Unofficial Event" || eventType == "Cruiser Organized"
                 
                 if isUnofficialEvent {
-                    print("🔧 [UNOFFICIAL_DEBUG] Processing unofficial event: '\(eventType)' - band: \(event.band?.bandName ?? "nil")")
-                    print("🔧 [UNOFFICIAL_DEBUG] - event.band exists: \(event.band != nil)")
-                    print("🔧 [UNOFFICIAL_DEBUG] - event.band?.bandName: '\(event.band?.bandName ?? "nil")'")
-                    print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty: \(event.band?.bandName?.isEmpty ?? true)")
+                    print("🔧 [UNOFFICIAL_DEBUG] Processing unofficial event: '\(eventType)' - band: \(event.bandName)")
+                    print("🔧 [UNOFFICIAL_DEBUG] - event.bandName: '\(event.bandName)'")
+                    print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty: \(event.bandName.isEmpty)")
                 }
                 
-                guard let band = event.band,
-                      let bandName = band.bandName,
-                      !bandName.isEmpty else { 
+                let bandName = event.bandName
+                guard !bandName.isEmpty else { 
                     if event.eventType == "Show" {
                         print("🚨 [SHOW_DEBUG] SKIPPING Show event due to guard condition failure")
                     }
@@ -333,9 +299,8 @@ open class scheduleHandler {
                     if isUnofficialEvent {
                         print("🔧 [UNOFFICIAL_DEBUG] ⚠️ Unofficial event FAILED guard - creating fake band")
                         print("🔧 [UNOFFICIAL_DEBUG] Guard failed because:")
-                        print("🔧 [UNOFFICIAL_DEBUG] - event.band = \(event.band?.description ?? "nil")")
-                        print("🔧 [UNOFFICIAL_DEBUG] - event.band?.bandName = \(event.band?.bandName ?? "nil")")
-                        print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty = \(event.band?.bandName?.isEmpty ?? true)")
+                        print("🔧 [UNOFFICIAL_DEBUG] - event.bandName = \(event.bandName)")
+                        print("🔧 [UNOFFICIAL_DEBUG] - bandName.isEmpty = \(event.bandName.isEmpty)")
                         // Create a fake band name for standalone unofficial events
                         let fakeBandName = eventType  // Use event type as band name
                         
@@ -353,7 +318,7 @@ open class scheduleHandler {
                         eventData[notesField] = event.notes ?? ""
                         eventData[descriptionUrlField] = event.descriptionUrl ?? ""
                         eventData[imageUrlField] = event.eventImageUrl ?? ""
-                        eventData[imageUrlDateField] = event.eventImageDate ?? ""
+                        // Note: eventImageDate doesn't exist in EventData struct
                         
                         // Store in schedulingData dictionary
                         if self._schedulingData[fakeBandName] == nil {
@@ -391,9 +356,9 @@ open class scheduleHandler {
                 eventData[notesField] = event.notes ?? ""
                 eventData[descriptionUrlField] = event.descriptionUrl ?? ""
                 eventData[imageUrlField] = event.eventImageUrl ?? ""
-                eventData[imageUrlDateField] = event.eventImageDate ?? ""
+                // Note: eventImageDate doesn't exist in EventData struct
                 // CRITICAL: Include the unique identifier in the event data
-                eventData["identifier"] = event.identifier ?? "\(timeIndex):\(bandName)"
+                eventData["identifier"] = "\(timeIndex):\(bandName)"
                 
                 // Initialize band data if needed (now thread-safe)
                 if self._schedulingData[bandName] == nil {
@@ -434,7 +399,7 @@ open class scheduleHandler {
             let sortedTimeIndices = timeIndexCounts.keys.sorted()
             for timeIndex in sortedTimeIndices.prefix(10) { // Show first 10
                 let count = timeIndexCounts[timeIndex]!
-                let date = Date(timeIntervalSince1970: timeIndex)
+                let date = Date(timeIntervalSinceReferenceDate: timeIndex) // FIX: Match storage format
                 print("🔍 [CORE_DATA_CONVERSION] TimeIndex \(timeIndex) (\(date)): \(count) events")
             }
             if sortedTimeIndices.count > 10 {
@@ -996,7 +961,7 @@ open class scheduleHandler {
                     print("🔧 [CONTEXT_DEBUG] After context sync: \(justImportedUnofficial.count) unofficial events in Core Data")
                     if justImportedUnofficial.count > 0 {
                         for event in justImportedUnofficial.prefix(3) {
-                            print("🔧 [CONTEXT_DEBUG] - Event: \(event.band?.bandName ?? "nil"), type: \(event.eventType ?? "nil")")
+                            print("🔧 [CONTEXT_DEBUG] - Event: \(event.bandName), type: \(event.eventType ?? "nil")")
                         }
                     }
                     
@@ -1077,9 +1042,9 @@ open class scheduleHandler {
         var closestDifference: TimeInterval = TimeInterval.greatestFiniteMagnitude
         
         for event in events {
-            guard let band = event.band, band.bandName == bandName else { continue }
+            guard event.bandName == bandName else { continue }
             
-            let eventDate = Date(timeIntervalSince1970: event.timeIndex)
+            let eventDate = Date(timeIntervalSinceReferenceDate: event.timeIndex) // FIX: Match storage format
             let difference = abs(eventDate.timeIntervalSince(currentDate))
             
             if difference < closestDifference {
@@ -1240,9 +1205,8 @@ open class scheduleHandler {
         let currentTime = Date().timeIntervalSince1970
         
         for event in events {
-            guard let band = event.band,
-                  let eventBandName = band.bandName,
-                  eventBandName == bandName else { continue }
+            let eventBandName = event.bandName
+            guard eventBandName == bandName else { continue }
             
             // Check if event is expired and if we should include it
             if !includeExpired {
@@ -1253,10 +1217,10 @@ open class scheduleHandler {
                 }
             }
             
-            // Convert Core Data event to legacy dictionary format
+            // Convert event struct to legacy dictionary format
             var eventData = [String: String]()
             eventData[bandField] = eventBandName
-            eventData[locationField] = event.location ?? ""
+            eventData[locationField] = event.location
             eventData[dateField] = event.date ?? ""
             eventData[dayField] = event.day ?? ""
             eventData[startTimeField] = event.startTime ?? ""
@@ -1266,7 +1230,7 @@ open class scheduleHandler {
             eventData[descriptionUrlField] = event.descriptionUrl ?? ""
             eventData[imageUrlField] = event.eventImageUrl ?? ""
             // CRITICAL: Include the unique identifier in the event data
-            eventData["identifier"] = event.identifier ?? "\(event.timeIndex):\(eventBandName)"
+            eventData["identifier"] = "\(event.timeIndex):\(eventBandName)"
             
             eventDataArray.append(eventData)
             print("🔍 [BAND_EVENTS_DEBUG] Added event: \(event.eventType ?? "unknown") for \(eventBandName)")

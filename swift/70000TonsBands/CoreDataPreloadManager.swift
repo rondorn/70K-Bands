@@ -41,7 +41,9 @@ class CoreDataPreloadManager {
     weak var delegate: CoreDataPreloadManagerDelegate?
     private(set) var loadState: LoadState = .waiting
     
-    private let coreDataManager = CoreDataManager.shared
+    // CRITICAL: Lazy initialization to prevent triggering Core Data on first launch
+    // Core Data should ONLY be initialized when migration is needed
+    private lazy var coreDataManager = CoreDataManager.shared
     private let cellCache = CellDataCache.shared
     
     // Monitoring
@@ -54,6 +56,11 @@ class CoreDataPreloadManager {
     private var currentEventYear: Int32 = 0
     private var lastBandCount: Int = 0
     private var lastEventCount: Int = 0
+    private var isSuspended: Bool = false  // Flag to temporarily suspend monitoring during bulk operations
+    private var isUsingSQLite: Bool {
+        // Check if DataManager is using SQLite backend
+        return DataManager.shared is SQLiteDataManager
+    }
     private var isMonitoring = false
     
     // Polling control to prevent infinite loops
@@ -356,10 +363,46 @@ class CoreDataPreloadManager {
     private func handleCoreDataChange(_ notification: Notification, entityName: String) {
         guard loadState == .ready else { return }
         
+        // Skip if monitoring is suspended (during bulk operations)
+        guard !isSuspended else { return }
+        
+        // Skip Core Data monitoring entirely when using SQLite backend
+        // (temporary NSManagedObjects from SQLite cause spurious notifications)
+        guard !isUsingSQLite else {
+            print("🔇 CoreDataPreloadManager: Ignoring Core Data change (using SQLite backend)")
+            return
+        }
+        
         // CORE DATA FIX: Process changes on main thread where managed objects are safe to access
         DispatchQueue.main.async { [weak self] in
             self?.processCoreDataChange(notification, entityName: entityName)
         }
+    }
+    
+    // MARK: - Suspension Control
+    
+    /// Temporarily suspend monitoring during bulk operations to prevent flooding of change notifications
+    func suspendMonitoring() {
+        print("⏸️ CoreDataPreloadManager: Monitoring suspended for bulk operation")
+        isSuspended = true
+    }
+    
+    /// Resume monitoring after bulk operations complete, triggering a UI refresh
+    func resumeMonitoring() {
+        print("▶️ CoreDataPreloadManager: Monitoring resumed (with notification)")
+        isSuspended = false
+        
+        // Trigger a refresh by posting a notification (more reliable than delegate during startup)
+        DispatchQueue.main.async {
+            print("📢 CoreDataPreloadManager: Posting bandNamesCacheReady notification for UI refresh")
+            NotificationCenter.default.post(name: NSNotification.Name("bandNamesCacheReady"), object: nil)
+        }
+    }
+    
+    /// Resume monitoring silently without triggering notifications (let completion handler handle refresh)
+    func resumeMonitoringSilently() {
+        print("▶️ CoreDataPreloadManager: Monitoring resumed (silent mode)")
+        isSuspended = false
     }
     
     private func processCoreDataChange(_ notification: Notification, entityName: String) {

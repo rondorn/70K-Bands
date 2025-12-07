@@ -21,10 +21,7 @@ class firebaseUserWrite {
     }
     
     private func initializeFirebaseReference(attempt: Int = 1) {
-        if AppDelegate.isFirebaseConfigured {
-            ref = Database.database().reference()
-            print("✅ Firebase User Data reference initialized successfully")
-        } else {
+        guard AppDelegate.isFirebaseConfigured else {
             print("⚠️ Firebase not yet configured for User Data (attempt \(attempt)/\(maxAttempts))")
             if attempt < maxAttempts {
                 DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay) { [weak self] in
@@ -33,7 +30,11 @@ class firebaseUserWrite {
             } else {
                 print("❌ Failed to initialize Firebase User Data reference after \(maxAttempts) attempts")
             }
+            return
         }
+        
+        ref = Database.database().reference()
+        print("✅ Firebase User Data reference initialized successfully")
     }
     
     func writeData (){

@@ -179,15 +179,69 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     
     // 4. EXPIRATION FILTER (if enabled)
     if getHideExpireScheduleData() {
-        let currentTime = Date().timeIntervalSince1970
+        let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
         predicates.append(NSPredicate(format: "endTimeIndex > %f", currentTime))
         print("🔍 [FILTER] Hiding expired events (ended before) \(currentTime)")
     }
     
-    // EXECUTE FILTERED QUERY
-    let combinedPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-    let filteredEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: combinedPredicate)
-    print("🔍 [FILTER] Core Data returned \(filteredEvents.count) filtered events")
+    // EXECUTE QUERY (via DataManager -> SQLite) and filter in Swift
+    // Note: New struct-based API doesn't use NSPredicate, so we filter directly
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    
+    // Apply filters directly on structs
+    let filteredEvents = allEvents.filter { event in
+        let eventType = event.eventType ?? ""
+        let location = event.location
+        
+        // 1. Event type exclusions
+        if excludedEventTypes.contains(eventType) {
+            return false
+        }
+        
+        // 2. Venue filters
+        if venuePredicateParts.isEmpty {
+            return false // No venues enabled
+        }
+        
+        var matchesVenue = false
+        for venueName in enabledFilterVenues {
+            if location.lowercased().hasPrefix(venueName.lowercased()) {
+                matchesVenue = true
+                break
+            }
+        }
+        
+        // Check "Other" venues
+        if !matchesVenue && getShowOtherShows() {
+            // Check if it's NOT a filter venue
+            var isFilterVenue = false
+            for venueName in filterVenues {
+                if location.lowercased().hasPrefix(venueName.lowercased()) {
+                    isFilterVenue = true
+                    break
+                }
+            }
+            if !isFilterVenue {
+                matchesVenue = true
+            }
+        }
+        
+        if !matchesVenue {
+            return false
+        }
+        
+        // 3. Expiration filter
+        if getHideExpireScheduleData() {
+            let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
+            if event.endTimeIndex <= currentTime {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
+    print("🔍 [FILTER] Filtered to \(filteredEvents.count) events from \(allEvents.count) total")
     
     // DEBUG: God Dethroned event count (avoid accessing relationships on background thread)
     print("🔍 [DEBUG_GOD_DETHRONED] Total filtered events: \(filteredEvents.count)")
@@ -208,8 +262,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
         }
     }
     
-    // Also check what we had BEFORE filtering
-    let allEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear))
+    // Also check what we had BEFORE filtering (reuse allEvents from above)
     let allEventTypeBreakdown = Dictionary(grouping: allEvents, by: { $0.eventType ?? "No Type" })
     print("🔍 [FILTER] ===== ALL EVENTS (before filtering) =====")
     for (type, events) in allEventTypeBreakdown.sorted(by: { $0.key < $1.key }) {
@@ -220,7 +273,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     
     // APPLY PRIORITY FILTERING (post-filter since priority data is separate)
     let priorityFilteredEvents = filteredEvents.filter { event in
-        guard let band = event.band, let bandName = band.bandName else { return true } // Include standalone events
+        let bandName = event.bandName
+        guard !bandName.isEmpty else { return true } // Include standalone events
         
         let priority = priorityManager.getPriority(for: bandName)
         
@@ -236,12 +290,12 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     print("🔍 [FILTER] After priority filtering: \(priorityFilteredEvents.count) events")
     
     // APPLY ATTENDANCE FILTER (if enabled)
-    let finalEvents: [Event]
+    let finalEvents: [EventData]
     if getShowOnlyWillAttened() {
         finalEvents = priorityFilteredEvents.filter { event in
-            guard let band = event.band, let bandName = band.bandName,
-                  let location = event.location,
-                  let eventType = event.eventType else { return false }
+            let bandName = event.bandName
+            let location = event.location
+            let eventType = event.eventType ?? ""
             
             // Use the raw startTime from the event data (same as GUI uses)
             let startTime = event.startTime ?? ""
@@ -290,9 +344,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     
     // Convert events to string format: "timeIndex:bandName" OR "timeIndex:eventName" for standalone events  
     let eventStrings = finalEvents.compactMap { event -> String? in
-        // First check if this event has a band association
-        if let band = event.band, let bandName = band.bandName, !bandName.isEmpty {
-            
+        // Get the band name from the event
+        let bandName = event.bandName
+        
+        if !bandName.isEmpty {
             // Check if this "band" name is actually a standalone event
             // These patterns indicate it's an event name, not a real band name
             let standaloneEventPatterns = [
@@ -326,10 +381,13 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                 eventIdentifier = notes
             } else if let eventType = event.eventType, !eventType.isEmpty, eventType.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
                 eventIdentifier = eventType
-            } else if let location = event.location, !location.isEmpty, location.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                eventIdentifier = location
             } else {
-                eventIdentifier = "Unknown Event"
+                let location = event.location
+                if !location.isEmpty && location.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+                    eventIdentifier = location
+                } else {
+                    eventIdentifier = "Unknown Event"
+                }
             }
             
             return "\(event.timeIndex):\(eventIdentifier)"
@@ -341,43 +399,36 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     // FIX: Get bands that have NON-EXPIRED events (regardless of other filters)
     // Bands should only appear below events when they have NO non-expired events, not when just filtered by venue
     let bandsWithVisibleEvents: Set<String>
+    let allYearEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    
     if getHideExpireScheduleData() {
         // When "Hide Expired Events" is enabled, get all bands that have future events (regardless of venue/priority filters)
-        let currentTime = Date().timeIntervalSince1970
-        let nonExpiredEventsPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "eventYear == %d", eventYear),
-            NSPredicate(format: "timeIndex > %f", currentTime)
-        ])
-        let nonExpiredEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: nonExpiredEventsPredicate)
-        bandsWithVisibleEvents = Set(nonExpiredEvents.compactMap { event in
-            event.band?.bandName
-        })
+        let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
+        let nonExpiredEvents = allYearEvents.filter { $0.timeIndex > currentTime }
+        bandsWithVisibleEvents = Set(nonExpiredEvents.map { $0.bandName })
         print("🔍 [BAND_DISPLAY_FIX] Hide Expired Events ON - bands with non-expired events: \(bandsWithVisibleEvents.sorted())")
     } else {
         // When "Hide Expired Events" is disabled, all bands with any events should not appear below (regardless of filters)
-        let allEventsPredicate = NSPredicate(format: "eventYear == %d", eventYear)
-        let allEvents = coreDataManager.fetchEvents(forYear: Int32(eventYear), predicate: allEventsPredicate)
-        bandsWithVisibleEvents = Set(allEvents.compactMap { event in
-            event.band?.bandName
-        })
+        bandsWithVisibleEvents = Set(allYearEvents.map { $0.bandName })
         print("🔍 [BAND_DISPLAY_FIX] Hide Expired Events OFF - bands with any events: \(bandsWithVisibleEvents.sorted())")
     }
     
-    // Fetch ALL bands for current year
-    let fetchedBands = coreDataManager.fetchBands(forYear: Int32(eventYear))
-    print("🔍 DEBUG: Fetched \(fetchedBands.count) bands from Core Data")
+    // Fetch ALL bands for current year (from SQLite via DataManager)
+    let fetchedBands = DataManager.shared.fetchBands(forYear: eventYear)
+    print("🔍 DEBUG: Fetched \(fetchedBands.count) bands from SQLite")
     
     // Only show bands that have NO visible events (band-only entries) and pass priority filters
     // These should be actual bands, not fake bands created from standalone events
     let bandOnlyStrings = fetchedBands.compactMap { band -> String? in
-        guard let bandName = band.bandName, !bandName.isEmpty else { return nil }
+        let bandName = band.bandName
+        guard !bandName.isEmpty else { return nil }
         
         // Only include band if it has no visible events
         if !bandsWithVisibleEvents.contains(bandName) {
             
             // ROBUST FAKE BAND DETECTION: Check if band is associated ONLY with unofficial/special events
             // If so, it's a fake band created for those events and should not appear when those events are hidden
-            let allEventsForBand = band.events?.allObjects as? [Event] ?? []
+            let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
             let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
             
             // Check if ALL events for this band are fake event types
@@ -391,7 +442,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                 for event in allEventsForBand.prefix(3) {
                     let eventType = event.eventType ?? "unknown"
                     let isVisible = filteredEvents.contains(event)
-                    print("🎭 [FAKE_BAND_DEBUG] - Event: '\(eventType)' at '\(event.location ?? "nil")' - Visible: \(isVisible)")
+                    print("🎭 [FAKE_BAND_DEBUG] - Event: '\(eventType)' at '\(event.location)' - Visible: \(isVisible)")
                 }
                 return nil
             }
@@ -501,41 +552,31 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
     if !showScheduleView {
         print("🔍 [VIEW_MODE_DEBUG] 🎵 Applying Bands Only filter - using Core Data query for all bands")
         
-        // Use Core Data to get all unique band names for the current year
+        // Use DataManager (SQLite) to get all unique band names for the current year
         // This respects all the existing filters (priority, venue, event type, expiration)
-        let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
-        var bandPredicates: [NSPredicate] = []
+        var bands = DataManager.shared.fetchBands(forYear: eventYear)
+        print("🔍 [VIEW_MODE_DEBUG] 🎵 SQLite returned \(bands.count) bands")
         
-        // 1. Year filter
-        bandPredicates.append(NSPredicate(format: "eventYear == %d", eventYear))
-        
-        // 2. Apply same filters as events for consistency
-        // Priority filtering will be applied post-query
-        
-        // 3. If "Hide Expired Events" is enabled, only show bands that have non-expired events OR no events
+        // If "Hide Expired Events" is enabled, only show bands that have non-expired events OR no events
         if getHideExpireScheduleData() {
-            let currentTime = Date().timeIntervalSince1970
-            // Show bands that either have no events OR have at least one non-expired event
-            let noEventsOrNonExpiredPredicate = NSPredicate(format: "events.@count == 0 OR SUBQUERY(events, $event, $event.timeIndex > %f).@count > 0", currentTime)
-            bandPredicates.append(noEventsOrNonExpiredPredicate)
+            let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
+            bands = bands.filter { band in
+                let events = DataManager.shared.fetchEventsForBand(band.bandName, forYear: eventYear)
+                return events.isEmpty || events.contains(where: { $0.timeIndex > currentTime })
+            }
+            print("🔍 [VIEW_MODE_DEBUG] 🎵 After expiration filter: \(bands.count) bands")
         }
         
-        let combinedBandPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: bandPredicates)
-        bandRequest.predicate = combinedBandPredicate
-        bandRequest.sortDescriptors = [NSSortDescriptor(key: "bandName", ascending: true)]
-        
         var allBandNames: [String] = []
-        do {
-            let bands = try coreDataManager.context.fetch(bandRequest)
-            print("🔍 [VIEW_MODE_DEBUG] 🎵 Core Data returned \(bands.count) bands")
-            
-            // Apply priority and fake band filtering (same as Schedule View logic)
-            for band in bands {
-                guard let bandName = band.bandName, !bandName.isEmpty else { continue }
+        
+        // Apply priority and fake band filtering (same as Schedule View logic)
+        for band in bands {
+                let bandName = band.bandName
+                guard !bandName.isEmpty else { continue }
                 
                 // BANDS ONLY FIX: Filter out fake bands created from standalone events
                 // Check if band is associated ONLY with unofficial/special events
-                let allEventsForBand = band.events?.allObjects as? [Event] ?? []
+                let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
                 let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
                 
                 // Check if ALL events for this band are fake event types
@@ -579,10 +620,6 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: PriorityManager,
                 
                 allBandNames.append(bandName)
             }
-        } catch {
-            print("❌ [VIEW_MODE_DEBUG] Error fetching bands: \(error)")
-            allBandNames = []
-        }
         
         print("🔍 [VIEW_MODE_DEBUG] 🎵 After priority filtering: \(allBandNames.count) bands")
         
@@ -1142,7 +1179,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
                 if day.isEmpty {
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "MMM d"
-                    day = dateFormatter.string(from: Date(timeIntervalSince1970: timeIndex))
+                    day = dateFormatter.string(from: Date(timeIntervalSinceReferenceDate: timeIndex)) // FIX: Match storage format
                 }
             }
         }
