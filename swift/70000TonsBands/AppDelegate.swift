@@ -222,11 +222,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
-        // REMOVED: Core Data initialization is now handled by CoreDataToSQLiteMigrator
-        // Core Data is ONLY initialized if migration is needed (i.e., old Core Data exists)
-        // On first launch, Core Data is NOT initialized, avoiding unnecessary overhead
-        // Migration check happens in setupDefaults() which is called below
-        print("ℹ️  Core Data initialization deferred to migration check (only if needed)")
+        // MIGRATION: Perform one-time migration from Core Data to SQLite
+        // This is safe to call every launch - it only runs once
+        print("🔄 Checking for Core Data to SQLite migration...")
+        CoreDataToSQLiteMigrationHelper.shared.performMigrationIfNeeded()
+        print("✅ Migration check complete")
         
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)
@@ -426,21 +426,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
                     
                     // Use new Core Data iCloud sync system
-                    let coreDataiCloudSync = CoreDataiCloudSync()
+                    let sqliteiCloudSync = SQLiteiCloudSync()
                     
                     // Sync priorities from iCloud
-                    coreDataiCloudSync.syncPrioritiesFromiCloud {
+                    sqliteiCloudSync.syncPrioritiesFromiCloud {
                         print("iCloud: Priority sync completed")
                     }
                     
                     // Sync attendance from iCloud
-                    coreDataiCloudSync.syncAttendanceFromiCloud {
+                    sqliteiCloudSync.syncAttendanceFromiCloud {
                         print("iCloud: Attendance sync completed")
                     }
                     
                     // Write local data to iCloud
-                    coreDataiCloudSync.syncPrioritiesToiCloud()
-                    coreDataiCloudSync.syncAttendanceToiCloud()
+                    sqliteiCloudSync.syncPrioritiesToiCloud()
+                    sqliteiCloudSync.syncAttendanceToiCloud()
                     
                     print("iCloud: Launch sync completed, refreshing display...")
                     
@@ -1075,21 +1075,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
             
             // NEW: Use Core Data iCloud sync system instead of old iCloudDataHandler
-            let coreDataiCloudSync = CoreDataiCloudSync()
+            let sqliteiCloudSync = SQLiteiCloudSync()
             
             // Sync priorities from iCloud
-            coreDataiCloudSync.syncPrioritiesFromiCloud {
+            sqliteiCloudSync.syncPrioritiesFromiCloud {
                 print("iCloud: Priority sync completed from external change")
             }
             
             // Sync attendance from iCloud
-            coreDataiCloudSync.syncAttendanceFromiCloud {
+            sqliteiCloudSync.syncAttendanceFromiCloud {
                 print("iCloud: Attendance sync completed from external change")
             }
             
             // Write local data to iCloud
-            coreDataiCloudSync.syncPrioritiesToiCloud()
-            coreDataiCloudSync.syncAttendanceToiCloud()
+            sqliteiCloudSync.syncPrioritiesToiCloud()
+            sqliteiCloudSync.syncAttendanceToiCloud()
             
             print("iCloud: External change processing completed, refreshing GUI...")
             

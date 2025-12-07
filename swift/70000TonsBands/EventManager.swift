@@ -193,7 +193,7 @@ class EventManager {
     func getFilteredEventsAndBands(
         year: Int,
         sortBy: String,
-        priorityManager: PriorityManager,
+        priorityManager: SQLitePriorityManager,
         attendedHandle: ShowsAttended
     ) -> (events: [String], bands: [String], eventCount: Int, bandCount: Int) {
         
