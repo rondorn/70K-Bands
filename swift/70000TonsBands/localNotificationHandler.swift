@@ -97,7 +97,7 @@ class localNoticationHandler {
      */
     func checkBandPriority (_ bandName: String, attendedStatus: String)->Bool{
         
-        let priorityManager = PriorityManager()
+        let priorityManager = SQLitePriorityManager.shared
         if (getMustSeeAlertValue() == true && priorityManager.getPriority(for: bandName) == 1){
             return true
         }

@@ -12,7 +12,7 @@ open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
     // NEW: Use Core Data AttendanceManager for all operations
-    private let attendanceManager = AttendanceManager()
+    private let attendanceManager = SQLiteAttendanceManager.shared
     
     // Thread-safe queue and backing store for showsAttendedArray
     private let showsAttendedQueue = DispatchQueue(label: "com.yourapp.showsAttendedQueue", attributes: .concurrent)

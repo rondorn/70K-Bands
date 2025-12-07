@@ -19,7 +19,7 @@ class SQLiteDataManager: DataManagerProtocol {
     private var db: Connection?
     
     // Database version for schema migrations
-    private let currentSchemaVersion = 7  // v7: Disabled CoreDataPreloadManager monitoring for SQLite backend
+    private let currentSchemaVersion = 8  // v8: Added description_map table
     private let schemaVersionKey = "SQLiteSchemaVersion"
     
     // Table definitions
@@ -27,6 +27,7 @@ class SQLiteDataManager: DataManagerProtocol {
     private let eventsTable = Table("events")
     private let userPrioritiesTable = Table("user_priorities")
     private let userAttendancesTable = Table("user_attendances")
+    private let descriptionMapTable = Table("description_map")
     
     // Band columns
     private let bandId = Expression<Int64>("id")
@@ -72,6 +73,13 @@ class SQLiteDataManager: DataManagerProtocol {
     private let attendanceTimeIndex = Expression<Double>("timeIndex")
     private let attendanceStatus = Expression<Int>("status")
     private let attendanceLastModified = Expression<Double?>("lastModified")
+    
+    // Description Map columns
+    private let descMapId = Expression<Int64>("id")
+    private let descMapEntityName = Expression<String>("entityName")  // Band or event name
+    private let descMapEventYear = Expression<Int>("eventYear")
+    private let descMapDescriptionUrl = Expression<String>("descriptionUrl")
+    private let descMapDescriptionUrlDate = Expression<String?>("descriptionUrlDate")  // Optional modification date
     
     private init() {
         print("📊 SQLiteDataManager: Initializing SQLite backend")
@@ -147,6 +155,7 @@ class SQLiteDataManager: DataManagerProtocol {
             try? db.run(eventsTable.drop(ifExists: true))
             try? db.run(userPrioritiesTable.drop(ifExists: true))
             try? db.run(userAttendancesTable.drop(ifExists: true))
+            try? db.run(descriptionMapTable.drop(ifExists: true))
             
             // Reset batch insert counters for all years since we're starting fresh
             for year in 2011...2030 {
@@ -224,10 +233,22 @@ class SQLiteDataManager: DataManagerProtocol {
             t.unique(attendanceBandName, attendanceEventYear, attendanceTimeIndex)
         })
         
+        // Description Map table
+        try db.run(descriptionMapTable.create(ifNotExists: true) { t in
+            t.column(descMapId, primaryKey: .autoincrement)
+            t.column(descMapEntityName)
+            t.column(descMapEventYear)
+            t.column(descMapDescriptionUrl)
+            t.column(descMapDescriptionUrlDate)
+            t.unique(descMapEntityName, descMapEventYear)
+        })
+        
         // Create indexes
         try db.run(bandsTable.createIndex(eventYear, ifNotExists: true))
         try db.run(eventsTable.createIndex(eventYear_col, ifNotExists: true))
         try db.run(eventsTable.createIndex(eventBandName, ifNotExists: true))
+        try db.run(descriptionMapTable.createIndex(descMapEventYear, ifNotExists: true))
+        try db.run(descriptionMapTable.createIndex(descMapEntityName, ifNotExists: true))
         
         print("✅ SQLiteDataManager: Tables created successfully")
     }
@@ -349,13 +370,38 @@ class SQLiteDataManager: DataManagerProtocol {
             fatalError("Database not initialized")
         }
         
+        // Helper to validate image URLs (reject nil, empty, whitespace-only)
+        func isValidImageURL(_ url: String?) -> Bool {
+            guard let url = url else { return false }
+            let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmed.isEmpty && trimmed != "http://"
+        }
+        
+        // Determine final image URL: use new one if valid, otherwise preserve existing
+        var finalImageUrl = imageUrl
+        if !isValidImageURL(imageUrl) {
+            // New URL is invalid - check if we should preserve existing
+            do {
+                let query = bandsTable.filter(bandName == name && eventYear == year)
+                if let existingBand = try db.pluck(query),
+                   let existingImageUrl = existingBand[self.imageUrl],
+                   isValidImageURL(existingImageUrl) {
+                    // Preserve existing valid image URL
+                    finalImageUrl = existingImageUrl
+                    print("✅ SQLiteDataManager: Preserving existing valid image URL for band '\(name)' year \(year)")
+                }
+            } catch {
+                print("⚠️ SQLiteDataManager: Could not check existing band image URL: \(error)")
+            }
+        }
+        
         do {
             let insert = bandsTable.insert(
                 or: .replace,
                 bandName <- name,
                 eventYear <- year,
                 self.officialSite <- officialSite,
-                self.imageUrl <- imageUrl,
+                self.imageUrl <- finalImageUrl,  // ✅ Use validated/preserved URL
                 self.youtube <- youtube,
                 self.metalArchives <- metalArchives,
                 self.wikipedia <- wikipedia,
@@ -375,7 +421,7 @@ class SQLiteDataManager: DataManagerProtocol {
             bandName: name,
             eventYear: year,
             officialSite: officialSite,
-            imageUrl: imageUrl,
+            imageUrl: finalImageUrl,
             youtube: youtube,
             metalArchives: metalArchives,
             wikipedia: wikipedia,
@@ -384,6 +430,49 @@ class SQLiteDataManager: DataManagerProtocol {
             noteworthy: noteworthy,
             priorYears: priorYears
         )
+    }
+    
+    /// Create band only if it doesn't exist (won't overwrite existing data)
+    /// Used by schedule importer to ensure band exists without destroying existing metadata
+    func createBandIfNotExists(name: String, eventYear year: Int) -> Bool {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Database not initialized")
+            return false
+        }
+        
+        do {
+            // Check if band already exists
+            let query = bandsTable.filter(bandName == name && eventYear == year)
+            let count = try db.scalar(query.count)
+            
+            if count > 0 {
+                // Band exists, don't overwrite
+                print("✅ SQLiteDataManager: Band '\(name)' for year \(year) already exists - preserving existing data")
+                return true
+            }
+            
+            // Band doesn't exist, create minimal entry
+            let insert = bandsTable.insert(
+                or: .ignore,  // ✅ IGNORE if already exists (race condition safety)
+                bandName <- name,
+                eventYear <- year,
+                self.officialSite <- nil,
+                self.imageUrl <- nil,
+                self.youtube <- nil,
+                self.metalArchives <- nil,
+                self.wikipedia <- nil,
+                self.country <- nil,
+                self.genre <- nil,
+                self.noteworthy <- nil,
+                self.priorYears <- nil
+            )
+            try db.run(insert)
+            print("✅ SQLiteDataManager: Created minimal band entry for '\(name)' year \(year)")
+            return true
+        } catch {
+            print("❌ SQLiteDataManager: Failed to create band if not exists: \(error)")
+            return false
+        }
     }
     
     // Guard to prevent concurrent batch inserts
@@ -424,14 +513,34 @@ class SQLiteDataManager: DataManagerProtocol {
                 print("🔍 [BATCH_DEBUG] First band year: \(firstBand.eventYear), name: '\(firstBand.name)'")
             }
             
+            // Helper to validate image URLs
+            func isValidImageURL(_ url: String?) -> Bool {
+                guard let url = url else { return false }
+                let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                return !trimmed.isEmpty && trimmed != "http://"
+            }
+            
             try db.transaction {
                 for (index, bandData) in bands.enumerated() {
+                    // Determine final image URL: use new one if valid, otherwise preserve existing
+                    var finalImageUrl = bandData.imageUrl
+                    if !isValidImageURL(bandData.imageUrl) {
+                        // New URL is invalid - check if we should preserve existing
+                        let query = bandsTable.filter(bandName == bandData.name && eventYear == bandData.eventYear)
+                        if let existingBand = try db.pluck(query),
+                           let existingImageUrl = existingBand[self.imageUrl],
+                           isValidImageURL(existingImageUrl) {
+                            // Preserve existing valid image URL
+                            finalImageUrl = existingImageUrl
+                        }
+                    }
+                    
                     let insert = bandsTable.insert(
                         or: .replace,
                         bandName <- bandData.name,
                         eventYear <- bandData.eventYear,
                         self.officialSite <- bandData.officialSite,
-                        self.imageUrl <- bandData.imageUrl,
+                        self.imageUrl <- finalImageUrl,  // ✅ Use validated/preserved URL
                         self.youtube <- bandData.youtube,
                         self.metalArchives <- bandData.metalArchives,
                         self.wikipedia <- bandData.wikipedia,
@@ -631,6 +740,10 @@ class SQLiteDataManager: DataManagerProtocol {
             fatalError("Database not initialized")
         }
         
+        // NOTE: Event images are allowed to be null - most events don't have their own images
+        // Only special events (like Meet & Greet) have event-specific images
+        // The DetailView fallback logic will use band images when event images are null
+        
         do {
             let insert = eventsTable.insert(
                 or: .replace,
@@ -646,7 +759,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.endTimeIndex <- endTimeIndex,
                 self.notes <- n,
                 self.descriptionUrl <- url,
-                self.eventImageUrl <- imgUrl
+                self.eventImageUrl <- imgUrl  // ✅ Write as-is (null is valid for events)
             )
             try db.run(insert)
             print("✅ SQLiteDataManager: Inserted/updated event for '\(name)' at timeIndex \(timeIndex) (NO Core Data!)")
@@ -827,6 +940,128 @@ class SQLiteDataManager: DataManagerProtocol {
             print("✅ SQLiteDataManager: Deleted user attendance for '\(name)'")
         } catch {
             print("❌ SQLiteDataManager: Failed to delete user attendance: \(error)")
+        }
+    }
+    
+    // MARK: - Description Map Operations
+    
+    /// Get description URL for a band or event
+    func getDescriptionUrl(forEntity entityName: String, eventYear year: Int) -> String? {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Database not initialized")
+            return nil
+        }
+        
+        do {
+            let query = descriptionMapTable.filter(descMapEntityName == entityName && descMapEventYear == year)
+            if let row = try db.pluck(query) {
+                return try row.get(descMapDescriptionUrl)
+            }
+            return nil
+        } catch {
+            print("❌ SQLiteDataManager: Failed to fetch description URL for '\(entityName)': \(error)")
+            return nil
+        }
+    }
+    
+    /// Get all description URLs for a given year
+    func getAllDescriptionUrls(forYear year: Int) -> [String: String] {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Database not initialized")
+            return [:]
+        }
+        
+        var descriptionMap: [String: String] = [:]
+        
+        do {
+            let query = descriptionMapTable.filter(descMapEventYear == year)
+            for row in try db.prepare(query) {
+                let entityName = try row.get(descMapEntityName)
+                let url = try row.get(descMapDescriptionUrl)
+                descriptionMap[entityName] = url
+            }
+            print("✅ SQLiteDataManager: Fetched \(descriptionMap.count) description URLs for year \(year)")
+        } catch {
+            print("❌ SQLiteDataManager: Failed to fetch description URLs: \(error)")
+        }
+        
+        return descriptionMap
+    }
+    
+    /// Insert or update description URL for a band or event
+    func createOrUpdateDescriptionUrl(forEntity entityName: String, eventYear year: Int, descriptionUrl url: String, descriptionUrlDate urlDate: String? = nil) {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Database not initialized")
+            return
+        }
+        
+        do {
+            let insert = descriptionMapTable.insert(
+                or: .replace,
+                descMapEntityName <- entityName,
+                descMapEventYear <- year,
+                descMapDescriptionUrl <- url,
+                descMapDescriptionUrlDate <- urlDate
+            )
+            try db.run(insert)
+            print("✅ SQLiteDataManager: Inserted/updated description URL for '\(entityName)'")
+        } catch {
+            print("❌ SQLiteDataManager: Failed to insert/update description URL: \(error)")
+        }
+    }
+    
+    /// Batch insert description map entries (for loading from CSV)
+    func batchInsertDescriptionMap(entries: [(entityName: String, eventYear: Int, url: String, urlDate: String?)]) {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Database not initialized")
+            return
+        }
+        
+        do {
+            try db.transaction {
+                for entry in entries {
+                    let insert = descriptionMapTable.insert(
+                        or: .replace,
+                        descMapEntityName <- entry.entityName,
+                        descMapEventYear <- entry.eventYear,
+                        descMapDescriptionUrl <- entry.url,
+                        descMapDescriptionUrlDate <- entry.urlDate
+                    )
+                    try db.run(insert)
+                }
+            }
+            print("✅ SQLiteDataManager: Batch inserted \(entries.count) description map entries")
+        } catch {
+            print("❌ SQLiteDataManager: Failed to batch insert description map: \(error)")
+        }
+    }
+    
+    /// Delete description URL for a band or event
+    func deleteDescriptionUrl(forEntity entityName: String, eventYear year: Int) {
+        guard let db = db else { return }
+        
+        do {
+            let entryToDelete = descriptionMapTable.filter(
+                descMapEntityName == entityName && 
+                descMapEventYear == year
+            )
+            try db.run(entryToDelete.delete())
+            print("✅ SQLiteDataManager: Deleted description URL for '\(entityName)'")
+        } catch {
+            print("❌ SQLiteDataManager: Failed to delete description URL: \(error)")
+        }
+    }
+    
+    /// Clear all description map entries for a specific year
+    func clearDescriptionMap(forYear year: Int) {
+        guard let db = db else { return }
+        
+        do {
+            let entriesToDelete = descriptionMapTable.filter(descMapEventYear == year)
+            let deleteCount = try db.run(entriesToDelete.delete())
+            print("✅ SQLiteDataManager: Cleared \(deleteCount) description map entries for year \(year)")
+        } catch {
+            print("❌ SQLiteDataManager: Failed to clear description map: \(error)")
         }
     }
 }

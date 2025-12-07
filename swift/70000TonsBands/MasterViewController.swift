@@ -137,7 +137,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleLabel: UINavigationItem!
     
     var dataHandle = dataHandler()
-    private let priorityManager = PriorityManager()
+    private let priorityManager = SQLitePriorityManager.shared
     
     var videoURL = URL("")
     var player = AVPlayer()
@@ -4022,39 +4022,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Actually refresh schedule data
                 self.schedule.populateSchedule(forceDownload: false)
                 
-                // Load iCloud data using new Core Data sync system
+                // Load iCloud data using new SQLite sync system
                 let iCloudGroup = DispatchGroup()
                 
                 iCloudGroup.enter()
                 DispatchQueue.global(qos: .utility).async {
-                    let coreDataiCloudSync = CoreDataiCloudSync()
+                    let sqliteiCloudSync = SQLiteiCloudSync()
                     
                     // First write local data to iCloud to ensure it's backed up
-                    coreDataiCloudSync.syncPrioritiesToiCloud()
-                    coreDataiCloudSync.syncAttendanceToiCloud()
+                    sqliteiCloudSync.syncPrioritiesToiCloud()
+                    sqliteiCloudSync.syncAttendanceToiCloud()
                     
                     // Then read any remote changes from iCloud
-                    print("iCloud Debug: Starting Core Data iCloud sync...")
+                    print("iCloud Debug: Starting SQLite iCloud sync...")
                     
                     let syncGroup = DispatchGroup()
                     
                     // Sync priorities from iCloud
                     syncGroup.enter()
-                    coreDataiCloudSync.syncPrioritiesFromiCloud {
+                    sqliteiCloudSync.syncPrioritiesFromiCloud {
                         print("iCloud Debug: Priority sync completed")
                         syncGroup.leave()
                     }
                     
                     // Sync attendance from iCloud
                     syncGroup.enter()
-                    coreDataiCloudSync.syncAttendanceFromiCloud {
+                    sqliteiCloudSync.syncAttendanceFromiCloud {
                         print("iCloud Debug: Attendance sync completed")
                         syncGroup.leave()
                     }
                     
                     // Wait for both syncs to complete
                     syncGroup.notify(queue: .global(qos: .utility)) {
-                        print("iCloud Debug: All Core Data sync completed")
+                        print("iCloud Debug: All SQLite sync completed")
                         iCloudGroup.leave()
                     }
                 }
@@ -4062,15 +4062,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // 3f. Generate consolidated image list then refresh the GUI
                 iCloudGroup.notify(queue: .main) {
                     print("Full data refresh (\(reason)): Step 3f - All data loaded, generating consolidated image list")
-                    
-                    // CRITICAL: Ensure all attendance records have index field and link to events
-                    let attendanceManager = AttendanceManager()
-                    attendanceManager.ensureAllAttendanceRecordsHaveIndex()
-                    attendanceManager.linkAttendanceRecordsToEvents()
-                    
-                    // DEBUG: Test attendance restoration system
-                    print("🧪 Testing attendance restoration system...")
-                    attendanceManager.testAttendanceRestoration()
                     
                     // Generate consolidated image list immediately after both artist and schedule data are loaded
                     CombinedImageListHandler.shared.generateCombinedImageList(
@@ -4216,25 +4207,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("☁️ Loading iCloud data...")
         
         // Use new Core Data iCloud sync system
-        let coreDataiCloudSync = CoreDataiCloudSync()
+        let sqliteiCloudSync = SQLiteiCloudSync()
         
         // First write local data to iCloud
-        coreDataiCloudSync.syncPrioritiesToiCloud()
-        coreDataiCloudSync.syncAttendanceToiCloud()
+        sqliteiCloudSync.syncPrioritiesToiCloud()
+        sqliteiCloudSync.syncAttendanceToiCloud()
         
         // Then read remote changes from iCloud, waiting for both to complete
         let syncGroup = DispatchGroup()
         
         // Sync priorities from iCloud
         syncGroup.enter()
-        coreDataiCloudSync.syncPrioritiesFromiCloud {
+        sqliteiCloudSync.syncPrioritiesFromiCloud {
             print("☁️ Priority sync completed")
             syncGroup.leave()
         }
         
         // Sync attendance from iCloud
         syncGroup.enter()
-        coreDataiCloudSync.syncAttendanceFromiCloud {
+        sqliteiCloudSync.syncAttendanceFromiCloud {
             print("☁️ Attendance sync completed")
             syncGroup.leave()
         }
@@ -4369,6 +4360,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
+            // CRITICAL: Synchronize UserDefaults to read latest settings from Settings.bundle
+            UserDefaults.standard.synchronize()
+            print("🔄 [UNIFIED_REFRESH] Step 0 - Synchronized UserDefaults to read latest settings")
+            
+            // Re-read the pointer URL preference to respect user's choice
+            let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+            print("🔄 [UNIFIED_REFRESH] Current PointerUrl preference: '\(pointerUrlPref)'")
+            
+            // Update defaultStorageUrl based on current preference
+            if pointerUrlPref == testingSetting {
+                defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
+                print("🔄 [UNIFIED_REFRESH] ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+            } else {
+                defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
+                print("🔄 [UNIFIED_REFRESH] ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+            }
+            
             // STEP 1: Download and update pointer file FIRST (synchronously)
             print("🔄 [UNIFIED_REFRESH] Step 1 - Downloading pointer file FIRST")
             let pointerUpdated = self.downloadAndUpdatePointerFileSync()
@@ -4463,7 +4471,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             refreshGroup.notify(queue: .global(qos: .utility)) { [weak self] in
                 guard let self = self else { return }
                 
-                print("🖼️ [UNIFIED_REFRESH] All CSVs downloaded - now building image map with fresh data")
+                print("📝 [UNIFIED_REFRESH] All CSVs downloaded - now loading description map and image map with fresh data")
+                
+                // Load description map AFTER CSVs are imported
+                // This ensures the description map is available for the details screen
+                self.bandDescriptions.getDescriptionMapFile()
+                self.bandDescriptions.getDescriptionMap()
+                print("✅ [UNIFIED_REFRESH] Description map loaded with fresh CSV data")
                 
                 // CRITICAL FIX: Build image map AFTER CSVs are imported
                 // This ensures the image map uses the NEW year's data with proper URLs
@@ -4474,7 +4488,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // Now update the display on main thread
                 DispatchQueue.main.async {
-                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + image map) - updating display")
+                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map + image map) - updating display")
                     
                     // Clear justLaunched flag
                     cacheVariables.justLaunched = false
@@ -4750,6 +4764,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Run entirely in background to never block GUI
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
+            
+            // CRITICAL: Synchronize UserDefaults to read latest settings from Settings.bundle
+            UserDefaults.standard.synchronize()
+            print("📡 FRESH DATA COLLECTION: Synchronized UserDefaults to read latest settings")
+            
+            // Re-read the pointer URL preference to respect user's choice
+            let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+            print("📡 FRESH DATA COLLECTION: Current PointerUrl preference: '\(pointerUrlPref)'")
+            
+            // Update defaultStorageUrl based on current preference
+            if pointerUrlPref == testingSetting {
+                defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
+                print("📡 FRESH DATA COLLECTION: ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+            } else {
+                defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
+                print("📡 FRESH DATA COLLECTION: ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+            }
             
             // Step 1: Download band names
             print("📡 FRESH DATA COLLECTION: Step 1 - Downloading band names")

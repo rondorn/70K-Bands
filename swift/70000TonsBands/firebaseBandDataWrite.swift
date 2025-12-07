@@ -160,7 +160,7 @@ class firebaseBandDataWrite {
                 self.buildBandRankArray()
                 for bandName in self.bandRank.keys {
                     
-                    let priorityManager = PriorityManager()
+                    let priorityManager = SQLitePriorityManager.shared
                     let rankingInteger = priorityManager.getPriority(for: bandName)
                     let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
                     print ("bandDataReport - Checking band \(bandName) - \(firebaseBandAttendedArray[bandName]) - \(ranking)")
@@ -192,7 +192,7 @@ class firebaseBandDataWrite {
         for band in bandsForCurrentYear {
             guard let bandName = band.bandName else { continue }
             
-            let priorityManager = PriorityManager()
+            let priorityManager = SQLitePriorityManager.shared
             let rankingNumber = String(priorityManager.getPriority(for: bandName))
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
