@@ -4444,7 +4444,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 refreshGroup.leave()
             }
             
-            // Thread 3: Download iCloud data + build image map
+            // Thread 3: Download iCloud data (parallel)
             refreshGroup.enter()
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 guard let self = self else {
@@ -4452,31 +4452,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     return
                 }
                 
-                print("🔄 [UNIFIED_REFRESH] Thread 3 - Downloading iCloud data + building image map")
-                
-                // Download iCloud data
+                print("🔄 [UNIFIED_REFRESH] Thread 3 - Downloading iCloud data")
                 self.loadICloudData {
-                    // Build combined image list
-                    self.loadCombinedImageList()
-                    
-                    print("✅ [UNIFIED_REFRESH] Thread 3 - iCloud data + image map complete")
+                    print("✅ [UNIFIED_REFRESH] Thread 3 - iCloud data complete")
                     refreshGroup.leave()
                 }
             }
             
-            // STEP 4: Wait for all 3 threads to complete, then update display
-            refreshGroup.notify(queue: .main) { [weak self] in
+            // STEP 4: Wait for all 3 parallel downloads to complete
+            refreshGroup.notify(queue: .global(qos: .utility)) { [weak self] in
                 guard let self = self else { return }
                 
-                print("🎉 [UNIFIED_REFRESH] All 3 threads complete - updating display")
+                print("🖼️ [UNIFIED_REFRESH] All CSVs downloaded - now building image map with fresh data")
                 
-                // Clear justLaunched flag
-                cacheVariables.justLaunched = false
+                // CRITICAL FIX: Build image map AFTER CSVs are imported
+                // This ensures the image map uses the NEW year's data with proper URLs
+                // Previously, image map was built in parallel with CSV downloads, causing empty URLs
+                self.loadCombinedImageList()
                 
-                // Update the display with fresh data
-                self.refreshBandList(reason: "\(reason) - all data refreshed")
+                print("✅ [UNIFIED_REFRESH] Image map built with fresh CSV data")
                 
-                print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
+                // Now update the display on main thread
+                DispatchQueue.main.async {
+                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + image map) - updating display")
+                    
+                    // Clear justLaunched flag
+                    cacheVariables.justLaunched = false
+                    
+                    // Update the display with fresh data
+                    self.refreshBandList(reason: "\(reason) - all data refreshed")
+                    
+                    print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
+                }
             }
         }
     }
