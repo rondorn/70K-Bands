@@ -134,9 +134,10 @@ class CombinedImageListHandler {
             let context = coreDataManager.persistentContainer.newBackgroundContext()
             
             let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-            // Filter for current year events only
-            let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+            // Filter for user's selected year events (not calendar year)
+            let currentYear = Int32(eventYear)
             eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+            print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
             
             do {
                 let allEvents = try context.fetch(eventRequest)
@@ -324,9 +325,10 @@ class CombinedImageListHandler {
             let context = coreDataManager.persistentContainer.newBackgroundContext()
             
             let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-            // Filter for current year events only
-            let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+            // Filter for user's selected year events (not calendar year)
+            let currentYear = Int32(eventYear)
             eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+            print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
             
             do {
                 let allEvents = try context.fetch(eventRequest)
@@ -462,9 +464,10 @@ class CombinedImageListHandler {
         let context = coreDataManager.context
         
         let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-        // Filter for current year events only
-        let currentYear = Int32(Calendar.current.component(.year, from: Date()))
+        // Filter for user's selected year events (not calendar year)
+        let currentYear = Int32(eventYear)
         eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+        print("📋 [YEAR_FIX] Checking events for user-selected year: \(currentYear)")
         
         do {
             let allEvents = try context.fetch(eventRequest)

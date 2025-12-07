@@ -212,6 +212,15 @@
 		11895B972EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
 		11895B982EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
 		11895B992EE4C8EB008CC4A9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
+		11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */; };
+		11895B9D2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9A2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift */; };
+		11895B9E2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */; };
+		11895B9F2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9A2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift */; };
+		11895BA02EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */; };
+		11895BA12EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9A2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift */; };
+		11895BA32EE4F0DB008CC4A9 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895BA22EE4F0DB008CC4A9 /* DataModels.swift */; };
+		11895BA42EE4F0DB008CC4A9 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895BA22EE4F0DB008CC4A9 /* DataModels.swift */; };
+		11895BA52EE4F0DB008CC4A9 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895BA22EE4F0DB008CC4A9 /* DataModels.swift */; };
 		11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */; };
 		119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
 		119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
@@ -277,6 +286,7 @@
 		11FBBE1E232F26E100109035 /* NotificationPayload.apns in Resources */ = {isa = PBXBuildFile; fileRef = 11FBBE1D232F26E000109035 /* NotificationPayload.apns */; };
 		11FD1F1E20E006C100BE0141 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
 		4F67BE347E058E3E472A7FAB /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */; };
+		9DE58C80B71FF2933BD45C36 /* Pods_MDF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */; };
 		C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -392,6 +402,9 @@
 		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11895B962EE4C8EB008CC4A9 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
+		11895B9A2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataToSQLiteMigrator.swift; sourceTree = "<group>"; };
+		11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDataManager.swift; sourceTree = "<group>"; };
+		11895BA22EE4F0DB008CC4A9 /* DataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModels.swift; sourceTree = "<group>"; };
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
 		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
 		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
@@ -434,10 +447,13 @@
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
+		14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
 		7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_BandsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
 		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MDF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -486,6 +502,7 @@
 				1172EE302E5A1C4D006E3596 /* CloudKit.framework in Frameworks */,
 				1172EE312E5A1C4D006E3596 /* CFNetwork.framework in Frameworks */,
 				1172EE322E5A1C4D006E3596 /* AudioToolbox.framework in Frameworks */,
+				9DE58C80B71FF2933BD45C36 /* Pods_MDF_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -503,6 +520,7 @@
 				11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */,
 				FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */,
 				7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */,
+				DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -544,12 +562,11 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				11895B962EE4C8EB008CC4A9 /* DataManager.swift */,
-				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
-				11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */,
+				11895BA22EE4F0DB008CC4A9 /* DataModels.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
+				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
 				1147D6DC2E63C549000A98B0 /* BandCSVImporter.swift */,
 				1147D6E82E63C879000A98B0 /* BandDataManager.swift */,
 				114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */,
@@ -559,10 +576,12 @@
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
 				1172EE512E5A292E006E3596 /* ConfigurationTest.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
+				11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */,
 				1147D6E92E63C879000A98B0 /* CoreDataIndexManager.swift */,
 				1147D6DD2E63C549000A98B0 /* CoreDataManager.swift */,
 				1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */,
 				1147D6DE2E63C549000A98B0 /* CoreDataTest.swift */,
+				11895B9A2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift */,
 				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
@@ -570,6 +589,7 @@
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
 				11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */,
 				11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */,
+				11895B962EE4C8EB008CC4A9 /* DataManager.swift */,
 				1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */,
 				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
 				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
@@ -614,6 +634,7 @@
 				11AE985220CDFE890007C4E1 /* ShowsAttended.swift */,
 				117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */,
 				11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */,
+				11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */,
 				1154F6091A575893003F4764 /* Supporting Files */,
 				111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */,
 				1147D6EA2E63C879000A98B0 /* TestCoreDataModel.swift */,
@@ -667,6 +688,8 @@
 				7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */,
 				77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */,
 				6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */,
+				14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */,
+				E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -719,11 +742,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1172EE442E5A1C4D006E3596 /* Build configuration list for PBXNativeTarget "MDF Bands" */;
 			buildPhases = (
+				B09391A028CD4320A77ADCD1 /* [CP] Check Pods Manifest.lock */,
 				1172EDF72E5A1C4D006E3596 /* Sources */,
 				1172EE272E5A1C4D006E3596 /* Frameworks */,
 				1172EE342E5A1C4D006E3596 /* Embed Foundation Extensions */,
 				119717BD2E5E4F8400D500C9 /* Copy Firebase Config */,
 				1172EE352E5A1C4D006E3596 /* Resources */,
+				716395E5DAFB8CD768AFABDF /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -960,6 +985,50 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K Bands/Pods-70K Bands-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		716395E5DAFB8CD768AFABDF /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-MDF Bands/Pods-MDF Bands-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
+				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
+				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
+				"${BUILT_PRODUCTS_DIR}/SQLite.swift/SQLite.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SQLite.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MDF Bands/Pods-MDF Bands-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		8F077B451801DD4DC1848014 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1002,6 +1071,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B09391A028CD4320A77ADCD1 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MDF Bands-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		D33BDE25FCA55CE093D49EF4 /* [CP] Check Pods Manifest.lock */ = {
@@ -1071,6 +1162,7 @@
 				11D4844B2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
 				11942FD41D0CE33D0078A422 /* SortFilterMenuController.swift in Sources */,
 				11AE985320CDFE890007C4E1 /* ShowsAttended.swift in Sources */,
+				11895BA42EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
@@ -1079,6 +1171,8 @@
 				11E2F24A2E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
+				11895BA02EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
+				11895BA12EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */,
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
 				110E08502AECB6E200075618 /* DropDown.swift in Sources */,
@@ -1146,6 +1240,7 @@
 				1155E3B11A8B126500D51ED9 /* CSV.swift in Sources */,
 				11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */,
 				11D4844C2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
+				11895BA32EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
@@ -1154,6 +1249,8 @@
 				11E2F2482E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
+				11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
+				11895B9D2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				110E08512AECB6E200075618 /* DropDown.swift in Sources */,
@@ -1221,6 +1318,7 @@
 				1172EDFD2E5A1C4D006E3596 /* firebaseBandDataWrite.swift in Sources */,
 				1172EDFE2E5A1C4D006E3596 /* SortFilterMenuController.swift in Sources */,
 				1172EDFF2E5A1C4D006E3596 /* ShowsAttended.swift in Sources */,
+				11895BA52EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				1172EE002E5A1C4D006E3596 /* CustomListEntry.swift in Sources */,
 				1172EE012E5A1C4D006E3596 /* variableStore.swift in Sources */,
 				1172EE022E5A1C4D006E3596 /* Constants.swift in Sources */,
@@ -1229,6 +1327,8 @@
 				11E2F2462E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				1172EE042E5A1C4D006E3596 /* iCloudDataHandler.swift in Sources */,
 				1172EE052E5A1C4D006E3596 /* firebaseUserWrite.swift in Sources */,
+				11895B9E2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
+				11895B9F2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */,
 				1172EE062E5A1C4D006E3596 /* firebaseEventDataWrite.swift in Sources */,
 				1172EE072E5A1C4D006E3596 /* webViewController.swift in Sources */,
 				1172EE082E5A1C4D006E3596 /* DropDown.swift in Sources */,
@@ -1495,7 +1595,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251206002;
+				CURRENT_PROJECT_VERSION = 20251206004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1523,7 +1623,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251206002;
+				MARKETING_VERSION = 20251206004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1579,7 +1679,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251206002;
+				CURRENT_PROJECT_VERSION = 20251206004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1604,7 +1704,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251206002;
+				MARKETING_VERSION = 20251206004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1790,6 +1890,7 @@
 		};
 		1172EE452E5A1C4D006E3596 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -1800,7 +1901,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251206002;
+				CURRENT_PROJECT_VERSION = 20251206004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1821,7 +1922,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251206002;
+				MARKETING_VERSION = 20251206004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1867,6 +1968,7 @@
 		};
 		1172EE462E5A1C4D006E3596 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -1876,7 +1978,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251206002;
+				CURRENT_PROJECT_VERSION = 20251206004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1901,7 +2003,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251206002;
+				MARKETING_VERSION = 20251206004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

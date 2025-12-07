@@ -1,15 +1,16 @@
 import Foundation
 import CoreData
 
-/// Imports event/schedule data from CSV files into Core Data
+/// Imports event/schedule data from CSV files into SQLite (via DataManager)
 /// Replaces the legacy scheduleHandler dictionary system with database storage
 class EventCSVImporter {
-    private let coreDataManager: CoreDataManager
+    private let dataManager = DataManager.shared
+    private let coreDataManager = CoreDataManager.shared // Only for background task coordination
     
-    init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
+    init() {
         print("🎭 [MDF_DEBUG] EventCSVImporter.init() called")
         print("🎭 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        self.coreDataManager = coreDataManager
+        print("🎭 [MDF_DEBUG] Using DataManager: \(type(of: dataManager))")
         print("🎭 [MDF_DEBUG] EventCSVImporter.init() completed")
     }
     
@@ -135,7 +136,7 @@ class EventCSVImporter {
                 
                 if rowIndex <= 3 {
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Time Index: \(timeIndex)")
-                    let dateObj = Date(timeIntervalSince1970: timeIndex)
+                    let dateObj = Date(timeIntervalSinceReferenceDate: timeIndex) // FIX: Match storage format
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Parsed Date: \(dateObj)")
                 }
                 
@@ -511,7 +512,7 @@ class EventCSVImporter {
         
         if let date = dateFormatter.date(from: fullDateString) {
             print("✅ [MDF_DEBUG] Date parsed successfully: \(date)")
-            var timeIndex = date.timeIntervalSince1970
+            var timeIndex = date.timeIntervalSinceReferenceDate // FIX: Match ScheduleCSVImporter reference
             
             // Ensure uniqueness by checking existing events
             while fetchEvent(band: coreDataManager.createOrUpdateBand(name: band, eventYear: Int32(eventYear)), timeIndex: timeIndex) != nil {

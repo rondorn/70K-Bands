@@ -189,15 +189,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         readFiltersFile()
         
         // MARK: - Core Data Integration  
-        // Core Data system is now active and ready
+        // Core Data system is now conditionally active (only if migration was needed)
         
-        // Start the Core Data preload system
-        print("🚀 Starting Core Data preload system...")
-        preloadManager.start(delegate: self)
-        
-        // Check if this is first install - if so, delay country dialog until data loads
+        // Check if this is first install BEFORE starting Core Data preload
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
         print("🎮 [MDF_DEBUG] hasRunBefore: \(hasRunBefore)")
+        
+        // CRITICAL: Only start Core Data preload on subsequent launches
+        // On first launch, Core Data may not exist (fresh install)
+        if hasRunBefore {
+            print("🚀 Starting Core Data preload system (subsequent launch)...")
+            preloadManager.start(delegate: self)
+        } else {
+            print("ℹ️  Skipping Core Data preload system (first launch - Core Data may not exist)")
+        }
         
         // Preload country data in background to ensure it's always available
         countryHandler.shared.loadCountryData { 
@@ -258,9 +263,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             showInitialWaitingMessage()
             
             // OPTIMIZED FIRST LAUNCH: Download and import data in proper sequence
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.performOptimizedFirstLaunch()
-            }
+            print("🔍 [HANG_DEBUG] About to call performOptimizedFirstLaunch() directly (no delay)")
+            print("🔍 [HANG_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+            // FIX: Call directly instead of dispatching - the delay was preventing execution
+            // because viewWillAppear was blocking the main thread
+            self.performOptimizedFirstLaunch()
+            print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() called, continuing with viewDidLoad")
         } else {
             print("🎮 [MDF_DEBUG] SUBSEQUENT LAUNCH PATH - will call performOptimizedSubsequentLaunch")
             print("[MasterViewController] 🚀 SUBSEQUENT LAUNCH - Starting optimized cached launch sequence")
@@ -269,25 +277,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.performOptimizedSubsequentLaunch()
         }
         
+        print("🔍 [HANG_DEBUG] About to call UserDefaults.didChangeValue")
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
+        print("🔍 [HANG_DEBUG] UserDefaults.didChangeValue completed")
         
+        print("🔍 [HANG_DEBUG] Registering notification observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake2), name: NSNotification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
+        print("🔍 [HANG_DEBUG] Notification observers registered")
         
-        
+        print("🔍 [HANG_DEBUG] About to call refreshDisplayAfterWake()")
         refreshDisplayAfterWake();
+        print("🔍 [HANG_DEBUG] refreshDisplayAfterWake() completed")
     
+        print("🔍 [HANG_DEBUG] Adding more notification observers...")
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(MasterViewController.showReceivedMessage(_:)),
                                                name: UserDefaults.didChangeNotification, object: nil)
+        print("🔍 [HANG_DEBUG] Notification observers done")
         
+        print("🔍 [HANG_DEBUG] About to call setNeedsStatusBarAppearanceUpdate()")
         setNeedsStatusBarAppearanceUpdate()
+        print("🔍 [HANG_DEBUG] setNeedsStatusBarAppearanceUpdate() completed")
         
+        print("🔍 [HANG_DEBUG] About to call setToolbar()")
         setToolbar();
+        print("🔍 [HANG_DEBUG] setToolbar() completed")
     
+        print("🔍 [HANG_DEBUG] Setting up table view and notifications...")
         mainTableView.estimatedSectionHeaderHeight = 44.0
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
@@ -295,18 +315,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
+        print("🔍 [HANG_DEBUG] Table view and notifications set up")
         
+        print("🔍 [HANG_DEBUG] About to create iCloudDataHandler")
         let iCloudHandle = iCloudDataHandler()
+        print("🔍 [HANG_DEBUG] iCloudDataHandler created")
 
+        print("🔍 [HANG_DEBUG] Setting up UI colors...")
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
         //createrFilterMenu(controller: self);
      
+        print("🔍 [HANG_DEBUG] Setting filter button title...")
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
+        print("🔍 [HANG_DEBUG] Filter button title set")
         
+        print("🔍 [HANG_DEBUG] Checking iOS version for iOS 26 visual fixes...")
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            
+            print("🔍 [HANG_DEBUG] iOS 26+ detected, applying visual fixes...")
             preferenceButton.hidesSharedBackground = true
             statsButton.hidesSharedBackground = true
             shareButton.hidesSharedBackground = true
@@ -333,16 +360,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             
         }
+        print("🔍 [HANG_DEBUG] iOS version checks completed")
         
+        print("🔍 [HANG_DEBUG] Registering orientation and cache observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
+        print("🔍 [HANG_DEBUG] Orientation and cache observers registered")
         
         // --- ADDED: Start 5-min timer ---
+        print("🔍 [HANG_DEBUG] About to start schedule refresh timer...")
         startScheduleRefreshTimer()
+        print("🔍 [HANG_DEBUG] Schedule refresh timer started")
         // --- END ADDED ---
         
+        print("🔍 [HANG_DEBUG] Registering notification observer 1...")
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
+        print("🔍 [HANG_DEBUG] Observer 1 registered")
         // App foreground handling is now done globally in AppDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
@@ -355,26 +389,77 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔔 REGISTERING MIGRATION DIALOG OBSERVER IN MasterViewController")
         NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
         print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
+        print("🔍 [HANG_DEBUG] About to register iCloudAttendedDataRestoredHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
+        print("🔍 [HANG_DEBUG] iCloudAttendedDataRestoredHandler registered")
+        print("🔍 [HANG_DEBUG] Registering bandNamesCacheReadyHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
+        print("🔍 [HANG_DEBUG] bandNamesCacheReadyHandler registered")
+        
+        // ✅ DEADLOCK FIX: Register observer for first launch band names loaded
+        print("🔍 [HANG_DEBUG] Registering firstLaunchBandNamesLoadedHandler...")
+        print("🔍 [NOTIF_REG] Observer target: \(self)")
+        print("🔍 [NOTIF_REG] Observer selector: #selector(firstLaunchBandNamesLoadedHandler)")
+        print("🔍 [NOTIF_REG] Notification name: BandNamesLoadedFirstLaunch")
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchBandNamesLoadedHandler), name: NSNotification.Name("BandNamesLoadedFirstLaunch"), object: nil)
+        
+        print("🔍 [HANG_DEBUG] firstLaunchBandNamesLoadedHandler registered")
+        print("🔍 [NOTIF_REG] Testing if observer was registered by posting test notification...")
+        
+        // DIAGNOSTIC: Immediately test if the observer is working
+        NotificationCenter.default.post(name: NSNotification.Name("BandNamesLoadedFirstLaunch_TEST"), object: nil)
+        print("🔍 [NOTIF_REG] Test notification posted (should not trigger handler)")
+        
+        // ✅ DEADLOCK FIX: Register observer for first launch schedule loaded
+        print("🔍 [HANG_DEBUG] Registering firstLaunchScheduleLoadedHandler...")
+        NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchScheduleLoadedHandler), name: NSNotification.Name("ScheduleLoadedFirstLaunch"), object: nil)
+        print("🔍 [HANG_DEBUG] firstLaunchScheduleLoadedHandler registered")
+        
+        // ✅ DEADLOCK FIX: Register observer for first launch iCloud loaded
+        print("🔍 [HANG_DEBUG] Registering firstLaunchICloudLoadedHandler...")
+        NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchICloudLoadedHandler), name: NSNotification.Name("iCloudLoadedFirstLaunch"), object: nil)
+        print("🔍 [HANG_DEBUG] firstLaunchICloudLoadedHandler registered")
+        
+        print("🔍 [HANG_DEBUG] Registering handlePointerDataUpdated...")
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
+        print("🔍 [HANG_DEBUG] handlePointerDataUpdated registered")
+        print("🔍 [HANG_DEBUG] Registering handleBackgroundDataRefresh...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
+        print("🔍 [HANG_DEBUG] handleBackgroundDataRefresh registered")
+        print("🔍 [HANG_DEBUG] Registering handleForegroundRefresh...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleForegroundRefresh), name: Notification.Name("ForegroundRefresh"), object: nil)
+        print("🔍 [HANG_DEBUG] handleForegroundRefresh registered")
         
         // Register for iCloud loading notifications
+        print("🔍 [HANG_DEBUG] Registering iCloud loading observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingStarted), name: Notification.Name("iCloudLoadingStarted"), object: nil)
+        print("🔍 [HANG_DEBUG] handleiCloudLoadingStarted registered")
         NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingCompleted), name: Notification.Name("iCloudLoadingCompleted"), object: nil)
+        print("🔍 [HANG_DEBUG] handleiCloudLoadingCompleted registered")
         
         // Listen for when returning from preferences screen
+        print("🔍 [HANG_DEBUG] Registering preferences observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
+        print("🔍 [HANG_DEBUG] handleReturnFromPreferences registered")
         
         // Listen for when returning from preferences screen after year change (no additional refresh needed)
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferencesAfterYearChange), name: Notification.Name("DismissPreferencesScreenAfterYearChange"), object: nil)
+        print("🔍 [HANG_DEBUG] handleReturnFromPreferencesAfterYearChange registered")
+        
+        print("🔍 [HANG_DEBUG] ALL NOTIFICATION OBSERVERS REGISTERED SUCCESSFULLY")
         
         // Legacy initialization code removed - now handled by optimized launch methods in performOptimizedFirstLaunch() and performOptimizedSubsequentLaunch()
     }
     
     @objc func bandNamesCacheReadyHandler() {
+        // 🔧 FIX: Skip refresh during first launch - the first launch handlers will update the UI
+        if cacheVariables.justLaunched {
+            print("🎛️ [FIRST_LAUNCH_FIX] ⚠️ SKIPPING bandNamesCacheReadyHandler - first launch still in progress")
+            print("🎛️ [FIRST_LAUNCH_FIX] First launch handlers will update the UI when data is ready")
+            return
+        }
+        
         // Prevent infinite loop: only refresh if we haven't already refreshed recently
         let now = Date()
         if let lastBandNamesRefresh = lastBandNamesCacheRefresh, now.timeIntervalSince(lastBandNamesRefresh) < 2.0 {
@@ -400,6 +485,122 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.main.async {
                 self.getCountry()
             }
+        }
+    }
+    
+    /// ✅ DEADLOCK FIX: Handler for first launch band names loaded notification
+    /// This uses NotificationCenter instead of main.async to avoid main queue blocking
+    @objc func firstLaunchBandNamesLoadedHandler() {
+        let handlerStartTime = CFAbsoluteTimeGetCurrent()
+        print("🚀 [NOTIF_TRACE] firstLaunchBandNamesLoadedHandler CALLED at \(handlerStartTime)")
+        print("🔍 [NOTIF_TRACE] Current thread: \(Thread.current)")
+        print("🔍 [NOTIF_TRACE] Is main thread: \(Thread.current.isMainThread)")
+        print("🔍 [NOTIF_TRACE] Main runloop: \(RunLoop.main)")
+        print("🔍 [NOTIF_TRACE] Current runloop: \(RunLoop.current)")
+        
+        // ✅ DIAGNOSTIC: Check main thread status
+        print("🔍 [NOTIF_TRACE] About to check if main thread is blocked...")
+        print("🔍 [NOTIF_TRACE] About to queue main.async block for Step 3")
+        
+        // ✅ CRITICAL: Directly populate bands array and reload table view
+        // This bypasses all the complex refresh logic that might skip or delay the update
+        DispatchQueue.main.async { [weak self] in
+            let asyncStartTime = CFAbsoluteTimeGetCurrent()
+            print("🎯 [NOTIF_TRACE] ======== main.async BLOCK EXECUTING for Step 3 ========")
+            print("🎯 [NOTIF_TRACE] Queued at: \(handlerStartTime), Executing at: \(asyncStartTime)")
+            print("🎯 [NOTIF_TRACE] Delay: \((asyncStartTime - handlerStartTime) * 1000)ms")
+            print("🎯 [NOTIF_TRACE] Current thread: \(Thread.current)")
+            
+            guard let self = self else {
+                print("❌ [NOTIF_TRACE] self deallocated in Step 3 handler")
+                return
+            }
+            
+            print("🔍 [NOTIF_TRACE] self is valid, getting filtered bands for display")
+            let bandNames = getFilteredScheduleData(sortedBy: getSortedBy(), priorityManager: self.priorityManager, attendedHandle: self.attendedHandle)
+            print("🔍 [NOTIF_TRACE] Got \(bandNames.count) filtered items (events + bands)")
+            
+            // Directly update the bands array
+            let beforeCount = self.bands.count
+            self.bands = bandNames
+            let afterCount = self.bands.count
+            print("🔍 [NOTIF_TRACE] Updated bands array: \(beforeCount) -> \(afterCount)")
+            
+            // Force table view reload
+            print("🔍 [NOTIF_TRACE] About to call tableView.reloadData()")
+            self.tableView.reloadData()
+            print("🔍 [NOTIF_TRACE] tableView.reloadData() COMPLETED")
+            
+            // Update count label
+            print("🔍 [NOTIF_TRACE] About to call updateCountLable()")
+            self.updateCountLable()
+            print("🔍 [NOTIF_TRACE] updateCountLable() COMPLETED")
+            
+            print("🚀 [NOTIF_TRACE] Step 3 refresh COMPLETED - UI now showing \(self.bands.count) bands")
+            print("🎯 [NOTIF_TRACE] ======== main.async BLOCK FINISHED for Step 3 ========")
+        }
+        
+        print("🔍 [NOTIF_TRACE] main.async block QUEUED for Step 3 (has not executed yet)")
+        print("🔍 [NOTIF_TRACE] firstLaunchBandNamesLoadedHandler RETURNING")
+    }
+    
+    /// ✅ DEADLOCK FIX: Handler for first launch schedule loaded notification
+    @objc func firstLaunchScheduleLoadedHandler() {
+        print("🚀 FIRST LAUNCH: Step 5 - Schedule imported, final display refresh (via notification)")
+        print("🔍 [FIRST_LAUNCH_DEBUG] Current thread: \(Thread.current.isMainThread ? "MAIN" : "BACKGROUND")")
+        
+        // ✅ CRITICAL: Directly populate bands array and reload table view
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                print("❌ [FIRST_LAUNCH_DEBUG] self deallocated in Step 5 handler")
+                return
+            }
+            
+            print("🔍 [FIRST_LAUNCH_DEBUG] Getting filtered bands for display (with schedule)")
+            let bandNames = getFilteredScheduleData(sortedBy: getSortedBy(), priorityManager: self.priorityManager, attendedHandle: self.attendedHandle)
+            print("🔍 [FIRST_LAUNCH_DEBUG] Got \(bandNames.count) filtered items (events + bands)")
+            
+            // Directly update the bands array
+            self.bands = bandNames
+            
+            // Force table view reload
+            print("🔍 [FIRST_LAUNCH_DEBUG] Reloading table view with \(self.bands.count) bands")
+            self.tableView.reloadData()
+            
+            // Update count label
+            self.updateCountLable()
+            
+            print("🚀 [FIRST_LAUNCH_DEBUG] Step 5 refresh COMPLETED - UI now showing \(self.bands.count) bands")
+        }
+    }
+    
+    /// ✅ DEADLOCK FIX: Handler for first launch iCloud loaded notification
+    @objc func firstLaunchICloudLoadedHandler() {
+        print("🚀 FIRST LAUNCH: Final refresh with iCloud data (via notification)")
+        print("🔍 [FIRST_LAUNCH_DEBUG] Current thread: \(Thread.current.isMainThread ? "MAIN" : "BACKGROUND")")
+        
+        // ✅ CRITICAL: Directly populate bands array and reload table view
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else {
+                print("❌ [FIRST_LAUNCH_DEBUG] self deallocated in Final iCloud handler")
+                return
+            }
+            
+            print("🔍 [FIRST_LAUNCH_DEBUG] Getting filtered bands for display (with iCloud)")
+            let bandNames = getFilteredScheduleData(sortedBy: getSortedBy(), priorityManager: self.priorityManager, attendedHandle: self.attendedHandle)
+            print("🔍 [FIRST_LAUNCH_DEBUG] Got \(bandNames.count) filtered items (events + bands)")
+            
+            // Directly update the bands array
+            self.bands = bandNames
+            
+            // Force table view reload
+            print("🔍 [FIRST_LAUNCH_DEBUG] Reloading table view with \(self.bands.count) bands")
+            self.tableView.reloadData()
+            
+            // Update count label
+            self.updateCountLable()
+            
+            print("🚀 [FIRST_LAUNCH_DEBUG] Final iCloud refresh COMPLETED - UI now showing \(self.bands.count) bands")
         }
     }
     
@@ -524,6 +725,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.present(alert, animated: true)
             print("🚨 MIGRATION DIALOG PRESENTED SUCCESSFULLY")
         }
+        
+        print("🔍 [HANG_DEBUG] ===== viewDidLoad() COMPLETING =====")
+        print("🔍 [HANG_DEBUG] About to return from viewDidLoad()")
     }
 
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
@@ -927,6 +1131,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🎛️ [PREFERENCES_SYNC] This prevents overriding user's preference changes")
             // Clear the flag after use
             justReturnedFromPreferences = false
+        } else if cacheVariables.justLaunched {
+            print("🎛️ [FIRST_LAUNCH_FIX] ⚠️ SKIPPING viewWillAppear refresh - first launch still in progress")
+            print("🎛️ [FIRST_LAUNCH_FIX] This prevents flickering during initial data load")
         } else {
             print("🎛️ [PREFERENCES_SYNC] Proceeding with viewWillAppear refresh (normal app flow)")
             
@@ -1439,9 +1646,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func performPullToRefreshWithRobustNetworkTest() {
         print("🔄 PULL-TO-REFRESH: Starting with 2-second busy indicator")
         
-        // STEP 1: Refresh from cache first (immediate UI update)
-        print("🔄 PULL-TO-REFRESH: Step 1 - Showing cached data immediately")
-        refreshBandList(reason: "Pull-to-refresh - immediate cached display")
+        // STEP 1: Refresh from database first (immediate UI update)
+        print("🔄 PULL-TO-REFRESH: Step 1 - Loading database data immediately")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Load all data from database immediately
+            self.bandNameHandle.loadCachedDataImmediately()
+            self.schedule.loadCachedDataImmediately()
+            
+            // Display to user on main thread
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Pull-to-refresh - immediate database display")
+            }
+        }
         
         // STEP 2: Always end refresh control after exactly 2 seconds (consistent UX)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
@@ -1458,24 +1676,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 3: Start background network test and data collection (independent of UI)
-        print("🔄 PULL-TO-REFRESH: Step 2 - Starting background network test (UI will return to normal in 2s)")
-        
-        // Use background network test pattern - UI indicator timing is now independent
-        performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
-            guard let self = self else { return }
-            
-            if networkIsGood {
-                print("🔄 PULL-TO-REFRESH: ✅ Network test passed - performing complete fresh data collection in background")
-                
-                // Do complete fresh data collection in background (UI already returned to normal)
-                self.performFreshDataCollection(reason: "Pull-to-refresh - network verified background update") 
-                
-            } else {
-                print("🔄 PULL-TO-REFRESH: ❌ Network test failed - staying with cached data")
-                print("🔄 PULL-TO-REFRESH: Background update skipped, user sees cached data")
-            }
-        }
+        // STEP 3: Launch unified data refresh (3 parallel threads)
+        print("🔄 PULL-TO-REFRESH: Step 3 - Launching unified data refresh (3 parallel threads)")
+        performUnifiedDataRefresh(reason: "Pull-to-refresh")
     }
     
     /// Called when returning from preferences screen (no year change - only refresh if needed)
@@ -1498,13 +1701,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         lastPreferenceReturnTime = Date().timeIntervalSince1970
         justReturnedFromPreferences = true  // Set flag to prevent viewWillAppear override
         
-        print("🎛️ [PREFERENCES_SYNC] handleReturnFromPreferencesAfterYearChange called - user returned after year change")
-        print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents: \(getHideExpireScheduleData())")
-        print("🎛️ [PREFERENCES_SYNC] Set justReturnedFromPreferences flag to prevent viewWillAppear override")
-        print("Handling return from preferences screen after year change")
-        print("No additional refresh needed - data was already refreshed during year change")
+        print("🎛️ [YEAR_CHANGE] handleReturnFromPreferencesAfterYearChange called - user returned after year change")
+        print("🎛️ [YEAR_CHANGE] Current eventYear: \(eventYear)")
+        print("🎛️ [YEAR_CHANGE] Current hideExpiredEvents: \(getHideExpireScheduleData())")
         
-        // CRITICAL FIX: Clean up orphaned bands (fake band entries for special events)
+        // STEP 1: Load all data from database immediately and display
+        print("🎛️ [YEAR_CHANGE] Step 1 - Loading database data for new year")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // Load all data from database (Bands, Events, Priorities, Attended) for new year
+            self.bandNameHandle.loadCachedDataImmediately()
+            self.schedule.loadCachedDataImmediately()
+            
+            // Display to user on main thread
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Year change - immediate database display")
+            }
+        }
+        
+        // STEP 2: Clean up orphaned bands (fake band entries for special events)
         // This prevents events like "All Star Jam" from appearing as bands in the list
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
@@ -1513,11 +1729,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let eventImporter = EventCSVImporter()
             eventImporter.cleanupOrphanedBands()
             
-            // Trigger a display refresh to ensure UI shows correct band count
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-            }
+            print("🧹 [CLEANUP] Orphaned bands cleanup complete")
         }
+        
+        // STEP 3: Clear image list cache before unified refresh
+        // This ensures the image map will be rebuilt with the new year's data
+        print("🖼️ [YEAR_CHANGE] Step 3a - Clearing combined image list cache before refresh")
+        CombinedImageListHandler.shared.clearCache()
+        
+        // STEP 4: Launch unified data refresh (3 parallel threads) for new year
+        // Thread 3 will rebuild the image map with fresh data
+        print("🎛️ [YEAR_CHANGE] Step 3b - Launching unified data refresh for new year")
+        performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
@@ -1575,17 +1798,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Clear MasterViewController cached arrays (but not bands array yet)
         self.clearMasterViewCachedData()
         
+        // ✅ DEADLOCK FIX: Clear cache without sync block - SQLite is thread-safe
         // Clear ALL static cache variables to prevent data mixing
-        staticSchedule.sync {
-            cacheVariables.scheduleStaticCache = [:]
-            cacheVariables.scheduleTimeStaticCache = [:]
-            cacheVariables.bandNamesStaticCache = [:]
-            cacheVariables.bandNamesArrayStaticCache = []
-            cacheVariables.bandDescriptionUrlCache = [:]
-            cacheVariables.bandDescriptionUrlDateCache = [:]
-            cacheVariables.attendedStaticCache = [:]
-            cacheVariables.lastModifiedDate = nil
-        }
+        cacheVariables.scheduleStaticCache = [:]
+        cacheVariables.scheduleTimeStaticCache = [:]
+        cacheVariables.bandNamesStaticCache = [:]
+        cacheVariables.bandNamesArrayStaticCache = []
+        cacheVariables.bandDescriptionUrlCache = [:]
+        cacheVariables.bandDescriptionUrlDateCache = [:]
+        cacheVariables.attendedStaticCache = [:]
+        cacheVariables.lastModifiedDate = nil
         
         // Clear CustomBandDescription instance caches
         self.bandDescriptions.bandDescriptionUrl.removeAll()
@@ -1962,6 +2184,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let timestamp = CFAbsoluteTimeGetCurrent()
+        print("📊 [TABLE_VIEW] numberOfRowsInSection CALLED at \(timestamp)")
+        print("📊 [TABLE_VIEW] Current thread: \(Thread.current.isMainThread ? "MAIN" : "BACKGROUND")")
+        print("📊 [TABLE_VIEW] bands.count = \(bands.count)")
         print("bands type:", type(of: bands))
         
         // Add safety check for empty bands array during data refresh
@@ -1970,6 +2196,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return 0
         }
         
+        print("📊 [TABLE_VIEW] Returning \(bands.count) rows")
         return bands.count
     }
     
@@ -3534,44 +3761,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handleForegroundRefresh() {
-        print("MasterViewController: Foreground refresh triggered - using same robust system as pull-to-refresh")
+        print("🔄 FOREGROUND-REFRESH: Triggered - using unified refresh system")
         
         // Prevent conflicts with existing data collection processes
         guard !isLoadingBandData, !bandNameHandle.readingBandFile else {
-            print("MasterViewController: Skipping foreground refresh - data collection already in progress")
+            print("🔄 FOREGROUND-REFRESH: Skipping - data collection already in progress")
             return
         }
         
         // Check if we're in the middle of first launch data loading
         guard !cacheVariables.justLaunched || (!bandNameHandle.getBandNames().isEmpty && !schedule.schedulingData.isEmpty) else {
-            print("MasterViewController: Skipping foreground refresh - first launch still in progress")
+            print("🔄 FOREGROUND-REFRESH: Skipping - first launch still in progress")
             return
         }
         
-        print("🔄 FOREGROUND-REFRESH: Using same robust pattern as pull-to-refresh")
-        
-        // STEP 1: Refresh from cache first (immediate UI update)
-        print("🔄 FOREGROUND-REFRESH: Step 1 - Showing cached data immediately")
-        refreshBandList(reason: "Foreground refresh - immediate cached display")
-        
-        // STEP 2: Start background network test and data collection (same as pull-to-refresh)
-        print("🔄 FOREGROUND-REFRESH: Step 2 - Starting background network test")
-        
-        // Use the same robust network test pattern as pull-to-refresh
-        performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+        // STEP 1: Load all data from database immediately and display
+        print("🔄 FOREGROUND-REFRESH: Step 1 - Loading database data immediately")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            if networkIsGood {
-                print("🔄 FOREGROUND-REFRESH: ✅ Network test passed - performing complete fresh data collection in background")
-                
-                // Do complete fresh data collection in background (same as pull-to-refresh)
-                self.performFreshDataCollection(reason: "Foreground refresh - network verified background update") 
-                
-            } else {
-                print("🔄 FOREGROUND-REFRESH: ❌ Network test failed - staying with cached data")
-                print("🔄 FOREGROUND-REFRESH: Background update skipped, user sees cached data")
+            // Load all data from database (Bands, Events, Priorities, Attended)
+            self.bandNameHandle.loadCachedDataImmediately()
+            self.schedule.loadCachedDataImmediately()
+            
+            // Display to user on main thread
+            DispatchQueue.main.async {
+                self.refreshBandList(reason: "Foreground refresh - immediate database display")
             }
         }
+        
+        // STEP 2: Launch unified data refresh (3 parallel threads)
+        print("🔄 FOREGROUND-REFRESH: Step 2 - Launching unified data refresh (3 parallel threads)")
+        performUnifiedDataRefresh(reason: "Foreground refresh")
     }
     
     // Helper to deduplicate while preserving order
@@ -4042,17 +4263,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // MARK: - PERFORMANCE OPTIMIZED LAUNCH METHODS
     
-    /// Optimized first launch: Show CoreData immediately, then test network before fresh data collection
+    /// Optimized first launch: Skip CoreData (empty on first install), go straight to network download
     private func performOptimizedFirstLaunch() {
-        print("🚀 [MDF_DEBUG] First launch - showing CoreData immediately, then testing network")
+        print("🚀 [MDF_DEBUG] First launch - SKIPPING CoreData (empty DB), going straight to network download")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        print("🚀 FIRST LAUNCH: Step 1 - Loading and displaying CoreData/cached data immediately")
+        print("🚀 FIRST LAUNCH: Triggering immediate network download (Core Data is empty on fresh install)")
         print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() called")
         
-        // CRITICAL: Do NOT wait for Core Data on main thread - could take 20+ seconds on slow devices
-        // Instead, load data in background once Core Data is ready
-        print("🔍 Loading data in background once Core Data is ready...")
-        print("🔍 [HANG_DEBUG] About to dispatch to background queue")
+        // FIX: On fresh install, Core Data is EMPTY and still initializing
+        // Accessing persistentContainer blocks the background thread until DB is created
+        // Instead, skip Core Data entirely and go straight to network download
+        print("🔍 Skipping Core Data access (empty on first launch), starting network download...")
+        print("🔍 [HANG_DEBUG] About to dispatch to background queue for network download")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             print("🔍 [HANG_DEBUG] Background queue STARTED for first launch")
@@ -4061,30 +4283,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 return
             }
             
-            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
-            print("🔍 [HANG_DEBUG] Accessing CoreDataManager.shared.persistentContainer")
-            _ = CoreDataManager.shared.persistentContainer
-            print("✅ Core Data ready in background")
-            print("🔍 [HANG_DEBUG] CoreData persistentContainer ready")
-            
-            // Step 1: Load and display CoreData/cached data
-            print("🔍 [HANG_DEBUG] Calling bandNameHandle.loadCachedDataImmediately()")
-            self.bandNameHandle.loadCachedDataImmediately()
-            print("🔍 [HANG_DEBUG] bandNameHandle.loadCachedDataImmediately() COMPLETED")
-            
-            print("🔍 [HANG_DEBUG] Calling schedule.loadCachedDataImmediately()")
-            self.schedule.loadCachedDataImmediately()
-            print("🔍 [HANG_DEBUG] schedule.loadCachedDataImmediately() COMPLETED")
-            
-            // Update UI on main thread
-            print("🔍 [HANG_DEBUG] About to dispatch refreshBandList to main thread")
-            DispatchQueue.main.async {
-                print("🔍 [HANG_DEBUG] refreshBandList dispatch block STARTED on main thread")
-                self.refreshBandList(reason: "First launch - immediate CoreData display", skipDataLoading: true)
-                print("🔍 [HANG_DEBUG] refreshBandList COMPLETED")
-            }
-            
-            print("🔍 [HANG_DEBUG] Calling continueFirstLaunchAfterDataLoad()")
+            // Skip Core Data on first launch - it's empty and still initializing!
+            // Go straight to network download
+            print("🔍 [HANG_DEBUG] Skipping Core Data access, calling continueFirstLaunchAfterDataLoad()")
             self.continueFirstLaunchAfterDataLoad()
             print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() background work COMPLETED")
         }
@@ -4101,85 +4302,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("🔧 SAFETY: Clearing justLaunched flag after 3 seconds to prevent app from getting stuck")
                 cacheVariables.justLaunched = false
             }
-            
-            // EMERGENCY FIX: If we still have no data after 3 seconds, force a download
-            let bandCount = self.bandNameHandle.getBandNames().count
-            let scheduleData = self.schedule.getBandSortedSchedulingData()
-            
-            if bandCount == 0 && scheduleData.isEmpty {
-                // Check if a year change is in progress - don't interfere
-                if MasterViewController.isYearChangeInProgress {
-                    print("🔄 EMERGENCY: No data found but year change in progress - skipping emergency download")
-                } else {
-                    print("🚨 EMERGENCY: No data found after 3 seconds - forcing network download")
-                    self.refreshDataWithBackgroundUpdate(reason: "Emergency: No data found after launch")
-                }
-            }
+            print("✅ FIRST LAUNCH: 3-second safety timer completed, justLaunched flag cleared")
         }
         
-        print("🚀 FIRST LAUNCH: Step 2 - Starting background network test with completion handler")
+        print("🚀 FIRST LAUNCH: Using unified parallel download with pointer refresh")
         
-        // Step 2: Start background network test with completion handler
-        self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
+        // NEW: Use the unified refresh function that does:
+        // 1. Download pointer file first
+        // 2. Check for year changes
+        // 3. Parallel download of bands, events, and iCloud data
+        // 4. Single UI refresh when ALL data is ready
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            if networkIsGood {
-                print("🚀 FIRST LAUNCH: Network test passed - proceeding with fresh data collection")
-                
-                // Network is good - proceed with fresh data collection including description map
-                DispatchQueue.global(qos: .userInitiated).async {
-                    print("🚀 [MDF_DEBUG] About to call bandNameHandle.gatherData() for MDF")
-                    self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
-                        guard let self = self else { return }
-                        
-                        print("🚀 [MDF_DEBUG] bandNameHandle.gatherData() COMPLETED for MDF")
-                        DispatchQueue.main.async {
-                            print("🚀 FIRST LAUNCH: Step 3 - Band names imported, refreshing display")
-                            self.refreshBandList(reason: "First launch - band names loaded")
-                            
-                            // Download schedule data
-                            print("🚀 FIRST LAUNCH: Step 4 - Starting schedule download")
-                            print("🚀 [MDF_DEBUG] About to call schedule.populateSchedule() for MDF")
-                            DispatchQueue.global(qos: .userInitiated).async {
-                                self.schedule.populateSchedule(forceDownload: true)
-                                print("🚀 [MDF_DEBUG] schedule.populateSchedule() COMPLETED for MDF")
-                                
-                                DispatchQueue.main.async {
-                                    print("🚀 FIRST LAUNCH: Step 5 - Schedule imported, final display refresh")
-                                    self.refreshBandList(reason: "First launch - schedule loaded")
-                                    
-                                    // Now download description map and other data
-                                    print("🚀 FIRST LAUNCH: Step 6 - Starting description map download")
-                                    DispatchQueue.global(qos: .utility).async {
-                                        self.bandDescriptions.getDescriptionMapFile()
-                                        self.bandDescriptions.getDescriptionMap()
-                                        print("🚀 FIRST LAUNCH: Description map download completed")
-                                        
-                                        // Step 7: Load iCloud data
-                                        print("🚀 FIRST LAUNCH: Step 7 - Loading iCloud data")
-                                        self.loadICloudData {
-                                            print("🚀 FIRST LAUNCH: iCloud data loaded")
-                                            
-                                            // Final refresh to show iCloud data
-                                            DispatchQueue.main.async {
-                                                print("🚀 FIRST LAUNCH: Final refresh with iCloud data")
-                                                self.refreshBandList(reason: "First launch - iCloud data loaded")
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                print("🚀 FIRST LAUNCH: Network test failed - staying with CoreData, no fresh data collection")
-                print("🚀 FIRST LAUNCH: User will see cached data only until network improves")
-            }
+            print("🚀 FIRST LAUNCH: Starting unified data refresh")
+            self.performUnifiedDataRefresh(reason: "First launch")
         }
     }
     
-    /// Optimized subsequent launch: Show CoreData immediately, then test network before fresh data collection if needed
+    /// Optimized subsequent launch: Show CoreData immediately, then refresh with parallel downloads
     private func performOptimizedSubsequentLaunch() {
         print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying CoreData/cached data immediately (non-blocking)")
         
@@ -4194,19 +4335,249 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             _ = CoreDataManager.shared.persistentContainer
             print("✅ Core Data ready in background")
             
-            // Step 1: Load CoreData/cached data immediately and display (ALWAYS show cached data first)
-            print("🚀 [MDF_DEBUG] Subsequent launch - loading CoreData/cached data")
-            print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
+            // Step 1: Load database data immediately and display to user
+            print("🚀 [UNIFIED_REFRESH] Subsequent launch - loading database data")
+            print("🚀 [UNIFIED_REFRESH] Festival: \(FestivalConfig.current.festivalShortName)")
             self.bandNameHandle.loadCachedDataImmediately()
             self.schedule.loadCachedDataImmediately()
             
-            // Update UI on main thread
+            // Update UI on main thread with database data
             DispatchQueue.main.async {
-                self.refreshBandList(reason: "Subsequent launch - immediate CoreData display", skipDataLoading: true)
+                self.refreshBandList(reason: "Subsequent launch - immediate database display", skipDataLoading: true)
             }
             
-            self.continueSubsequentLaunchAfterDataLoad()
+            // Step 2: Launch parallel download threads
+            self.performUnifiedDataRefresh(reason: "Subsequent launch")
         }
+    }
+    
+    // MARK: - Unified Data Refresh (Pointer First, Then 3 Parallel Threads)
+    
+    /// Unified data refresh function that:
+    /// STEP 1: Downloads and updates pointer file (synchronously)
+    /// STEP 2: Checks if year changed and handles it
+    /// STEP 3: Launches 3 parallel threads to download:
+    ///   - Thread 1: Bands CSV
+    ///   - Thread 2: Events CSV  
+    ///   - Thread 3: iCloud data + build image map
+    /// STEP 4: Updates display once all three threads complete
+    /// - Parameter reason: Description of why refresh is occurring
+    private func performUnifiedDataRefresh(reason: String) {
+        print("🔄 [UNIFIED_REFRESH] Starting unified data refresh - \(reason)")
+        
+        // Run on background thread to avoid blocking UI
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // STEP 1: Download and update pointer file FIRST (synchronously)
+            print("🔄 [UNIFIED_REFRESH] Step 1 - Downloading pointer file FIRST")
+            let pointerUpdated = self.downloadAndUpdatePointerFileSync()
+            
+            if pointerUpdated {
+                print("✅ [UNIFIED_REFRESH] Pointer file updated successfully")
+                
+                // STEP 2: Check if year changed
+                let newYear = getPointerUrlData(keyValue: "eventYear") ?? String(eventYear)
+                let newYearInt = Int(newYear) ?? eventYear
+                
+                if newYearInt != eventYear {
+                    print("🔄 [UNIFIED_REFRESH] Year changed from \(eventYear) to \(newYearInt)")
+                    eventYear = newYearInt
+                    
+                    // Update year file
+                    do {
+                        try newYear.write(toFile: eventYearFile, atomically: true, encoding: .utf8)
+                        print("✅ [UNIFIED_REFRESH] Updated year file to \(newYear)")
+                    } catch {
+                        print("⚠️ [UNIFIED_REFRESH] Failed to update year file: \(error)")
+                    }
+                    
+                    // Notify that year changed
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(
+                            name: Notification.Name("YearChangedAutomatically"),
+                            object: nil,
+                            userInfo: ["newYear": newYearInt, "oldYear": eventYear]
+                        )
+                    }
+                }
+            } else {
+                print("⚠️ [UNIFIED_REFRESH] Pointer file update failed, continuing with cached pointer data")
+            }
+            
+            // STEP 3: Launch 3 parallel CSV download threads
+            print("🔄 [UNIFIED_REFRESH] Step 3 - Launching 3 parallel CSV download threads")
+            
+            // Create a dispatch group to track all 3 parallel operations
+            let refreshGroup = DispatchGroup()
+            
+            // Thread 1: Download and import Bands CSV
+            refreshGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else {
+                    refreshGroup.leave()
+                    return
+                }
+                
+                print("🔄 [UNIFIED_REFRESH] Thread 1 - Downloading Bands CSV")
+                self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                    guard let self = self else {
+                        refreshGroup.leave()
+                        return
+                    }
+                    print("✅ [UNIFIED_REFRESH] Thread 1 - Bands CSV download complete")
+                    refreshGroup.leave()
+                }
+            }
+            
+            // Thread 2: Download and import Events CSV
+            refreshGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else {
+                    refreshGroup.leave()
+                    return
+                }
+                
+                print("🔄 [UNIFIED_REFRESH] Thread 2 - Downloading Events CSV")
+                self.schedule.populateSchedule(forceDownload: true)
+                print("✅ [UNIFIED_REFRESH] Thread 2 - Events CSV download complete")
+                refreshGroup.leave()
+            }
+            
+            // Thread 3: Download iCloud data + build image map
+            refreshGroup.enter()
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                guard let self = self else {
+                    refreshGroup.leave()
+                    return
+                }
+                
+                print("🔄 [UNIFIED_REFRESH] Thread 3 - Downloading iCloud data + building image map")
+                
+                // Download iCloud data
+                self.loadICloudData {
+                    // Build combined image list
+                    self.loadCombinedImageList()
+                    
+                    print("✅ [UNIFIED_REFRESH] Thread 3 - iCloud data + image map complete")
+                    refreshGroup.leave()
+                }
+            }
+            
+            // STEP 4: Wait for all 3 threads to complete, then update display
+            refreshGroup.notify(queue: .main) { [weak self] in
+                guard let self = self else { return }
+                
+                print("🎉 [UNIFIED_REFRESH] All 3 threads complete - updating display")
+                
+                // Clear justLaunched flag
+                cacheVariables.justLaunched = false
+                
+                // Update the display with fresh data
+                self.refreshBandList(reason: "\(reason) - all data refreshed")
+                
+                print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
+            }
+        }
+    }
+    
+    /// Downloads and updates the pointer file synchronously (blocking)
+    /// Returns true if successful, false otherwise
+    /// This is called at the start of every data refresh to ensure fresh pointer data
+    private func downloadAndUpdatePointerFileSync() -> Bool {
+        print("📍 [POINTER_SYNC] Starting synchronous pointer file download")
+        
+        // Check internet connectivity
+        guard Reachability.isConnectedToNetwork() else {
+            print("📍 [POINTER_SYNC] No internet connection, using cached pointer data")
+            return false
+        }
+        
+        // Get the pointer URL
+        guard let url = URL(string: defaultStorageUrl) else {
+            print("📍 [POINTER_SYNC] Invalid pointer URL: \(defaultStorageUrl)")
+            return false
+        }
+        
+        // Download pointer file synchronously
+        let semaphore = DispatchSemaphore(value: 0)
+        var downloadSuccess = false
+        
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 30.0
+        configuration.timeoutIntervalForResource = 60.0
+        let session = URLSession(configuration: configuration)
+        
+        let task = session.dataTask(with: url) { (data, response, error) in
+            defer { semaphore.signal() }
+            
+            if let error = error {
+                print("📍 [POINTER_SYNC] Download error: \(error)")
+                return
+            }
+            
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  data.count <= 1024 * 1024 else { // 1MB limit
+                print("📍 [POINTER_SYNC] Invalid response or data")
+                return
+            }
+            
+            // Verify content is valid pointer data
+            guard let content = String(data: data, encoding: .utf8),
+                  !content.isEmpty else {
+                print("📍 [POINTER_SYNC] Downloaded content is empty or invalid")
+                return
+            }
+            
+            // Validate pointer format
+            let lines = content.components(separatedBy: "\n")
+            var validLineCount = 0
+            for line in lines.prefix(10) {
+                if line.contains("::") && line.components(separatedBy: "::").count >= 3 {
+                    validLineCount += 1
+                    if validLineCount >= 2 {
+                        break
+                    }
+                }
+            }
+            
+            guard validLineCount >= 2 else {
+                print("📍 [POINTER_SYNC] Downloaded content is not valid pointer data")
+                return
+            }
+            
+            // Save pointer file
+            let documentsPath = getDocumentsDirectory()
+            let cachedPointerFile = documentsPath.appendingPathComponent("cachedPointerData.txt")
+            
+            do {
+                // Remove old file
+                if FileManager.default.fileExists(atPath: cachedPointerFile) {
+                    try FileManager.default.removeItem(atPath: cachedPointerFile)
+                }
+                
+                // Write new file
+                try data.write(to: URL(fileURLWithPath: cachedPointerFile))
+                
+                // Clear in-memory cache to force reload
+                storePointerLock.sync() {
+                    cacheVariables.storePointerData.removeAll()
+                }
+                
+                print("📍 [POINTER_SYNC] Successfully updated pointer file and cleared cache")
+                downloadSuccess = true
+                
+            } catch {
+                print("📍 [POINTER_SYNC] Failed to save pointer file: \(error)")
+            }
+        }
+        
+        task.resume()
+        semaphore.wait()
+        
+        return downloadSuccess
     }
     
     /// Continue subsequent launch sequence after initial data load
@@ -4222,15 +4593,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Step 2: Check if we need background updates
+        let forceDownload = UserDefaults.standard.bool(forKey: "ForceCSVDownload")
         let lastLaunchKey = "LastAppLaunchDate"
         let now = Date()
         let lastLaunch = UserDefaults.standard.object(forKey: lastLaunchKey) as? Date
-        let shouldUpdateData = lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
+        let shouldUpdateData = forceDownload || lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
         
         UserDefaults.standard.set(now, forKey: lastLaunchKey)
         
         if shouldUpdateData {
-            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background network test for 24h data update")
+            if forceDownload {
+                print("🚀 SUBSEQUENT LAUNCH: Step 2 - FORCED CSV download due to pointer URL change")
+            } else {
+                print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background network test for 24h data update")
+            }
             
             // Test network first, then do fresh data collection including description map
             self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
@@ -4238,10 +4614,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 if networkIsGood {
                     print("🚀 SUBSEQUENT LAUNCH: Network test passed - proceeding with fresh data collection")
-                    self.performFreshDataCollection(reason: "Subsequent launch - 24h network-verified update")
+                    self.performFreshDataCollection(reason: "Subsequent launch - forced or 24h network-verified update")
+                    
+                    // Clear the force flag after successful download
+                    if forceDownload {
+                        UserDefaults.standard.set(false, forKey: "ForceCSVDownload")
+                        UserDefaults.standard.synchronize()
+                        print("🚀 SUBSEQUENT LAUNCH: Cleared ForceCSVDownload flag after successful download")
+                        
+                        // Update LastUsedPointerUrl to match what was just downloaded
+                        UserDefaults.standard.set(defaultStorageUrl, forKey: "LastUsedPointerUrl")
+                        UserDefaults.standard.synchronize()
+                        print("🚀 SUBSEQUENT LAUNCH: Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
+                    }
                 } else {
                     print("🚀 SUBSEQUENT LAUNCH: Network test failed - staying with CoreData, no fresh data collection")
                     print("🚀 SUBSEQUENT LAUNCH: User will continue seeing cached data until network improves")
+                    // Keep the force flag set so it will retry next time
+                    if forceDownload {
+                        print("🚀 SUBSEQUENT LAUNCH: Keeping ForceCSVDownload flag set for next attempt")
+                    }
                 }
             }
         } else {
@@ -4267,8 +4659,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🌐 BACKGROUND NETWORK TEST: Robust network test completed - result: \(isNetworkGood)")
             
             // Call completion handler on main thread for UI updates
+            print("🔍 [NETWORK_DEBUG] About to dispatch completion handler to MAIN thread with result: \(isNetworkGood)")
             DispatchQueue.main.async {
+                print("🔍 [NETWORK_DEBUG] ===== COMPLETION HANDLER EXECUTING ON MAIN THREAD =====")
+                print("🔍 [NETWORK_DEBUG] Calling completion handler with networkIsGood: \(isNetworkGood)")
                 completion(isNetworkGood)
+                print("🔍 [NETWORK_DEBUG] ===== COMPLETION HANDLER FINISHED =====")
             }
         }
     }
@@ -4383,6 +4779,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 self.loadCombinedImageList()
                                 
                                 print("📡 FRESH DATA COLLECTION: All fresh data collection completed for: \(reason)")
+                                
+                                // Clear force download flag if it was set (pointer URL change)
+                                if UserDefaults.standard.bool(forKey: "ForceCSVDownload") {
+                                    UserDefaults.standard.set(false, forKey: "ForceCSVDownload")
+                                    UserDefaults.standard.synchronize()
+                                    print("📡 FRESH DATA COLLECTION: Cleared ForceCSVDownload flag after successful data collection")
+                                }
+                                
+                                // CRITICAL: Update LastUsedPointerUrl to match what was just downloaded
+                                // This ensures future comparisons know which data is currently loaded
+                                UserDefaults.standard.set(defaultStorageUrl, forKey: "LastUsedPointerUrl")
+                                UserDefaults.standard.synchronize()
+                                print("📡 FRESH DATA COLLECTION: Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
                                 
                                 // Notify CoreDataPreloadManager that fresh data is available
                                 // This allows it to restart if it was stuck in cache-only mode

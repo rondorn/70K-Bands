@@ -238,7 +238,7 @@ class localNoticationHandler {
      */
     func addNotifications(){
         
-        print ("Locking object with schedule.schedulingData")
+        print ("✅ [THREAD_SAFE] addNotifications: No locking needed with SQLite")
         
         // Don't add notifications if schedule data is empty or inconsistent
         if schedule.schedulingData.isEmpty {
@@ -246,9 +246,8 @@ class localNoticationHandler {
             return
         }
         
-        scheduleQueue.sync {
-
-            if (schedule.schedulingData.isEmpty == false){
+        // ✅ DEADLOCK FIX: Removed scheduleQueue.sync - SQLite is thread-safe, no blocking needed
+        if (schedule.schedulingData.isEmpty == false){
                 for bandName in schedule.schedulingData{
                     guard let bandSchedule = schedule.schedulingData[bandName.0] else {
                         print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping band \(bandName.0) - no schedule data")
@@ -284,7 +283,7 @@ class localNoticationHandler {
                     }
                 }
             }
-        }
+        // ✅ DEADLOCK FIX: Removed closing brace of scheduleQueue.sync block
     }
     
     func addNotification(message: String, showTime: NSDate) {
