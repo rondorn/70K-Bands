@@ -120,7 +120,7 @@ class localNoticationHandler {
      */
     func getAlertMessage(_ name:String, indexValue: Date){
         
-        let eventType = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: "Type")
+        let eventType = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: "Type")
         
         switch eventType {
             
@@ -156,8 +156,8 @@ class localNoticationHandler {
      */
     func showMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
         
         alertTextMessage = name + " will be playing the " + locationName + " at " + formatTimeValue(timeValue: startingTime)
     }
@@ -170,8 +170,8 @@ class localNoticationHandler {
      */
     func specialEventMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
         
         alertTextMessage = "Special event '" + name + "' is taking place at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
@@ -184,8 +184,8 @@ class localNoticationHandler {
      */
     func unofficalEventMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
         
         alertTextMessage = "Unoffical event '" + name + "' is taking place at " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
@@ -198,8 +198,8 @@ class localNoticationHandler {
      */
     func meetingAndGreetMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
         
         alertTextMessage = name + " is holding a Meet and Greet at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
@@ -212,8 +212,8 @@ class localNoticationHandler {
      */
     func listeningPartyMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
         
         alertTextMessage = name + " is holding a new album listening party at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
@@ -226,19 +226,22 @@ class localNoticationHandler {
      */
     func clinicMessage(_ name:String, indexValue: Date){
         
-        let locationName = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: locationField)
-        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: startTimeField)
-        let note = schedule.getData(name, index: indexValue.timeIntervalSince1970, variable: notesField)
+        let locationName = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: locationField)
+        let startingTime = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: startTimeField)
+        let note = schedule.getData(name, index: indexValue.timeIntervalSinceReferenceDate, variable: notesField)
         
         alertTextMessage = note + " from " + name + " is holding a clinic at the " + locationName + " starting at " + formatTimeValue(timeValue: startingTime)
     }
     
     /**
      Adds notifications for all eligible events in the schedule.
+     TIMEZONE FIX: Recalculates event times using current timezone, not pre-calculated values.
+     This ensures notifications fire at the correct local time even after timezone changes.
      */
     func addNotifications(){
         
         print ("✅ [THREAD_SAFE] addNotifications: No locking needed with SQLite")
+        print ("🌍 [ALERT_TIMEZONE] Scheduling alerts using current timezone: \(TimeZone.current.identifier)")
         
         // Don't add notifications if schedule data is empty or inconsistent
         if schedule.schedulingData.isEmpty {
@@ -255,25 +258,37 @@ class localNoticationHandler {
                     }
                     
                     for startTime in bandSchedule{
-                        let alertTime = NSDate(timeIntervalSince1970: startTime.0)
                         //print ("Adding notificaiton \(bandName) Date provided is \(alertTime)")
                         if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                             
                             guard let eventData = schedule.schedulingData[bandName.0]?[startTime.0],
                                   let eventTypeValue = eventData[typeField],
                                   let startTimeValue = eventData[startTimeField],
+                                  let dateValue = eventData[dateField],
                                   let locationValue = eventData[locationField],
                                   !eventTypeValue.isEmpty else {
                                 print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping event - missing required data for \(bandName.0) at \(startTime.0)")
                                 continue
                             }
                             
+                            // TIMEZONE FIX: Recalculate alert time using CURRENT timezone, not stored timeIndex
+                            // This ensures the notification fires at the correct local time
+                            let recalculatedTimeIndex = calculateTimeIndexForAlert(date: dateValue, time: startTimeValue)
+                            
+                            // Skip if we couldn't parse the time
+                            if recalculatedTimeIndex == -1 {
+                                print("⚠️ [ALERT_TIMEZONE] Failed to parse time for \(bandName.0) - skipping alert")
+                                continue
+                            }
+                            
+                            let alertTime = NSDate(timeIntervalSinceReferenceDate: recalculatedTimeIndex)
+                            
                             let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
                             
                             if (addToNoticication == true){
                                 let compareResult = alertTime.compare(NSDate() as Date)
                                 if compareResult == ComparisonResult.orderedDescending {
-                                    print ("Adding notificaiton \(alertTextMessage) for \(alertTime)")
+                                    print ("🔔 [ALERT_TIMEZONE] Scheduling notification for \(bandName.0) at \(alertTime) (current TZ)")
                                     getAlertMessage(bandName.0, indexValue: alertTime as Date)
                                     addNotification(message: alertTextMessage, showTime: alertTime)
 
@@ -327,5 +342,48 @@ class localNoticationHandler {
         print ("sendLocalAlert! clearing all alerts")
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         alertTracker = [String]()
+    }
+    
+    // MARK: - Timezone-Independent Time Calculation
+    
+    /**
+     Calculate time index at alert scheduling time using CURRENT timezone.
+     This ensures that if the user changes timezones, alerts are recalculated correctly
+     and always fire at the same wall-clock time regardless of device timezone.
+     
+     - Parameters:
+        - date: Date string from event data (e.g., "12/07/2025")
+        - time: Time string from event data (e.g., "17:00")
+     - Returns: timeIntervalSinceReferenceDate for the event, or -1 if parsing fails
+     */
+    private func calculateTimeIndexForAlert(date: String, time: String) -> Double {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current // Use CURRENT timezone at alert scheduling time
+        
+        let dateTimeString = "\(date) \(time)"
+        
+        // Try multiple date formats to handle different CSV formats
+        let formats = [
+            "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
+            "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
+            "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")
+            "MM/dd/yyyy H:mm",     // Padded date + single digit hour
+            "M/d/yyyy h:mm a",     // 12-hour with AM/PM
+            "MM/dd/yyyy h:mm a",   // Padded + 12-hour with AM/PM
+        ]
+        
+        for format in formats {
+            formatter.dateFormat = format
+            if let parsedDate = formatter.date(from: dateTimeString) {
+                let timeIndex = parsedDate.timeIntervalSinceReferenceDate
+                print("🌍 [ALERT_TIMEZONE] Parsed '\(dateTimeString)' as \(parsedDate) in timezone \(TimeZone.current.identifier)")
+                return timeIndex
+            }
+        }
+        
+        // If parsing fails, return -1 to signal error
+        print("⚠️ [ALERT_TIMEZONE] Failed to parse '\(dateTimeString)' with any known format")
+        return -1
     }
 }
