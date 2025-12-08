@@ -3,28 +3,34 @@ platform :ios, '15.0'
 # Uncomment this line if you're using Swift
 use_frameworks!
 
+# Require CocoaPods 1.12.0 or higher for privacy manifest support
+install! 'cocoapods', :warn_for_unused_master_specs_repo => false
+
 target '70K Bands' do
-	pod 'Firebase/Core', '~> 8.15.0'
-	pod 'Firebase/Messaging', '~> 8.15.0'
-	pod 'Firebase/Database', '~> 8.15.0'
+	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
+	pod 'Firebase/Core', '~> 10.22.0'
+	pod 'Firebase/Messaging', '~> 10.22.0'
+	pod 'Firebase/Database', '~> 10.22.0'
         pod 'AWSSNS', '~> 2.3.0'
         pod 'Bolts'
         pod 'SQLite.swift', '~> 0.15.3'
 end
 
 target 'MDF Bands' do
-	pod 'Firebase/Core', '~> 8.15.0'
-	pod 'Firebase/Messaging', '~> 8.15.0'
-	pod 'Firebase/Database', '~> 8.15.0'
+	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
+	pod 'Firebase/Core', '~> 10.22.0'
+	pod 'Firebase/Messaging', '~> 10.22.0'
+	pod 'Firebase/Database', '~> 10.22.0'
         pod 'AWSSNS', '~> 2.3.0'
         pod 'Bolts'
         pod 'SQLite.swift', '~> 0.15.3'
 end
 
 target '70K BandsTests' do
-        pod 'Firebase/Core', '~> 8.15.0'
-        pod 'Firebase/Messaging', '~> 8.15.0'
-	pod 'Firebase/Database', '~> 8.15.0'
+        # Firebase 10.22.0+ includes privacy manifests (required for App Store)
+        pod 'Firebase/Core', '~> 10.22.0'
+        pod 'Firebase/Messaging', '~> 10.22.0'
+	pod 'Firebase/Database', '~> 10.22.0'
         pod 'AWSSNS', '~> 2.3.0'
         pod 'Bolts'
         pod 'SQLite.swift', '~> 0.15.3'

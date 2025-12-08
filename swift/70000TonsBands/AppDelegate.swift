@@ -12,6 +12,7 @@ import UserNotifications
 import Firebase
 import FirebaseCore
 import FirebaseMessaging
+import FirebaseAnalytics
 import Foundation
 
 let appDelegate : AppDelegate? = UIApplication.shared.delegate as? AppDelegate
@@ -372,6 +373,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("🔥 [TIMING] Firebase configured with DEFAULT config")
             }
             FirebaseConfiguration.shared.setLoggerLevel(.min)
+            
+            // Explicitly disable Firebase Analytics data collection for privacy
+            Analytics.setAnalyticsCollectionEnabled(false)
+            print("🔒 Firebase Analytics explicitly DISABLED for privacy")
             
             // Set flag to indicate Firebase is now configured
             AppDelegate.isFirebaseConfigured = true

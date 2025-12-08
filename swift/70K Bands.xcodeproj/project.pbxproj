@@ -971,11 +971,13 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
@@ -988,11 +990,13 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
@@ -1015,11 +1019,13 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
@@ -1032,11 +1038,13 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
@@ -1059,11 +1067,13 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
 				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
@@ -1076,11 +1086,13 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreDiagnostics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
@@ -1627,7 +1639,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251207005;
+				CURRENT_PROJECT_VERSION = 20251208003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1655,7 +1667,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251207005;
+				MARKETING_VERSION = 20251208003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1711,7 +1723,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251207005;
+				CURRENT_PROJECT_VERSION = 20251208003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1736,7 +1748,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251207005;
+				MARKETING_VERSION = 20251208003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1933,7 +1945,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251207005;
+				CURRENT_PROJECT_VERSION = 20251208003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1954,7 +1966,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251207005;
+				MARKETING_VERSION = 20251208003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2010,7 +2022,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20251207005;
+				CURRENT_PROJECT_VERSION = 20251208003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2035,7 +2047,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20251207005;
+				MARKETING_VERSION = 20251208003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
