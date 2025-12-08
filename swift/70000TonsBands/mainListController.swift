@@ -230,13 +230,45 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             return false
         }
         
-        // 3. Expiration filter
-        if getHideExpireScheduleData() {
-            let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
-            if event.endTimeIndex <= currentTime {
-                return false
-            }
+    // 3. Expiration filter - CALCULATE AT FILTER TIME, NOT IMPORT TIME
+    // This ensures that if the user changes timezones, events are still shown at the correct local times
+    if getHideExpireScheduleData() {
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        
+        // Parse the end time from stored strings using CURRENT timezone
+        // This ensures timezone changes don't affect event display times
+        guard let dateString = event.date, let endTimeString = event.endTime else {
+            // If no date/time info, keep the event (don't filter it out)
+            return true
         }
+        
+        let endTimeIndex = calculateTimeIndexForFiltering(date: dateString, time: endTimeString)
+        
+        // DEBUG: Log filtering details for specific event
+        if event.bandName.contains("Bloodred Hourglass") {
+            print("🔍 [EXPIRE_DEBUG] Band: \(event.bandName)")
+            print("🔍 [EXPIRE_DEBUG] Location: \(event.location)")
+            print("🔍 [EXPIRE_DEBUG] Date: \(dateString)")
+            print("🔍 [EXPIRE_DEBUG] Start Time: \(event.startTime ?? "N/A")")
+            print("🔍 [EXPIRE_DEBUG] End Time: \(endTimeString)")
+            print("🔍 [EXPIRE_DEBUG] Stored endTimeIndex: \(event.endTimeIndex)")
+            print("🔍 [EXPIRE_DEBUG] Recalculated endTimeIndex (current TZ): \(endTimeIndex)")
+            print("🔍 [EXPIRE_DEBUG] currentTime: \(currentTime)")
+            print("🔍 [EXPIRE_DEBUG] Current timezone: \(TimeZone.current.identifier)")
+            print("🔍 [EXPIRE_DEBUG] endTimeIndex <= currentTime? \(endTimeIndex <= currentTime)")
+            
+            // Convert to readable dates for debugging
+            let endDate = Date(timeIntervalSinceReferenceDate: endTimeIndex)
+            let now = Date(timeIntervalSinceReferenceDate: currentTime)
+            print("🔍 [EXPIRE_DEBUG] End time as Date: \(endDate)")
+            print("🔍 [EXPIRE_DEBUG] Current time as Date: \(now)")
+        }
+        
+        // Use recalculated time index, not stored one
+        if endTimeIndex <= currentTime {
+            return false
+        }
+    }
         
         return true
     }
@@ -646,6 +678,40 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     print("🚀 getFilteredScheduleData COMPLETE - Time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms - Total: \(combinedResults.count) entries")
     
     return combinedResults
+}
+
+// MARK: - Helper Function for Timezone-Independent Time Calculation
+
+/// Calculate time index at filtering time using CURRENT timezone
+/// This ensures that if the user changes timezones, events are recalculated correctly
+/// and always display at the same wall-clock time regardless of device timezone
+private func calculateTimeIndexForFiltering(date: String, time: String) -> Double {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current // Use CURRENT timezone at filter time
+    
+    let dateTimeString = "\(date) \(time)"
+    
+    // Try multiple date formats to handle different CSV formats
+    let formats = [
+        "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
+        "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
+        "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")
+        "MM/dd/yyyy H:mm",     // Padded date + single digit hour
+        "M/d/yyyy h:mm a",     // 12-hour with AM/PM
+        "MM/dd/yyyy h:mm a",   // Padded + 12-hour with AM/PM
+    ]
+    
+    for format in formats {
+        formatter.dateFormat = format
+        if let parsedDate = formatter.date(from: dateTimeString) {
+            return parsedDate.timeIntervalSinceReferenceDate
+        }
+    }
+    
+    // If parsing fails, return a very large value so the event isn't incorrectly filtered out
+    print("⚠️ [FILTER_TIME_PARSE] Failed to parse '\(dateTimeString)' - keeping event")
+    return Double.greatestFiniteMagnitude
 }
 
 

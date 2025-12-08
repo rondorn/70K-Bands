@@ -171,11 +171,11 @@ class ScheduleCSVImporter {
     private func calculateTimeIndex(date: String, time: String) -> Double {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        formatter.timeZone = TimeZone.current // FIX: Use device's local timezone, no shifting
         
         let dateTimeString = "\(date) \(time)"
         
-        print("🔍 [DATE_PARSE_DEBUG] Attempting to parse: '\(dateTimeString)'")
+        print("🔍 [DATE_PARSE_DEBUG] Attempting to parse: '\(dateTimeString)' in timezone \(TimeZone.current.identifier)")
         print("🔍 [DATE_PARSE_DEBUG] - Date component: '\(date)'")
         print("🔍 [DATE_PARSE_DEBUG] - Time component: '\(time)'")
         
