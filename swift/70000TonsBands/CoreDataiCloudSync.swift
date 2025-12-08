@@ -2,25 +2,30 @@ import Foundation
 import CoreData
 import UIKit
 
-/// Handles iCloud synchronization for Core Data entities
-/// Replaces the legacy iCloud sync system with Core Data integration
+/// Handles iCloud synchronization using SQLite backend
+/// PriorityManager and AttendanceManager now use SQLite instead of Core Data
+/// This class maintains the same API but data is stored in SQLite (thread-safe, no deadlocks!)
 class CoreDataiCloudSync {
+    // These managers now use SQLite internally (Core Data is read-only)
     private let priorityManager: PriorityManager
     private let attendanceManager: AttendanceManager
     private let coreDataManager: CoreDataManager
     
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
         self.coreDataManager = coreDataManager
+        // These managers now delegate to SQLite
         self.priorityManager = PriorityManager(coreDataManager: coreDataManager)
         self.attendanceManager = AttendanceManager(coreDataManager: coreDataManager)
+        
+        print("✅ CoreDataiCloudSync: Initialized with SQLite backend (no deadlock risk!)")
     }
     
     // MARK: - Priority Sync
     
-    /// Reads all priority data from iCloud and updates Core Data
-    /// Replaces iCloudDataHandler.readAllPriorityData
+    /// Reads all priority data from iCloud and updates SQLite
+    /// Data is stored in SQLite for thread-safe access without deadlocks
     func syncPrioritiesFromiCloud(completion: @escaping () -> Void) {
-        print("☁️ Starting iCloud priority sync to Core Data...")
+        print("☁️ Starting iCloud priority sync to SQLite...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { 
@@ -68,13 +73,13 @@ class CoreDataiCloudSync {
         }
     }
     
-    /// Writes all local priorities to iCloud
-    /// Replaces iCloudDataHandler.writeAllPriorityData
+    /// Writes all local priorities to iCloud from SQLite
+    /// Data is read from SQLite (thread-safe, no blocking!)
     func syncPrioritiesToiCloud() {
-        print("☁️ Starting priority sync to iCloud...")
+        print("☁️ Starting priority sync to iCloud from SQLite...")
         
-        // Perform Core Data operations on main thread
-        DispatchQueue.main.async { [weak self] in
+        // SQLite operations can be performed on any thread safely
+        DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
             
             let allPriorities = self.priorityManager.getAllPriorities()
@@ -149,10 +154,10 @@ class CoreDataiCloudSync {
     
     // MARK: - Attendance Sync
     
-    /// Reads all attendance data from iCloud and updates Core Data
-    /// Replaces iCloudDataHandler.readCloudAttendedData
+    /// Reads all attendance data from iCloud and updates SQLite
+    /// Data is stored in SQLite for thread-safe access without deadlocks
     func syncAttendanceFromiCloud(completion: @escaping () -> Void) {
-        print("☁️ Starting iCloud attendance sync to Core Data...")
+        print("☁️ Starting iCloud attendance sync to SQLite...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { 
@@ -213,13 +218,13 @@ class CoreDataiCloudSync {
         }
     }
     
-    /// Writes all local attendance data to iCloud
-    /// Replaces iCloudDataHandler.writeAllScheduleData
+    /// Writes all local attendance data to iCloud from SQLite
+    /// Data is read from SQLite (thread-safe, no blocking!)
     func syncAttendanceToiCloud() {
-        print("☁️ Starting attendance sync to iCloud...")
+        print("☁️ Starting attendance sync to iCloud from SQLite...")
         
-        // Perform Core Data operations on main thread
-        DispatchQueue.main.async { [weak self] in
+        // SQLite operations can be performed on any thread safely
+        DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
             
             let allAttendance = self.attendanceManager.getAllAttendanceDataByIndex()
@@ -428,9 +433,10 @@ class CoreDataiCloudSync {
     
     // MARK: - Batch Operations
     
-    /// Performs a complete two-way sync between Core Data and iCloud
+    /// Performs a complete two-way sync between SQLite and iCloud
+    /// All data operations use SQLite (thread-safe, no deadlocks!)
     func performFullSync(completion: @escaping () -> Void) {
-        print("🔄 Starting full iCloud sync...")
+        print("🔄 Starting full iCloud sync with SQLite backend...")
         
         // First, read from iCloud to get latest changes
         syncPrioritiesFromiCloud { [weak self] in

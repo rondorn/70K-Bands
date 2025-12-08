@@ -128,50 +128,45 @@ class CoreDataManager {
         return viewContext
     }
     
-    // MARK: - Save Context
+    // MARK: - Save Context (READ-ONLY MODE)
     
+    /// ⚠️ READ-ONLY: Core Data saves are blocked during migration to SQLite
+    /// All write operations should use SQLiteDataManager instead
     func saveContext() {
+        print("🚨 READ-ONLY MODE: Core Data save operation blocked!")
+        print("🚨 All writes should go through SQLiteDataManager")
+        print("🚨 Core Data is read-only for migration purposes only")
+        
+        // DO NOT SAVE - just log what would have been saved
         context.performAndWait {
             if context.hasChanges {
-                do {
-                    print("💾 About to save Core Data context with \(context.insertedObjects.count) insertions, \(context.updatedObjects.count) updates, \(context.deletedObjects.count) deletions")
-                    try context.save()
-                    print("✅ Core Data save successful")
-                } catch {
-                    print("❌ CRITICAL: Core Data save failed with error: \(error)")
-                    print("❌ Error localizedDescription: \(error.localizedDescription)")
-                    if let nsError = error as NSError? {
-                        print("❌ Error domain: \(nsError.domain)")
-                        print("❌ Error code: \(nsError.code)")
-                        print("❌ Error userInfo: \(nsError.userInfo)")
-                    }
-                    // Use fatalError to get full crash details with the Core Data error
-                    fatalError("Core Data save failed: \(error)")
-                }
-            } else {
-                print("💾 No changes to save in Core Data context")
+                print("⚠️ BLOCKED: Would have saved \(context.insertedObjects.count) insertions, \(context.updatedObjects.count) updates, \(context.deletedObjects.count) deletions")
+                
+                // Rollback changes to prevent accumulation
+                context.rollback()
+                print("🔄 Rolled back unsaved changes to keep context clean")
             }
         }
     }
     
+    /// ⚠️ READ-ONLY: Core Data saves are blocked during migration to SQLite
     func saveContextWithReturn() -> Bool {
-        var result = true
+        print("🚨 READ-ONLY MODE: Core Data save operation blocked!")
+        print("🚨 All writes should go through SQLiteDataManager")
+        
         context.performAndWait {
             if context.hasChanges {
-                do {
-                    try context.save()
-                    result = true
-                } catch {
-                    print("Save error: \(error)")
-                    result = false
-                }
+                print("⚠️ BLOCKED: Would have saved changes")
+                context.rollback()
+                print("🔄 Rolled back unsaved changes")
             }
         }
-        return result
+        return false // Always return false since we didn't save
     }
     
-    // MARK: - Background Operations
+    // MARK: - Background Operations (READ-ONLY)
     
+    /// ⚠️ READ-ONLY: Background operations blocked from saving
     func performBackgroundTask<T>(_ operation: @escaping (NSManagedObjectContext) throws -> T) -> T? {
         var result: T?
         var error: Error?
@@ -180,7 +175,8 @@ class CoreDataManager {
             do {
                 result = try operation(backgroundContext)
                 if backgroundContext.hasChanges {
-                    try backgroundContext.save()
+                    print("🚨 READ-ONLY MODE: Blocking background context save")
+                    backgroundContext.rollback()
                 }
             } catch let operationError {
                 error = operationError
@@ -194,6 +190,7 @@ class CoreDataManager {
         return result
     }
     
+    /// ⚠️ READ-ONLY: Background async operations blocked from saving
     func performBackgroundTaskAsync<T>(_ operation: @escaping (NSManagedObjectContext) throws -> T, completion: @escaping (T?) -> Void) {
         // Create a NEW background context for each operation to prevent concurrent access issues
         let context = persistentContainer.newBackgroundContext()
@@ -203,7 +200,8 @@ class CoreDataManager {
             do {
                 let result = try operation(context)
                 if context.hasChanges {
-                    try context.save()
+                    print("🚨 READ-ONLY MODE: Blocking background async context save")
+                    context.rollback()
                 }
                 DispatchQueue.main.async {
                     completion(result)

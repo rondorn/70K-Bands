@@ -2,9 +2,14 @@ import Foundation
 import CoreData
 import UIKit
 
-/// Manages band priorities using Core Data
-/// Replaces the old dictionary-based priority system with database storage
+/// Manages band priorities using SQLite
+/// This is now a wrapper around SQLitePriorityManager for backwards compatibility
+/// Core Data is read-only and only used for migration purposes
 class PriorityManager {
+    // Use SQLite as primary storage
+    private let sqliteManager = SQLitePriorityManager.shared
+    
+    // Keep Core Data manager ONLY for reading during migration
     private let coreDataManager: CoreDataManager
     
     init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
@@ -13,81 +18,29 @@ class PriorityManager {
         // Check for one-time migration from legacy data
         performLegacyMigrationIfNeeded()
         
-        // Check for bandName field migration for existing UserPriority records
-        migrateBandNameFieldIfNeeded()
+        // Migrate from Core Data to SQLite if needed
+        migrateFromCoreDataIfNeeded()
     }
     
     // MARK: - Priority Management
     
-    /// Sets priority for a band (replaces dataHandler.addPriorityData)
+    /// Sets priority for a band using SQLite
     /// - Parameters:
     ///   - bandName: Name of the band
     ///   - priority: Priority value (0=Unknown, 1=Must See, 2=Might See, 3=Won't See)
     ///   - timestamp: Optional timestamp, defaults to current time
     ///   - completion: Optional completion handler
     func setPriority(for bandName: String, priority: Int, timestamp: Double? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
-        print("🎯 Setting priority for \(bandName) = \(priority)")
+        print("🎯 Setting priority for \(bandName) = \(priority) [SQLite]")
         
-        // Use background context to prevent deadlocks
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
-        
-        context.perform {
-            do {
-                // Get or create the band
-                let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
-                bandRequest.predicate = NSPredicate(format: "bandName == %@", bandName)
-                bandRequest.fetchLimit = 1
-                
-                let band: Band
-                let fetchedBands = try context.fetch(bandRequest)
-                if let existingBand = fetchedBands.first {
-                    band = existingBand
-                } else {
-                    let newBand = Band(context: context)
-                    newBand.bandName = bandName
-                    band = newBand
-                }
-                
-                // Get or create the priority record using bandName field - more robust
-                let priorityRequest: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-                priorityRequest.predicate = NSPredicate(format: "bandName == %@", bandName)
-                priorityRequest.fetchLimit = 1
-                
-                let userPriority: UserPriority
-                let fetchedPriorities = try context.fetch(priorityRequest)
-                if let existingPriority = fetchedPriorities.first {
-                    userPriority = existingPriority
-                } else {
-                    let newUserPriority = UserPriority(context: context)
-                    newUserPriority.bandName = bandName  // Set bandName field directly
-                    newUserPriority.band = band  // Keep relationship for compatibility
-                    newUserPriority.priorityLevel = 0
-                    newUserPriority.createdAt = Date()
-                    newUserPriority.updatedAt = Date()
-                    userPriority = newUserPriority
-                }
-                
-                // Update the priority
-                userPriority.priorityLevel = Int16(priority)
-                userPriority.updatedAt = Date()
-                
-                // Save to Core Data
-                if context.hasChanges {
-                    try context.save()
-                }
-                
-                DispatchQueue.main.async {
-                    completion(true)
-                }
-                
-            } catch {
-                print("❌ Error setting priority: \(error)")
-                DispatchQueue.main.async {
-                    completion(false)
-                }
-            }
-        }
+        // Write to SQLite (thread-safe, no deadlocks!)
+        sqliteManager.setPriority(
+            for: bandName,
+            priority: priority,
+            eventYear: eventYear,
+            timestamp: timestamp,
+            completion: completion
+        )
         
         // Sync to iCloud (background thread)
         DispatchQueue.global(qos: .default).async {
@@ -95,270 +48,98 @@ class PriorityManager {
             iCloudHandler.writeAPriorityRecord(bandName: bandName, priority: priority)
         }
         
-        print("✅ Priority saved for \(bandName): \(priority)")
+        print("✅ Priority saved for \(bandName): \(priority) [SQLite]")
     }
     
-    /// Gets priority for a band (replaces dataHandler.getPriorityData)
+    /// Gets priority for a band from SQLite (thread-safe, no deadlocks!)
     /// - Parameter bandName: Name of the band
     /// - Returns: Priority value (0 if not found)
     func getPriority(for bandName: String) -> Int {
-        var priority = 0
-        
-        // Use background context to prevent deadlocks during iCloud sync
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
-        
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        context.perform {
-            // Try bandName field first (new approach), fallback to relationship (old approach)
-            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            let bandNamePredicate = NSPredicate(format: "bandName == %@", bandName)
-            let relationshipPredicate = NSPredicate(format: "band.bandName == %@", bandName)
-            request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [bandNamePredicate, relationshipPredicate])
-            request.fetchLimit = 1
-            
-            do {
-                if let userPriority = try context.fetch(request).first {
-                    priority = Int(userPriority.priorityLevel)
-                    
-                    // If this record has no bandName but has a relationship, migrate it
-                    if userPriority.bandName == nil && userPriority.band?.bandName == bandName {
-                        userPriority.bandName = bandName
-                        try context.save()
-                        print("🔄 Auto-migrated bandName for: \(bandName)")
-                    }
-                }
-            } catch {
-                print("❌ Error fetching priority for band \(bandName): \(error)")
-            }
-            
-            semaphore.signal()
-        }
-        
-        // Wait with timeout to prevent deadlocks
-        let timeoutResult = semaphore.wait(timeout: .now() + 2.0)
-        if timeoutResult == .timedOut {
-            print("⚠️ Priority fetch timed out for \(bandName) - preventing deadlock")
-            return 0
-        }
-        
-        return priority
+        // Use SQLite - no deadlock risk!
+        return sqliteManager.getPriority(for: bandName, eventYear: eventYear)
     }
     
-    /// Gets the last change timestamp for a band's priority
+    /// Gets the last change timestamp for a band's priority from SQLite
     /// - Parameter bandName: Name of the band
     /// - Returns: Timestamp of last change (0 if not found)
     func getPriorityLastChange(for bandName: String) -> Double {
-        var timestamp = 0.0
-        
-        // Use background context to prevent deadlocks during iCloud sync
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
-        
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        context.perform {
-            // Try bandName field first (new approach), fallback to relationship (old approach)
-            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            let bandNamePredicate = NSPredicate(format: "bandName == %@", bandName)
-            let relationshipPredicate = NSPredicate(format: "band.bandName == %@", bandName)
-            request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [bandNamePredicate, relationshipPredicate])
-            request.fetchLimit = 1
-            
-            do {
-                if let userPriority = try context.fetch(request).first {
-                    timestamp = userPriority.updatedAt?.timeIntervalSince1970 ?? 0.0
-                    
-                    // If this record has no bandName but has a relationship, migrate it
-                    if userPriority.bandName == nil && userPriority.band?.bandName == bandName {
-                        userPriority.bandName = bandName
-                        try context.save()
-                        print("🔄 Auto-migrated bandName for: \(bandName)")
-                    }
-                }
-            } catch {
-                print("❌ Error fetching priority timestamp for band \(bandName): \(error)")
-            }
-            
-            semaphore.signal()
-        }
-        
-        // Wait with timeout to prevent deadlocks
-        let timeoutResult = semaphore.wait(timeout: .now() + 2.0)
-        if timeoutResult == .timedOut {
-            print("⚠️ Priority timestamp fetch timed out for \(bandName) - preventing deadlock")
-            return 0.0
-        }
-        
-        return timestamp
+        // Use SQLite - no deadlock risk!
+        return sqliteManager.getPriorityLastChange(for: bandName, eventYear: eventYear)
     }
     
-    /// Gets all bands with their priorities (replaces dataHandler.readFile)
+    /// Gets all bands with their priorities from SQLite (thread-safe!)
     /// - Returns: Dictionary of band names to priority values
     func getAllPriorities() -> [String: Int] {
-        var result: [String: Int] = [:]
-        
-        // Use background context to prevent deadlocks during iCloud sync
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
-        
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        context.perform {
-            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            
-            do {
-                let priorities = try context.fetch(request)
-                
-                for priority in priorities {
-                    // Try bandName field first, fallback to relationship
-                    var bandName: String?
-                    
-                    if let name = priority.bandName {
-                        bandName = name
-                    } else if let name = priority.band?.bandName {
-                        bandName = name
-                        // Auto-migrate this record
-                        priority.bandName = name
-                        try context.save()
-                        print("🔄 Auto-migrated bandName for: \(name)")
-                    }
-                    
-                    if let name = bandName {
-                        result[name] = Int(priority.priorityLevel)
-                    }
-                }
-                
-                print("📊 Loaded \(result.count) priorities from database")
-            } catch {
-                print("❌ Error fetching priorities: \(error)")
-            }
-            
-            semaphore.signal()
-        }
-        
-        // Wait with timeout to prevent deadlocks
-        let timeoutResult = semaphore.wait(timeout: .now() + 5.0)
-        if timeoutResult == .timedOut {
-            print("⚠️ GetAllPriorities timed out - preventing deadlock")
-            return [:]
-        }
-        
-        return result
+        // Use SQLite - no deadlock risk!
+        return sqliteManager.getAllPriorities(eventYear: eventYear)
     }
     
-    /// Gets bands filtered by priority
+    /// Gets bands filtered by priority from SQLite (thread-safe!)
     /// - Parameter priorities: Array of priority values to include
     /// - Returns: Array of band names matching the priorities
     func getBandsWithPriorities(_ priorities: [Int]) -> [String] {
-        var result: [String] = []
-        
-        // Use background context to prevent deadlocks during iCloud sync
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
-        
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        context.perform {
-            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            let priorityPredicates = priorities.map { NSPredicate(format: "priorityLevel == %d", $0) }
-            request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: priorityPredicates)
-            
-            do {
-                let userPriorities = try context.fetch(request)
-                
-                for priority in userPriorities {
-                    // Try bandName field first, fallback to relationship
-                    var bandName: String?
-                    
-                    if let name = priority.bandName {
-                        bandName = name
-                    } else if let name = priority.band?.bandName {
-                        bandName = name
-                        // Auto-migrate this record
-                        priority.bandName = name
-                        try context.save()
-                        print("🔄 Auto-migrated bandName for: \(name)")
-                    }
-                    
-                    if let name = bandName {
-                        result.append(name)
-                    }
-                }
-            } catch {
-                print("❌ Error fetching bands with priorities \(priorities): \(error)")
-            }
-            
-            semaphore.signal()
-        }
-        
-        // Wait with timeout to prevent deadlocks
-        let timeoutResult = semaphore.wait(timeout: .now() + 3.0)
-        if timeoutResult == .timedOut {
-            print("⚠️ GetBandsWithPriorities timed out - preventing deadlock")
-            return []
-        }
-        
-        return result
+        // Use SQLite - no deadlock risk!
+        let allPriorities = sqliteManager.getAllPriorities(eventYear: eventYear)
+        return allPriorities.filter { priorities.contains($0.value) }.map { $0.key }
     }
     
     // MARK: - Migration Support
     
-    /// Migrates existing UserPriority records to populate bandName field
-    /// This ensures existing priority data works with the new bandName-based queries
-    private func migrateBandNameFieldIfNeeded() {
-        let migrationKey = "BandNameFieldMigrationCompleted"
+    /// Migrates priority data from Core Data to SQLite (one-time migration)
+    private func migrateFromCoreDataIfNeeded() {
+        let migrationKey = "PriorityCoreDat aToSQLiteMigrationCompleted"
         let migrationCompleted = UserDefaults.standard.bool(forKey: migrationKey)
         
         if migrationCompleted {
-            print("🔄 BandName field migration already completed")
+            print("✅ Priority Core Data to SQLite migration already completed")
             return
         }
         
-        print("🔄 Starting bandName field migration for existing UserPriority records...")
+        print("🔄 Starting priority migration from Core Data to SQLite...")
         
-        // Use background context to prevent blocking
-        let context = coreDataManager.persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        // Read all priorities from Core Data (read-only!)
+        let context = coreDataManager.viewContext
+        var priorities: [String: Int] = [:]
+        var timestamps: [String: Double] = [:]
         
-        context.perform {
+        context.performAndWait {
+            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
+            
             do {
-                // Find all UserPriority records that have a band relationship but no bandName
-                let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-                request.predicate = NSPredicate(format: "bandName == nil AND band != nil")
+                let coreDataPriorities = try context.fetch(request)
                 
-                let priorities = try context.fetch(request)
-                print("🔄 Found \(priorities.count) UserPriority records needing bandName migration")
-                
-                var migratedCount = 0
-                
-                for priority in priorities {
-                    if let band = priority.band, let bandName = band.bandName {
-                        // Populate the bandName field from the relationship
-                        priority.bandName = bandName
-                        migratedCount += 1
-                        print("🔄 Migrated bandName for: \(bandName)")
+                for priority in coreDataPriorities {
+                    // Try bandName field first, fallback to relationship
+                    var bandName: String?
+                    
+                    if let name = priority.bandName {
+                        bandName = name
+                    } else if let name = priority.band?.bandName {
+                        bandName = name
+                    }
+                    
+                    if let name = bandName {
+                        priorities[name] = Int(priority.priorityLevel)
+                        timestamps[name] = priority.updatedAt?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
                     }
                 }
                 
-                if migratedCount > 0 {
-                    // Save the changes
-                    try context.save()
-                    print("✅ Successfully migrated \(migratedCount) UserPriority records with bandName field")
-                } else {
-                    print("ℹ️ No UserPriority records needed bandName migration")
-                }
-                
-                // Mark migration as completed
-                UserDefaults.standard.set(true, forKey: migrationKey)
-                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "BandNameFieldMigrationTimestamp")
-                UserDefaults.standard.synchronize()
-                
+                print("📊 Found \(priorities.count) priorities in Core Data to migrate")
             } catch {
-                print("❌ Error during bandName field migration: \(error)")
+                print("❌ Error reading priorities from Core Data: \(error)")
             }
         }
+        
+        // Migrate to SQLite
+        if !priorities.isEmpty {
+            sqliteManager.migrateFromCoreData(coreDataPriorities: priorities, timestamps: timestamps)
+            print("✅ Migrated \(priorities.count) priorities from Core Data to SQLite")
+        }
+        
+        // Mark migration as completed
+        UserDefaults.standard.set(true, forKey: migrationKey)
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityCoreDataToSQLiteMigrationTimestamp")
+        UserDefaults.standard.synchronize()
     }
     
     /// Performs one-time migration from legacy data sources to Core Data
@@ -868,24 +649,24 @@ class PriorityManager {
     
     // MARK: - iCloud Sync Integration
     
-    /// Updates priority from iCloud data (replaces iCloud sync logic)
+    /// Updates priority from iCloud data using SQLite
     /// - Parameters:
     ///   - bandName: Name of the band
     ///   - priority: Priority from iCloud
     ///   - timestamp: Timestamp from iCloud
     ///   - deviceUID: Device UID from iCloud
     func updatePriorityFromiCloud(bandName: String, priority: Int, timestamp: Double, deviceUID: String, completion: @escaping (Bool) -> Void = { _ in }) {
-        print("☁️ Processing iCloud priority update for \(bandName)")
+        print("☁️ Processing iCloud priority update for \(bandName) [SQLite]")
         
-        // Get current local data
+        // Get current local data from SQLite
         let currentPriority = getPriority(for: bandName)
         let localTimestamp = getPriorityLastChange(for: bandName)
         let currentUID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
         
         // RULE 1: Only skip if UID matches current device AND local data exists
-        // CRITICAL FIX: After delete/reinstall, local data is null, so we need to restore iCloud data even from same device
         if deviceUID == currentUID && currentPriority != 0 {
             print("⏭️ Skipping \(bandName) - UID matches current device and local data exists")
+            completion(false)
             return
         }
         
@@ -895,90 +676,75 @@ class PriorityManager {
         
         // CRITICAL FIX: If local data is null (priority = 0), iCloud data should ALWAYS be written
         if currentPriority == 0 {
-            print("☁️ Local data is null for \(bandName), iCloud data will be written regardless of other rules")
+            print("☁️ Local data is null for \(bandName), iCloud data will be written")
             setPriority(for: bandName, priority: priority, timestamp: timestamp, completion: completion)
             return
         }
         
-        // RULE 2: Only update if iCloud data is newer (when local data exists)
+        // RULE 2: Only update if iCloud data is newer
         if localTimestamp > 0 && timestamp <= localTimestamp {
-            print("⏭️ Skipping \(bandName) - iCloud data not newer (\(timestamp) <= \(localTimestamp))")
+            print("⏭️ Skipping \(bandName) - iCloud data not newer")
+            completion(false)
             return
         }
         
         // RULE 3: Be conservative if local data exists but no timestamp
         if currentPriority != 0 && localTimestamp <= 0 {
             print("⏭️ Skipping \(bandName) - local data exists but no timestamp")
+            completion(false)
             return
         }
         
-        // Update from iCloud
-        print("☁️ Updating \(bandName): \(currentPriority) -> \(priority) (timestamp: \(timestamp))")
-        setPriority(for: bandName, priority: priority, timestamp: timestamp, completion: completion)
+        // Update from iCloud using SQLite
+        print("☁️ Updating \(bandName): \(currentPriority) -> \(priority)")
+        sqliteManager.updatePriorityFromiCloud(
+            bandName: bandName,
+            priority: priority,
+            timestamp: timestamp,
+            deviceUID: deviceUID,
+            eventYear: eventYear
+        )
+        completion(true)
     }
     
-    /// Batch update priorities from iCloud - more efficient for bulk operations
+    /// Batch update priorities from iCloud using SQLite (thread-safe!)
     /// - Parameter updates: Array of (bandName, priority, timestamp, deviceUID) tuples
     func batchUpdatePrioritiesFromiCloud(updates: [(String, Int, Double, String)]) {
-        print("☁️ Processing batch iCloud priority update for \(updates.count) bands")
+        print("☁️ Processing batch iCloud priority update for \(updates.count) bands [SQLite]")
         
-        // Use async to prevent blocking
-        DispatchQueue.global(qos: .utility).async {
-            // Use background context to prevent deadlocks during iCloud sync
-            let context = self.coreDataManager.persistentContainer.newBackgroundContext()
-            context.mergePolicy = NSMergeByPropertyStoreTrumpMergePolicy
+        let currentUID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+        var updatedCount = 0
+        
+        for (bandName, priority, timestamp, deviceUID) in updates {
+            // Get current local data from SQLite
+            let currentPriority = getPriority(for: bandName)
+            let localTimestamp = getPriorityLastChange(for: bandName)
             
-            context.perform {
-                let currentUID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
-                var updatedCount = 0
-                
-                for (bandName, priority, timestamp, deviceUID) in updates {
-                    // Get current local data using bandName field - more robust
-                    let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-                    request.predicate = NSPredicate(format: "bandName == %@", bandName)
-                    request.fetchLimit = 1
-                    
-                    let userPriority = try? context.fetch(request).first
-                    let currentPriority = Int(userPriority?.priorityLevel ?? 0)
-                    let localTimestamp = userPriority?.updatedAt?.timeIntervalSince1970 ?? 0
-                    
-                    // Apply the same rules as individual updates
-                    if deviceUID == currentUID {
-                        continue // Skip - UID matches current device
-                    }
-                    
-                    if localTimestamp > 0 && timestamp <= localTimestamp {
-                        continue // Skip - iCloud data not newer
-                    }
-                    
-                    if currentPriority != 0 && localTimestamp <= 0 {
-                        continue // Skip - local data exists but no timestamp
-                    }
-                    
-                    // Update the priority using bandName field
-                    if let existingUserPriority = userPriority {
-                        // Update existing priority
-                        existingUserPriority.priorityLevel = Int16(priority)
-                        existingUserPriority.updatedAt = Date(timeIntervalSince1970: timestamp)
-                        updatedCount += 1
-                        print("☁️ Updated \(bandName): \(currentPriority) -> \(priority)")
-                    } else {
-                        // Create new priority record
-                        let newUserPriority = UserPriority(context: context)
-                        newUserPriority.bandName = bandName  // Set bandName field directly
-                        newUserPriority.priorityLevel = Int16(priority)
-                        newUserPriority.updatedAt = Date(timeIntervalSince1970: timestamp)
-                        newUserPriority.createdAt = Date()
-                        updatedCount += 1
-                        print("☁️ Created new priority for \(bandName): \(priority)")
-                    }
-                }
-                
-                // Save all changes at once
-                self.coreDataManager.saveContext()
-                print("☁️ Batch update completed: \(updatedCount)/\(updates.count) priorities updated")
+            // Apply the same rules as individual updates
+            if deviceUID == currentUID && currentPriority != 0 {
+                continue // Skip - UID matches current device and local data exists
             }
+            
+            if localTimestamp > 0 && timestamp <= localTimestamp {
+                continue // Skip - iCloud data not newer
+            }
+            
+            if currentPriority != 0 && localTimestamp <= 0 {
+                continue // Skip - local data exists but no timestamp
+            }
+            
+            // Update using SQLite
+            sqliteManager.updatePriorityFromiCloud(
+                bandName: bandName,
+                priority: priority,
+                timestamp: timestamp,
+                deviceUID: deviceUID,
+                eventYear: eventYear
+            )
+            updatedCount += 1
         }
+        
+        print("☁️ Batch update completed: \(updatedCount)/\(updates.count) priorities updated [SQLite]")
     }
     
     // MARK: - Private Helpers
