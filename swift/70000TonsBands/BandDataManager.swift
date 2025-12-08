@@ -2,8 +2,9 @@
 //  BandDataManager.swift
 //  70000TonsBands
 //
-//  Unified band data manager that can use either Core Data or legacy system
-//  Allows gradual migration from bandNamesHandler to Core Data
+//  Unified band data manager using SQLite backend
+//  BandCSVImporter now writes directly to SQLite
+//  Core Data is read-only for migration purposes only
 //
 
 import Foundation
@@ -11,11 +12,11 @@ import Foundation
 class BandDataManager {
     static let shared = BandDataManager()
     
+    // CSV importer writes directly to SQLite
     private let csvImporter = BandCSVImporter()
-    // Note: Legacy handler will be integrated later
     
-    // Flag to control which system to use
-    private var useCoreData = true // Always use Core Data for now
+    // SQLite is the primary storage (thread-safe, no deadlocks!)
+    private var useSQLite = true
     
     private init() {}
     
@@ -41,18 +42,18 @@ class BandDataManager {
         return csvImporter.getBandNamesArray().isEmpty
     }
     
-    /// Load band data (replacement for bandNamesHandler.readBandFile())
+    /// Load band data from SQLite (thread-safe, no deadlocks!)
     func loadBandData(completion: (() -> Void)? = nil) {
         // Try to import from existing file first
         if csvImporter.importBandsFromFile() {
-            print("✅ Loaded bands from Core Data")
+            print("✅ Loaded bands from SQLite")
             completion?()
         } else {
             // If no file exists, try to download
             csvImporter.downloadAndImportBands(forceDownload: false) { success in
                 DispatchQueue.main.async {
                     if success {
-                        print("✅ Downloaded and imported bands to Core Data")
+                        print("✅ Downloaded and imported bands to SQLite")
                     } else {
                         print("⚠️ Failed to load bands")
                     }
@@ -67,16 +68,22 @@ class BandDataManager {
         csvImporter.downloadAndImportBands(forceDownload: forceDownload, completion: completion)
     }
     
-    /// Clear cached data
+    /// Clear cached data (SQLite data is preserved)
     func clearCachedData() {
-        // For Core Data, we might want to keep the data but mark it as stale
-        print("🧹 Core Data cache cleared (data preserved)")
+        // SQLite data is kept for offline access
+        print("🧹 SQLite cache cleared (data preserved)")
     }
     
     // MARK: - System Info
     
     /// Check which system is currently active
+    func isUsingSQLite() -> Bool {
+        return useSQLite
+    }
+    
+    /// Legacy compatibility method
+    @available(*, deprecated, message: "Use isUsingSQLite() instead")
     func isUsingCoreData() -> Bool {
-        return useCoreData
+        return false // Always false now
     }
 }
