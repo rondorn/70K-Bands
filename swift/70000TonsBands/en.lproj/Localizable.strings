@@ -96,6 +96,8 @@
 
 "ShareBandChoices" = "Share Band Choices";
 "ShareShowChoices" = "Share Show Choices";
+"Share Type" = "Share Type";
+"Share Preferences & Schedule" = "Share Preferences & Schedule";
 
 "visitBands" = "Links";
 "country" = "Country";
@@ -246,3 +248,55 @@
 "UnofficialEventsPlural" = "Unoffical Events";
 
 "HereAreMy" = "Here are my";
+
+// Sharing Feature
+"Failed to export preferences. Please try again." = "Failed to export preferences. Please try again.";
+"Share Your Preferences" = "Share Your Preferences";
+"Share your Must/Might/Won't priorities and attended events with another user." = "Share your Must/Might/Won't priorities and attended events with another user.";
+"Export Your Profile" = "Export Your Profile";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Your Default profile will be exported. Recipients can import it and view your preferences.";
+
+// Import Feature
+"This file is not a valid 70K Bands share file." = "This file is not a valid 70K Bands share file.";
+"Import Shared Preferences" = "Import Shared Preferences";
+"New profile received!" = "New profile received!";
+"band priorities" = "band priorities";
+"scheduled events" = "scheduled events";
+"Choose a name for this profile:" = "Choose a name for this profile:";
+"Import" = "Import";
+"Updated" = "Updated";
+"with new data!" = "with new data!";
+"Showing preferences from" = "Showing preferences from";
+"Successfully imported" = "Successfully imported";
+"Failed to import. Please try again." = "Failed to import. Please try again.";
+"Import Successful" = "Import Successful";
+"Profile Updated" = "Profile Updated";
+"Import Failed" = "Import Failed";
+
+// Profile Management
+"Choose an action" = "Choose an action";
+"Rename This Entry" = "Rename This Entry";
+"Change The Color" = "Change The Color";
+"Make These Settings My Own" = "Make These Settings My Own";
+"Delete this Entry" = "Delete this Entry";
+"Rename Profile" = "Rename Profile";
+"Enter a new name for this profile" = "Enter a new name for this profile";
+"Save" = "Save";
+"Choose Color" = "Choose Color";
+"Select a color for" = "Select a color for";
+"Delete Profile" = "Delete Profile";
+"Are you sure you want to delete" = "Are you sure you want to delete";
+"This cannot be undone." = "This cannot be undone.";
+"Delete" = "Delete";
+"Make These Settings Your Own" = "Make These Settings Your Own";
+"This will overwrite all of your current Default profile settings with" = "This will overwrite all of your current Default profile settings with";
+"Your existing priorities and attended events will be permanently lost." = "Your existing priorities and attended events will be permanently lost.";
+"Are you sure you want to continue?" = "Are you sure you want to continue?";
+"Overwrite My Settings" = "Overwrite My Settings";
+"Now Viewing Profile:" = "Now Viewing Profile:";
+"Copied" = "Copied";
+"to Your Profile" = "to Your Profile";
+
+// Profile Tutorial
+"Tap here to switch between profiles" = "Tap here to switch between profiles";
+"Tap anywhere to close" = "Tap anywhere to close";

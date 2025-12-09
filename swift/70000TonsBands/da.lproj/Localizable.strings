@@ -211,3 +211,59 @@
 "year_change_loading" = "Indlæser data for nyt år, vent venligst...";
 
 "HereAreMy" = "Her er mine";
+
+// Sharing Feature
+"Failed to export preferences. Please try again." = "Kunne ikke eksportere præferencer. Prøv venligst igen.";
+"Share Your Preferences" = "Del Dine Præferencer";
+"Share your Must/Might/Won't priorities and attended events with another user." = "Del dine Skal/Måske/Skal ikke prioriteter og deltagne begivenheder med en anden bruger.";
+"Export Your Profile" = "Eksportér Din Profil";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Din standardprofil vil blive eksporteret. Modtagere kan importere den og se dine præferencer.";
+
+// Import Feature
+"This file is not a valid 70K Bands share file." = "Denne fil er ikke en gyldig 70K Bands delingsfil.";
+"Import Shared Preferences" = "Importér Delte Præferencer";
+"New profile received!" = "Ny profil modtaget!";
+"band priorities" = "band prioriteter";
+"scheduled events" = "planlagte begivenheder";
+"Choose a name for this profile:" = "Vælg et navn til denne profil:";
+"Import" = "Importér";
+"Updated" = "Opdateret";
+"with new data!" = "med nye data!";
+"Showing preferences from" = "Viser præferencer fra";
+"Successfully imported" = "Importeret med succes";
+"Failed to import. Please try again." = "Kunne ikke importere. Prøv venligst igen.";
+"Import Successful" = "Import Lykkedes";
+"Profile Updated" = "Profil Opdateret";
+"Import Failed" = "Import Mislykkedes";
+
+// Profile Management
+"Choose an action" = "Vælg en handling";
+"Rename This Entry" = "Omdøb Denne Post";
+"Change The Color" = "Skift Farven";
+"Make These Settings My Own" = "Gør Disse Indstillinger Til Mine Egne";
+"Delete this Entry" = "Slet Denne Post";
+"Rename Profile" = "Omdøb Profil";
+"Enter a new name for this profile" = "Indtast et nyt navn til denne profil";
+"Save" = "Gem";
+"Choose Color" = "Vælg Farve";
+"Select a color for" = "Vælg en farve til";
+"Delete Profile" = "Slet Profil";
+"Are you sure you want to delete" = "Er du sikker på, at du vil slette";
+"This cannot be undone." = "Dette kan ikke fortrydes.";
+"Delete" = "Slet";
+"Make These Settings Your Own" = "Gør Disse Indstillinger Til Dine Egne";
+"This will overwrite all of your current Default profile settings with" = "Dette vil overskrive alle dine nuværende standardprofil indstillinger med";
+"Your existing priorities and attended events will be permanently lost." = "Dine eksisterende prioriteter og deltagne begivenheder vil blive permanent tabt.";
+"Are you sure you want to continue?" = "Er du sikker på, at du vil fortsætte?";
+"Overwrite My Settings" = "Overskriv Mine Indstillinger";
+"Now Viewing Profile:" = "Ser Nu Profil:";
+"Copied" = "Kopieret";
+"to Your Profile" = "til Din Profil";
+
+// Profile Tutorial
+"Tap here to switch between profiles" = "Tryk her for at skifte mellem profiler";
+"Tap anywhere to close" = "Tryk hvor som helst for at lukke";
+
+// Share Menu
+"Share Type" = "Delingstype";
+"Share Preferences & Schedule" = "Del Præferencer og Tidsplan";
