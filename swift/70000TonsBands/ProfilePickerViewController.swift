@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ProfilePickerViewController: UITableViewController {
+class ProfilePickerViewController: UITableViewController, UIPopoverPresentationControllerDelegate {
     
     private var profiles: [String] = []
     private var activeProfile: String = ""
@@ -46,6 +46,11 @@ class ProfilePickerViewController: UITableViewController {
             action: #selector(dismissPicker)
         )
         
+        // Add long-press gesture to the TABLE VIEW (not individual cells)
+        // This prevents duplicate gestures on reused cells
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        tableView.addGestureRecognizer(longPress)
+        
         // Load profiles
         loadProfiles()
     }
@@ -53,34 +58,38 @@ class ProfilePickerViewController: UITableViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // Add a subtle dim overlay behind the picker
-        if let presentingView = presentingViewController?.view {
-            let dim = UIView(frame: presentingView.bounds)
-            dim.backgroundColor = UIColor.black.withAlphaComponent(0.25)
-            dim.alpha = 0
-            presentingView.addSubview(dim)
-            dimView = dim
-            
-            UIView.animate(withDuration: 0.3) {
-                dim.alpha = 1
+        // Only apply custom positioning and dim overlay on iPhone
+        // iPad uses popover which handles its own positioning
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            // Add a subtle dim overlay behind the picker
+            if let presentingView = presentingViewController?.view {
+                let dim = UIView(frame: presentingView.bounds)
+                dim.backgroundColor = UIColor.black.withAlphaComponent(0.25)
+                dim.alpha = 0
+                presentingView.addSubview(dim)
+                dimView = dim
+                
+                UIView.animate(withDuration: 0.3) {
+                    dim.alpha = 1
+                }
             }
-        }
-        
-        // Position the view near the top center
-        if let navController = navigationController {
-            let width: CGFloat = 300
-            let height: CGFloat = min(400, CGFloat(profiles.count * 60 + 100))
             
-            navController.view.frame = CGRect(
-                x: (UIScreen.main.bounds.width - width) / 2,
-                y: 100, // Position below navigation bar/count label
-                width: width,
-                height: height
-            )
-            
-            // Add rounded corners to the nav controller view
-            navController.view.layer.cornerRadius = 12
-            navController.view.layer.masksToBounds = true
+            // Position the view near the top center
+            if let navController = navigationController {
+                let width: CGFloat = 300
+                let height: CGFloat = min(400, CGFloat(profiles.count * 60 + 100))
+                
+                navController.view.frame = CGRect(
+                    x: (UIScreen.main.bounds.width - width) / 2,
+                    y: 100, // Position below navigation bar/count label
+                    width: width,
+                    height: height
+                )
+                
+                // Add rounded corners to the nav controller view
+                navController.view.layer.cornerRadius = 12
+                navController.view.layer.masksToBounds = true
+            }
         }
     }
     
@@ -154,9 +163,7 @@ class ProfilePickerViewController: UITableViewController {
         selectedBackgroundView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.6)
         cell.selectedBackgroundView = selectedBackgroundView
         
-        // Add long-press gesture
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        cell.addGestureRecognizer(longPress)
+        // Note: Long-press gesture is added to the table view in viewDidLoad, not to individual cells
         
         return cell
     }
@@ -238,7 +245,15 @@ class ProfilePickerViewController: UITableViewController {
         }
         alert.addAction(colorAction)
         
-        // 3) Delete (only for non-Default profiles)
+        // 3) Make These Settings My Own (only for non-Default profiles)
+        if profileKey != "Default" {
+            let copyAction = UIAlertAction(title: "Make These Settings My Own", style: .default) { [weak self] _ in
+                self?.confirmCopyToDefault(fromProfileKey: profileKey, displayName: displayName)
+            }
+            alert.addAction(copyAction)
+        }
+        
+        // 4) Delete (only for non-Default profiles)
         if profileKey != "Default" {
             let deleteAction = UIAlertAction(title: "Delete this Entry", style: .destructive) { [weak self] _ in
                 self?.confirmDeleteProfile(userId: profileKey)
@@ -389,6 +404,117 @@ class ProfilePickerViewController: UITableViewController {
         alert.addAction(cancelAction)
         
         present(alert, animated: true)
+    }
+    
+    /// Shows confirmation dialog before copying profile to Default
+    private func confirmCopyToDefault(fromProfileKey: String, displayName: String) {
+        let alert = UIAlertController(
+            title: "Make These Settings Your Own",
+            message: "This will overwrite all of your current Default profile settings with '\(displayName)'.\n\nYour existing priorities and attended events will be permanently lost.\n\nAre you sure you want to continue?",
+            preferredStyle: .alert
+        )
+        
+        let copyAction = UIAlertAction(title: "Overwrite My Settings", style: .destructive) { [weak self] _ in
+            self?.copyProfileToDefault(fromProfileKey: fromProfileKey, displayName: displayName)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(copyAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
+    }
+    
+    /// Copies settings from a shared profile to Default profile
+    private func copyProfileToDefault(fromProfileKey: String, displayName: String) {
+        print("📋 [COPY] Copying profile '\(displayName)' to Default")
+        
+        // Get the current event year from global Constants
+        let currentEventYear = eventYear
+        
+        // Get priorities and attendance from source profile
+        let priorities = SQLitePriorityManager.shared.getAllPriorities(eventYear: currentEventYear, profileName: fromProfileKey)
+        let attendanceData = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: fromProfileKey)
+        
+        print("📋 [COPY] Source has \(priorities.count) priorities and \(attendanceData.count) attendance records")
+        
+        // Use a dispatch group to wait for both delete operations to complete
+        let deleteGroup = DispatchGroup()
+        
+        // Delete all existing Default profile priorities
+        deleteGroup.enter()
+        SQLitePriorityManager.shared.deleteProfile(named: "Default") { success in
+            if success {
+                print("✅ [COPY] Cleared Default profile priorities")
+            }
+            deleteGroup.leave()
+        }
+        
+        // Delete all existing Default profile attendance
+        deleteGroup.enter()
+        SQLiteAttendanceManager.shared.deleteProfile(named: "Default") { success in
+            if success {
+                print("✅ [COPY] Cleared Default profile attendance")
+            }
+            deleteGroup.leave()
+        }
+        
+        // Wait for deletions to complete, then import new data
+        deleteGroup.notify(queue: .main) {
+            print("📋 [COPY] Deletions complete, starting import...")
+            
+            // Copy priorities to Default (async operation)
+            SQLitePriorityManager.shared.importPriorities(
+                for: "Default",
+                priorities: priorities,
+                eventYear: currentEventYear
+            )
+            
+            // Convert attendance data to the format expected by importAttendance
+            // importAttendance expects [[String: Any]], so extract just the data dictionaries
+            var attendanceArray: [[String: Any]] = []
+            for (_, data) in attendanceData {
+                attendanceArray.append(data)
+            }
+            
+            // Copy attendance to Default (async operation)
+            SQLiteAttendanceManager.shared.importAttendance(
+                for: "Default",
+                attendanceData: attendanceArray
+            )
+            
+            print("✅ [COPY] Import operations initiated for Default profile")
+            
+            // Give a moment for async import operations to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                // Switch to Default profile
+                self.sharingManager.setActivePreferenceSource("Default")
+                
+                // Refresh the UI
+                self.masterViewController?.clearAllCachesAndRefresh()
+                
+                // Update profile list
+                self.loadProfiles()
+                
+                // Dismiss picker and show success message
+                self.dismiss(animated: true) {
+                    if let masterVC = self.masterViewController {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            let visibleLocation = CGRect(origin: masterVC.mainTableView.contentOffset, size: masterVC.mainTableView.bounds.size)
+                            ToastMessages("Copied '\(displayName)' to Your Profile").show(masterVC, cellLocation: visibleLocation, placeHigh: true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - UIPopoverPresentationControllerDelegate
+    
+    /// Ensures popover always shows as popover on iPad (doesn't adapt to full screen)
+    func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle {
+        return .none  // Always use popover, never adapt
     }
 }
 

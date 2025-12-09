@@ -1219,15 +1219,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let navController = UINavigationController(rootViewController: pickerVC)
         
-        // Use overCurrentContext to allow transparency
-        navController.modalPresentationStyle = .overCurrentContext
-        navController.modalTransitionStyle = .crossDissolve
-        
-        // Make the navigation controller's view transparent
-        navController.view.backgroundColor = UIColor.clear
-        
-        // Set preferred size (will be used by the table view)
-        navController.preferredContentSize = CGSize(width: 300, height: 400)
+        // Check if we're on iPad
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: Use popover for proper split view support
+            navController.modalPresentationStyle = .popover
+            
+            if let popover = navController.popoverPresentationController {
+                // Anchor to the title view (count label)
+                popover.sourceView = navigationItem.titleView ?? navigationController?.navigationBar ?? view
+                popover.sourceRect = navigationItem.titleView?.bounds ?? CGRect(x: view.bounds.midX, y: 0, width: 0, height: 0)
+                popover.permittedArrowDirections = [.up, .down]
+                popover.backgroundColor = UIColor.black.withAlphaComponent(0.9)
+                
+                // Set delegate to handle dismissal
+                popover.delegate = pickerVC
+            }
+            
+            navController.preferredContentSize = CGSize(width: 320, height: 400)
+        } else {
+            // iPhone: Use overCurrentContext for transparency
+            navController.modalPresentationStyle = .overCurrentContext
+            navController.modalTransitionStyle = .crossDissolve
+            navController.view.backgroundColor = UIColor.clear
+            navController.preferredContentSize = CGSize(width: 300, height: 400)
+        }
         
         present(navController, animated: true)
     }
