@@ -34,6 +34,15 @@ struct SharingView: View {
                     )
                 }
             }
+            .alert(NSLocalizedString("Name Your Share", comment: "Name share dialog title"), isPresented: $viewModel.showNamePrompt) {
+                TextField("e.g., John's iPhone", text: $viewModel.shareName)
+                Button(NSLocalizedString("Cancel", comment: "Cancel button"), role: .cancel) { }
+                Button("Share") {
+                    viewModel.exportPreferences()
+                }
+            } message: {
+                Text(NSLocalizedString("Give this share a name so the recipient can identify you.", comment: "Name share dialog message"))
+            }
             .alert(NSLocalizedString("Export Failed", comment: "Export error alert title"), isPresented: $viewModel.showExportError) {
                 Button(NSLocalizedString("OK", comment: "OK button")) { }
             } message: {
@@ -45,7 +54,7 @@ struct SharingView: View {
     private var exportSection: some View {
         Section {
             Button(action: {
-                viewModel.exportPreferences()
+                viewModel.showNamePrompt = true
             }) {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
@@ -78,17 +87,29 @@ struct SharingView: View {
 // MARK: - View Model
 
 class SharingViewModel: ObservableObject {
+    @Published var shareName: String = ""
+    @Published var showNamePrompt = false
     @Published var showShareSheet = false
     @Published var showExportError = false
     @Published var exportedFileURL: URL?
     
     private let sharingManager = SharedPreferencesManager.shared
     
+    init() {
+        // Pre-populate with device name
+        shareName = UIDevice.current.name
+    }
+    
     func exportPreferences() {
-        print("📤 Starting export (no name required from sender)")
+        guard !shareName.isEmpty else {
+            showExportError = true
+            return
+        }
         
-        // Always export from Default profile, no name needed
-        if let fileURL = sharingManager.exportCurrentPreferences(shareName: nil) {
+        print("📤 Starting export with name: \(shareName)")
+        
+        // Always export from Default profile with sender's chosen name
+        if let fileURL = sharingManager.exportCurrentPreferences(shareName: shareName) {
             print("📤 Export successful, preparing to share...")
             print("📤 File URL: \(fileURL.absoluteString)")
             print("📤 File exists: \(FileManager.default.fileExists(atPath: fileURL.path))")
@@ -102,6 +123,7 @@ class SharingViewModel: ObservableObject {
             
             exportedFileURL = fileURL
             showShareSheet = true
+            // Don't reset shareName - keep it for next time
         } else {
             print("❌ Export failed")
             showExportError = true

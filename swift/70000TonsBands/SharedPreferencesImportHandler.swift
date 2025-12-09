@@ -231,8 +231,10 @@ class SharedPreferencesImportHandler {
             )
             
             alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default) { _ in
-                // Show tutorial overlay for all imports (new or update)
-                self.showProfileSwitchTutorial()
+                // Show tutorial overlay only for NEW profiles (not updates)
+                if isNewProfile {
+                    self.showProfileSwitchTutorial()
+                }
             })
             
             var presenter = topVC

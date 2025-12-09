@@ -82,8 +82,9 @@
     <string name="ImportDataBackup">Import Data Backup</string>
 
     <string name="ShareTitle">What do you want to share?</string>
-    <string name="ShareBandChoices">Share Band Choices</string>
-    <string name="ShareShowChoices">Share Show Choices</string>
+    <string name="ShareBandChoices">Share Band Report</string>
+    <string name="ShareShowChoices">Share Event Report</string>
+    <string name="ShareImportableData">Share Importable Band/Event Data</string>
     <string name="ExportUserData">Export User Data</string>
     
     <!-- Localized share text -->
@@ -298,4 +299,85 @@
     <string name="bulk_image_download">Bulk Image Download</string>
     <string name="bulk_note_download">Bulk Note Download</string>
     <string name="bulk_data_upload">Bulk Data Upload</string>
+    
+    <!-- Sharing Feature -->
+    <string name="failed_to_export_preferences">Failed to export preferences. Please try again.</string>
+    <string name="share_your_preferences">Share Your Preferences</string>
+    <string name="share_priorities_and_events">Share your Must/Might/Won\'t priorities and attended events with another user.</string>
+    <string name="export_your_profile">Export Your Profile</string>
+    <string name="export_profile_description">Your Default profile will be exported. Recipients can import it and view your preferences.</string>
+    <string name="export_failed">Export Failed</string>
+    <string name="name_your_share">Name Your Share</string>
+    <string name="name_share_message">Give this share a name so the recipient can identify you.</string>
+    
+    <!-- Import Feature -->
+    <string name="invalid_share_file">This file is not a valid 70K Bands share file.</string>
+    <string name="import_shared_preferences">Import Shared Preferences</string>
+    <string name="new_profile_received">New profile received!</string>
+    <string name="band_priorities">band priorities</string>
+    <string name="scheduled_events">scheduled events</string>
+    <string name="choose_profile_name">Choose a name for this profile:</string>
+    <string name="import_button">Import</string>
+    <string name="updated">Updated</string>
+    <string name="with_new_data">with new data!</string>
+    <string name="showing_preferences_from">Showing preferences from</string>
+    <string name="successfully_imported">Successfully imported</string>
+    <string name="failed_to_import">Failed to import. Please try again.</string>
+    <string name="import_successful">Import Successful</string>
+    <string name="profile_updated">Profile Updated</string>
+    <string name="import_failed">Import Failed</string>
+    
+    <!-- Profile Management -->
+    <string name="choose_an_action">Choose an action</string>
+    <string name="rename_this_entry">Rename This Entry</string>
+    <string name="change_the_color">Change The Color</string>
+    <string name="make_settings_my_own">Make These Settings My Own</string>
+    <string name="delete_this_entry">Delete this Entry</string>
+    <string name="rename_profile">Rename Profile</string>
+    <string name="enter_new_profile_name">Enter a new name for this profile</string>
+    <string name="save">Save</string>
+    <string name="choose_color">Choose Color</string>
+    <string name="select_color_for">Select a color for</string>
+    <string name="delete_profile">Delete Profile</string>
+    <string name="are_you_sure_delete">Are you sure you want to delete</string>
+    <string name="cannot_be_undone">This cannot be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="make_settings_your_own">Make These Settings Your Own</string>
+    <string name="overwrite_warning">This will overwrite all of your current Default profile settings with</string>
+    <string name="existing_data_lost">Your existing priorities and attended events will be permanently lost.</string>
+    <string name="are_you_sure_continue">Are you sure you want to continue?</string>
+    <string name="overwrite_my_settings">Overwrite My Settings</string>
+    <string name="now_viewing_profile">Now Viewing Profile:</string>
+    <string name="select_profile">Select Profile</string>
+    <string name="copied">Copied</string>
+    <string name="to_your_profile">to Your Profile</string>
+    
+    <!-- Profile Tutorial -->
+    <string name="tap_to_switch_profiles">Tap here to switch between profiles</string>
+    <string name="tap_anywhere_to_close">Tap anywhere to close</string>
+    <string name="done">Done</string>
+    <string name="share_preferences">Share Preferences</string>
+    
+    <!-- Profile Actions -->
+    <string name="choose_action">Choose an action</string>
+    <string name="rename_entry">Rename This Entry</string>
+    <string name="change_color">Change The Color</string>
+    <string name="make_settings_own">Make These Settings My Own</string>
+    <string name="delete_entry">Delete This Entry</string>
+    <string name="rename_profile_message">Enter a new name for this profile</string>
+    <string name="Save">Save</string>
+    <string name="Delete">Delete</string>
+    <string name="Update">Update</string>
+    <string name="profile_renamed">Profile renamed</string>
+    <string name="change_profile_color">Change Profile Color</string>
+    <string name="color_changed">Color changed</string>
+    <string name="make_my_own">Make My Own</string>
+    <string name="make_settings_own_message">This will copy all priorities and attendance from \"{profileName}\" to your Default profile, replacing your current settings.\n\nAre you sure?</string>
+    <string name="settings_copied_to_default">Settings copied to Default</string>
+    <string name="delete_profile_message">Are you sure you want to delete \"{profileName}\"?\n\nThis cannot be undone.</string>
+    <string name="profile_deleted">Profile deleted</string>
+    
+    <!-- Import/Export -->
+    <string name="update_profile">Update Profile</string>
+    <string name="update_existing_profile_message">This will update the existing profile \"{profileName}\" with new data:</string>
 </resources>

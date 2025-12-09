@@ -224,7 +224,9 @@
 "Share Your Preferences" = "Jaa Asetuksesi";
 "Share your Must/Might/Won't priorities and attended events with another user." = "Jaa Pakko/Ehkä/En prioriteettisi ja osallistutut tapahtumat toisen käyttäjän kanssa.";
 "Export Your Profile" = "Vie Profiilisi";
-"Your Default profile will be exported. Recipients can import it and view your preferences." = "Oletusprofiilisi viedään. Vastaanottajat voivat tuoda sen ja tarkastella asetuksiasi.";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Tämä vie Pakko, Ehkä, En ja osallistutut tapahtumat tiedot, jolloin vastaanottajat voivat tuoda nämä tiedot laitteisiinsa.";
+"Name Your Share" = "Nimeä Jakosi";
+"Give this share a name so the recipient can identify you." = "Anna tälle jaolle nimi, jotta vastaanottaja voi tunnistaa sinut.";
 
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.";
@@ -273,4 +275,6 @@
 
 // Share Menu
 "Share Type" = "Jakamistyyppi";
-"Share Preferences & Schedule" = "Jaa Asetukset ja Aikataulu";
+"Share Importable Band/Event Data" = "Jaa Tuotavat Bändi/Tapahtuma Tiedot";
+"Share Band Report" = "Jaa Bändiraportti";
+"Share Event Report" = "Jaa Tapahtumaraportti";
