@@ -31,6 +31,14 @@ class PriorityManager {
     ///   - timestamp: Optional timestamp, defaults to current time
     ///   - completion: Optional completion handler
     func setPriority(for bandName: String, priority: Int, timestamp: Double? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
+        // CRITICAL: Check if current profile is read-only (shared)
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
+            print("❌ Cannot set priority - viewing read-only shared profile: \(activeProfile)")
+            completion(false)
+            return
+        }
+        
         print("🎯 Setting priority for \(bandName) = \(priority) [SQLite]")
         
         // Write to SQLite (thread-safe, no deadlocks!)
@@ -42,19 +50,34 @@ class PriorityManager {
             completion: completion
         )
         
-        // Sync to iCloud (background thread)
+        // Sync to iCloud (background thread) - only if iCloud is enabled
         DispatchQueue.global(qos: .default).async {
             let iCloudHandler = iCloudDataHandler()
-            iCloudHandler.writeAPriorityRecord(bandName: bandName, priority: priority)
+            if iCloudHandler.checkForIcloud() {
+                print("☁️ iCloud enabled - syncing priority for \(bandName)")
+                iCloudHandler.writeAPriorityRecord(bandName: bandName, priority: priority)
+            } else {
+                print("☁️ iCloud disabled - skipping priority sync for \(bandName)")
+            }
         }
         
         print("✅ Priority saved for \(bandName): \(priority) [SQLite]")
     }
     
     /// Gets priority for a band from SQLite (thread-safe, no deadlocks!)
+    /// Also respects shared preference source if one is active
     /// - Parameter bandName: Name of the band
     /// - Returns: Priority value (0 if not found)
     func getPriority(for bandName: String) -> Int {
+        // Check if viewing shared preferences
+        let sharingManager = SharedPreferencesManager.shared
+        let activeSource = sharingManager.getActivePreferenceSource()
+        
+        if activeSource != "Default" {
+            // Use shared preferences
+            return sharingManager.getPriorityFromActiveSource(for: bandName)
+        }
+        
         // Use SQLite - no deadlock risk!
         return sqliteManager.getPriority(for: bandName, eventYear: eventYear)
     }
@@ -68,8 +91,18 @@ class PriorityManager {
     }
     
     /// Gets all bands with their priorities from SQLite (thread-safe!)
+    /// Also respects shared preference source if one is active
     /// - Returns: Dictionary of band names to priority values
     func getAllPriorities() -> [String: Int] {
+        // Check if viewing shared preferences
+        let sharingManager = SharedPreferencesManager.shared
+        let activeSource = sharingManager.getActivePreferenceSource()
+        
+        if activeSource != "Default" {
+            // Use shared preferences
+            return sharingManager.getAllPrioritiesFromActiveSource()
+        }
+        
         // Use SQLite - no deadlock risk!
         return sqliteManager.getAllPriorities(eventYear: eventYear)
     }
@@ -92,6 +125,18 @@ class PriorityManager {
         
         if migrationCompleted {
             print("✅ Priority Core Data to SQLite migration already completed")
+            return
+        }
+        
+        // CRITICAL FIX: Check if Core Data store even exists before trying to access it
+        // On fresh install, there's nothing to migrate and we shouldn't block startup
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
+        
+        if !FileManager.default.fileExists(atPath: coreDataStorePath) {
+            print("ℹ️  No Core Data store found - fresh install, skipping migration")
+            // Mark migration as complete so we don't check again
+            UserDefaults.standard.set(true, forKey: migrationKey)
             return
         }
         

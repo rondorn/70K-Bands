@@ -149,6 +149,10 @@ class CoreDataToSQLiteMigrator {
         let dbPath = "\(documentsPath)/70kbands.sqlite3"
         let db = try Connection(dbPath)
         
+        // CRITICAL: Set busy timeout to handle concurrent writes
+        try db.execute("PRAGMA busy_timeout = 30000")  // 30 seconds
+        print("✅ Migrator: Set busy timeout to 30 seconds")
+        
         // Create tables - they should already exist from SQLiteDataManager init
         print("📊 Verifying SQLite tables exist...")
         
@@ -333,6 +337,9 @@ class CoreDataToSQLiteMigrator {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
         let dbPath = "\(documentsPath)/70kbands.sqlite3"
         let db = try Connection(dbPath)
+        
+        // CRITICAL: Set busy timeout to handle concurrent writes
+        try db.execute("PRAGMA busy_timeout = 30000")  // 30 seconds
         
         // Define priority table
         let userPrioritiesTable = Table("user_priorities")
