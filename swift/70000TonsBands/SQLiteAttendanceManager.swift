@@ -66,8 +66,10 @@ class SQLiteAttendanceManager {
                 
                 if hasProfileName == 0 {
                     print("🔄 SQLiteAttendanceManager: Migrating table to add profileName column")
-                    let nullCountBefore = try db?.scalar("SELECT COUNT(*) FROM user_attendances WHERE profileName IS NULL") as? Int64 ?? 0
-                    print("🔍 [MIGRATION] \(nullCountBefore) records with NULL profileName BEFORE migration")
+                    
+                    // Get total count BEFORE adding column (can't check profileName since column doesn't exist yet)
+                    let totalCountBefore = try db?.scalar("SELECT COUNT(*) FROM user_attendances") as? Int64 ?? 0
+                    print("🔍 [MIGRATION] \(totalCountBefore) total records BEFORE adding profileName column")
                     
                     try db?.execute("ALTER TABLE user_attendances ADD COLUMN profileName TEXT DEFAULT 'Default'")
                     
@@ -78,7 +80,9 @@ class SQLiteAttendanceManager {
                     try db?.execute("UPDATE user_attendances SET profileName = 'Default' WHERE profileName IS NULL")
                     
                     let nullCountAfterUpdate = try db?.scalar("SELECT COUNT(*) FROM user_attendances WHERE profileName IS NULL") as? Int64 ?? 0
+                    let totalCountAfter = try db?.scalar("SELECT COUNT(*) FROM user_attendances") as? Int64 ?? 0
                     print("🔍 [MIGRATION] \(nullCountAfterUpdate) records with NULL profileName AFTER update")
+                    print("🔍 [MIGRATION] \(totalCountAfter) total records AFTER migration")
                     print("✅ SQLiteAttendanceManager: profileName migration complete")
                 }
                 
@@ -92,23 +96,53 @@ class SQLiteAttendanceManager {
                 if !migrationCompleted {
                     print("🔄 SQLiteAttendanceManager: Migrating to new unique constraint (attendanceIndex + profileName)")
                     
-                    // Backup data - Use EXPLICIT column names to avoid ordering issues
-                    let backupQuery = "SELECT id, bandName, eventYear, timeIndex, status, lastModified, attendanceIndex, profileName FROM user_attendances"
+                    // Check which columns exist before backing up
+                    let schema = try db?.scalar("SELECT sql FROM sqlite_master WHERE type='table' AND name='user_attendances'") as? String
+                    let hasAttendanceIndex = schema?.contains("attendanceIndex") ?? false
+                    let hasProfileNameCol = schema?.contains("profileName") ?? false
+                    
+                    print("🔍 [MIGRATION] Attendance schema check: attendanceIndex=\(hasAttendanceIndex), profileName=\(hasProfileNameCol)")
+                    
+                    // Build appropriate SELECT query based on what columns exist
+                    var backupQuery = "SELECT id, bandName, eventYear, timeIndex, status, lastModified"
+                    if hasAttendanceIndex {
+                        backupQuery += ", attendanceIndex"
+                    }
+                    if hasProfileNameCol {
+                        backupQuery += ", profileName"
+                    }
+                    backupQuery += " FROM user_attendances"
+                    
+                    print("🔍 [MIGRATION] Using query: \(backupQuery)")
                     let backupData = try db?.prepare(backupQuery)
                     var allRecords: [[String: Any]] = []
                     
                     if let backupData = backupData {
                         for row in backupData {
                             var record: [String: Any] = [:]
-                            // Now we KNOW the column order because we specified it in SELECT
+                            // Base columns (always present)
                             record["id"] = row[0] as? Int64 ?? 0
                             record["bandName"] = row[1] as? String ?? ""
                             record["eventYear"] = row[2] as? Int ?? 0
                             record["timeIndex"] = row[3] as? Double ?? 0.0
                             record["status"] = row[4] as? Int ?? 0
                             record["lastModified"] = row[5] as? Double
-                            record["attendanceIndex"] = row[6] as? String
-                            record["profileName"] = row[7] as? String ?? "Default"
+                            
+                            // Optional columns (depending on schema version)
+                            var colIndex = 6
+                            if hasAttendanceIndex {
+                                record["attendanceIndex"] = row[colIndex] as? String
+                                colIndex += 1
+                            } else {
+                                record["attendanceIndex"] = nil
+                            }
+                            
+                            if hasProfileNameCol {
+                                record["profileName"] = row[colIndex] as? String ?? "Default"
+                            } else {
+                                record["profileName"] = "Default"
+                            }
+                            
                             allRecords.append(record)
                             
                             // Log first few records for debugging
@@ -190,9 +224,23 @@ class SQLiteAttendanceManager {
                     
                     print("✅ Restored \(backupDataArray.count) attendance records")
                     
+                    // Verify restoration by counting records
+                    let finalCount = try db?.scalar("SELECT COUNT(*) FROM user_attendances") as? Int64 ?? 0
+                    print("🔍 [MIGRATION] Final verification: \(finalCount) attendance records in database")
+                    
+                    if finalCount == backupDataArray.count {
+                        print("✅ [MIGRATION] All \(backupDataArray.count) attendance records successfully restored")
+                    } else {
+                        print("⚠️ [MIGRATION] Mismatch! Expected \(backupDataArray.count) but found \(finalCount)")
+                    }
+                    
                     // Clear backup
                     UserDefaults.standard.removeObject(forKey: migrationKey + "_Backup")
                     UserDefaults.standard.removeObject(forKey: migrationKey + "_NeedsRestore")
+                    
+                    print("✅ [MIGRATION] Attendance table migration COMPLETE - safe for iCloud sync now")
+                } else {
+                    print("⚠️ [MIGRATION] No attendance backup data found in UserDefaults!")
                 }
             }
             

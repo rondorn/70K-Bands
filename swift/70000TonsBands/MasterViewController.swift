@@ -1212,115 +1212,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Shows profile picker UI
     @objc func showProfilePicker() {
-        let sharingManager = SharedPreferencesManager.shared
-        let availableProfiles = sharingManager.getAvailablePreferenceSources()
-        let activeProfile = sharingManager.getActivePreferenceSource()
-        
         print("🔍 [PICKER] Opening profile picker")
-        print("🔍 [PICKER] Available profiles: \(availableProfiles)")
-        print("🔍 [PICKER] Active profile: \(activeProfile)")
-        print("🔍 [PICKER] Will show delete button: \(activeProfile != "Default")")
         
-        guard availableProfiles.count > 1 else {
-            print("ℹ️ No imported profiles available")
-            return
-        }
+        let pickerVC = ProfilePickerViewController(style: UITableView.Style.plain)
+        pickerVC.masterViewController = self
         
-        let alert = UIAlertController(
-            title: "Select Profile",
-            message: "Choose which preferences to view",
-            preferredStyle: .actionSheet
-        )
+        let navController = UINavigationController(rootViewController: pickerVC)
         
-        // Configure popover for iPad
-        if let popover = alert.popoverPresentationController {
-            popover.barButtonItem = navigationItem.titleView as? UIBarButtonItem
-            if let titleView = navigationItem.titleView {
-                popover.sourceView = titleView
-                popover.sourceRect = titleView.bounds
-            }
-        }
+        // Use overCurrentContext to allow transparency
+        navController.modalPresentationStyle = .overCurrentContext
+        navController.modalTransitionStyle = .crossDissolve
         
-        // Add action for each profile
-        for profileKey in availableProfiles {
-            let displayName = sharingManager.getDisplayName(for: profileKey)
-            let color = ProfileColorManager.shared.getColor(for: profileKey)
-            let isActive = (profileKey == activeProfile)
-            
-            var titleText = displayName
-            if isActive {
-                titleText = "✓ \(displayName)"
-            }
-            
-            let action = UIAlertAction(title: titleText, style: .default) { [weak self] _ in
-                print("🔄 [PROFILE] Tapped profile: \(displayName) (\(profileKey)), was active: \(isActive)")
-                
-                if profileKey != activeProfile {
-                    print("🔄 [PROFILE] Switching to profile: \(displayName) (\(profileKey))")
-                    sharingManager.setActivePreferenceSource(profileKey)
-                    
-                    // Force full refresh
-                    self?.clearAllCachesAndRefresh()
-                } else {
-                    print("🔄 [PROFILE] Profile already active, no switch needed")
-                }
-            }
-            
-            // Color the action text
-            action.setValue(color, forKey: "titleTextColor")
-            
-            alert.addAction(action)
-        }
+        // Make the navigation controller's view transparent
+        navController.view.backgroundColor = UIColor.clear
         
-        // Add delete option for non-Default profiles
-        if activeProfile != "Default" {
-            let deleteAction = UIAlertAction(title: "Delete This Profile", style: .destructive) { [weak self] _ in
-                self?.confirmDeleteProfile(userId: activeProfile)
-            }
-            alert.addAction(deleteAction)
-        }
+        // Set preferred size (will be used by the table view)
+        navController.preferredContentSize = CGSize(width: 300, height: 400)
         
-        // Cancel action
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true)
+        present(navController, animated: true)
     }
     
     /// Confirms deletion of a profile
-    private func confirmDeleteProfile(userId: String) {
-        let sharingManager = SharedPreferencesManager.shared
-        let displayName = sharingManager.getDisplayName(for: userId)
-        
-        let alert = UIAlertController(
-            title: "Delete Profile",
-            message: "Delete '\(displayName)'? This cannot be undone.",
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
-            if sharingManager.deleteImportedSet(byUserId: userId) {
-                // Remove color assignment
-                ProfileColorManager.shared.removeColor(for: userId)
-                
-                // Switch back to Default
-                sharingManager.setActivePreferenceSource("Default")
-                
-                // Refresh UI
-                self?.clearAllCachesAndRefresh()
-                
-                // Show confirmation
-                self?.showToast(message: "Profile deleted", duration: 2.0)
-            }
-        })
-        
-        present(alert, animated: true)
-    }
-    
     /// Clears all caches and forces a complete refresh
-    private func clearAllCachesAndRefresh() {
+    func clearAllCachesAndRefresh() {
         print("🔄 [PROFILE] Forcing complete data refresh...")
         
         // Clear all caches
@@ -2105,34 +2019,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print ("Event or Band label: \(listCount) \(eventCounterUnoffical)")
         
-        // CRITICAL FIX: Calculate eventCounterUnoffical from current Core Data
-        // Since we moved to Core Data, the old loops that counted unofficial events are bypassed
+        // CRITICAL FIX: Calculate eventCounterUnoffical from current SQLite data
+        // Since we moved to SQLite, the old loops that counted unofficial events are bypassed
         // We need to count unofficial events directly from the current filtered data
         // FULLY ASYNC: NO blocking of main thread to prevent deadlocks
-        eventCounterUnoffical = 0  // Start with 0, will update asynchronously
-        let coreDataManager = CoreDataManager.shared
-        let currentYear = Int32(eventYear)
+        // DON'T reset eventCounterUnoffical to 0 - use existing value for synchronous display
+        let currentYear = eventYear
         
         print("📊 [ASYNC_COUNT] Starting async event count for year \(currentYear)")
-        print("📊 [ASYNC_COUNT] Display will update briefly when count completes")
+        print("📊 [ASYNC_COUNT] Using current eventCounterUnoffical=\(eventCounterUnoffical) for immediate display")
+        print("📊 [ASYNC_COUNT] Will update when async count completes")
         
-        // Perform Core Data fetch fully asynchronously - NO BLOCKING
+        // Perform SQLite fetch fully asynchronously - NO BLOCKING
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            print("📊 [ASYNC_COUNT] Fetching events on background thread...")
-            let allEvents = coreDataManager.fetchEvents(forYear: currentYear)
-            print("📊 [ASYNC_COUNT] Fetched \(allEvents.count) events")
+            print("📊 [ASYNC_COUNT] Fetching events from SQLite on background thread...")
+            let allEvents = DataManager.shared.fetchEvents(forYear: currentYear)
+            print("📊 [ASYNC_COUNT] Fetched \(allEvents.count) events from SQLite")
             
             var count = 0
+            var eventTypes: Set<String> = []
             for event in allEvents {
-                let eventType = event.eventType ?? ""
+                let eventType = event.eventType
+                eventTypes.insert(eventType!)
                 if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
                     count += 1
                 }
             }
             
-            print("📊 [ASYNC_COUNT] Count completed: \(count) unofficial events")
+            print("📊 [ASYNC_COUNT] Event types found: \(Array(eventTypes).sorted())")
+            print("📊 [ASYNC_COUNT] Looking for: '\(unofficalEventType)' or '\(unofficalEventTypeOld)'")
+            print("📊 [ASYNC_COUNT] Count completed: \(count) unofficial events out of \(allEvents.count) total")
             
             // Update the counter and refresh display on main thread
             DispatchQueue.main.async {
@@ -2154,14 +2072,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
                     let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
                     
+                    print("📊 [ASYNC_LOGIC] hasEvents=\(hasEvents), hasBands=\(hasBands), allEventsAreUnofficial=\(allEventsAreUnofficial)")
+                    print("📊 [ASYNC_LOGIC] listCount=\(listCount), bandCount=\(bandCount), eventCount=\(eventCount), unofficialCount=\(eventCounterUnoffical)")
+                    print("📊 [ASYNC_LOGIC] showScheduleView=\(getShowScheduleView()), unofficialCountToSubtract=\(unofficialCountToSubtract)")
+                    
                     if !getShowScheduleView() || (!hasEvents && hasBands) || (hasEvents && hasBands && allEventsAreUnofficial) {
                         // Show bands
                         labeleCounter = listCount - unofficialCountToSubtract
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS - count=\(labeleCounter)")
                     } else {
                         // Show events
                         labeleCounter = listCount
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS - count=\(labeleCounter)")
                     }
                     
                     let currentYearSetting = getScheduleUrl()
@@ -2172,18 +2096,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         titleText = String(labeleCounter) + lableCounterString
                     }
                     
-                    // Apply profile color
-                    let profileColor = self.getColorForCurrentProfile()
-                    let attributedTitle = NSAttributedString(
-                        string: titleText,
-                        attributes: [
-                            .foregroundColor: profileColor,
-                            .font: UIFont.boldSystemFont(ofSize: 17)
-                        ]
-                    )
+                    // Set the title on the IBOutlet titleButton
+                    self.titleButton.title = titleText
+                    print("🎯 [ASYNC_UPDATE] titleButton.title set to: '\(titleText)'")
                     
-                    if let titleView = self.navigationItem.titleView as? UILabel {
-                        titleView.attributedText = attributedTitle
+                    // Update or create custom colored titleView for visual distinction between profiles
+                    let profileColor = self.getColorForCurrentProfile()
+                    
+                    if let existingLabel = self.navigationItem.titleView as? UILabel {
+                        // Reuse existing label
+                        existingLabel.text = titleText
+                        existingLabel.textColor = profileColor
+                        existingLabel.sizeToFit()
+                    } else {
+                        // Create new label
+                        let titleLabel = UILabel()
+                        titleLabel.text = titleText
+                        titleLabel.textColor = profileColor
+                        titleLabel.font = UIFont.boldSystemFont(ofSize: 17)
+                        titleLabel.textAlignment = .center
+                        titleLabel.isUserInteractionEnabled = true
+                        
+                        // Set wider frame to prevent truncation
+                        titleLabel.frame = CGRect(x: 0, y: 0, width: 300, height: 44)
+                        titleLabel.adjustsFontSizeToFitWidth = false
+                        titleLabel.numberOfLines = 1
+                        
+                        // Add tap gesture for profile picker
+                        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.showProfilePicker))
+                        titleLabel.addGestureRecognizer(tapGesture)
+                        
+                        self.navigationItem.titleView = titleLabel
                     }
                     
                     print("📊 [ASYNC_COUNT] Display updated: \(titleText)")
@@ -2228,12 +2171,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
         
         // DEBUG: Show the logic calculations
-        print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents) (eventCount=\(eventCount))")
-        print("📊 [LOGIC_DEBUG] getShowUnofficalEvents: \(getShowUnofficalEvents())")
+        print("📊 [LOGIC_DEBUG] ==================== SYNCHRONOUS DISPLAY LOGIC ====================")
+        print("📊 [LOGIC_DEBUG] listCount: \(listCount)")
+        print("📊 [LOGIC_DEBUG] bandCount: \(bandCount)")
+        print("📊 [LOGIC_DEBUG] eventCount: \(eventCount)")
+        print("📊 [LOGIC_DEBUG] eventCounterUnoffical: \(eventCounterUnoffical) ⚠️ (JUST RESET TO 0)")
+        print("📊 [LOGIC_DEBUG] getShowUnofficalEvents(): \(getShowUnofficalEvents())")
         print("📊 [LOGIC_DEBUG] unofficialCountToSubtract: \(unofficialCountToSubtract)")
-        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (bandCount=\(bandCount), listCount-unofficial=\(listCount - unofficialCountToSubtract))")
-        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
-        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents) (eventCount=\(eventCount), eventCounterUnoffical=\(eventCounterUnoffical))")
+        print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents)")
+        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (calc: bandCount > 0 || (listCount - unofficial) > 0)")
+        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial) (calc: eventCount > 0 && eventCounterUnoffical == eventCount)")
+        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents) (calc: eventCount > 0 && eventCounterUnoffical < eventCount)")
+        print("📊 [LOGIC_DEBUG] ==================================================================")
         
         // CRITICAL FIX: Check view mode first - if "Show Bands Only", always show "Bands"
         let showScheduleView = getShowScheduleView()
@@ -2320,25 +2269,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             titleText = String(labeleCounter) + lableCounterString
         }
         
-        // Create attributed string with profile color
-        let profileColor = getColorForCurrentProfile()
-        let attributedTitle = NSAttributedString(
-            string: titleText,
-            attributes: [
-                .foregroundColor: profileColor,
-                .font: UIFont.boldSystemFont(ofSize: 17)
-            ]
-        )
+        print("🎯 [FINAL_DISPLAY] Setting title to: '\(titleText)'")
+        print("🎯 [FINAL_DISPLAY] labeleCounter=\(labeleCounter), lableCounterString='\(lableCounterString)'")
         
-        // Apply to navigation bar title view
-        if let titleView = navigationItem.titleView as? UILabel {
-            titleView.attributedText = attributedTitle
+        // Set the title on the IBOutlet titleButton
+        titleButton.title = titleText
+        print("🎯 [FINAL_DISPLAY] titleButton.title is now: '\(titleButton.title ?? "nil")'")
+        
+        // Update or create custom colored titleView for visual distinction between profiles
+        let profileColor = getColorForCurrentProfile()
+        
+        if let existingLabel = navigationItem.titleView as? UILabel {
+            // Reuse existing label
+            existingLabel.text = titleText
+            existingLabel.textColor = profileColor
+            existingLabel.sizeToFit()
         } else {
-            // Create custom title view if not exists
+            // Create new label
             let titleLabel = UILabel()
-            titleLabel.attributedText = attributedTitle
+            titleLabel.text = titleText
+            titleLabel.textColor = profileColor
+            titleLabel.font = UIFont.boldSystemFont(ofSize: 17)
             titleLabel.textAlignment = .center
             titleLabel.isUserInteractionEnabled = true
+            
+            // Set wider frame to prevent truncation
+            titleLabel.frame = CGRect(x: 0, y: 0, width: 300, height: 44)
+            titleLabel.adjustsFontSizeToFitWidth = false
+            titleLabel.numberOfLines = 1
             
             // Add tap gesture for profile picker
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showProfilePicker))

@@ -83,10 +83,11 @@ class SQLiteProfileManager {
                 let existing = self.profilesTable.filter(self.userIdColumn == profile.userId)
                 
                 if try db.scalar(existing.count) > 0 {
-                    // Update
+                    // Update existing profile
+                    // CRITICAL: Do NOT update the color - once assigned, it should never change
                     try db.run(existing.update(
                         self.labelColumn <- profile.label,
-                        self.colorColumn <- profile.color,
+                        // colorColumn is intentionally NOT updated to preserve original color
                         self.importDateColumn <- profile.importDate,
                         self.shareDateColumn <- profile.shareDate,
                         self.eventYearColumn <- profile.eventYear,
@@ -94,9 +95,9 @@ class SQLiteProfileManager {
                         self.attendanceCountColumn <- profile.attendanceCount,
                         self.isReadOnlyColumn <- profile.isReadOnly
                     ))
-                    print("✅ SQLiteProfileManager: Updated profile: \(profile.label)")
+                    print("✅ SQLiteProfileManager: Updated profile: \(profile.label) (color preserved)")
                 } else {
-                    // Insert
+                    // Insert new profile with assigned color
                     try db.run(self.profilesTable.insert(
                         self.userIdColumn <- profile.userId,
                         self.labelColumn <- profile.label,
@@ -108,7 +109,7 @@ class SQLiteProfileManager {
                         self.attendanceCountColumn <- profile.attendanceCount,
                         self.isReadOnlyColumn <- profile.isReadOnly
                     ))
-                    print("✅ SQLiteProfileManager: Inserted profile: \(profile.label)")
+                    print("✅ SQLiteProfileManager: Inserted profile: \(profile.label) with color: \(profile.color)")
                 }
                 
                 success = true
@@ -320,6 +321,34 @@ class SQLiteProfileManager {
         return success
     }
     
+    /// Updates the color for a profile (for future user customization)
+    /// - Parameters:
+    ///   - userId: The user ID
+    ///   - newColorHex: The new color in hex format (e.g., "#FF0000")
+    /// - Returns: true if successful
+    func updateColor(userId: String, newColorHex: String) -> Bool {
+        var success = false
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        serialQueue.async { [weak self] in
+            defer { semaphore.signal() }
+            
+            guard let self = self, let db = self.db else { return }
+            
+            do {
+                let profile = self.profilesTable.filter(self.userIdColumn == userId)
+                try db.run(profile.update(self.colorColumn <- newColorHex))
+                print("✅ SQLiteProfileManager: Updated color for \(userId) to: \(newColorHex)")
+                success = true
+            } catch {
+                print("❌ SQLiteProfileManager: Failed to update color: \(error)")
+            }
+        }
+        
+        semaphore.wait()
+        return success
+    }
+    
     /// Checks if a profile is read-only (i.e., a shared profile)
     /// - Parameter userId: The user ID to check
     /// - Returns: true if read-only, false otherwise
@@ -335,8 +364,8 @@ class SQLiteProfileManager {
 
 struct ProfileMetadata: Codable {
     let userId: String          // Immutable - Firebase UserID or "Default"
-    let label: String           // Mutable - Display name
-    let color: String           // Hex color (e.g., "#FF0000")
+    let label: String           // Mutable - Display name (user can rename)
+    let color: String           // Hex color (e.g., "#FF0000") - Assigned once, not changed on updates
     let importDate: Date
     let shareDate: Date
     let eventYear: Int64

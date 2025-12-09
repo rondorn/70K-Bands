@@ -60,8 +60,27 @@ class SQLitePriorityManager {
                     print("🚨 [MIGRATION] Current schema: \(schema ?? "unknown")")
                     print("🔄 [MIGRATION] Must drop and recreate table with correct constraint...")
                     
-                    // Backup all data
-                    let backupData = try db?.prepare("SELECT bandName, eventYear, priority, lastModified, deviceUID, profileName FROM user_priorities")
+                    // Check which columns exist in the old schema
+                    let hasProfileNameColumn = schema?.contains("profileName") ?? false
+                    let hasDeviceUIDColumn = schema?.contains("deviceUID") ?? false
+                    
+                    print("🔄 [MIGRATION] Schema check: profileName=\(hasProfileNameColumn), deviceUID=\(hasDeviceUIDColumn)")
+                    
+                    // Backup all data - use appropriate SELECT based on what columns exist
+                    let selectSQL: String
+                    if hasProfileNameColumn && hasDeviceUIDColumn {
+                        selectSQL = "SELECT bandName, eventYear, priority, lastModified, deviceUID, profileName FROM user_priorities"
+                    } else if hasProfileNameColumn {
+                        selectSQL = "SELECT bandName, eventYear, priority, lastModified, profileName FROM user_priorities"
+                    } else if hasDeviceUIDColumn {
+                        selectSQL = "SELECT bandName, eventYear, priority, lastModified, deviceUID FROM user_priorities"
+                    } else {
+                        // Very old schema - only has basic columns
+                        selectSQL = "SELECT bandName, eventYear, priority, lastModified FROM user_priorities"
+                    }
+                    
+                    print("🔄 [MIGRATION] Using SQL: \(selectSQL)")
+                    let backupData = try db?.prepare(selectSQL)
                     var allRecords: [[String: Any]] = []
                     
                     if let backupData = backupData {
@@ -71,8 +90,23 @@ class SQLitePriorityManager {
                             record["eventYear"] = row[1] as? Int ?? 0
                             record["priority"] = row[2] as? Int ?? 0
                             record["lastModified"] = row[3] as? Double
-                            record["deviceUID"] = row[4] as? String
-                            record["profileName"] = row[5] as? String ?? "Default"
+                            
+                            // Handle different schema combinations
+                            if hasProfileNameColumn && hasDeviceUIDColumn {
+                                record["deviceUID"] = row[4] as? String
+                                record["profileName"] = row[5] as? String ?? "Default"
+                            } else if hasProfileNameColumn {
+                                record["deviceUID"] = nil
+                                record["profileName"] = row[4] as? String ?? "Default"
+                            } else if hasDeviceUIDColumn {
+                                record["deviceUID"] = row[4] as? String
+                                record["profileName"] = "Default"
+                            } else {
+                                // Very old schema - no deviceUID or profileName
+                                record["deviceUID"] = nil
+                                record["profileName"] = "Default"
+                            }
+                            
                             allRecords.append(record)
                         }
                     }
@@ -138,9 +172,23 @@ class SQLitePriorityManager {
                     
                     print("✅ [MIGRATION] Restored \(backupDataArray.count) priority records")
                     
-                    // Clear backup
+                    // Verify restoration by counting records
+                    let finalCount = try db?.scalar("SELECT COUNT(*) FROM user_priorities") as? Int64 ?? 0
+                    print("🔍 [MIGRATION] Final verification: \(finalCount) priorities in database")
+                    
+                    if finalCount == backupDataArray.count {
+                        print("✅ [MIGRATION] All \(backupDataArray.count) records successfully restored")
+                    } else {
+                        print("⚠️ [MIGRATION] Mismatch! Expected \(backupDataArray.count) but found \(finalCount)")
+                    }
+                    
+                    // Clear backup and flags
                     UserDefaults.standard.removeObject(forKey: "PriorityUniqueConstraintMigration_Backup")
                     UserDefaults.standard.removeObject(forKey: "PriorityUniqueConstraintMigration_Started")
+                    
+                    print("✅ [MIGRATION] Priority table migration COMPLETE - safe for iCloud sync now")
+                } else {
+                    print("⚠️ [MIGRATION] No backup data found in UserDefaults!")
                 }
             }
             
