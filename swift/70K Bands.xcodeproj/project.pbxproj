@@ -47,6 +47,21 @@
 		112913862EE618BE008472A3 /* SQLiteiCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913792EE618BE008472A3 /* SQLiteiCloudSync.swift */; };
 		112913872EE618BE008472A3 /* CoreDataToSQLiteMigrationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913762EE618BE008472A3 /* CoreDataToSQLiteMigrationHelper.swift */; };
 		112913892EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129137A2EE618BE008472A3 /* SQLitePriorityManager.swift */; };
+		1129138D2EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */; };
+		1129138E2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
+		1129138F2EE74F7F008472A3 /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
+		112913902EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */; };
+		112913912EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
+		112913922EE74F7F008472A3 /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
+		112913932EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */; };
+		112913942EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
+		112913952EE74F7F008472A3 /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
+		112913972EE77518008472A3 /* ProfileColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913962EE77518008472A3 /* ProfileColorManager.swift */; };
+		112913982EE77518008472A3 /* ProfileColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913962EE77518008472A3 /* ProfileColorManager.swift */; };
+		112913992EE77518008472A3 /* ProfileColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913962EE77518008472A3 /* ProfileColorManager.swift */; };
+		1129139B2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */; };
+		1129139C2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */; };
+		1129139D2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */; };
 		1145F0D52E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
 		1145F0D62E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
 		1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
@@ -356,6 +371,11 @@
 		112913782EE618BE008472A3 /* SQLiteAttendanceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteAttendanceManager.swift; sourceTree = "<group>"; };
 		112913792EE618BE008472A3 /* SQLiteiCloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteiCloudSync.swift; sourceTree = "<group>"; };
 		1129137A2EE618BE008472A3 /* SQLitePriorityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLitePriorityManager.swift; sourceTree = "<group>"; };
+		1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedPreferencesImportHandler.swift; sourceTree = "<group>"; };
+		1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedPreferencesManager.swift; sourceTree = "<group>"; };
+		1129138C2EE74F7F008472A3 /* SharingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingView.swift; sourceTree = "<group>"; };
+		112913962EE77518008472A3 /* ProfileColorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileColorManager.swift; sourceTree = "<group>"; };
+		1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteProfileManager.swift; sourceTree = "<group>"; };
 		113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = 70000TonsBands.entitlements; sourceTree = "<group>"; };
 		1145F0D42E69ED1A002B7511 /* CellDataCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CellDataCache.swift; sourceTree = "<group>"; };
 		1145F0D82E6A18C8002B7511 /* CoreDataPreloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataPreloadManager.swift; sourceTree = "<group>"; };
@@ -578,6 +598,11 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */,
+				112913962EE77518008472A3 /* ProfileColorManager.swift */,
+				1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */,
+				1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */,
+				1129138C2EE74F7F008472A3 /* SharingView.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
@@ -971,7 +996,6 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
@@ -990,7 +1014,6 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
@@ -1019,7 +1042,6 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
@@ -1038,7 +1060,6 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
@@ -1067,7 +1088,6 @@
 				"${BUILT_PRODUCTS_DIR}/AWSCore/AWSCore.framework",
 				"${BUILT_PRODUCTS_DIR}/AWSSNS/AWSSNS.framework",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
-				"${BUILT_PRODUCTS_DIR}/FirebaseAppCheckInterop/FirebaseAppCheckInterop.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
@@ -1086,7 +1106,6 @@
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AWSSNS.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseAppCheckInterop.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
@@ -1213,6 +1232,7 @@
 				11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */,
 				110E08522AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
+				1129139C2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
 				1147D6D92E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
@@ -1233,8 +1253,12 @@
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
+				112913972EE77518008472A3 /* ProfileColorManager.swift in Sources */,
 				1145F0D92E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */,
+				112913932EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */,
+				112913942EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */,
+				112913952EE74F7F008472A3 /* SharingView.swift in Sources */,
 				11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */,
 				11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */,
 				1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */,
@@ -1295,6 +1319,7 @@
 				1155E3AD1A8B121000D51ED9 /* urlStorage.swift in Sources */,
 				110E08532AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
+				1129139D2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
 				1175C93B2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
 				1147D6DA2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
@@ -1315,8 +1340,12 @@
 				11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */,
 				1155E3AF1A8B121000D51ED9 /* webViewController.swift in Sources */,
+				112913982EE77518008472A3 /* ProfileColorManager.swift in Sources */,
 				1145F0DA2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1155E3B31A8B126500D51ED9 /* imageHandler.swift in Sources */,
+				1129138D2EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */,
+				1129138E2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */,
+				1129138F2EE74F7F008472A3 /* SharingView.swift in Sources */,
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
@@ -1377,6 +1406,7 @@
 				1172EE0B2E5A1C4D006E3596 /* dataHandler.swift in Sources */,
 				1172EE0C2E5A1C4D006E3596 /* DPDKeyboardListener.swift in Sources */,
 				1172EE0D2E5A1C4D006E3596 /* DPDConstants.swift in Sources */,
+				1129139B2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1172EE0E2E5A1C4D006E3596 /* ShowAttendedReport.swift in Sources */,
 				1172EE0F2E5A1C4D006E3596 /* _0000TonsBands.xcdatamodeld in Sources */,
 				1147D6DB2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
@@ -1397,8 +1427,12 @@
 				1172EE162E5A1C4D006E3596 /* PreferencesView.swift in Sources */,
 				1172EE172E5A1C4D006E3596 /* AppDelegate.swift in Sources */,
 				1172EE182E5A1C4D006E3596 /* Reachability.swift in Sources */,
+				112913992EE77518008472A3 /* ProfileColorManager.swift in Sources */,
 				1145F0DB2E6A18C8002B7511 /* CoreDataPreloadManager.swift in Sources */,
 				1172EE192E5A1C4D006E3596 /* bandNamesHandler.swift in Sources */,
+				112913902EE74F7F008472A3 /* SharedPreferencesManager.swift in Sources */,
+				112913912EE74F7F008472A3 /* SharedPreferencesImportHandler.swift in Sources */,
+				112913922EE74F7F008472A3 /* SharingView.swift in Sources */,
 				1172EE1A2E5A1C4D006E3596 /* mainListController.swift in Sources */,
 				1172EE1B2E5A1C4D006E3596 /* localNotificationHandler.swift in Sources */,
 				1172EE1C2E5A1C4D006E3596 /* urlStorage.swift in Sources */,

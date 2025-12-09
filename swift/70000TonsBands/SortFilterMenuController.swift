@@ -25,6 +25,8 @@ func createrFilterMenu( controller: MasterViewController){
         "Clear All Filters"
     ]
     
+    // NOTE: Profile selection moved to title button tap (not in filter menu anymore)
+    
     // Determine if we should show schedule-related filters
     let hasScheduledEvents = (eventCount > 0 && eventCounterUnoffical != eventCount)
     let showScheduleView = getShowScheduleView()
@@ -725,4 +727,6 @@ func setupViewModeMenuChoices(controller: MasterViewController, item: String, ce
         }
     }
 }
+
+// MARK: - Shared Preferences (now handled in title button tap)
 

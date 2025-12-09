@@ -94,6 +94,11 @@ class SQLiteDataManager: DataManagerProtocol {
             
             db = try Connection(dbPath)
             
+            // CRITICAL: Set busy timeout to handle concurrent writes
+            // This prevents "database is locked" errors when multiple managers access the same DB
+            try db?.execute("PRAGMA busy_timeout = 30000")  // 30 seconds
+            print("✅ SQLiteDataManager: Set busy timeout to 30 seconds")
+            
             // Enable WAL mode for better concurrency
             try db?.execute("PRAGMA journal_mode=WAL")
             

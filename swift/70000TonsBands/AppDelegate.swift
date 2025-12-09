@@ -1225,6 +1225,52 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
         }
     }
+    
+    // MARK: - Shared Preferences Import Support
+    
+    /// Handles opening .70kshare files (iOS 9+)
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
+        
+        // Check if this is a shared preferences file
+        if url.pathExtension == "70kshare" {
+            // Handle the import
+            return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+        }
+        
+        return false
+    }
+    
+    /// Legacy method for opening URLs (iOS 4.2-9.0, still called by some apps)
+    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
+        print("📥 AppDelegate: Opening URL (Legacy): \(url)")
+        
+        // Check if this is a shared preferences file
+        if url.pathExtension == "70kshare" {
+            // Handle the import
+            return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+        }
+        
+        return false
+    }
+    
+    /// Handle opening documents (alternative entry point)
+    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        print("📥 AppDelegate: willFinishLaunchingWithOptions")
+        
+        // Check if launched with a URL
+        if let url = launchOptions?[.url] as? URL {
+            print("📥 Launched with URL: \(url)")
+            if url.pathExtension == "70kshare" {
+                // Delay handling to ensure UI is ready
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    _ = SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+                }
+            }
+        }
+        
+        return true
+    }
 
 }
 

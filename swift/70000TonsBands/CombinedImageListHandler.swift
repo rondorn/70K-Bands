@@ -127,21 +127,30 @@ class CombinedImageListHandler {
                 }
             }
             
-            // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
-            // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
-            print("📋 Fetching events directly from Core Data (including those without bands)...")
-            let coreDataManager = CoreDataManager.shared
-            let context = coreDataManager.persistentContainer.newBackgroundContext()
+            // CRITICAL FIX: Check if Core Data store exists before accessing it
+            // On fresh installs, we should use SQLite only
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+            let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
+            let coreDataExists = FileManager.default.fileExists(atPath: coreDataStorePath)
             
-            let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-            // Filter for user's selected year events (not calendar year)
-            let currentYear = Int32(eventYear)
-            eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
-            print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+            print("📋 [COREDATA_CHECK] Core Data store exists: \(coreDataExists)")
             
-            do {
-                let allEvents = try context.fetch(eventRequest)
-                print("📋 Found \(allEvents.count) events in Core Data for year \(currentYear)")
+            if coreDataExists {
+                // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
+                // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
+                print("📋 Fetching events directly from Core Data (including those without bands)...")
+                let coreDataManager = CoreDataManager.shared
+                let context = coreDataManager.persistentContainer.newBackgroundContext()
+                
+                let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
+                // Filter for user's selected year events (not calendar year)
+                let currentYear = Int32(eventYear)
+                eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+                print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+                
+                do {
+                    let allEvents = try context.fetch(eventRequest)
+                    print("📋 Found \(allEvents.count) events in Core Data for year \(currentYear)")
                 
                 for event in allEvents {
                     // Get the event name from the identifier (which contains the band/event name)
@@ -176,8 +185,12 @@ class CombinedImageListHandler {
                         }
                     }
                 }
-            } catch {
-                print("❌ Error fetching events from Core Data: \(error)")
+                } catch {
+                    print("❌ Error fetching events from Core Data: \(error)")
+                }
+            } else {
+                print("📋 [COREDATA_SKIP] Skipping Core Data event fetch - no Core Data store (fresh install)")
+                print("📋 [COREDATA_SKIP] Event images will be fetched from SQLite schedule data")
             }
             
             // Update the combined list
@@ -318,21 +331,30 @@ class CombinedImageListHandler {
                 }
             }
             
-            // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
-            // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
-            print("📋 [ASYNC] Fetching events directly from Core Data (including those without bands)...")
-            let coreDataManager = CoreDataManager.shared
-            let context = coreDataManager.persistentContainer.newBackgroundContext()
+            // CRITICAL FIX: Check if Core Data store exists before accessing it
+            // On fresh installs, we should use SQLite only
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+            let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
+            let coreDataExists = FileManager.default.fileExists(atPath: coreDataStorePath)
             
-            let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-            // Filter for user's selected year events (not calendar year)
-            let currentYear = Int32(eventYear)
-            eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
-            print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+            print("📋 [ASYNC][COREDATA_CHECK] Core Data store exists: \(coreDataExists)")
             
-            do {
-                let allEvents = try context.fetch(eventRequest)
-                print("📋 [ASYNC] Found \(allEvents.count) events in Core Data for year \(currentYear)")
+            if coreDataExists {
+                // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
+                // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
+                print("📋 [ASYNC] Fetching events directly from Core Data (including those without bands)...")
+                let coreDataManager = CoreDataManager.shared
+                let context = coreDataManager.persistentContainer.newBackgroundContext()
+                
+                let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
+                // Filter for user's selected year events (not calendar year)
+                let currentYear = Int32(eventYear)
+                eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+                print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+                
+                do {
+                    let allEvents = try context.fetch(eventRequest)
+                    print("📋 [ASYNC] Found \(allEvents.count) events in Core Data for year \(currentYear)")
                 
                 for event in allEvents {
                     // Get the event name from the identifier (which contains the band/event name)
@@ -359,8 +381,12 @@ class CombinedImageListHandler {
                         }
                     }
                 }
-            } catch {
-                print("❌ [ASYNC] Error fetching events from Core Data: \(error)")
+                } catch {
+                    print("❌ [ASYNC] Error fetching events from Core Data: \(error)")
+                }
+            } else {
+                print("📋 [ASYNC][COREDATA_SKIP] Skipping Core Data event fetch - no Core Data store (fresh install)")
+                print("📋 [ASYNC][COREDATA_SKIP] Event images will be fetched from SQLite schedule data")
             }
             
             // Update the list and save it (on main queue for thread safety)

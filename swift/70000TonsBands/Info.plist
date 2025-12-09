@@ -89,5 +89,76 @@
 		<key>NSUbiquitousContainerSupportedFolderLevels</key>
 		<string>One</string>
 	</dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.rdorn.70kbands.share</string>
+			</array>
+			<key>LSSupportsOpeningDocumentsInPlace</key>
+			<true/>
+		</dict>
+	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.70kbands.share</string>
+			<key>UTTypeDescription</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>70kshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-70kbands-share</string>
+					<string>application/json</string>
+				</array>
+			</dict>
+			<key>UTTypeIconFiles</key>
+			<array/>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.70kbands.share</string>
+			<key>UTTypeDescription</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>70kshare</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

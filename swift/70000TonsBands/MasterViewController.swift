@@ -179,8 +179,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎮 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🎮 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         
+        // Configure CellDataCache dependencies for performance
+        print("🔧 [CACHE_CONFIG] Configuring CellDataCache dependencies")
+        CellDataCache.shared.configure(
+            schedule: schedule,
+            dataHandle: dataHandle,
+            priorityManager: priorityManager,
+            attendedHandle: attendedHandle
+        )
+        print("🔧 [CACHE_CONFIG] CellDataCache configured successfully")
+        
         // Set initial title to app name before data loads
-        titleButton.title = FestivalConfig.current.appName
+        print("🔧 [INIT_DEBUG] About to call updateTitleForActivePreferenceSource()")
+        updateTitleForActivePreferenceSource()
+        print("🔧 [INIT_DEBUG] updateTitleForActivePreferenceSource() completed")
         
         bandSearch.placeholder = NSLocalizedString("SearchCriteria", comment: "")
         //bandSearch.backgroundImage = UIImage(named: "70KSearch")!
@@ -659,6 +671,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
       }
     }
     
+    /// Helper to show toast message at center of screen
+    func showToast(message: String, duration: TimeInterval = 2.0) {
+        DispatchQueue.main.async {
+            let visibleLocation = CGRect(origin: self.tableView.contentOffset, size: self.tableView.bounds.size)
+            ToastMessages(message).show(self, cellLocation: visibleLocation, placeHigh: true)
+        }
+    }
+    
     @objc func showToastMessage(_ notification: NSNotification) {
         guard let message = notification.object as? String else { return }
         
@@ -1110,6 +1130,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎛️ [PREFERENCES_SYNC] ⚠️ viewWillAppear called - this might override user preference changes!")
         print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents at viewWillAppear start: \(getHideExpireScheduleData())")
         
+        // Register for preference source change notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onPreferenceSourceChanged(_:)),
+            name: Notification.Name("PreferenceSourceChanged"),
+            object: nil
+        )
+        
+        // Update title in case source changed
+        updateTitleForActivePreferenceSource()
+        
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
         backItem.title = "Back"
@@ -1168,9 +1199,141 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     @IBAction func titleButtonAction(_ sender: AnyObject) {
-        self.tableView.contentOffset = CGPoint(x: 0, y: 0 - self.tableView.contentInset.top);
-        sender.setImage(chevronRight, for: UIControl.State.normal)
+        // Show profile picker instead of scrolling to top
+        showProfilePicker()
+    }
+    
+    /// Gets the color for the currently active profile
+    private func getColorForCurrentProfile() -> UIColor {
+        let sharingManager = SharedPreferencesManager.shared
+        let activeProfile = sharingManager.getActivePreferenceSource()
+        return ProfileColorManager.shared.getColor(for: activeProfile)
+    }
+    
+    /// Shows profile picker UI
+    @objc func showProfilePicker() {
+        let sharingManager = SharedPreferencesManager.shared
+        let availableProfiles = sharingManager.getAvailablePreferenceSources()
+        let activeProfile = sharingManager.getActivePreferenceSource()
         
+        print("🔍 [PICKER] Opening profile picker")
+        print("🔍 [PICKER] Available profiles: \(availableProfiles)")
+        print("🔍 [PICKER] Active profile: \(activeProfile)")
+        print("🔍 [PICKER] Will show delete button: \(activeProfile != "Default")")
+        
+        guard availableProfiles.count > 1 else {
+            print("ℹ️ No imported profiles available")
+            return
+        }
+        
+        let alert = UIAlertController(
+            title: "Select Profile",
+            message: "Choose which preferences to view",
+            preferredStyle: .actionSheet
+        )
+        
+        // Configure popover for iPad
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.titleView as? UIBarButtonItem
+            if let titleView = navigationItem.titleView {
+                popover.sourceView = titleView
+                popover.sourceRect = titleView.bounds
+            }
+        }
+        
+        // Add action for each profile
+        for profileKey in availableProfiles {
+            let displayName = sharingManager.getDisplayName(for: profileKey)
+            let color = ProfileColorManager.shared.getColor(for: profileKey)
+            let isActive = (profileKey == activeProfile)
+            
+            var titleText = displayName
+            if isActive {
+                titleText = "✓ \(displayName)"
+            }
+            
+            let action = UIAlertAction(title: titleText, style: .default) { [weak self] _ in
+                print("🔄 [PROFILE] Tapped profile: \(displayName) (\(profileKey)), was active: \(isActive)")
+                
+                if profileKey != activeProfile {
+                    print("🔄 [PROFILE] Switching to profile: \(displayName) (\(profileKey))")
+                    sharingManager.setActivePreferenceSource(profileKey)
+                    
+                    // Force full refresh
+                    self?.clearAllCachesAndRefresh()
+                } else {
+                    print("🔄 [PROFILE] Profile already active, no switch needed")
+                }
+            }
+            
+            // Color the action text
+            action.setValue(color, forKey: "titleTextColor")
+            
+            alert.addAction(action)
+        }
+        
+        // Add delete option for non-Default profiles
+        if activeProfile != "Default" {
+            let deleteAction = UIAlertAction(title: "Delete This Profile", style: .destructive) { [weak self] _ in
+                self?.confirmDeleteProfile(userId: activeProfile)
+            }
+            alert.addAction(deleteAction)
+        }
+        
+        // Cancel action
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
+    }
+    
+    /// Confirms deletion of a profile
+    private func confirmDeleteProfile(userId: String) {
+        let sharingManager = SharedPreferencesManager.shared
+        let displayName = sharingManager.getDisplayName(for: userId)
+        
+        let alert = UIAlertController(
+            title: "Delete Profile",
+            message: "Delete '\(displayName)'? This cannot be undone.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            if sharingManager.deleteImportedSet(byUserId: userId) {
+                // Remove color assignment
+                ProfileColorManager.shared.removeColor(for: userId)
+                
+                // Switch back to Default
+                sharingManager.setActivePreferenceSource("Default")
+                
+                // Refresh UI
+                self?.clearAllCachesAndRefresh()
+                
+                // Show confirmation
+                self?.showToast(message: "Profile deleted", duration: 2.0)
+            }
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    /// Clears all caches and forces a complete refresh
+    private func clearAllCachesAndRefresh() {
+        print("🔄 [PROFILE] Forcing complete data refresh...")
+        
+        // Clear all caches
+        bands.removeAll()
+        bandsByTime.removeAll()
+        bandsByName.removeAll()
+        cacheVariables.bandNamesStaticCache.removeAll()
+        cacheVariables.bandNamesArrayStaticCache.removeAll()
+        CellDataCache.shared.clearCache()
+        
+        // Force refresh with user-initiated flag to bypass throttle
+        refreshData(isUserInitiated: true, forceDownload: false)
+        quickRefresh_Pre()
     }
 
     
@@ -1823,6 +1986,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func setFilterTitleText(){
+        print("🔧 [INIT_DEBUG] setFilterTitleText() ENTERED")
         
         // FIXED: Determine if filters are active by checking actual filter settings, not counts
         print("🔍 [FILTER_STATUS] Checking filter status...")
@@ -1930,8 +2094,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// ⚠️ DO NOT MODIFY without reading the detailed comments inside this function!
     /// ⚠️ The logic is complex and specific - test ALL scenarios before changing!
     func updateCountLable(){
+        print("🔧 [INIT_DEBUG] updateCountLable() ENTERED")
         
+        print("🔧 [INIT_DEBUG] About to call setFilterTitleText()")
         setFilterTitleText()
+        print("🔧 [INIT_DEBUG] setFilterTitleText() completed")
+        
         var lableCounterString = String();
         var labeleCounter = Int()
         
@@ -1997,13 +2165,28 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     }
                     
                     let currentYearSetting = getScheduleUrl()
+                    let titleText: String
                     if currentYearSetting != "Current" && currentYearSetting != "Default" {
-                        self.titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+                        titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
                     } else {
-                        self.titleButton.title = String(labeleCounter) + lableCounterString
+                        titleText = String(labeleCounter) + lableCounterString
                     }
                     
-                    print("📊 [ASYNC_COUNT] Display updated: \(self.titleButton.title ?? "nil")")
+                    // Apply profile color
+                    let profileColor = self.getColorForCurrentProfile()
+                    let attributedTitle = NSAttributedString(
+                        string: titleText,
+                        attributes: [
+                            .foregroundColor: profileColor,
+                            .font: UIFont.boldSystemFont(ofSize: 17)
+                        ]
+                    )
+                    
+                    if let titleView = self.navigationItem.titleView as? UILabel {
+                        titleView.attributedText = attributedTitle
+                    }
+                    
+                    print("📊 [ASYNC_COUNT] Display updated: \(titleText)")
                 } else {
                     print("📊 [ASYNC_COUNT] Year changed during count, skipping update")
                 }
@@ -2129,11 +2312,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
 
         var currentYearSetting = getScheduleUrl()
+        let titleText: String
         if (currentYearSetting != "Current" && currentYearSetting != "Default"){
-            titleButton.title = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
             
         } else {
-            titleButton.title = String(labeleCounter) + lableCounterString
+            titleText = String(labeleCounter) + lableCounterString
+        }
+        
+        // Create attributed string with profile color
+        let profileColor = getColorForCurrentProfile()
+        let attributedTitle = NSAttributedString(
+            string: titleText,
+            attributes: [
+                .foregroundColor: profileColor,
+                .font: UIFont.boldSystemFont(ofSize: 17)
+            ]
+        )
+        
+        // Apply to navigation bar title view
+        if let titleView = navigationItem.titleView as? UILabel {
+            titleView.attributedText = attributedTitle
+        } else {
+            // Create custom title view if not exists
+            let titleLabel = UILabel()
+            titleLabel.attributedText = attributedTitle
+            titleLabel.textAlignment = .center
+            titleLabel.isUserInteractionEnabled = true
+            
+            // Add tap gesture for profile picker
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showProfilePicker))
+            titleLabel.addGestureRecognizer(tapGesture)
+            
+            navigationItem.titleView = titleLabel
         }
         //createrFilterMenu(controller: self);
     }
@@ -2283,11 +2494,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if (cellStatus.isHidden == false){
                 let cellData = cellText?.split(separator: ";")
                 
-                let cellBandName = cellData![0]
+                // CRITICAL: Validate cellData has enough elements to prevent crash
+                guard let data = cellData, data.count >= 4 else {
+                    print("❌ [SWIPE_ACTION] Invalid cell data format: \(cellText ?? "nil")")
+                    let message = "Invalid cell data - cannot add attendance"
+                    ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
+                    return
+                }
                 
-                let cellLocation = cellData![1]
-                let cellEventType  = cellData![2]
-                let cellStartTime = cellData![3]
+                let cellBandName = data[0]
+                let cellLocation = data[1]
+                let cellEventType  = data[2]
+                let cellStartTime = data[3]
 
                 let status = attendedHandle.addShowsAttended(band: String(cellBandName), location: String(cellLocation), startTime: String(cellStartTime), eventType: String(cellEventType),eventYearString: String(eventYear));
                 
@@ -2511,8 +2729,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
         }
         
-        // Set venue background color from cached data
-        cell.backgroundColor = cachedData.venueBackgroundColor
+        // Keep black background for all cells (venue colors not used in list view)
+        // cell.backgroundColor is already set to UIColor.black above at line 2471
     }
     
     
@@ -2596,6 +2814,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    func showSharingView() {
+        let sharingView = SharingHostingController()
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: Show as modal
+            sharingView.modalPresentationStyle = .formSheet
+        } else {
+            // iPhone: Show as full screen
+            sharingView.modalPresentationStyle = .fullScreen
+        }
+        self.present(sharingView, animated: true)
+    }
+    
+    // MARK: - Shared Preferences Title Update
+    
+    func updateTitleForActivePreferenceSource() {
+        // Now handled by updateCountLable() which applies profile colors
+        updateCountLable()
+    }
+    
+    @objc func onPreferenceSourceChanged(_ notification: Notification) {
+        print("🔄 [PREFERENCE_SOURCE] Received preference source change notification")
+        updateTitleForActivePreferenceSource()
+    }
+    
     func detailShareChoices(){
         
         sharedMessage = "Start"
@@ -2610,6 +2852,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         let reportHandler = showAttendenceReport()
+        
+        // NEW: Share preferences as file
+        let sharePreferencesFile = UIAlertAction.init(title: "Share Preferences & Schedule", style: .default) { _ in
+            print("Opening Sharing view")
+            self.showSharingView()
+        }
+        alert.addAction(sharePreferencesFile)
         
         let mustMightShare = UIAlertAction.init(title: NSLocalizedString("ShareBandChoices", comment: ""), style: .default) { _ in
             print("shared message: Share Must/Might list")
@@ -4023,10 +4272,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.schedule.populateSchedule(forceDownload: false)
                 
                 // Load iCloud data using new SQLite sync system
+                // CRITICAL: Skip iCloud operations entirely during profile switches
+                let isProfileSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+                if isProfileSwitching {
+                    print("🚫 [REFRESH_DATA] Profile switch in progress - SKIPPING ALL iCloud operations")
+                }
+                
                 let iCloudGroup = DispatchGroup()
                 
                 iCloudGroup.enter()
                 DispatchQueue.global(qos: .utility).async {
+                    // CRITICAL: Double-check flag before starting iCloud operations
+                    let isStillSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+                    if isStillSwitching {
+                        print("🚫 [REFRESH_DATA] Profile switch still in progress - ABORTING iCloud operations")
+                        iCloudGroup.leave()
+                        return
+                    }
+                    
                     let sqliteiCloudSync = SQLiteiCloudSync()
                     
                     // First write local data to iCloud to ensure it's backed up
@@ -4204,6 +4467,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Load iCloud data after core data is available
     private func loadICloudData(completion: (() -> Void)? = nil) {
+        // CRITICAL: Skip iCloud operations during profile switches
+        let isProfileSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        if isProfileSwitching {
+            print("🚫 [LOAD_ICLOUD] Profile switch in progress - SKIPPING iCloud data load")
+            completion?()
+            return
+        }
+        
         print("☁️ Loading iCloud data...")
         
         // Use new Core Data iCloud sync system

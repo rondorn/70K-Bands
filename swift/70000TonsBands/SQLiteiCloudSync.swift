@@ -25,6 +25,30 @@ class SQLiteiCloudSync {
     /// Reads all priority data from iCloud and updates SQLite
     /// Thread-safe - can be called from any thread
     func syncPrioritiesFromiCloud(completion: @escaping () -> Void) {
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud priority sync")
+            completion()
+            return
+        }
+        
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            completion()
+            return
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping priority sync from iCloud")
+            completion()
+            return
+        }
+        
         print("☁️ Starting iCloud priority sync to SQLite...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -69,15 +93,37 @@ class SQLiteiCloudSync {
     /// Writes all local priorities to iCloud
     /// Thread-safe - can be called from any thread
     func syncPrioritiesToiCloud() {
-        print("☁️ Starting priority sync to iCloud...")
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud priority sync")
+            return
+        }
+        
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            return
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping priority sync to iCloud")
+            return
+        }
+        
+        print("☁️ Starting priority sync to iCloud (Default only)...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            let allPriorities = self.priorityManager.getAllPriorities()
+            // Only sync "Default" profile to iCloud
+            let allPriorities = self.priorityManager.getAllPriorities(profileName: "Default")
             
             guard !allPriorities.isEmpty else {
-                print("📝 No priorities to sync to iCloud")
+                print("📝 No priorities to sync to iCloud (Default)")
                 return
             }
             
@@ -135,6 +181,30 @@ class SQLiteiCloudSync {
     /// Reads all attendance data from iCloud and updates SQLite
     /// Thread-safe - can be called from any thread
     func syncAttendanceFromiCloud(completion: @escaping () -> Void) {
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud attendance sync")
+            completion()
+            return
+        }
+        
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            completion()
+            return
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping attendance sync from iCloud")
+            completion()
+            return
+        }
+        
         print("☁️ Starting iCloud attendance sync to SQLite...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -186,12 +256,34 @@ class SQLiteiCloudSync {
     /// Writes all local attendance data to iCloud
     /// Thread-safe - can be called from any thread
     func syncAttendanceToiCloud() {
-        print("☁️ Starting attendance sync to iCloud...")
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud attendance sync")
+            return
+        }
+        
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            return
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping attendance sync to iCloud")
+            return
+        }
+        
+        print("☁️ Starting attendance sync to iCloud (Default only)...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            let allAttendance = self.attendanceManager.getAllAttendanceDataByIndex()
+            // Only sync "Default" profile to iCloud
+            let allAttendance = self.attendanceManager.getAllAttendanceDataByIndex(profileName: "Default")
             let iCloudStore = NSUbiquitousKeyValueStore.default
             
             var writtenCount = 0
@@ -297,8 +389,10 @@ class SQLiteiCloudSync {
             print("☁️ No local data exists, using iCloud data")
         }
         
-        // Update the attendance record
-        print("☁️ Updating attendance record: \(attendanceIndex) -> \(status)")
+        // Update the attendance record (only "Default" profile)
+        print("☁️ Updating attendance record (Default): \(attendanceIndex) -> \(status)")
+        // Note: setAttendanceStatusByIndex needs to be updated to accept profileName parameter
+        // For now, it will use the default "Default" via getCurrentProfileName()
         attendanceManager.setAttendanceStatusByIndex(
             index: attendanceIndex,
             status: status,
@@ -376,6 +470,22 @@ class SQLiteiCloudSync {
     
     /// Performs a complete two-way sync between SQLite and iCloud
     func performFullSync(completion: @escaping () -> Void) {
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            completion()
+            return
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping full sync")
+            completion()
+            return
+        }
+        
         print("🔄 Starting full iCloud sync...")
         
         // First, read from iCloud to get latest changes
@@ -390,12 +500,25 @@ class SQLiteiCloudSync {
     
     /// Sets up automatic iCloud sync monitoring
     func setupAutomaticSync() {
+        // Check if iCloud is enabled before setting up monitoring
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping automatic sync setup")
+            return
+        }
+        
         // Monitor iCloud changes
         NotificationCenter.default.addObserver(
             forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
             object: NSUbiquitousKeyValueStore.default,
             queue: .main
         ) { [weak self] notification in
+            // Double-check iCloud is still enabled when notification fires
+            let iCloudHandler = iCloudDataHandler()
+            guard iCloudHandler.checkForIcloud() else {
+                print("☁️ iCloud disabled - ignoring external change notification")
+                return
+            }
             print("☁️ iCloud data changed externally, syncing...")
             self?.syncPrioritiesFromiCloud { }
         }
@@ -406,6 +529,12 @@ class SQLiteiCloudSync {
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            // Check if iCloud is still enabled when app becomes active
+            let iCloudHandler = iCloudDataHandler()
+            guard iCloudHandler.checkForIcloud() else {
+                print("☁️ iCloud disabled - skipping app active sync")
+                return
+            }
             print("📱 App became active, checking iCloud sync...")
             self?.syncPrioritiesFromiCloud { }
         }

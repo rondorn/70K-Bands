@@ -267,6 +267,13 @@ open class ShowsAttended {
             print("🔍 [ShowsAttended] Fallback: setting to Will Attend (2)")
         }
         
+        // CRITICAL: Check if current profile is read-only (shared)
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
+            print("❌ Cannot set attendance - viewing read-only shared profile: \(activeProfile)")
+            return sawNoneStatus  // Return unchanged status
+        }
+        
         // Update using Core Data
         attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus)
         
@@ -294,6 +301,13 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
+        // CRITICAL: Check if current profile is read-only (shared)
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
+            print("❌ Cannot change attendance - viewing read-only shared profile: \(activeProfile)")
+            return
+        }
+        
         // Parse status to get numeric value
         let statusParts = status.components(separatedBy: ":")
         let statusString = statusParts[0]
@@ -322,8 +336,13 @@ open class ShowsAttended {
         saveShowsAttended()
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
-            NSUbiquitousKeyValueStore.default.synchronize()
+            if iCloudHandle.checkForIcloud() {
+                print("☁️ iCloud enabled - syncing attendance for \(index)")
+                iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
+                NSUbiquitousKeyValueStore.default.synchronize()
+            } else {
+                print("☁️ iCloud disabled - skipping attendance sync for \(index)")
+            }
         }
     }
     
@@ -347,8 +366,13 @@ open class ShowsAttended {
         if !skipICloud {
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                 let iCloudHandle = iCloudDataHandler()
-                iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
-                NSUbiquitousKeyValueStore.default.synchronize()
+                if iCloudHandle.checkForIcloud() {
+                    print("☁️ iCloud enabled - syncing attendance for \(index)")
+                    iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
+                    NSUbiquitousKeyValueStore.default.synchronize()
+                } else {
+                    print("☁️ iCloud disabled - skipping attendance sync for \(index)")
+                }
             }
         } else {
             print("Skipping iCloud write for \(index) during restoration")
