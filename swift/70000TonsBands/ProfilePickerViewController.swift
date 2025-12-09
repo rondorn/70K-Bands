@@ -325,26 +325,27 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         }
         
         // Get available colors - must match ProfileColorManager.swift
-        let colorOptions: [(name: String, color: UIColor, hex: String)] = [
-            ("Red", UIColor(red: 1.0, green: 0.2, blue: 0.2, alpha: 1.0), "#FF3333"),
-            ("Green", UIColor(red: 0.2, green: 0.9, blue: 0.2, alpha: 1.0), "#33E633"),
-            ("Orange", UIColor(red: 1.0, green: 0.6, blue: 0.1, alpha: 1.0), "#FF9A1A"),
-            ("Pink", UIColor(red: 1.0, green: 0.3, blue: 0.7, alpha: 1.0), "#FF4DB8"),
-            ("Teal", UIColor(red: 0.1, green: 0.9, blue: 0.9, alpha: 1.0), "#1AE6E6"),
-            ("Yellow", UIColor(red: 1.0, green: 0.9, blue: 0.1, alpha: 1.0), "#FFE61A"),
+        // Using emoji circles that are already colored to avoid UIAlertAction limitations
+        let colorOptions: [(name: String, emoji: String, hex: String)] = [
+            ("Red", "🔴", "#FF3333"),
+            ("Green", "🟢", "#33E633"),
+            ("Orange", "🟠", "#FF9A1A"),
+            ("Pink", "🩷", "#FF4DB8"),
+            ("Teal", "🔵", "#1AE6E6"),
+            ("Yellow", "🟡", "#FFE61A"),
         ]
         
         // Add white option for Default profile (not available for others)
         var allColorOptions = colorOptions
         if profileKey == "Default" {
-            allColorOptions.insert(("White", UIColor.white, "#FFFFFF"), at: 0)
+            allColorOptions.insert(("White", "⚪", "#FFFFFF"), at: 0)
         }
         
         for colorOption in allColorOptions {
-            // Create title with colored dot prefix
-            let dotAndName = "●  \(colorOption.name)"
+            // Create two-column layout: colored emoji dot on left, black text on right
+            let title = "\(colorOption.emoji)  \(colorOption.name)"
             
-            let action = UIAlertAction(title: dotAndName, style: .default) { [weak self] _ in
+            let action = UIAlertAction(title: title, style: .default) { [weak self] _ in
                 print("🎨 [COLOR_CHANGE] Setting '\(displayName)' to \(colorOption.name)")
                 
                 // Update color in SQLite
@@ -359,9 +360,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
                 }
             }
             
-            // Color only the dot part (using titleTextColor colors the entire text)
-            // Note: UIAlertAction doesn't support attributed text, so we color the whole action
-            action.setValue(colorOption.color, forKey: "titleTextColor")
+            // Keep text black by NOT setting titleTextColor - emoji will be colored naturally
             alert.addAction(action)
         }
         

@@ -120,10 +120,11 @@ class SharedPreferencesManager {
     // MARK: - Export Functionality
     
     /// Exports current user's priorities and attendance to a shareable file
-    /// Sender does not need to provide a name - receiver will name it on import
+    /// Sender can provide a name (defaults to device name if not provided)
+    /// - Parameter shareName: Optional name for the share (e.g., "John's iPhone")
     /// - Returns: URL of the created file, or nil if export failed
     func exportCurrentPreferences(shareName: String? = nil) -> URL? {
-        let name = shareName ?? ""  // Empty name - receiver will provide one
+        let name = shareName ?? UIDevice.current.name  // Use device name as default
         
         // Get sender's Firebase UserID (device identifier)
         let senderUserId = UIDevice.current.identifierForVendor?.uuidString ?? "Unknown"
@@ -161,7 +162,7 @@ class SharedPreferencesManager {
             return nil
         }
         
-        // Create file with UserID-based name (not sender name, since sender doesn't provide one)
+        // Create file with UserID-based name for uniqueness (sender name is stored in metadata)
         let fileName = "70KBands_\(senderUserId.prefix(8))_\(eventYear).\(fileExtension)"
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let sharesDir = documentsDir.appendingPathComponent("Shares")
@@ -287,7 +288,7 @@ class SharedPreferencesManager {
             eventYear: Int64(preferenceSet.eventYear),
             priorityCount: preferenceSet.priorities.count,
             attendanceCount: preferenceSet.attendance.count,
-            isReadOnly: true  // Shared profiles are read-only
+            isReadOnly: false  // Imported profiles are editable - changes save until re-import
         )
         
         // Save to SQLite (will update if exists)

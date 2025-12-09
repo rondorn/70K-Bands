@@ -31,14 +31,7 @@ class PriorityManager {
     ///   - timestamp: Optional timestamp, defaults to current time
     ///   - completion: Optional completion handler
     func setPriority(for bandName: String, priority: Int, timestamp: Double? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
-        // CRITICAL: Check if current profile is read-only (shared)
-        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
-        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
-            print("❌ Cannot set priority - viewing read-only shared profile: \(activeProfile)")
-            completion(false)
-            return
-        }
-        
+        // All profiles are now editable - changes save until re-import
         print("🎯 Setting priority for \(bandName) = \(priority) [SQLite]")
         
         // Write to SQLite (thread-safe, no deadlocks!)

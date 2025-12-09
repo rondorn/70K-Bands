@@ -255,7 +255,9 @@
 "Share Your Preferences" = "Compartilhar Suas Preferências";
 "Share your Must/Might/Won't priorities and attended events with another user." = "Compartilhe suas prioridades Obrigatório/Talvez/Não e eventos participados com outro usuário.";
 "Export Your Profile" = "Exportar Seu Perfil";
-"Your Default profile will be exported. Recipients can import it and view your preferences." = "Seu perfil padrão será exportado. Os destinatários podem importá-lo e visualizar suas preferências.";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Isto irá exportar os seus dados Obrigatório, Talvez, Não e eventos participados, permitindo que os destinatários importem estes dados para os seus dispositivos.";
+"Name Your Share" = "Nomeie Seu Compartilhamento";
+"Give this share a name so the recipient can identify you." = "Dê um nome a este compartilhamento para que o destinatário possa identificá-lo.";
 
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Este arquivo não é um arquivo de compartilhamento 70K Bands válido.";
@@ -304,4 +306,6 @@
 
 // Share Menu
 "Share Type" = "Tipo de Compartilhamento";
-"Share Preferences & Schedule" = "Compartilhar Preferências e Horário";
+"Share Importable Band/Event Data" = "Compartilhar Dados Importáveis de Bandas/Eventos";
+"Share Band Report" = "Compartilhar Relatório de Bandas";
+"Share Event Report" = "Compartilhar Relatório de Eventos";

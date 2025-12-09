@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:background="#000000">
+    
+    <!-- Color indicator circle -->
+    <View
+        android:id="@+id/profile_color_dot"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/profile_color_circle" />
+    
+    <!-- Profile name with checkmark -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        
+        <!-- Checkmark for active profile -->
+        <TextView
+            android:id="@+id/profile_checkmark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓ "
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:visibility="gone"
+            android:layout_marginEnd="4dp" />
+        
+        <!-- Profile name -->
+        <TextView
+            android:id="@+id/profile_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</LinearLayout>

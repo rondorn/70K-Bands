@@ -332,9 +332,18 @@ public class mainListHandler {
 
         TextView bandCount = (TextView) showBands.findViewById(R.id.headerBandCount);
         String headerText = this.getSizeDisplay();
+        
         Log.d("HeaderText", "Setting headerBandCount TextView to: " + headerText);
-        Log.d("HeaderText", "FestivalConfig appName: " + FestivalConfig.getInstance().appName);
         bandCount.setText(headerText);
+        
+        // Set text color based on active profile (white for Default, profile color for others)
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        String activeProfile = sharingManager.getActivePreferenceSource();
+        int profileColor = ProfileColorManager.getInstance().getColorInt(activeProfile);
+        bandCount.setTextColor(profileColor);
+        
+        String profileDisplayName = sharingManager.getDisplayName(activeProfile);
+        Log.d("HeaderText", "Active profile: " + activeProfile + " (" + profileDisplayName + "), color: " + String.format("#%06X", (0xFFFFFF & profileColor)));
 
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
 

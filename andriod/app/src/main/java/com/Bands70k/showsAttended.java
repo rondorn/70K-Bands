@@ -13,20 +13,75 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+/**
+ * PROFILE-AWARE: This class now supports multiple profiles
+ * - Default profile uses: 70kBands/showsAttended.data
+ * - Other profiles use: profiles/{profileId}/showsAttended.data
+ */
 public class showsAttended {
 
     private Map<String,String> showsAttendedHash = new HashMap<String,String>();
     private File showsAttendedFile = FileHandler70k.showsAttendedFile;
+    private String currentLoadedProfile = null;  // Track which profile is currently loaded
 
     public showsAttended(){
         showsAttendedHash = loadShowsAttended();
     }
+    
+    /**
+     * Gets the correct file path based on active profile
+     */
+    private File getFileForActiveProfile() {
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        
+        if ("Default".equals(activeProfile)) {
+            // Use standard file for Default profile
+            return FileHandler70k.showsAttendedFile;
+        } else {
+            // Use profile-specific file
+            File profileDir = new File(Bands70k.getAppContext().getFilesDir(), "profiles/" + activeProfile);
+            return new File(profileDir, "showsAttended.data");
+        }
+    }
+    
+    /**
+     * Reloads data from the active profile
+     * Called when user switches profiles
+     */
+    public void reloadForActiveProfile() {
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        Log.d("showsAttended", "🔄 [PROFILE_RELOAD] Reloading attendance for profile: " + activeProfile);
+        
+        // Clear current data
+        showsAttendedHash.clear();
+        currentLoadedProfile = null;
+        
+        // Reload from correct profile
+        showsAttendedHash = loadShowsAttended();
+    }
 
     public Map<String,String> getShowsAttended(){
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        
+        // Reload if profile changed
+        if (!activeProfile.equals(currentLoadedProfile)) {
+            Log.d("showsAttended", "🔄 [PROFILE_CHECK] Profile changed. Current: " + currentLoadedProfile + ", Active: " + activeProfile);
+            reloadForActiveProfile();
+        }
+        
         return showsAttendedHash;
     }
 
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        
+        File fileToSave = getFileForActiveProfile();
+        
+        // Ensure directory exists for profile-specific files
+        File parentDir = fileToSave.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
 
         if (showsAttendedHash.size() > 0) {
             Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
@@ -34,7 +89,7 @@ public class showsAttended {
             try {
 
                 //Saving of object in a file
-                FileOutputStream file = new FileOutputStream(showsAttendedFile);
+                FileOutputStream file = new FileOutputStream(fileToSave);
                 ObjectOutputStream out = new ObjectOutputStream(file);
 
                 // Method for serialization of object
@@ -42,6 +97,8 @@ public class showsAttended {
 
                 out.close();
                 file.close();
+                
+                Log.d("showsAttended", "💾 [PROFILE_SAVE] Saved to profile '" + activeProfile + "': " + fileToSave.getPath());
 
             } catch (Exception error) {
                 Log.e("ShowsAttended Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
@@ -51,13 +108,23 @@ public class showsAttended {
     }
 
     public Map<String,String>  loadShowsAttended() {
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        File fileToLoad = getFileForActiveProfile();
+        
+        Log.d("showsAttended", "📂 [PROFILE_LOAD] Loading attendance for profile '" + activeProfile + "' from: " + fileToLoad.getPath());
 
         Map<String, String> showsAttendedHash = new HashMap<String, String>();
 
         try {
+            if (!fileToLoad.exists()) {
+                Log.d("showsAttended", "📂 [PROFILE_LOAD] File doesn't exist for profile '" + activeProfile + "', starting with empty attendance");
+                currentLoadedProfile = activeProfile;
+                return showsAttendedHash;
+            }
+            
             Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
             // Reading the object from a file
-            FileInputStream file = new FileInputStream(showsAttendedFile);
+            FileInputStream file = new FileInputStream(fileToLoad);
             ObjectInputStream in = new ObjectInputStream(file);
 
             // Method for deserialization of object
@@ -67,6 +134,9 @@ public class showsAttended {
             file.close();
 
             showsAttendedHash = convertToNewFormat(showsAttendedHash);
+            
+            currentLoadedProfile = activeProfile;
+            Log.d("showsAttended", "✅ [PROFILE_LOAD] Loaded " + showsAttendedHash.size() + " attendance records for profile '" + activeProfile + "'");
 
         } catch (Exception error) {
             Log.e("ShowsAttended Error", "Unable to load alert tracking data " + error.getMessage());

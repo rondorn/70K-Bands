@@ -23,11 +23,93 @@
             android:name=".showBands"
             android:label="@string/app_name"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Handle shared preference files (.70kshare and .mdfshare) -->
+            <!-- Intent filter for .70kshare files using file:// scheme -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.70kshare" />
+                <data android:pathPattern=".*\\.70kshare.*" />
+                <data android:pathPattern=".*\\..*\\.70kshare" />
+                <data android:pathPattern=".*\\..*\\..*\\.70kshare" />
+            </intent-filter>
+            <!-- Intent filter for .70kshare files using content:// scheme -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.70kshare" />
+                <data android:pathPattern=".*\\.70kshare.*" />
+                <data android:pathPattern=".*\\..*\\.70kshare" />
+                <data android:pathPattern=".*\\..*\\..*\\.70kshare" />
+            </intent-filter>
+            <!-- Intent filter for .70kshare files using MIME type -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.70kshare" />
+            </intent-filter>
+            <!-- Intent filter for .mdfshare files using file:// scheme -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.mdfshare" />
+                <data android:pathPattern=".*\\.mdfshare.*" />
+                <data android:pathPattern=".*\\..*\\.mdfshare" />
+                <data android:pathPattern=".*\\..*\\..*\\.mdfshare" />
+            </intent-filter>
+            <!-- Intent filter for .mdfshare files using content:// scheme -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.mdfshare" />
+                <data android:pathPattern=".*\\.mdfshare.*" />
+                <data android:pathPattern=".*\\..*\\.mdfshare" />
+                <data android:pathPattern=".*\\..*\\..*\\.mdfshare" />
+            </intent-filter>
+            <!-- Intent filter for .mdfshare files using MIME type -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.mdfshare" />
             </intent-filter>
         </activity>
         <activity

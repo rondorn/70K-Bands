@@ -51,6 +51,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -196,6 +197,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("startup", "show init start - 1");
 
         staticVariablesInitialize();
+        
+        // Initialize sharing managers early
+        Log.d("INIT", "🔧 Initializing sharing managers...");
+        SQLiteProfileManager.getInstance();
+        ProfileColorManager.getInstance();
+        SharedPreferencesManager.getInstance();
+        Log.d("INIT", "✅ Sharing managers initialized");
+        
+        // Handle incoming shared preference file (if opened from external source)
+        handleIncomingIntent(getIntent());
 
         this.getCountry();
         Log.d("startup", "show init start - 2");
@@ -211,9 +222,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
 
         TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
-        jumpToTop.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
+        
+        // Long click jumps to top (original behavior)
+        jumpToTop.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
                 bandNamesList.setSelectionAfterHeaderView();
+                return true;
+            }
+        });
+        
+        // Regular click shows profile picker (new behavior)
+        jumpToTop.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showProfilePicker();
             }
         });
 
@@ -763,6 +785,447 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         });
     }
 
+    /**
+     * Shows profile picker dialog to switch between profiles
+     */
+    private void showProfilePicker() {
+        Log.d("ProfilePicker", "🔍 [PICKER] Opening profile picker");
+        
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        List<String> profileKeys = sharingManager.getAvailablePreferenceSources();
+        String activeProfile = sharingManager.getActivePreferenceSource();
+        
+        Log.d("ProfilePicker", "🔍 [PICKER] Found " + profileKeys.size() + " profiles");
+        Log.d("ProfilePicker", "🔍 [PICKER] Active profile: " + activeProfile);
+        Log.d("ProfilePicker", "🔍 [PICKER] Profile keys: " + profileKeys.toString());
+        
+        if (profileKeys.isEmpty()) {
+            Log.e("ProfilePicker", "❌ No profiles available - this shouldn't happen!");
+            Toast.makeText(this, "No profiles available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Build display names list
+        java.util.List<String> displayNames = new java.util.ArrayList<>();
+        for (String profileKey : profileKeys) {
+            displayNames.add(sharingManager.getDisplayName(profileKey));
+        }
+        
+        // Create custom adapter with colored dots and checkmarks
+        ProfileListAdapter adapter = new ProfileListAdapter(this, profileKeys, displayNames, activeProfile);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(getString(R.string.select_profile));
+        
+        builder.setAdapter(adapter, (dialog, which) -> {
+            String selectedProfileKey = profileKeys.get(which);
+            String selectedDisplayName = sharingManager.getDisplayName(selectedProfileKey);
+            
+            if (!selectedProfileKey.equals(activeProfile)) {
+                Log.d("ProfilePicker", "🔄 [PROFILE] Switching to profile: " + selectedDisplayName + " (" + selectedProfileKey + ")");
+                sharingManager.setActivePreferenceSource(selectedProfileKey);
+                
+                // Reload profile-specific data
+                rankStore.reloadForActiveProfile();
+                staticVariables.attendedHandler.reloadForActiveProfile();
+                Log.d("ProfilePicker", "✅ [PROFILE] Reloaded priority and attendance data for profile: " + selectedDisplayName);
+                
+                // Refresh the band list with new profile data
+                refreshNewData();
+                
+                // Update header color immediately to reflect new profile
+                updateHeaderColorForCurrentProfile();
+                
+                // Show toast message
+                String nowViewingText = getString(R.string.now_viewing_profile);
+                Toast.makeText(this, nowViewingText + " " + selectedDisplayName, Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d("ProfilePicker", "🔄 [PROFILE] Profile already active");
+            }
+            
+            dialog.dismiss();
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.cancel());
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Position dialog near the "51 Bands" header
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            TextView headerBandCount = findViewById(R.id.headerBandCount);
+            if (headerBandCount != null) {
+                // Get the location of the header text
+                int[] location = new int[2];
+                headerBandCount.getLocationOnScreen(location);
+                
+                // Position dialog below the header
+                android.view.WindowManager.LayoutParams params = window.getAttributes();
+                params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+                params.x = location[0];
+                params.y = location[1] + headerBandCount.getHeight();
+                window.setAttributes(params);
+            }
+        }
+        
+        // Add long-press handler to profile items
+        ListView listView = dialog.getListView();
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            String profileKey = profileKeys.get(position);
+            showProfileActionMenu(profileKey);
+            dialog.dismiss();
+            return true;
+        });
+    }
+    
+    /**
+     * Updates the header band count color to match the active profile
+     */
+    public void updateHeaderColorForCurrentProfile() {
+        TextView bandCount = (TextView) findViewById(R.id.headerBandCount);
+        if (bandCount != null) {
+            SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+            String activeProfile = sharingManager.getActivePreferenceSource();
+            int profileColor = ProfileColorManager.getInstance().getColorInt(activeProfile);
+            bandCount.setTextColor(profileColor);
+            
+            String profileDisplayName = sharingManager.getDisplayName(activeProfile);
+            Log.d("HeaderColor", "Updated header color for profile: " + activeProfile + " (" + profileDisplayName + "), color: " + String.format("#%06X", (0xFFFFFF & profileColor)));
+        }
+    }
+    
+    /**
+     * Shows action menu for a profile (rename, change color, copy, delete)
+     */
+    private void showProfileActionMenu(String profileKey) {
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        String displayName = sharingManager.getDisplayName(profileKey);
+        boolean isDefault = "Default".equals(profileKey);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(displayName);
+        
+        // Build action list based on profile type
+        java.util.List<String> actions = new java.util.ArrayList<>();
+        actions.add(getString(R.string.rename_entry));
+        actions.add(getString(R.string.change_color));
+        if (!isDefault) {
+            actions.add(getString(R.string.make_settings_own));
+            actions.add(getString(R.string.delete_entry));
+        }
+        
+        // Use custom adapter to style the delete action in red (iOS style)
+        ActionMenuAdapter adapter = new ActionMenuAdapter(this, actions, !isDefault);
+        
+        builder.setAdapter(adapter, (dialog, which) -> {
+            if (which == 0) {
+                // Rename
+                showRenameDialog(profileKey);
+            } else if (which == 1) {
+                // Change Color
+                showColorPicker(profileKey);
+            } else if (!isDefault && which == 2) {
+                // Make These Settings My Own
+                confirmCopyToDefault(profileKey, displayName);
+            } else if (!isDefault && which == 3) {
+                // Delete
+                confirmDeleteProfile(profileKey);
+            }
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Position dialog near the "51 Bands" header for consistency
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            TextView headerBandCount = findViewById(R.id.headerBandCount);
+            if (headerBandCount != null) {
+                // Get the location of the header text
+                int[] location = new int[2];
+                headerBandCount.getLocationOnScreen(location);
+                
+                // Position dialog below the header
+                android.view.WindowManager.LayoutParams params = window.getAttributes();
+                params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+                params.x = location[0];
+                params.y = location[1] + headerBandCount.getHeight();
+                window.setAttributes(params);
+            }
+        }
+    }
+    
+    /**
+     * Shows rename dialog for a profile
+     */
+    private void showRenameDialog(String profileKey) {
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        String currentName = sharingManager.getDisplayName(profileKey);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(getString(R.string.rename_profile));
+        builder.setMessage(getString(R.string.rename_profile_message));
+        
+        final EditText input = new EditText(this);
+        input.setText(currentName);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        builder.setView(input);
+        
+        builder.setPositiveButton(getString(R.string.Save), (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                Log.d("ProfileAction", "✏️ [RENAME] Renaming '" + currentName + "' to '" + newName + "'");
+                sharingManager.renameProfile(profileKey, newName);
+                
+                // Refresh if this is the active profile
+                if (profileKey.equals(sharingManager.getActivePreferenceSource())) {
+                    refreshNewData();
+                }
+                
+                Toast.makeText(this, getString(R.string.profile_renamed), Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        builder.show();
+    }
+    
+    /**
+     * Shows color picker for a profile
+     */
+    private void showColorPicker(String profileKey) {
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        ProfileColorManager colorManager = ProfileColorManager.getInstance();
+        String displayName = sharingManager.getDisplayName(profileKey);
+        
+        // Get available colors - matching iOS exactly
+        // White is reserved for Default profile only
+        String[] colorNames = {
+            "Red", "Green", "Orange", "Pink", "Teal", "Yellow"
+        };
+        
+        int[] colorValues = {
+            0xFFFF3333, // Red - matches iOS #FF3333
+            0xFF33E633, // Green - matches iOS #33E633
+            0xFFFF9A1A, // Orange - matches iOS #FF9A1A
+            0xFFFF4DB8, // Pink - matches iOS #FF4DB8
+            0xFF1AE6E6, // Teal - matches iOS #1AE6E6
+            0xFFFFE61A  // Yellow - matches iOS #FFE61A
+        };
+        
+        // Create custom adapter with color sample dots
+        ColorPickerAdapter adapter = new ColorPickerAdapter(this, colorNames, colorValues);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(getString(R.string.change_profile_color));
+        
+        builder.setAdapter(adapter, (dialog, which) -> {
+            String hexColor = String.format("#%06X", (0xFFFFFF & colorValues[which]));
+            Log.d("ProfileAction", "🎨 [COLOR] Changing color of '" + displayName + "' to " + hexColor);
+            colorManager.updateColor(profileKey, hexColor);
+            
+            // Refresh if this is the active profile
+            if (profileKey.equals(sharingManager.getActivePreferenceSource())) {
+                refreshNewData();
+                updateHeaderColorForCurrentProfile();
+            }
+            
+            Toast.makeText(this, getString(R.string.color_changed), Toast.LENGTH_SHORT).show();
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Position dialog near the "51 Bands" header for consistency
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            TextView headerBandCount = findViewById(R.id.headerBandCount);
+            if (headerBandCount != null) {
+                // Get the location of the header text
+                int[] location = new int[2];
+                headerBandCount.getLocationOnScreen(location);
+                
+                // Position dialog below the header
+                android.view.WindowManager.LayoutParams params = window.getAttributes();
+                params.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+                params.x = location[0];
+                params.y = location[1] + headerBandCount.getHeight();
+                window.setAttributes(params);
+            }
+        }
+    }
+    
+    /**
+     * Confirms copying a shared profile to Default (making it your own)
+     */
+    private void confirmCopyToDefault(String profileKey, String displayName) {
+        String message = getString(R.string.make_settings_own_message).replace("{profileName}", displayName);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(getString(R.string.make_settings_own));
+        builder.setMessage(message);
+        
+        builder.setPositiveButton(getString(R.string.make_my_own), (dialog, which) -> {
+            SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+            
+            Log.d("ProfileAction", "📋 [COPY] Copying '" + displayName + "' to Default");
+            
+            // Copy priorities and attendance to Default
+            try {
+                File profileDir = new File(getFilesDir(), "profiles/" + profileKey);
+                
+                // Copy priorities
+                File prioritiesFile = new File(profileDir, "bandRankings.txt");
+                if (prioritiesFile.exists()) {
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(prioritiesFile));
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] parts = line.split(":");
+                        if (parts.length == 2) {
+                            rankStore.saveBandRanking(parts[0], parts[1]);
+                        }
+                    }
+                    br.close();
+                }
+                
+                // Copy attendance
+                File attendanceFile = new File(profileDir, "showsAttended.data");
+                if (attendanceFile.exists()) {
+                    java.io.FileInputStream fis = new java.io.FileInputStream(attendanceFile);
+                    java.io.ObjectInputStream ois = new java.io.ObjectInputStream(fis);
+                    java.util.Map<String, String> attendanceMap = (java.util.Map<String, String>) ois.readObject();
+                    ois.close();
+                    
+                    for (java.util.Map.Entry<String, String> entry : attendanceMap.entrySet()) {
+                        staticVariables.attendedHandler.addShowsAttended(entry.getKey(), entry.getValue());
+                    }
+                }
+                
+                // Switch to Default and refresh
+                sharingManager.setActivePreferenceSource("Default");
+                
+                // Reload Default profile data
+                rankStore.reloadForActiveProfile();
+                staticVariables.attendedHandler.reloadForActiveProfile();
+                Log.d("ProfileAction", "✅ [COPY] Reloaded Default profile data after copy");
+                
+                refreshNewData();
+                updateHeaderColorForCurrentProfile();
+                
+                Toast.makeText(this, getString(R.string.settings_copied_to_default), Toast.LENGTH_LONG).show();
+                
+            } catch (Exception e) {
+                Log.e("ProfileAction", "❌ [COPY] Failed to copy to Default", e);
+                Toast.makeText(this, "Failed to copy settings", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        builder.show();
+    }
+    
+    /**
+     * Confirms deleting a profile
+     */
+    private void confirmDeleteProfile(String profileKey) {
+        SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+        String displayName = sharingManager.getDisplayName(profileKey);
+        
+        String message = getString(R.string.delete_profile_message).replace("{profileName}", displayName);
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(getString(R.string.delete_entry));
+        builder.setMessage(message);
+        
+        builder.setPositiveButton(getString(R.string.Delete), (dialog, which) -> {
+            Log.d("ProfileAction", "🗑️ [DELETE] Deleting profile: " + displayName);
+            
+            if (sharingManager.deleteImportedSet(profileKey)) {
+                // If this was the active profile, we're now on Default
+                refreshNewData();
+                updateHeaderColorForCurrentProfile();
+                Toast.makeText(this, getString(R.string.profile_deleted), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Failed to delete profile", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        builder.setNegativeButton(getString(R.string.Cancel), null);
+        builder.show();
+    }
+    
+    /**
+     * Shows a dialog prompting for a name when exporting preferences
+     */
+    private void showExportNamePrompt() {
+        // Get device name as default (must be final for lambda)
+        final String deviceName;
+        if (android.os.Build.MODEL != null && !android.os.Build.MODEL.isEmpty()) {
+            deviceName = android.os.Build.MODEL;
+        } else {
+            deviceName = "My Device";
+        }
+        
+        // Use dark theme for the dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
+        builder.setTitle(R.string.name_your_share);
+        builder.setMessage(R.string.name_share_message);
+        
+        // Set up the input field
+        final EditText input = new EditText(this);
+        input.setHint("e.g., John's Phone");
+        input.setText(deviceName);
+        input.selectAll();
+        builder.setView(input);
+        
+        // Cancel button
+        builder.setNegativeButton(R.string.Cancel, (dialog, which) -> dialog.cancel());
+        
+        // Share button
+        builder.setPositiveButton(R.string.share_preferences, (dialog, which) -> {
+            String shareName = input.getText().toString().trim();
+            if (shareName.isEmpty()) {
+                shareName = deviceName;
+            }
+            performExport(shareName);
+        });
+        
+        builder.show();
+    }
+    
+    /**
+     * Performs the actual export with the given name
+     */
+    private void performExport(String shareName) {
+        // Export preferences using SharedPreferencesManager with custom name
+        Uri fileUri = SharedPreferencesManager.getInstance().exportCurrentPreferences(shareName);
+        if (fileUri != null) {
+            Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+            sharingIntent.setType("*/*");
+            sharingIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            
+            String appName = FestivalConfig.getInstance().appName;
+            sharingIntent.putExtra(Intent.EXTRA_SUBJECT, appName + " Shared Preferences");
+            sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing my " + appName + " band priorities and event attendance");
+            
+            startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_preferences)));
+        } else {
+            Toast.makeText(showBands.this, R.string.failed_to_export_preferences, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void shareMenuPrompt() {
 
         sharedZipFile = false;
@@ -783,25 +1246,25 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
         builder.setView(customLayout);
 
-        Button shareBandChoices = (Button) customLayout.findViewById(R.id.GoToDetails);
-        Button shareShowChoices = (Button) customLayout.findViewById(R.id.AttendedAll);
-        Button saveData = (Button) customLayout.findViewById(R.id.AttendeSome);
+        Button shareImportableData = (Button) customLayout.findViewById(R.id.GoToDetails);
+        Button shareBandReport = (Button) customLayout.findViewById(R.id.AttendedAll);
+        Button shareEventReport = (Button) customLayout.findViewById(R.id.AttendeSome);
         Button na1 = (Button) customLayout.findViewById(R.id.AttendeNone);
         Button na2 = (Button) customLayout.findViewById(R.id.Disable);
 
-        shareBandChoices.setText(getString(R.string.ShareBandChoices));
-        shareShowChoices.setText(getString(R.string.ShareShowChoices));
-        saveData.setText(getString(R.string.ExportUserData));
+        shareImportableData.setText(getString(R.string.ShareImportableData));
+        shareBandReport.setText(getString(R.string.ShareBandChoices));
+        shareEventReport.setText(getString(R.string.ShareShowChoices));
         na1.setVisibility(View.INVISIBLE);
         na2.setVisibility(View.INVISIBLE);
         
-        // Check if Share Show Choice should be enabled
+        // Check if Share Event Report should be enabled
         boolean hasScheduleData = BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty();
         boolean hasAttendanceData = hasUserAttendanceData();
         
         if (!hasScheduleData || !hasAttendanceData) {
-            shareShowChoices.setEnabled(false);
-            shareShowChoices.setAlpha(0.5f); // Visual indication that it's disabled
+            shareEventReport.setEnabled(false);
+            shareEventReport.setAlpha(0.5f); // Visual indication that it's disabled
         }
 
         // add a button
@@ -816,7 +1279,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         final AlertDialog dialog = builder.create();
 
 
-        shareBandChoices.setOnClickListener(new View.OnClickListener() {
+        // NEW: Share Importable Band/Event Data - First option
+        shareImportableData.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+                showExportNamePrompt();
+            }
+        });
+
+        // Share Band Report - Second option
+        shareBandReport.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 dialog.dismiss();
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
@@ -831,9 +1303,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         });
 
-        shareShowChoices.setOnClickListener(new View.OnClickListener() {
+        // Share Event Report - Third option
+        shareEventReport.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-
+                dialog.dismiss();
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
@@ -848,43 +1321,32 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         });
 
-        saveData.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                String zipFileName = UserDataExportImport.exportDataToZip();
-
-                Log.d("", "Zip file name 1 is  " + zipFileName);
-                zipFile = new File(zipFileName);
-                Log.d("", "Zip file name 2 is  " + zipFile.getAbsolutePath());
-
-                // Use dynamic authority based on current application ID (works for both 70K and MDF)
-                String authority = context.getPackageName() + ".fileprovider";
-                Uri zipFileUri = FileProvider.getUriForFile(
-                        context,
-                        authority,
-                        zipFile);
-
-                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-
-                sharingIntent.setType("application/zip");
-                sharingIntent.putExtra(Intent.EXTRA_STREAM, zipFileUri);
-
-                // Use descriptive subject with actual filename
-                String fileName = zipFile.getName();
-                sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Backup: " + fileName);
-                sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing user data backup: " + fileName);
-
-                startActivity(Intent.createChooser(sharingIntent, "Share Backup File"));
-
-                dialog.dismiss();
-                sharedZipFile = true;
-            }
-        });
-
         dialog.show();
 
         if (sharedZipFile == true) {
             zipFile.delete();
         }
+    }
+
+    /**
+     * Updates the profile switcher button with current profile name and color
+     */
+    private void updateProfileSwitcherButton() {
+        Button profileButton = (Button) findViewById(R.id.profileSwitcher);
+        if (profileButton == null) return;
+        
+        SharedPreferencesManager manager = SharedPreferencesManager.getInstance();
+        String activeProfileKey = manager.getActivePreferenceSource();
+        String displayName = manager.getDisplayName(activeProfileKey);
+        
+        // Get profile color
+        int color = ProfileColorManager.getInstance().getColorInt(activeProfileKey);
+        
+        // Update button
+        profileButton.setText(displayName);
+        profileButton.setTextColor(color);
+        
+        Log.d(TAG, "Updated profile switcher button: " + displayName);
     }
 
     private void showNotification() {
@@ -931,6 +1393,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     public void setupButtons() {
+
+        // Profile switcher button
+        Button profileSwitcher = (Button) findViewById(R.id.profileSwitcher);
+        if (profileSwitcher != null) {
+            updateProfileSwitcherButton();
+            profileSwitcher.setOnClickListener(v -> showProfilePicker());
+        }
 
         ImageButton preferencesButton = (ImageButton) findViewById(R.id.preferences);
 
@@ -1816,6 +2285,95 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "🔥🔥🔥 onNewIntent called 🔥🔥🔥");
+        setIntent(intent);  // CRITICAL: Update the activity's intent
+        handleIncomingIntent(intent);
+    }
+    
+    /**
+     * Handles incoming intent for shared preference file imports
+     */
+    private void handleIncomingIntent(Intent intent) {
+        Log.d(TAG, "🔥 handleIncomingIntent called 🔥");
+        
+        if (intent == null) {
+            Log.d(TAG, "🔥 Intent is NULL");
+            return;
+        }
+        
+        String action = intent.getAction();
+        Uri data = intent.getData();
+        
+        if (!Intent.ACTION_VIEW.equals(action) || data == null) {
+            Log.d(TAG, "🔥 Not ACTION_VIEW or data is null - Action:" + action + ", Data:" + data);
+            return;
+        }
+        
+        String scheme = data.getScheme();
+        String path = data.getPath();
+        
+        Log.d(TAG, "🔥🔥🔥 handleIncomingIntent - Action: " + action + ", Data: " + data + ", Scheme: " + scheme + ", Path: " + path);
+        Log.d(TAG, "🔥 ACTION_VIEW detected with data");
+        
+        // Get the actual filename from the URI
+        String filename = getFilenameFromUri(data);
+        Log.d(TAG, "🔥🔥🔥 Resolved filename: " + filename + " 🔥🔥🔥");
+        
+        if (filename != null && (filename.endsWith(".70kshare") || filename.endsWith(".mdfshare"))) {
+            Log.d(TAG, "🔥🔥🔥 Detected shared preference file: " + filename + " 🔥🔥🔥");
+            SharedPreferencesImportHandler.getInstance().handleIncomingFile(data, this);
+            // Clear the intent so we don't process it again on resume
+            setIntent(new Intent());
+        } else {
+            Log.d(TAG, "🔥 Filename doesn't end with .70kshare or .mdfshare: " + filename);
+        }
+    }
+    
+    /**
+     * Get the actual filename from a content URI
+     */
+    private String getFilenameFromUri(Uri uri) {
+        String filename = null;
+        
+        // First try to get display name from ContentResolver
+        if ("content".equals(uri.getScheme())) {
+            android.database.Cursor cursor = null;
+            try {
+                cursor = getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        filename = cursor.getString(nameIndex);
+                        Log.d(TAG, "🔥 Got filename from ContentResolver: " + filename);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "🔥 Error getting filename from ContentResolver", e);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        
+        // Fallback to path parsing if content resolver didn't work
+        if (filename == null) {
+            String path = uri.getPath();
+            if (path != null) {
+                int lastSlash = path.lastIndexOf('/');
+                if (lastSlash != -1 && lastSlash < path.length() - 1) {
+                    filename = path.substring(lastSlash + 1);
+                    Log.d(TAG, "🔥 Got filename from path parsing: " + filename);
+                }
+            }
+        }
+        
+        return filename;
+    }
+
+    @Override
     public void onResume() {
         if (dialog != null){
             if (dialog.isShowing()){
@@ -1824,6 +2382,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         Log.d(TAG, notificationTag + " In onResume - 1");
         super.onResume();
+        
+        // Check for incoming file share intent (for API 35 emulator compatibility)
+        Log.d(TAG, "🔥🔥🔥 onResume - checking for file share intent 🔥🔥🔥");
+        handleIncomingIntent(getIntent());
 
         Log.d("DisplayListData", "On Resume refreshNewData");
         

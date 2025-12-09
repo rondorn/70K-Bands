@@ -2642,6 +2642,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         cell.backgroundColor = UIColor.black
         cell.textLabel?.textColor = UIColor.white
         
+        // CRITICAL FIX: Set indexText for swipe action parsing
+        // The swipe action reads cell.textLabel?.text and expects format: "bandName;location;event;startTime"
+        cell.textLabel?.text = cachedData.indexText
+        
         // Configure text colors (from cached data)
         bandNameView.textColor = cachedData.bandNameColor
         locationView.textColor = cachedData.locationColor
@@ -2817,6 +2821,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let alert = UIAlertController.init(title: NSLocalizedString("Share Type", comment: "Share type dialog title"), message: "", preferredStyle: .actionSheet)
         
+        // Set preferred size to ensure all options are visible
+        alert.preferredContentSize = CGSize(width: 400, height: 400)
+        
         // Configure popover for iPad
         if let popover = alert.popoverPresentationController {
             popover.sourceView = self.view
@@ -2826,29 +2833,42 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let reportHandler = showAttendenceReport()
         
+        print("🔍 [SHARE_MENU] ========== STARTING SHARE MENU SETUP ==========")
+        
         // NEW: Share preferences as file
-        let sharePreferencesFile = UIAlertAction.init(title: NSLocalizedString("Share Preferences & Schedule", comment: "Share preferences and schedule option"), style: .default) { _ in
+        let sharePreferencesFile = UIAlertAction.init(title: NSLocalizedString("Share Importable Band/Event Data", comment: "Share importable profile file"), style: .default) { _ in
             print("Opening Sharing view")
             self.showSharingView()
         }
         alert.addAction(sharePreferencesFile)
+        print("✅ [SHARE_MENU] Added option 1: Share Importable Band/Event Data")
         
-        let mustMightShare = UIAlertAction.init(title: NSLocalizedString("ShareBandChoices", comment: ""), style: .default) { _ in
+        let mustMightShare = UIAlertAction.init(title: NSLocalizedString("Share Band Report", comment: "Share band priorities as text"), style: .default) { _ in
             print("shared message: Share Must/Might list")
             var message = reportHandler.buildMessage(type: "MustMight")
             self.sendSharedMessage(message: message)
         }
         alert.addAction(mustMightShare)
+        print("✅ [SHARE_MENU] Added option 2: Share Band Report")
         
+        print("🔍 [SHARE_MENU] About to call reportHandler.assembleReport()...")
         reportHandler.assembleReport();
+        print("🔍 [SHARE_MENU] assembleReport() completed")
         
-        if (reportHandler.getIsReportEmpty() == false){
-            let showsAttended = UIAlertAction.init(title: NSLocalizedString("ShareShowChoices", comment: ""), style: .default) { _ in
-                    print("shared message: Share Shows Attendedt list")
+        let isEmpty = reportHandler.getIsReportEmpty()
+        print("📋 [SHARE_MENU] Report isEmpty: \(isEmpty)")
+        
+        if (isEmpty == false){
+            print("✅ [SHARE_MENU] isEmpty is FALSE - Adding 'Share Event Report' option")
+            let showsAttended = UIAlertAction.init(title: NSLocalizedString("Share Event Report", comment: "Share attended events as text"), style: .default) { _ in
+                    print("shared message: Share Event Report")
                     var message = reportHandler.buildMessage(type: "Events")
                     self.sendSharedMessage(message: message)
             }
             alert.addAction(showsAttended)
+            print("✅ [SHARE_MENU] Added option 3: Share Event Report")
+        } else {
+            print("⚠️ [SHARE_MENU] isEmpty is TRUE - NOT adding 'Share Event Report' option")
         }
         
         let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
@@ -2856,6 +2876,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         alert.addAction(cancelDialog)
+        print("✅ [SHARE_MENU] Added Cancel button")
+        
+        print("🔍 [SHARE_MENU] Total actions in alert: \(alert.actions.count)")
+        for (index, action) in alert.actions.enumerated() {
+            print("🔍 [SHARE_MENU] Action \(index): \(action.title ?? "nil") (style: \(action.style.rawValue))")
+        }
         
         if let popoverController = alert.popoverPresentationController {
               popoverController.sourceView = self.view

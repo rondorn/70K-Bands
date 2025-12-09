@@ -363,8 +363,8 @@ class SQLiteAttendanceManager {
                 // For timeIndex, we'll use a hash of the full index as a fallback
                 let ti = Double(index.hashValue)
                 
-                // Default to "Default" for iCloud operations
-                let currentProfile = profile ?? "Default"
+                // Use provided profile, or get current active profile if not specified
+                let currentProfile = profile ?? self.getCurrentProfileName()
                 
                 let insert = self.attendanceTable.insert(
                     or: .replace,
@@ -388,7 +388,9 @@ class SQLiteAttendanceManager {
     /// Sets attendance status by index (convenience method without explicit timestamp)
     /// Thread-safe - can be called from any thread
     func setAttendanceStatusByIndex(index: String, status statusValue: Int) {
-        self.setAttendanceStatusByIndex(index: index, status: statusValue, timestamp: Date().timeIntervalSince1970)
+        // Get active profile from SharedPreferencesManager
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        self.setAttendanceStatusByIndex(index: index, status: statusValue, timestamp: Date().timeIntervalSince1970, profileName: activeProfile)
     }
     
     /// Gets all attendance data indexed by attendance index

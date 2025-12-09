@@ -217,7 +217,9 @@
 "Share Your Preferences" = "Del Dine Præferencer";
 "Share your Must/Might/Won't priorities and attended events with another user." = "Del dine Skal/Måske/Skal ikke prioriteter og deltagne begivenheder med en anden bruger.";
 "Export Your Profile" = "Eksportér Din Profil";
-"Your Default profile will be exported. Recipients can import it and view your preferences." = "Din standardprofil vil blive eksporteret. Modtagere kan importere den og se dine præferencer.";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Dette vil eksportere dine Skal, Måske, Skal ikke og deltagne begivenheder data, som gør det muligt for modtagere at importere disse data til deres enheder.";
+"Name Your Share" = "Navngiv Din Deling";
+"Give this share a name so the recipient can identify you." = "Giv denne deling et navn, så modtageren kan identificere dig.";
 
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Denne fil er ikke en gyldig 70K Bands delingsfil.";
@@ -266,4 +268,6 @@
 
 // Share Menu
 "Share Type" = "Delingstype";
-"Share Preferences & Schedule" = "Del Præferencer og Tidsplan";
+"Share Importable Band/Event Data" = "Del Importerbare Band/Event Data";
+"Share Band Report" = "Del Bandrapport";
+"Share Event Report" = "Del Eventrapport";
