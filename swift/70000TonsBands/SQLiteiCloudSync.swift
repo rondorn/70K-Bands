@@ -25,6 +25,14 @@ class SQLiteiCloudSync {
     /// Reads all priority data from iCloud and updates SQLite
     /// Thread-safe - can be called from any thread
     func syncPrioritiesFromiCloud(completion: @escaping () -> Void) {
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud priority sync")
+            completion()
+            return
+        }
+        
         // CRITICAL: Block iCloud operations during profile switches
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
@@ -93,6 +101,13 @@ class SQLiteiCloudSync {
     /// Writes all local priorities to iCloud
     /// Thread-safe - can be called from any thread
     func syncPrioritiesToiCloud() {
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud priority sync")
+            return
+        }
+        
         // CRITICAL: Block iCloud operations during profile switches
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
@@ -181,6 +196,14 @@ class SQLiteiCloudSync {
     /// Reads all attendance data from iCloud and updates SQLite
     /// Thread-safe - can be called from any thread
     func syncAttendanceFromiCloud(completion: @escaping () -> Void) {
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud attendance sync")
+            completion()
+            return
+        }
+        
         // CRITICAL: Block iCloud operations during profile switches
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
@@ -256,6 +279,13 @@ class SQLiteiCloudSync {
     /// Writes all local attendance data to iCloud
     /// Thread-safe - can be called from any thread
     func syncAttendanceToiCloud() {
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud attendance sync")
+            return
+        }
+        
         // CRITICAL: Block iCloud operations during profile switches
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
