@@ -1228,14 +1228,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     // MARK: - Shared Preferences Import Support
     
-    /// Handles opening .70kshare files (iOS 9+)
+    /// Check if the file extension is valid for THIS specific app (no cross-compatibility)
+    private func isValidShareExtension(_ extension: String) -> Bool {
+        // 70K Bands only accepts .70kshare, MDF only accepts .mdfshare
+        let expectedExtension = FestivalConfig.current.isMDF() ? "mdfshare" : "70kshare"
+        return `extension` == expectedExtension
+    }
+    
+    /// Handles opening share files (iOS 9+) - app-specific extension only
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
         
-        // Check if this is a shared preferences file
-        if url.pathExtension == "70kshare" {
+        // Check if this is a valid shared preferences file for THIS app
+        if isValidShareExtension(url.pathExtension) {
             // Handle the import
             return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+        } else {
+            print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
         }
         
         return false
@@ -1245,10 +1254,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         print("📥 AppDelegate: Opening URL (Legacy): \(url)")
         
-        // Check if this is a shared preferences file
-        if url.pathExtension == "70kshare" {
+        // Check if this is a valid shared preferences file for THIS app
+        if isValidShareExtension(url.pathExtension) {
             // Handle the import
             return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+        } else {
+            print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
         }
         
         return false
@@ -1261,11 +1272,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Check if launched with a URL
         if let url = launchOptions?[.url] as? URL {
             print("📥 Launched with URL: \(url)")
-            if url.pathExtension == "70kshare" {
+            if isValidShareExtension(url.pathExtension) {
                 // Delay handling to ensure UI is ready
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     _ = SharedPreferencesImportHandler.shared.handleIncomingFile(url)
                 }
+            } else {
+                print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
             }
         }
         

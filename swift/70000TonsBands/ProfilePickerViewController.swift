@@ -189,7 +189,8 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
                 if let masterVC = self.masterViewController {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         let visibleLocation = CGRect(origin: masterVC.mainTableView.contentOffset, size: masterVC.mainTableView.bounds.size)
-                        ToastMessages("Now Viewing Profile: \(displayName)").show(masterVC, cellLocation: visibleLocation, placeHigh: true)
+                        let nowViewingText = NSLocalizedString("Now Viewing Profile:", comment: "Now viewing profile toast")
+                        ToastMessages("\(nowViewingText) \(displayName)").show(masterVC, cellLocation: visibleLocation, placeHigh: true)
                     }
                 }
             }
@@ -222,7 +223,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         
         let alert = UIAlertController(
             title: displayName,
-            message: "Choose an action",
+            message: NSLocalizedString("Choose an action", comment: "Choose action prompt"),
             preferredStyle: .actionSheet
         )
         
@@ -234,20 +235,20 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         }
         
         // 1) Rename
-        let renameAction = UIAlertAction(title: "Rename This Entry", style: .default) { [weak self] _ in
+        let renameAction = UIAlertAction(title: NSLocalizedString("Rename This Entry", comment: "Rename action"), style: .default) { [weak self] _ in
             self?.showRenameDialog(for: profileKey)
         }
         alert.addAction(renameAction)
         
         // 2) Change Color
-        let colorAction = UIAlertAction(title: "Change The Color", style: .default) { [weak self] _ in
+        let colorAction = UIAlertAction(title: NSLocalizedString("Change The Color", comment: "Change color action"), style: .default) { [weak self] _ in
             self?.showColorPicker(for: profileKey)
         }
         alert.addAction(colorAction)
         
         // 3) Make These Settings My Own (only for non-Default profiles)
         if profileKey != "Default" {
-            let copyAction = UIAlertAction(title: "Make These Settings My Own", style: .default) { [weak self] _ in
+            let copyAction = UIAlertAction(title: NSLocalizedString("Make These Settings My Own", comment: "Copy to default action"), style: .default) { [weak self] _ in
                 self?.confirmCopyToDefault(fromProfileKey: profileKey, displayName: displayName)
             }
             alert.addAction(copyAction)
@@ -255,14 +256,14 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         
         // 4) Delete (only for non-Default profiles)
         if profileKey != "Default" {
-            let deleteAction = UIAlertAction(title: "Delete this Entry", style: .destructive) { [weak self] _ in
+            let deleteAction = UIAlertAction(title: NSLocalizedString("Delete this Entry", comment: "Delete action"), style: .destructive) { [weak self] _ in
                 self?.confirmDeleteProfile(userId: profileKey)
             }
             alert.addAction(deleteAction)
         }
         
         // Cancel
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel)
         alert.addAction(cancelAction)
         
         present(alert, animated: true)
@@ -272,8 +273,8 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         let currentName = sharingManager.getDisplayName(for: profileKey)
         
         let alert = UIAlertController(
-            title: "Rename Profile",
-            message: "Enter a new name for this profile",
+            title: NSLocalizedString("Rename Profile", comment: "Rename dialog title"),
+            message: NSLocalizedString("Enter a new name for this profile", comment: "Rename dialog message"),
             preferredStyle: .alert
         )
         
@@ -283,7 +284,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
             textField.autocapitalizationType = .words
         }
         
-        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self, weak alert] _ in
+        let saveAction = UIAlertAction(title: NSLocalizedString("Save", comment: "Save button"), style: .default) { [weak self, weak alert] _ in
             guard let newName = alert?.textFields?.first?.text,
                   !newName.isEmpty else { return }
             
@@ -297,7 +298,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
             }
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel)
         
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
@@ -308,9 +309,11 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
     private func showColorPicker(for profileKey: String) {
         let displayName = sharingManager.getDisplayName(for: profileKey)
         
+        let selectColorForText = NSLocalizedString("Select a color for", comment: "Select color for message")
+        
         let alert = UIAlertController(
-            title: "Choose Color",
-            message: "Select a color for '\(displayName)'",
+            title: NSLocalizedString("Choose Color", comment: "Choose color title"),
+            message: "\(selectColorForText) '\(displayName)'",
             preferredStyle: .actionSheet
         )
         
@@ -362,7 +365,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
             alert.addAction(action)
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel)
         alert.addAction(cancelAction)
         
         present(alert, animated: true)
@@ -371,13 +374,16 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
     private func confirmDeleteProfile(userId: String) {
         let displayName = sharingManager.getDisplayName(for: userId)
         
+        let sureToDeleteText = NSLocalizedString("Are you sure you want to delete", comment: "Delete confirmation message")
+        let cannotUndoText = NSLocalizedString("This cannot be undone.", comment: "Cannot undo message")
+        
         let alert = UIAlertController(
-            title: "Delete Profile",
-            message: "Are you sure you want to delete '\(displayName)'? This cannot be undone.",
+            title: NSLocalizedString("Delete Profile", comment: "Delete profile title"),
+            message: "\(sureToDeleteText) '\(displayName)'? \(cannotUndoText)",
             preferredStyle: .alert
         )
         
-        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+        let deleteAction = UIAlertAction(title: NSLocalizedString("Delete", comment: "Delete button"), style: .destructive) { [weak self] _ in
             print("🗑️ [DELETE] Deleting profile: \(displayName) (\(userId))")
             
             // If deleting the active profile, switch to Default first
@@ -398,7 +404,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
             }
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel)
         
         alert.addAction(deleteAction)
         alert.addAction(cancelAction)
@@ -408,17 +414,21 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
     
     /// Shows confirmation dialog before copying profile to Default
     private func confirmCopyToDefault(fromProfileKey: String, displayName: String) {
+        let overwriteText = NSLocalizedString("This will overwrite all of your current Default profile settings with", comment: "Overwrite warning message")
+        let lostText = NSLocalizedString("Your existing priorities and attended events will be permanently lost.", comment: "Data loss warning")
+        let continueText = NSLocalizedString("Are you sure you want to continue?", comment: "Continue confirmation")
+        
         let alert = UIAlertController(
-            title: "Make These Settings Your Own",
-            message: "This will overwrite all of your current Default profile settings with '\(displayName)'.\n\nYour existing priorities and attended events will be permanently lost.\n\nAre you sure you want to continue?",
+            title: NSLocalizedString("Make These Settings Your Own", comment: "Copy to default title"),
+            message: "\(overwriteText) '\(displayName)'.\n\n\(lostText)\n\n\(continueText)",
             preferredStyle: .alert
         )
         
-        let copyAction = UIAlertAction(title: "Overwrite My Settings", style: .destructive) { [weak self] _ in
+        let copyAction = UIAlertAction(title: NSLocalizedString("Overwrite My Settings", comment: "Overwrite button"), style: .destructive) { [weak self] _ in
             self?.copyProfileToDefault(fromProfileKey: fromProfileKey, displayName: displayName)
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel)
         
         alert.addAction(copyAction)
         alert.addAction(cancelAction)
@@ -502,7 +512,9 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
                     if let masterVC = self.masterViewController {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             let visibleLocation = CGRect(origin: masterVC.mainTableView.contentOffset, size: masterVC.mainTableView.bounds.size)
-                            ToastMessages("Copied '\(displayName)' to Your Profile").show(masterVC, cellLocation: visibleLocation, placeHigh: true)
+                            let copiedText = NSLocalizedString("Copied", comment: "Copied message")
+                            let toYourProfileText = NSLocalizedString("to Your Profile", comment: "To your profile message")
+                            ToastMessages("\(copiedText) '\(displayName)' \(toYourProfileText)").show(masterVC, cellLocation: visibleLocation, placeHigh: true)
                         }
                     }
                 }
