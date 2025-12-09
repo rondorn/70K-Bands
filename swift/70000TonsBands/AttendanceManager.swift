@@ -85,7 +85,17 @@ class AttendanceManager {
     }
     
     /// Gets attendance status using index-based lookup from SQLite
+    /// Also respects shared preference source if one is active
     func getAttendanceStatusByIndex(index: String) -> Int {
+        // Check if viewing shared preferences
+        let sharingManager = SharedPreferencesManager.shared
+        let activeSource = sharingManager.getActivePreferenceSource()
+        
+        if activeSource != "Default" {
+            // Use shared preferences
+            return sharingManager.getAttendanceFromActiveSource(for: index)
+        }
+        
         return sqliteManager.getAttendanceStatusByIndex(index: index)
     }
     
@@ -110,6 +120,18 @@ class AttendanceManager {
         
         if migrationCompleted {
             print("✅ Attendance Core Data to SQLite migration already completed")
+            return
+        }
+        
+        // CRITICAL FIX: Check if Core Data store even exists before trying to access it
+        // On fresh install, there's nothing to migrate and we shouldn't block startup
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+        let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
+        
+        if !FileManager.default.fileExists(atPath: coreDataStorePath) {
+            print("ℹ️  No Core Data store found - fresh install, skipping migration")
+            // Mark migration as complete so we don't check again
+            UserDefaults.standard.set(true, forKey: migrationKey)
             return
         }
         
