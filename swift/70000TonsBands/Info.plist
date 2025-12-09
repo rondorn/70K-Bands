@@ -119,9 +119,7 @@
 			<string>70K Bands Shared Preferences</string>
 			<key>UTTypeConformsTo</key>
 			<array>
-				<string>public.json</string>
 				<string>public.data</string>
-				<string>public.content</string>
 			</array>
 			<key>UTTypeTagSpecification</key>
 			<dict>
@@ -132,7 +130,7 @@
 				<key>public.mime-type</key>
 				<array>
 					<string>application/x-70kbands-share</string>
-					<string>application/json</string>
+					<string>application/octet-stream</string>
 				</array>
 			</dict>
 			<key>UTTypeIconFiles</key>
@@ -148,7 +146,6 @@
 			<string>70K Bands Shared Preferences</string>
 			<key>UTTypeConformsTo</key>
 			<array>
-				<string>public.json</string>
 				<string>public.data</string>
 			</array>
 			<key>UTTypeTagSpecification</key>
@@ -156,6 +153,11 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>70kshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-70kbands-share</string>
+					<string>application/octet-stream</string>
 				</array>
 			</dict>
 		</dict>

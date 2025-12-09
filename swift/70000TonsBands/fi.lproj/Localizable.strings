@@ -218,3 +218,59 @@
 "year_change_loading" = "Ladataan uuden vuoden tietoja, odota...";
 
 "HereAreMy" = "Tässä ovat minun";
+
+// Sharing Feature
+"Failed to export preferences. Please try again." = "Asetusten vienti epäonnistui. Yritä uudelleen.";
+"Share Your Preferences" = "Jaa Asetuksesi";
+"Share your Must/Might/Won't priorities and attended events with another user." = "Jaa Pakko/Ehkä/En prioriteettisi ja osallistutut tapahtumat toisen käyttäjän kanssa.";
+"Export Your Profile" = "Vie Profiilisi";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Oletusprofiilisi viedään. Vastaanottajat voivat tuoda sen ja tarkastella asetuksiasi.";
+
+// Import Feature
+"This file is not a valid 70K Bands share file." = "Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.";
+"Import Shared Preferences" = "Tuo Jaetut Asetukset";
+"New profile received!" = "Uusi profiili vastaanotettu!";
+"band priorities" = "bändin prioriteetit";
+"scheduled events" = "aikataulutetut tapahtumat";
+"Choose a name for this profile:" = "Valitse nimi tälle profiilille:";
+"Import" = "Tuo";
+"Updated" = "Päivitetty";
+"with new data!" = "uusilla tiedoilla!";
+"Showing preferences from" = "Näytetään asetukset kohteesta";
+"Successfully imported" = "Tuonti onnistui";
+"Failed to import. Please try again." = "Tuonti epäonnistui. Yritä uudelleen.";
+"Import Successful" = "Tuonti Onnistui";
+"Profile Updated" = "Profiili Päivitetty";
+"Import Failed" = "Tuonti Epäonnistui";
+
+// Profile Management
+"Choose an action" = "Valitse toiminto";
+"Rename This Entry" = "Nimeä Tämä Merkintä Uudelleen";
+"Change The Color" = "Vaihda Väri";
+"Make These Settings My Own" = "Tee Näistä Asetuksista Omat";
+"Delete this Entry" = "Poista Tämä Merkintä";
+"Rename Profile" = "Nimeä Profiili Uudelleen";
+"Enter a new name for this profile" = "Anna uusi nimi tälle profiilille";
+"Save" = "Tallenna";
+"Choose Color" = "Valitse Väri";
+"Select a color for" = "Valitse väri kohteelle";
+"Delete Profile" = "Poista Profiili";
+"Are you sure you want to delete" = "Haluatko varmasti poistaa";
+"This cannot be undone." = "Tätä ei voi peruuttaa.";
+"Delete" = "Poista";
+"Make These Settings Your Own" = "Tee Näistä Asetuksista Omat";
+"This will overwrite all of your current Default profile settings with" = "Tämä korvaa kaikki nykyiset Oletus-profiilisi asetukset kohteella";
+"Your existing priorities and attended events will be permanently lost." = "Olemassa olevat prioriteettisi ja osallistutut tapahtumat menetetään pysyvästi.";
+"Are you sure you want to continue?" = "Haluatko varmasti jatkaa?";
+"Overwrite My Settings" = "Korvaa Asetukseni";
+"Now Viewing Profile:" = "Katsotaan Nyt Profiilia:";
+"Copied" = "Kopioitu";
+"to Your Profile" = "Profiiliisi";
+
+// Profile Tutorial
+"Tap here to switch between profiles" = "Napauta tästä vaihtaaksesi profiilien välillä";
+"Tap anywhere to close" = "Napauta mistä tahansa sulkeaksesi";
+
+// Share Menu
+"Share Type" = "Jakamistyyppi";
+"Share Preferences & Schedule" = "Jaa Asetukset ja Aikataulu";

@@ -2815,7 +2815,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         sharedMessage = "Start"
         
-        let alert = UIAlertController.init(title: "Share Type", message: "", preferredStyle: .actionSheet)
+        let alert = UIAlertController.init(title: NSLocalizedString("Share Type", comment: "Share type dialog title"), message: "", preferredStyle: .actionSheet)
         
         // Configure popover for iPad
         if let popover = alert.popoverPresentationController {
@@ -2827,7 +2827,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let reportHandler = showAttendenceReport()
         
         // NEW: Share preferences as file
-        let sharePreferencesFile = UIAlertAction.init(title: "Share Preferences & Schedule", style: .default) { _ in
+        let sharePreferencesFile = UIAlertAction.init(title: NSLocalizedString("Share Preferences & Schedule", comment: "Share preferences and schedule option"), style: .default) { _ in
             print("Opening Sharing view")
             self.showSharingView()
         }

@@ -34,19 +34,10 @@ struct SharingView: View {
                     )
                 }
             }
-            .alert("Name Your Share", isPresented: $viewModel.showNamePrompt) {
-                TextField("e.g., My Favorites", text: $viewModel.shareName)
-                Button("Cancel", role: .cancel) { }
-                Button("Share") {
-                    viewModel.exportPreferences()
-                }
+            .alert(NSLocalizedString("Export Failed", comment: "Export error alert title"), isPresented: $viewModel.showExportError) {
+                Button(NSLocalizedString("OK", comment: "OK button")) { }
             } message: {
-                Text("Give this share a name so the recipient can identify it.")
-            }
-            .alert("Export Failed", isPresented: $viewModel.showExportError) {
-                Button("OK") { }
-            } message: {
-                Text("Failed to export preferences. Please try again.")
+                Text(NSLocalizedString("Failed to export preferences. Please try again.", comment: "Export error message"))
             }
         }
     }
@@ -54,7 +45,7 @@ struct SharingView: View {
     private var exportSection: some View {
         Section {
             Button(action: {
-                viewModel.showNamePrompt = true
+                viewModel.exportPreferences()
             }) {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
@@ -62,10 +53,10 @@ struct SharingView: View {
                         .font(.system(size: 24))
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Share Your Preferences")
+                        Text(NSLocalizedString("Share Your Preferences", comment: "Share feature title"))
                             .foregroundColor(.primary)
                             .font(.headline)
-                        Text("Share your Must/Might/Won't priorities and attended events with another user.")
+                        Text(NSLocalizedString("Share your Must/Might/Won't priorities and attended events with another user.", comment: "Share feature description"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -76,9 +67,9 @@ struct SharingView: View {
                 .padding(.vertical, 8)
             }
         } header: {
-            Text("Export Your Profile")
+            Text(NSLocalizedString("Export Your Profile", comment: "Section header for export"))
         } footer: {
-            Text("Your Default profile will be exported. Recipients can import it and view your preferences.")
+            Text(NSLocalizedString("Your Default profile will be exported. Recipients can import it and view your preferences.", comment: "Export section footer"))
                 .font(.caption)
         }
     }
@@ -87,8 +78,6 @@ struct SharingView: View {
 // MARK: - View Model
 
 class SharingViewModel: ObservableObject {
-    @Published var shareName: String = ""
-    @Published var showNamePrompt = false
     @Published var showShareSheet = false
     @Published var showExportError = false
     @Published var exportedFileURL: URL?
@@ -96,15 +85,10 @@ class SharingViewModel: ObservableObject {
     private let sharingManager = SharedPreferencesManager.shared
     
     func exportPreferences() {
-        guard !shareName.isEmpty else {
-            showExportError = true
-            return
-        }
+        print("📤 Starting export (no name required from sender)")
         
-        print("📤 Starting export with name: \(shareName)")
-        
-        // Always export from Default profile
-        if let fileURL = sharingManager.exportCurrentPreferences(shareName: shareName) {
+        // Always export from Default profile, no name needed
+        if let fileURL = sharingManager.exportCurrentPreferences(shareName: nil) {
             print("📤 Export successful, preparing to share...")
             print("📤 File URL: \(fileURL.absoluteString)")
             print("📤 File exists: \(FileManager.default.fileExists(atPath: fileURL.path))")
@@ -118,7 +102,6 @@ class SharingViewModel: ObservableObject {
             
             exportedFileURL = fileURL
             showShareSheet = true
-            shareName = "" // Reset for next time
         } else {
             print("❌ Export failed")
             showExportError = true
@@ -137,7 +120,9 @@ struct ActivityViewController: UIViewControllerRepresentable {
         var items: [Any] = []
         
         // Add descriptive text first (helps Messages understand this is a file share)
-        let shareText = "70K Bands Shared Preferences: \(fileName.replacingOccurrences(of: ".70kshare", with: ""))"
+        let appName = FestivalConfig.current.appName
+        let cleanFileName = fileName.replacingOccurrences(of: ".70kshare", with: "").replacingOccurrences(of: ".mdfshare", with: "")
+        let shareText = "\(appName) Shared Preferences: \(cleanFileName)"
         items.append(shareText)
         
         // Add file URL(s) with custom item source

@@ -69,7 +69,7 @@ class SharedPreferencesImportHandler {
         
         // Validate and parse the file
         guard let preferenceSet = sharingManager.validateImportedFile(at: fileToRead) else {
-            showErrorAlert(message: "This file is not a valid 70K Bands share file.")
+            showErrorAlert(message: NSLocalizedString("This file is not a valid 70K Bands share file.", comment: "Invalid file error"))
             
             // Clean up temp file
             if let tempFile = tempFile {
@@ -97,31 +97,50 @@ class SharedPreferencesImportHandler {
         return true
     }
     
-    /// Shows dialog to accept and name the imported share
+    /// Shows dialog to accept and name the imported share (only for new profiles)
     private func showImportDialog(preferenceSet: SharedPreferenceSet) {
         DispatchQueue.main.async {
+            // Check if this UserID already exists
+            if let existingProfile = SQLiteProfileManager.shared.getProfile(userId: preferenceSet.senderUserId) {
+                // Profile exists - update silently without prompting
+                print("📥 [IMPORT] Updating existing profile: \(existingProfile.label) (\(preferenceSet.senderUserId))")
+                
+                // Use existing label/name
+                self.completeImport(customName: existingProfile.label, isUpdate: true)
+                return
+            }
+            
+            // New profile - prompt for name
+            print("📥 [IMPORT] New profile, prompting for name")
+            
             guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let topVC = windowScene.windows.first?.rootViewController else {
                 return
             }
             
+            let title = NSLocalizedString("Import Shared Preferences", comment: "Import dialog title")
+            let newProfileText = NSLocalizedString("New profile received!", comment: "New profile message")
+            let bandPrioritiesText = NSLocalizedString("band priorities", comment: "Band priorities label")
+            let scheduledEventsText = NSLocalizedString("scheduled events", comment: "Scheduled events label")
+            let chooseNameText = NSLocalizedString("Choose a name for this profile:", comment: "Choose name prompt")
+            
             let alert = UIAlertController(
-                title: "Import Shared Preferences",
-                message: "'\(preferenceSet.senderName)' wants to share their preferences with you.\n\n\(preferenceSet.priorities.count) band priorities\n\(preferenceSet.attendance.count) scheduled events\n\nChoose a name to save this share:",
+                title: title,
+                message: "\(newProfileText)\n\n\(preferenceSet.priorities.count) \(bandPrioritiesText)\n\(preferenceSet.attendance.count) \(scheduledEventsText)\n\n\(chooseNameText)",
                 preferredStyle: .alert
             )
             
             alert.addTextField { textField in
-                textField.placeholder = "e.g., \(preferenceSet.senderName)"
-                textField.text = preferenceSet.senderName
+                textField.placeholder = "e.g., Friend's Picks"
+                textField.text = preferenceSet.senderName.isEmpty ? "Shared Profile" : preferenceSet.senderName
                 textField.autocapitalizationType = .words
             }
             
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel) { _ in
                 self.pendingImportSet = nil
             })
             
-            alert.addAction(UIAlertAction(title: "Import", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Import", comment: "Import button"), style: .default) { [weak self] _ in
                 guard let self = self,
                       let textField = alert.textFields?.first,
                       let customName = textField.text,
@@ -129,7 +148,7 @@ class SharedPreferencesImportHandler {
                     return
                 }
                 
-                self.completeImport(customName: customName)
+                self.completeImport(customName: customName, isUpdate: false)
             })
             
             // Present from the top-most view controller
@@ -142,7 +161,7 @@ class SharedPreferencesImportHandler {
     }
     
     /// Completes the import with the user's chosen name
-    private func completeImport(customName: String) {
+    private func completeImport(customName: String, isUpdate: Bool) {
         guard let preferenceSet = pendingImportSet else { return }
         
         if sharingManager.importPreferenceSet(preferenceSet, withName: customName) {
@@ -154,27 +173,41 @@ class SharedPreferencesImportHandler {
             
             print("✅ [IMPORT_HANDLER] Switched to profile: \(profileKey)")
             
-            showSuccessAlert(message: "Successfully imported '\(customName)'!\n\nShowing preferences from '\(customName)'.")
+            // Different message for update vs new import
+            let message: String
+            if isUpdate {
+                let updatedText = NSLocalizedString("Updated", comment: "Updated status")
+                let withNewDataText = NSLocalizedString("with new data!", comment: "With new data message")
+                let showingPrefsText = NSLocalizedString("Showing preferences from", comment: "Showing preferences message")
+                message = "\(updatedText) '\(customName)' \(withNewDataText)\n\n\(showingPrefsText) '\(customName)'."
+            } else {
+                let successText = NSLocalizedString("Successfully imported", comment: "Success message")
+                let showingPrefsText = NSLocalizedString("Showing preferences from", comment: "Showing preferences message")
+                message = "\(successText) '\(customName)'!\n\n\(showingPrefsText) '\(customName)'."
+            }
+            
+            showSuccessAlert(message: message, isNewProfile: !isUpdate)
             
             // Refresh the UI - this will trigger a full data reload with the new profile
             NotificationCenter.default.post(name: Notification.Name("refreshGUI"), object: nil)
         } else {
-            showErrorAlert(message: "Failed to import. The name '\(customName)' may already be in use. Please try a different name.")
+            showErrorAlert(message: NSLocalizedString("Failed to import. Please try again.", comment: "Import failed message"))
             
-            // Show dialog again with different name suggestion
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                var modifiedSet = preferenceSet
-                // Create a new set with modified sender name to retry
-                let retrySet = SharedPreferenceSet(
-                    senderUserId: preferenceSet.senderUserId,
-                    senderName: "\(customName) 2",
-                    shareDate: preferenceSet.shareDate,
-                    eventYear: preferenceSet.eventYear,
-                    priorities: preferenceSet.priorities,
-                    attendance: preferenceSet.attendance
-                )
-                self.pendingImportSet = retrySet
-                self.showImportDialog(preferenceSet: retrySet)
+            // Only retry for new profiles, not updates
+            if !isUpdate {
+                // Show dialog again with different name suggestion
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    let retrySet = SharedPreferenceSet(
+                        senderUserId: preferenceSet.senderUserId,
+                        senderName: "\(customName) 2",
+                        shareDate: preferenceSet.shareDate,
+                        eventYear: preferenceSet.eventYear,
+                        priorities: preferenceSet.priorities,
+                        attendance: preferenceSet.attendance
+                    )
+                    self.pendingImportSet = retrySet
+                    self.showImportDialog(preferenceSet: retrySet)
+                }
             }
         }
         
@@ -182,21 +215,23 @@ class SharedPreferencesImportHandler {
     }
     
     /// Shows success alert
-    private func showSuccessAlert(message: String) {
+    private func showSuccessAlert(message: String, isNewProfile: Bool) {
         DispatchQueue.main.async {
             guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let topVC = windowScene.windows.first?.rootViewController else {
                 return
             }
             
+            let title = isNewProfile ? NSLocalizedString("Import Successful", comment: "Import success title") : NSLocalizedString("Profile Updated", comment: "Profile updated title")
+            
             let alert = UIAlertController(
-                title: "Import Successful",
+                title: title,
                 message: message,
                 preferredStyle: .alert
             )
             
-            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                // After dismissing alert, show tutorial overlay
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default) { _ in
+                // Show tutorial overlay for all imports (new or update)
                 self.showProfileSwitchTutorial()
             })
             
@@ -243,12 +278,12 @@ class SharedPreferencesImportHandler {
             }
             
             let alert = UIAlertController(
-                title: "Import Failed",
+                title: NSLocalizedString("Import Failed", comment: "Import failed title"),
                 message: message,
                 preferredStyle: .alert
             )
             
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default))
             
             var presenter = topVC
             while let presented = presenter.presentedViewController {

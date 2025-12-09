@@ -245,3 +245,59 @@
 "year_change_loading" = "Cargando datos para el nuevo año, por favor espere...";
 
 "HereAreMy" = "Aquí están mis";
+
+// Sharing Feature
+"Failed to export preferences. Please try again." = "Error al exportar preferencias. Por favor, inténtelo de nuevo.";
+"Share Your Preferences" = "Compartir Tus Preferencias";
+"Share your Must/Might/Won't priorities and attended events with another user." = "Comparte tus prioridades Debo/Podría/No y eventos asistidos con otro usuario.";
+"Export Your Profile" = "Exportar Tu Perfil";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "Tu perfil predeterminado será exportado. Los destinatarios pueden importarlo y ver tus preferencias.";
+
+// Import Feature
+"This file is not a valid 70K Bands share file." = "Este archivo no es un archivo de compartición 70K Bands válido.";
+"Import Shared Preferences" = "Importar Preferencias Compartidas";
+"New profile received!" = "¡Nuevo perfil recibido!";
+"band priorities" = "prioridades de bandas";
+"scheduled events" = "eventos programados";
+"Choose a name for this profile:" = "Elige un nombre para este perfil:";
+"Import" = "Importar";
+"Updated" = "Actualizado";
+"with new data!" = "¡con datos nuevos!";
+"Showing preferences from" = "Mostrando preferencias de";
+"Successfully imported" = "Importado correctamente";
+"Failed to import. Please try again." = "Error al importar. Por favor, inténtelo de nuevo.";
+"Import Successful" = "Importación Exitosa";
+"Profile Updated" = "Perfil Actualizado";
+"Import Failed" = "Error en la Importación";
+
+// Profile Management
+"Choose an action" = "Elige una acción";
+"Rename This Entry" = "Renombrar Esta Entrada";
+"Change The Color" = "Cambiar el Color";
+"Make These Settings My Own" = "Hacer Estos Ajustes Míos";
+"Delete this Entry" = "Eliminar Esta Entrada";
+"Rename Profile" = "Renombrar Perfil";
+"Enter a new name for this profile" = "Introduce un nuevo nombre para este perfil";
+"Save" = "Guardar";
+"Choose Color" = "Elegir Color";
+"Select a color for" = "Selecciona un color para";
+"Delete Profile" = "Eliminar Perfil";
+"Are you sure you want to delete" = "¿Estás seguro de que quieres eliminar";
+"This cannot be undone." = "Esto no se puede deshacer.";
+"Delete" = "Eliminar";
+"Make These Settings Your Own" = "Hacer Estos Ajustes Tuyos";
+"This will overwrite all of your current Default profile settings with" = "Esto sobrescribirá todos tus ajustes de perfil predeterminado actuales con";
+"Your existing priorities and attended events will be permanently lost." = "Tus prioridades existentes y eventos asistidos se perderán permanentemente.";
+"Are you sure you want to continue?" = "¿Estás seguro de que quieres continuar?";
+"Overwrite My Settings" = "Sobrescribir Mis Ajustes";
+"Now Viewing Profile:" = "Viendo Ahora el Perfil:";
+"Copied" = "Copiado";
+"to Your Profile" = "a Tu Perfil";
+
+// Profile Tutorial
+"Tap here to switch between profiles" = "Toca aquí para cambiar entre perfiles";
+"Tap anywhere to close" = "Toca en cualquier lugar para cerrar";
+
+// Share Menu
+"Share Type" = "Tipo de Compartir";
+"Share Preferences & Schedule" = "Compartir Preferencias y Horario";

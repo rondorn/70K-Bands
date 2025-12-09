@@ -56,8 +56,10 @@ class SharedPreferencesManager {
     // Storage keys
     private let activeSourceKey = "ActivePreferenceSource"
     
-    // File extension for shared preferences
-    private let fileExtension = "70kshare"
+    // File extension for shared preferences (app-specific)
+    private var fileExtension: String {
+        return FestivalConfig.current.isMDF() ? "mdfshare" : "70kshare"
+    }
     
     // Public property for accessing current profile name
     var currentSharedProfileName: String? {
@@ -118,9 +120,10 @@ class SharedPreferencesManager {
     // MARK: - Export Functionality
     
     /// Exports current user's priorities and attendance to a shareable file
+    /// Sender does not need to provide a name - receiver will name it on import
     /// - Returns: URL of the created file, or nil if export failed
     func exportCurrentPreferences(shareName: String? = nil) -> URL? {
-        let name = shareName ?? "My 70K Bands"
+        let name = shareName ?? ""  // Empty name - receiver will provide one
         
         // Get sender's Firebase UserID (device identifier)
         let senderUserId = UIDevice.current.identifierForVendor?.uuidString ?? "Unknown"
@@ -137,7 +140,7 @@ class SharedPreferencesManager {
             }
         }
         
-        // Create preference set with sender's UserID
+        // Create preference set with sender's UserID (name optional)
         let preferenceSet = SharedPreferenceSet(
             senderUserId: senderUserId,
             senderName: name,
@@ -147,7 +150,7 @@ class SharedPreferencesManager {
             attendance: attendance
         )
         
-        print("📤 [EXPORT] Exporting with UserID: \(senderUserId), Name: \(name)")
+        print("📤 [EXPORT] Exporting with UserID: \(senderUserId), Name: '\(name.isEmpty ? "(none provided)" : name)'")
         
         // Encode to JSON with pretty printing for better file inspection
         let encoder = JSONEncoder()
@@ -158,8 +161,8 @@ class SharedPreferencesManager {
             return nil
         }
         
-        // Create file in Documents directory (more reliable for sharing)
-        let fileName = "\(preferenceSet.senderName.replacingOccurrences(of: " ", with: "_"))_\(eventYear).\(fileExtension)"
+        // Create file with UserID-based name (not sender name, since sender doesn't provide one)
+        let fileName = "70KBands_\(senderUserId.prefix(8))_\(eventYear).\(fileExtension)"
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let sharesDir = documentsDir.appendingPathComponent("Shares")
         
