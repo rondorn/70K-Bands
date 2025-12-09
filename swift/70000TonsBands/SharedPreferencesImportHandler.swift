@@ -195,13 +195,42 @@ class SharedPreferencesImportHandler {
                 preferredStyle: .alert
             )
             
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                // After dismissing alert, show tutorial overlay
+                self.showProfileSwitchTutorial()
+            })
             
             var presenter = topVC
             while let presented = presenter.presentedViewController {
                 presenter = presented
             }
             presenter.present(alert, animated: true)
+        }
+    }
+    
+    /// Shows tutorial overlay pointing to the profile switcher
+    private func showProfileSwitchTutorial() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let topVC = windowScene.windows.first?.rootViewController else {
+                return
+            }
+            
+            // Find the MasterViewController
+            var targetVC: UIViewController? = topVC
+            if let navController = topVC as? UINavigationController {
+                targetVC = navController.viewControllers.first
+            } else if let splitVC = topVC as? UISplitViewController {
+                targetVC = splitVC.viewControllers.first
+                if let navController = targetVC as? UINavigationController {
+                    targetVC = navController.viewControllers.first
+                }
+            }
+            
+            // Show tutorial on the found view controller
+            if let viewController = targetVC {
+                ProfileTutorialOverlay.show(on: viewController)
+            }
         }
     }
     

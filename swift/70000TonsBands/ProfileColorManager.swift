@@ -12,58 +12,85 @@ class ProfileColorManager {
     static let shared = ProfileColorManager()
     
     // Vibrant colors that look good against black background
+    // Colors rotate in order: Red, Green, Orange, Pink, Teal, Yellow
     private let availableColors: [UIColor] = [
-        UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),      // White (Default)
-        UIColor(red: 0.4, green: 0.8, blue: 1.0, alpha: 1.0),      // Sky Blue
-        UIColor(red: 1.0, green: 0.4, blue: 0.6, alpha: 1.0),      // Pink
-        UIColor(red: 0.5, green: 1.0, blue: 0.5, alpha: 1.0),      // Light Green
-        UIColor(red: 1.0, green: 0.8, blue: 0.3, alpha: 1.0),      // Gold
-        UIColor(red: 0.8, green: 0.6, blue: 1.0, alpha: 1.0),      // Purple
-        UIColor(red: 1.0, green: 0.6, blue: 0.3, alpha: 1.0),      // Orange
-        UIColor(red: 0.4, green: 1.0, blue: 0.8, alpha: 1.0),      // Cyan
-        UIColor(red: 1.0, green: 0.5, blue: 0.8, alpha: 1.0),      // Rose
-        UIColor(red: 0.6, green: 0.9, blue: 1.0, alpha: 1.0),      // Baby Blue
+        UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0),      // White (Default only)
+        UIColor(red: 1.0, green: 0.2, blue: 0.2, alpha: 1.0),      // Red
+        UIColor(red: 0.2, green: 0.9, blue: 0.2, alpha: 1.0),      // Green
+        UIColor(red: 1.0, green: 0.6, blue: 0.1, alpha: 1.0),      // Orange
+        UIColor(red: 1.0, green: 0.3, blue: 0.7, alpha: 1.0),      // Pink
+        UIColor(red: 0.1, green: 0.9, blue: 0.9, alpha: 1.0),      // Teal
+        UIColor(red: 1.0, green: 0.9, blue: 0.1, alpha: 1.0),      // Yellow
     ]
-    
-    private let userDefaultsKey = "ProfileColorAssignments"
     
     private init() {}
     
     /// Get color for a profile (from SQLite or assigns one if not already assigned)
     func getColor(for profileKey: String) -> UIColor {
+        // Default profile always gets white
+        if profileKey == "Default" {
+            return UIColor.white
+        }
+        
         // Try to get color from SQLite profile table
         if let profile = SQLiteProfileManager.shared.getProfile(userId: profileKey) {
             return colorFromHex(profile.color)
         }
         
-        // Fallback: Default profile always gets white
-        if profileKey == "Default" {
-            return UIColor.white
+        // If no profile found in SQLite, assign a new color
+        // Check ALL existing profiles in SQLite to see what colors are already used
+        let allProfiles = SQLiteProfileManager.shared.getAllProfiles()
+        var usedColorIndices: Set<Int> = [0]  // 0 is white/default, always reserved
+        
+        // Collect all currently used color indices from SQLite by comparing hex strings
+        for existingProfile in allProfiles {
+            if existingProfile.userId == "Default" { continue }
+            let existingColorHex = existingProfile.color.uppercased()
+            
+            // Compare with all available colors to find which index is being used
+            for (index, color) in availableColors.enumerated() {
+                let colorHex = getHexString(for: color).uppercased()
+                if colorHex == existingColorHex {
+                    usedColorIndices.insert(index)
+                    break
+                }
+            }
         }
         
-        // If no profile found, assign a new color (for temporary use before SQLite save)
-        var assignments = getStoredAssignments()
+        // Find the next available color index (1-6, rotating)
+        // Start at 1 to skip white (index 0)
+        print("🎨 [COLOR] Assigning color for profile '\(profileKey)'")
+        print("🎨 [COLOR] Used color indices: \(usedColorIndices.sorted())")
         
-        // If already assigned in legacy storage, return existing color
-        if let colorIndex = assignments[profileKey] {
-            return availableColors[colorIndex % availableColors.count]
-        }
-        
-        // Assign a new color (skip index 0 which is white/default)
-        let usedIndices = Set(assignments.values)
-        var newIndex = 1  // Start at 1 to skip white
-        
-        // Find first unused color index
-        while usedIndices.contains(newIndex) && newIndex < availableColors.count {
+        var newIndex = 1
+        while usedColorIndices.contains(newIndex) && newIndex < availableColors.count {
             newIndex += 1
         }
         
-        // If all colors used, just cycle through
+        // If all colors are used, cycle back through (1-6)
         if newIndex >= availableColors.count {
-            newIndex = 1 + (assignments.count % (availableColors.count - 1))
+            // Count non-Default profiles and use modulo to cycle through colors
+            let nonDefaultCount = allProfiles.filter { $0.userId != "Default" }.count
+            newIndex = 1 + (nonDefaultCount % (availableColors.count - 1))
+            print("🎨 [COLOR] All colors used, cycling to index \(newIndex)")
         }
         
+        print("🎨 [COLOR] Assigned color index \(newIndex) (\(getColorName(newIndex))) to profile '\(profileKey)'")
         return availableColors[newIndex]
+    }
+    
+    /// Get friendly name for color index (for logging)
+    private func getColorName(_ index: Int) -> String {
+        switch index {
+        case 0: return "White"
+        case 1: return "Red"
+        case 2: return "Green"
+        case 3: return "Orange"
+        case 4: return "Pink"
+        case 5: return "Teal"
+        case 6: return "Yellow"
+        default: return "Unknown"
+        }
     }
     
     /// Convert hex string to UIColor
@@ -81,11 +108,11 @@ class ProfileColorManager {
         return UIColor(red: r, green: g, blue: b, alpha: 1.0)
     }
     
-    /// Remove color assignment when profile is deleted
+    /// Remove color assignment when profile is deleted (no-op since colors are in SQLite)
     func removeColor(for profileKey: String) {
-        var assignments = getStoredAssignments()
-        assignments.removeValue(forKey: profileKey)
-        saveAssignments(assignments)
+        // Colors are now stored in SQLite, managed by SQLiteProfileManager
+        // This function is kept for API compatibility but does nothing
+        print("🎨 [COLOR] Color for '\(profileKey)' will be removed by SQLiteProfileManager")
     }
     
     /// Get hex string for a color (for debugging/display)
@@ -98,23 +125,6 @@ class ProfileColorManager {
         color.getRed(&r, green: &g, blue: &b, alpha: &a)
         
         return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
-    }
-    
-    // MARK: - Private Storage
-    
-    private func getStoredAssignments() -> [String: Int] {
-        if let data = UserDefaults.standard.data(forKey: userDefaultsKey),
-           let assignments = try? JSONDecoder().decode([String: Int].self, from: data) {
-            return assignments
-        }
-        return [:]
-    }
-    
-    private func saveAssignments(_ assignments: [String: Int]) {
-        if let data = try? JSONEncoder().encode(assignments) {
-            UserDefaults.standard.set(data, forKey: userDefaultsKey)
-            UserDefaults.standard.synchronize()
-        }
     }
 }
 

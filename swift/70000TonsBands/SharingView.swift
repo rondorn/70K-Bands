@@ -15,7 +15,6 @@ struct SharingView: View {
         NavigationView {
             Form {
                 exportSection
-                importedSharesSection
             }
             .navigationTitle("Share Preferences")
             .navigationBarTitleDisplayMode(.inline)
@@ -49,11 +48,6 @@ struct SharingView: View {
             } message: {
                 Text("Failed to export preferences. Please try again.")
             }
-            .alert("Share Tip", isPresented: $viewModel.showShareTip) {
-                Button("OK") { }
-            } message: {
-                Text("Tip: In Messages, your file will appear as an attachment. Recipients can tap to download and open in 70K Bands.")
-            }
         }
     }
     
@@ -65,97 +59,28 @@ struct SharingView: View {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
                         .foregroundColor(.blue)
-                    Text("Share Default")
-                        .foregroundColor(.primary)
+                        .font(.system(size: 24))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Share Your Preferences")
+                            .foregroundColor(.primary)
+                            .font(.headline)
+                        Text("Share your Must/Might/Won't priorities and attended events with another user.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.leading, 8)
+                    
                     Spacer()
                 }
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Share your Must/Might/Won't priorities and event schedule with other users.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                .padding(.vertical, 8)
             }
         } header: {
-            Text("Export")
-        }
-    }
-    
-    private var importedSharesSection: some View {
-        Section {
-            if viewModel.importedShares.isEmpty {
-                Text("No imported shares yet")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            } else {
-                ForEach(viewModel.importedShares, id: \.userId) { share in
-                    HStack {
-                        // Color indicator
-                        Circle()
-                            .fill(colorFromHex(share.color))
-                            .frame(width: 12, height: 12)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(share.label)
-                                .font(.body)
-                            Text("\(share.priorityCount) priorities • \(share.attendanceCount) events")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("Imported \(formatDate(share.importDate))")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        // Check if this UserID is the active source
-                        if viewModel.activeSource == share.userId {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        // Select using UserID (the profile key)
-                        viewModel.selectSource(share.userId)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            // Delete using UserID (the profile key)
-                            viewModel.deleteShare(share.userId)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                }
-            }
-        } header: {
-            Text("Imported Shares")
+            Text("Export Your Profile")
         } footer: {
-            Text("Tap a share to view it in the Filters menu. Swipe left to delete.")
+            Text("Your Default profile will be exported. Recipients can import it and view your preferences.")
                 .font(.caption)
         }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-    
-    // Helper to convert hex string to SwiftUI Color
-    private func colorFromHex(_ hex: String) -> Color {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
-        
-        var rgb: UInt64 = 0
-        Scanner(string: hexSanitized).scanHexInt64(&rgb)
-        
-        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
-        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
-        let b = Double((rgb & 0x0000FF)) / 255.0
-        
-        return Color(red: r, green: g, blue: b)
     }
 }
 
@@ -166,27 +91,9 @@ class SharingViewModel: ObservableObject {
     @Published var showNamePrompt = false
     @Published var showShareSheet = false
     @Published var showExportError = false
-    @Published var showShareTip = false
     @Published var exportedFileURL: URL?
-    @Published var importedShares: [ProfileMetadata] = []
-    @Published var activeSource: String = "Default"
     
     private let sharingManager = SharedPreferencesManager.shared
-    private let profileManager = SQLiteProfileManager.shared
-    
-    init() {
-        loadImportedShares()
-        loadActiveSource()
-    }
-    
-    func loadImportedShares() {
-        // Get all profiles except Default
-        importedShares = profileManager.getAllProfiles().filter { $0.userId != "Default" }
-    }
-    
-    func loadActiveSource() {
-        activeSource = sharingManager.getActivePreferenceSource()
-    }
     
     func exportPreferences() {
         guard !shareName.isEmpty else {
@@ -196,6 +103,7 @@ class SharingViewModel: ObservableObject {
         
         print("📤 Starting export with name: \(shareName)")
         
+        // Always export from Default profile
         if let fileURL = sharingManager.exportCurrentPreferences(shareName: shareName) {
             print("📤 Export successful, preparing to share...")
             print("📤 File URL: \(fileURL.absoluteString)")
@@ -214,24 +122,6 @@ class SharingViewModel: ObservableObject {
         } else {
             print("❌ Export failed")
             showExportError = true
-        }
-    }
-    
-    func selectSource(_ profileKey: String) {
-        sharingManager.setActivePreferenceSource(profileKey)
-        activeSource = profileKey
-        
-        // Refresh main view
-        NotificationCenter.default.post(name: Notification.Name("refreshGUI"), object: nil)
-    }
-    
-    func deleteShare(_ userId: String) {
-        if sharingManager.deleteImportedSet(byUserId: userId) {
-            loadImportedShares()
-            loadActiveSource()
-            
-            // Refresh main view
-            NotificationCenter.default.post(name: Notification.Name("refreshGUI"), object: nil)
         }
     }
 }
