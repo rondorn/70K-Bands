@@ -97,7 +97,9 @@
 "ShareBandChoices" = "Share Band Choices";
 "ShareShowChoices" = "Share Show Choices";
 "Share Type" = "Share Type";
-"Share Preferences & Schedule" = "Share Preferences & Schedule";
+"Share Importable Band/Event Data" = "Share Importable Band/Event Data";
+"Share Band Report" = "Share Band Report";
+"Share Event Report" = "Share Event Report";
 
 "visitBands" = "Links";
 "country" = "Country";
@@ -254,7 +256,9 @@
 "Share Your Preferences" = "Share Your Preferences";
 "Share your Must/Might/Won't priorities and attended events with another user." = "Share your Must/Might/Won't priorities and attended events with another user.";
 "Export Your Profile" = "Export Your Profile";
-"Your Default profile will be exported. Recipients can import it and view your preferences." = "Your Default profile will be exported. Recipients can import it and view your preferences.";
+"Your Default profile will be exported. Recipients can import it and view your preferences." = "This will export your Must, Might, Won't and events attended data, allowing recipients to import this data onto their devices.";
+"Name Your Share" = "Name Your Share";
+"Give this share a name so the recipient can identify you." = "Give this share a name so the recipient can identify you.";
 
 // Import Feature
 "This file is not a valid 70K Bands share file." = "This file is not a valid 70K Bands share file.";

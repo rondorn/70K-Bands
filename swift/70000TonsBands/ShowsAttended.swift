@@ -267,14 +267,7 @@ open class ShowsAttended {
             print("🔍 [ShowsAttended] Fallback: setting to Will Attend (2)")
         }
         
-        // CRITICAL: Check if current profile is read-only (shared)
-        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
-        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
-            print("❌ Cannot set attendance - viewing read-only shared profile: \(activeProfile)")
-            return sawNoneStatus  // Return unchanged status
-        }
-        
-        // Update using Core Data
+        // Update using Core Data (all profiles are now editable)
         attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus)
         
         // Convert to string status for return value
@@ -301,14 +294,7 @@ open class ShowsAttended {
         - status: The new attendance status.
      */
     func changeShowAttendedStatus(index: String, status:String){
-        // CRITICAL: Check if current profile is read-only (shared)
-        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
-        if SharedPreferencesManager.shared.isReadOnly(profileKey: activeProfile) {
-            print("❌ Cannot change attendance - viewing read-only shared profile: \(activeProfile)")
-            return
-        }
-        
-        // Parse status to get numeric value
+        // Parse status to get numeric value (all profiles are now editable)
         let statusParts = status.components(separatedBy: ":")
         let statusString = statusParts[0]
         let numericStatus: Int

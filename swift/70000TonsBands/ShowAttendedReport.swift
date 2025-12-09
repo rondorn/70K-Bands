@@ -14,8 +14,6 @@ class showAttendenceReport {
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
     
     var schedule = scheduleHandler.shared
-    var attendedHandle = ShowsAttended()
-    
     var bandNamesHandle = bandNamesHandler.shared
     var dataHandle = dataHandler()
     
@@ -45,17 +43,31 @@ class showAttendenceReport {
         schedule.buildTimeSortedSchedulingData();
         
         let scheduleData = schedule.getBandSortedSchedulingData();
-        let showsAttendedArray = attendedHandle.getShowsAttended();
+        
+        // Get attendance data from SQLite for the active profile
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        let showsAttendedArray = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: activeProfile)
+        
+        print("🔍 [REPORT_DEBUG] Getting attendance for profile: '\(activeProfile)'")
+        print("🔍 [REPORT_DEBUG] Found \(showsAttendedArray.count) attendance records")
+        
         let allBands = bandNamesHandle.getBandNames()
         var unuiqueSpecial = [String]()
         
         var tempEventCount = 0
         
+        // Reset report empty flag at the start
+        isReportEmpty = false
+        
         if (schedule.getBandSortedSchedulingData().count > 0){
             for index in showsAttendedArray {
                 
+                print("🔍 [VALIDATION] ========== Processing attendance record ==========")
+                print("🔍 [VALIDATION] Index key: '\(index.key)'")
+                
                 //prevent duplicate events
                 if (indexMap.contains(index.key)){
+                    print("⚠️ [VALIDATION] SKIPPED: Duplicate entry")
                     continue
                 }
                 indexMap.append(index.key)
@@ -63,6 +75,7 @@ class showAttendenceReport {
                 let indexArray = index.key.split(separator: ":")
                 
                 guard indexArray.count >= 6 else {
+                    print("⚠️ [VALIDATION] SKIPPED: Index array count = \(indexArray.count), need >= 6")
                     continue
                 }
                 
@@ -72,43 +85,87 @@ class showAttendenceReport {
                 let min = String(indexArray[3])
                 let eventType = String(indexArray[4])
                 let year = String(indexArray[5])
-                let status = String(showsAttendedArray[index.key]!)
+                
+                print("🔍 [VALIDATION] Parsed: band='\(bandName)', location='\(location)', time='\(hour):\(min)', type='\(eventType)', year='\(year)'")
+                
+                // Get status from the dictionary returned by SQLite (stored as Int, convert to String)
+                guard let statusInt = index.value["status"] as? Int else {
+                    print("⚠️ [VALIDATION] SKIPPED: Could not extract status Int from dictionary")
+                    print("⚠️ [VALIDATION] status raw value: \(index.value["status"] ?? "nil")")
+                    continue
+                }
+                
+                // Convert Int status code to String
+                let status: String
+                switch statusInt {
+                case 2:
+                    status = sawAllStatus  // "sawAll"
+                case 1:
+                    status = sawSomeStatus // "sawSome"
+                case 3:
+                    status = sawNoneStatus // "sawNone"
+                default:
+                    status = sawNoneStatus // "sawNone"
+                }
+                
+                print("🔍 [VALIDATION] Status: '\(status)'")
                 
                 if (year != String(eventYear)){
+                    print("⚠️ [VALIDATION] SKIPPED: Year mismatch - attendance year '\(year)' != current eventYear '\(eventYear)'")
                     continue
                 }
                 if (status == "sawNone"){
+                    print("⚠️ [VALIDATION] SKIPPED: Status is 'sawNone'")
                     continue
                 }
                 
                 // Extract just the status without timestamp
                 let statusOnly = String(status.split(separator: ":")[0])
                 
+                print("🔍 [VALIDATION] Status (without timestamp): '\(statusOnly)'")
+                
                 var validateEvent = false
                 if scheduleData.index(forKey: bandName) != nil {
                     validateEvent = true
+                    print("✅ [VALIDATION] Band '\(bandName)' FOUND in schedule data")
+                } else {
+                    print("⚠️ [VALIDATION] Band '\(bandName)' NOT FOUND in schedule data")
                 }
                 
                 if validateEvent {
                     // Do additional time-based validation
                     var timeValidated = false
+                    print("🔍 [VALIDATION] Checking time/location match for '\(bandName)'...")
+                    print("🔍 [VALIDATION] Looking for: location='\(location)', type='\(eventType)', time='\(hour):\(min)'")
+                    
                     for timeIndex in scheduleData[bandName]!.keys {
-                        if (scheduleData[bandName]?[timeIndex]?["Location"] == location &&
-                            scheduleData[bandName]?[timeIndex]?["Type"] == eventType &&
-                            scheduleData[bandName]?[timeIndex]?["Start Time"] == hour + ":" + min){
+                        let schedLocation = scheduleData[bandName]?[timeIndex]?["Location"] ?? ""
+                        let schedType = scheduleData[bandName]?[timeIndex]?["Type"] ?? ""
+                        let schedTime = scheduleData[bandName]?[timeIndex]?["Start Time"] ?? ""
+                        let expectedTime = hour + ":" + min
+                        
+                        print("🔍 [VALIDATION]   Checking schedule entry: location='\(schedLocation)', type='\(schedType)', time='\(schedTime)'")
+                        
+                        if (schedLocation == location &&
+                            schedType == eventType &&
+                            schedTime == expectedTime){
                             timeValidated = true
+                            print("✅ [VALIDATION] TIME/LOCATION MATCH FOUND!")
                             break
                         }
                     }
                     
                     if timeValidated {
+                        print("✅ [VALIDATION] Event PASSED all validation - counting it!")
                         getEventTypeCounts(eventType: eventType, sawStatus: statusOnly)
                         getBandCounts(eventType: eventType, bandName: bandName, sawStatus: statusOnly)
                         tempEventCount += 1
                     } else {
+                        print("⚠️ [VALIDATION] SKIPPED: Time/location validation FAILED")
                         continue
                     }
                 } else {
+                    print("⚠️ [VALIDATION] SKIPPED: Band not in schedule")
                     continue
                 }
                 
@@ -119,19 +176,28 @@ class showAttendenceReport {
                     eventType != specialEventType &&
                     eventType != unofficalEventTypeOld){
 
-                    print("ShareDebug: Band '\(bandName)' not in main band list and not a special event type - skipping")
+                    print("⚠️ [VALIDATION] FINAL CHECK FAILED: Band '\(bandName)' not in main band list and not a special event type - skipping")
+                    print("⚠️ [VALIDATION] eventType='\(eventType)', unofficalEventType='\(unofficalEventType)', karaokeEventType='\(karaokeEventType)'")
                     continue
                 }
                 
-                // This validation and counting is already handled above in the new debug code
-                // No need to duplicate the processing here
+                print("✅ [VALIDATION] Event '\(bandName)' PASSED final band validation check")
+                print("🔍 [VALIDATION] ========================================")
                 
             }
+            
+            // Set report status based on count
+            isReportEmpty = (tempEventCount == 0)
+            print("📊 [REPORT] ==========================================")
+            print("📊 [REPORT] FINAL SUMMARY:")
+            print("📊 [REPORT] Total attendance records processed: \(showsAttendedArray.count)")
+            print("📊 [REPORT] Events that passed validation: \(tempEventCount)")
+            print("📊 [REPORT] isReportEmpty = \(isReportEmpty)")
+            print("📊 [REPORT] ==========================================")
         } else {
+            // No schedule data available
             isReportEmpty = true
-        }
-        if (tempEventCount == 0){
-            isReportEmpty = true
+            print("⚠️ [REPORT] No schedule data available, isReportEmpty = true")
         }
 
     }

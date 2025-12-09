@@ -27,25 +27,50 @@
             android:drawablePadding="20dp"
             android:contentDescription="View Report Dashboard" />
 
-        <TextView
-            android:id="@+id/headerBandCount"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:gravity="center"
-            android:text=""
-            android:textAlignment="center"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="@android:color/white"
-            android:textStyle="bold"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="4sp"
-            android:autoSizeMaxTextSize="40sp"
-            android:autoSizeStepGranularity="1sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/profileSwitcher"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Default"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="?android:attr/selectableItemBackground"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:minHeight="0dp"
+                android:minWidth="0dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/headerBandCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
+                android:gravity="center"
+                android:text=""
+                android:textAlignment="center"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="4sp"
+                android:autoSizeMaxTextSize="40sp"
+                android:autoSizeStepGranularity="1sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/preferences"
