@@ -82,6 +82,7 @@
     <string name="ShareTitle">Mitä haluat jakaa?</string>
     <string name="ShareBandChoices">Jaa yhtyevalinnat</string>
     <string name="ShareShowChoices">Jaa esitysvalinnat</string>
+    <string name="ShareImportableData">Jaa Tuotavat Bändi/Tapahtuma Tiedot</string>
     <string name="ExportUserData">Vie käyttäjätiedot</string>
 
     <string name="visitBands">Linkit</string>
@@ -288,4 +289,92 @@
     <string name="bulk_image_download">Massakuvien lataus</string>
     <string name="bulk_note_download">Massamuistiinpanojen lataus</string>
     <string name="bulk_data_upload">Massatietojen lähetys</string>
+    <string name="alert_warning_import">Huom: Tapahtumahälytykset perustuvat Oletus-profiilisi asetuksiin, eivät tähän tuotuun profiiliin.</string>
+    <string name="select_profile">Valitse Profiili</string>
+    <string name="now_viewing_profile">Katsotaan Nyt Profiilia:</string>
+    
+    <!-- Import Feature -->
+    <string name="import_shared_preferences">Tuo Jaetut Asetukset</string>
+    <string name="new_profile_received">Uusi profiili vastaanotettu!</string>
+    <string name="band_priorities">bändin prioriteetit</string>
+    <string name="scheduled_events">aikataulutetut tapahtumat</string>
+    <string name="choose_profile_name">Valitse nimi tälle profiilille:</string>
+    <string name="showing_preferences_from">Näytetään asetukset kohteesta</string>
+    <string name="successfully_imported">Tuonti onnistui</string>
+    <string name="import_successful">Tuonti Onnistui</string>
+    
+    <!-- Profile Actions -->
+    <string name="choose_an_action">Valitse toiminto</string>
+    <string name="choose_action">Valitse toiminto</string>
+    <string name="rename_this_entry">Nimeä Tämä Merkintä Uudelleen</string>
+    <string name="rename_entry">Nimeä Tämä Merkintä Uudelleen</string>
+    <string name="change_the_color">Vaihda Väri</string>
+    <string name="change_color">Vaihda Väri</string>
+    <string name="make_settings_my_own">Tee Näistä Asetuksista Omat</string>
+    <string name="make_settings_own">Tee Näistä Asetuksista Omat</string>
+    <string name="delete_this_entry">Poista Tämä Merkintä</string>
+    <string name="delete_entry">Poista Tämä Merkintä</string>
+    <string name="are_you_sure_delete">Haluatko varmasti poistaa</string>
+    <string name="cannot_be_undone">Tätä ei voi peruuttaa.</string>
+    <string name="delete_profile_message">Haluatko varmasti poistaa \"{profileName}\"?\n\nTätä ei voi peruuttaa.</string>
+    
+    <!-- Profile Tutorial -->
+    <string name="tap_here_to_switch_profiles">Napauta tästä vaihtaaksesi profiilien välillä</string>
+    <string name="tap_anywhere_to_close">Napauta mistä tahansa sulkeaksesi</string>
+    
+    <!-- Sharing Feature -->
+    <string name="failed_to_export_preferences">Asetusten vienti epäonnistui. Yritä uudelleen.</string>
+    <string name="share_your_preferences">Jaa Asetuksesi</string>
+    <string name="share_priorities_and_events">Jaa Must/Might/Won\'t-prioriteettisi ja osallistutut tapahtumat toisen käyttäjän kanssa.</string>
+    <string name="export_your_profile">Vie Profiilisi</string>
+    <string name="export_profile_description">Oletusprofiilisi viedään. Vastaanottajat voivat tuoda sen ja tarkastella asetuksiasi.</string>
+    <string name="export_failed">Vienti Epäonnistui</string>
+    <string name="name_your_share">Nimeä Jakosi</string>
+    <string name="name_share_message">Anna tälle jaolle nimi, jotta vastaanottaja voi tunnistaa sinut.</string>
+    <string name="import_button">Tuo</string>
+    <string name="updated">Päivitetty</string>
+    <string name="with_new_data">uusilla tiedoilla!</string>
+    <string name="invalid_share_file">Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.</string>
+    <string name="failed_to_import">Tuonti epäonnistui. Yritä uudelleen.</string>
+    <string name="import_failed">Tuonti Epäonnistui</string>
+    <string name="profile_updated">Profiili Päivitetty</string>
+    
+    <!-- Profile Management Additional -->
+    <string name="save">Tallenna</string>
+    <string name="Save">Tallenna</string>
+    <string name="delete">Poista</string>
+    <string name="Delete">Poista</string>
+    <string name="Update">Päivitä</string>
+    <string name="Preferences">Asetukset</string>
+    <string name="profile_renamed">Profiili nimetty uudelleen</string>
+    <string name="change_profile_color">Vaihda Profiilin Väri</string>
+    <string name="color_changed">Väri vaihdettu</string>
+    <string name="choose_color">Valitse Väri</string>
+    <string name="select_color_for">Valitse väri kohteelle</string>
+    <string name="rename_profile">Nimeä Profiili Uudelleen</string>
+    <string name="rename_profile_message">Anna uusi nimi tälle profiilille</string>
+    <string name="enter_new_profile_name">Anna uusi nimi tälle profiilille</string>
+    <string name="delete_profile">Poista Profiili</string>
+    <string name="profile_deleted">Profiili poistettu</string>
+    <string name="make_my_own">Tee Omakseni</string>
+    <string name="make_settings_own_message">Tämä kopioi kaikki prioriteetit ja osallistumiset profiilista \"{profileName}\" oletusprofiiliisi, korvaten nykyiset asetuksesi.\n\nOletko varma?</string>
+    <string name="make_settings_your_own">Tee Näistä Asetuksista Omasi</string>
+    <string name="settings_copied_to_default">Asetukset Kopioitu Oletukseen</string>
+    <string name="are_you_sure_continue">Oletko varma, että haluat jatkaa?</string>
+    <string name="existing_data_lost">Nykyiset prioriteettisi ja osallistutut tapahtumat menetetään pysyvästi.</string>
+    <string name="overwrite_warning">Tämä korvaa kaikki nykyiset oletusprofiilisi asetukset</string>
+    <string name="overwrite_my_settings">Korvaa Asetukseni</string>
+    <string name="copied">Kopioitu</string>
+    <string name="to_your_profile">Profiiliisi</string>
+    <string name="done">Valmis</string>
+    <string name="share_preferences">Jaa Asetukset</string>
+    
+    <!-- View Mode Filter Strings -->
+    <string name="view_mode">Katselutila</string>
+    <string name="show_schedule">Näytä Aikataulu</string>
+    <string name="show_bands_only">Näytä Vain Bändit</string>
+    
+    <!-- Import/Export -->
+    <string name="update_profile">Päivitä Profiili</string>
+    <string name="update_existing_profile_message">Tämä päivittää olemassa olevan profiilin \"{profileName}\" uusilla tiedoilla:</string>
 </resources>

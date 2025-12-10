@@ -406,8 +406,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private void handleSearch(){
         searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
-        searchCriteriaObject.setQuery(searchCriteria, true);
+        searchCriteriaObject.setQuery(searchCriteria, false); // Don't submit query to avoid auto-focus
         searchCriteria = searchCriteriaObject.getQuery().toString();
+        
+        // Ensure SearchView doesn't automatically get focus
+        searchCriteriaObject.clearFocus();
+        searchCriteriaObject.setFocusable(false);
+        searchCriteriaObject.setFocusable(true);
+        searchCriteriaObject.setFocusableInTouchMode(false);
 
         searchCriteriaObject.setOnQueryTextListener(
 
@@ -1084,18 +1090,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             try {
                 File profileDir = new File(getFilesDir(), "profiles/" + profileKey);
                 
+                // **FIX: Switch to Default BEFORE copying data**
+                // This ensures rankStore.saveBandRanking() saves to Default, not the shared profile
+                sharingManager.setActivePreferenceSource("Default");
+                rankStore.reloadForActiveProfile();
+                staticVariables.attendedHandler.reloadForActiveProfile();
+                Log.d("ProfileAction", "🔄 [COPY] Switched to Default profile before copying");
+                
                 // Copy priorities
                 File prioritiesFile = new File(profileDir, "bandRankings.txt");
                 if (prioritiesFile.exists()) {
                     java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(prioritiesFile));
                     String line;
+                    int priorityCount = 0;
                     while ((line = br.readLine()) != null) {
                         String[] parts = line.split(":");
                         if (parts.length == 2) {
                             rankStore.saveBandRanking(parts[0], parts[1]);
+                            priorityCount++;
                         }
                     }
                     br.close();
+                    Log.d("ProfileAction", "✅ [COPY] Copied " + priorityCount + " band priorities to Default");
                 }
                 
                 // Copy attendance
@@ -1106,21 +1122,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     java.util.Map<String, String> attendanceMap = (java.util.Map<String, String>) ois.readObject();
                     ois.close();
                     
+                    int attendanceCount = 0;
                     for (java.util.Map.Entry<String, String> entry : attendanceMap.entrySet()) {
                         staticVariables.attendedHandler.addShowsAttended(entry.getKey(), entry.getValue());
+                        attendanceCount++;
                     }
+                    Log.d("ProfileAction", "✅ [COPY] Copied " + attendanceCount + " attended events to Default");
                 }
                 
-                // Switch to Default and refresh
-                sharingManager.setActivePreferenceSource("Default");
-                
-                // Reload Default profile data
-                rankStore.reloadForActiveProfile();
-                staticVariables.attendedHandler.reloadForActiveProfile();
-                Log.d("ProfileAction", "✅ [COPY] Reloaded Default profile data after copy");
-                
+                // Refresh UI with Default profile data
                 refreshNewData();
                 updateHeaderColorForCurrentProfile();
+                Log.d("ProfileAction", "✅ [COPY] Successfully copied '" + displayName + "' to Default profile");
                 
                 Toast.makeText(this, getString(R.string.settings_copied_to_default), Toast.LENGTH_LONG).show();
                 
@@ -1182,11 +1195,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         builder.setTitle(R.string.name_your_share);
         builder.setMessage(R.string.name_share_message);
         
-        // Set up the input field
+        // Set up the input field with explicit colors for dark theme
         final EditText input = new EditText(this);
         input.setHint("e.g., John's Phone");
         input.setText(deviceName);
         input.selectAll();
+        input.setTextColor(android.graphics.Color.WHITE);  // White text
+        input.setHintTextColor(android.graphics.Color.LTGRAY);  // Light gray hint
+        input.setBackgroundColor(android.graphics.Color.parseColor("#303030"));  // Dark gray background
+        input.setPadding(40, 40, 40, 40);  // Add padding for better visibility
         builder.setView(input);
         
         // Cancel button
@@ -1216,8 +1233,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             sharingIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
             sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             
+            // Use share name with extension as the subject so Google Drive uses it as filename
+            // Simple format: "John's Phone.70kshare"
+            String fileExtension = FestivalConfig.getInstance().isMDF() ? ".mdfshare" : ".70kshare";
+            String subject = shareName + fileExtension;
+            sharingIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            
             String appName = FestivalConfig.getInstance().appName;
-            sharingIntent.putExtra(Intent.EXTRA_SUBJECT, appName + " Shared Preferences");
             sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing my " + appName + " band priorities and event attendance");
             
             startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_preferences)));

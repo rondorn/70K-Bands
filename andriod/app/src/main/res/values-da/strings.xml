@@ -81,6 +81,7 @@
     <string name="ShareTitle">Hvad vil du dele?</string>
     <string name="ShareBandChoices">Del Bandvalg</string>
     <string name="ShareShowChoices">Del Vis valg</string>
+    <string name="ShareImportableData">Del Importerbare Band/Event Data</string>
     <string name="ExportUserData">Eksporter brugerdata</string>
 
     <string name="visitBands">Links</string>
@@ -286,4 +287,91 @@
     <string name="bulk_image_download">Massebilleddownload</string>
     <string name="bulk_note_download">Massenotedownload</string>
     <string name="bulk_data_upload">Massedataupload</string>
+    <string name="alert_warning_import">Bemærk: Begivenhedsalarmer vil være baseret på dine standardprofilindstillinger, ikke denne importerede profil.</string>
+    <string name="select_profile">Vælg Profil</string>
+    <string name="now_viewing_profile">Ser Nu Profil:</string>
+    
+    <!-- Import Feature -->
+    <string name="import_shared_preferences">Importér Delte Præferencer</string>
+    <string name="new_profile_received">Ny profil modtaget!</string>
+    <string name="band_priorities">band prioriteter</string>
+    <string name="scheduled_events">planlagte begivenheder</string>
+    <string name="choose_profile_name">Vælg et navn til denne profil:</string>
+    <string name="showing_preferences_from">Viser præferencer fra</string>
+    <string name="successfully_imported">Importeret med succes</string>
+    <string name="import_successful">Import Lykkedes</string>
+    
+    <!-- Profile Actions -->
+    <string name="choose_an_action">Vælg en handling</string>
+    <string name="choose_action">Vælg en handling</string>
+    <string name="rename_this_entry">Omdøb Denne Post</string>
+    <string name="rename_entry">Omdøb Denne Post</string>
+    <string name="change_the_color">Skift Farven</string>
+    <string name="change_color">Skift Farven</string>
+    <string name="make_settings_my_own">Gør Disse Indstillinger Til Mine Egne</string>
+    <string name="make_settings_own">Gør Disse Indstillinger Til Mine Egne</string>
+    <string name="delete_this_entry">Slet Denne Post</string>
+    <string name="delete_entry">Slet Denne Post</string>
+    <string name="are_you_sure_delete">Er du sikker på, at du vil slette</string>
+    <string name="cannot_be_undone">Dette kan ikke fortrydes.</string>
+    <string name="delete_profile_message">Er du sikker på, at du vil slette \"{profileName}\"?\n\nDette kan ikke fortrydes.</string>
+    
+    <!-- Profile Tutorial -->
+    <string name="tap_here_to_switch_profiles">Tryk her for at skifte mellem profiler</string>
+    <string name="tap_anywhere_to_close">Tryk hvor som helst for at lukke</string>
+    
+    <!-- Sharing Feature -->
+    <string name="failed_to_export_preferences">Kunne ikke eksportere præferencer. Prøv venligst igen.</string>
+    <string name="share_your_preferences">Del Dine Præferencer</string>
+    <string name="share_priorities_and_events">Del dine Must/Might/Won\'t prioriteter og besøgte begivenheder med en anden bruger.</string>
+    <string name="export_your_profile">Eksporter Din Profil</string>
+    <string name="export_profile_description">Din standardprofil vil blive eksporteret. Modtagere kan importere den og se dine præferencer.</string>
+    <string name="export_failed">Eksport Mislykkedes</string>
+    <string name="name_your_share">Navngiv Din Deling</string>
+    <string name="name_share_message">Giv denne deling et navn, så modtageren kan identificere dig.</string>
+    <string name="import_button">Import</string>
+    <string name="updated">Opdateret</string>
+    <string name="with_new_data">med nye data!</string>
+    <string name="invalid_share_file">Denne fil er ikke en gyldig 70K Bands delingsfil.</string>
+    <string name="failed_to_import">Kunne ikke importere. Prøv venligst igen.</string>
+    <string name="import_failed">Import Mislykkedes</string>
+    <string name="profile_updated">Profil Opdateret</string>
+    
+    <!-- Profile Management Additional -->
+    <string name="save">Gem</string>
+    <string name="Save">Gem</string>
+    <string name="delete">Slet</string>
+    <string name="Delete">Slet</string>
+    <string name="Update">Opdater</string>
+    <string name="profile_renamed">Profil omdøbt</string>
+    <string name="change_profile_color">Skift Profilfarve</string>
+    <string name="color_changed">Farve ændret</string>
+    <string name="choose_color">Vælg Farve</string>
+    <string name="select_color_for">Vælg en farve til</string>
+    <string name="rename_profile">Omdøb Profil</string>
+    <string name="rename_profile_message">Indtast et nyt navn til denne profil</string>
+    <string name="enter_new_profile_name">Indtast et nyt navn til denne profil</string>
+    <string name="delete_profile">Slet Profil</string>
+    <string name="profile_deleted">Profil slettet</string>
+    <string name="make_my_own">Gør Til Mine Egne</string>
+    <string name="make_settings_own_message">Dette vil kopiere alle prioriteter og deltagelse fra \"{profileName}\" til din standardprofil, og erstatte dine nuværende indstillinger.\n\nEr du sikker?</string>
+    <string name="make_settings_your_own">Gør Disse Indstillinger Til Dine Egne</string>
+    <string name="settings_copied_to_default">Indstillinger kopieret til Standard</string>
+    <string name="are_you_sure_continue">Er du sikker på, at du vil fortsætte?</string>
+    <string name="existing_data_lost">Dine eksisterende prioriteter og besøgte begivenheder vil være permanent tabt.</string>
+    <string name="overwrite_warning">Dette vil overskrive alle dine nuværende standardprofilindstillinger med</string>
+    <string name="overwrite_my_settings">Overskriv Mine Indstillinger</string>
+    <string name="copied">Kopieret</string>
+    <string name="to_your_profile">til Din Profil</string>
+    <string name="done">Færdig</string>
+    <string name="share_preferences">Del Præferencer</string>
+    
+    <!-- View Mode Filter Strings -->
+    <string name="view_mode">Visningstilstand</string>
+    <string name="show_schedule">Vis Tidsplan</string>
+    <string name="show_bands_only">Vis Kun Bands</string>
+    
+    <!-- Import/Export -->
+    <string name="update_profile">Opdater Profil</string>
+    <string name="update_existing_profile_message">Dette vil opdatere den eksisterende profil \"{profileName}\" med nye data:</string>
 </resources>

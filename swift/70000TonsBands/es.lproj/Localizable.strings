@@ -292,6 +292,7 @@
 "Your existing priorities and attended events will be permanently lost." = "Tus prioridades existentes y eventos asistidos se perderán permanentemente.";
 "Are you sure you want to continue?" = "¿Estás seguro de que quieres continuar?";
 "Overwrite My Settings" = "Sobrescribir Mis Ajustes";
+"Note: Event alerts will be based on your Default profile settings, not this imported profile." = "Nota: Las alertas de eventos se basarán en la configuración de tu perfil predeterminado, no en este perfil importado.";
 "Now Viewing Profile:" = "Viendo Ahora el Perfil:";
 "Copied" = "Copiado";
 "to Your Profile" = "a Tu Perfil";

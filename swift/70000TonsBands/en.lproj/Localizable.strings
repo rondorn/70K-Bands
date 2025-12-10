@@ -297,6 +297,7 @@
 "Your existing priorities and attended events will be permanently lost." = "Your existing priorities and attended events will be permanently lost.";
 "Are you sure you want to continue?" = "Are you sure you want to continue?";
 "Overwrite My Settings" = "Overwrite My Settings";
+"Note: Event alerts will be based on your Default profile settings, not this imported profile." = "Note: Event alerts will be based on your Default profile settings, not this imported profile.";
 "Now Viewing Profile:" = "Now Viewing Profile:";
 "Copied" = "Copied";
 "to Your Profile" = "to Your Profile";
