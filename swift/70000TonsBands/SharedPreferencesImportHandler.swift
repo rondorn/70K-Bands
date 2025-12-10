@@ -123,10 +123,11 @@ class SharedPreferencesImportHandler {
             let bandPrioritiesText = NSLocalizedString("band priorities", comment: "Band priorities label")
             let scheduledEventsText = NSLocalizedString("scheduled events", comment: "Scheduled events label")
             let chooseNameText = NSLocalizedString("Choose a name for this profile:", comment: "Choose name prompt")
+            let alertWarning = NSLocalizedString("Note: Event alerts will be based on your Default profile settings, not this imported profile.", comment: "Alert settings warning")
             
             let alert = UIAlertController(
                 title: title,
-                message: "\(newProfileText)\n\n\(preferenceSet.priorities.count) \(bandPrioritiesText)\n\(preferenceSet.attendance.count) \(scheduledEventsText)\n\n\(chooseNameText)",
+                message: "\(newProfileText)\n\n\(preferenceSet.priorities.count) \(bandPrioritiesText)\n\(preferenceSet.attendance.count) \(scheduledEventsText)\n\n⚠️ \(alertWarning)\n\n\(chooseNameText)",
                 preferredStyle: .alert
             )
             

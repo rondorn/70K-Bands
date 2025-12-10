@@ -258,6 +258,7 @@
 "Your existing priorities and attended events will be permanently lost." = "Dine eksisterende prioriteter og deltagne begivenheder vil blive permanent tabt.";
 "Are you sure you want to continue?" = "Er du sikker på, at du vil fortsætte?";
 "Overwrite My Settings" = "Overskriv Mine Indstillinger";
+"Note: Event alerts will be based on your Default profile settings, not this imported profile." = "Bemærk: Begivenhedsalarmer vil være baseret på dine standardprofilindstillinger, ikke denne importerede profil.";
 "Now Viewing Profile:" = "Ser Nu Profil:";
 "Copied" = "Kopieret";
 "to Your Profile" = "til Din Profil";

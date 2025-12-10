@@ -104,14 +104,14 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>70K Bands Shared Preferences</string>
+			<string>MDF Shared Preferences</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.rdorn.70kbands.share</string>
+				<string>com.rdorn.mdf.share</string>
 			</array>
 			<key>LSSupportsOpeningDocumentsInPlace</key>
 			<true/>
