@@ -335,6 +335,7 @@ class SQLitePriorityManager {
     
     /// Gets priority timestamp
     /// Thread-safe - can be called from any thread
+    /// CRITICAL: iCloud sync should ONLY operate against Default profile
     func getPriorityLastChange(for bandNameStr: String, eventYear year: Int = 0) -> Double {
         var result: Double = 0
         let semaphore = DispatchSemaphore(value: 0)
@@ -346,12 +347,21 @@ class SQLitePriorityManager {
             
             do {
                 let currentYear = year > 0 ? year : eventYear
+                
+                // CRITICAL FIX: iCloud sync should ONLY operate against Default profile
+                // Without profile filter, we might get timestamps from shared profiles,
+                // causing iCloud to incorrectly overwrite newer Default data
                 let query = self.prioritiesTable
-                    .filter(self.bandName == bandNameStr && self.eventYearColumn == currentYear)
+                    .filter(self.bandName == bandNameStr && 
+                           self.eventYearColumn == currentYear &&
+                           self.profileName == "Default")
                     .limit(1)
                 
                 if let row = try db.pluck(query) {
                     result = row[self.lastModified] ?? 0
+                    print("🔍 [TIMESTAMP] \(bandNameStr) Default profile timestamp: \(result)")
+                } else {
+                    print("🔍 [TIMESTAMP] No Default profile data for \(bandNameStr)")
                 }
             } catch {
                 print("❌ SQLitePriorityManager: Failed to get timestamp: \(error)")

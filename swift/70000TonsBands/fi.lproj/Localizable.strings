@@ -265,6 +265,7 @@
 "Your existing priorities and attended events will be permanently lost." = "Olemassa olevat prioriteettisi ja osallistutut tapahtumat menetetään pysyvästi.";
 "Are you sure you want to continue?" = "Haluatko varmasti jatkaa?";
 "Overwrite My Settings" = "Korvaa Asetukseni";
+"Note: Event alerts will be based on your Default profile settings, not this imported profile." = "Huom: Tapahtumahälytykset perustuvat Oletus-profiilisi asetuksiin, eivät tähän tuotuun profiiliin.";
 "Now Viewing Profile:" = "Katsotaan Nyt Profiilia:";
 "Copied" = "Kopioitu";
 "to Your Profile" = "Profiiliisi";

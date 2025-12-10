@@ -109,7 +109,8 @@ public class SharedPreferencesImportHandler {
                     preferenceSet.priorities.size() + " " + 
                     context.getString(R.string.band_priorities) + "\n" +
                     preferenceSet.attendance.size() + " " + 
-                    context.getString(R.string.scheduled_events);
+                    context.getString(R.string.scheduled_events) + "\n\n" +
+                    "⚠️ " + context.getString(R.string.alert_warning_import);
             builder.setMessage(message);
             
             // Cancel button
@@ -143,6 +144,7 @@ public class SharedPreferencesImportHandler {
                     context.getString(R.string.band_priorities) + "\n" +
                     preferenceSet.attendance.size() + " " + 
                     context.getString(R.string.scheduled_events) + "\n\n" +
+                    "⚠️ " + context.getString(R.string.alert_warning_import) + "\n\n" +
                     context.getString(R.string.choose_profile_name);
             builder.setMessage(message);
             
@@ -240,11 +242,30 @@ public class SharedPreferencesImportHandler {
             
             builder.setPositiveButton(R.string.Ok, (dialog, which) -> {
                 dialog.dismiss();
+                
+                // Show tutorial overlay for NEW profiles only (not updates)
+                // This helps users discover the profile switcher
+                if (!isUpdate) {
+                    showProfileSwitchTutorial(activity);
+                }
                 // Could show tutorial overlay here if desired
             });
             
             AlertDialog dialog = builder.create();
             dialog.show();
+        });
+    }
+    
+    /**
+     * Shows tutorial overlay pointing to the profile switcher
+     * Helps users discover they can tap the band count header to switch profiles
+     */
+    private void showProfileSwitchTutorial(Activity activity) {
+        // Delay slightly to allow the success dialog to fully dismiss
+        activity.runOnUiThread(() -> {
+            new android.os.Handler().postDelayed(() -> {
+                ProfileTutorialOverlay.show(activity);
+            }, 500);
         });
     }
     

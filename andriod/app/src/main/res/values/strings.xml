@@ -317,6 +317,7 @@
     <string name="band_priorities">band priorities</string>
     <string name="scheduled_events">scheduled events</string>
     <string name="choose_profile_name">Choose a name for this profile:</string>
+    <string name="alert_warning_import">Note: Event alerts will be based on your Default profile settings, not this imported profile.</string>
     <string name="import_button">Import</string>
     <string name="updated">Updated</string>
     <string name="with_new_data">with new data!</string>
@@ -352,9 +353,6 @@
     <string name="copied">Copied</string>
     <string name="to_your_profile">to Your Profile</string>
     
-    <!-- Profile Tutorial -->
-    <string name="tap_to_switch_profiles">Tap here to switch between profiles</string>
-    <string name="tap_anywhere_to_close">Tap anywhere to close</string>
     <string name="done">Done</string>
     <string name="share_preferences">Share Preferences</string>
     
@@ -376,6 +374,10 @@
     <string name="settings_copied_to_default">Settings copied to Default</string>
     <string name="delete_profile_message">Are you sure you want to delete \"{profileName}\"?\n\nThis cannot be undone.</string>
     <string name="profile_deleted">Profile deleted</string>
+    
+    <!-- Profile Tutorial -->
+    <string name="tap_here_to_switch_profiles">Tap here to switch between profiles</string>
+    <string name="tap_anywhere_to_close">Tap anywhere to close</string>
     
     <!-- Import/Export -->
     <string name="update_profile">Update Profile</string>

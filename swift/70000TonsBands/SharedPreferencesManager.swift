@@ -162,8 +162,8 @@ class SharedPreferencesManager {
             return nil
         }
         
-        // Create file with UserID-based name for uniqueness (sender name is stored in metadata)
-        let fileName = "70KBands_\(senderUserId.prefix(8))_\(eventYear).\(fileExtension)"
+        // Create file with profile name
+        let fileName = "\(name).\(fileExtension)"
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let sharesDir = documentsDir.appendingPathComponent("Shares")
         

@@ -442,11 +442,30 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         // Get the current event year from global Constants
         let currentEventYear = eventYear
         
-        // Get priorities and attendance from source profile
-        let priorities = SQLitePriorityManager.shared.getAllPriorities(eventYear: currentEventYear, profileName: fromProfileKey)
-        let attendanceData = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: fromProfileKey)
+        // CRITICAL: Get CURRENT Default profile data BEFORE deleting
+        // We need to know ALL bands/events that exist, so we can fill in missing ones
+        let existingDefaultPriorities = SQLitePriorityManager.shared.getAllPriorities(eventYear: currentEventYear, profileName: "Default")
+        let existingDefaultAttendance = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: "Default")
         
-        print("📋 [COPY] Source has \(priorities.count) priorities and \(attendanceData.count) attendance records")
+        print("📋 [COPY] Default currently has \(existingDefaultPriorities.count) priorities and \(existingDefaultAttendance.count) attendance records")
+        
+        // Get priorities and attendance from source profile
+        let sourcePriorities = SQLitePriorityManager.shared.getAllPriorities(eventYear: currentEventYear, profileName: fromProfileKey)
+        let sourceAttendance = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: fromProfileKey)
+        
+        print("📋 [COPY] Source has \(sourcePriorities.count) priorities and \(sourceAttendance.count) attendance records")
+        
+        // CRITICAL: Merge source data with existing Default bands
+        // For any band in Default but NOT in source, set to priority=0 (Not Ranked)
+        var mergedPriorities = sourcePriorities
+        for (bandName, _) in existingDefaultPriorities {
+            if mergedPriorities[bandName] == nil {
+                mergedPriorities[bandName] = 0  // Not Ranked
+                print("📋 [COPY] Adding missing band '\(bandName)' as Not Ranked (priority=0)")
+            }
+        }
+        
+        print("📋 [COPY] After merge: \(mergedPriorities.count) total priorities (\(sourcePriorities.count) from source + \(mergedPriorities.count - sourcePriorities.count) filled as Not Ranked)")
         
         // Use a dispatch group to wait for both delete operations to complete
         let deleteGroup = DispatchGroup()
@@ -473,19 +492,51 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         deleteGroup.notify(queue: .main) {
             print("📋 [COPY] Deletions complete, starting import...")
             
-            // Copy priorities to Default (async operation)
+            // Copy merged priorities to Default (async operation)
             SQLitePriorityManager.shared.importPriorities(
                 for: "Default",
-                priorities: priorities,
+                priorities: mergedPriorities,
                 eventYear: currentEventYear
             )
             
-            // Convert attendance data to the format expected by importAttendance
-            // importAttendance expects [[String: Any]], so extract just the data dictionaries
-            var attendanceArray: [[String: Any]] = []
-            for (_, data) in attendanceData {
-                attendanceArray.append(data)
+            // CRITICAL: Merge source attendance with existing Default events
+            // For any event in Default but NOT in source, set to status=0 (Not Attended)
+            var mergedAttendanceData = sourceAttendance
+            var missingCount = 0
+            for (index, _) in existingDefaultAttendance {
+                if mergedAttendanceData[index] == nil {
+                    // Event exists in Default but not in source - set to Not Attended
+                    mergedAttendanceData[index] = ["status": 0, "lastModified": Date().timeIntervalSince1970]
+                    missingCount += 1
+                }
             }
+            
+            print("📋 [COPY] After merge: \(mergedAttendanceData.count) total attendance (\(sourceAttendance.count) from source + \(missingCount) filled as Not Attended)")
+            
+            // Convert attendance data to the format expected by importAttendance
+            // importAttendance expects [[String: Any]] with specific fields
+            var attendanceArray: [[String: Any]] = []
+            for (index, data) in mergedAttendanceData {
+                // Parse the index to get required fields: "BandName:Location:StartTime:EventType:Year"
+                let components = index.split(separator: ":").map(String.init)
+                guard components.count >= 5 else {
+                    print("⚠️ [COPY] Skipping invalid attendance index: \(index)")
+                    continue
+                }
+                
+                let bandNameStr = components[0]
+                let yearInt = Int(components[4]) ?? currentEventYear
+                
+                attendanceArray.append([
+                    "bandName": bandNameStr,
+                    "status": data["status"] ?? 0,
+                    "timeIndex": 0.0,  // Use hash of index as timeIndex
+                    "eventYear": yearInt,
+                    "index": index
+                ])
+            }
+            
+            print("📋 [COPY] Prepared \(attendanceArray.count) attendance records for import")
             
             // Copy attendance to Default (async operation)
             SQLiteAttendanceManager.shared.importAttendance(

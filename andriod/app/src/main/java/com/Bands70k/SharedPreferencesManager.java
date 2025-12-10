@@ -218,15 +218,8 @@ public class SharedPreferencesManager {
             }
             json.put("attendance", attendanceJson);
             
-            // Write to file - use share name if provided, otherwise use user ID
-            String fileNamePrefix;
-            if (shareName != null && !shareName.isEmpty()) {
-                // Clean the share name for use in filename (remove special characters)
-                fileNamePrefix = shareName.replaceAll("[^a-zA-Z0-9]", "_");
-            } else {
-                fileNamePrefix = senderUserId.substring(0, Math.min(8, senderUserId.length()));
-            }
-            String fileName = "70KBands_" + fileNamePrefix + "_" + staticVariables.eventYear + "." + getFileExtension();
+            // Write to file with profile name
+            String fileName = shareName + "." + getFileExtension();
             File sharesDir = new File(context.getFilesDir(), "Shares");
             if (!sharesDir.exists()) {
                 sharesDir.mkdirs();

@@ -82,6 +82,7 @@
     <string name="ShareTitle">O que você quer compartilhar?</string>
     <string name="ShareBandChoices">Compartilhar Opções de Banda</string>
     <string name="ShareShowChoices">Compartilhar Opções de Shows</string>
+    <string name="ShareImportableData">Compartilhar Dados Importáveis de Bandas/Eventos</string>
     <string name="ExportUserData">Exportar Dados do Usuário</string>
 
     <string name="visitBands">Links</string>
@@ -286,4 +287,91 @@
     <string name="bulk_image_download">Download em massa de imagens</string>
     <string name="bulk_note_download">Download em massa de notas</string>
     <string name="bulk_data_upload">Upload em massa de dados</string>
+    <string name="alert_warning_import">Nota: Os alertas de eventos serão baseados nas configurações do seu perfil padrão, não neste perfil importado.</string>
+    <string name="select_profile">Selecionar Perfil</string>
+    <string name="now_viewing_profile">Visualizando Agora o Perfil:</string>
+    
+    <!-- Import Feature -->
+    <string name="import_shared_preferences">Importar Preferências Compartilhadas</string>
+    <string name="new_profile_received">Novo perfil recebido!</string>
+    <string name="band_priorities">prioridades de bandas</string>
+    <string name="scheduled_events">eventos agendados</string>
+    <string name="choose_profile_name">Escolha um nome para este perfil:</string>
+    <string name="showing_preferences_from">Mostrando preferências de</string>
+    <string name="successfully_imported">Importado com sucesso</string>
+    <string name="import_successful">Importação Bem-Sucedida</string>
+    
+    <!-- Profile Actions -->
+    <string name="choose_an_action">Escolha uma ação</string>
+    <string name="choose_action">Escolha uma ação</string>
+    <string name="rename_this_entry">Renomear Esta Entrada</string>
+    <string name="rename_entry">Renomear Esta Entrada</string>
+    <string name="change_the_color">Mudar a Cor</string>
+    <string name="change_color">Mudar a Cor</string>
+    <string name="make_settings_my_own">Tornar Estas Configurações Minhas</string>
+    <string name="make_settings_own">Tornar Estas Configurações Minhas</string>
+    <string name="delete_this_entry">Excluir Esta Entrada</string>
+    <string name="delete_entry">Excluir Esta Entrada</string>
+    <string name="are_you_sure_delete">Tem certeza de que deseja excluir</string>
+    <string name="cannot_be_undone">Isso não pode ser desfeito.</string>
+    <string name="delete_profile_message">Tem certeza de que deseja excluir \"{profileName}\"?\n\nIsso não pode ser desfeito.</string>
+    
+    <!-- Profile Tutorial -->
+    <string name="tap_here_to_switch_profiles">Toque aqui para alternar entre perfis</string>
+    <string name="tap_anywhere_to_close">Toque em qualquer lugar para fechar</string>
+    
+    <!-- Sharing Feature -->
+    <string name="failed_to_export_preferences">Falha ao exportar preferências. Por favor, tente novamente.</string>
+    <string name="share_your_preferences">Compartilhe Suas Preferências</string>
+    <string name="share_priorities_and_events">Compartilhe suas prioridades Must/Might/Won\'t e eventos participados com outro usuário.</string>
+    <string name="export_your_profile">Exporte Seu Perfil</string>
+    <string name="export_profile_description">Seu perfil padrão será exportado. Os destinatários podem importá-lo e visualizar suas preferências.</string>
+    <string name="export_failed">Falha na Exportação</string>
+    <string name="name_your_share">Nomeie Seu Compartilhamento</string>
+    <string name="name_share_message">Dê um nome a este compartilhamento para que o destinatário possa identificá-lo.</string>
+    <string name="import_button">Importar</string>
+    <string name="updated">Atualizado</string>
+    <string name="with_new_data">com novos dados!</string>
+    <string name="invalid_share_file">Este arquivo não é um arquivo de compartilhamento válido do 70K Bands.</string>
+    <string name="failed_to_import">Falha ao importar. Por favor, tente novamente.</string>
+    <string name="import_failed">Falha na Importação</string>
+    <string name="profile_updated">Perfil Atualizado</string>
+    
+    <!-- Profile Management Additional -->
+    <string name="save">Salvar</string>
+    <string name="Save">Salvar</string>
+    <string name="delete">Excluir</string>
+    <string name="Delete">Excluir</string>
+    <string name="Update">Atualizar</string>
+    <string name="profile_renamed">Perfil renomeado</string>
+    <string name="change_profile_color">Alterar Cor do Perfil</string>
+    <string name="color_changed">Cor alterada</string>
+    <string name="choose_color">Escolher Cor</string>
+    <string name="select_color_for">Selecione uma cor para</string>
+    <string name="rename_profile">Renomear Perfil</string>
+    <string name="rename_profile_message">Digite um novo nome para este perfil</string>
+    <string name="enter_new_profile_name">Digite um novo nome para este perfil</string>
+    <string name="delete_profile">Excluir Perfil</string>
+    <string name="profile_deleted">Perfil excluído</string>
+    <string name="make_my_own">Tornar Meus</string>
+    <string name="make_settings_own_message">Isso copiará todas as prioridades e participação de \"{profileName}\" para seu perfil padrão, substituindo suas configurações atuais.\n\nTem certeza?</string>
+    <string name="make_settings_your_own">Tornar Estas Configurações Suas</string>
+    <string name="settings_copied_to_default">Configurações Copiadas para o Padrão</string>
+    <string name="are_you_sure_continue">Tem certeza de que deseja continuar?</string>
+    <string name="existing_data_lost">Suas prioridades e eventos participados existentes serão permanentemente perdidos.</string>
+    <string name="overwrite_warning">Isso substituirá todas as suas configurações atuais do perfil padrão por</string>
+    <string name="overwrite_my_settings">Sobrescrever Minhas Configurações</string>
+    <string name="copied">Copiado</string>
+    <string name="to_your_profile">para Seu Perfil</string>
+    <string name="done">Concluído</string>
+    <string name="share_preferences">Compartilhar Preferências</string>
+    
+    <!-- View Mode Filter Strings -->
+    <string name="view_mode">Modo de Visualização</string>
+    <string name="show_schedule">Mostrar Programação</string>
+    <string name="show_bands_only">Mostrar Apenas Bandas</string>
+    
+    <!-- Import/Export -->
+    <string name="update_profile">Atualizar Perfil</string>
+    <string name="update_existing_profile_message">Isso atualizará o perfil existente \"{profileName}\" com novos dados:</string>
 </resources>
