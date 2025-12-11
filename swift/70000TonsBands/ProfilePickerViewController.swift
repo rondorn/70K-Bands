@@ -7,12 +7,27 @@
 
 import UIKit
 
+/// Custom view that passes through touches to views above it, except when tapped directly
+class PassthroughDimView: UIView {
+    var menuFrame: CGRect = .zero
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        // If the touch is within the menu frame, don't handle it (pass through)
+        if menuFrame.contains(point) {
+            return nil
+        }
+        
+        // Touch is outside menu - return self so gesture recognizer can handle it
+        return super.hitTest(point, with: event)
+    }
+}
+
 class ProfilePickerViewController: UITableViewController, UIPopoverPresentationControllerDelegate {
     
     private var profiles: [String] = []
     private var activeProfile: String = ""
     private let sharingManager = SharedPreferencesManager.shared
-    private var dimView: UIView?
+    private var dimView: PassthroughDimView?
     
     weak var masterViewController: MasterViewController?
     
@@ -39,12 +54,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
             navBar.barTintColor = UIColor.black.withAlphaComponent(0.75)
         }
         
-        // Add close button
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .done,
-            target: self,
-            action: #selector(dismissPicker)
-        )
+        // No close button - menu will dismiss when any profile is tapped
         
         // Add long-press gesture to the TABLE VIEW (not individual cells)
         // This prevents duplicate gestures on reused cells
@@ -61,20 +71,7 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         // Only apply custom positioning and dim overlay on iPhone
         // iPad uses popover which handles its own positioning
         if UIDevice.current.userInterfaceIdiom == .phone {
-            // Add a subtle dim overlay behind the picker
-            if let presentingView = presentingViewController?.view {
-                let dim = UIView(frame: presentingView.bounds)
-                dim.backgroundColor = UIColor.black.withAlphaComponent(0.25)
-                dim.alpha = 0
-                presentingView.addSubview(dim)
-                dimView = dim
-                
-                UIView.animate(withDuration: 0.3) {
-                    dim.alpha = 1
-                }
-            }
-            
-            // Position the view near the top center
+            // Position the navigation controller (menu) first
             if let navController = navigationController {
                 let width: CGFloat = 300
                 let height: CGFloat = min(400, CGFloat(profiles.count * 60 + 100))
@@ -89,6 +86,30 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
                 // Add rounded corners to the nav controller view
                 navController.view.layer.cornerRadius = 12
                 navController.view.layer.masksToBounds = true
+                
+                // Add a full-screen dim overlay that passes through touches to the menu
+                if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                    // Create custom passthrough dim view that covers the entire screen
+                    let dim = PassthroughDimView(frame: window.bounds)
+                    dim.backgroundColor = UIColor.black.withAlphaComponent(0.25)
+                    dim.alpha = 0
+                    dim.menuFrame = navController.view.frame // Tell it where the menu is
+                    
+                    // Add to window
+                    window.addSubview(dim)
+                    dimView = dim
+                    
+                    // Make absolutely sure the nav controller is on top
+                    window.bringSubviewToFront(navController.view)
+                    
+                    // Add tap gesture to dismiss when tapping ANYWHERE outside the menu
+                    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDimViewTap(_:)))
+                    dim.addGestureRecognizer(tapGesture)
+                    
+                    UIView.animate(withDuration: 0.3) {
+                        dim.alpha = 1
+                    }
+                }
             }
         }
     }
@@ -111,7 +132,9 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
         tableView.reloadData()
     }
     
-    @objc private func dismissPicker() {
+    @objc private func handleDimViewTap(_ gesture: UITapGestureRecognizer) {
+        // Tap is outside the menu - dismiss
+        // This includes the count header, table view, or any other UI element
         dismiss(animated: true)
     }
     
@@ -195,7 +218,9 @@ class ProfilePickerViewController: UITableViewController, UIPopoverPresentationC
                 }
             }
         } else {
-            print("🔄 [PROFILE] Profile already active")
+            // Profile already active - just dismiss the menu
+            print("🔄 [PROFILE] Profile already active - dismissing menu")
+            dismiss(animated: true)
         }
     }
     

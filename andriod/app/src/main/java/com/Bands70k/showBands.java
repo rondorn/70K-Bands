@@ -346,13 +346,76 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         dialog = new Dialog(this,android.R.style.Theme_Translucent_NoTitleBar);
         dialog.setContentView(R.layout.prompt_show_video);
+        
+        // Allow dialog to be dismissed by tapping outside or pressing back button
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
 
 
         VideoView mVideoView = (VideoView)dialog.findViewById(R.id.VideoView);
 
-        String path = ("android.resource://com.Bands70k/" +  R.raw.snl_more_cowbell);
-        mVideoView.setOnPreparedListener(this);
-        mVideoView.getHolder().setFixedSize(300, 400);
+        // Construct proper URI for the raw resource
+        // Try to get the resource ID - will use MP4 if available, fallback to MOV
+        int videoResourceId = getVideoResourceId();
+        Uri videoUri = Uri.parse("android.resource://" + getPackageName() + "/" + videoResourceId);
+        Log.d("Easter Egg", "Video URI: " + videoUri.toString());
+        
+        mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                Log.d("Easter Egg", "Video prepared and ready to play");
+                mp.start();
+            }
+        });
+        
+        // Add error listener to catch playback issues
+        mVideoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                String errorMsg = "Video playback error - what: " + what + ", extra: " + extra;
+                Log.e("Easter Egg", errorMsg);
+                
+                // Provide more specific error messages
+                String userMessage = "Unable to play video";
+                if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN) {
+                    userMessage = "Unknown media error";
+                } else if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
+                    userMessage = "Media server error";
+                }
+                
+                Toast.makeText(showBands.this, userMessage, Toast.LENGTH_LONG).show();
+                if (dialog != null && dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+                return true;
+            }
+        });
+        
+        // Add click listener to VideoView to dismiss on tap
+        mVideoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("Easter Egg", "Video tapped - dismissing dialog");
+                if (dialog != null && dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        
+        // Also add touch listener to the entire dialog container (including background) for better UX
+        View dialogContainer = dialog.findViewById(R.id.video_dialog_container);
+        if (dialogContainer != null) {
+            dialogContainer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d("Easter Egg", "Dialog background tapped - dismissing dialog");
+                    if (dialog != null && dialog.isShowing()) {
+                        dialog.dismiss();
+                    }
+                }
+            });
+        }
+        
         dialog.show();
 
         // Center the dialog on the screen
@@ -361,22 +424,38 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
             layoutParams.copyFrom(window.getAttributes());
             layoutParams.gravity = Gravity.CENTER;
-            // Optionally set width/height:
-            // layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-            // layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
             window.setAttributes(layoutParams);
         }
 
-        mVideoView.setVideoPath(path);
-        mVideoView.requestFocus();
-        mVideoView.start();
+        try {
+            mVideoView.setVideoURI(videoUri);
+            mVideoView.requestFocus();
+        } catch (Exception e) {
+            Log.e("Easter Egg", "Exception setting video URI: " + e.getMessage());
+            Toast.makeText(this, "Error loading video", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        }
+        
         mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
+                Log.d("Easter Egg", "Video playback completed");
                 dialog.dismiss();
             }
         });
 
+    }
+    
+    private int getVideoResourceId() {
+        // Try to get MP4 version first (better Android compatibility)
+        int resourceId = getResources().getIdentifier("snl_more_cowbell", "raw", getPackageName());
+        if (resourceId == 0) {
+            Log.w("Easter Egg", "Could not find video resource, using R.raw.snl_more_cowbell");
+            resourceId = R.raw.snl_more_cowbell;
+        } else {
+            Log.d("Easter Egg", "Found video resource with ID: " + resourceId);
+        }
+        return resourceId;
     }
 
     @Override
@@ -2343,13 +2422,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         String filename = getFilenameFromUri(data);
         Log.d(TAG, "🔥🔥🔥 Resolved filename: " + filename + " 🔥🔥🔥");
         
-        if (filename != null && (filename.endsWith(".70kshare") || filename.endsWith(".mdfshare"))) {
+        // Only accept the appropriate file extension for this app variant
+        String expectedExtension = FestivalConfig.getInstance().isMDF() ? ".mdfshare" : ".70kshare";
+        
+        if (filename != null && filename.endsWith(expectedExtension)) {
             Log.d(TAG, "🔥🔥🔥 Detected shared preference file: " + filename + " 🔥🔥🔥");
             SharedPreferencesImportHandler.getInstance().handleIncomingFile(data, this);
             // Clear the intent so we don't process it again on resume
             setIntent(new Intent());
         } else {
-            Log.d(TAG, "🔥 Filename doesn't end with .70kshare or .mdfshare: " + filename);
+            String wrongExtension = FestivalConfig.getInstance().isMDF() ? ".70kshare" : ".mdfshare";
+            if (filename != null && filename.endsWith(wrongExtension)) {
+                String appName = FestivalConfig.getInstance().appName;
+                Toast.makeText(this, "This file is not compatible with " + appName + ". Please use the correct app to open this file.", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "🔥 Wrong file extension detected. Expected: " + expectedExtension + ", got: " + wrongExtension);
+            } else {
+                Log.d(TAG, "🔥 Filename doesn't end with " + expectedExtension + ": " + filename);
+            }
         }
     }
     
