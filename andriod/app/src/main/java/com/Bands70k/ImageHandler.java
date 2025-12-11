@@ -149,15 +149,30 @@ public class ImageHandler {
         
         // Clean up old schedule images if date changed (must happen before checking cache)
         if (imageDate != null && !imageDate.trim().isEmpty()) {
-            cleanupOldScheduleImages(bandName, imageDate.trim());
+            String sanitizedDate = sanitizeDateForFilename(imageDate.trim());
+            cleanupOldScheduleImages(bandName, sanitizedDate);
             // Schedule image with date - use date-based filename
-            String filename = bandName + "_schedule_" + imageDate.trim() + ".png";
+            String filename = bandName + "_schedule_" + sanitizedDate + ".png";
             Log.d("ImageFile", "Using date-based cache filename for " + bandName + ": " + filename);
             return filename;
         } else {
             // Artist image or schedule without date - use standard filename
             return bandName + ".png";
         }
+    }
+    
+    /**
+     * Sanitizes a date string to be safe for use in filenames.
+     * Replaces forward slashes and other problematic characters with dashes.
+     * @param date The date string (e.g., "12-7/2025")
+     * @return Sanitized date string (e.g., "12-7-2025")
+     */
+    private String sanitizeDateForFilename(String date) {
+        if (date == null) {
+            return "";
+        }
+        // Replace forward slashes with dashes to avoid directory path issues
+        return date.replace("/", "-");
     }
     
     /**
