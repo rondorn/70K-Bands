@@ -63,6 +63,9 @@ public class FirebaseUserWrite {
             String country = staticVariables.userCountry;
             String language = Locale.getDefault().getLanguage();
 
+            // Count active profiles (non-deleted profiles in the database)
+            int activeProfileCount = SQLiteProfileManager.getInstance().getAllProfiles().size();
+
             userData.put("userID", staticVariables.userID);
             userData.put("country", country);
             userData.put("language", language);
@@ -70,6 +73,7 @@ public class FirebaseUserWrite {
             userData.put("lastLaunch", getCurrentDateString());
             userData.put("70kVersion", version70k);
             userData.put("osVersion", android.os.Build.VERSION.SDK_INT);
+            userData.put("activeProfiles", activeProfileCount);
 
             DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             Date today = new Date();
