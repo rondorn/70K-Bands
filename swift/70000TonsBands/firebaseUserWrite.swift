@@ -62,13 +62,18 @@ class firebaseUserWrite {
                     
                     print ("Writing Firebase  firebase data to userData start");
                     
+                    // Count active profiles (non-deleted profiles in the database)
+                    let allProfiles = SQLiteProfileManager.shared.getAllProfiles()
+                    let activeProfileCount = allProfiles.count
+                    
                     firebaseRef.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
                                                                                     "country": userDataHandle.country,
                                                                                     "language": userDataHandle.language,
                                                                                     "platform": "iOS",
                                                                                     "osVersion" : userDataHandle.iosVersion,
                                                                                     "70kVersion" : userDataHandle.bandsVersion,
-                                                                                    "lastLaunch": userDataHandle.getCurrentDateString()]) {
+                                                                                    "lastLaunch": userDataHandle.getCurrentDateString(),
+                                                                                    "activeProfiles": activeProfileCount]) {
                         (error:Error?, ref:DatabaseReference) in
                         if let error = error {
                             print("Writing Firebase data could not be saved: \(error).")
