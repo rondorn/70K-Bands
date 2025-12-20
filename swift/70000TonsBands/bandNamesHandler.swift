@@ -25,6 +25,11 @@ open class bandNamesHandler {
     private var cacheLoaded = false
     private var cachedForYear: Int = -1  // Track which year the cache was loaded for
     
+    // Queue for deferred operations during year changes
+    private var deferredCacheLoads: [() -> Void] = []
+    private var deferredBandLookups: [(bandName: String, field: String, completion: (String) -> Void)] = []
+    private let deferredOperationsQueue = DispatchQueue(label: "com.yourapp.deferredOperations")
+    
     // Threading and state management (same as original)
     private let readingBandFileQueue = DispatchQueue(label: "com.yourapp.readingBandFileQueue")
     private var _readingBandFile: Bool = false
@@ -40,8 +45,90 @@ open class bandNamesHandler {
         // Initialize eventYear from global variable (defined in Constants.swift)
         // Load cached year before loading data
         loadCachedYearIfNeeded()
-        print("🔄 bandNamesHandler (Core Data) singleton initialized - Loading from Core Data")
+        print("🔄 bandNamesHandler (SQLite) singleton initialized - Loading from SQLite")
+        
+        // Listen for year change completion to process deferred operations
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleYearChangeCompleted),
+            name: NSNotification.Name("YearChangeCompleted"),
+            object: nil
+        )
+        
         getCachedData()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func handleYearChangeCompleted() {
+        print("✅ [YEAR_CHANGE] Processing \(deferredCacheLoads.count) deferred cache loads and \(deferredBandLookups.count) deferred lookups")
+        
+        deferredOperationsQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Process deferred cache loads
+            let cacheLoads = self.deferredCacheLoads
+            self.deferredCacheLoads.removeAll()
+            for loadOperation in cacheLoads {
+                loadOperation()
+            }
+            
+            // Process deferred band lookups
+            let lookups = self.deferredBandLookups
+            self.deferredBandLookups.removeAll()
+            for lookup in lookups {
+                if let bandData = self.dataManager.fetchBand(byName: lookup.bandName, eventYear: eventYear) {
+                    let value: String
+                    switch lookup.field {
+                    case "imageUrl":
+                        value = bandData.imageUrl ?? ""
+                    case "officialSite":
+                        value = bandData.officialSite ?? ""
+                    case "wikipedia":
+                        value = bandData.wikipedia ?? ""
+                    case "youtube":
+                        value = bandData.youtube ?? ""
+                    case "metalArchives":
+                        value = bandData.metalArchives ?? ""
+                    case "country":
+                        value = bandData.country ?? ""
+                    case "genre":
+                        value = bandData.genre ?? ""
+                    case "noteworthy":
+                        value = bandData.noteworthy ?? ""
+                    case "priorYears":
+                        value = bandData.priorYears ?? ""
+                    default:
+                        value = ""
+                    }
+                    lookup.completion(value)
+                } else {
+                    lookup.completion("")
+                }
+            }
+            
+            print("✅ [YEAR_CHANGE] Completed processing deferred operations")
+        }
+    }
+    
+    private func deferCacheLoadUntilYearChangeCompletes() {
+        deferredOperationsQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.deferredCacheLoads.append { [weak self] in
+                self?.loadCacheFromCoreData()
+            }
+            print("⏳ [YEAR_CHANGE] Queued cache load for after year change completes")
+        }
+    }
+    
+    private func queueBandLookupForAfterYearChange(bandName: String, field: String, completion: @escaping (String) -> Void) {
+        deferredOperationsQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.deferredBandLookups.append((bandName: bandName, field: field, completion: completion))
+            print("⏳ [YEAR_CHANGE] Queued \(field) lookup for '\(bandName)' for after year change completes")
+        }
     }
     
     /// Loads the cached year from file if eventYear is still 0
@@ -75,24 +162,27 @@ open class bandNamesHandler {
     
     // MARK: - Core Data Cache Management
     
-    /// Loads band data from Core Data into memory cache for fast access
+    /// Loads band data from SQLite into memory cache for fast access
     private func loadCacheFromCoreData() {
         print("🔍 [HANG_DEBUG] bandNamesHandler.loadCacheFromCoreData() ENTERED")
+        
+        // CRITICAL: If year change is in progress, defer this operation until it completes
+        if MasterViewController.isYearChangeInProgress {
+            print("⏳ [YEAR_CHANGE] Year change in progress - deferring cache load")
+            deferCacheLoadUntilYearChangeCompletes()
+            return
+        }
+        
         guard !cacheLoaded else {
             print("🔍 [HANG_DEBUG] Cache already loaded, returning")
             return
         }
         
-        print("🔄 Loading bands from Core Data...")
+        print("🔄 Loading bands from SQLite...")
         print("🔍 [HANG_DEBUG] Cache not loaded, proceeding with load")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
-        
-        // SQLITE FIX: No sync block needed - SQLite.swift is thread-safe
-        print("🔍 [HANG_DEBUG] Clearing data structures (no sync needed with SQLite)")
-        self.bandNames = [String: [String: String]]()
-        self.bandNamesArray = [String]()
         
         // CRITICAL FIX: Filter bands by the current event year
         print("🔍 [HANG_DEBUG] About to call dataManager.fetchBands for year \(eventYear)")
@@ -101,49 +191,58 @@ open class bandNamesHandler {
         print("🔄 Fetched \(bands.count) bands from SQLite for year \(eventYear)")
         print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands for year \(eventYear)")
         
-        for band in bands {
-            let bandName = band.bandName
-            guard !bandName.isEmpty else { continue }
+        // CRITICAL: All dictionary modifications must be synchronized
+        staticBandName.sync {
+            // Clear data structures
+            print("🔍 [HANG_DEBUG] Clearing data structures (with sync protection)")
+            self.bandNames = [String: [String: String]]()
+            self.bandNamesArray = [String]()
             
-            var bandData = [String: String]()
-            bandData["bandName"] = bandName
+            for band in bands {
+                let bandName = band.bandName
+                guard !bandName.isEmpty else { continue }
+                
+                var bandData = [String: String]()
+                bandData["bandName"] = bandName
+                
+                // Map SQLite fields to legacy dictionary format
+                if let imageUrl = band.imageUrl, !imageUrl.isEmpty {
+                    bandData["bandImageUrl"] = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
+                }
+                if let officialSite = band.officialSite, !officialSite.isEmpty {
+                    bandData["officalUrls"] = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
+                }
+                if let wikipedia = band.wikipedia, !wikipedia.isEmpty {
+                    bandData["wikipediaLink"] = wikipedia
+                }
+                if let youtube = band.youtube, !youtube.isEmpty {
+                    bandData["youtubeLinks"] = youtube
+                }
+                if let metalArchives = band.metalArchives, !metalArchives.isEmpty {
+                    bandData["metalArchiveLinks"] = metalArchives
+                }
+                if let country = band.country, !country.isEmpty {
+                    bandData["bandCountry"] = country
+                }
+                if let genre = band.genre, !genre.isEmpty {
+                    bandData["bandGenre"] = genre
+                }
+                if let noteworthy = band.noteworthy, !noteworthy.isEmpty {
+                    bandData["bandNoteWorthy"] = noteworthy
+                }
+                if let priorYears = band.priorYears, !priorYears.isEmpty {
+                    bandData["priorYears"] = priorYears
+                }
+                
+                self.bandNames[bandName] = bandData
+                self.bandNamesArray.append(bandName)
+            }
             
-            // Map SQLite fields to legacy dictionary format
-            if let imageUrl = band.imageUrl, !imageUrl.isEmpty {
-                bandData["bandImageUrl"] = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
-            }
-            if let officialSite = band.officialSite, !officialSite.isEmpty {
-                bandData["officalUrls"] = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
-            }
-            if let wikipedia = band.wikipedia, !wikipedia.isEmpty {
-                bandData["wikipediaLink"] = wikipedia
-            }
-            if let youtube = band.youtube, !youtube.isEmpty {
-                bandData["youtubeLinks"] = youtube
-            }
-            if let metalArchives = band.metalArchives, !metalArchives.isEmpty {
-                bandData["metalArchiveLinks"] = metalArchives
-            }
-            if let country = band.country, !country.isEmpty {
-                bandData["bandCountry"] = country
-            }
-            if let genre = band.genre, !genre.isEmpty {
-                bandData["bandGenre"] = genre
-            }
-            if let noteworthy = band.noteworthy, !noteworthy.isEmpty {
-                bandData["bandNoteWorthy"] = noteworthy
-            }
-            if let priorYears = band.priorYears, !priorYears.isEmpty {
-                bandData["priorYears"] = priorYears
-            }
-            
-            self.bandNames[bandName] = bandData
-            self.bandNamesArray.append(bandName)
+            self.cacheLoaded = true
+            self.cachedForYear = eventYear
+            let count = self.bandNamesArray.count
+            print("✅ Loaded \(count) bands from SQLite into cache for year \(eventYear)")
         }
-        
-        self.cacheLoaded = true
-        self.cachedForYear = eventYear
-        print("✅ Loaded \(self.bandNamesArray.count) bands from SQLite into cache for year \(eventYear)")
     }
     
     // MARK: - Original API Methods (100% Compatible)
@@ -172,7 +271,11 @@ open class bandNamesHandler {
             print("⚠️ bandNamesHandler: No cached data available")
             print("🔍 [HANG_DEBUG] No cached band data found")
         } else {
-            print("✅ bandNamesHandler: Loaded \(self.bandNamesArray.count) cached bands immediately")
+            var count = 0
+            staticBandName.sync {
+                count = self.bandNamesArray.count
+            }
+            print("✅ bandNamesHandler: Loaded \(count) cached bands immediately")
         }
     }
     
@@ -728,18 +831,42 @@ open class bandNamesHandler {
             result = self.bandNames[band]?["bandImageUrl"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                let imageUrl = bandData.imageUrl ?? ""
-                if !imageUrl.isEmpty {
-                    result = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
-                    print("🔧 OFFLINE MODE: Retrieved imageUrl '\(result)' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                // Queue this lookup to happen after year change completes
+                // Note: We return empty string now, but the lookup will complete later
+                // The caller should retry after year change completes
+                print("⏳ [YEAR_CHANGE] Queuing image URL lookup for '\(band)' - will complete after year change")
+                queueBandLookupForAfterYearChange(bandName: band, field: "imageUrl") { imageUrl in
+                    // This will be called after year change completes
+                    // Update cache if we got a result
+                    if !imageUrl.isEmpty {
+                        var finalUrl = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["bandImageUrl"] = finalUrl
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred lookup for '\(band)': \(finalUrl)")
+                    }
+                }
+                // Return empty for now - will be populated after year change
+            } else {
+                // Safe to query SQLite now
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    let imageUrl = bandData.imageUrl ?? ""
+                    if !imageUrl.isEmpty {
+                        result = imageUrl.hasPrefix("http") ? imageUrl : "http://\(imageUrl)"
+                        print("🔧 OFFLINE MODE: Retrieved imageUrl '\(result)' from SQLite for band '\(band)'")
+                    }
                 }
             }
         }
         
-        print("🔗 URL lookup for band \(band): \(result.isEmpty ? "no URL available" : result) (Core Data)")
+        print("🔗 URL lookup for band \(band): \(result.isEmpty ? "no URL available" : result) (SQLite)")
         return result
     }
 
@@ -752,18 +879,37 @@ open class bandNamesHandler {
             result = self.bandNames[band]?["officalUrls"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                let officialSite = bandData.officialSite ?? ""
-                if !officialSite.isEmpty {
-                    result = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
-                    print("🔧 OFFLINE MODE: Retrieved officialSite '\(result)' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                // Queue this lookup to happen after year change completes
+                queueBandLookupForAfterYearChange(bandName: band, field: "officialSite") { officialSite in
+                    if !officialSite.isEmpty {
+                        var finalUrl = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["officalUrls"] = finalUrl
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred officialSite lookup for '\(band)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing officialSite lookup for '\(band)' - will complete after year change")
+            } else {
+                // Safe to query SQLite now
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    let officialSite = bandData.officialSite ?? ""
+                    if !officialSite.isEmpty {
+                        result = officialSite.hasPrefix("http") ? officialSite : "http://\(officialSite)"
+                        print("🔧 OFFLINE MODE: Retrieved officialSite '\(result)' from SQLite for band '\(band)'")
+                    }
                 }
             }
         }
         
-        print("Getting officalSite for band \(band) will return \(result) (Core Data)")
+        print("Getting officalSite for band \(band) will return \(result) (SQLite)")
         return result
     }
 
@@ -776,11 +922,29 @@ open class bandNamesHandler {
             wikipediaUrl = self.bandNames[bandName]?["wikipediaLink"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if wikipediaUrl.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
-                wikipediaUrl = bandData.wikipedia ?? ""
-                print("🔧 OFFLINE MODE: Retrieved wikipedia '\(wikipediaUrl)' from Core Data for band '\(bandName)'")
+            if MasterViewController.isYearChangeInProgress {
+                // Queue this lookup to happen after year change completes
+                queueBandLookupForAfterYearChange(bandName: bandName, field: "wikipedia") { wikipedia in
+                    if !wikipedia.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[bandName] == nil {
+                                self.bandNames[bandName] = [:]
+                            }
+                            self.bandNames[bandName]?["wikipediaLink"] = wikipedia
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred wikipedia lookup for '\(bandName)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing wikipedia lookup for '\(bandName)' - will complete after year change")
+            } else {
+                // Safe to query SQLite now
+                if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
+                    wikipediaUrl = bandData.wikipedia ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved wikipedia '\(wikipediaUrl)' from SQLite for band '\(bandName)'")
+                }
             }
         }
         
@@ -804,11 +968,27 @@ open class bandNamesHandler {
             youTubeUrl = self.bandNames[bandName]?["youtubeLinks"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if youTubeUrl.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
-                youTubeUrl = bandData.youtube ?? ""
-                print("🔧 OFFLINE MODE: Retrieved youtube '\(youTubeUrl)' from Core Data for band '\(bandName)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: bandName, field: "youtube") { youtube in
+                    if !youtube.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[bandName] == nil {
+                                self.bandNames[bandName] = [:]
+                            }
+                            self.bandNames[bandName]?["youtubeLinks"] = youtube
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred youtube lookup for '\(bandName)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing youtube lookup for '\(bandName)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
+                    youTubeUrl = bandData.youtube ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved youtube '\(youTubeUrl)' from SQLite for band '\(bandName)'")
+                }
             }
         }
         
@@ -830,11 +1010,27 @@ open class bandNamesHandler {
             result = self.bandNames[bandName]?["metalArchiveLinks"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
-                result = bandData.metalArchives ?? ""
-                print("🔧 OFFLINE MODE: Retrieved metalArchives '\(result)' from Core Data for band '\(bandName)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: bandName, field: "metalArchives") { metalArchives in
+                    if !metalArchives.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[bandName] == nil {
+                                self.bandNames[bandName] = [:]
+                            }
+                            self.bandNames[bandName]?["metalArchiveLinks"] = metalArchives
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred metalArchives lookup for '\(bandName)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing metalArchives lookup for '\(bandName)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
+                    result = bandData.metalArchives ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved metalArchives '\(result)' from SQLite for band '\(bandName)'")
+                }
             }
         }
         
@@ -850,11 +1046,27 @@ open class bandNamesHandler {
             result = self.bandNames[band]?["bandCountry"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                result = bandData.country ?? ""
-                print("🔧 OFFLINE MODE: Retrieved country '\(result)' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: band, field: "country") { country in
+                    if !country.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["bandCountry"] = country
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred country lookup for '\(band)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing country lookup for '\(band)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    result = bandData.country ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved country '\(result)' from SQLite for band '\(band)'")
+                }
             }
         }
         
@@ -870,11 +1082,27 @@ open class bandNamesHandler {
             result = self.bandNames[band]?["bandGenre"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                result = bandData.genre ?? ""
-                print("🔧 OFFLINE MODE: Retrieved genre '\(result)' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: band, field: "genre") { genre in
+                    if !genre.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["bandGenre"] = genre
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred genre lookup for '\(band)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing genre lookup for '\(band)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    result = bandData.genre ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved genre '\(result)' from SQLite for band '\(band)'")
+                }
             }
         }
         
@@ -890,11 +1118,27 @@ open class bandNamesHandler {
             result = self.bandNames[band]?["bandNoteWorthy"] ?? ""
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if result.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                result = bandData.noteworthy ?? ""
-                print("🔧 OFFLINE MODE: Retrieved noteworthy '\(result)' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: band, field: "noteworthy") { noteworthy in
+                    if !noteworthy.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["bandNoteWorthy"] = noteworthy
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred noteworthy lookup for '\(band)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing noteworthy lookup for '\(band)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    result = bandData.noteworthy ?? ""
+                    print("🔧 OFFLINE MODE: Retrieved noteworthy '\(result)' from SQLite for band '\(band)'")
+                }
             }
         }
         
@@ -910,11 +1154,27 @@ open class bandNamesHandler {
             previousYears = self.bandNames[band]?["priorYears"]
         }
         
-        // OFFLINE MODE FIX: Fall back to Core Data if in-memory cache doesn't have data
+        // OFFLINE MODE FIX: Fall back to SQLite if in-memory cache doesn't have data
+        // CRITICAL: If year change is in progress, queue the lookup for after year change completes
         if previousYears == nil || previousYears!.isEmpty {
-            if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
-                previousYears = bandData.priorYears
-                print("🔧 OFFLINE MODE: Retrieved priorYears '\(previousYears ?? "")' from Core Data for band '\(band)'")
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: band, field: "priorYears") { priorYears in
+                    if !priorYears.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["priorYears"] = priorYears
+                        }
+                        print("✅ [YEAR_CHANGE] Completed deferred priorYears lookup for '\(band)'")
+                    }
+                }
+                print("⏳ [YEAR_CHANGE] Queuing priorYears lookup for '\(band)' - will complete after year change")
+            } else {
+                if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                    previousYears = bandData.priorYears
+                    print("🔧 OFFLINE MODE: Retrieved priorYears '\(previousYears ?? "")' from SQLite for band '\(band)'")
+                }
             }
         }
         

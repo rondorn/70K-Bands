@@ -153,9 +153,9 @@ class SharedPreferencesManager {
         
         print("📤 [EXPORT] Exporting with UserID: \(senderUserId), Name: '\(name.isEmpty ? "(none provided)" : name)'")
         
-        // Encode to JSON with pretty printing for better file inspection
+        // Encode to JSON (compact, no pretty printing to reduce size)
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.sortedKeys]
         
         guard let jsonData = try? encoder.encode(preferenceSet) else {
             print("❌ Failed to encode preference set")
