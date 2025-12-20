@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CoreData
 
 /// Stores image information including URL and optional expiration date
 struct ImageInfo: Codable {
@@ -68,6 +67,13 @@ class CombinedImageListHandler {
     ///   - completion: Completion handler called when the list is generated
     func generateCombinedImageList(bandNameHandle: bandNamesHandler, scheduleHandle: scheduleHandler, completion: @escaping () -> Void) {
         print("📋 [IMAGE_DEBUG] generateCombinedImageList called")
+        
+        // NOTE: We no longer abort during year changes because:
+        // 1. SQLite is thread-safe and won't cause deadlocks
+        // 2. Generation is called as part of the official data refresh during year changes
+        // 3. The cache is already cleared during year change start, so we won't use stale data
+        // 4. We use the current eventYear which is updated early in the year change process
+        
         print("📋 Generating combined image URL list (no downloads)...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -127,70 +133,34 @@ class CombinedImageListHandler {
                 }
             }
             
-            // CRITICAL FIX: Check if Core Data store exists before accessing it
-            // On fresh installs, we should use SQLite only
-            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
-            let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
-            let coreDataExists = FileManager.default.fileExists(atPath: coreDataStorePath)
+            // Fetch all events from SQLite (including "orphan" events like "All Star Jam" that don't have Band entities)
+            // SQLite stores events independently by eventBandName, so all events are accessible
+            print("📋 Fetching events from SQLite (including those without bands)...")
+            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+            print("📋 Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
             
-            print("📋 [COREDATA_CHECK] Core Data store exists: \(coreDataExists)")
-            
-            if coreDataExists {
-                // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
-                // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
-                print("📋 Fetching events directly from Core Data (including those without bands)...")
-                let coreDataManager = CoreDataManager.shared
-                let context = coreDataManager.persistentContainer.newBackgroundContext()
+            // Process SQLite events to extract unique band/event names and their image URLs
+            var processedEventNames = Set<String>()
+            for event in sqliteEvents {
+                let eventName = event.bandName
                 
-                let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-                // Filter for user's selected year events (not calendar year)
-                let currentYear = Int32(eventYear)
-                eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
-                print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+                // Skip if we already processed this event name (avoid duplicates)
+                guard !processedEventNames.contains(eventName) else { continue }
+                processedEventNames.insert(eventName)
                 
-                do {
-                    let allEvents = try context.fetch(eventRequest)
-                    print("📋 Found \(allEvents.count) events in Core Data for year \(currentYear)")
+                // Only add if not already present (artist takes priority)
+                guard newCombinedList[eventName] == nil else { continue }
                 
-                for event in allEvents {
-                    // Get the event name from the identifier (which contains the band/event name)
-                    guard let identifier = event.identifier else { continue }
-                    
-                    // Extract the event name from the identifier (format: "bandName_eventId")
-                    let eventName = identifier.components(separatedBy: "_").first ?? identifier
-                    
-                    // Check if this event has an image URL
-                    if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[eventName] == nil {
-                            // Get ImageDate if available for this event
-                            let imageDate = event.eventImageDate
-                            newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: imageDate)
-                            if let date = imageDate, !date.isEmpty {
-                                print("📋 Added Core Data event image URL for '\(eventName)' with date \(date): \(eventImageUrl)")
-                            } else {
-                                print("📋 Added Core Data event image URL for '\(eventName)' (no date): \(eventImageUrl)")
-                            }
-                        } else {
-                            print("📋 Skipped Core Data event image URL for '\(eventName)' (already has URL): \(eventImageUrl)")
-                        }
-                    } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[eventName] == nil {
-                            // Description URLs don't have dates
-                            newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
-                            print("📋 Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
-                        } else {
-                            print("📋 Skipped Core Data event description URL for '\(eventName)' (already has URL): \(descriptionUrl)")
-                        }
-                    }
+                // Check for eventImageUrl first (higher priority), then descriptionUrl
+                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                    // SQLite doesn't store eventImageDate, so use nil
+                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
+                    print("📋 Added SQLite event image URL for '\(eventName)': \(eventImageUrl)")
+                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                    // Description URLs don't have dates
+                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
+                    print("📋 Added SQLite event description URL for '\(eventName)': \(descriptionUrl)")
                 }
-                } catch {
-                    print("❌ Error fetching events from Core Data: \(error)")
-                }
-            } else {
-                print("📋 [COREDATA_SKIP] Skipping Core Data event fetch - no Core Data store (fresh install)")
-                print("📋 [COREDATA_SKIP] Event images will be fetched from SQLite schedule data")
             }
             
             // Update the combined list
@@ -268,6 +238,11 @@ class CombinedImageListHandler {
             return
         }
         
+        // NOTE: We no longer abort during year changes for spontaneous generations because:
+        // 1. SQLite is thread-safe and won't cause deadlocks
+        // 2. The cache is cleared during year change, so we'll regenerate with new data
+        // 3. If year change is in progress, we'll just use the new year's data
+        
         isGenerating = true
         print("🚀 [IMAGE_DEBUG] triggerAsyncGenerationIfNeeded: Starting async image list generation")
         
@@ -331,62 +306,33 @@ class CombinedImageListHandler {
                 }
             }
             
-            // CRITICAL FIX: Check if Core Data store exists before accessing it
-            // On fresh installs, we should use SQLite only
-            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
-            let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
-            let coreDataExists = FileManager.default.fileExists(atPath: coreDataStorePath)
+            // Fetch all events from SQLite (including "orphan" events like "All Star Jam")
+            print("📋 [ASYNC] Fetching events from SQLite (including those without bands)...")
+            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+            print("📋 [ASYNC] Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
             
-            print("📋 [ASYNC][COREDATA_CHECK] Core Data store exists: \(coreDataExists)")
-            
-            if coreDataExists {
-                // CRITICAL FIX: Also fetch events directly from Core Data that don't have associated bands
-                // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
-                print("📋 [ASYNC] Fetching events directly from Core Data (including those without bands)...")
-                let coreDataManager = CoreDataManager.shared
-                let context = coreDataManager.persistentContainer.newBackgroundContext()
+            // Process SQLite events to extract unique band/event names and their image URLs
+            var processedEventNames = Set<String>()
+            for event in sqliteEvents {
+                let eventName = event.bandName
                 
-                let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-                // Filter for user's selected year events (not calendar year)
-                let currentYear = Int32(eventYear)
-                eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
-                print("📋 [YEAR_FIX] Fetching events for user-selected year: \(currentYear)")
+                // Skip if we already processed this event name (avoid duplicates)
+                guard !processedEventNames.contains(eventName) else { continue }
+                processedEventNames.insert(eventName)
                 
-                do {
-                    let allEvents = try context.fetch(eventRequest)
-                    print("📋 [ASYNC] Found \(allEvents.count) events in Core Data for year \(currentYear)")
+                // Only add if not already present (artist takes priority)
+                guard newCombinedList[eventName] == nil else { continue }
                 
-                for event in allEvents {
-                    // Get the event name from the identifier (which contains the band/event name)
-                    guard let identifier = event.identifier else { continue }
-                    
-                    // Extract the event name from the identifier (format: "bandName_eventId")
-                    let eventName = identifier.components(separatedBy: "_").first ?? identifier
-                    
-                    // Check if this event has an image URL
-                    if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[eventName] == nil {
-                            // Get ImageDate if available
-                            let imageDate = event.eventImageDate
-                            newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: imageDate)
-                            print("📋 [ASYNC] Added Core Data event image URL for '\(eventName)': \(eventImageUrl)")
-                        }
-                    } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[eventName] == nil {
-                            // Description URLs don't have dates
-                            newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
-                            print("📋 [ASYNC] Added Core Data event description URL for '\(eventName)': \(descriptionUrl)")
-                        }
-                    }
+                // Check for eventImageUrl first (higher priority), then descriptionUrl
+                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                    // SQLite doesn't store eventImageDate, so use nil
+                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
+                    print("📋 [ASYNC] Added SQLite event image URL for '\(eventName)': \(eventImageUrl)")
+                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                    // Description URLs don't have dates
+                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
+                    print("📋 [ASYNC] Added SQLite event description URL for '\(eventName)': \(descriptionUrl)")
                 }
-                } catch {
-                    print("❌ [ASYNC] Error fetching events from Core Data: \(error)")
-                }
-            } else {
-                print("📋 [ASYNC][COREDATA_SKIP] Skipping Core Data event fetch - no Core Data store (fresh install)")
-                print("📋 [ASYNC][COREDATA_SKIP] Event images will be fetched from SQLite schedule data")
             }
             
             // Update the list and save it (on main queue for thread safety)
@@ -483,57 +429,40 @@ class CombinedImageListHandler {
             }
         }
         
-        // CRITICAL FIX: Also check events directly from Core Data that don't have associated bands
-        // This includes events like "All Star Jam" that appear in the band list but don't have a Band entity
-        print("📋 Checking Core Data events (including those without bands) for image URL changes...")
-        let coreDataManager = CoreDataManager.shared
-        let context = coreDataManager.context
+        // Check events from SQLite (including "orphan" events like "All Star Jam")
+        print("📋 Checking SQLite events (including those without bands) for image URL changes...")
+        let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+        print("📋 Checking \(sqliteEvents.count) SQLite events for year \(eventYear)")
         
-        let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-        // Filter for user's selected year events (not calendar year)
-        let currentYear = Int32(eventYear)
-        eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
-        print("📋 [YEAR_FIX] Checking events for user-selected year: \(currentYear)")
-        
-        do {
-            let allEvents = try context.fetch(eventRequest)
-            print("📋 Checking \(allEvents.count) Core Data events for year \(currentYear)")
+        var processedEventNames = Set<String>()
+        for event in sqliteEvents {
+            let eventName = event.bandName
             
-            for event in allEvents {
-                // Get the event name from the identifier (which contains the band/event name)
-                guard let identifier = event.identifier else { continue }
-                
-                // Extract the event name from the identifier (format: "bandName_eventId")
-                let eventName = identifier.components(separatedBy: "_").first ?? identifier
-                
-                // Check if this event has an image URL
-                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                    // Only add if not already present (artist takes priority)
-                    if expectedList[eventName] == nil {
-                        // Get ImageDate if available
-                        let imageDate = event.eventImageDate
-                        let expectedInfo = ImageInfo(url: eventImageUrl, date: imageDate)
-                        expectedList[eventName] = expectedInfo
-                        // Check if URL or date changed
-                        if currentList[eventName]?.url != eventImageUrl || currentList[eventName]?.date != imageDate {
-                            print("📋 Core Data event image changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' (date: '\(currentList[eventName]?.date ?? "nil")') -> '\(eventImageUrl)' (date: '\(imageDate ?? "nil")')")
-                            hasChanges = true
-                        }
-                    }
-                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                    // Only add if not already present (artist takes priority)
-                    if expectedList[eventName] == nil {
-                        let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
-                        expectedList[eventName] = expectedInfo
-                        if currentList[eventName]?.url != descriptionUrl {
-                            print("📋 Core Data event description URL changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(descriptionUrl)'")
-                            hasChanges = true
-                        }
-                    }
+            // Skip if we already processed this event name (avoid duplicates)
+            guard !processedEventNames.contains(eventName) else { continue }
+            processedEventNames.insert(eventName)
+            
+            // Only check if not already present (artist takes priority)
+            guard expectedList[eventName] == nil else { continue }
+            
+            // Check for eventImageUrl first (higher priority), then descriptionUrl
+            if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                // SQLite doesn't store eventImageDate, so use nil
+                let expectedInfo = ImageInfo(url: eventImageUrl, date: nil)
+                expectedList[eventName] = expectedInfo
+                // Check if URL changed (date is always nil for SQLite events)
+                if currentList[eventName]?.url != eventImageUrl {
+                    print("📋 SQLite event image changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(eventImageUrl)'")
+                    hasChanges = true
+                }
+            } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
+                expectedList[eventName] = expectedInfo
+                if currentList[eventName]?.url != descriptionUrl {
+                    print("📋 SQLite event description URL changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(descriptionUrl)'")
+                    hasChanges = true
                 }
             }
-        } catch {
-            print("❌ Error fetching events from Core Data for regeneration check: \(error)")
         }
         
         // Check if any entries were removed (bands/events no longer exist)
@@ -780,32 +709,31 @@ class CombinedImageListHandler {
                 }
             }
             
-            // Fetch events from Core Data
-            let coreDataManager = CoreDataManager.shared
-            let context = coreDataManager.persistentContainer.newBackgroundContext()
-            let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-            let currentYear = Int32(Calendar.current.component(.year, from: Date()))
-            eventRequest.predicate = NSPredicate(format: "eventYear == %d", currentYear)
+            // Fetch events from SQLite (including "orphan" events like "All Star Jam")
+            print("📋 [FORCE_REFRESH] Fetching events from SQLite...")
+            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+            print("📋 [FORCE_REFRESH] Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
             
-            do {
-                let allEvents = try context.fetch(eventRequest)
-                for event in allEvents {
-                    guard let identifier = event.identifier else { continue }
-                    let eventName = identifier.components(separatedBy: "_").first ?? identifier
-                    
-                    if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                        if newCombinedList[eventName] == nil {
-                            let imageDate = event.eventImageDate
-                            newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: imageDate)
-                        }
-                    } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                        if newCombinedList[eventName] == nil {
-                            newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
-                        }
-                    }
+            // Process SQLite events to extract unique band/event names and their image URLs
+            var processedEventNames = Set<String>()
+            for event in sqliteEvents {
+                let eventName = event.bandName
+                
+                // Skip if we already processed this event name (avoid duplicates)
+                guard !processedEventNames.contains(eventName) else { continue }
+                processedEventNames.insert(eventName)
+                
+                // Only add if not already present (artist takes priority)
+                guard newCombinedList[eventName] == nil else { continue }
+                
+                // Check for eventImageUrl first (higher priority), then descriptionUrl
+                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                    // SQLite doesn't store eventImageDate, so use nil
+                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
+                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                    // Description URLs don't have dates
+                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
                 }
-            } catch {
-                print("❌ FORCE REFRESH: Error fetching events from Core Data: \(error)")
             }
             
             // Update the list

@@ -1,17 +1,15 @@
 import Foundation
-import CoreData
 
-/// Manages all event operations using Core Data
+/// Manages all event operations using SQLite (via DataManager)
 /// Replaces the legacy scheduleHandler dictionary system with database operations
 class EventManager {
-    private let coreDataManager: CoreDataManager
     private let csvImporter: EventCSVImporter
+    private let dataManager = DataManager.shared
     
-    init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
+    init() {
         print("📊 [MDF_DEBUG] EventManager.init() called")
         print("📊 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        self.coreDataManager = coreDataManager
-        self.csvImporter = EventCSVImporter()  // No parameters - uses DataManager.shared internally
+        self.csvImporter = EventCSVImporter()  // Uses DataManager.shared (SQLite) internally
         print("📊 [MDF_DEBUG] EventManager.init() completed - csvImporter created")
     }
     
@@ -20,14 +18,14 @@ class EventManager {
     /// Get all events for a band (replaces schedulingData[bandName])
     /// - Parameter bandName: Name of the band
     /// - Returns: Array of events sorted by time
-    func getEvents(for bandName: String) -> [Event] {
+    func getEvents(for bandName: String) -> [EventData] {
         return csvImporter.getEvents(for: bandName)
     }
     
     /// Get events by time index (replaces schedulingDataByTime[timeIndex])
     /// - Parameter timeIndex: Time index to search for
     /// - Returns: Array of events at that time
-    func getEvents(byTimeIndex timeIndex: TimeInterval) -> [Event] {
+    func getEvents(byTimeIndex timeIndex: TimeInterval) -> [EventData] {
         return csvImporter.getEvents(byTimeIndex: timeIndex)
     }
     
@@ -43,18 +41,18 @@ class EventManager {
     
     /// Get all events for current year (replaces full schedule access)
     /// - Returns: All events for current eventYear sorted by time
-    func getAllEvents() -> [Event] {
+    func getAllEvents() -> [EventData] {
         print("🔍 [MDF_DEBUG] getAllEvents() called")
         print("🔍 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🔍 [MDF_DEBUG] Current eventYear: \(eventYear)")
         
         let results = getEvents(forYear: eventYear)
-        print("🔍 [MDF_DEBUG] Found \(results.count) events in Core Data for year \(eventYear)")
+        print("🔍 [MDF_DEBUG] Found \(results.count) events in SQLite for year \(eventYear)")
         
         if results.count > 0 {
             print("🔍 [MDF_DEBUG] First few events:")
             for (index, event) in results.prefix(3).enumerated() {
-                print("   \(index + 1). \(event.band?.bandName ?? "Unknown") at \(event.location ?? "Unknown") on \(event.date ?? "Unknown")")
+                print("   \(index + 1). \(event.bandName) at \(event.location) on \(event.date ?? "Unknown")")
             }
         }
         
@@ -66,65 +64,33 @@ class EventManager {
     /// Get events by year
     /// - Parameter year: Event year to filter by
     /// - Returns: Events for the specified year
-    func getEvents(forYear year: Int) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "eventYear == %d", year)
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events for year \(year): \(error)")
-            return []
-        }
+    func getEvents(forYear year: Int) -> [EventData] {
+        let events = dataManager.fetchEvents(forYear: year)
+        return events.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get events by location (filtered by current year)
     /// - Parameter location: Location to filter by
     /// - Returns: Events at the specified location for current eventYear
-    func getEvents(atLocation location: String) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "location CONTAINS[cd] %@ AND eventYear == %d", location, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events at location \(location): \(error)")
-            return []
-        }
+    func getEvents(atLocation location: String) -> [EventData] {
+        let events = dataManager.fetchEvents(forYear: eventYear, location: location, eventType: nil)
+        return events.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get events by type (filtered by current year)
     /// - Parameter eventType: Event type to filter by
     /// - Returns: Events of the specified type for current eventYear
-    func getEvents(ofType eventType: String) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "eventType == %@ AND eventYear == %d", eventType, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events of type \(eventType): \(error)")
-            return []
-        }
+    func getEvents(ofType eventType: String) -> [EventData] {
+        let events = dataManager.fetchEvents(forYear: eventYear, location: nil, eventType: eventType)
+        return events.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get events by day (filtered by current year)
     /// - Parameter day: Day to filter by
     /// - Returns: Events on the specified day for current eventYear
-    func getEvents(onDay day: String) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "day == %@ AND eventYear == %d", day, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events on day \(day): \(error)")
-            return []
-        }
+    func getEvents(onDay day: String) -> [EventData] {
+        let allEvents = dataManager.fetchEvents(forYear: eventYear)
+        return allEvents.filter { $0.day == day }.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get events within time range (filtered by current year)
@@ -132,53 +98,28 @@ class EventManager {
     ///   - startTime: Start time interval
     ///   - endTime: End time interval
     /// - Returns: Events within the time range for current eventYear
-    func getEvents(from startTime: TimeInterval, to endTime: TimeInterval) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "timeIndex >= %f AND timeIndex <= %f AND eventYear == %d", startTime, endTime, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events in time range: \(error)")
-            return []
-        }
+    func getEvents(from startTime: TimeInterval, to endTime: TimeInterval) -> [EventData] {
+        let allEvents = dataManager.fetchEvents(forYear: eventYear)
+        return allEvents.filter { $0.timeIndex >= startTime && $0.timeIndex <= endTime }
+            .sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get upcoming events (replaces hasUpcomingShows logic, filtered by current year)
     /// - Parameter bandName: Name of the band
     /// - Returns: Future events for the band in current eventYear
-    func getUpcomingEvents(for bandName: String) -> [Event] {
-        let currentTime = Date().timeIntervalSince1970
-        
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band.bandName == %@ AND timeIndex > %f AND eventYear == %d", bandName, currentTime, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching upcoming events for \(bandName): \(error)")
-            return []
-        }
+    func getUpcomingEvents(for bandName: String) -> [EventData] {
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+        return events.filter { $0.timeIndex > currentTime }.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     /// Get past events (filtered by current year)
     /// - Parameter bandName: Name of the band
     /// - Returns: Past events for the band in current eventYear
-    func getPastEvents(for bandName: String) -> [Event] {
-        let currentTime = Date().timeIntervalSince1970
-        
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band.bandName == %@ AND timeIndex <= %f AND eventYear == %d", bandName, currentTime, Int32(eventYear))
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: false)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching past events for \(bandName): \(error)")
-            return []
-        }
+    func getPastEvents(for bandName: String) -> [EventData] {
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+        return events.filter { $0.timeIndex <= currentTime }.sorted { $0.timeIndex > $1.timeIndex }
     }
     
     // MARK: - Complex Filtering (Replaces MasterViewController filtering logic)
@@ -200,70 +141,52 @@ class EventManager {
         print("🚀 QUERY-BASED FILTERING START - Year: \(year), Sort: \(sortBy)")
         
         // DEBUG: Check what years we have in the database
-        let allEventsRequest: NSFetchRequest<Event> = Event.fetchRequest()
-        do {
-            let allEvents = try coreDataManager.context.fetch(allEventsRequest)
-            print("🔍 DEBUG: Total events in database: \(allEvents.count)")
-            let eventYears = Dictionary(grouping: allEvents, by: { $0.eventYear })
-            for (year, events) in eventYears.sorted(by: { $0.key < $1.key }) {
-                print("🔍 DEBUG: Year \(year) has \(events.count) events")
+        let allEvents = dataManager.fetchEvents()
+        print("🔍 DEBUG: Total events in database: \(allEvents.count)")
+        let eventYears = Dictionary(grouping: allEvents, by: { $0.eventYear })
+        for (eventYear, events) in eventYears.sorted(by: { $0.key < $1.key }) {
+            print("🔍 DEBUG: Year \(eventYear) has \(events.count) events")
+        }
+        
+        // Check if events have year 0 (which means they weren't properly imported)
+        let zeroYearEvents = allEvents.filter { $0.eventYear == 0 }
+        if !zeroYearEvents.isEmpty {
+            print("🚨 ERROR: Found \(zeroYearEvents.count) events with eventYear = 0 (improperly imported)")
+        }
+        
+        // Check for duplicate events (same band, time, location)
+        let currentYearEvents = allEvents.filter { $0.eventYear == year }
+        var duplicateGroups: [String: [EventData]] = [:]
+        
+        for event in currentYearEvents {
+            let key = "\(event.bandName)|\(event.timeIndex)|\(event.location)"
+            if duplicateGroups[key] == nil {
+                duplicateGroups[key] = []
             }
-            
-            // Check if events have year 0 (which means they weren't properly imported)
-            let zeroYearEvents = allEvents.filter { $0.eventYear == 0 }
-            if !zeroYearEvents.isEmpty {
-                print("🚨 ERROR: Found \(zeroYearEvents.count) events with eventYear = 0 (improperly imported)")
+            duplicateGroups[key]!.append(event)
+        }
+        
+        let duplicates = duplicateGroups.filter { $1.count > 1 }
+        if !duplicates.isEmpty {
+            print("🚨 DUPLICATE EVENTS FOUND: \(duplicates.count) sets of duplicates")
+            for (key, events) in duplicates.prefix(5) {
+                print("🚨 - \(key): \(events.count) duplicates")
             }
-            
-            // Check for duplicate events (same band, time, location)
-            let currentYearEvents = allEvents.filter { $0.eventYear == Int32(year) }
-            var duplicateGroups: [String: [Event]] = [:]
-            
-            for event in currentYearEvents {
-                guard let bandName = event.band?.bandName else { continue }
-                let key = "\(bandName)|\(event.timeIndex)|\(event.location ?? "Unknown")"
-                if duplicateGroups[key] == nil {
-                    duplicateGroups[key] = []
-                }
-                duplicateGroups[key]!.append(event)
-            }
-            
-            let duplicates = duplicateGroups.filter { $1.count > 1 }
-            if !duplicates.isEmpty {
-                print("🚨 DUPLICATE EVENTS FOUND: \(duplicates.count) sets of duplicates")
-                for (key, events) in duplicates.prefix(5) {
-                    print("🚨 - \(key): \(events.count) duplicates")
-                }
-                let totalDuplicates = duplicates.values.reduce(0) { $0 + ($1.count - 1) }
-                print("🚨 TOTAL DUPLICATE EVENTS: \(totalDuplicates) (should be removed)")
-                print("🚨 UNIQUE EVENTS: \(currentYearEvents.count - totalDuplicates) (this should be ~250)")
-            }
-            
-            // Clean up duplicates if found
-            if !duplicates.isEmpty {
-                print("🚨 RUNNING DUPLICATE CLEANUP...")
-                coreDataManager.removeDuplicateEvents()
-                print("🚨 DUPLICATE CLEANUP COMPLETE - Please check results")
-            }
-        } catch {
-            print("❌ Error checking event years: \(error)")
+            let totalDuplicates = duplicates.values.reduce(0) { $0 + ($1.count - 1) }
+            print("🚨 TOTAL DUPLICATE EVENTS: \(totalDuplicates) (should be removed)")
+            print("🚨 UNIQUE EVENTS: \(currentYearEvents.count - totalDuplicates) (this should be ~250)")
         }
         
         let startTime = CFAbsoluteTimeGetCurrent()
         
-        // Build compound predicate for all active filters
-        var eventPredicates: [NSPredicate] = []
-        var bandPredicates: [NSPredicate] = []
-        
-        // 1. YEAR FILTERING
+        // 1. YEAR FILTERING - Get events for the specified year
+        var filteredEvents = dataManager.fetchEvents(forYear: year)
         print("🎯 [MDF_DEBUG] YEAR FILTERING:")
         print("   Filtering for eventYear == \(year)")
         print("   Global eventYear variable: \(eventYear)")
-        let yearPredicate = NSPredicate(format: "eventYear == %d", year)
-        eventPredicates.append(yearPredicate)
+        print("   Found \(filteredEvents.count) events for year \(year)")
         
         // 2. EVENT TYPE FILTERING (EXCLUSIVE approach - show everything EXCEPT filtered out types)
-        // This ensures new unknown event types appear by default
         var excludedEventTypes: [String] = []
         print("🔍 DEBUG: Event type filter settings (EXCLUSIVE approach):")
         print("🔍 DEBUG: getShowSpecialEvents() = \(getShowSpecialEvents())")
@@ -286,19 +209,16 @@ class EventManager {
         print("🔍 DEBUG: Final excludedEventTypes: \(excludedEventTypes)")
         
         if !excludedEventTypes.isEmpty {
-            let eventTypePredicate = NSPredicate(format: "NOT (eventType IN %@)", excludedEventTypes)
-            eventPredicates.append(eventTypePredicate)
+            filteredEvents = filteredEvents.filter { event in
+                guard let eventType = event.eventType else { return true } // Include events with no type
+                return !excludedEventTypes.contains(eventType)
+            }
         } else {
             print("🔍 DEBUG: No event types excluded - showing ALL event types")
         }
         
         // 3. VENUE FILTERING (DYNAMIC approach using FestivalConfig venues)
-        // This ensures new venues from different festivals are handled automatically
-        
-        // Get the filter venues from FestivalConfig (only venues with showInFilters=true)
         let filterVenues = FestivalConfig.current.getFilterVenueNames()
-        
-        // Build list of enabled filter venues
         var enabledFilterVenues: [String] = []
         
         for venueName in filterVenues {
@@ -310,81 +230,56 @@ class EventManager {
             }
         }
         
-        // Build the venue filter predicate
-        var venuePredicateParts: [NSPredicate] = []
-        
-        // Add predicates for enabled filter venues
-        // Use BEGINSWITH for exact venue matching to avoid "Lounge" matching "Boleros Lounge"
-        for venueName in enabledFilterVenues {
-            venuePredicateParts.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
-        }
-        
-        // Handle "Other" venues - if enabled, include venues not matching any filter venue
-        if getShowOtherShows() {
-            print("🔍 DEBUG: ✅ Including Other venues (venues with showInFilters=false)")
-            // If Other venues are enabled, we need to add a predicate for "NOT any filter venue"
-            if !filterVenues.isEmpty {
-                var filterVenuePredicates: [NSPredicate] = []
-                for venueName in filterVenues {
-                    // Use BEGINSWITH for exact venue matching
-                    filterVenuePredicates.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
+        // Apply venue filtering
+        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
+            filteredEvents = filteredEvents.filter { event in
+                // Check if location matches any enabled filter venue
+                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
+                    event.location.localizedCaseInsensitiveContains(venueName)
                 }
-                let notFilterVenuesPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: 
-                    NSCompoundPredicate(orPredicateWithSubpredicates: filterVenuePredicates))
-                venuePredicateParts.append(notFilterVenuesPredicate)
+                
+                if matchesFilterVenue {
+                    return true
+                }
+                
+                // Check if it's an "Other" venue (not matching any filter venue)
+                if getShowOtherShows() {
+                    let matchesAnyFilterVenue = filterVenues.contains { venueName in
+                        event.location.localizedCaseInsensitiveContains(venueName)
+                    }
+                    return !matchesAnyFilterVenue
+                }
+                
+                return false
             }
-        } else {
-            print("🔍 DEBUG: ❌ EXCLUDING Other venues (venues with showInFilters=false)")
-        }
-        
-        // Apply the venue filter: show events that match enabled venues OR other venues (if enabled)
-        if !venuePredicateParts.isEmpty {
-            let venuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: venuePredicateParts)
-            eventPredicates.append(venuePredicate)
-            print("🔍 DEBUG: Applied venue filter: enabled=\(enabledFilterVenues), other=\(getShowOtherShows())")
         } else {
             // No venues enabled and Other venues disabled = hide all venues
             print("🔍 DEBUG: ⚠️ No venues enabled - this will show no events")
-            eventPredicates.append(NSPredicate(value: false)) // Force no results
+            filteredEvents = []
         }
         
         // 4. TIME FILTERING (upcoming events only if hideExpiredScheduleData is enabled)
         if getHideExpireScheduleData() {
-            let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Match timeIndex storage format
-            let timePredicate = NSPredicate(format: "endTimeIndex > %f", currentTime)
-            eventPredicates.append(timePredicate)
+            let currentTime = Date().timeIntervalSinceReferenceDate
+            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
             print("🔍 DEBUG: Filtering expired events (endTimeIndex > \(currentTime))")
         }
         
-        // Execute query for events
-        let eventRequest: NSFetchRequest<Event> = Event.fetchRequest()
-        if !eventPredicates.isEmpty {
-            eventRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: eventPredicates)
-            print("🔍 DEBUG: Final query predicate: \(eventRequest.predicate!)")
-        }
-        
-        // Set sort order
+        // 5. SORTING
         if sortBy == "name" {
-            eventRequest.sortDescriptors = [NSSortDescriptor(key: "band.bandName", ascending: true)]
+            filteredEvents.sort { $0.bandName < $1.bandName }
         } else {
-            eventRequest.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
+            filteredEvents.sort { $0.timeIndex < $1.timeIndex }
         }
         
-        var filteredEvents: [Event] = []
-        do {
-            filteredEvents = try coreDataManager.context.fetch(eventRequest)
-            print("🚀 QUERY RESULT: Found \(filteredEvents.count) events from database")
-        } catch {
-            print("❌ Error fetching filtered events: \(error)")
-            filteredEvents = []
-        }
+        print("🚀 QUERY RESULT: Found \(filteredEvents.count) events from database")
         
-        // 5. PRIORITY FILTERING (post-query filtering for priority since it's in separate system)
+        // 6. PRIORITY FILTERING (post-query filtering for priority since it's in separate system)
         var eventStrings: [String] = []
         var bandNames: Set<String> = Set()
         
         for event in filteredEvents {
-            guard let bandName = event.band?.bandName else { continue }
+            let bandName = event.bandName
             
             // Apply priority filtering (replaces rankFiltering function)
             let priority = priorityManager.getPriority(for: bandName)
@@ -408,18 +303,9 @@ class EventManager {
             }
         }
         
-        // 6. Get bands without events (replaces band-only logic)
-        let bandRequest: NSFetchRequest<Band> = Band.fetchRequest()
-        bandRequest.predicate = NSPredicate(format: "eventYear == %d", year)
-        bandRequest.sortDescriptors = [NSSortDescriptor(key: "bandName", ascending: true)]
-        
-        var allBandNames: [String] = []
-        do {
-            let bands = try coreDataManager.context.fetch(bandRequest)
-            allBandNames = bands.compactMap { $0.bandName }
-        } catch {
-            print("❌ Error fetching bands: \(error)")
-        }
+        // 7. Get bands without events (replaces band-only logic)
+        let allBands = dataManager.fetchBands(forYear: year)
+        var allBandNames = allBands.map { $0.bandName }
         
         // Find bands without events and apply same priority filtering
         var bandOnlyStrings: [String] = []
@@ -471,52 +357,45 @@ class EventManager {
         eventTypes: [String]? = nil,
         days: [String]? = nil,
         year: Int? = nil
-    ) -> [Event] {
-        var predicates: [NSPredicate] = []
+    ) -> [EventData] {
+        let targetYear = year ?? eventYear
+        var events = dataManager.fetchEvents(forYear: targetYear)
         
         // Band name filtering
         if let bandNames = bandNames, !bandNames.isEmpty {
-            let bandPredicate = NSPredicate(format: "band.bandName IN %@", bandNames)
-            predicates.append(bandPredicate)
+            let bandNameSet = Set(bandNames)
+            events = events.filter { bandNameSet.contains($0.bandName) }
         }
         
         // Location filtering
         if let locations = locations, !locations.isEmpty {
-            let locationPredicates = locations.map { NSPredicate(format: "location CONTAINS[cd] %@", $0) }
-            let locationPredicate = NSCompoundPredicate(orPredicateWithSubpredicates: locationPredicates)
-            predicates.append(locationPredicate)
+            events = events.filter { event in
+                locations.contains { location in
+                    event.location.localizedCaseInsensitiveContains(location)
+                }
+            }
         }
         
         // Event type filtering
         if let eventTypes = eventTypes, !eventTypes.isEmpty {
-            let typePredicate = NSPredicate(format: "eventType IN %@", eventTypes)
-            predicates.append(typePredicate)
+            let eventTypeSet = Set(eventTypes)
+            events = events.filter { event in
+                guard let eventType = event.eventType else { return false }
+                return eventTypeSet.contains(eventType)
+            }
         }
         
         // Day filtering
         if let days = days, !days.isEmpty {
-            let dayPredicate = NSPredicate(format: "day IN %@", days)
-            predicates.append(dayPredicate)
+            let daySet = Set(days)
+            events = events.filter { event in
+                guard let day = event.day else { return false }
+                return daySet.contains(day)
+            }
         }
         
-        // Year filtering
-        if let year = year {
-            let yearPredicate = NSPredicate(format: "eventYear == %d", year)
-            predicates.append(yearPredicate)
-        }
-        
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        if !predicates.isEmpty {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-        }
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching filtered events: \(error)")
-            return []
-        }
+        // Sort by timeIndex
+        return events.sorted { $0.timeIndex < $1.timeIndex }
     }
     
     // MARK: - Statistics and Counts
@@ -525,62 +404,29 @@ class EventManager {
     /// - Parameter bandName: Name of the band
     /// - Returns: Number of events for the band
     func getEventCount(for bandName: String) -> Int {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band.bandName == %@", bandName)
-        
-        do {
-            return try coreDataManager.context.count(for: request)
-        } catch {
-            print("❌ Error counting events for \(bandName): \(error)")
-            return 0
-        }
+        return dataManager.fetchEventsForBand(bandName, forYear: eventYear).count
     }
     
     /// Get total event count
     /// - Returns: Total number of events in database
     func getTotalEventCount() -> Int {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        
-        do {
-            return try coreDataManager.context.count(for: request)
-        } catch {
-            print("❌ Error counting total events: \(error)")
-            return 0
-        }
+        return dataManager.fetchEvents().count
     }
     
     /// Get unique locations
     /// - Returns: Array of unique location names
     func getUniqueLocations() -> [String] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.propertiesToFetch = ["location"]
-        request.returnsDistinctResults = true
-        request.resultType = .dictionaryResultType
-        
-        do {
-            let results = try coreDataManager.context.fetch(request) as! [[String: Any]]
-            return results.compactMap { $0["location"] as? String }.sorted()
-        } catch {
-            print("❌ Error fetching unique locations: \(error)")
-            return []
-        }
+        let allEvents = dataManager.fetchEvents()
+        let locations = Set(allEvents.map { $0.location })
+        return Array(locations).sorted()
     }
     
     /// Get unique event types
     /// - Returns: Array of unique event type names
     func getUniqueEventTypes() -> [String] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.propertiesToFetch = ["eventType"]
-        request.returnsDistinctResults = true
-        request.resultType = .dictionaryResultType
-        
-        do {
-            let results = try coreDataManager.context.fetch(request) as! [[String: Any]]
-            return results.compactMap { $0["eventType"] as? String }.sorted()
-        } catch {
-            print("❌ Error fetching unique event types: \(error)")
-            return []
-        }
+        let allEvents = dataManager.fetchEvents()
+        let eventTypes = Set(allEvents.compactMap { $0.eventType })
+        return Array(eventTypes).sorted()
     }
     
     // MARK: - Data Management (Replaces scheduleHandler management methods)
@@ -629,14 +475,14 @@ class EventManager {
         var result: [String: [TimeInterval: [String: String]]] = [:]
         
         for event in events {
-            guard let bandName = event.band?.bandName else { continue }
+            let bandName = event.bandName
             
             if result[bandName] == nil {
                 result[bandName] = [:]
             }
             
             let eventData: [String: String] = [
-                "Location": event.location ?? "",
+                "Location": event.location,
                 "Date": event.date ?? "",
                 "Day": event.day ?? "",
                 "Start Time": event.startTime ?? "",
@@ -645,7 +491,7 @@ class EventManager {
                 "Notes": event.notes ?? "",
                 "Description URL": event.descriptionUrl ?? "",
                 "ImageURL": event.eventImageUrl ?? "",
-                "ImageDate": event.eventImageDate ?? ""
+                "ImageDate": "" // SQLite doesn't store ImageDate separately
             ]
             
             result[bandName]?[event.timeIndex] = eventData
@@ -662,8 +508,8 @@ class EventManager {
         
         for event in events {
             let eventData: [String: String] = [
-                "Band": event.band?.bandName ?? "",
-                "Location": event.location ?? "",
+                "Band": event.bandName,
+                "Location": event.location,
                 "Date": event.date ?? "",
                 "Day": event.day ?? "",
                 "Start Time": event.startTime ?? "",
@@ -672,7 +518,7 @@ class EventManager {
                 "Notes": event.notes ?? "",
                 "Description URL": event.descriptionUrl ?? "",
                 "ImageURL": event.eventImageUrl ?? "",
-                "ImageDate": event.eventImageDate ?? ""
+                "ImageDate": "" // SQLite doesn't store ImageDate separately
             ]
             
             result[event.timeIndex] = eventData

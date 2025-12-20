@@ -1,11 +1,10 @@
 import Foundation
-import CoreData
 
-/// Imports event/schedule data from CSV files into SQLite (via DataManager)
+/// Imports event/schedule data from CSV files directly into SQLite (via DataManager)
 /// Replaces the legacy scheduleHandler dictionary system with database storage
+/// All data writes go directly to SQLite - no Core Data intermediate step
 class EventCSVImporter {
     private let dataManager = DataManager.shared
-    private let coreDataManager = CoreDataManager.shared // Only for background task coordination
     
     init() {
         print("🎭 [MDF_DEBUG] EventCSVImporter.init() called")
@@ -31,11 +30,11 @@ class EventCSVImporter {
     
     // MARK: - CSV Import Methods
     
-    /// Import events from CSV string data
+    /// Import events from CSV string data directly into SQLite
     /// - Parameter csvString: Raw CSV data string
     /// - Returns: True if import was successful
     func importEventsFromCSV(_ csvString: String) -> Bool {
-        print("🎭 [MDF_DEBUG] Starting event CSV import to Core Data...")
+        print("🎭 [MDF_DEBUG] Starting event CSV import to SQLite...")
         print("🎭 [MDF_DEBUG] Festival Config: \(FestivalConfig.current.festivalShortName)")
         print("🎭 [MDF_DEBUG] CSV string length: \(csvString.count)")
         
@@ -128,118 +127,91 @@ class EventCSVImporter {
                     print("   Event Year: \(eventYear)")
                 }
                 
-                // Get or create the band
-                let band = coreDataManager.createOrUpdateBand(name: bandName, eventYear: Int32(eventYear))
+                // Ensure band exists in SQLite (create if needed)
+                _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
                 
                 // Create unique identifier for this event
                 let timeIndex = getDateIndex(date, timeString: startTime, band: bandName)
                 
                 if rowIndex <= 3 {
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Time Index: \(timeIndex)")
-                    let dateObj = Date(timeIntervalSinceReferenceDate: timeIndex) // FIX: Match storage format
+                    let dateObj = Date(timeIntervalSinceReferenceDate: timeIndex)
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Parsed Date: \(dateObj)")
                 }
-                
-                // Check if event already exists
-                let existingEvent = fetchEvent(band: band, timeIndex: timeIndex)
-                let event = existingEvent ?? Event(context: coreDataManager.context)
-                
-                if rowIndex <= 3 {
-                    print("💾 [MDF_DEBUG] Row \(rowIndex) Event Status: \(existingEvent != nil ? "EXISTING" : "NEW")")
-                }
-                
-                // Update event data
-                event.band = band
-                event.location = location
-                event.date = date
-                event.day = lineData["Day"] ?? ""
-                event.startTime = startTime
-                event.endTime = lineData["End Time"] ?? ""
-                event.timeIndex = timeIndex
                 
                 // Calculate end time index (CRITICAL for proper event filtering)
                 let endTime = lineData["End Time"] ?? ""
                 let endTimeIndex = getDateIndex(date, timeString: endTime, band: bandName)
-                event.endTimeIndex = endTimeIndex
                 
                 if rowIndex <= 3 {
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) End Time Index: \(endTimeIndex)")
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Duration: \((endTimeIndex - timeIndex) / 60) minutes")
                 }
                 
-                // Debug year assignment
-                if rowIndex <= 3 {
-                    print("🎯 [MDF_DEBUG] Row \(rowIndex) YEAR ASSIGNMENT:")
-                    print("   Global eventYear variable: \(eventYear)")
-                    print("   Event date string: '\(date)'")
-                    print("   Assigning eventYear = \(eventYear) to Core Data event")
-                }
-                
-                event.eventYear = Int32(eventYear)
-                
                 // Handle event type
                 var eventType = lineData["Type"] ?? ""
                 if eventType == "Unofficial Event (Old)" {
                     eventType = "Unofficial Event"
                 }
-                event.eventType = eventType
                 
-                // Generate identifiers for Firebase safety and backward compatibility
-                let yearString = String(eventYear)
-                event.identifier = EventCSVImporter.createOriginalEventIdentifier(
-                    bandName: bandName, 
-                    location: location, 
-                    startTime: startTime, 
-                    eventType: eventType, 
-                    year: yearString
-                )
-                event.sanitizedIdentifier = EventCSVImporter.createSanitizedEventIdentifier(
-                    bandName: bandName, 
-                    location: location, 
-                    startTime: startTime, 
-                    eventType: eventType, 
-                    year: yearString
-                )
+                // Check if event already exists in SQLite
+                let existingEvents = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+                let existingEvent = existingEvents.first { $0.timeIndex == timeIndex }
                 
-                // Optional fields
-                event.notes = lineData["Notes"]
-                event.descriptionUrl = lineData["Description URL"]
-                event.eventImageUrl = lineData["ImageURL"]
+                if rowIndex <= 3 {
+                    print("💾 [MDF_DEBUG] Row \(rowIndex) Event Status: \(existingEvent != nil ? "EXISTING" : "NEW")")
+                    print("🎯 [MDF_DEBUG] Row \(rowIndex) YEAR ASSIGNMENT:")
+                    print("   Global eventYear variable: \(eventYear)")
+                    print("   Event date string: '\(date)'")
+                    print("   Assigning eventYear = \(eventYear) to SQLite event")
+                }
                 
-                // CRITICAL: Get ImageDate and log for debugging
+                // Get ImageDate for logging
                 let imageDateFromCSV = lineData["ImageDate"] ?? ""
                 let trimmedImageDate = imageDateFromCSV.trimmingCharacters(in: .whitespacesAndNewlines)
-                event.eventImageDate = trimmedImageDate.isEmpty ? nil : trimmedImageDate
+                let imageDate = trimmedImageDate.isEmpty ? nil : trimmedImageDate
                 
                 // DEBUG: Log ImageDate parsing for ALL events with ImageURL
                 if let imageUrl = lineData["ImageURL"], !imageUrl.isEmpty {
-                    if !trimmedImageDate.isEmpty {
-                        print("📅 [CSV_IMPORT] Parsed ImageDate '\(trimmedImageDate)' for band '\(lineData["Band"] ?? "unknown")' with ImageURL: \(imageUrl)")
+                    if let imageDate = imageDate, !imageDate.isEmpty {
+                        print("📅 [CSV_IMPORT] Parsed ImageDate '\(imageDate)' for band '\(lineData["Band"] ?? "unknown")' with ImageURL: \(imageUrl)")
                     } else {
                         print("⚠️ [CSV_IMPORT] Band '\(lineData["Band"] ?? "unknown")' has ImageURL but ImageDate is empty or missing")
                         print("⚠️ [CSV_IMPORT] Raw ImageDate value: '\(imageDateFromCSV)' (length: \(imageDateFromCSV.count))")
-                        // Also log all available keys to see what CSV parser is returning
                         if rowIndex <= 5 {
                             print("⚠️ [CSV_IMPORT] Available CSV keys: \(lineData.keys.sorted())")
                         }
                     }
                 }
                 
-                // Set timestamps
+                // Create or update event directly in SQLite
+                _ = dataManager.createOrUpdateEvent(
+                    bandName: bandName,
+                    timeIndex: timeIndex,
+                    endTimeIndex: endTimeIndex,
+                    location: location,
+                    date: date,
+                    day: lineData["Day"],
+                    startTime: startTime,
+                    endTime: endTime,
+                    eventType: eventType,
+                    eventYear: eventYear,
+                    notes: lineData["Notes"],
+                    descriptionUrl: lineData["Description URL"],
+                    eventImageUrl: lineData["ImageURL"]
+                )
+                
+                // Track import/update counts
                 if existingEvent == nil {
-                    event.createdAt = Date()
                     importedCount += 1
                     print("✅ Imported event: \(bandName) at \(location) on \(date)")
                 } else {
                     updatedCount += 1
                     print("🔄 Updated event: \(bandName) at \(location) on \(date)")
                 }
-                event.updatedAt = Date()
             }
             
-            // Save all changes
-            coreDataManager.saveContext()
-            
+            // SQLite writes are immediate (no saveContext needed)
             print("🎉 Event import complete!")
             print("📊 Imported: \(importedCount), Updated: \(updatedCount), Skipped: \(skippedCount)")
             print("📊 Total: \(importedCount + updatedCount) events processed")
@@ -324,7 +296,7 @@ class EventCSVImporter {
                 // Save to file for caching
                 self.saveEventDataToFile(csvData)
                 
-                // Import to Core Data
+                // Import directly to SQLite
                 let success = self.importEventsFromCSV(csvData)
                 
                 if success {
@@ -338,88 +310,59 @@ class EventCSVImporter {
         }
     }
     
-    // MARK: - Data Access Methods (Compatible with existing code)
+    // MARK: - Data Access Methods (Using SQLite)
     
-    /// Get all events as array (replacement for scheduleHandler access)
-    func getEventsArray() -> [Event] {
-        return fetchEvents()
+    /// Get all events as EventData array (replacement for scheduleHandler access)
+    func getEventsArray() -> [EventData] {
+        return dataManager.fetchEvents(forYear: eventYear)
     }
     
     /// Get events for a specific band (replacement for schedulingData[bandName])
-    func getEvents(for bandName: String) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band.bandName == %@", bandName)
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events for band \(bandName): \(error)")
-            return []
-        }
+    func getEvents(for bandName: String) -> [EventData] {
+        return dataManager.fetchEventsForBand(bandName, forYear: eventYear)
     }
     
     /// Get events by time index (replacement for schedulingDataByTime)
-    func getEvents(byTimeIndex timeIndex: TimeInterval) -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "timeIndex == %f", timeIndex)
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events by time index: \(error)")
-            return []
-        }
+    func getEvents(byTimeIndex timeIndex: TimeInterval) -> [EventData] {
+        let allEvents = dataManager.fetchEvents(forYear: eventYear)
+        return allEvents.filter { $0.timeIndex == timeIndex }
     }
     
     /// Get event data for specific band and time (replacement for getData method)
     func getEventData(bandName: String, timeIndex: TimeInterval, field: String) -> String {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band.bandName == %@ AND timeIndex == %f", bandName, timeIndex)
-        request.fetchLimit = 1
-        
-        do {
-            guard let event = try coreDataManager.context.fetch(request).first else {
-                return ""
-            }
-            
-            // Map field names to event properties
-            switch field {
-            case "Location": return event.location ?? ""
-            case "Date": return event.date ?? ""
-            case "Day": return event.day ?? ""
-            case "Start Time": return event.startTime ?? ""
-            case "End Time": return event.endTime ?? ""
-            case "Type": return event.eventType ?? ""
-            case "Notes": return event.notes ?? ""
-            case "Description URL": return event.descriptionUrl ?? ""
-            case "ImageURL": return event.eventImageUrl ?? ""
-            case "ImageDate": return event.eventImageDate ?? ""
-            default: return ""
-            }
-        } catch {
-            print("❌ Error fetching event data: \(error)")
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+        guard let event = events.first(where: { $0.timeIndex == timeIndex }) else {
             return ""
+        }
+        
+        // Map field names to event properties
+        switch field {
+        case "Location": return event.location
+        case "Date": return event.date ?? ""
+        case "Day": return event.day ?? ""
+        case "Start Time": return event.startTime ?? ""
+        case "End Time": return event.endTime ?? ""
+        case "Type": return event.eventType ?? ""
+        case "Notes": return event.notes ?? ""
+        case "Description URL": return event.descriptionUrl ?? ""
+        case "ImageURL": return event.eventImageUrl ?? ""
+        case "ImageDate": return "" // SQLite doesn't store ImageDate separately
+        default: return ""
         }
     }
     
     /// Check if events data is empty
     func isEmpty() -> Bool {
-        return fetchEvents().isEmpty
+        return dataManager.fetchEvents(forYear: eventYear).isEmpty
     }
     
-    /// Clear all cached event data
+    /// Clear all cached event data for current year
     func clearCachedData() {
-        let request: NSFetchRequest<NSFetchRequestResult> = Event.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
-        
-        do {
-            try coreDataManager.context.execute(deleteRequest)
-            coreDataManager.saveContext()
-            print("🗑️ Cleared all event data from Core Data")
-        } catch {
-            print("❌ Error clearing event data: \(error)")
+        let events = dataManager.fetchEvents(forYear: eventYear)
+        for event in events {
+            dataManager.deleteEvent(bandName: event.bandName, timeIndex: event.timeIndex, eventYear: eventYear)
         }
+        print("🗑️ Cleared all event data from SQLite for year \(eventYear)")
     }
     
     /// Clean up orphaned bands that have no events (fake band entries)
@@ -427,27 +370,22 @@ class EventCSVImporter {
     func cleanupOrphanedBands() {
         print("🧹 [CLEANUP] Starting orphaned bands cleanup...")
         
-        let request: NSFetchRequest<Band> = Band.fetchRequest()
-        request.predicate = NSPredicate(format: "events.@count == 0")
+        let allBands = dataManager.fetchBands(forYear: eventYear)
+        var orphanedCount = 0
         
-        do {
-            let orphanedBands = try coreDataManager.context.fetch(request)
-            print("🧹 [CLEANUP] Found \(orphanedBands.count) orphaned bands with no events")
-            
-            for band in orphanedBands {
-                print("🗑️ [CLEANUP] Removing orphaned band: '\(band.bandName ?? "Unknown")' (Year: \(band.eventYear))")
-                coreDataManager.context.delete(band)
+        for band in allBands {
+            let events = dataManager.fetchEventsForBand(band.bandName, forYear: eventYear)
+            if events.isEmpty {
+                print("🗑️ [CLEANUP] Removing orphaned band: '\(band.bandName)' (Year: \(eventYear))")
+                dataManager.deleteBand(name: band.bandName, eventYear: eventYear)
+                orphanedCount += 1
             }
-            
-            if !orphanedBands.isEmpty {
-                coreDataManager.saveContext()
-                print("✅ [CLEANUP] Removed \(orphanedBands.count) orphaned bands")
-            } else {
-                print("✅ [CLEANUP] No orphaned bands found")
-            }
-            
-        } catch {
-            print("❌ [CLEANUP] Error cleaning up orphaned bands: \(error)")
+        }
+        
+        if orphanedCount > 0 {
+            print("✅ [CLEANUP] Removed \(orphanedCount) orphaned bands")
+        } else {
+            print("✅ [CLEANUP] No orphaned bands found")
         }
     }
     
@@ -470,29 +408,13 @@ class EventCSVImporter {
         return paths[0]
     }
     
-    private func fetchEvents() -> [Event] {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(key: "timeIndex", ascending: true)]
-        
-        do {
-            return try coreDataManager.context.fetch(request)
-        } catch {
-            print("❌ Error fetching events: \(error)")
-            return []
-        }
+    private func fetchEvents() -> [EventData] {
+        return dataManager.fetchEvents(forYear: eventYear).sorted { $0.timeIndex < $1.timeIndex }
     }
     
-    private func fetchEvent(band: Band, timeIndex: TimeInterval) -> Event? {
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "band == %@ AND timeIndex == %f", band, timeIndex)
-        request.fetchLimit = 1
-        
-        do {
-            return try coreDataManager.context.fetch(request).first
-        } catch {
-            print("❌ Error fetching event: \(error)")
-            return nil
-        }
+    private func fetchEvent(bandName: String, timeIndex: TimeInterval) -> EventData? {
+        let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
+        return events.first { $0.timeIndex == timeIndex }
     }
     
     /// Calculate unique time index for event (matches scheduleHandler logic)
@@ -514,8 +436,8 @@ class EventCSVImporter {
             print("✅ [MDF_DEBUG] Date parsed successfully: \(date)")
             var timeIndex = date.timeIntervalSinceReferenceDate // FIX: Match ScheduleCSVImporter reference
             
-            // Ensure uniqueness by checking existing events
-            while fetchEvent(band: coreDataManager.createOrUpdateBand(name: band, eventYear: Int32(eventYear)), timeIndex: timeIndex) != nil {
+            // Ensure uniqueness by checking existing events in SQLite
+            while fetchEvent(bandName: band, timeIndex: timeIndex) != nil {
                 timeIndex += 1
             }
             

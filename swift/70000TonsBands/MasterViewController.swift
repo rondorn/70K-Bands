@@ -68,6 +68,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("📊 Year change took \(String(format: "%.2f", duration)) seconds")
             yearChangeStartTime = nil
         }
+        
+        // Post notification to trigger deferred operations
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("YearChangeCompleted"),
+                object: nil
+            )
+        }
     }
     
     private func cancelAllBackgroundOperations() {
