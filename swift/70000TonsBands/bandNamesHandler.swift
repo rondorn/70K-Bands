@@ -65,6 +65,16 @@ open class bandNamesHandler {
     @objc private func handleYearChangeCompleted() {
         print("✅ [YEAR_CHANGE] Processing \(deferredCacheLoads.count) deferred cache loads and \(deferredBandLookups.count) deferred lookups")
         
+        // RACE FIX: Wait for data to be ready before processing deferred operations
+        // This prevents conflicts with handleReturnFromPreferencesAfterYearChange
+        if !MasterViewController.isYearChangeDataReady() {
+            print("⏳ [RACE_FIX] Year change data not ready - deferring deferred operations")
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.handleYearChangeCompleted()
+            }
+            return
+        }
+        
         deferredOperationsQueue.async { [weak self] in
             guard let self = self else { return }
             
@@ -173,6 +183,18 @@ open class bandNamesHandler {
             return
         }
         
+        // RACE FIX: If year change just completed but data isn't ready yet, wait briefly
+        // This prevents reading SQLite before data import completes (edge case)
+        // Only check if year change is NOT in progress (already handled above) but data not ready
+        if !MasterViewController.isYearChangeInProgress && !MasterViewController.isYearChangeDataReady() {
+            // Year change flag cleared but data not ready - wait briefly
+            print("⏳ [RACE_FIX] Year change completed but data not ready - waiting briefly...")
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                self?.loadCacheFromCoreData()
+            }
+            return
+        }
+        
         guard !cacheLoaded else {
             print("🔍 [HANG_DEBUG] Cache already loaded, returning")
             return
@@ -182,6 +204,7 @@ open class bandNamesHandler {
         print("🔍 [HANG_DEBUG] Cache not loaded, proceeding with load")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
+        // eventYear is already thread-safe via lock in Constants.swift
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // CRITICAL FIX: Filter bands by the current event year

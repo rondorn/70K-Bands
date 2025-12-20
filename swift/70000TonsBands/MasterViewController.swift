@@ -19,6 +19,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     static var isCsvDownloadInProgress: Bool = false
     static let backgroundRefreshLock = NSLock()
     
+    // MARK: - Year Change Data Readiness (Race Condition Fix)
+    private static var yearChangeDataReady: Bool = false
+    private static var yearChangeDataReadyLock = NSLock()
+    private static var pendingYearChangeCompletion: Bool = false
+    
     // MARK: - Deadlock Prevention
     private static var yearChangeStartTime: Date?
     private static var deadlockDetectionTimer: Timer?
@@ -36,6 +41,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         isYearChangeInProgress = true
         currentDataRefreshOperationId = UUID()
         yearChangeStartTime = Date()
+        
+        // Reset data readiness flag
+        yearChangeDataReadyLock.lock()
+        yearChangeDataReady = false
+        pendingYearChangeCompletion = false
+        yearChangeDataReadyLock.unlock()
         
         // ADD DEADLOCK DETECTION TIMER
         deadlockDetectionTimer?.invalidate()
@@ -55,7 +66,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    /// Marks year change data as ready - called after initial data load completes
+    static func markYearChangeDataReady() {
+        yearChangeDataReadyLock.lock()
+        yearChangeDataReady = true
+        let shouldComplete = pendingYearChangeCompletion
+        yearChangeDataReadyLock.unlock()
+        
+        print("✅ [RACE_FIX] Year change data marked as ready")
+        
+        // If completion was pending, do it now
+        if shouldComplete {
+            print("✅ [RACE_FIX] Completing pending year change notification")
+            notifyYearChangeCompleted()
+        }
+    }
+    
     static func notifyYearChangeCompleted() {
+        yearChangeDataReadyLock.lock()
+        let dataReady = yearChangeDataReady
+        if !dataReady {
+            // Data not ready yet - defer completion
+            print("⏳ [RACE_FIX] Year change completion deferred - data not ready yet")
+            pendingYearChangeCompletion = true
+            yearChangeDataReadyLock.unlock()
+            return
+        }
+        pendingYearChangeCompletion = false
+        yearChangeDataReadyLock.unlock()
+        
         print("✅ [YEAR_CHANGE_DEADLOCK_FIX] Year change completed - background operations can resume")
         isYearChangeInProgress = false
         
@@ -76,6 +115,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 object: nil
             )
         }
+    }
+    
+    /// Checks if year change data is ready (for race condition prevention)
+    static func isYearChangeDataReady() -> Bool {
+        yearChangeDataReadyLock.lock()
+        defer { yearChangeDataReadyLock.unlock() }
+        return yearChangeDataReady
     }
     
     private func cancelAllBackgroundOperations() {
@@ -1359,6 +1405,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] refreshBandList START - reason: '\(reason)'")
         
+        // RACE FIX: During year changes, wait for data to be ready before refreshing
+        // This prevents showing stale data or causing crashes (edge case protection)
+        let isYearChangeReason = reason.lowercased().contains("year change")
+        if isYearChangeReason && !MasterViewController.isYearChangeDataReady() {
+            print("⏳ [RACE_FIX] Year change data not ready - deferring refreshBandList")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.refreshBandList(reason: reason, scrollToTop: scrollToTop, isPullToRefresh: isPullToRefresh, skipDataLoading: skipDataLoading)
+            }
+            return
+        }
+        
         if MasterViewController.isRefreshingBandList {
             print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] Global: Band list refresh already in progress. Skipping. Reason: \(reason)")
             return
@@ -1805,6 +1862,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎛️ [YEAR_CHANGE] Current eventYear: \(eventYear)")
         print("🎛️ [YEAR_CHANGE] Current hideExpiredEvents: \(getHideExpireScheduleData())")
         
+        // RACE FIX: Wait briefly if year change data isn't ready yet (edge case protection)
+        // This prevents reading SQLite before data import completes
+        if !MasterViewController.isYearChangeDataReady() {
+            print("⏳ [RACE_FIX] Year change data not ready yet - waiting briefly...")
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.performInitialDataLoadAfterYearChange()
+            }
+        } else {
+            performInitialDataLoadAfterYearChange()
+        }
+    }
+    
+    /// Performs initial data load after year change (extracted for reuse)
+    private func performInitialDataLoadAfterYearChange() {
         // STEP 1: Load all data from database immediately and display
         print("🎛️ [YEAR_CHANGE] Step 1 - Loading database data for new year")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -1813,6 +1884,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Load all data from database (Bands, Events, Priorities, Attended) for new year
             self.bandNameHandle.loadCachedDataImmediately()
             self.schedule.loadCachedDataImmediately()
+            
+            // Mark data as ready (allows deferred year change completion to proceed)
+            MasterViewController.markYearChangeDataReady()
             
             // Display to user on main thread
             DispatchQueue.main.async {
@@ -1839,8 +1913,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // STEP 4: Launch unified data refresh (3 parallel threads) for new year
         // Thread 3 will rebuild the image map with fresh data
+        // RACE FIX: Ensure data is ready before starting unified refresh
         print("🎛️ [YEAR_CHANGE] Step 3b - Launching unified data refresh for new year")
-        performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
+        if MasterViewController.isYearChangeDataReady() {
+            performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
+        } else {
+            // Wait briefly for data to be ready (edge case)
+            print("⏳ [RACE_FIX] Waiting for year change data before unified refresh...")
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self = self else { return }
+                if MasterViewController.isYearChangeDataReady() {
+                    self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
+                } else {
+                    print("⚠️ [RACE_FIX] Year change data still not ready, proceeding anyway")
+                    self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
+                }
+            }
+        }
     }
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
