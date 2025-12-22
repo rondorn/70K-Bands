@@ -231,17 +231,38 @@ func setupFlaggedOnlyResponse(controller: MasterViewController, item: String){
 func setupFlaggedOnlylMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
 
     if (item == "Flagged Items"){
+        // Determine if we should enable the filter based on three conditions:
+        // 1. Events are being displayed (showScheduleView)
+        // 2. All events are NOT Cruiser Organize or Unofficial (hasScheduledEvents)
+        // 3. At least one event is flagged as will attend (attendingCount > 0)
+        let showScheduleView = getShowScheduleView()
+        let hasScheduledEvents = (eventCount > 0 && eventCounterUnoffical != eventCount)
+        let hasFlaggedEvents = attendingCount > 0
+        
+        // Enable filter only when all three conditions are met:
+        // - We're in schedule view (events are being displayed)
+        // - Not all events are unofficial/cruiser organized
+        // - At least one event is flagged
+        let shouldEnableFilter = showScheduleView && hasScheduledEvents && hasFlaggedEvents
+        
         if (getShowOnlyWillAttened() == false){
-            setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: ""), cellData: cellRow, imageName: attendedShowIcon, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: ""), cellData: cellRow, imageName: attendedShowIcon, disabled: !shouldEnableFilter)
         } else {
-            setupCell(header: false, titleText: NSLocalizedString("Show All Events", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: false)
+            setupCell(header: false, titleText: NSLocalizedString("Show All Events", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: !shouldEnableFilter)
         }
-        if (attendingCount == 0){
-            print("🔍 [FLAGGED_FILTER_DEBUG] ❌ Disabling 'Show Flagged Events Only' - attendingCount = \(attendingCount)")
+        
+        if (!shouldEnableFilter){
+            print("🔍 [FLAGGED_FILTER_DEBUG] ❌ Disabling 'Show Flagged Events Only'")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - showScheduleView: \(showScheduleView)")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - hasScheduledEvents: \(hasScheduledEvents) (eventCount: \(eventCount), eventCounterUnoffical: \(eventCounterUnoffical))")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - hasFlaggedEvents: \(hasFlaggedEvents) (attendingCount: \(attendingCount))")
             setupCell(header: false, titleText: NSLocalizedString("Show Flagged Events Only", comment: "") , cellData: cellRow, imageName: attendedShowIconAlt, disabled: true)
             cellRow.optionLabel.textColor = UIColor.darkGray
         } else {
-            print("🔍 [FLAGGED_FILTER_DEBUG] ✅ Enabling 'Show Flagged Events Only' - attendingCount = \(attendingCount)")
+            print("🔍 [FLAGGED_FILTER_DEBUG] ✅ Enabling 'Show Flagged Events Only'")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - showScheduleView: \(showScheduleView)")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - hasScheduledEvents: \(hasScheduledEvents) (eventCount: \(eventCount), eventCounterUnoffical: \(eventCounterUnoffical))")
+            print("🔍 [FLAGGED_FILTER_DEBUG]   - hasFlaggedEvents: \(hasFlaggedEvents) (attendingCount: \(attendingCount))")
         }
     }
 }
