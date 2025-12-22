@@ -369,8 +369,38 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     // Reset count - will be set appropriately based on view mode
     attendingCount = 0
     
-    // TODO: Add bands-only mode counting if needed later
-    // For now, events-based counting should be sufficient since most flagged items are events
+    // COUNT FLAGGED EVENTS: Count all events that have attendance flags (past or future)
+    // This is used to enable/disable the "Show Flagged Events Only" filter option
+    // Note: We count ALL flagged events (both past and future) for filtering purposes
+    if getShowScheduleView() {
+        for event in finalEvents {
+            let bandName = event.bandName
+            let location = event.location
+            let eventType = event.eventType ?? ""
+            let startTime = event.startTime ?? ""
+            
+            // Skip if no startTime data
+            guard !startTime.isEmpty else { continue }
+            
+            let eventYearString = String(eventYear)
+            let attendedStatus = attendedHandle.getShowAttendedStatus(
+                band: bandName,
+                location: location,
+                startTime: startTime,
+                eventType: eventType,
+                eventYearString: eventYearString
+            )
+            
+            // Count any event with an attendance flag (not "sawNone")
+            if attendedStatus != sawNoneStatus {
+                attendingCount += 1
+            }
+        }
+        print("🔍 [ATTENDING_COUNT_FIX] Counted \(attendingCount) flagged events (past and future)")
+    } else {
+        // In bands-only mode, we don't show events, so no flagged events to count
+        print("🔍 [ATTENDING_COUNT_FIX] Bands-only mode - no events to count, attendingCount remains 0")
+    }
     
     print("🔍 [ATTENDING_COUNT_FIX] Final attendingCount = \(attendingCount)")
     
