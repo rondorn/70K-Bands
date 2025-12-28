@@ -250,7 +250,6 @@ func getVenueColor (venue: String)->UIColor{
     // Use the new configurable venue system from FestivalConfig
     let venueColor = FestivalConfig.current.getVenueColor(for: venue)
     
-    print ("Returning \(venueColor) for venue of \(venue)")
     return venueColor
 }
 

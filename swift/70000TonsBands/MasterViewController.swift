@@ -2113,6 +2113,118 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return showEventMenu
     }
     
+    /// Helper function to check if all currently visible events are Unofficial or Cruiser Organized
+    /// This checks the actual visible events after all filters are applied, not the database count
+    private func areAllVisibleEventsUnofficialOrCruiserOrganized() -> Bool {
+        // If there are no visible events, return false (default to Bands per rule 1)
+        guard eventCount > 0 else { return false }
+        
+        // Get all events for the current year and apply the same filters that are used for display
+        let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+        
+        // Apply the same filtering logic as getFilteredScheduleData
+        // 1. Event type filtering
+        var excludedEventTypes: [String] = []
+        if !getShowUnofficalEvents() {
+            excludedEventTypes.append(contentsOf: ["Unofficial Event", "Cruiser Organized"])
+        }
+        if !getShowMeetAndGreetEvents() {
+            excludedEventTypes.append("Meet and Greet")
+        }
+        if !getShowSpecialEvents() {
+            excludedEventTypes.append("Special Event")
+        }
+        
+        var filteredEvents = allEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return !excludedEventTypes.contains(eventType)
+        }
+        
+        // 2. Venue filtering
+        let filterVenues = FestivalConfig.current.getFilterVenueNames()
+        let enabledFilterVenues = filterVenues.filter { getShowVenueEvents(venueName: $0) }
+        
+        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
+            filteredEvents = filteredEvents.filter { event in
+                let location = event.location
+                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
+                    location.lowercased().hasPrefix(venueName.lowercased())
+                }
+                
+                if matchesFilterVenue {
+                    return true
+                }
+                
+                if !matchesFilterVenue && getShowOtherShows() {
+                    let isFilterVenue = filterVenues.contains { venueName in
+                        location.lowercased().hasPrefix(venueName.lowercased())
+                    }
+                    return !isFilterVenue
+                }
+                
+                return false
+            }
+        } else {
+            filteredEvents = []
+        }
+        
+        // 3. Expiration filtering
+        if getHideExpireScheduleData() {
+            let currentTime = Date().timeIntervalSinceReferenceDate
+            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
+        }
+        
+        // 4. Priority filtering
+        let priorityFilteredEvents = filteredEvents.filter { event in
+            let bandName = event.bandName
+            guard !bandName.isEmpty else { return true }
+            
+            let priority = priorityManager.getPriority(for: bandName)
+            
+            if priority == 1 && !getMustSeeOn() { return false }
+            if priority == 2 && !getMightSeeOn() { return false }
+            if priority == 3 && !getWontSeeOn() { return false }
+            if priority == 0 && !getUnknownSeeOn() { return false }
+            
+            return true
+        }
+        
+        // 5. Attendance filtering (if enabled)
+        let finalEvents: [EventData]
+        if getShowOnlyWillAttened() {
+            finalEvents = priorityFilteredEvents.filter { event in
+                let bandName = event.bandName
+                let location = event.location
+                let eventType = event.eventType ?? ""
+                let startTime = event.startTime ?? ""
+                
+                guard !startTime.isEmpty else { return false }
+                
+                let eventYearString = String(eventYear)
+                let attendedStatus = attendedHandle.getShowAttendedStatus(
+                    band: bandName,
+                    location: location,
+                    startTime: startTime,
+                    eventType: eventType,
+                    eventYearString: eventYearString
+                )
+                
+                return attendedStatus != sawNoneStatus
+            }
+        } else {
+            finalEvents = priorityFilteredEvents
+        }
+        
+        // Now check if all visible events are unofficial or cruiser organized
+        guard !finalEvents.isEmpty else { return false }
+        
+        let allAreUnofficialOrCruiser = finalEvents.allSatisfy { event in
+            let eventType = event.eventType ?? ""
+            return eventType == unofficalEventType || eventType == unofficalEventTypeOld
+        }
+        
+        return allAreUnofficialOrCruiser
+    }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"
     /// 
@@ -2182,22 +2294,40 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     // If hidden, listCount already excludes them
                     let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
                     let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
-                    let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
+                    // FIX: Check visible events directly instead of comparing database counts
+                    // This ensures filtering is correctly accounted for
+                    let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
                     
                     print("📊 [ASYNC_LOGIC] hasEvents=\(hasEvents), hasBands=\(hasBands), allEventsAreUnofficial=\(allEventsAreUnofficial)")
                     print("📊 [ASYNC_LOGIC] listCount=\(listCount), bandCount=\(bandCount), eventCount=\(eventCount), unofficialCount=\(eventCounterUnoffical)")
                     print("📊 [ASYNC_LOGIC] showScheduleView=\(getShowScheduleView()), unofficialCountToSubtract=\(unofficialCountToSubtract)")
                     
-                    if !getShowScheduleView() || (!hasEvents && hasBands) || (hasEvents && hasBands && allEventsAreUnofficial) {
-                        // Show bands
+                    // Apply the same rules as updateCountLable
+                    if !getShowScheduleView() {
+                        // SPECIAL CASE: "Show Bands Only" mode - always show "Bands"
                         labeleCounter = listCount - unofficialCountToSubtract
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS - count=\(labeleCounter)")
-                    } else {
-                        // Show events
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Bands Only mode) - count=\(labeleCounter)")
+                    } else if !hasEvents && hasBands {
+                        // RULE 1: ONLY bands, NO events - show "Bands"
+                        labeleCounter = listCount - unofficialCountToSubtract
+                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 1: Only bands) - count=\(labeleCounter)")
+                    } else if hasEvents && !hasBands {
+                        // RULE 2/4: ONLY events, NO standalone bands - show "Events" (regardless of event type)
                         labeleCounter = listCount
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS - count=\(labeleCounter)")
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter)")
+                    } else if hasEvents && hasBands && allEventsAreUnofficial {
+                        // RULE 3a: MIXTURE with ALL events being unofficial/cruiser organized - show "Bands"
+                        labeleCounter = listCount - unofficialCountToSubtract
+                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 3a: Mixed, all unofficial) - count=\(labeleCounter)")
+                    } else {
+                        // RULE 3b: MIXTURE with ANY official events - show "Events"
+                        labeleCounter = listCount
+                        lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter)")
                     }
                     
                     let currentYearSetting = getScheduleUrl()
@@ -2261,14 +2391,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // 1. If there are ONLY bands (no events): 
         //    → Display "{x} Bands"
         //
-        // 2. If there are ONLY events (no bands):
-        //    → Display "{x} Events" 
+        // 2. If there are ONLY events (no standalone bands):
+        //    → Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
         //
         // 3. If there are MIXTURES of bands and events:
         //    a) If ALL events are "Unofficial" or "Cruiser Organized":
         //       → Display "{x} Bands" (ignore event count)
         //    b) If ANY events are NOT "Unofficial" or "Cruiser Organized":
         //       → Display "{x} Events" (ignore band count)
+        //
+        // 4. If ONLY events are being displayed (no standalone bands):
+        //    → Display "{x} Events" (regardless of event type)
+        //    NOTE: This is the same as Rule 2, explicitly stated for clarity
         //
         // SPECIAL CASE: "Show Bands Only" mode ALWAYS shows "{x} Bands"
         // ========================================================================
@@ -2279,8 +2413,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // If hidden, listCount already excludes them
         let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
         let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
-        let allEventsAreUnofficial = eventCount > 0 && eventCounterUnoffical == eventCount
-        let hasNonUnofficalEvents = eventCount > 0 && eventCounterUnoffical < eventCount
+        // FIX: Check visible events directly instead of comparing database counts
+        // This ensures filtering is correctly accounted for
+        let allEventsAreUnofficial = areAllVisibleEventsUnofficialOrCruiserOrganized()
+        let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
         
         // DEBUG: Show the logic calculations
         print("📊 [LOGIC_DEBUG] ==================== SYNCHRONOUS DISPLAY LOGIC ====================")
@@ -2326,15 +2462,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
         } else if hasEvents && !hasBands {
             // ========================================================================
-            // RULE 2: ONLY events, NO bands  
-            // Display "{x} Events"
+            // RULE 2/4: ONLY events, NO standalone bands
+            // Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
             // ========================================================================
             labeleCounter = listCount
             if (labeleCounter < 0){
                 labeleCounter = 0
             }
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 2: Only events (\(labeleCounter)) - showing Events")
+            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (regardless of event type)")
             
         } else if (hasEvents && hasBands && allEventsAreUnofficial) {
             // ========================================================================
@@ -2698,8 +2834,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             configureCellFromCache(cell, with: cachedData)
         } else {
             // Fallback: Use original method if cache miss (shouldn't happen with proper preload)
-            print("⚠️ Cache miss at index \(indexPath.row) - using fallback cell configuration")
-            getCellValue(indexPath.row, schedule: schedule, sortBy: sortedBy, cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
+            getCellValue(indexPath.row, schedule: schedule, sortBy: getSortedBy(), cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
         }
         
         // Configure separator immediately to avoid async access issues
@@ -2745,15 +2880,75 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Configure text colors (from cached data)
         bandNameView.textColor = cachedData.bandNameColor
-        locationView.textColor = cachedData.locationColor
+        // Don't set locationView.textColor here - it will be set via attributed string foregroundColor
         startTimeView.textColor = UIColor.white
         endTimeView.textColor = hexStringToUIColor(hex: "#797D7F")
         dayView.textColor = UIColor.white
         bandNameNoSchedule.textColor = UIColor.white
         
-        // Set text from cached data
-        bandNameView.text = cachedData.bandName
-        locationView.text = cachedData.locationText
+        // Set text from cached data with venue colors
+        // For bandNameView: Create attributed string with venue color marker if has schedule
+        if cachedData.hasSchedule {
+            if cachedData.isPartialInfo {
+                // Partial info: "   " + location (colored marker on 2nd space)
+                let locationString = "   " + cachedData.location
+                let venueString = NSMutableAttributedString(string: locationString)
+                // Second space - colored marker with fixed 17pt font
+                venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 1, length: 1))
+                venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 1, length: 1))
+                // Location text (after the three spaces) - variable size font
+                if cachedData.location.count > 0 {
+                    let locationTextSize = calculateOptimalFontSize(for: cachedData.location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
+                    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location: 3, length: cachedData.location.count))
+                    venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 3, length: cachedData.location.count))
+                }
+                bandNameView.adjustsFontSizeToFitWidth = false
+                bandNameView.backgroundColor = UIColor.clear
+                bandNameView.attributedText = venueString
+                
+                // Also set locationView with venue color for partial info
+                var locationOfVenue = "  " + (venueLocation[cachedData.location] ?? "")
+                if !cachedData.notes.isEmpty && cachedData.notes != " " {
+                    locationOfVenue += " " + cachedData.notes
+                }
+                let locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
+                // First space - colored marker with fixed 17pt font
+                locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0, length: 1))
+                locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 0, length: 1))
+                // Venue text (after the two spaces) - variable size font
+                if locationOfVenue.count > 2 {
+                    let venueText = String(locationOfVenue.dropFirst(2))
+                    let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+                    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location: 2, length: locationOfVenue.count - 2))
+                    locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 2, length: locationOfVenue.count - 2))
+                }
+                locationView.adjustsFontSizeToFitWidth = false
+                locationView.backgroundColor = UIColor.clear
+                locationView.attributedText = locationOfVenueString
+            } else {
+                // Full info: "  " + locationText (colored marker on 1st space)
+                let locationString = "  " + cachedData.locationText
+                let myMutableString = NSMutableAttributedString(string: locationString)
+                // First space - colored marker with fixed 17pt font
+                myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0, length: 1))
+                myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 0, length: 1))
+                // Location text (after the two spaces) - variable size font
+                if cachedData.locationText.count > 0 {
+                    let locationTextSize = calculateOptimalFontSize(for: cachedData.locationText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
+                    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location: 2, length: cachedData.locationText.count))
+                    myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 2, length: cachedData.locationText.count))
+                }
+                locationView.adjustsFontSizeToFitWidth = false
+                locationView.backgroundColor = UIColor.clear
+                locationView.attributedText = myMutableString
+                bandNameView.text = cachedData.bandName
+            }
+        } else {
+            // No schedule - just plain text
+            bandNameView.text = cachedData.bandName
+            locationView.text = cachedData.locationText
+        }
+        
         startTimeView.text = cachedData.startTimeText
         endTimeView.text = cachedData.endTimeText
         dayView.text = cachedData.dayText
