@@ -1234,6 +1234,10 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     dayView.textColor = UIColor.white
     bandNameNoSchedule.textColor = UIColor.white
     
+    // Ensure labels have clear backgrounds so attributed string backgroundColor shows through
+    bandNameView.backgroundColor = UIColor.clear
+    locationView.backgroundColor = UIColor.clear
+    
     bandNameView.text = bandName
     indexText = bandName
     
@@ -1437,6 +1441,8 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
     
     // Disable font auto-sizing to preserve our 17pt marker
     bandNameView.adjustsFontSizeToFitWidth = false
+    // Ensure background is clear so attributed string backgroundColor is visible
+    bandNameView.backgroundColor = UIColor.clear
     bandNameView.attributedText = venueString
     bandNameView.isHidden = false;
     
@@ -1461,6 +1467,8 @@ func getCellScheduleValuePartialInfo(bandName: String, location: String, bandNam
 
     // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
+    // Ensure background is clear so attributed string backgroundColor is visible
+    locationView.backgroundColor = UIColor.clear
     locationView.attributedText = locationOfVenueString
     
     //setup bandname for use is access the details screen
@@ -1488,6 +1496,8 @@ func getCellScheduleValueFullInfo(bandName: String, location: String, locationTe
     bandNameView.backgroundColor = UIColor.black;
     // Disable font auto-sizing to preserve our 17pt marker
     locationView.adjustsFontSizeToFitWidth = false
+    // Ensure background is clear so attributed string backgroundColor is visible
+    locationView.backgroundColor = UIColor.clear
     locationView.attributedText = myMutableString
     bandNameView.isHidden = false
     bandNameNoSchedule.isHidden = true

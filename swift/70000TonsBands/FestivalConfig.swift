@@ -323,10 +323,18 @@ struct FestivalConfig {
     
     /// Get venue by partial name match (for backwards compatibility)
     func getVenueByPartialName(_ name: String) -> Venue? {
-        return venues.first { venue in
-            name.lowercased().contains(venue.name.lowercased()) || 
-            venue.name.lowercased().contains(name.lowercased())
+        // Trim whitespace and normalize the input
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let matched = venues.first { venue in
+            let nameLower = trimmedName.lowercased()
+            let venueLower = venue.name.lowercased()
+            let contains1 = nameLower.contains(venueLower)
+            let contains2 = venueLower.contains(nameLower)
+            return contains1 || contains2
         }
+        
+        return matched
     }
     
     /// Get all venue names
@@ -346,7 +354,12 @@ struct FestivalConfig {
     
     /// Get venue color for a given venue name (returns UIColor)
     func getVenueColor(for venueName: String) -> UIColor {
-        return getVenueByPartialName(venueName)?.uiColor ?? UIColor.gray
+        let venue = getVenueByPartialName(venueName)
+        if let venue = venue {
+            return venue.uiColor
+        } else {
+            return UIColor.gray
+        }
     }
     
     /// Get venue color for a given venue name (returns SwiftUI Color)
