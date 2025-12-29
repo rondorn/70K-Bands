@@ -73,11 +73,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let shouldComplete = pendingYearChangeCompletion
         yearChangeDataReadyLock.unlock()
         
-        print("✅ [RACE_FIX] Year change data marked as ready")
-        
         // If completion was pending, do it now
         if shouldComplete {
-            print("✅ [RACE_FIX] Completing pending year change notification")
             notifyYearChangeCompleted()
         }
     }
@@ -87,7 +84,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let dataReady = yearChangeDataReady
         if !dataReady {
             // Data not ready yet - defer completion
-            print("⏳ [RACE_FIX] Year change completion deferred - data not ready yet")
             pendingYearChangeCompletion = true
             yearChangeDataReadyLock.unlock()
             return
@@ -329,12 +325,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             showInitialWaitingMessage()
             
             // OPTIMIZED FIRST LAUNCH: Download and import data in proper sequence
-            print("🔍 [HANG_DEBUG] About to call performOptimizedFirstLaunch() directly (no delay)")
-            print("🔍 [HANG_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
             // FIX: Call directly instead of dispatching - the delay was preventing execution
             // because viewWillAppear was blocking the main thread
             self.performOptimizedFirstLaunch()
-            print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() called, continuing with viewDidLoad")
         } else {
             print("🎮 [MDF_DEBUG] SUBSEQUENT LAUNCH PATH - will call performOptimizedSubsequentLaunch")
             print("[MasterViewController] 🚀 SUBSEQUENT LAUNCH - Starting optimized cached launch sequence")
@@ -343,37 +336,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.performOptimizedSubsequentLaunch()
         }
         
-        print("🔍 [HANG_DEBUG] About to call UserDefaults.didChangeValue")
         UserDefaults.standard.didChangeValue(forKey: "mustSeeAlert")
-        print("🔍 [HANG_DEBUG] UserDefaults.didChangeValue completed")
         
-        print("🔍 [HANG_DEBUG] Registering notification observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshDisplayAfterWake2), name: NSNotification.Name(rawValue: "RefreshDisplay"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshGUI), name: NSNotification.Name(rawValue: "refreshGUI"), object: nil)
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
-        print("🔍 [HANG_DEBUG] Notification observers registered")
         
-        print("🔍 [HANG_DEBUG] About to call refreshDisplayAfterWake()")
         refreshDisplayAfterWake();
-        print("🔍 [HANG_DEBUG] refreshDisplayAfterWake() completed")
     
-        print("🔍 [HANG_DEBUG] Adding more notification observers...")
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(MasterViewController.showReceivedMessage(_:)),
                                                name: UserDefaults.didChangeNotification, object: nil)
-        print("🔍 [HANG_DEBUG] Notification observers done")
         
-        print("🔍 [HANG_DEBUG] About to call setNeedsStatusBarAppearanceUpdate()")
         setNeedsStatusBarAppearanceUpdate()
-        print("🔍 [HANG_DEBUG] setNeedsStatusBarAppearanceUpdate() completed")
         
-        print("🔍 [HANG_DEBUG] About to call setToolbar()")
         setToolbar();
-        print("🔍 [HANG_DEBUG] setToolbar() completed")
     
-        print("🔍 [HANG_DEBUG] Setting up table view and notifications...")
         mainTableView.estimatedSectionHeaderHeight = 44.0
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
@@ -381,25 +361,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.refreshMainDisplayAfterRefresh), name:NSNotification.Name(rawValue: "refreshMainDisplayAfterRefresh"), object: nil)
-        print("🔍 [HANG_DEBUG] Table view and notifications set up")
         
-        print("🔍 [HANG_DEBUG] About to create iCloudDataHandler")
         let iCloudHandle = iCloudDataHandler()
-        print("🔍 [HANG_DEBUG] iCloudDataHandler created")
 
-        print("🔍 [HANG_DEBUG] Setting up UI colors...")
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
         //createrFilterMenu(controller: self);
      
-        print("🔍 [HANG_DEBUG] Setting filter button title...")
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
-        print("🔍 [HANG_DEBUG] Filter button title set")
         
-        print("🔍 [HANG_DEBUG] Checking iOS version for iOS 26 visual fixes...")
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            print("🔍 [HANG_DEBUG] iOS 26+ detected, applying visual fixes...")
             preferenceButton.hidesSharedBackground = true
             statsButton.hidesSharedBackground = true
             shareButton.hidesSharedBackground = true
@@ -426,23 +398,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             
         }
-        print("🔍 [HANG_DEBUG] iOS version checks completed")
         
-        print("🔍 [HANG_DEBUG] Registering orientation and cache observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
-        print("🔍 [HANG_DEBUG] Orientation and cache observers registered")
         
         // --- ADDED: Start 5-min timer ---
-        print("🔍 [HANG_DEBUG] About to start schedule refresh timer...")
         startScheduleRefreshTimer()
-        print("🔍 [HANG_DEBUG] Schedule refresh timer started")
         // --- END ADDED ---
         
-        print("🔍 [HANG_DEBUG] Registering notification observer 1...")
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
-        print("🔍 [HANG_DEBUG] Observer 1 registered")
         // App foreground handling is now done globally in AppDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
@@ -455,22 +420,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔔 REGISTERING MIGRATION DIALOG OBSERVER IN MasterViewController")
         NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
         print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
-        print("🔍 [HANG_DEBUG] About to register iCloudAttendedDataRestoredHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
-        print("🔍 [HANG_DEBUG] iCloudAttendedDataRestoredHandler registered")
-        print("🔍 [HANG_DEBUG] Registering bandNamesCacheReadyHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
-        print("🔍 [HANG_DEBUG] bandNamesCacheReadyHandler registered")
         
         // ✅ DEADLOCK FIX: Register observer for first launch band names loaded
-        print("🔍 [HANG_DEBUG] Registering firstLaunchBandNamesLoadedHandler...")
         print("🔍 [NOTIF_REG] Observer target: \(self)")
         print("🔍 [NOTIF_REG] Observer selector: #selector(firstLaunchBandNamesLoadedHandler)")
         print("🔍 [NOTIF_REG] Notification name: BandNamesLoadedFirstLaunch")
         
         NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchBandNamesLoadedHandler), name: NSNotification.Name("BandNamesLoadedFirstLaunch"), object: nil)
         
-        print("🔍 [HANG_DEBUG] firstLaunchBandNamesLoadedHandler registered")
         print("🔍 [NOTIF_REG] Testing if observer was registered by posting test notification...")
         
         // DIAGNOSTIC: Immediately test if the observer is working
@@ -478,42 +437,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔍 [NOTIF_REG] Test notification posted (should not trigger handler)")
         
         // ✅ DEADLOCK FIX: Register observer for first launch schedule loaded
-        print("🔍 [HANG_DEBUG] Registering firstLaunchScheduleLoadedHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchScheduleLoadedHandler), name: NSNotification.Name("ScheduleLoadedFirstLaunch"), object: nil)
-        print("🔍 [HANG_DEBUG] firstLaunchScheduleLoadedHandler registered")
         
         // ✅ DEADLOCK FIX: Register observer for first launch iCloud loaded
-        print("🔍 [HANG_DEBUG] Registering firstLaunchICloudLoadedHandler...")
         NotificationCenter.default.addObserver(self, selector: #selector(firstLaunchICloudLoadedHandler), name: NSNotification.Name("iCloudLoadedFirstLaunch"), object: nil)
-        print("🔍 [HANG_DEBUG] firstLaunchICloudLoadedHandler registered")
         
-        print("🔍 [HANG_DEBUG] Registering handlePointerDataUpdated...")
         NotificationCenter.default.addObserver(self, selector: #selector(handlePointerDataUpdated), name: Notification.Name("PointerDataUpdated"), object: nil)
-        print("🔍 [HANG_DEBUG] handlePointerDataUpdated registered")
-        print("🔍 [HANG_DEBUG] Registering handleBackgroundDataRefresh...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleBackgroundDataRefresh), name: Notification.Name("BackgroundDataRefresh"), object: nil)
-        print("🔍 [HANG_DEBUG] handleBackgroundDataRefresh registered")
-        print("🔍 [HANG_DEBUG] Registering handleForegroundRefresh...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleForegroundRefresh), name: Notification.Name("ForegroundRefresh"), object: nil)
-        print("🔍 [HANG_DEBUG] handleForegroundRefresh registered")
         
         // Register for iCloud loading notifications
-        print("🔍 [HANG_DEBUG] Registering iCloud loading observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingStarted), name: Notification.Name("iCloudLoadingStarted"), object: nil)
-        print("🔍 [HANG_DEBUG] handleiCloudLoadingStarted registered")
         NotificationCenter.default.addObserver(self, selector: #selector(handleiCloudLoadingCompleted), name: Notification.Name("iCloudLoadingCompleted"), object: nil)
-        print("🔍 [HANG_DEBUG] handleiCloudLoadingCompleted registered")
         
         // Listen for when returning from preferences screen
-        print("🔍 [HANG_DEBUG] Registering preferences observers...")
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferences), name: Notification.Name("DismissPreferencesScreen"), object: nil)
-        print("🔍 [HANG_DEBUG] handleReturnFromPreferences registered")
         
         // Listen for when returning from preferences screen after year change (no additional refresh needed)
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferencesAfterYearChange), name: Notification.Name("DismissPreferencesScreenAfterYearChange"), object: nil)
-        print("🔍 [HANG_DEBUG] handleReturnFromPreferencesAfterYearChange registered")
         
-        print("🔍 [HANG_DEBUG] ALL NOTIFICATION OBSERVERS REGISTERED SUCCESSFULLY")
         
         // Legacy initialization code removed - now handled by optimized launch methods in performOptimizedFirstLaunch() and performOptimizedSubsequentLaunch()
     }
@@ -800,8 +742,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🚨 MIGRATION DIALOG PRESENTED SUCCESSFULLY")
         }
         
-        print("🔍 [HANG_DEBUG] ===== viewDidLoad() COMPLETING =====")
-        print("🔍 [HANG_DEBUG] About to return from viewDidLoad()")
     }
 
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
@@ -1409,7 +1349,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // This prevents showing stale data or causing crashes (edge case protection)
         let isYearChangeReason = reason.lowercased().contains("year change")
         if isYearChangeReason && !MasterViewController.isYearChangeDataReady() {
-            print("⏳ [RACE_FIX] Year change data not ready - deferring refreshBandList")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.refreshBandList(reason: reason, scrollToTop: scrollToTop, isPullToRefresh: isPullToRefresh, skipDataLoading: skipDataLoading)
             }
@@ -1865,7 +1804,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // RACE FIX: Wait briefly if year change data isn't ready yet (edge case protection)
         // This prevents reading SQLite before data import completes
         if !MasterViewController.isYearChangeDataReady() {
-            print("⏳ [RACE_FIX] Year change data not ready yet - waiting briefly...")
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.performInitialDataLoadAfterYearChange()
             }
@@ -1919,13 +1857,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
         } else {
             // Wait briefly for data to be ready (edge case)
-            print("⏳ [RACE_FIX] Waiting for year change data before unified refresh...")
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 guard let self = self else { return }
                 if MasterViewController.isYearChangeDataReady() {
                     self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
                 } else {
-                    print("⚠️ [RACE_FIX] Year change data still not ready, proceeding anyway")
                     self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
                 }
             }
@@ -2115,6 +2051,175 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Helper function to check if all currently visible events are Unofficial or Cruiser Organized
     /// This checks the actual visible events after all filters are applied, not the database count
+    /// Counts the number of unofficial/cruiser organized events that are actually in the displayed bands array
+    /// This counts what's actually on screen, not what's in the database
+    private func countUnofficialEventsInDisplayedBands() -> Int {
+        // Only count if unofficial events are supposed to be shown.
+        // If they are filtered out, they shouldn't be in self.bands anyway.
+        guard getShowUnofficalEvents() else {
+            print("📊 [UNOFFICIAL_COUNT_DEBUG] getShowUnofficalEvents() is false, returning 0 unofficial events.")
+            return 0
+        }
+
+        var count = 0
+        print("📊 [UNOFFICIAL_COUNT_DEBUG] Starting countUnofficialEventsInDisplayedBands (self.bands.count: \(self.bands.count))")
+        
+        for item in self.bands {
+            // Items in bands array are either "timeIndex:bandName" (events) or "bandName" (bands only)
+            // Check if this item has a timeIndex (contains ":")
+            if item.contains(":") {
+                // This is an event - extract the identifier
+                let components = item.split(separator: ":", maxSplits: 1)
+                if components.count == 2 {
+                    let timeIndexStr = String(components[0])
+                    let namePart = String(components[1])
+                    
+                    // Try to parse timeIndex
+                    if let timeIndex = Double(timeIndexStr) {
+                        // First, try to find the event by timeIndex directly (more reliable)
+                        let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+                        if let event = allEvents.first(where: { abs($0.timeIndex - timeIndex) < 0.001 }) {
+                            let eventType = event.eventType ?? ""
+                            if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+                                count += 1
+                                continue
+                            }
+                        }
+                        
+                        // Fallback: try looking up by band name (for band-associated events)
+                        let events = DataManager.shared.fetchEventsForBand(namePart, forYear: eventYear)
+                        if let event = events.first(where: { abs($0.timeIndex - timeIndex) < 0.001 }) {
+                            let eventType = event.eventType ?? ""
+                            if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+                                count += 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        print("📊 [UNOFFICIAL_COUNT] Counted \(count) unofficial events in displayed bands array (out of \(self.bands.count) total items)")
+        if count == 0 && self.bands.count > 0 {
+            // Debug: Show what items we're checking
+            let eventItems = self.bands.filter { $0.contains(":") }
+            print("📊 [UNOFFICIAL_COUNT_DEBUG] Found \(eventItems.count) items with ':' (potential events)")
+            for (index, item) in eventItems.prefix(5).enumerated() {
+                print("📊 [UNOFFICIAL_COUNT_DEBUG] [\(index)] Item: '\(item)'")
+            }
+        }
+        return count
+    }
+    
+    /// Counts the number of unofficial/cruiser organized events that are actually being displayed
+    /// (after all filters are applied). This is different from eventCounterUnoffical which counts
+    /// all unofficial events in the database regardless of filters.
+    private func countDisplayedUnofficialEvents() -> Int {
+        // Get all events for the current year and apply the same filters that are used for display
+        let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+        
+        // Apply the same filtering logic as getFilteredScheduleData
+        // 1. Event type filtering
+        var excludedEventTypes: [String] = []
+        if !getShowUnofficalEvents() {
+            excludedEventTypes.append(contentsOf: ["Unofficial Event", "Cruiser Organized"])
+        }
+        if !getShowMeetAndGreetEvents() {
+            excludedEventTypes.append("Meet and Greet")
+        }
+        if !getShowSpecialEvents() {
+            excludedEventTypes.append("Special Event")
+        }
+        
+        var filteredEvents = allEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return !excludedEventTypes.contains(eventType)
+        }
+        
+        // 2. Venue filtering
+        let filterVenues = FestivalConfig.current.getFilterVenueNames()
+        let enabledFilterVenues = filterVenues.filter { getShowVenueEvents(venueName: $0) }
+        
+        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
+            filteredEvents = filteredEvents.filter { event in
+                let location = event.location
+                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
+                    location.lowercased().hasPrefix(venueName.lowercased())
+                }
+                
+                if matchesFilterVenue {
+                    return true
+                }
+                
+                if !matchesFilterVenue && getShowOtherShows() {
+                    let isFilterVenue = filterVenues.contains { venueName in
+                        location.lowercased().hasPrefix(venueName.lowercased())
+                    }
+                    return !isFilterVenue
+                }
+                
+                return false
+            }
+        } else {
+            filteredEvents = []
+        }
+        
+        // 3. Expiration filtering
+        if getHideExpireScheduleData() {
+            let currentTime = Date().timeIntervalSinceReferenceDate
+            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
+        }
+        
+        // 4. Priority filtering
+        let priorityFilteredEvents = filteredEvents.filter { event in
+            let bandName = event.bandName
+            guard !bandName.isEmpty else { return true }
+            
+            let priority = priorityManager.getPriority(for: bandName)
+            
+            if priority == 1 && !getMustSeeOn() { return false }
+            if priority == 2 && !getMightSeeOn() { return false }
+            if priority == 3 && !getWontSeeOn() { return false }
+            if priority == 0 && !getUnknownSeeOn() { return false }
+            
+            return true
+        }
+        
+        // 5. Attendance filtering (if enabled)
+        let finalEvents: [EventData]
+        if getShowOnlyWillAttened() {
+            finalEvents = priorityFilteredEvents.filter { event in
+                let bandName = event.bandName
+                let location = event.location
+                let eventType = event.eventType ?? ""
+                let startTime = event.startTime ?? ""
+                
+                guard !startTime.isEmpty else { return false }
+                
+                let eventYearString = String(eventYear)
+                let attendedStatus = attendedHandle.getShowAttendedStatus(
+                    band: bandName,
+                    location: location,
+                    startTime: startTime,
+                    eventType: eventType,
+                    eventYearString: eventYearString
+                )
+                
+                return attendedStatus != sawNoneStatus
+            }
+        } else {
+            finalEvents = priorityFilteredEvents
+        }
+        
+        // Count unofficial/cruiser organized events that are actually being displayed
+        let unofficialCount = finalEvents.filter { event in
+            let eventType = event.eventType ?? ""
+            return eventType == unofficalEventType || eventType == unofficalEventTypeOld
+        }.count
+        
+        return unofficialCount
+    }
+    
     private func areAllVisibleEventsUnofficialOrCruiserOrganized() -> Bool {
         // If there are no visible events, return false (default to Bands per rule 1)
         guard eventCount > 0 else { return false }
@@ -2283,6 +2388,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     eventCounterUnoffical = count
                     print("📊 [ASYNC_COUNT] Updated eventCounterUnoffical to \(count)")
                     
+                    // CRITICAL FIX: Use the same logic as the synchronous part to ensure consistency
+                    // This prevents the async block from overwriting the correct count with an incorrect one
+                    // Use self.bands.count (which includes search filter) instead of listCount
+                    let displayedCount = self.bands.count
+                    print("📊 [ASYNC_COUNT] self.bands.count (actual displayed) = \(displayedCount)")
+                    print("📊 [ASYNC_COUNT] listCount = \(listCount) (from getFilteredBands)")
+                    
+                    // Use the same fallback logic as synchronous part
+                    let effectiveDisplayedCount: Int
+                    if displayedCount == 0 && listCount > 0 {
+                        print("⚠️ [ASYNC_COUNT] WARNING: bands.count is 0 but listCount is \(listCount) - using listCount as fallback")
+                        effectiveDisplayedCount = listCount
+                    } else {
+                        effectiveDisplayedCount = displayedCount
+                    }
+                    
                     // Just update the title directly without recursing into updateCountLable
                     self.setFilterTitleText()
                     let lableCounterString: String
@@ -2290,44 +2411,59 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     // Use the same logic from updateCountLable to determine display
                     let hasEvents = eventCount > 0
-                    // CRITICAL FIX: Only subtract unofficial events if they're being shown
-                    // If hidden, listCount already excludes them
-                    let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
-                    let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
+                    // CRITICAL FIX: Use countUnofficialEventsInDisplayedBands() instead of countDisplayedUnofficialEvents()
+                    // This ensures search filter is correctly accounted for (countDisplayedUnofficialEvents doesn't account for search)
+                    let showUnofficalEvents = getShowUnofficalEvents()
+                    let displayedUnofficialCount: Int
+                    if showUnofficalEvents {
+                        displayedUnofficialCount = self.countUnofficialEventsInDisplayedBands()
+                    } else {
+                        displayedUnofficialCount = 0
+                    }
+                    // Only subtract unofficial events if they're being shown
+                    let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
+                    let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
                     // FIX: Check visible events directly instead of comparing database counts
                     // This ensures filtering is correctly accounted for
                     let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
+                    let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
                     
                     print("📊 [ASYNC_LOGIC] hasEvents=\(hasEvents), hasBands=\(hasBands), allEventsAreUnofficial=\(allEventsAreUnofficial)")
-                    print("📊 [ASYNC_LOGIC] listCount=\(listCount), bandCount=\(bandCount), eventCount=\(eventCount), unofficialCount=\(eventCounterUnoffical)")
+                    print("📊 [ASYNC_LOGIC] effectiveDisplayedCount=\(effectiveDisplayedCount), listCount=\(listCount), bandCount=\(bandCount), eventCount=\(eventCount)")
+                    print("📊 [ASYNC_LOGIC] displayedUnofficialCount=\(displayedUnofficialCount), eventCounterUnoffical=\(eventCounterUnoffical)")
                     print("📊 [ASYNC_LOGIC] showScheduleView=\(getShowScheduleView()), unofficialCountToSubtract=\(unofficialCountToSubtract)")
                     
-                    // Apply the same rules as updateCountLable
+                    // Apply the same rules as updateCountLable (using effectiveDisplayedCount)
                     if !getShowScheduleView() {
                         // SPECIAL CASE: "Show Bands Only" mode - always show "Bands"
-                        labeleCounter = listCount - unofficialCountToSubtract
+                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Bands Only mode) - count=\(labeleCounter)")
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Bands Only mode) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
                     } else if !hasEvents && hasBands {
                         // RULE 1: ONLY bands, NO events - show "Bands"
-                        labeleCounter = listCount - unofficialCountToSubtract
+                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 1: Only bands) - count=\(labeleCounter)")
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 1: Only bands) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
                     } else if hasEvents && !hasBands {
                         // RULE 2/4: ONLY events, NO standalone bands - show "Events" (regardless of event type)
-                        labeleCounter = listCount
+                        labeleCounter = max(effectiveDisplayedCount, 0)
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter)")
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount))")
                     } else if hasEvents && hasBands && allEventsAreUnofficial {
                         // RULE 3a: MIXTURE with ALL events being unofficial/cruiser organized - show "Bands"
-                        labeleCounter = listCount - unofficialCountToSubtract
+                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
                         lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 3a: Mixed, all unofficial) - count=\(labeleCounter)")
-                    } else {
+                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 3a: Mixed, all unofficial) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
+                    } else if hasNonUnofficalEvents {
                         // RULE 3b: MIXTURE with ANY official events - show "Events"
-                        labeleCounter = listCount
+                        labeleCounter = max(effectiveDisplayedCount, 0)
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter)")
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount))")
+                    } else {
+                        // FALLBACK
+                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
+                        print("📊 [ASYNC_LOGIC] Decision: Fallback - Show BANDS - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
                     }
                     
                     let currentYearSetting = getScheduleUrl()
@@ -2407,12 +2543,61 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // SPECIAL CASE: "Show Bands Only" mode ALWAYS shows "{x} Bands"
         // ========================================================================
         
+        // CRITICAL FIX: Use the actual displayed items count (what's on screen)
+        // This ensures search filters and all other filters are correctly accounted for
+        // IMPORTANT: Use self.bands explicitly to avoid confusion with global bands array
+        let displayedCount = self.bands.count
+        print("📊 [COUNT_DEBUG] self.bands.count (actual displayed) = \(displayedCount)")
+        print("📊 [COUNT_DEBUG] listCount = \(listCount) (from getFilteredBands)")
+        print("📊 [COUNT_DEBUG] filteredBandCount = \(filteredBandCount) (from getFilteredBands)")
+        
+        // CRITICAL: If bands.count is 0 but listCount > 0, there's a sync issue
+        // Use listCount as fallback if bands is empty but we know there should be items
+        let effectiveDisplayedCount: Int
+        if displayedCount == 0 && listCount > 0 {
+            print("⚠️ [COUNT_DEBUG] WARNING: bands.count is 0 but listCount is \(listCount) - using listCount as fallback")
+            effectiveDisplayedCount = listCount
+        } else {
+            effectiveDisplayedCount = displayedCount
+        }
+        
+        if effectiveDisplayedCount > 0 && effectiveDisplayedCount <= 20 {
+            print("📊 [COUNT_DEBUG] Contents of bands array (first \(min(effectiveDisplayedCount, 10)) items):")
+            for (index, item) in self.bands.prefix(10).enumerated() {
+                let name = getNameFromSortable(item, sortedBy: getSortedBy())
+                print("📊 [COUNT_DEBUG] [\(index)] '\(item)' -> name: '\(name)'")
+            }
+        }
+        
+        // Count unofficial events that are actually displayed on screen
+        // CRITICAL: Only count if unofficial events are actually being shown
+        // If they're filtered out, they shouldn't be in bands array, but check anyway
+        let showUnofficalEvents = getShowUnofficalEvents()
+        print("📊 [COUNT_DEBUG] getShowUnofficalEvents() = \(showUnofficalEvents)")
+        
+        let displayedUnofficialCount: Int
+        if showUnofficalEvents {
+            // Only count unofficial events if they're being shown
+            // If filtered out, they shouldn't be in bands, so this should return 0
+            displayedUnofficialCount = countUnofficialEventsInDisplayedBands()
+            print("📊 [COUNT_DEBUG] displayedUnofficialCount (from bands array) = \(displayedUnofficialCount)")
+        } else {
+            // Unofficial events are filtered out - they shouldn't be in bands array
+            // But if they somehow are, don't count them
+            displayedUnofficialCount = 0
+            print("📊 [COUNT_DEBUG] Unofficial events are FILTERED OUT - not counting them (displayedUnofficialCount = 0)")
+        }
+        
+        // CRITICAL FIX: Only subtract unofficial events if they're actually being shown
+        // If they're filtered out, they shouldn't be in bands array, so displayedUnofficialCount should be 0
+        // But to be safe, explicitly check that we're showing them before subtracting
+        let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
+        print("📊 [COUNT_DEBUG] unofficialCountToSubtract = \(unofficialCountToSubtract) (showUnofficalEvents=\(showUnofficalEvents), displayedUnofficialCount=\(displayedUnofficialCount))")
+        
         // Calculate what we have in the current list
+        // Use effectiveDisplayedCount instead of displayedCount to handle sync issues
         let hasEvents = eventCount > 0
-        // CRITICAL FIX: Only subtract unofficial events if they're being shown
-        // If hidden, listCount already excludes them
-        let unofficialCountToSubtract = getShowUnofficalEvents() ? eventCounterUnoffical : 0
-        let hasBands = bandCount > 0 || (listCount - unofficialCountToSubtract) > 0
+        let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
         // FIX: Check visible events directly instead of comparing database counts
         // This ensures filtering is correctly accounted for
         let allEventsAreUnofficial = areAllVisibleEventsUnofficialOrCruiserOrganized()
@@ -2420,16 +2605,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // DEBUG: Show the logic calculations
         print("📊 [LOGIC_DEBUG] ==================== SYNCHRONOUS DISPLAY LOGIC ====================")
-        print("📊 [LOGIC_DEBUG] listCount: \(listCount)")
-        print("📊 [LOGIC_DEBUG] bandCount: \(bandCount)")
+        print("📊 [LOGIC_DEBUG] displayedCount (self.bands.count): \(displayedCount)")
+        print("📊 [LOGIC_DEBUG] effectiveDisplayedCount: \(effectiveDisplayedCount) ⭐ USING THIS FOR CALCULATION")
+        print("📊 [LOGIC_DEBUG] listCount: \(listCount) (from getFilteredBands, used as fallback if bands.count=0)")
+        print("📊 [LOGIC_DEBUG] bandCount: \(bandCount) (may be out of sync)")
         print("📊 [LOGIC_DEBUG] eventCount: \(eventCount)")
-        print("📊 [LOGIC_DEBUG] eventCounterUnoffical: \(eventCounterUnoffical) ⚠️ (JUST RESET TO 0)")
+        print("📊 [LOGIC_DEBUG] displayedUnofficialCount: \(displayedUnofficialCount) (from bands array)")
+        print("📊 [LOGIC_DEBUG] eventCounterUnoffical: \(eventCounterUnoffical) (total in database, may differ from displayed)")
         print("📊 [LOGIC_DEBUG] getShowUnofficalEvents(): \(getShowUnofficalEvents())")
         print("📊 [LOGIC_DEBUG] unofficialCountToSubtract: \(unofficialCountToSubtract)")
         print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents)")
-        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (calc: bandCount > 0 || (listCount - unofficial) > 0)")
-        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial) (calc: eventCount > 0 && eventCounterUnoffical == eventCount)")
-        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents) (calc: eventCount > 0 && eventCounterUnoffical < eventCount)")
+        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (calc: effectiveDisplayedCount > unofficialCountToSubtract)")
+        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial)")
+        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents)")
         print("📊 [LOGIC_DEBUG] ==================================================================")
         
         // CRITICAL FIX: Check view mode first - if "Show Bands Only", always show "Bands"
@@ -2440,72 +2628,60 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // ========================================================================
             // SPECIAL CASE: "Show Bands Only" mode
             // ALWAYS show band count, NEVER show "Events" regardless of content
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount - unofficialCountToSubtract
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("🎵 [VIEW_MODE_FIX] Show Bands Only mode - showing \(labeleCounter) bands")
+            print("🎵 [VIEW_MODE_FIX] Show Bands Only mode - showing \(labeleCounter) bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
             
         } else if !hasEvents && hasBands {
             // ========================================================================
             // RULE 1: ONLY bands, NO events
             // Display "{x} Bands"
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount - unofficialCountToSubtract
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 1: Only bands (\(labeleCounter)) - showing Bands")
+            print("📊 [COUNT_LOGIC] Rule 1: Only bands (\(labeleCounter)) - showing Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
             
         } else if hasEvents && !hasBands {
             // ========================================================================
             // RULE 2/4: ONLY events, NO standalone bands
             // Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount, 0)
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (regardless of event type)")
+            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (effectiveDisplayedCount=\(effectiveDisplayedCount))")
             
         } else if (hasEvents && hasBands && allEventsAreUnofficial) {
             // ========================================================================
             // RULE 3a: MIXTURE with ALL events being "Unofficial" or "Cruiser Organized"
             // Display "{x} Bands" (ignore unofficial event count)
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount - unofficialCountToSubtract
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 3a: Mixed with ALL unofficial events - showing \(labeleCounter) Bands (ignoring \(eventCounterUnoffical) unofficial events)")
+            print("📊 [COUNT_LOGIC] Rule 3a: Mixed with ALL unofficial events - showing \(labeleCounter) Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficialCount=\(unofficialCountToSubtract))")
             
         } else if (hasNonUnofficalEvents) {
             // ========================================================================
             // RULE 3b: MIXTURE with ANY events being official (NOT "Unofficial" or "Cruiser Organized")
             // Display "{x} Events" (ignore band count)
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount, 0)
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (ignoring bands)")
+            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (effectiveDisplayedCount=\(effectiveDisplayedCount))")
             
         } else {
             // ========================================================================
             // FALLBACK: Should not reach here, but default to bands for safety
+            // Use effectiveDisplayedCount which handles sync issues
             // ========================================================================
-            labeleCounter = listCount - unofficialCountToSubtract
-            if (labeleCounter < 0){
-                labeleCounter = 0
-            }
+            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
             lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("⚠️ [COUNT_LOGIC] Fallback case - showing \(labeleCounter) Bands")
+            print("⚠️ [COUNT_LOGIC] Fallback case - showing \(labeleCounter) Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficialCount=\(unofficialCountToSubtract))")
         }
 
         var currentYearSetting = getScheduleUrl()
@@ -4669,8 +4845,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// 3. Efficient updates - only changed data is processed
     /// 4. Atomic operations - table view updates happen atomically with data changes
     func safelyMergeBandData(_ newBands: [String], reason: String) {
-        print("🔄 Safely merging band data - reason: '\(reason)'")
-        print("🔄 Current bands count: \(bands.count), New bands count: \(newBands.count)")
+        print("🔄 [MERGE_DEBUG] Safely merging band data - reason: '\(reason)'")
+        print("🔄 [MERGE_DEBUG] Current bands count: \(bands.count), New bands count: \(newBands.count)")
+        if newBands.count > 0 && newBands.count <= 20 {
+            print("🔄 [MERGE_DEBUG] New bands array contents (first \(min(newBands.count, 10)) items):")
+            for (index, item) in newBands.prefix(10).enumerated() {
+                let name = getNameFromSortable(item, sortedBy: getSortedBy())
+                print("🔄 [MERGE_DEBUG] [\(index)] '\(item)' -> name: '\(name)'")
+            }
+        }
         
         // Create a set of new band names for efficient lookup
         let newBandSet = Set(newBands)
@@ -4821,28 +5004,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚀 [MDF_DEBUG] First launch - SKIPPING CoreData (empty DB), going straight to network download")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🚀 FIRST LAUNCH: Triggering immediate network download (Core Data is empty on fresh install)")
-        print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() called")
         
         // FIX: On fresh install, Core Data is EMPTY and still initializing
         // Accessing persistentContainer blocks the background thread until DB is created
         // Instead, skip Core Data entirely and go straight to network download
         print("🔍 Skipping Core Data access (empty on first launch), starting network download...")
-        print("🔍 [HANG_DEBUG] About to dispatch to background queue for network download")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            print("🔍 [HANG_DEBUG] Background queue STARTED for first launch")
             guard let self = self else {
-                print("🔍 [HANG_DEBUG] self is nil, returning")
                 return
             }
             
             // Skip Core Data on first launch - it's empty and still initializing!
             // Go straight to network download
-            print("🔍 [HANG_DEBUG] Skipping Core Data access, calling continueFirstLaunchAfterDataLoad()")
             self.continueFirstLaunchAfterDataLoad()
-            print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() background work COMPLETED")
         }
-        print("🔍 [HANG_DEBUG] performOptimizedFirstLaunch() main function RETURNING (background work continues)")
     }
     
     /// Continue first launch sequence after initial data load
