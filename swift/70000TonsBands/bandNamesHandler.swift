@@ -68,7 +68,6 @@ open class bandNamesHandler {
         // RACE FIX: Wait for data to be ready before processing deferred operations
         // This prevents conflicts with handleReturnFromPreferencesAfterYearChange
         if !MasterViewController.isYearChangeDataReady() {
-            print("⏳ [RACE_FIX] Year change data not ready - deferring deferred operations")
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 self?.handleYearChangeCompleted()
             }
@@ -174,7 +173,6 @@ open class bandNamesHandler {
     
     /// Loads band data from SQLite into memory cache for fast access
     private func loadCacheFromCoreData() {
-        print("🔍 [HANG_DEBUG] bandNamesHandler.loadCacheFromCoreData() ENTERED")
         
         // CRITICAL: If year change is in progress, defer this operation until it completes
         if MasterViewController.isYearChangeInProgress {
@@ -188,7 +186,6 @@ open class bandNamesHandler {
         // Only check if year change is NOT in progress (already handled above) but data not ready
         if !MasterViewController.isYearChangeInProgress && !MasterViewController.isYearChangeDataReady() {
             // Year change flag cleared but data not ready - wait briefly
-            print("⏳ [RACE_FIX] Year change completed but data not ready - waiting briefly...")
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.15) { [weak self] in
                 self?.loadCacheFromCoreData()
             }
@@ -196,28 +193,22 @@ open class bandNamesHandler {
         }
         
         guard !cacheLoaded else {
-            print("🔍 [HANG_DEBUG] Cache already loaded, returning")
             return
         }
         
         print("🔄 Loading bands from SQLite...")
-        print("🔍 [HANG_DEBUG] Cache not loaded, proceeding with load")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         // eventYear is already thread-safe via lock in Constants.swift
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // CRITICAL FIX: Filter bands by the current event year
-        print("🔍 [HANG_DEBUG] About to call dataManager.fetchBands for year \(eventYear)")
-        print("🔍 [HANG_DEBUG] dataManager type: \(type(of: self.dataManager))")
         let bands = self.dataManager.fetchBands(forYear: eventYear)
         print("🔄 Fetched \(bands.count) bands from SQLite for year \(eventYear)")
-        print("🔍 [HANG_DEBUG] fetchBands returned \(bands.count) bands for year \(eventYear)")
         
         // CRITICAL: All dictionary modifications must be synchronized
         staticBandName.sync {
             // Clear data structures
-            print("🔍 [HANG_DEBUG] Clearing data structures (with sync protection)")
             self.bandNames = [String: [String: String]]()
             self.bandNamesArray = [String]()
             
@@ -274,25 +265,20 @@ open class bandNamesHandler {
     /// PERFORMANCE OPTIMIZED: Load data from cache immediately (no network calls)
     func loadCachedDataImmediately() {
         print("🚀 bandNamesHandler: Loading cached data immediately (no network calls)")
-        print("🔍 [HANG_DEBUG] bandNamesHandler.loadCachedDataImmediately() STARTED")
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
         // Load from Core Data cache immediately
-        print("🔍 [HANG_DEBUG] About to call loadCacheFromCoreData()")
         loadCacheFromCoreData()
-        print("🔍 [HANG_DEBUG] loadCacheFromCoreData() COMPLETED")
         
         var isEmpty = false
         staticBandName.sync {
             isEmpty = self.bandNames.isEmpty
         }
-        print("🔍 [HANG_DEBUG] Checked if bandNames is empty: \(isEmpty)")
         
         if isEmpty {
             print("⚠️ bandNamesHandler: No cached data available")
-            print("🔍 [HANG_DEBUG] No cached band data found")
         } else {
             var count = 0
             staticBandName.sync {

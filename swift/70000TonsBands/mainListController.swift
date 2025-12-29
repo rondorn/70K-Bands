@@ -899,19 +899,28 @@ func getFilteredBands(
             filteredBands = newAllBands;
         
         // Apply search criteria if provided
-            if (searchCriteria != ""){
+        if (searchCriteria != ""){
             let searchStartTime = CFAbsoluteTimeGetCurrent()
-            print("🔍 [\(String(format: "%.3f", searchStartTime))] getFilteredBands - applying search criteria: '\(searchCriteria)'")
+            print("🔍 [SEARCH_DEBUG] getFilteredBands - applying search criteria: '\(searchCriteria)'")
+            print("🔍 [SEARCH_DEBUG] Before search: \(filteredBands.count) items")
             var searchFilteredBands = [String]()
-                for bandNameIndex in filteredBands {
+            for bandNameIndex in filteredBands {
                 let bandName = getNameFromSortable(bandNameIndex, sortedBy: sortedBy)
                 if (bandName.localizedCaseInsensitiveContains(searchCriteria)){
                     searchFilteredBands.append(bandNameIndex)
+                    print("🔍 [SEARCH_DEBUG] Match found: '\(bandName)' (from '\(bandNameIndex)')")
                 }
             }
             filteredBands = searchFilteredBands
             let searchEndTime = CFAbsoluteTimeGetCurrent()
-            print("🔍 [\(String(format: "%.3f", searchEndTime))] getFilteredBands - search filtering END - filtered to \(filteredBands.count) entries - time: \(String(format: "%.3f", (searchEndTime - searchStartTime) * 1000))ms")
+            print("🔍 [SEARCH_DEBUG] getFilteredBands - search filtering END - filtered to \(filteredBands.count) entries - time: \(String(format: "%.3f", (searchEndTime - searchStartTime) * 1000))ms")
+            if filteredBands.count > 0 {
+                print("🔍 [SEARCH_DEBUG] First 5 filtered items:")
+                for (index, item) in filteredBands.prefix(5).enumerated() {
+                    let name = getNameFromSortable(item, sortedBy: sortedBy)
+                    print("🔍 [SEARCH_DEBUG] [\(index)] '\(item)' -> name: '\(name)'")
+                }
+            }
         }
         filteredBandCount = filteredBands.count
         if (filteredBandCount == 0){

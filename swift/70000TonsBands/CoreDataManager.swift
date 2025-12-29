@@ -16,9 +16,7 @@ class CoreDataManager {
     private let initQueue = DispatchQueue(label: "com.rdorn.coredata.init", qos: .userInitiated)
     
     private init() {
-        print("🔍 [HANG_DEBUG] CoreDataManager init() called")
         // Initialization happens via initializeIfNeeded()
-        print("🔍 [HANG_DEBUG] CoreDataManager init() completed")
     }
     
     /// Check if Core Data store exists (for migration detection)
@@ -34,7 +32,6 @@ class CoreDataManager {
     /// Will only initialize once, subsequent calls return immediately
     /// CRITICAL: Only initializes if Core Data store exists (for migration)
     private func initializeIfNeeded() {
-        print("🔍 [HANG_DEBUG] initializeIfNeeded() called from thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
         guard _persistentContainer == nil else { return }
         
         // CRITICAL FIX: Don't initialize Core Data if old store doesn't exist
@@ -47,9 +44,7 @@ class CoreDataManager {
             return
         }
         
-        print("🔍 [HANG_DEBUG] About to enter initQueue.sync...")
         initQueue.sync {
-            print("🔍 [HANG_DEBUG] Inside initQueue.sync, thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
             // Double-check inside lock
             guard _persistentContainer == nil else { return }
             
@@ -61,7 +56,6 @@ class CoreDataManager {
             let elapsedTime = Date().timeIntervalSince(startTime)
             print("✅ CoreDataManager: Initialized in \(String(format: "%.3f", elapsedTime)) seconds")
         }
-        print("🔍 [HANG_DEBUG] Exited initQueue.sync")
     }
     
     /// Creates and configures the persistent container
@@ -81,26 +75,21 @@ class CoreDataManager {
             print("✅ SQLite WAL mode enabled for concurrency safety")
         }
         
-        print("🔍 [HANG_DEBUG] About to call container.loadPersistentStores...")
         
         // CRITICAL FIX: loadPersistentStores is ASYNC - must wait for completion before accessing viewContext
         let semaphore = DispatchSemaphore(value: 0)
         var storeLoadError: Error?
         
         container.loadPersistentStores { _, error in
-            print("🔍 [HANG_DEBUG] loadPersistentStores completion handler called")
             storeLoadError = error
             if let error = error {
                 print("❌ CRITICAL Core Data error: \(error)")
             } else {
-                print("🔍 [HANG_DEBUG] loadPersistentStores completed successfully")
             }
             semaphore.signal()  // Signal that loading is complete
         }
         
-        print("🔍 [HANG_DEBUG] Waiting for persistent stores to load...")
         semaphore.wait()  // Block until stores are loaded
-        print("🔍 [HANG_DEBUG] Persistent stores loaded, continuing...")
         
         // Check for errors after waiting
         if let error = storeLoadError {
@@ -110,23 +99,15 @@ class CoreDataManager {
         // Configure main context for UI operations
         // CRITICAL FIX: viewContext is MAIN-THREAD-ONLY in Core Data
         // Must configure on main thread to avoid deadlock
-        print("🔍 [HANG_DEBUG] Configuring view context...")
-        print("🔍 [HANG_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
         
         if Thread.isMainThread {
-            print("🔍 [HANG_DEBUG] Already on main thread, configuring directly...")
             container.viewContext.automaticallyMergesChangesFromParent = true
             container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-            print("🔍 [HANG_DEBUG] View context configured")
         } else {
-            print("🔍 [HANG_DEBUG] On background thread, dispatching to main thread...")
             DispatchQueue.main.sync {
-                print("🔍 [HANG_DEBUG] Now on main thread, configuring view context...")
                 container.viewContext.automaticallyMergesChangesFromParent = true
                 container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-                print("🔍 [HANG_DEBUG] View context configured on main thread")
             }
-            print("🔍 [HANG_DEBUG] Returned from main thread dispatch")
         }
         
         print("✅ Core Data stack initialized successfully with WAL mode")
