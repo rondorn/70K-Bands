@@ -124,7 +124,6 @@ open class scheduleHandler {
     /// Loads schedule data from SQLite into memory cache for fast access
     /// SQLITE FIX: Simplified to work with thread-safe SQLite (no complex locking needed)
     private func loadCacheFromCoreData() {
-        print("🔍 [HANG_DEBUG] scheduleHandler.loadCacheFromCoreData() ENTERED")
         
         // Simple check - if already loaded, don't reload
         guard !cacheLoaded else { 
@@ -136,9 +135,7 @@ open class scheduleHandler {
         print("🔍 [SCHEDULE_DEBUG] Using eventYear = \(eventYear)")
         
         // SQLite is thread-safe, just load directly
-        print("🔍 [HANG_DEBUG] About to call loadCacheFromCoreDataInternal()")
         self.loadCacheFromCoreDataInternal()
-        print("🔍 [HANG_DEBUG] loadCacheFromCoreDataInternal() COMPLETED")
     }
     
     private func loadCacheFromCoreDataInternal(useYear: Int? = nil) {
@@ -446,27 +443,20 @@ open class scheduleHandler {
     /// PERFORMANCE OPTIMIZED: Load schedule data from cache immediately (no network calls)
     func loadCachedDataImmediately() {
         print("🚀 scheduleHandler: Loading cached data immediately (no network calls)")
-        print("🔍 [HANG_DEBUG] scheduleHandler.loadCachedDataImmediately() STARTED")
         
         // Year synchronization is now handled by loadCacheFromCoreData() - no need to duplicate
         print("🚀 scheduleHandler: Year resolution will be handled by loadCacheFromCoreData() if needed")
         
         // Load from Core Data cache immediately (thread-safe)
-        print("🔍 [HANG_DEBUG] About to enter scheduleHandlerQueue.sync")
         var eventCount = 0
         scheduleHandlerQueue.sync {
-            print("🔍 [HANG_DEBUG] Inside scheduleHandlerQueue, calling loadCacheFromCoreData()")
             loadCacheFromCoreData()
-            print("🔍 [HANG_DEBUG] loadCacheFromCoreData() completed, entering dictionaryQueue")
             eventCount = dictionaryQueue.sync {
                 return self._schedulingData.count
             }
-            print("🔍 [HANG_DEBUG] Got event count: \(eventCount)")
         }
-        print("🔍 [HANG_DEBUG] Exited scheduleHandlerQueue.sync")
         if eventCount == 0 {
             print("⚠️ scheduleHandler: No cached schedule data available")
-            print("🔍 [HANG_DEBUG] No cached schedule data found")
         } else {
             print("✅ scheduleHandler: Loaded \(eventCount) cached events immediately")
         }
