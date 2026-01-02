@@ -1567,6 +1567,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private String buildShareMessage() {
+        Log.d("buildShareMessage", "🔍 [SHARE_REPORT] ========== STARTING MUST/MIGHT REPORT ==========");
+        
+        // CRITICAL: Always use "Default" profile for sharing reports
+        // Save current active profile
+        SharedPreferencesManager profileManager = SharedPreferencesManager.getInstance();
+        String originalProfile = profileManager.getActivePreferenceSource();
+        Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Original active profile: '" + originalProfile + "'");
+        
+        // Temporarily switch to "Default" profile
+        if (!"Default".equals(originalProfile)) {
+            Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Temporarily switching to 'Default' profile for report generation");
+            profileManager.setActivePreferenceSource("Default");
+            // Force rankStore to reload for Default profile
+            rankStore.reloadForActiveProfile();
+        } else {
+            Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Already on 'Default' profile, no switch needed");
+        }
 
         String message = "🤘 " + staticVariables.context.getString(R.string.HereAreMy) + " " + FestivalConfig.getInstance().appName + " " + getString(R.string.Choices) + "\n\n";
         
@@ -1583,6 +1600,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 mightSeeBands.add(band);
             }
         }
+        
+        Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Found " + mustSeeBands.size() + " Must See bands and " + mightSeeBands.size() + " Might See bands");
         
         // Format must-see section with localized text
         message += "🟢 " + getString(R.string.MustSeeBands) + " (" + mustSeeBands.size() + "):\n";
@@ -1609,6 +1628,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
 
         message += "\n\n" + FestivalConfig.getInstance().shareUrl;
+        
+        // CRITICAL: Restore original profile
+        if (!"Default".equals(originalProfile)) {
+            Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Restoring original profile: '" + originalProfile + "'");
+            profileManager.setActivePreferenceSource(originalProfile);
+            // Force rankStore to reload for original profile
+            rankStore.reloadForActiveProfile();
+            Log.d("buildShareMessage", "🔍 [SHARE_REPORT] Profile restored and rankStore reloaded");
+        }
+        
+        Log.d("buildShareMessage", "🔍 [SHARE_REPORT] ========== REPORT COMPLETE ==========");
         return message;
     }
     
