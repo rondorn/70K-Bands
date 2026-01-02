@@ -40,15 +40,20 @@ class showAttendenceReport {
      */
     func assembleReport (){
         
+        print("🔍 [EVENTS_REPORT] ========== STARTING EVENTS ATTENDED REPORT ==========")
+        
+        // CRITICAL: Always use "Default" profile for sharing reports
+        let targetProfile = "Default"
+        print("🔍 [EVENTS_REPORT] Using profile: '\(targetProfile)' (always Default for sharing)")
+        
         schedule.buildTimeSortedSchedulingData();
         
         let scheduleData = schedule.getBandSortedSchedulingData();
         
-        // Get attendance data from SQLite for the active profile
-        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
-        let showsAttendedArray = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: activeProfile)
+        // Get attendance data from SQLite for Default profile (not active profile)
+        let showsAttendedArray = SQLiteAttendanceManager.shared.getAllAttendanceDataByIndex(profileName: targetProfile)
         
-        print("🔍 [REPORT_DEBUG] Getting attendance for profile: '\(activeProfile)'")
+        print("🔍 [REPORT_DEBUG] Getting attendance for profile: '\(targetProfile)'")
         print("🔍 [REPORT_DEBUG] Found \(showsAttendedArray.count) attendance records")
         
         let allBands = bandNamesHandle.getBandNames()
@@ -199,6 +204,8 @@ class showAttendenceReport {
             isReportEmpty = true
             print("⚠️ [REPORT] No schedule data available, isReportEmpty = true")
         }
+        
+        print("🔍 [EVENTS_REPORT] ========== EVENTS REPORT ASSEMBLY COMPLETE ==========")
 
     }
     
@@ -248,29 +255,113 @@ class showAttendenceReport {
      */
     func buildMustMightReport()->String {
         
+        print("🔍 [MUST_MIGHT_REPORT] ========== STARTING MUST/MIGHT REPORT ==========")
+        
+        // CRITICAL: Always use "Default" profile for sharing reports
+        let targetProfile = "Default"
+        print("🔍 [MUST_MIGHT_REPORT] Using profile: '\(targetProfile)'")
+        
+        // CRITICAL: Resolve year properly - never hardcode, always use config/pointer system
+        // This ensures "Current" is resolved to actual year (e.g., 2026)
+        let resolvedYearString = getPointerUrlData(keyValue: "eventYear")
+        print("🔍 [MUST_MIGHT_REPORT] Resolved year from pointer: '\(resolvedYearString)'")
+        
+        // Convert resolved year string to Int, with fallback to global eventYear
+        var resolvedYear: Int
+        if let yearInt = Int(resolvedYearString), yearInt > 2000 && yearInt < 2030 {
+            resolvedYear = yearInt
+            print("🔍 [MUST_MIGHT_REPORT] Using resolved year: \(resolvedYear)")
+        } else {
+            // Fallback to global eventYear if pointer resolution fails
+            resolvedYear = eventYear
+            print("⚠️ [MUST_MIGHT_REPORT] Pointer resolution failed, using global eventYear: \(resolvedYear)")
+            if resolvedYear == 0 {
+                print("❌ [MUST_MIGHT_REPORT] CRITICAL: eventYear is 0! This will cause no bands to be found!")
+            }
+        }
+        
         var intro = "🤘 " + NSLocalizedString("HereAreMy", comment: "") + " " + FestivalConfig.current.appName + " " + NSLocalizedString("Choices", comment: "") + "\n\n"
         var mustSeeBands: [String] = []
         var mightSeeBands: [String] = []
         
-        let bands = bandNamesHandle.getBandNames()
+        // CRITICAL: Ensure bands are loaded before trying to get them
+        // getBandNames() may return empty if cache isn't loaded yet
+        print("🔍 [MUST_MIGHT_REPORT] Ensuring bands are loaded from cache...")
         
-        // Collect must-see bands
+        // First attempt to get bands from cache
+        var bands = bandNamesHandle.getBandNames()
+        print("🔍 [MUST_MIGHT_REPORT] Initial getBandNames() returned \(bands.count) bands")
+        
+        // If empty, try to load cache
+        if bands.isEmpty {
+            print("🔍 [MUST_MIGHT_REPORT] Bands empty, forcing cache load...")
+            let semaphore = DispatchSemaphore(value: 0)
+            
+            // Force read from Core Data/SQLite
+            bandNamesHandle.readBandFile()
+            
+            // Also try getCachedData to ensure everything is loaded
+            bandNamesHandle.getCachedData(forceNetwork: false) {
+                semaphore.signal()
+            }
+            
+            // Wait up to 2 seconds for cache to load
+            _ = semaphore.wait(timeout: .now() + 2.0)
+            
+            // Try again after cache load
+            bands = bandNamesHandle.getBandNames()
+            print("🔍 [MUST_MIGHT_REPORT] After cache load, retrieved \(bands.count) bands")
+        }
+        
+        // FALLBACK: If still empty, get bands directly from SQLite for the resolved year
+        if bands.isEmpty {
+            print("🔍 [MUST_MIGHT_REPORT] Still empty, trying SQLite fallback for year \(resolvedYear)...")
+            let sqliteBands = SQLiteDataManager.shared.fetchBands(forYear: resolvedYear)
+            bands = sqliteBands.map { $0.bandName }.sorted()
+            print("🔍 [MUST_MIGHT_REPORT] SQLite fallback returned \(bands.count) bands for year \(resolvedYear)")
+        }
+        
+        // FINAL FALLBACK: If still empty, try getting bands from schedule data
+        if bands.isEmpty {
+            print("🔍 [MUST_MIGHT_REPORT] Still empty, trying schedule data fallback...")
+            let scheduleData = schedule.getBandSortedSchedulingData()
+            bands = Array(scheduleData.keys).sorted()
+            print("🔍 [MUST_MIGHT_REPORT] Schedule data fallback returned \(bands.count) bands")
+        }
+        
+        print("🔍 [MUST_MIGHT_REPORT] Final band count: \(bands.count)")
+        
+        if bands.isEmpty {
+            print("⚠️ [MUST_MIGHT_REPORT] WARNING: No bands found after all attempts! This will result in empty report.")
+            print("⚠️ [MUST_MIGHT_REPORT] This may indicate bands haven't been loaded yet or data is missing.")
+            print("⚠️ [MUST_MIGHT_REPORT] Try refreshing the app or ensuring band data has been downloaded.")
+        } else {
+            print("🔍 [MUST_MIGHT_REPORT] Sample bands (first 5): \(Array(bands.prefix(5)))")
+        }
+        
+        let priorityManager = SQLitePriorityManager.shared
+        
+        // Collect must-see bands (priority == 1)
+        print("🔍 [MUST_MIGHT_REPORT] Checking for Must See bands (priority=1)...")
         for band in bands {
-            let priorityManager = SQLitePriorityManager.shared
-            if (priorityManager.getPriority(for: band) == 1){
-                print ("Adding band " + band)
+            let priority = priorityManager.getPriority(for: band, eventYear: resolvedYear, profileName: targetProfile)
+            if priority == 1 {
+                print("✅ [MUST_MIGHT_REPORT] Adding Must See band: '\(band)' (priority=\(priority), year=\(resolvedYear), profile=\(targetProfile))")
                 mustSeeBands.append(band)
             }
         }
+        print("🔍 [MUST_MIGHT_REPORT] Found \(mustSeeBands.count) Must See bands")
         
-        // Collect might-see bands
+        // Collect might-see bands (priority == 2)
+        print("🔍 [MUST_MIGHT_REPORT] Checking for Might See bands (priority=2)...")
         for band in bands {
-            let priorityManager = SQLitePriorityManager.shared
-            if (priorityManager.getPriority(for: band) == 2){
-                print ("Adding band " + band)
+            let priority = priorityManager.getPriority(for: band, eventYear: resolvedYear, profileName: targetProfile)
+            if priority == 2 {
+                print("✅ [MUST_MIGHT_REPORT] Adding Might See band: '\(band)' (priority=\(priority), year=\(resolvedYear), profile=\(targetProfile))")
                 mightSeeBands.append(band)
             }
         }
+        print("🔍 [MUST_MIGHT_REPORT] Found \(mightSeeBands.count) Might See bands")
         
         // Format must-see section with localized text
         intro += "🟢 " + NSLocalizedString("MustSeeBands", comment: "") + " (\(mustSeeBands.count)):\n"
@@ -286,7 +377,11 @@ class showAttendenceReport {
         }
         
         intro += "\n\n" + FestivalConfig.current.shareUrl
-         return intro
+        
+        print("🔍 [MUST_MIGHT_REPORT] Report complete: Must=\(mustSeeBands.count), Might=\(mightSeeBands.count)")
+        print("🔍 [MUST_MIGHT_REPORT] ========== REPORT COMPLETE ==========")
+        
+        return intro
     }
     
     /**

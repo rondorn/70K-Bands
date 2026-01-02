@@ -16,6 +16,21 @@ public class showsAttendedReport {
     private Map<String,Map<String,Map<String,Integer>>> bandCounts = new HashMap<String,Map<String,Map<String,Integer>>>();
 
     public void assembleReport() {
+        Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] ========== STARTING EVENTS ATTENDED REPORT ==========");
+        
+        // CRITICAL: Always use "Default" profile for sharing reports
+        // Save current active profile
+        SharedPreferencesManager profileManager = SharedPreferencesManager.getInstance();
+        String originalProfile = profileManager.getActivePreferenceSource();
+        Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] Original active profile: '" + originalProfile + "'");
+        
+        // Temporarily switch to "Default" profile
+        if (!"Default".equals(originalProfile)) {
+            Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] Temporarily switching to 'Default' profile for report generation");
+            profileManager.setActivePreferenceSource("Default");
+        } else {
+            Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] Already on 'Default' profile, no switch needed");
+        }
 
         showsAttended attendedHandler = new showsAttended();
         attendedHandler.loadShowsAttended();
@@ -48,6 +63,14 @@ public class showsAttendedReport {
             getBandCounts(eventType, bandName,  showsAttendedArray.get(index));
 
         }
+        
+        // CRITICAL: Restore original profile
+        if (!"Default".equals(originalProfile)) {
+            Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] Restoring original profile: '" + originalProfile + "'");
+            profileManager.setActivePreferenceSource(originalProfile);
+        }
+        
+        Log.d("showsAttendedReport", "🔍 [SHARE_REPORT] ========== REPORT COMPLETE ==========");
     }
 
     public String addPlural(Integer count, String eventType){
