@@ -1280,12 +1280,26 @@ class DetailViewModel: ObservableObject {
             return !trimmed.isEmpty && trimmed != "http://" && trimmed.count > 0
         }
         
+        // Helper function to normalize URLs by adding protocol prefix if missing
+        // This matches the behavior in bandNamesHandler.getBandImageUrl() and Android's getImageUrl()
+        func normalizeImageURL(_ url: String) -> String {
+            let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+            // If URL doesn't start with http:// or https://, add https:// prefix
+            if !trimmed.hasPrefix("http://") && !trimmed.hasPrefix("https://") {
+                let normalized = "https://\(trimmed)"
+                print("🔧 [IMAGE_FALLBACK] Normalized URL: '\(url)' -> '\(normalized)'")
+                return normalized
+            }
+            return trimmed
+        }
+        
         // Step 1: Try to get image URL from bands table
         let dataManager = DataManager.shared
         if let band = dataManager.fetchBand(byName: bandName, eventYear: eventYear) {
             if let imageUrl = band.imageUrl, isValidImageURL(imageUrl) {
-                print("✅ [IMAGE_FALLBACK] Found image URL in bands table: \(imageUrl)")
-                return imageUrl
+                let normalizedUrl = normalizeImageURL(imageUrl)
+                print("✅ [IMAGE_FALLBACK] Found image URL in bands table: \(imageUrl) -> normalized: \(normalizedUrl)")
+                return normalizedUrl
             } else {
                 print("⚠️ [IMAGE_FALLBACK] Band exists but has no valid image URL (imageUrl: '\(band.imageUrl ?? "nil")')")
             }
@@ -1303,8 +1317,9 @@ class DetailViewModel: ObservableObject {
             // Try to find an event with an image URL
             for event in events {
                 if let eventImageUrl = event.eventImageUrl, isValidImageURL(eventImageUrl) {
-                    print("✅ [IMAGE_FALLBACK] Found image URL in events table: \(eventImageUrl)")
-                    return eventImageUrl
+                    let normalizedUrl = normalizeImageURL(eventImageUrl)
+                    print("✅ [IMAGE_FALLBACK] Found image URL in events table: \(eventImageUrl) -> normalized: \(normalizedUrl)")
+                    return normalizedUrl
                 }
             }
             
