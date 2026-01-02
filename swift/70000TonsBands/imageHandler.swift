@@ -76,6 +76,19 @@ open class imageHandler {
         return getFestivalDefaultLogo()
     }
     
+    /// Normalizes image URLs by adding protocol prefix if missing
+    /// Band image URLs may not have the protocol prefix, while schedule URLs may already have https://
+    /// - Parameter url: The URL string to normalize
+    /// - Returns: The normalized URL with https:// prefix if it was missing
+    private func normalizeImageURL(_ url: String) -> String {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        // If URL doesn't start with http:// or https://, add https:// prefix
+        if !trimmed.hasPrefix("http://") && !trimmed.hasPrefix("https://") {
+            return "https://\(trimmed)"
+        }
+        return trimmed
+    }
+    
     /// Downloads an image from URL and caches it with proper inversion analysis
     /// - Parameters:
     ///   - urlString: The URL string for the image
@@ -83,7 +96,9 @@ open class imageHandler {
     ///   - cacheFilename: Optional custom cache filename (without directory path). If nil, uses bandName + "_v2.png"
     ///   - completion: Completion handler called with the processed image
     func downloadAndCacheImage(urlString: String, bandName: String, cacheFilename: String? = nil, completion: @escaping (UIImage?) -> Void) {
-        print("📥 downloadAndCacheImage called for '\(bandName)' with URL: \(urlString)")
+        // Normalize URL to ensure it has protocol prefix (band URLs may not have it)
+        let normalizedUrlString = normalizeImageURL(urlString)
+        print("📥 downloadAndCacheImage called for '\(bandName)' with URL: \(urlString) -> normalized: \(normalizedUrlString)")
         print("📥 cacheFilename: \(cacheFilename ?? "nil (will use default)")")
         
         // Check if we're at the concurrent download limit
@@ -95,14 +110,14 @@ open class imageHandler {
             return
         }
         
-        guard let url = URL(string: urlString) else {
-            print("Invalid URL for \(bandName): \(urlString)")
+        guard let url = URL(string: normalizedUrlString) else {
+            print("Invalid URL for \(bandName): \(normalizedUrlString) (original: \(urlString))")
             completion(nil)
             return
         }
         
         activeDownloads += 1
-        print("🔄 Downloading image for \(bandName) from \(urlString) (active: \(activeDownloads)/\(maxConcurrentDownloads))")
+        print("🔄 Downloading image for \(bandName) from \(normalizedUrlString) (active: \(activeDownloads)/\(maxConcurrentDownloads))")
         
         // Create a URLRequest with timeout for slow connections
         var request = URLRequest(url: url)

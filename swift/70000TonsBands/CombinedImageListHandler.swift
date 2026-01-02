@@ -60,6 +60,19 @@ class CombinedImageListHandler {
         print("📋 [IMAGE_DEBUG] CombinedImageListHandler initialized with \(combinedImageList.count) entries")
     }
     
+    /// Normalizes image URLs by adding protocol prefix if missing
+    /// This matches the behavior in bandNamesHandler.getBandImageUrl() and Android's getImageUrl()
+    /// - Parameter url: The URL string to normalize
+    /// - Returns: The normalized URL with https:// prefix if it was missing
+    private func normalizeImageURL(_ url: String) -> String {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        // If URL doesn't start with http:// or https://, add https:// prefix
+        if !trimmed.hasPrefix("http://") && !trimmed.hasPrefix("https://") {
+            return "https://\(trimmed)"
+        }
+        return trimmed
+    }
+    
     /// Generates the combined image list from artist and event data
     /// - Parameters:
     ///   - bandNameHandle: Handler for band/artist data
@@ -88,8 +101,10 @@ class CombinedImageListHandler {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
                     // Artist images don't have dates - use nil
-                    newCombinedList[bandName] = ImageInfo(url: imageUrl, date: nil)
-                    print("📋 Added artist image URL for \(bandName): \(imageUrl)")
+                    // Note: getBandImageUrl() already normalizes URLs, but we'll ensure it's normalized here too
+                    let normalizedUrl = self.normalizeImageURL(imageUrl)
+                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
+                    print("📋 Added artist image URL for \(bandName): \(normalizedUrl)")
                 }
             }
             
@@ -109,11 +124,13 @@ class CombinedImageListHandler {
                         if newCombinedList[bandName] == nil {
                             // Get ImageDate if available for schedule images
                             let imageDate = eventData[imageUrlDateField] as? String
-                            newCombinedList[bandName] = ImageInfo(url: imageUrl, date: imageDate)
+                            // Normalize URL to ensure it has protocol prefix
+                            let normalizedUrl = self.normalizeImageURL(imageUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
                             if let date = imageDate, !date.isEmpty {
-                                print("📋 Added event image URL for \(bandName) with date \(date): \(imageUrl)")
+                                print("📋 Added event image URL for \(bandName) with date \(date): \(normalizedUrl)")
                             } else {
-                                print("📋 Added event image URL for \(bandName) (no date): \(imageUrl)")
+                                print("📋 Added event image URL for \(bandName) (no date): \(normalizedUrl)")
                             }
                         } else {
                             print("📋 Skipped event image URL for \(bandName) (artist already has URL): \(imageUrl)")
@@ -122,8 +139,10 @@ class CombinedImageListHandler {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
                             // Description URLs don't have dates
-                            newCombinedList[bandName] = ImageInfo(url: descriptionUrl, date: nil)
-                            print("Added event description URL for \(bandName): \(descriptionUrl)")
+                            // Normalize URL to ensure it has protocol prefix
+                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
+                            print("Added event description URL for \(bandName): \(normalizedUrl)")
                         } else {
                             print("📋 Skipped event description URL for \(bandName) (artist already has URL): \(descriptionUrl)")
                         }
@@ -154,12 +173,16 @@ class CombinedImageListHandler {
                 // Check for eventImageUrl first (higher priority), then descriptionUrl
                 if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                     // SQLite doesn't store eventImageDate, so use nil
-                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
-                    print("📋 Added SQLite event image URL for '\(eventName)': \(eventImageUrl)")
+                    // Normalize URL to ensure it has protocol prefix
+                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                    print("📋 Added SQLite event image URL for '\(eventName)': \(normalizedUrl)")
                 } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                     // Description URLs don't have dates
-                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
-                    print("📋 Added SQLite event description URL for '\(eventName)': \(descriptionUrl)")
+                    // Normalize URL to ensure it has protocol prefix
+                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                    print("📋 Added SQLite event description URL for '\(eventName)': \(normalizedUrl)")
                 }
             }
             
@@ -280,7 +303,9 @@ class CombinedImageListHandler {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
                     // Artist images don't have dates
-                    newCombinedList[bandName] = ImageInfo(url: imageUrl, date: nil)
+                    // Normalize URL (band URLs may not have protocol prefix)
+                    let normalizedUrl = self.normalizeImageURL(imageUrl)
+                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
                 }
             }
             
@@ -294,13 +319,17 @@ class CombinedImageListHandler {
                         if newCombinedList[bandName] == nil {
                             // Get ImageDate if available
                             let imageDate = eventData[imageUrlDateField] as? String
-                            newCombinedList[bandName] = ImageInfo(url: imageUrl, date: imageDate)
+                            // Normalize URL (schedule URLs may already have https://, but ensure consistency)
+                            let normalizedUrl = self.normalizeImageURL(imageUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
                         }
                     } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
                         // Only add if not already present (artist takes priority)
                         if newCombinedList[bandName] == nil {
                             // Description URLs don't have dates
-                            newCombinedList[bandName] = ImageInfo(url: descriptionUrl, date: nil)
+                            // Normalize URL to ensure it has protocol prefix
+                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
                         }
                     }
                 }
@@ -326,12 +355,16 @@ class CombinedImageListHandler {
                 // Check for eventImageUrl first (higher priority), then descriptionUrl
                 if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                     // SQLite doesn't store eventImageDate, so use nil
-                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
-                    print("📋 [ASYNC] Added SQLite event image URL for '\(eventName)': \(eventImageUrl)")
+                    // Normalize URL (schedule URLs may already have https://, but ensure consistency)
+                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                    print("📋 [ASYNC] Added SQLite event image URL for '\(eventName)': \(normalizedUrl)")
                 } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                     // Description URLs don't have dates
-                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
-                    print("📋 [ASYNC] Added SQLite event description URL for '\(eventName)': \(descriptionUrl)")
+                    // Normalize URL to ensure it has protocol prefix
+                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                    print("📋 [ASYNC] Added SQLite event description URL for '\(eventName)': \(normalizedUrl)")
                 }
             }
             
@@ -688,7 +721,9 @@ class CombinedImageListHandler {
             for bandName in bandNames {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
                 if !imageUrl.isEmpty {
-                    newCombinedList[bandName] = ImageInfo(url: imageUrl, date: nil)
+                    // Normalize URL (band URLs may not have protocol prefix)
+                    let normalizedUrl = self.normalizeImageURL(imageUrl)
+                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
                 }
             }
             
@@ -699,11 +734,15 @@ class CombinedImageListHandler {
                     if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
                         if newCombinedList[bandName] == nil {
                             let imageDate = eventData[imageUrlDateField] as? String
-                            newCombinedList[bandName] = ImageInfo(url: imageUrl, date: imageDate)
+                            // Normalize URL (schedule URLs may already have https://, but ensure consistency)
+                            let normalizedUrl = self.normalizeImageURL(imageUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
                         }
                     } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
                         if newCombinedList[bandName] == nil {
-                            newCombinedList[bandName] = ImageInfo(url: descriptionUrl, date: nil)
+                            // Normalize URL to ensure it has protocol prefix
+                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
                         }
                     }
                 }
@@ -729,10 +768,14 @@ class CombinedImageListHandler {
                 // Check for eventImageUrl first (higher priority), then descriptionUrl
                 if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
                     // SQLite doesn't store eventImageDate, so use nil
-                    newCombinedList[eventName] = ImageInfo(url: eventImageUrl, date: nil)
+                    // Normalize URL (schedule URLs may already have https://, but ensure consistency)
+                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
                 } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
                     // Description URLs don't have dates
-                    newCombinedList[eventName] = ImageInfo(url: descriptionUrl, date: nil)
+                    // Normalize URL to ensure it has protocol prefix
+                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
+                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
                 }
             }
             
