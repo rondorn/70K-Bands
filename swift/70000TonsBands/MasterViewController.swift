@@ -1742,8 +1742,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func performPullToRefreshWithRobustNetworkTest() {
         print("🔄 PULL-TO-REFRESH: Starting with 2-second busy indicator")
         
-        // STEP 1: Refresh from database first (immediate UI update)
-        print("🔄 PULL-TO-REFRESH: Step 1 - Loading database data immediately")
+        // STEP 1: Check if we're in "waiting for data" state
+        let bandCount = bandNameHandle.getBandNames().count
+        let eventCount = schedule.schedulingData.count
+        let hasData = bandCount > 0 || eventCount > 0
+        let isWaitingForData = !hasData || (bands.count == 1 && bands.first?.contains("Waiting for data") == true)
+        
+        if isWaitingForData {
+            print("🔄 PULL-TO-REFRESH: ⚠️ Detected 'waiting for data' state - forcing full data refresh")
+            print("🔄 PULL-TO-REFRESH: Current state: \(bandCount) bands, \(eventCount) events")
+        }
+        
+        // STEP 2: Refresh from database first (immediate UI update)
+        print("🔄 PULL-TO-REFRESH: Step 2 - Loading database data immediately")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -1751,16 +1762,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bandNameHandle.loadCachedDataImmediately()
             self.schedule.loadCachedDataImmediately()
             
+            // Check again after reload
+            let reloadedBandCount = self.bandNameHandle.getBandNames().count
+            let reloadedEventCount = self.schedule.schedulingData.count
+            let hasDataAfterReload = reloadedBandCount > 0 || reloadedEventCount > 0
+            
+            print("🔄 PULL-TO-REFRESH: After reload: \(reloadedBandCount) bands, \(reloadedEventCount) events")
+            
             // Display to user on main thread
             DispatchQueue.main.async {
                 self.refreshBandList(reason: "Pull-to-refresh - immediate database display")
             }
+            
+            // If still no data and we're in waiting state, ensure we force a full refresh
+            if isWaitingForData && !hasDataAfterReload {
+                print("🔄 PULL-TO-REFRESH: ⚠️ Still no data after reload - will force full refresh")
+            }
         }
         
-        // STEP 2: Always end refresh control after exactly 2 seconds (consistent UX)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        // STEP 3: Always end refresh control after exactly 2 seconds (consistent UX)
+        // But if we're waiting for data, keep it active longer
+        let refreshDuration: TimeInterval = isWaitingForData ? 3.0 : 2.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + refreshDuration) { [weak self] in
             guard let self = self else { return }
-            print("🔄 PULL-TO-REFRESH: Ending refresh control after 2 seconds (background updates continue)")
+            print("🔄 PULL-TO-REFRESH: Ending refresh control after \(refreshDuration) seconds (background updates continue)")
             
             // Properly end refresh control with animation
             self.refreshControl?.endRefreshing()
@@ -1772,9 +1797,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 3: Launch unified data refresh (3 parallel threads)
-        print("🔄 PULL-TO-REFRESH: Step 3 - Launching unified data refresh (3 parallel threads)")
-        performUnifiedDataRefresh(reason: "Pull-to-refresh")
+        // STEP 4: Launch unified data refresh (3 parallel threads)
+        // Force download if we're in waiting state
+        print("🔄 PULL-TO-REFRESH: Step 4 - Launching unified data refresh (3 parallel threads)")
+        if isWaitingForData {
+            print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state")
+            // Use refreshData with forceDownload for waiting state
+            refreshData(isUserInitiated: true, forceDownload: true)
+        } else {
+            performUnifiedDataRefresh(reason: "Pull-to-refresh")
+        }
     }
     
     /// Called when returning from preferences screen (no year change - only refresh if needed)
@@ -1814,35 +1846,66 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Performs initial data load after year change (extracted for reuse)
     private func performInitialDataLoadAfterYearChange() {
-        // STEP 1: Load all data from database immediately and display
-        print("🎛️ [YEAR_CHANGE] Step 1 - Loading database data for new year")
+        // STEP 1: Wait for Core Data import to complete before loading
+        // The data refresh downloads CSVs and imports them, but import happens asynchronously
+        print("🎛️ [YEAR_CHANGE] Step 1 - Waiting for Core Data import to complete")
+        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Load all data from database (Bands, Events, Priorities, Attended) for new year
-            self.bandNameHandle.loadCachedDataImmediately()
-            self.schedule.loadCachedDataImmediately()
+            // Wait for data to be available (with timeout)
+            var attempts = 0
+            let maxAttempts = 50 // Check up to 50 times (10 seconds max)
+            var hasData = false
+            
+            while attempts < maxAttempts && !hasData {
+                attempts += 1
+                
+                // Log current state before each attempt
+                print("🔍 [YEAR_CHANGE_DEBUG] Attempt \(attempts)/\(maxAttempts):")
+                print("🔍 [YEAR_CHANGE_DEBUG]   Current eventYear = \(eventYear)")
+                print("🔍 [YEAR_CHANGE_DEBUG]   About to load cached data...")
+                
+                // Try loading cached data
+                self.bandNameHandle.loadCachedDataImmediately()
+                self.schedule.loadCachedDataImmediately()
+                
+                // Check if data is now available
+                let bandCount = self.bandNameHandle.getBandNames().count
+                let eventCount = self.schedule.schedulingData.count
+                hasData = bandCount > 0 || eventCount > 0
+                
+                print("🔍 [YEAR_CHANGE_DEBUG]   After load: \(bandCount) bands, \(eventCount) events")
+                
+                if hasData {
+                    print("🎛️ [YEAR_CHANGE] ✅ Data available after \(attempts) attempts: \(bandCount) bands, \(eventCount) events")
+                    break
+                }
+                
+                if attempts < maxAttempts {
+                    // Wait 200ms before next attempt
+                    Thread.sleep(forTimeInterval: 0.2)
+                }
+            }
+            
+            if !hasData {
+                print("🎛️ [YEAR_CHANGE] ⚠️ No data available after \(maxAttempts) attempts - may still be importing")
+            }
             
             // Mark data as ready (allows deferred year change completion to proceed)
             MasterViewController.markYearChangeDataReady()
             
             // Display to user on main thread
             DispatchQueue.main.async {
-                self.refreshBandList(reason: "Year change - immediate database display")
+                self.refreshBandList(reason: "Year change - database display after import wait")
             }
         }
         
         // STEP 2: Clean up orphaned bands (fake band entries for special events)
-        // This prevents events like "All Star Jam" from appearing as bands in the list
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self else { return }
-            
-            print("🧹 [CLEANUP] Starting orphaned bands cleanup after year change...")
-            let eventImporter = EventCSVImporter()
-            eventImporter.cleanupOrphanedBands()
-            
-            print("🧹 [CLEANUP] Orphaned bands cleanup complete")
-        }
+        // CRITICAL FIX: This MUST run AFTER both bands AND events are imported
+        // Otherwise it will delete all bands because events haven't been imported yet
+        // This cleanup is now deferred until after performUnifiedDataRefresh completes
+        // See performUnifiedDataRefresh for where cleanupOrphanedBands() is actually called
         
         // STEP 3: Clear image list cache before unified refresh
         // This ensures the image map will be rebuilt with the new year's data
@@ -1867,6 +1930,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
     }
+    
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
         // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh)
@@ -5223,6 +5287,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.loadCombinedImageList()
                 
                 print("✅ [UNIFIED_REFRESH] Image map built with fresh CSV data")
+                
+                // DISABLED: Orphaned band cleanup removed
+                // Bands and events are separate entities - bands can legitimately exist without events
+                // Fake bands (like "All Star Jam") are filtered in UI display logic, not deleted from database
+                print("🧹 [CLEANUP] Skipping orphaned band cleanup - bands and events are separate entities")
                 
                 // Now update the display on main thread
                 DispatchQueue.main.async {

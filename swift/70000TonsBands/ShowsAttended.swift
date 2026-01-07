@@ -321,13 +321,12 @@ open class ShowsAttended {
         }
         saveShowsAttended()
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-            let iCloudHandle = iCloudDataHandler()
-            if iCloudHandle.checkForIcloud() {
-                print("☁️ iCloud enabled - syncing attendance for \(index)")
-                iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
-                NSUbiquitousKeyValueStore.default.synchronize()
+            // Use SQLiteiCloudSync - only syncs Default profile
+            let sqliteiCloudSync = SQLiteiCloudSync()
+            if sqliteiCloudSync.writeAttendanceRecordToiCloud(eventIndex: index, status: status) {
+                print("☁️ Attendance synced to iCloud for \(index) (Default profile only)")
             } else {
-                print("☁️ iCloud disabled - skipping attendance sync for \(index)")
+                print("☁️ Attendance sync skipped for \(index) (not Default profile or iCloud disabled)")
             }
         }
     }
@@ -351,13 +350,12 @@ open class ShowsAttended {
         
         if !skipICloud {
             DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                let iCloudHandle = iCloudDataHandler()
-                if iCloudHandle.checkForIcloud() {
-                    print("☁️ iCloud enabled - syncing attendance for \(index)")
-                    iCloudHandle.writeAScheduleRecord(eventIndex: index, status: status)
-                    NSUbiquitousKeyValueStore.default.synchronize()
+                // Use SQLiteiCloudSync - only syncs Default profile
+                let sqliteiCloudSync = SQLiteiCloudSync()
+                if sqliteiCloudSync.writeAttendanceRecordToiCloud(eventIndex: index, status: status) {
+                    print("☁️ Attendance synced to iCloud for \(index) (Default profile only)")
                 } else {
-                    print("☁️ iCloud disabled - skipping attendance sync for \(index)")
+                    print("☁️ Attendance sync skipped for \(index) (not Default profile or iCloud disabled)")
                 }
             }
         } else {

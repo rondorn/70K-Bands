@@ -450,7 +450,10 @@ class PreferencesViewModel: ObservableObject {
         
         // Setup URLs but do NOT call setupDefaults() during year changes (it would override eventYear)
         setupCurrentYearUrls()
+        let previousEventYear = eventYear
         eventYear = targetEventYear
+        print("🔍 [YEAR_CHANGE_DEBUG] eventYear changed: \(previousEventYear) → \(eventYear)")
+        print("🔍 [YEAR_CHANGE_DEBUG] Target year string: '\(eventYearChangeAttempt)' → resolved to: \(targetEventYear)")
         print("🎯 Set eventYear = \(eventYear) during year change (skipped setupDefaults to avoid override)")
         
         print("🎯 Year pointers updated early - artistUrl: \(getArtistUrl()), scheduleUrl: \(getScheduleUrl()), eventYear: \(eventYear)")
@@ -554,9 +557,14 @@ class PreferencesViewModel: ObservableObject {
         
         // Clear all caches (pointers already updated above)
         print("🎯 STEP 4: Clearing all caches and preparing for data refresh")
+        print("🔍 [YEAR_CHANGE_DEBUG] Current eventYear before clear: \(eventYear)")
+        print("🔍 [YEAR_CHANGE_DEBUG] Target year (eventYearChangeAttempt): \(eventYearChangeAttempt)")
+        print("🔍 [YEAR_CHANGE_DEBUG] Resolved target year: \(resolveYearToNumber(eventYearChangeAttempt))")
         
         // CRITICAL: Clear year-specific Core Data (preserve user priorities)
+        print("🔍 [YEAR_CHANGE_DEBUG] About to call clearYearSpecificData()")
         CoreDataManager.shared.clearYearSpecificData()
+        print("🔍 [YEAR_CHANGE_DEBUG] clearYearSpecificData() completed")
         
         // Clear static caches
         bandNamesHandler.shared.clearCachedData()
@@ -889,26 +897,27 @@ class PreferencesViewModel: ObservableObject {
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 // CRITICAL: Use protected CSV download to prevent race conditions
-                print("🔒 waitForCoreDataPopulation: Requesting protected CSV download")
+                print("🔒 [SCHEDULE_LOAD] Requesting protected CSV download")
                 await self.performProtectedCsvDownload()
                 
                 // Wait for schedule file to be written
                 var attempts = 0
-                while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < 10 {
+                let maxFileWaitAttempts = 15 // Increased from 10
+                while !FileManager.default.fileExists(atPath: scheduleFile) && attempts < maxFileWaitAttempts {
                     try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
                     attempts += 1
-                    print("⏳ Waiting for schedule file (attempt \(attempts))")
+                    print("⏳ [SCHEDULE_LOAD] Waiting for schedule file (attempt \(attempts)/\(maxFileWaitAttempts))")
                 }
                 
                 if FileManager.default.fileExists(atPath: scheduleFile) {
-                    print("📄 Schedule file available, populating schedule data")
+                    print("📄 [SCHEDULE_LOAD] Schedule file available, populating schedule data")
                     masterView.schedule.populateSchedule(forceDownload: false)
                 } else {
-                    print("⚠️ Schedule file not found, forcing download")
+                    print("⚠️ [SCHEDULE_LOAD] Schedule file not found after \(maxFileWaitAttempts) attempts, forcing download")
                     masterView.schedule.populateSchedule(forceDownload: true)
                 }
                 
-                print("✅ Schedule data loading completed")
+                print("✅ [SCHEDULE_LOAD] Schedule data loading process completed")
             }
         }
     }
@@ -1022,31 +1031,12 @@ class PreferencesViewModel: ObservableObject {
                 print("🐛 [REVERT_DEBUG] User preference hideExpiredEvents: \(hideExpiredEvents)")
             }
             
-            // Ensure schedule data is loaded (same as Band/Event List choices)
-            Task {
-                // Start timing to ensure minimum loading display time
-                let loadingStartTime = Date()
-                
-                await ensureScheduleDataLoaded()
-                
-                await MainActor.run {
-                    // Refresh display with comprehensive refresh
-                    print("🔄 Current year: Triggering comprehensive display refresh")
-                    NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-                    masterView.refreshBandList(reason: "Current year final refresh - ensure all data displayed")
-                    masterView.refreshData(isUserInitiated: true)
-                }
-                
-                // Navigate immediately after data is loaded - no artificial delays
-                let loadingElapsed = Date().timeIntervalSince(loadingStartTime)
-                print("🎯 Current year: Loading took \(loadingElapsed)s, navigating immediately")
-                
-                DispatchQueue.main.async {
-                    print("🎯 Current year data loaded - navigating immediately")
-                    self.isLoadingData = false
-                    self.navigateBackToMainScreen()
-                }
-            }
+            // For "Current" year, data loading is handled by performInitialDataLoadAfterYearChange()
+            // which is called when returning from preferences. We just need to navigate back.
+            // The data refresh is already in progress from performBackgroundDataRefresh().
+            print("🎯 [CURRENT_YEAR] Current year selected - data loading handled by return handler")
+            isLoadingData = false
+            navigateBackToMainScreen()
         }
     }
 
@@ -1055,6 +1045,7 @@ class PreferencesViewModel: ObservableObject {
         // Use a different notification name to indicate year change occurred (no additional refresh needed)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreenAfterYearChange"), object: nil)
     }
+    
     
     /// Perform CSV download with proper race condition protection
     /// This ensures only one CSV download can happen at a time across the entire app

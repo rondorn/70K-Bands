@@ -762,12 +762,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     //end push functions
     
     func reportData(){
+        print("🔥 [APP_DELEGATE] reportData: ========== ENTRY ==========")
+        print("🔥 [APP_DELEGATE] reportData: Called from thread: \(Thread.isMainThread ? "main" : "background")")
         
         internetAvailble = isInternetAvailable();
+        print("🔥 [APP_DELEGATE] reportData: Internet available: \(internetAvailble)")
+        
+        print("🔥 [APP_DELEGATE] reportData: Creating firebaseBandDataWrite instance...")
         let bandWrite  = firebaseBandDataWrite();
+        print("🔥 [APP_DELEGATE] reportData: Calling bandWrite.writeData()...")
         bandWrite.writeData();
+        print("🔥 [APP_DELEGATE] reportData: bandWrite.writeData() call completed")
+        
+        print("🔥 [APP_DELEGATE] reportData: Creating firebaseEventDataWrite instance...")
         let showWrite = firebaseEventDataWrite()
+        print("🔥 [APP_DELEGATE] reportData: Calling showWrite.writeData()...")
         showWrite.writeData();
+        print("🔥 [APP_DELEGATE] reportData: showWrite.writeData() call completed")
+        
+        print("🔥 [APP_DELEGATE] reportData: ========== EXIT ==========")
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
@@ -808,12 +821,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("📱 Local notifications processing completed")
         }
         
-        // iCloud data sync
+        // iCloud data sync (using SQLiteiCloudSync - Default profile only)
         DispatchQueue.global(qos: .userInitiated).async {
-            let iCloudHandle = iCloudDataHandler()
-            iCloudHandle.writeAllPriorityData()
-            iCloudHandle.writeAllScheduleData()
-            print("☁️ iCloud sync completed")
+            let sqliteiCloudSync = SQLiteiCloudSync()
+            sqliteiCloudSync.syncPrioritiesToiCloud()
+            sqliteiCloudSync.syncAttendanceToiCloud()
+            print("☁️ iCloud sync completed (Default profile only)")
         }
         
         // Gate bulk operations behind network test - never run heavy operations in bad network
