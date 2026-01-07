@@ -240,9 +240,11 @@ var eventYear:Int {
         }
         
         eventYearLock.lock()
-        let needsUpdate = (_eventYear != newValue)
+        let oldValue = _eventYear
+        let needsUpdate = (oldValue != newValue)
         if needsUpdate {
-            print("📅 Updating eventYear from \(_eventYear) to \(newValue)")
+            print("🔍 [EVENT_YEAR_CHANGE] eventYear changed: \(oldValue) → \(newValue)")
+            print("🔍 [EVENT_YEAR_CHANGE] Call stack: \(Thread.callStackSymbols.prefix(3).joined(separator: " -> "))")
             _eventYear = newValue
         }
         eventYearLock.unlock()
