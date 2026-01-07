@@ -163,7 +163,40 @@ class SQLiteiCloudSync {
     
     /// Writes a single priority record to iCloud
     /// Thread-safe - can be called from any thread
+    /// CRITICAL: Only writes if Default profile is active
+    /// - Parameters:
+    ///   - bandName: The band name
+    ///   - priority: The priority value
+    /// - Returns: True if written, false if skipped (not Default profile or iCloud disabled)
     func writePriorityToiCloud(bandName: String, priority: Int) -> Bool {
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping priority write")
+            return false
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping priority write")
+            return false
+        }
+        
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING priority write")
+            return false
+        }
+        
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING priority write")
+            return false
+        }
+        
         let timestamp = priorityManager.getPriorityLastChange(for: bandName)
         let currentUID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
         
@@ -185,8 +218,77 @@ class SQLiteiCloudSync {
         let timestampString = String(format: "%.0f", timestamp > 0 ? timestamp : Date().timeIntervalSince1970)
         let dataString = "\(priority):\(currentUID):\(timestampString)"
         
-        print("☁️ Writing to iCloud: \(bandName) = \(dataString)")
+        print("☁️ Writing priority to iCloud: \(bandName) = \(dataString)")
         iCloudStore.set(dataString, forKey: key)
+        
+        return true
+    }
+    
+    /// Writes a single attendance record to iCloud
+    /// Thread-safe - can be called from any thread
+    /// CRITICAL: Only writes if Default profile is active
+    /// - Parameters:
+    ///   - eventIndex: The event identifier (format: "bandName:location:startTime:eventType:eventYear")
+    ///   - status: The attendance status (can be "status:timestamp" or just "status")
+    /// - Returns: True if written, false if skipped (not Default profile or iCloud disabled)
+    func writeAttendanceRecordToiCloud(eventIndex: String, status: String) -> Bool {
+        // CRITICAL: Only sync when Default profile is active
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping attendance write")
+            return false
+        }
+        
+        // Check if iCloud is enabled
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            print("☁️ iCloud disabled - skipping attendance write")
+            return false
+        }
+        
+        // CRITICAL: Block iCloud operations during database migration
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING attendance write")
+            return false
+        }
+        
+        // CRITICAL: Block iCloud operations during profile switches
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING attendance write")
+            return false
+        }
+        
+        // Parse status to extract status value and timestamp
+        let statusParts = status.split(separator: ":")
+        let statusString: String
+        let timestamp: Double
+        
+        if statusParts.count == 2, let parsedTimestamp = Double(statusParts[1]) {
+            // Status format: "status:timestamp"
+            statusString = String(statusParts[0])
+            timestamp = parsedTimestamp
+        } else {
+            // Status format: just "status" - use current time
+            statusString = status
+            timestamp = Date().timeIntervalSince1970
+        }
+        
+        // Get current device UID
+        guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else {
+            print("☁️ ERROR - Cannot get device UID, skipping attendance write")
+            return false
+        }
+        
+        // Create iCloud key and value
+        let iCloudKey = "eventName:" + eventIndex
+        let iCloudValue = "\(statusString):\(currentUid):\(String(format: "%.0f", timestamp))"
+        
+        print("☁️ Writing attendance to iCloud: \(eventIndex) = \(iCloudValue)")
+        let iCloudStore = NSUbiquitousKeyValueStore.default
+        iCloudStore.set(iCloudValue, forKey: iCloudKey)
+        iCloudStore.synchronize()
         
         return true
     }

@@ -366,27 +366,14 @@ class EventCSVImporter {
     }
     
     /// Clean up orphaned bands that have no events (fake band entries)
-    /// This should be called during year changes to remove bands created for special events
+    /// DISABLED: This function previously deleted bands without events, but that's incorrect behavior.
+    /// Bands and events are separate entities - bands can legitimately exist without events.
+    /// Fake bands (like "All Star Jam") are now filtered out in the UI display logic instead of being deleted.
     func cleanupOrphanedBands() {
-        print("🧹 [CLEANUP] Starting orphaned bands cleanup...")
-        
-        let allBands = dataManager.fetchBands(forYear: eventYear)
-        var orphanedCount = 0
-        
-        for band in allBands {
-            let events = dataManager.fetchEventsForBand(band.bandName, forYear: eventYear)
-            if events.isEmpty {
-                print("🗑️ [CLEANUP] Removing orphaned band: '\(band.bandName)' (Year: \(eventYear))")
-                dataManager.deleteBand(name: band.bandName, eventYear: eventYear)
-                orphanedCount += 1
-            }
-        }
-        
-        if orphanedCount > 0 {
-            print("✅ [CLEANUP] Removed \(orphanedCount) orphaned bands")
-        } else {
-            print("✅ [CLEANUP] No orphaned bands found")
-        }
+        print("🧹 [CLEANUP] Orphaned band cleanup is DISABLED")
+        print("🧹 [CLEANUP] Bands and events are separate entities - bands can exist without events")
+        print("🧹 [CLEANUP] Fake bands are filtered in UI display logic, not deleted from database")
+        // No-op: Do not delete bands based on event presence
     }
     
     // MARK: - Helper Methods

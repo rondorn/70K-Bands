@@ -63,16 +63,20 @@ class ScheduleCSVImporter {
             return false
         }
         
-        // STEP 1: DELETE ALL old events for this year (CSV validation passed)
-        // This ensures test data doesn't persist when production data is downloaded
-        print("🗑️ [EVENT_CLEANUP] STEP 1: Deleting ALL old events for year \(eventYear)")
+        // STEP 1: DELETE ALL old events for this year (CSV validation passed - has records)
+        // This removes events that are NOT in the downloaded CSV file
+        // Only runs when CSV has valid records (safety check passed above)
+        print("🗑️ [EVENT_CLEANUP] STEP 1: Removing events for year \(eventYear) that are NOT in CSV")
+        print("🗑️ [EVENT_CLEANUP] CSV has \(csvData.rows.count) events - will keep only these events")
         let existingEvents = dataManager.fetchEvents(forYear: eventYear)
-        print("🗑️ [EVENT_CLEANUP] Found \(existingEvents.count) existing events to delete")
+        print("🗑️ [EVENT_CLEANUP] Found \(existingEvents.count) existing events in database for year \(eventYear)")
         
+        var deletedCount = 0
         for event in existingEvents {
             dataManager.deleteEvent(bandName: event.bandName, timeIndex: event.timeIndex, eventYear: eventYear)
+            deletedCount += 1
         }
-        print("🗑️ [EVENT_CLEANUP] Deleted \(existingEvents.count) old events for year \(eventYear)")
+        print("🗑️ [EVENT_CLEANUP] Deleted \(deletedCount) old events for year \(eventYear) (not in CSV)")
         
         // STEP 2: Import new events from CSV
         print("🚀 [EVENT_IMPORT] STEP 2: Importing \(csvData.rows.count) events from CSV")

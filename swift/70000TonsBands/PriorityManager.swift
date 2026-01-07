@@ -43,14 +43,14 @@ class PriorityManager {
             completion: completion
         )
         
-        // Sync to iCloud (background thread) - only if iCloud is enabled
+        // Sync to iCloud (background thread) - only if Default profile is active
         DispatchQueue.global(qos: .default).async {
-            let iCloudHandler = iCloudDataHandler()
-            if iCloudHandler.checkForIcloud() {
-                print("☁️ iCloud enabled - syncing priority for \(bandName)")
-                iCloudHandler.writeAPriorityRecord(bandName: bandName, priority: priority)
+            // Use SQLiteiCloudSync - only syncs Default profile
+            let sqliteiCloudSync = SQLiteiCloudSync()
+            if sqliteiCloudSync.writePriorityToiCloud(bandName: bandName, priority: priority) {
+                print("☁️ Priority synced to iCloud for \(bandName) (Default profile only)")
             } else {
-                print("☁️ iCloud disabled - skipping priority sync for \(bandName)")
+                print("☁️ Priority sync skipped for \(bandName) (not Default profile or iCloud disabled)")
             }
         }
         

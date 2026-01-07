@@ -200,11 +200,17 @@ open class bandNamesHandler {
         
         // Use eventYear as-is (should be set correctly during app launch or year change)
         // eventYear is already thread-safe via lock in Constants.swift
-        print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
+        print("🔍 [LOAD_CACHE_DEBUG] loadCacheFromCoreData called")
+        print("🔍 [LOAD_CACHE_DEBUG] Current eventYear = \(eventYear)")
+        print("🔍 [LOAD_CACHE_DEBUG] cachedForYear = \(cachedForYear)")
+        print("🔍 [LOAD_CACHE_DEBUG] cacheLoaded = \(cacheLoaded)")
+        print("🔍 [LOAD_CACHE_DEBUG] isYearChangeInProgress = \(MasterViewController.isYearChangeInProgress)")
+        print("🔍 [LOAD_CACHE_DEBUG] isYearChangeDataReady = \(MasterViewController.isYearChangeDataReady())")
         
         // CRITICAL FIX: Filter bands by the current event year
+        print("🔍 [LOAD_CACHE_DEBUG] About to call fetchBands(forYear: \(eventYear))")
         let bands = self.dataManager.fetchBands(forYear: eventYear)
-        print("🔄 Fetched \(bands.count) bands from SQLite for year \(eventYear)")
+        print("🔍 [LOAD_CACHE_DEBUG] fetchBands returned \(bands.count) bands for year \(eventYear)")
         
         // CRITICAL: All dictionary modifications must be synchronized
         staticBandName.sync {

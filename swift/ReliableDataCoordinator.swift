@@ -462,10 +462,15 @@ extension ReliableDataCoordinator {
             coreDataManager.updatePriority(bandName: bandName, priority: priority) { result in
                 switch result {
                 case .success:
-                    // Also sync to iCloud
+                    // Also sync to iCloud (Default profile only)
                     DispatchQueue.global(qos: .default).async {
-                        let iCloudHandler = iCloudDataHandler()
-                        iCloudHandler.writeAPriorityRecord(bandName: bandName, priority: priority)
+                        // Use SQLiteiCloudSync - only syncs Default profile
+                        let sqliteiCloudSync = SQLiteiCloudSync()
+                        if sqliteiCloudSync.writePriorityToiCloud(bandName: bandName, priority: priority) {
+                            print("☁️ Priority synced to iCloud for \(bandName) (Default profile only)")
+                        } else {
+                            print("☁️ Priority sync skipped for \(bandName) (not Default profile or iCloud disabled)")
+                        }
                     }
                     completion(.success(()))
                     

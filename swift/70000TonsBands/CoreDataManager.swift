@@ -302,10 +302,32 @@ class CoreDataManager {
                 viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
             }
             
+            // First, check total bands in database (all years) for debugging
+            let allBandsRequest: NSFetchRequest<Band> = Band.fetchRequest()
+            var allBandsCount = 0
+            do {
+                let allBands = try viewContext.fetch(allBandsRequest)
+                allBandsCount = allBands.count
+                if allBandsCount > 0 {
+                    let yearCounts = Dictionary(grouping: allBands, by: { $0.eventYear })
+                    print("🔍 [FETCH_DEBUG] Total bands in database (all years): \(allBandsCount)")
+                    for (yearKey, bands) in yearCounts.sorted(by: { $0.key < $1.key }) {
+                        print("🔍 [FETCH_DEBUG]   Year \(yearKey): \(bands.count) bands")
+                    }
+                }
+            } catch {
+                print("🔍 [FETCH_DEBUG] Error counting all bands: \(error)")
+            }
+            
             let request: NSFetchRequest<Band> = Band.fetchRequest()
             request.predicate = NSPredicate(format: "eventYear == %d", year)
             do {
                 result = try viewContext.fetch(request)
+                print("🔍 [FETCH_DEBUG] Query: fetchBands(forYear: \(year))")
+                print("🔍 [FETCH_DEBUG] Result: \(result.count) bands found for year \(year)")
+                if result.count == 0 && allBandsCount > 0 {
+                    print("🔍 [FETCH_DEBUG] ⚠️ WARNING: No bands for year \(year) but \(allBandsCount) total bands exist in database")
+                }
             } catch {
                 print("Fetch bands for year error: \(error)")
                 result = []
@@ -495,21 +517,10 @@ class CoreDataManager {
                 print("❌ Error fetching Bands: \(error)")
             }
             
-            // 5. CRITICAL FIX: Clean up any orphaned bands that might have been created
-            // This prevents fake band entries for special events from persisting
-            let orphanedBandRequest: NSFetchRequest<Band> = Band.fetchRequest()
-            orphanedBandRequest.predicate = NSPredicate(format: "events.@count == 0")
-            do {
-                let orphanedBands = try backgroundContext.fetch(orphanedBandRequest)
-                for band in orphanedBands {
-                    backgroundContext.delete(band)
-                }
-                if !orphanedBands.isEmpty {
-                    print("🧹 [CLEANUP] Deleted \(orphanedBands.count) orphaned bands with no events")
-                }
-            } catch {
-                print("❌ Error cleaning up orphaned bands: \(error)")
-            }
+            // 5. DISABLED: Orphaned band cleanup removed
+            // Bands and events are separate entities - bands can legitimately exist without events
+            // Fake bands are filtered in UI display logic, not deleted from database
+            print("🧹 [CLEANUP] Skipping orphaned band cleanup - bands and events are separate entities")
         }
     }
     
@@ -609,6 +620,23 @@ class CoreDataManager {
                 viewContext.automaticallyMergesChangesFromParent = originalMergesSetting
             }
             
+            // First, check total events in database (all years) for debugging
+            let allEventsRequest: NSFetchRequest<Event> = Event.fetchRequest()
+            var allEventsCount = 0
+            do {
+                let allEvents = try viewContext.fetch(allEventsRequest)
+                allEventsCount = allEvents.count
+                if allEventsCount > 0 {
+                    let yearCounts = Dictionary(grouping: allEvents, by: { $0.eventYear })
+                    print("🔍 [FETCH_DEBUG] Total events in database (all years): \(allEventsCount)")
+                    for (yearKey, events) in yearCounts.sorted(by: { $0.key < $1.key }) {
+                        print("🔍 [FETCH_DEBUG]   Year \(yearKey): \(events.count) events")
+                    }
+                }
+            } catch {
+                print("🔍 [FETCH_DEBUG] Error counting all events: \(error)")
+            }
+            
             while attempt < maxRetries {
                 do {
                     // Add defensive checks before fetch
@@ -621,7 +649,11 @@ class CoreDataManager {
                     request.predicate = NSPredicate(format: "eventYear == %d", year)
                     
                     result = try viewContext.fetch(request)
-                    print("DEBUG: Successfully fetched \(result.count) events for year \(year) on attempt \(attempt + 1)")
+                    print("🔍 [FETCH_DEBUG] Query: fetchEvents(forYear: \(year))")
+                    print("🔍 [FETCH_DEBUG] Result: \(result.count) events found for year \(year)")
+                    if result.count == 0 && allEventsCount > 0 {
+                        print("🔍 [FETCH_DEBUG] ⚠️ WARNING: No events for year \(year) but \(allEventsCount) total events exist in database")
+                    }
                     break // Success, exit retry loop
                 } catch {
                     attempt += 1

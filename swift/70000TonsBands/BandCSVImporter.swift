@@ -373,9 +373,11 @@ extension BandCSVImporter {
     
     /// Import bands directly to SQLite on first launch (bypasses Core Data initialization deadlock)
     private func importBandsDirectlyToSQLite(_ csvData: CSV) -> Bool {
-        print("🚀 [SQLITE_DIRECT] Starting direct SQLite import (no Core Data)")
-        print("🚀 [SQLITE_DIRECT] CSV has \(csvData.rows.count) rows to process")
-        print("🚀 [SQLITE_DIRECT] Using eventYear: \(eventYear)")
+        print("🔍 [IMPORT_DEBUG] ========== BAND CSV IMPORT STARTING ==========")
+        print("🔍 [IMPORT_DEBUG] CSV has \(csvData.rows.count) rows to process")
+        print("🔍 [IMPORT_DEBUG] ⚠️ CRITICAL: Using eventYear = \(eventYear) for import")
+        print("🔍 [IMPORT_DEBUG] This means ALL bands will be imported with eventYear = \(eventYear)")
+        print("🔍 [IMPORT_DEBUG] ==============================================")
         
         // CRITICAL FIX: Track which bands are in the CSV so we can delete old ones
         var bandsInCSV = Set<String>()
@@ -416,20 +418,22 @@ extension BandCSVImporter {
         }
         
         // STEP 1: DELETE old bands for this year that are NOT in the new CSV
-        // Only runs if CSV has valid data (safety check passed above)
-        print("🗑️ [SQLITE_CLEANUP] STEP 1: Deleting old bands not in CSV for year \(eventYear)")
+        // Only runs if CSV has valid records (safety check passed above - bandsToInsert is not empty)
+        // This removes bands that exist in database but are NOT in the downloaded CSV file
+        print("🗑️ [SQLITE_CLEANUP] STEP 1: Removing bands for year \(eventYear) that are NOT in CSV")
+        print("🗑️ [SQLITE_CLEANUP] CSV has \(bandsToInsert.count) bands - will keep only these bands")
         let existingBands = dataManager.fetchBands(forYear: eventYear)
         print("🗑️ [SQLITE_CLEANUP] Found \(existingBands.count) existing bands in database for year \(eventYear)")
         
         var deletedCount = 0
         for existingBand in existingBands {
             if !bandsInCSV.contains(existingBand.bandName) {
-                print("🗑️ [SQLITE_CLEANUP] Deleting old band: \(existingBand.bandName) (not in new CSV)")
+                print("🗑️ [SQLITE_CLEANUP] Deleting band: \(existingBand.bandName) (not in CSV)")
                 dataManager.deleteBand(name: existingBand.bandName, eventYear: eventYear)
                 deletedCount += 1
             }
         }
-        print("🗑️ [SQLITE_CLEANUP] Deleted \(deletedCount) old bands for year \(eventYear)")
+        print("🗑️ [SQLITE_CLEANUP] Deleted \(deletedCount) bands for year \(eventYear) (not in CSV)")
         
         // STEP 2: Insert/update new bands from CSV
         print("🚀 [SQLITE_DIRECT] STEP 2: Inserting/updating \(bandsToInsert.count) bands from CSV")
