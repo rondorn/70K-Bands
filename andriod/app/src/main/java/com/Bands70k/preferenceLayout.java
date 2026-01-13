@@ -2,6 +2,7 @@ package com.Bands70k;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -52,8 +53,6 @@ import static com.Bands70k.staticVariables.staticVariablesInitialize;
  * Created by rdorn on 8/15/15.
  */
 public class preferenceLayout  extends Activity {
-
-    private Button dataImportButton;
 
     private Switch showSpecialEvents;
     private Switch showMeetAndGreet;
@@ -118,14 +117,6 @@ public class preferenceLayout  extends Activity {
         setLabels();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        dataImportButton = (Button) findViewById(R.id.ImportDataBackup);
-        dataImportButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                dataImportFunc();
-            }
-        });
         eventYearButton();
 
         disableAlertButtonsIfNeeded();
@@ -460,107 +451,149 @@ public class preferenceLayout  extends Activity {
         restartDialog.setPositiveButton(getResources().getString(R.string.Ok),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        // Dismiss the confirmation dialog first
+                        dialog.dismiss();
+                        
                         String localCurrentValue = getResources().getString(R.string.Current);
-
                         String waitText = getResources().getString(R.string.waiting_for_data);
-                        HelpMessageHandler.showMessage(waitText);
-
-                        Log.d("preferenceLayout", "Testing network connection");
-                        if (OnlineStatus.testInternetAvailableSynchronous() == false){
-                            Log.d("preferenceLayout", "Testing network connection, failed");
-                            abortLastYearOperation();
-                            return;
-                        }
-
-                        if (String.valueOf(eventYearButton.getText()).equals("Current") == false && String.valueOf(eventYearButton.getText()).equals(localCurrentValue) == false) {
-                            bandListOrScheduleDialog();
-                        }
-
-                        Log.d("preferenceLayout", "Testing network connection, passed");
-                        //staticVariables.preferences.setUseLastYearsData(lastYearsData.isChecked());
-                        String selectedYear = String.valueOf(eventYearButton.getText());
-                        staticVariables.preferences.setEventYearToLoad(selectedYear);
                         
-                        // Auto-enable "Hide Expired Events" when year is set to "Current"
-                        if (selectedYear.equals("Current") || selectedYear.equals(localCurrentEventYear)) {
-                            staticVariables.preferences.setHideExpiredEvents(true);
-                            // Update the UI switch if it exists
-                            if (hideExpiredEvents != null) {
-                                hideExpiredEvents.setChecked(true);
+                        // Show a persistent progress dialog instead of just a toast
+                        final ProgressDialog progressDialog = new ProgressDialog(preferenceLayout.this);
+                        progressDialog.setMessage(waitText);
+                        progressDialog.setIndeterminate(true);
+                        progressDialog.setCancelable(false);
+                        progressDialog.show();
+
+                        // Store values needed in background thread
+                        final String selectedYearText = String.valueOf(eventYearButton.getText());
+                        final boolean isCurrentYear = selectedYearText.equals("Current") || selectedYearText.equals(localCurrentValue);
+                        final boolean isNotCurrent = !selectedYearText.equals("Current") && !selectedYearText.equals(localCurrentValue);
+
+                        // Move heavy work to background thread to allow dialog to render
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Log.d("preferenceLayout", "Testing network connection");
+                                    if (OnlineStatus.testInternetAvailableSynchronous() == false){
+                                        Log.d("preferenceLayout", "Testing network connection, failed");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressDialog.dismiss();
+                                                abortLastYearOperation();
+                                            }
+                                        });
+                                        return;
+                                    }
+
+                                    Log.d("preferenceLayout", "Testing network connection, passed");
+                                    String selectedYear = selectedYearText;
+                                    staticVariables.preferences.setEventYearToLoad(selectedYear);
+                                    
+                                    // Auto-enable "Hide Expired Events" when year is set to "Current"
+                                    if (isCurrentYear) {
+                                        staticVariables.preferences.setHideExpiredEvents(true);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (hideExpiredEvents != null) {
+                                                    hideExpiredEvents.setChecked(true);
+                                                }
+                                            }
+                                        });
+                                        Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year");
+                                    }
+                                    
+                                    staticVariables.preferences.resetMainFilters();
+                                    staticVariables.preferences.saveData();
+                                    staticVariables.artistURL = null;
+                                    staticVariables.eventYear = 0;
+                                    staticVariables.eventYearIndex = selectedYearText;
+                                    staticVariables.lookupUrls();
+
+                                    //delete band file
+                                    Log.d("preferenceLayout", "Deleting band file");
+                                    File fileBandFile = FileHandler70k.bandInfo;
+                                    fileBandFile.delete();
+
+                                    //delete current schedule file
+                                    Log.d("preferenceLayout", "Deleting schedule file");
+                                    File fileSchedule = FileHandler70k.schedule;
+                                    fileSchedule.delete();
+
+                                    //erase existing alerts
+                                    Log.d("preferenceLayout", "Erasing alerts");
+
+                                    scheduleAlertHandler alerts = new scheduleAlertHandler();
+                                    alerts.clearAlerts();
+
+                                    BandInfo bandInfo = new BandInfo();
+                                    bandInfo.getDownloadtUrls();
+                                    bandInfo.DownloadBandFile();
+
+                                    scheduleInfo scheduleData = new scheduleInfo();
+                                    scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+
+                                    staticVariablesInitialize();
+                                    
+                                    Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
+                                    // Use exponential backoff instead of fixed sleep delays
+                                    AtomicBoolean scheduleFileReady = new AtomicBoolean(false);
+                                    if (!FileHandler70k.schedule.exists()) {
+                                        Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " - downloading");
+                                        bandInfo.getDownloadtUrls();
+                                        scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+                                        
+                                        // Wait with backoff instead of busy-waiting
+                                        if (!SynchronizationManager.waitWithBackoff(scheduleFileReady, 5, 500)) {
+                                            Log.w("preferenceLayout", "Timeout waiting for schedule file download");
+                                        }
+                                    }
+                                    
+                                    Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
+                                    Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
+                                    
+                                    AtomicBoolean bandInfoFileReady = new AtomicBoolean(false);
+                                    if (!FileHandler70k.bandInfo.exists()) {
+                                        Log.d("preferenceLayout", "Missing band info file - downloading");
+                                        bandInfo.getDownloadtUrls();
+                                        bandInfo.DownloadBandFile();
+                                        
+                                        // Wait with backoff instead of busy-waiting
+                                        if (!SynchronizationManager.waitWithBackoff(bandInfoFileReady, 5, 500)) {
+                                            Log.w("preferenceLayout", "Timeout waiting for band info file download");
+                                        }
+                                    }
+                                    Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
+
+                                    staticVariables.refreshActivated = true;
+
+                                    // Dismiss the progress dialog and finish on UI thread
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            progressDialog.dismiss();
+
+                                            if (isNotCurrent) {
+                                                bandListOrScheduleDialog();
+                                            } else if (isCurrentYear) {
+                                                bandListOrScheduleDialog();
+                                                onBackPressed();
+                                            }
+                                        }
+                                    });
+                                } catch (Exception e) {
+                                    Log.e("preferenceLayout", "Error during year change", e);
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            progressDialog.dismiss();
+                                        }
+                                    });
+                                }
                             }
-                            Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year");
-                        }
-                        
-                        staticVariables.preferences.resetMainFilters();
-                        staticVariables.preferences.saveData();
-                        staticVariables.artistURL = null;
-                        staticVariables.eventYear = 0;
-                        staticVariables.eventYearIndex = String.valueOf(eventYearButton.getText());
-                        staticVariables.lookupUrls();
-
-                        //delete band file
-                        Log.d("preferenceLayout", "Deleting band file");
-                        File fileBandFile = FileHandler70k.bandInfo;
-                        fileBandFile.delete();
-
-                        //delete current schedule file
-                        Log.d("preferenceLayout", "Deleting schedule file");
-                        File fileSchedule = FileHandler70k.schedule;
-                        fileSchedule.delete();
-
-
-                        //erase existing alerts
-                        Log.d("preferenceLayout", "Erasing alerts");
-
-                        scheduleAlertHandler alerts = new scheduleAlertHandler();
-                        alerts.clearAlerts();
-
-                        BandInfo bandInfo = new BandInfo();
-                        bandInfo.getDownloadtUrls();
-                        bandInfo.DownloadBandFile();
-
-                        scheduleInfo scheduleData = new scheduleInfo();
-                        scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
-
-                        staticVariablesInitialize();
-                        
-                        Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
-                        // Use exponential backoff instead of fixed sleep delays
-                        AtomicBoolean scheduleFileReady = new AtomicBoolean(false);
-                        if (!FileHandler70k.schedule.exists()) {
-                            Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " - downloading");
-                            bandInfo.getDownloadtUrls();
-                            scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
-                            
-                            // Wait with backoff instead of busy-waiting
-                            if (!SynchronizationManager.waitWithBackoff(scheduleFileReady, 5, 500)) {
-                                Log.w("preferenceLayout", "Timeout waiting for schedule file download");
-                            }
-                        }
-                        
-                        Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
-                        Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
-                        
-                        AtomicBoolean bandInfoFileReady = new AtomicBoolean(false);
-                        if (!FileHandler70k.bandInfo.exists()) {
-                            Log.d("preferenceLayout", "Missing band info file - downloading");
-                            bandInfo.getDownloadtUrls();
-                            bandInfo.DownloadBandFile();
-                            
-                            // Wait with backoff instead of busy-waiting
-                            if (!SynchronizationManager.waitWithBackoff(bandInfoFileReady, 5, 500)) {
-                                Log.w("preferenceLayout", "Timeout waiting for band info file download");
-                            }
-                        }
-                        Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
-
-                        staticVariables.refreshActivated = true;
-
-
-                        if (String.valueOf(eventYearButton.getText()).equals("Current") == true) {
-                            bandListOrScheduleDialog();
-                            onBackPressed();
-                        }
+                        }).start();
 
                     }
                 });

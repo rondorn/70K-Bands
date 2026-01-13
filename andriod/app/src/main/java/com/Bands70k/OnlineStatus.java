@@ -39,6 +39,7 @@ public class OnlineStatus {
      * Force refresh the network status cache - useful when device wakes from sleep
      * @deprecated Use smartRefreshNetworkStatus() instead for better UX
      */
+    @Deprecated
     public static void forceRefreshNetworkStatus() {
         Log.d("Internet Found", "Force refreshing network status cache");
         // Clear the cache to force a fresh check

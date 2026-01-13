@@ -20,6 +20,8 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import android.os.SystemClock;
+import android.os.Handler;
+import android.os.Looper;
 
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -1572,6 +1574,92 @@ public class showBandDetails extends Activity {
     }
 
     /**
+     * Attempts to create and configure WebView with retry logic.
+     * Handles Resources$NotFoundException that can occur on Android 14+.
+     * 
+     * @return true if WebView was successfully created, false otherwise
+     */
+    private boolean createWebViewWithRetry() {
+        final int MAX_RETRIES = 3;
+        final long RETRY_DELAY_MS = 150;
+        
+        // Initial attempt
+        try {
+            Log.d("WebView", "Attempting to create WebView (initial attempt)");
+            inAppWebView = new WebView(this);
+            configureWebView();
+            Log.d("WebView", "WebView created successfully on initial attempt");
+            return true;
+        } catch (Exception e) {
+            Log.w("WebView", "Initial WebView creation failed: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            
+            // Retry with delays
+            // Note: Using Thread.sleep() on main thread is acceptable here because:
+            // 1. Delays are very short (150ms each, max 450ms total)
+            // 2. This is a critical path operation (user opening a link)
+            // 3. Synchronous retry is simpler and more reliable than async callbacks
+            for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    Log.d("WebView", "Retrying WebView creation (attempt " + attempt + " of " + MAX_RETRIES + ")");
+                    Thread.sleep(RETRY_DELAY_MS);
+                    inAppWebView = new WebView(this);
+                    configureWebView();
+                    Log.d("WebView", "WebView created successfully on retry attempt " + attempt);
+                    return true;
+                } catch (InterruptedException ie) {
+                    Log.e("WebView", "Retry interrupted: " + ie.getMessage());
+                    Thread.currentThread().interrupt();
+                    return false;
+                } catch (Exception retryException) {
+                    Log.w("WebView", "Retry attempt " + attempt + " failed: " + retryException.getClass().getSimpleName() + " - " + retryException.getMessage());
+                    if (attempt == MAX_RETRIES) {
+                        Log.e("WebView", "All retry attempts exhausted. Last error: " + retryException.getMessage());
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Configures WebView settings after creation.
+     * Separated to avoid code duplication in retry logic.
+     */
+    private void configureWebView() {
+        LinearLayout.LayoutParams webViewParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 
+            0  // Height 0 with weight 1 = takes remaining space
+        );
+        webViewParams.weight = 1.0f;  // Takes all remaining vertical space
+        inAppWebView.setLayoutParams(webViewParams);
+        inAppWebView.getSettings().setJavaScriptEnabled(true);
+        inAppWebView.getSettings().setLoadWithOverviewMode(true);
+        inAppWebView.getSettings().setUseWideViewPort(true);
+        inAppWebView.getSettings().setBuiltInZoomControls(true);
+        inAppWebView.getSettings().setDisplayZoomControls(false);
+        inAppWebView.getSettings().setDomStorageEnabled(true);
+        inAppWebView.getSettings().setSupportZoom(true);
+        
+        // Enable history tracking for proper back navigation
+        inAppWebView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+        
+        // SECURITY FIX: Restrict file access to prevent cross-app scripting
+        inAppWebView.getSettings().setAllowFileAccess(false);  // Disable file:// URL access
+        inAppWebView.getSettings().setAllowContentAccess(true);  // Keep content:// access
+        
+        // SECURITY FIX: Prevent universal file access (API 16+)
+        if (android.os.Build.VERSION.SDK_INT >= 16) {
+            inAppWebView.getSettings().setAllowUniversalAccessFromFileURLs(false);
+            inAppWebView.getSettings().setAllowFileAccessFromFileURLs(false);
+        }
+        
+        // Enable navigation history
+        inAppWebView.clearHistory(); // Start with clean history
+        Log.d("WebView", "WebView history cleared, ready for navigation");
+    }
+    
+    /**
      * Shows a web URL in an in-app WebView using the normal screen area
      */
     private void showInAppWebView(String url, String linkType) {
@@ -1715,38 +1803,14 @@ public class showBandDetails extends Activity {
         Log.d("Navigation", "Forward button: " + (webViewForwardButton != null ? "created" : "null"));
         Log.d("Navigation", "Refresh button: " + (webViewRefreshButton != null ? "created" : "null"));
         
-        // Create WebView - takes remaining space in LinearLayout
-        inAppWebView = new WebView(this);
-        LinearLayout.LayoutParams webViewParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 
-            0  // Height 0 with weight 1 = takes remaining space
-        );
-        webViewParams.weight = 1.0f;  // Takes all remaining vertical space
-        inAppWebView.setLayoutParams(webViewParams);
-        inAppWebView.getSettings().setJavaScriptEnabled(true);
-        inAppWebView.getSettings().setLoadWithOverviewMode(true);
-        inAppWebView.getSettings().setUseWideViewPort(true);
-        inAppWebView.getSettings().setBuiltInZoomControls(true);
-        inAppWebView.getSettings().setDisplayZoomControls(false);
-        inAppWebView.getSettings().setDomStorageEnabled(true);
-        inAppWebView.getSettings().setSupportZoom(true);
-        
-        // Enable history tracking for proper back navigation
-        inAppWebView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
-        
-        // SECURITY FIX: Restrict file access to prevent cross-app scripting
-        inAppWebView.getSettings().setAllowFileAccess(false);  // Disable file:// URL access
-        inAppWebView.getSettings().setAllowContentAccess(true);  // Keep content:// access
-        
-        // SECURITY FIX: Prevent universal file access (API 16+)
-        if (android.os.Build.VERSION.SDK_INT >= 16) {
-            inAppWebView.getSettings().setAllowUniversalAccessFromFileURLs(false);
-            inAppWebView.getSettings().setAllowFileAccessFromFileURLs(false);
+        // Create WebView with retry logic to handle Resources$NotFoundException
+        if (!createWebViewWithRetry()) {
+            // All retry attempts failed - show error and exit
+            Log.e("WebView", "Failed to create WebView after all retry attempts");
+            Toast.makeText(this, "Unable to open web browser. Please try again later.", Toast.LENGTH_LONG).show();
+            exitInAppWebView();
+            return;
         }
-        
-        // Enable navigation history
-        inAppWebView.clearHistory(); // Start with clean history
-        Log.d("WebView", "WebView history cleared, ready for navigation");
         
         // Set WebView client to handle page loading
         inAppWebView.setWebViewClient(new WebViewClient() {
@@ -2069,6 +2133,18 @@ public class showBandDetails extends Activity {
                 public void onTranslationComplete(String translatedText) {
                     Log.d("Translation", "Translation completed: " + (translatedText != null ? translatedText.substring(0, Math.min(100, translatedText.length())) : "null"));
                     runOnUiThread(() -> {
+                        // Check if activity is still valid
+                        if (isFinishing() || isDestroyed()) {
+                            Log.d("Translation", "Activity destroyed, ignoring translation result");
+                            return;
+                        }
+                        
+                        // Check if views are still available
+                        if (noteValue == null || translator == null) {
+                            Log.e("Translation", "Views null, cannot update translation");
+                            return;
+                        }
+                        
                         if (translatedText != null && !translatedText.isEmpty()) {
                             currentTranslatedText = translatedText;
                             
@@ -2101,6 +2177,11 @@ public class showBandDetails extends Activity {
                 public void onTranslationError(String error) {
                     Log.e("Translation", "Translation error: " + error);
                     runOnUiThread(() -> {
+                        // Check if activity is still valid before showing error
+                        if (isFinishing() || isDestroyed()) {
+                            Log.d("Translation", "Activity destroyed, ignoring translation error");
+                            return;
+                        }
                         showToast("Translation error: " + error);
                     });
                 }
@@ -2238,18 +2319,30 @@ public class showBandDetails extends Activity {
                     @Override
                     public void onTranslationComplete(String translatedText) {
                         runOnUiThread(() -> {
+                            // Check if activity is still valid
+                            if (isFinishing() || isDestroyed()) {
+                                Log.d("Translation", "Activity destroyed, ignoring auto-load translation result");
+                                return;
+                            }
+                            
+                            // Check if views are still available
+                            if (noteValue == null || translator == null) {
+                                Log.e("Translation", "Views null, cannot update auto-load translation");
+                                return;
+                            }
+                            
                             if (translatedText != null && !translatedText.isEmpty()) {
                                 currentTranslatedText = translatedText;
                                 
-                                                            // Don't apply additional formatting cleanup that might strip newlines
-                            // Just add translation header
-                            String translationHeader = translator.getLocalizedTranslationHeaderText(languageCode);
-                            String formattedText = translationHeader + "\n\n" + translatedText;
-                            
-                            // Debug: Log the final text with visible newlines
-                            Log.d("Translation", "Auto-load final text with newlines: " + formattedText.replace("\n", "[\\n]").substring(0, Math.min(300, formattedText.length())));
-                            
-                            noteValue.setText(formattedText);
+                                // Don't apply additional formatting cleanup that might strip newlines
+                                // Just add translation header
+                                String translationHeader = translator.getLocalizedTranslationHeaderText(languageCode);
+                                String formattedText = translationHeader + "\n\n" + translatedText;
+                                
+                                // Debug: Log the final text with visible newlines
+                                Log.d("Translation", "Auto-load final text with newlines: " + formattedText.replace("\n", "[\\n]").substring(0, Math.min(300, formattedText.length())));
+                                
+                                noteValue.setText(formattedText);
                                 
                                 updateTranslationButton();
                                 Log.d("Translation", "Auto-loaded cached translation for " + bandName);
@@ -2260,6 +2353,7 @@ public class showBandDetails extends Activity {
                     @Override
                     public void onTranslationError(String error) {
                         Log.e("Translation", "Error auto-loading translation: " + error);
+                        // No UI update needed for auto-load errors, just log
                     }
                 });
             } else {
