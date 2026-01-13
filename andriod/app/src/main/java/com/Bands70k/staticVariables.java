@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
@@ -90,6 +92,9 @@ public class staticVariables {
     
     // Cache for pointer data
     public static Map<String, String> storePointerData = new HashMap<String, String>();
+    
+    // Flag to track if background URL lookup is in progress (prevents duplicate calls)
+    private static volatile boolean backgroundLookupInProgress = false;
 
     public final static String sawAllColor = "#67C10C";
     public final static String sawSomeColor = "#F0D905";
@@ -711,87 +716,298 @@ public class staticVariables {
     }
 
     /**
-     * Looks up and sets URLs for artist and schedule data.
-     * This method should only be called at launch or pull-to-refresh.
-     * For all other operations, use cached data.
+     * Checks if cached pointer data is available and complete.
+     * @return True if cache has all required URL data, false otherwise.
      */
-    public static void lookupUrls(){
-
+    private static boolean hasCachedPointerData() {
+        if (storePointerData == null || storePointerData.isEmpty()) {
+            return false;
+        }
+        
+        // Check if we have all required keys
+        return storePointerData.containsKey("artistUrl") &&
+               storePointerData.containsKey("scheduleUrl") &&
+               storePointerData.containsKey("descriptionMap") &&
+               storePointerData.containsKey("eventYear") &&
+               storePointerData.get("artistUrl") != null &&
+               !storePointerData.get("artistUrl").isEmpty() &&
+               storePointerData.get("scheduleUrl") != null &&
+               !storePointerData.get("scheduleUrl").isEmpty();
+    }
+    
+    /**
+     * Loads URLs from cache into main variables.
+     * Should only be called if hasCachedPointerData() returns true.
+     */
+    private static void loadFromCache() {
+        if (storePointerData == null || storePointerData.isEmpty()) {
+            Log.w("lookupUrls", "Attempted to load from empty cache");
+            return;
+        }
+        
+        artistURL = storePointerData.get("artistUrl");
+        scheduleURL = storePointerData.get("scheduleUrl");
+        descriptionMap = storePointerData.get("descriptionMap");
+        String eventYearStr = storePointerData.get("eventYear");
+        if (eventYearStr != null && !eventYearStr.isEmpty()) {
+            try {
+                eventYearRaw = Integer.valueOf(eventYearStr);
+            } catch (NumberFormatException e) {
+                Log.w("lookupUrls", "Invalid eventYear in cache: " + eventYearStr);
+            }
+        }
+        
+        Log.d("lookupUrls", "Loaded from cache - artistURL: " + artistURL);
+        Log.d("lookupUrls", "Loaded from cache - scheduleURL: " + scheduleURL);
+        Log.d("lookupUrls", "Loaded from cache - descriptionMap: " + descriptionMap);
+        Log.d("lookupUrls", "Loaded from cache - eventYearRaw: " + eventYearRaw);
+    }
+    
+    /**
+     * Fetches pointer data from network and returns parsed URLs.
+     * @return Map of URL keys to values, or null if fetch failed.
+     */
+    private static Map<String, String> fetchFromNetwork() {
         String pointerUrl = getDefaultUrls();
         if (preferences.getPointerUrl().equals("Testing")){
             pointerUrl = getDefaultUrlTest();
         }
 
-        Log.d("pointerUrl", "pointerUrl equals " + pointerUrl + " - OnlineStatus is " + OnlineStatus.isOnline());
+        Log.d("lookupUrls", "Fetching from network: " + pointerUrl);
 
-        if (OnlineStatus.isOnline() == true) {
-            try {
-
-                if (preferences.getEventYearToLoad() == null || preferences.getEventYearToLoad().isEmpty() == false){
-                    eventYearIndex = preferences.getEventYearToLoad();
-                }
-
-                if (eventYearIndex.equals("true") || eventYearIndex.equals("false")){
-                    eventYearIndex = "Current";
-                    preferences.setEventYearToLoad("Current");
-                }
-                
-                // DEBUG: Log what year is selected by user
-                Log.d("70K_NOTE_DEBUG", "User selected eventYearIndex: " + eventYearIndex);
-                Log.d("70K_NOTE_DEBUG", "Available years in pointer file: " + eventYearArray.toString());
-
-                Log.d("pointerUrl", "eventYearIndex equals " + eventYearIndex);
-                String data = "";
-                String line;
-
-                URL url = new URL(pointerUrl);
-                
-                // Handle HTTP redirects properly for Dropbox URLs
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setInstanceFollowRedirects(true);
-                connection.setConnectTimeout(10000); // 10 seconds
-                connection.setReadTimeout(30000); // 30 seconds
-                
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                while ((line = in.readLine()) != null) {
-                    data += line + "\n";
-                }
-                in.close();
-
-                Log.d("defaultUrls", data);
-
-                String[] records = data.split("\\n");
-                Log.d("defaultUrls", "eventYearIndex is " + eventYearIndex);
-                Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
-                Log.d("defaultUrls",downloadUrls.toString());
-                
-                // Cache all the data for immediate access
-                storePointerData.clear(); // Clear old cache
-                for (Map.Entry<String, String> entry : downloadUrls.entrySet()) {
-                    storePointerData.put(entry.getKey(), entry.getValue());
-                    Log.d("lookupUrls", "Cached: " + entry.getKey() + " = " + entry.getValue());
-                }
-                
-                // Set the main variables
-                artistURL = downloadUrls.get("artistUrl");
-                scheduleURL = downloadUrls.get("scheduleUrl");
-                descriptionMap = downloadUrls.get("descriptionMap");
-                eventYearRaw = Integer.valueOf(downloadUrls.get("eventYear"));
-
-                Log.d("pointerUrl", "artistURL = " + artistURL);
-                Log.d("pointerUrl", "scheduleURL = " + scheduleURL);
-                Log.d("pointerUrl", "descriptionMap = " + descriptionMap);
-                Log.d("pointerUrl", "eventYearRaw = " + eventYearRaw);
-                
-                // Additional 70K_NOTE_DEBUG logging
-                Log.d("70K_NOTE_DEBUG", "Final URLs set - artistURL: " + artistURL);
-                Log.d("70K_NOTE_DEBUG", "Final URLs set - descriptionMap: " + descriptionMap);
-                Log.d("70K_NOTE_DEBUG", "Final URLs set - eventYearRaw: " + eventYearRaw);
-            } catch (Exception error) {
-                Log.d("pointerUrl Error", error.getMessage());
-                Log.d("pointerUrl Error", String.valueOf(error.getCause()));
-                Log.d("pointerUrl Error", String.valueOf(error.getStackTrace()));
+        if (!OnlineStatus.isOnline()) {
+            Log.d("lookupUrls", "Not online, cannot fetch from network");
+            return null;
+        }
+        
+        try {
+            // Normalize eventYearIndex
+            if (preferences.getEventYearToLoad() == null || preferences.getEventYearToLoad().isEmpty() == false){
+                eventYearIndex = preferences.getEventYearToLoad();
             }
+
+            if (eventYearIndex.equals("true") || eventYearIndex.equals("false")){
+                eventYearIndex = "Current";
+                preferences.setEventYearToLoad("Current");
+            }
+            
+            Log.d("70K_NOTE_DEBUG", "User selected eventYearIndex: " + eventYearIndex);
+            Log.d("70K_NOTE_DEBUG", "Available years in pointer file: " + eventYearArray.toString());
+
+            String data = "";
+            String line;
+
+            URL url = new URL(pointerUrl);
+            
+            // Handle HTTP redirects properly for Dropbox URLs
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(10000); // 10 seconds
+            connection.setReadTimeout(30000); // 30 seconds
+            
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            while ((line = in.readLine()) != null) {
+                data += line + "\n";
+            }
+            in.close();
+
+            Log.d("defaultUrls", data);
+
+            String[] records = data.split("\\n");
+            Log.d("defaultUrls", "eventYearIndex is " + eventYearIndex);
+            Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
+            Log.d("defaultUrls", downloadUrls.toString());
+            
+            return downloadUrls;
+        } catch (Exception error) {
+            Log.e("lookupUrls", "Network fetch error: " + error.getMessage(), error);
+            Log.d("pointerUrl Error", String.valueOf(error.getCause()));
+            Log.d("pointerUrl Error", String.valueOf(error.getStackTrace()));
+            return null;
+        }
+    }
+    
+    /**
+     * Compares new URLs with cached URLs to detect changes.
+     * @param newUrls The newly fetched URLs.
+     * @return True if any URL has changed, false if all are the same.
+     */
+    private static boolean compareUrls(Map<String, String> newUrls) {
+        if (newUrls == null || newUrls.isEmpty()) {
+            return false;
+        }
+        
+        // Compare each key
+        String[] keysToCompare = {"artistUrl", "scheduleUrl", "descriptionMap", "eventYear"};
+        for (String key : keysToCompare) {
+            String newValue = newUrls.get(key);
+            String cachedValue = storePointerData != null ? storePointerData.get(key) : null;
+            
+            // Handle null/empty cases
+            if (newValue == null) newValue = "";
+            if (cachedValue == null) cachedValue = "";
+            
+            if (!newValue.equals(cachedValue)) {
+                Log.d("lookupUrls", "Change detected for " + key + ": '" + cachedValue + "' -> '" + newValue + "'");
+                return true;
+            }
+        }
+        
+        Log.d("lookupUrls", "No changes detected in pointer data");
+        return false;
+    }
+    
+    /**
+     * Updates cache with new URLs and sets main variables.
+     * @param downloadUrls The new URLs to cache.
+     */
+    private static void updateCacheAndVariables(Map<String, String> downloadUrls) {
+        if (downloadUrls == null || downloadUrls.isEmpty()) {
+            return;
+        }
+        
+        // Cache all the data for immediate access
+        storePointerData.clear(); // Clear old cache
+        for (Map.Entry<String, String> entry : downloadUrls.entrySet()) {
+            storePointerData.put(entry.getKey(), entry.getValue());
+            Log.d("lookupUrls", "Cached: " + entry.getKey() + " = " + entry.getValue());
+        }
+        
+        // Set the main variables
+        artistURL = downloadUrls.get("artistUrl");
+        scheduleURL = downloadUrls.get("scheduleUrl");
+        descriptionMap = downloadUrls.get("descriptionMap");
+        String eventYearStr = downloadUrls.get("eventYear");
+        if (eventYearStr != null && !eventYearStr.isEmpty()) {
+            try {
+                eventYearRaw = Integer.valueOf(eventYearStr);
+            } catch (NumberFormatException e) {
+                Log.w("lookupUrls", "Invalid eventYear: " + eventYearStr);
+            }
+        }
+
+        Log.d("pointerUrl", "artistURL = " + artistURL);
+        Log.d("pointerUrl", "scheduleURL = " + scheduleURL);
+        Log.d("pointerUrl", "descriptionMap = " + descriptionMap);
+        Log.d("pointerUrl", "eventYearRaw = " + eventYearRaw);
+        
+        // Additional 70K_NOTE_DEBUG logging
+        Log.d("70K_NOTE_DEBUG", "Final URLs set - artistURL: " + artistURL);
+        Log.d("70K_NOTE_DEBUG", "Final URLs set - descriptionMap: " + descriptionMap);
+        Log.d("70K_NOTE_DEBUG", "Final URLs set - eventYearRaw: " + eventYearRaw);
+    }
+    
+    /**
+     * Safely triggers UI refresh from background thread.
+     * Uses ForegroundDownloadManager pattern to get current activity.
+     */
+    private static void triggerUIRefresh() {
+        // Use Handler to post to UI thread
+        Handler uiHandler = new Handler(Looper.getMainLooper());
+        uiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Activity currentActivity = ForegroundDownloadManager.getCurrentActivity();
+                    if (currentActivity != null && currentActivity instanceof showBands) {
+                        showBands showBandsActivity = (showBands) currentActivity;
+                        Log.d("lookupUrls", "Triggering UI refresh due to pointer data change");
+                        showBandsActivity.refreshNewData();
+                    } else {
+                        Log.d("lookupUrls", "Cannot trigger refresh - no valid showBands activity");
+                    }
+                } catch (Exception e) {
+                    Log.e("lookupUrls", "Error triggering UI refresh: " + e.getMessage(), e);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Background version of lookupUrls that updates cache and triggers refresh if data changed.
+     * This should only be called from a background thread.
+     */
+    private static void lookupUrlsInBackground() {
+        // Prevent duplicate background lookups
+        if (backgroundLookupInProgress) {
+            Log.d("lookupUrls", "Background lookup already in progress, skipping");
+            return;
+        }
+        
+        backgroundLookupInProgress = true;
+        try {
+            Log.d("lookupUrls", "Starting background URL lookup");
+            
+            // Fetch new data from network
+            Map<String, String> newUrls = fetchFromNetwork();
+            
+            if (newUrls == null || newUrls.isEmpty()) {
+                Log.w("lookupUrls", "Background fetch returned no data");
+                return;
+            }
+            
+            // Compare with cached data
+            boolean dataChanged = compareUrls(newUrls);
+            
+            if (dataChanged) {
+                Log.d("lookupUrls", "Pointer data changed - updating cache and triggering refresh");
+                // Update cache and variables
+                updateCacheAndVariables(newUrls);
+                // Trigger UI refresh
+                triggerUIRefresh();
+            } else {
+                Log.d("lookupUrls", "Pointer data unchanged - no refresh needed");
+                // Still update cache to ensure it's fresh (even if values are same)
+                updateCacheAndVariables(newUrls);
+            }
+        } finally {
+            backgroundLookupInProgress = false;
+        }
+    }
+
+    /**
+     * Looks up and sets URLs for artist and schedule data.
+     * This method checks cache first, uses cached data if available, and triggers
+     * background update to ensure cache stays fresh. If no cache exists, fetches
+     * from network synchronously (should only be called from background threads).
+     * 
+     * CRITICAL: This method should NOT be called from the main/UI thread if it
+     * needs to make a network call. Use lookupUrlsInBackground() via ThreadManager
+     * for background updates.
+     */
+    public static void lookupUrls(){
+        // CRITICAL: Check if we're on main thread and cache is available
+        boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
+        
+        // Check cache first
+        if (hasCachedPointerData()) {
+            Log.d("lookupUrls", "Using cached pointer data");
+            loadFromCache();
+            
+            // Trigger background update to refresh cache (if online and not already in progress)
+            if (OnlineStatus.isOnline() && !backgroundLookupInProgress) {
+                Log.d("lookupUrls", "Triggering background update to refresh cache");
+                ThreadManager.getInstance().executeNetwork(() -> {
+                    lookupUrlsInBackground();
+                });
+            }
+            return; // Return immediately with cached data
+        }
+        
+        // No cache available - must fetch from network
+        // WARNING: This will block if called on main thread
+        if (isMainThread) {
+            Log.w("lookupUrls", "⚠️ WARNING: lookupUrls() called on main thread with no cache - this will block!");
+            Log.w("lookupUrls", "⚠️ Consider using ThreadManager to call this from background thread");
+        }
+        
+        Log.d("lookupUrls", "No cache available - fetching from network");
+        Map<String, String> downloadUrls = fetchFromNetwork();
+        
+        if (downloadUrls != null && !downloadUrls.isEmpty()) {
+            updateCacheAndVariables(downloadUrls);
+        } else {
+            Log.w("lookupUrls", "Failed to fetch URLs from network and no cache available");
         }
     }
 

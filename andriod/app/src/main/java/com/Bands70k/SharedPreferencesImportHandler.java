@@ -198,10 +198,24 @@ public class SharedPreferencesImportHandler {
             
             Log.d(TAG, "✅ [IMPORT_HANDLER] Switched to profile: " + profileKey);
             
-            // Update header color immediately if this is the showBands activity
+            // CRITICAL: Reload profile-specific data (same as manual profile switching)
+            // This ensures the UI shows the correct profile data, not just the color
+            rankStore.reloadForActiveProfile();
+            if (staticVariables.attendedHandler != null) {
+                staticVariables.attendedHandler.reloadForActiveProfile();
+            }
+            Log.d(TAG, "✅ [IMPORT_HANDLER] Reloaded priority and attendance data for profile: " + customName);
+            
+            // Update header color and refresh UI if this is the showBands activity
             if (activity instanceof showBands) {
-                ((showBands) activity).updateHeaderColorForCurrentProfile();
+                showBands showBandsActivity = (showBands) activity;
+                showBandsActivity.updateHeaderColorForCurrentProfile();
                 Log.d(TAG, "✅ [IMPORT_HANDLER] Updated header color for new profile");
+                
+                // CRITICAL: Refresh the band list with new profile data
+                // This ensures the UI displays the imported profile's data, not just the color
+                showBandsActivity.refreshNewData();
+                Log.d(TAG, "✅ [IMPORT_HANDLER] Refreshed band list with new profile data");
             }
             
             // Different message for update vs new import
@@ -216,10 +230,6 @@ public class SharedPreferencesImportHandler {
             }
             
             showSuccessAlert(activity, message, isUpdate);
-            
-            // Refresh the UI
-            Intent refreshIntent = new Intent("refreshGUI");
-            LocalBroadcastManager.getInstance(context).sendBroadcast(refreshIntent);
             
         } else {
             showErrorAlert(activity, context.getString(R.string.failed_to_import));
