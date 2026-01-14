@@ -107,7 +107,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private int currentScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
     private long lastScrollTime = 0;
     private static final long SCROLL_STOP_DELAY_MS = 50; // Reduced delay - only block clicks during active scrolling, not after
-    private boolean isRefreshing = false; // Track if a refresh is in progress
+    private static final long SCROLL_STATE_TIMEOUT_MS = 200; // If scroll state hasn't changed in this time, treat as IDLE
+    private volatile boolean isRefreshing = false; // Track if a refresh is in progress
+    private int refreshCounter = 0; // Track number of concurrent refreshes for debugging
+    private long lastRefreshStartTime = 0; // Track when refresh started
+    private long lastRefreshEndTime = 0; // Track when refresh ended
+    private AbsListView.OnScrollListener scrollListener = null; // Store scroll listener to avoid replacing it
 
     private ArrayList<String> rankedBandNames;
 
@@ -662,32 +667,39 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      */
     private void setupClickListener() {
         if (bandNamesList != null) {
-            Log.d("CLICK_LISTENER_FIX", "✅ Setting up click listener for bandNamesList");
             bandNamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 // argument position gives the index of item which is clicked
                 public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
+                    long clickTime = System.currentTimeMillis();
                     try {
-                        // CLICK FIX: Only ignore clicks during active scrolling, not after it stops
-                        // This prevents accidental detail screen opens when user touches screen to stop scrolling
-                        // But allows legitimate clicks shortly after scrolling stops
-                        boolean isScrolling = currentScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+                        // SCROLL STATE STUCK FIX: If scroll state says we're scrolling but it's been a long time
+                        // since the last scroll stop, the scroll state callback was likely missed. Treat as IDLE.
+                        long timeSinceScrollStop = (lastScrollTime > 0) ? (clickTime - lastScrollTime) : -1;
+                        boolean scrollStateStuck = (currentScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE) && 
+                                                   (timeSinceScrollStop > SCROLL_STATE_TIMEOUT_MS);
+                        boolean isScrolling = (currentScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE) && !scrollStateStuck;
                         
-                        // Only block clicks if actively scrolling OR if refresh is in progress (which might trigger scroll state changes)
+                        // If scroll state is stuck, force it back to IDLE
+                        if (scrollStateStuck) {
+                            Log.w("CLICK_DEBUG", "Scroll state stuck, forcing to IDLE (state: " + currentScrollState + ", timeSinceScrollStop: " + timeSinceScrollStop + "ms)");
+                            currentScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+                            isScrolling = false;
+                        }
+                        
+                        // Only block clicks if actively scrolling OR if refresh is in progress
                         if (isScrolling || isRefreshing) {
-                            Log.d("CLICK_LISTENER_FIX", "⏭️ Ignoring click - scroll active (state: " + currentScrollState + ") or refreshing: " + isRefreshing);
                             return;
                         }
                         
-                        Log.d("CLICK_LISTENER_FIX", "✅ Click detected at position: " + position);
                         showClickChoices(position);
                     } catch (Exception error) {
-                        Log.e("CLICK_DEBUG", "Error in showClickChoices: " + error.toString(), error);
+                        Log.e("CLICK_DEBUG", "Error in onItemClick at position " + position + ": " + error.toString(), error);
                         System.exit(0);
                     }
                 }
             });
         } else {
-            Log.e("CLICK_LISTENER_FIX", "❌ Cannot set OnItemClickListener - bandNamesList is null!");
+            Log.e("CLICK_DEBUG", "Cannot set OnItemClickListener - bandNamesList is null!");
         }
     }
 
@@ -779,38 +791,42 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         //set MenuCreator
         bandNamesList.setMenuCreator(creator);
 
-        bandNamesList.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                // CLICK FIX: Track scroll state to prevent accidental clicks when stopping scroll
-                currentScrollState = scrollState;
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                    lastScrollTime = System.currentTimeMillis();
-                    Log.d("ScrollState", "Scroll stopped at " + lastScrollTime);
-                } else {
-                    Log.d("ScrollState", "Scroll state changed to: " + scrollState);
-                }
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem,
-                                 int visibleItemCount, int totalItemCount) {
-
-                // ERRATIC JUMPING FIX: Only update position during normal user scrolling
-                // Don't interfere when returning from details screen or during restoration
-                if (firstVisibleItem > 0 && !returningFromDetailsScreen) {
-                    // Only update if this seems like genuine user scrolling (not programmatic)
-                    if (staticVariables.listPosition == 0 || Math.abs(firstVisibleItem - staticVariables.listPosition) <= 3) {
-                        Log.d("Setting position", "Normal scroll - updating position to: " + firstVisibleItem);
-                        staticVariables.listPosition = firstVisibleItem;
-                        if (staticVariables.listPosition == 1) {
-                            staticVariables.listPosition = 0;
-                        }
+        // SCROLL LISTENER FIX: Only create scroll listener once to prevent replacing it during scrolling
+        // Replacing the listener while scrolling causes the IDLE callback to be missed, leaving state stuck
+        if (scrollListener == null) {
+            scrollListener = new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    // CLICK FIX: Track scroll state to prevent accidental clicks when stopping scroll
+                    currentScrollState = scrollState;
+                    if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                        lastScrollTime = System.currentTimeMillis();
                     }
                 }
 
-            }
-        });
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem,
+                                     int visibleItemCount, int totalItemCount) {
+
+                    // ERRATIC JUMPING FIX: Only update position during normal user scrolling
+                    // Don't interfere when returning from details screen or during restoration
+                    if (firstVisibleItem > 0 && !returningFromDetailsScreen) {
+                        // Only update if this seems like genuine user scrolling (not programmatic)
+                        if (staticVariables.listPosition == 0 || Math.abs(firstVisibleItem - staticVariables.listPosition) <= 3) {
+                            Log.d("Setting position", "Normal scroll - updating position to: " + firstVisibleItem);
+                            staticVariables.listPosition = firstVisibleItem;
+                            if (staticVariables.listPosition == 1) {
+                                staticVariables.listPosition = 0;
+                            }
+                        }
+                    }
+
+                }
+            };
+        }
+        
+        // Always set the listener (reuse existing instance to avoid missing callbacks)
+        bandNamesList.setOnScrollListener(scrollListener);
 
         // set SwipeListener
         bandNamesList.setOnSwipeListener(new SwipeMenuListView.OnSwipeListener() {
@@ -1774,8 +1790,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("ScrollPosition", "Universal scroll preservation activated for extra refresh");
             }
             displayBandData();
-            // Restore position after refresh to make it transparent
-            restoreScrollPosition();
+            // REMOVED: Redundant position restoration - displayBandData already handles position preservation
+            // restoreScrollPosition();
         }
         Log.d("refreshNewData", "refreshNewData - 5");
     }
@@ -1954,6 +1970,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private void displayBandDataWithoutSchedule() {
         
         // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
+        refreshCounter++;
+        lastRefreshStartTime = System.currentTimeMillis();
         isRefreshing = true;
         
         Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Starting bands-only display");
@@ -1977,15 +1995,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         
-        // TRANSPARENT REFRESH: Reuse existing adapter instead of creating new one
-        if (adapter == null) {
-            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
-            Log.d("VIEW_MODE_DEBUG", "🎵 Created new adapter");
-        } else {
-            adapter.clearAll();
-            Log.d("VIEW_MODE_DEBUG", "🎵 Cleared existing adapter for refresh");
-        }
-        
+        // TRANSPARENT REFRESH: Build new list first, then replace atomically to avoid flash
+        // This prevents the adapter from going to 0 items, which causes flashing
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
         
@@ -1994,15 +2005,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             listHandler = new mainListHandler(showBands.this);
         }
         
-        // CRITICAL FIX: Clear both lists before repopulating to ensure sync with adapter
-        listHandler.bandNamesIndex.clear();
-        scheduleSortedBandNames.clear();
-        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Cleared bandNamesIndex and scheduleSortedBandNames before populating");
+        // FLASHING FIX: Build the new list of items FIRST (without modifying adapter)
+        List<bandListItem> newItems = new ArrayList<>();
+        List<String> newBandNamesIndex = new ArrayList<>();
+        List<String> newScheduleSortedBandNames = new ArrayList<>();
         
         if (bandNames.size() == 0) {
             String emptyDataMessage = getResources().getString(R.string.waiting_for_data);
             bandListItem bandItem = new bandListItem(emptyDataMessage);
-            adapter.add(bandItem);
+            newItems.add(bandItem);
         } else {
             // Sort bands alphabetically for bands-only view
             Collections.sort(bandNames);
@@ -2012,56 +2023,67 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             for (String bandName : bandNames) {
                 bandListItem bandItem = new bandListItem(bandName);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
-                adapter.add(bandItem);
+                newItems.add(bandItem);
                 // CRITICAL FIX: Add band name to both lists to keep in sync with adapter
-                listHandler.bandNamesIndex.add(bandName);
-                scheduleSortedBandNames.add(bandName);
+                newBandNamesIndex.add(bandName);
+                newScheduleSortedBandNames.add(bandName);
                 counter++;
             }
             
-            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Added " + counter + " bands to adapter");
-            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: bandNamesIndex.size() = " + listHandler.bandNamesIndex.size());
-            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
-            
-            // Verify sync between adapter and both lists
-            if (adapter.getCount() != listHandler.bandNamesIndex.size() || adapter.getCount() != scheduleSortedBandNames.size()) {
-                Log.e("SYNC_ERROR", "🚨 MISMATCH: adapter has " + adapter.getCount() + " items but bandNamesIndex has " + listHandler.bandNamesIndex.size() + " and scheduleSortedBandNames has " + scheduleSortedBandNames.size() + " items!");
-            } else {
-                Log.d("SYNC_SUCCESS", "✅ Adapter, bandNamesIndex, and scheduleSortedBandNames are in sync with " + adapter.getCount() + " items");
-            }
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Built " + counter + " items in new list");
         }
         
-        // TRANSPARENT REFRESH: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
-        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Notifying adapter of data change with " + adapter.getCount() + " items");
-        if (bandNamesList != null) {
-            // FLASHING FIX: Temporarily disable animations during update to reduce visual flashing
-            boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
-            if (animationsEnabled) {
-                bandNamesList.setLayoutAnimation(null);
-            }
+        // FLASHING FIX: Now replace adapter data atomically (adapter never goes to 0 items)
+        if (adapter == null) {
+            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+            Log.d("VIEW_MODE_DEBUG", "🎵 Created new adapter");
+        }
+        
+        // FLASHING FIX: Only replace if data actually changed
+        // This prevents unnecessary clears that cause flashing
+        boolean dataChanged = adapter.replaceAll(newItems);
+        
+        if (dataChanged) {
+            // Update the index lists atomically
+            listHandler.bandNamesIndex.clear();
+            listHandler.bandNamesIndex.addAll(newBandNamesIndex);
+            scheduleSortedBandNames.clear();
+            scheduleSortedBandNames.addAll(newScheduleSortedBandNames);
             
-            // Only set adapter if it's not already set (first time)
-            if (bandNamesList.getAdapter() != adapter) {
-                bandNamesList.setAdapter(adapter);
-                Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set for first time");
-            } else {
-                // Adapter already set, just notify of data change - Android preserves scroll position automatically
-                adapter.notifyDataSetChanged();
-                Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter data updated, scroll position preserved automatically");
-            }
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Replaced adapter with " + adapter.getCount() + " items");
             
-            // FLASHING FIX: Re-enable animations after update completes
-            if (animationsEnabled) {
-                bandNamesList.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Animations will be restored naturally if needed
-                    }
-                });
-            }
-            
-            // TRANSPARENT REFRESH: Restore to center item if we saved one
-            if (centerBandName != null) {
+            // TRANSPARENT REFRESH: Immediately notify adapter of change to minimize flash
+            // Do this BEFORE any other operations to ensure ListView sees the new data immediately
+            if (bandNamesList != null) {
+                // FLASHING FIX: Disable animations and notify immediately
+                boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
+                if (animationsEnabled) {
+                    bandNamesList.setLayoutAnimation(null);
+                }
+                
+                // CRITICAL: Notify immediately after replaceAll to minimize flash window
+                // With stable IDs, Android should preserve scroll position
+                if (bandNamesList.getAdapter() != adapter) {
+                    bandNamesList.setAdapter(adapter);
+                    Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set for first time");
+                } else {
+                    // Immediately notify - this is critical to minimize flash
+                    adapter.notifyDataSetChanged();
+                    Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter notified immediately after replaceAll");
+                }
+                
+                // FLASHING FIX: Re-enable animations after update completes
+                if (animationsEnabled) {
+                    bandNamesList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Animations will be restored naturally if needed
+                        }
+                    });
+                }
+                
+                // TRANSPARENT REFRESH: Restore to center item if we saved one
+                if (centerBandName != null) {
                 final String targetBandName = centerBandName;
                 final int savedScrollPosition = staticVariables.savedScrollPosition;
                 final int savedScrollOffset = staticVariables.savedScrollOffset;
@@ -2128,10 +2150,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     });
                 }
             }
+            } else {
+                Log.w("VIEW_MODE_DEBUG", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
+                // Store adapter for later when UI is initialized
+                this.adapter = adapter;
+            }
         } else {
-            Log.w("VIEW_MODE_DEBUG", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
-            // Store adapter for later when UI is initialized
-            this.adapter = adapter;
+            // Data unchanged - no refresh needed, no flash!
+            Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Data unchanged, skipping refresh to avoid flash");
         }
         
         // Setup swipe and filters
@@ -2145,11 +2171,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Finished display " + adapter.getCount() + " bands");
         
         // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
+        final long refreshStartTime = lastRefreshStartTime;
         bandNamesList.postDelayed(new Runnable() {
             @Override
             public void run() {
-                isRefreshing = false;
-                Log.d("CLICK_LISTENER_FIX", "Refresh complete, clicks enabled");
+                refreshCounter = Math.max(0, refreshCounter - 1); // Decrement but don't go negative
+                isRefreshing = (refreshCounter > 0); // Only false if no refreshes in progress
+                lastRefreshEndTime = System.currentTimeMillis();
             }
         }, 100); // Small delay to ensure adapter update is complete
     }
@@ -2157,6 +2185,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private void displayBandDataWithSchedule() {
 
         // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
+        refreshCounter++;
+        lastRefreshStartTime = System.currentTimeMillis();
         isRefreshing = true;
 
         Log.d("ListPosition", "displayBandDataWithSchedule called - returningFromDetailsScreen: " + returningFromDetailsScreen + ", savedPosition: " + staticVariables.listPosition);
@@ -2180,19 +2210,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         
-        // TRANSPARENT REFRESH: Reuse existing adapter instead of creating new one
-        if (adapter == null) {
-            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
-            Log.d("DisplayListData", "🔧 Created new adapter");
-        } else {
-            adapter.clearAll();
-            Log.d("DisplayListData", "🔧 Cleared existing adapter for refresh");
-        }
-
-        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
+        // FLASHING FIX: Build new list first, then replace atomically to avoid flash
+        // This prevents the adapter from going to 0 items, which causes flashing
         BandInfo bandInfoNames = new BandInfo();
-
-        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 3");
         bandNames = bandInfoNames.getBandNames();
 
         if (bandNames.size() == 0) {
@@ -2245,13 +2265,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("DisplayListData", "starting file download, done ");
         }
 
+        // FLASHING FIX: Build new list of items FIRST (without modifying adapter)
+        List<bandListItem> newItems = new ArrayList<>();
+        List<String> newBandNamesIndex = new ArrayList<>();
+        
         Integer counter = 0;
         attendedHandler.loadShowsAttended();
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
-        
-        // CRITICAL FIX: Clear bandNamesIndex before repopulating to ensure sync with adapter
-        listHandler.bandNamesIndex.clear();
-        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Cleared bandNamesIndex before populating");
         
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: About to iterate over scheduleSortedBandNames");
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
@@ -2349,35 +2369,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
                 counter = counter + 1;
-                adapter.add(bandItem);
+                newItems.add(bandItem);
                 // CRITICAL FIX: Add band name to index to keep in sync with adapter
-                listHandler.bandNamesIndex.add(bandName);
+                newBandNamesIndex.add(bandName);
             } else {
 
                 bandIndex = bandIndex.replaceAll(":", "");
                 bandListItem bandItem = new bandListItem(bandIndex);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandIndex));
                 counter = counter + 1;
-                adapter.add(bandItem);
+                newItems.add(bandItem);
                 // CRITICAL FIX: Add band name to index to keep in sync with adapter
-                listHandler.bandNamesIndex.add(bandIndex);
+                newBandNamesIndex.add(bandIndex);
             }
 
         }
         
-        // Handle processing after the main loop
-        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Finished processing loop, counter = " + counter);
-        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: adapter.getCount() = " + adapter.getCount());
-        Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: bandNamesIndex.size() = " + listHandler.bandNamesIndex.size());
-        
-        // Verify sync between adapter and bandNamesIndex
-        if (adapter.getCount() != listHandler.bandNamesIndex.size()) {
-            Log.e("SYNC_ERROR", "🚨 MISMATCH: adapter has " + adapter.getCount() + " items but bandNamesIndex has " + listHandler.bandNamesIndex.size() + " items!");
-        } else {
-            Log.d("SYNC_SUCCESS", "✅ Adapter and bandNamesIndex are in sync with " + adapter.getCount() + " items");
-        }
-
-        // Handle empty data case AFTER the loop
+        // Handle empty data case
         if (counter == 0) {
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
@@ -2387,27 +2395,45 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 emptyDataMessage = getResources().getString(R.string.waiting_for_data);
             }
             bandListItem bandItem = new bandListItem(emptyDataMessage);
-            adapter.add(bandItem);
+            newItems.add(bandItem);
         }
         
-        // TRANSPARENT REFRESH: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
-        Log.d("DisplayListData", "🔧 CRITICAL: Notifying adapter of data change with " + adapter.getCount() + " items");
-        if (bandNamesList != null) {
-            // FLASHING FIX: Temporarily disable animations during update to reduce visual flashing
-            boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
-            if (animationsEnabled) {
-                bandNamesList.setLayoutAnimation(null);
-            }
+        // FLASHING FIX: Now replace adapter data atomically (adapter never goes to 0 items)
+        if (adapter == null) {
+            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+            Log.d("DisplayListData", "🔧 Created new adapter");
+        }
+        
+        // FLASHING FIX: Only replace if data actually changed
+        // This prevents unnecessary clears that cause flashing
+        boolean dataChanged = adapter.replaceAll(newItems);
+        
+        if (dataChanged) {
+            // Update the index list atomically
+            listHandler.bandNamesIndex.clear();
+            listHandler.bandNamesIndex.addAll(newBandNamesIndex);
             
-            // Only set adapter if it's not already set (first time)
-            if (bandNamesList.getAdapter() != adapter) {
-                bandNamesList.setAdapter(adapter);
-                Log.d("DisplayListData", "🔧 SUCCESS: Adapter set for first time");
-            } else {
-                // Adapter already set, just notify of data change - Android preserves scroll position automatically
-                adapter.notifyDataSetChanged();
-                Log.d("DisplayListData", "🔧 SUCCESS: Adapter data updated, scroll position preserved automatically");
-            }
+            Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Replaced adapter with " + adapter.getCount() + " items");
+            
+            // TRANSPARENT REFRESH: Immediately notify adapter of change to minimize flash
+            // Do this BEFORE any other operations to ensure ListView sees the new data immediately
+            if (bandNamesList != null) {
+                // FLASHING FIX: Disable animations and notify immediately
+                boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
+                if (animationsEnabled) {
+                    bandNamesList.setLayoutAnimation(null);
+                }
+                
+                // CRITICAL: Notify immediately after replaceAll to minimize flash window
+                // With stable IDs, Android should preserve scroll position
+                if (bandNamesList.getAdapter() != adapter) {
+                    bandNamesList.setAdapter(adapter);
+                    Log.d("DisplayListData", "🔧 SUCCESS: Adapter set for first time");
+                } else {
+                    // Immediately notify - this is critical to minimize flash
+                    adapter.notifyDataSetChanged();
+                    Log.d("DisplayListData", "🔧 SUCCESS: Adapter notified immediately after replaceAll");
+                }
             
             // FLASHING FIX: Re-enable animations after update completes
             if (animationsEnabled) {
@@ -2487,10 +2513,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     });
                 }
             }
+            } else {
+                Log.w("DisplayListData", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
+                // Store adapter for later when UI is initialized
+                this.adapter = adapter;
+            }
         } else {
-            Log.w("DisplayListData", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
-            // Store adapter for later when UI is initialized
-            this.adapter = adapter;
+            // Data unchanged - no refresh needed, no flash!
+            Log.d("DisplayListData", "🔧 displayBandDataWithSchedule: Data unchanged, skipping refresh to avoid flash");
         }
 
         //swip stuff
@@ -2506,16 +2536,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
         
         // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
+        final long refreshStartTime = lastRefreshStartTime;
         if (bandNamesList != null) {
             bandNamesList.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    isRefreshing = false;
-                    Log.d("CLICK_LISTENER_FIX", "Refresh complete, clicks enabled");
+                    refreshCounter = Math.max(0, refreshCounter - 1); // Decrement but don't go negative
+                    isRefreshing = (refreshCounter > 0); // Only false if no refreshes in progress
+                    lastRefreshEndTime = System.currentTimeMillis();
                 }
             }, 100); // Small delay to ensure adapter update is complete
         } else {
-            isRefreshing = false; // Reset immediately if list not available
+            refreshCounter = Math.max(0, refreshCounter - 1);
+            isRefreshing = (refreshCounter > 0);
+            lastRefreshEndTime = System.currentTimeMillis();
         }
         
         // JUMPING FIX: Position restoration is no longer needed here
@@ -3361,7 +3395,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     public void showClickChoices(final int position) {
-
         if (listHandler == null || listHandler.bandNamesIndex == null) {
             Log.e("CLICK_DEBUG", "listHandler or bandNamesIndex is null!");
             return;
@@ -3677,9 +3710,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             () -> {
                 Log.d("Refresh", "Refresh Stage = Post-Start");
                 
-                // FRESH INSTALL FIX: Always refresh display after data download
-                // This ensures downloaded data is displayed even on fresh install
-                refreshData();
+                // FRESH INSTALL FIX: Refresh display after data download
+                // NOTE: refreshData() will check if data changed and skip refresh if unchanged
+                // This prevents unnecessary refreshes that cause flashing
+                // Only refresh if we don't have data yet (fresh install) or if forceRefresh is needed
+                boolean needsRefresh = (adapter == null || adapter.getCount() == 0 || 
+                    (adapter.getCount() == 1 && adapter.getItem(0) != null && 
+                     adapter.getItem(0).getBandName() != null && 
+                     adapter.getItem(0).getBandName().contains("waiting for data")));
+                
+                if (needsRefresh) {
+                    Log.d("onPostExecuteRefresh", "Fresh install or blank list - refreshing");
+                    refreshData();
+                } else {
+                    Log.d("onPostExecuteRefresh", "List already has data - refreshData() will check if update needed");
+                    refreshData(); // Still call it, but it will skip if data unchanged
+                }
                 Log.d("onPostExecuteRefresh", "Post-execute refresh (displaying downloaded data)");
                 
                 // Note: Scroll preservation is handled within refreshData() if needed
@@ -3698,15 +3744,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 bandNamesPullRefresh.setRefreshing(false);
                 fileDownloaded = true;
                 
-                // CRITICAL FIX: Ensure UI is updated after data load completes
-                // This is especially important on first install when "waiting for data" is shown
-                if (bandNamesList != null && adapter != null) {
-                    Log.d("FRESH_INSTALL", "Ensuring list is visible and adapter is updated after data load");
-                    bandNamesList.setVisibility(View.VISIBLE);
-                    bandNamesList.setAdapter(adapter);
-                    adapter.notifyDataSetChanged();
-                    bandNamesList.requestLayout();
-                }
+                // FLASHING FIX: refreshData() already handles setting/updating the adapter
+                // We should NOT call setAdapter() here as it causes flashing when data is unchanged
+                // The adapter is set/updated in displayBandDataWithSchedule() or displayBandDataWithoutSchedule()
+                // which are called by refreshData() -> displayBandData()
+                // Only exception: if adapter is null and list is blank (fresh install), but refreshData() handles that too
+                Log.d("FRESH_INSTALL", "Skipping adapter update in onPostExecuteRefresh - refreshData() already handled it");
                 
                 // Start bulk downloads after CSV processing completes
                 Log.d("Refresh", "CSV processing complete, starting bulk downloads");
