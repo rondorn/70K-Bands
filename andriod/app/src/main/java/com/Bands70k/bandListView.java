@@ -85,6 +85,15 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         bandInfoList.add(object);
         super.add(object);
     }
+    
+    /**
+     * Clears all items from the adapter.
+     * Used for refreshing data without creating a new adapter instance.
+     */
+    public void clearAll() {
+        bandInfoList.clear();
+        super.clear();
+    }
 
     /**
      * Returns the view for a specific position in the list.
@@ -138,15 +147,19 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         bandListItem bandData = getItem(position);
         String currentBandName = bandData.getBandName();
 
-        Log.d("displayingList", "Working on position " + String.valueOf(position) + " previousPosition " + String.valueOf(previousPosition) + " " + currentBandName + " Scrolling is " + scrollingDirection);
-        Log.d("displayingList", "working on bandName " + currentBandName + " color " + bandData.getLocationColor());
+        // PERFORMANCE FIX: Reduce logging in getView() - only log in debug builds or remove entirely
+        // Logging in getView() is called for every visible item during scrolling, causing performance issues
+        // Uncomment below only for debugging specific issues
+        // Log.d("displayingList", "Working on position " + String.valueOf(position) + " previousPosition " + String.valueOf(previousPosition) + " " + currentBandName + " Scrolling is " + scrollingDirection);
+        // Log.d("displayingList", "working on bandName " + currentBandName + " color " + bandData.getLocationColor());
 
         if (bandData.getLocation() == null){
 
             viewHolder.eventTypeImage.setVisibility(View.INVISIBLE);
             viewHolder.attendedImage.setVisibility(View.INVISIBLE);
             viewHolder.location.setVisibility(View.INVISIBLE);
-            viewHolder.location.setVisibility(View.INVISIBLE);
+            // PERFORMANCE FIX: Remove duplicate setVisibility call
+            // viewHolder.location.setVisibility(View.INVISIBLE); // Duplicate removed
             viewHolder.locationColor.setVisibility(View.INVISIBLE);
             viewHolder.day.setVisibility(View.INVISIBLE);
             viewHolder.startTime.setVisibility(View.INVISIBLE);
@@ -176,7 +189,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.eventTypeImage.setVisibility(View.VISIBLE);
             viewHolder.attendedImage.setVisibility(View.VISIBLE);
             viewHolder.location.setVisibility(View.VISIBLE);
-            viewHolder.location.setVisibility(View.VISIBLE);
+            // PERFORMANCE FIX: Remove duplicate setVisibility call
+            // viewHolder.location.setVisibility(View.VISIBLE); // Duplicate removed
             viewHolder.locationColor.setVisibility(View.VISIBLE);
             viewHolder.day.setVisibility(View.VISIBLE);
             viewHolder.startTime.setVisibility(View.VISIBLE);
@@ -195,8 +209,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             if (bandData.getRankImg() == 0){
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);
             } else {
-
-                Log.d("bandListView", "ranking image is " + bandData.getRankImg());
+                // PERFORMANCE FIX: Reduce logging in getView()
+                // Log.d("bandListView", "ranking image is " + bandData.getRankImg());
                 if (bandData.getRankImg() != 50000000) {
                     viewHolder.rankImage.setImageResource(bandData.getRankImg());
                 } else {
@@ -241,29 +255,35 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 viewHolder.bandName.setTextSize(23);
             }
 
-            try {
-                bandListItem bandDataNext = getItem(position - 1);
-                nextBand = bandDataNext.getBandName();
-            } catch (Exception error){
-                nextBand = "Unknown";
+            // PERFORMANCE FIX: Optimize previous item access - check bounds before accessing
+            if (position > 0) {
+                try {
+                    bandListItem bandDataNext = getItem(position - 1);
+                    nextBand = bandDataNext.getBandName();
+                } catch (Exception error){
+                    nextBand = "Unknown";
+                }
             }
 
             if (previousBandName.equals(currentBandName) == true  && scrollingDirection == "Down" && position != 0){
-
-                Log.d("bandListViewSortName", "1 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                // PERFORMANCE FIX: Reduce logging in getView()
+                // Log.d("bandListViewSortName", "1 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
 
             } else if (scrollingDirection == "Down") {
 
-                Log.d("bandListViewSortName", "2 full current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                // PERFORMANCE FIX: Reduce logging in getView()
+                // Log.d("bandListViewSortName", "2 full current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValueFullInfo(viewHolder, bandData);
 
             } else if (nextBand.equals(currentBandName) == false  || position == 0) {
-                Log.d("bandListViewSortName", "3 full current band is " + currentBandName + " = " + nextBand + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                // PERFORMANCE FIX: Reduce logging in getView()
+                // Log.d("bandListViewSortName", "3 full current band is " + currentBandName + " = " + nextBand + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValueFullInfo(viewHolder, bandData);
 
             } else {
-                Log.d("bandListViewSortName", "4 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+                // PERFORMANCE FIX: Reduce logging in getView()
+                // Log.d("bandListViewSortName", "4 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
             }
 
@@ -360,7 +380,8 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         display.getMetrics(metrics);
         int width = metrics.widthPixels;
 
-        Log.d("screenWidth", "Screen Width is " + width);
+        // PERFORMANCE FIX: Reduce logging - screen width doesn't change frequently
+        // Log.d("screenWidth", "Screen Width is " + width);
         return width;
     }
 }
